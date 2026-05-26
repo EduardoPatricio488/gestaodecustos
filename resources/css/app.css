@@ -1,0 +1,133 @@
+@import 'tailwindcss';
+
+@import '../../vendor/livewire/flux/dist/flux.css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-brand-50: #ecfdf5;
+    --color-brand-100: #d1fae5;
+    --color-brand-200: #a7f3d0;
+    --color-brand-300: #6ee7b7;
+    --color-brand-400: #34d399;
+    --color-brand-500: #10b981;
+    --color-brand-600: #059669;
+    --color-brand-700: #047857;
+    --color-brand-800: #065f46;
+    --color-brand-900: #064e3b;
+    --color-brand-950: #022c22;
+
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f4f4f5;
+    --color-zinc-200: #e4e4e7;
+    --color-zinc-300: #d4d4d8;
+    --color-zinc-400: #a1a1aa;
+    --color-zinc-500: #71717a;
+    --color-zinc-600: #52525b;
+    --color-zinc-700: #3f3f46;
+    --color-zinc-800: #27272a;
+    --color-zinc-900: #18181b;
+    --color-zinc-950: #09090b;
+
+    --color-accent: var(--color-brand-600);
+    --color-accent-content: var(--color-brand-600);
+    --color-accent-foreground: var(--color-white);
+}
+
+@layer theme {
+    .dark {
+        --color-accent: var(--color-brand-400);
+        --color-accent-content: var(--color-brand-400);
+        --color-accent-foreground: var(--color-zinc-950);
+    }
+}
+
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-zinc-200, currentColor);
+    }
+
+    .dark *,
+    .dark ::after,
+    .dark ::before {
+        border-color: var(--color-zinc-800, currentColor);
+    }
+}
+
+.privacy-blur {
+    transition: filter 0.3s ease-in-out;
+}
+
+[x-cloak] { display: none !important; }
+
+/* Quando o modo de privacidade está ativo, desfoca elementos com esta classe */
+.privacy-active .privacy-blur {
+    filter: blur(8px);
+    pointer-events: none; /* Impede selecionar o texto para copiar */
+    user-select: none;
+}
+
+
+@layer components {
+    .app-shell {
+        @apply relative min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100;
+    }
+
+    .app-shell::before {
+        content: '';
+        @apply pointer-events-none fixed inset-0 -z-10;
+        background:
+            radial-gradient(ellipse 80% 50% at 20% -10%, color-mix(in oklab, var(--color-brand-500) 18%, transparent), transparent),
+            radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in oklab, var(--color-brand-400) 10%, transparent), transparent);
+    }
+
+    .dark .app-shell::before {
+        background:
+            radial-gradient(ellipse 80% 50% at 20% -10%, color-mix(in oklab, var(--color-brand-500) 12%, transparent), transparent),
+            radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in oklab, var(--color-brand-600) 8%, transparent), transparent);
+    }
+
+    .glass-card {
+        @apply rounded-2xl border border-zinc-200/80 bg-white/80 shadow-sm shadow-zinc-900/5 backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:shadow-none;
+    }
+
+    .stat-card {
+        @apply rounded-2xl border border-zinc-200/80 bg-white/80 p-5 shadow-sm shadow-zinc-900/5 backdrop-blur-sm transition hover:border-brand-500/30 hover:shadow-md hover:shadow-brand-500/5 dark:border-zinc-800/80 dark:bg-zinc-900/60;
+    }
+
+    .brand-gradient {
+        @apply bg-gradient-to-br from-brand-500 to-brand-700 text-white;
+    }
+
+    .chart-bar {
+        @apply rounded-t-md bg-gradient-to-t from-brand-600 to-brand-400 transition-all duration-500 ease-out;
+    }
+
+    .category-pill {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+}
+
+[data-flux-field]:not(ui-radio, ui-checkbox) {
+    @apply grid gap-2;
+}
+
+[data-flux-label] {
+    @apply !mb-0 !leading-tight;
+}
+
+input:focus[data-flux-control],
+textarea:focus[data-flux-control],
+select:focus[data-flux-control] {
+    @apply outline-hidden ring-2 ring-brand-500/50 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900;
+}
