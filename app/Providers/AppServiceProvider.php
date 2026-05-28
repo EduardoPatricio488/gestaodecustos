@@ -28,19 +28,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // 1. Configurações padrão existentes
-        // $this->configureDefaults(); // Comenta se der erro, estas funções são custom do teu kit
-        // $this->registerViewNamespaces();
+        // 1. Configurações padrão do Starter Kit
+        $this->configureDefaults();
+        $this->registerViewNamespaces();
 
-        // 2. Configuração de Idioma
+        // 2. Configuração de Idioma (Português)
         App::setLocale('pt');
         Carbon::setLocale('pt');
 
-        // 3. FORÇAR HTTPS (O segredo para o Ngrok e para o CSS não quebrar)
-        if (config('app.env') === 'local') {
+        // 3. FORÇAR HTTPS APENAS PARA NGROK
+        // Isto permite que o localhost continue a funcionar em HTTP
+        // Mas garante que o Ngrok e o iPhone usem HTTPS para o CSS não quebrar
+        if (str_contains(request()->getHost(), 'ngrok')) {
             URL::forceScheme('https');
         }
     }
+
     protected function registerViewNamespaces(): void
     {
         View::addNamespace('pages', resource_path('views/pages'));
