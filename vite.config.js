@@ -21,6 +21,11 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
+        // PERMITE LIGAÇÕES EXTERNAS (TELEMÓVEL)
+        host: '0.0.0.0',
+        hmr: {
+            host: '192.168.1.73', // O teu IP do computador
+        },
         cors: true,
         watch: {
             ignored: ['**/storage/framework/views/**'],

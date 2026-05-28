@@ -1,10 +1,30 @@
 <!DOCTYPE html>
 <html lang="pt">
     <head>
+        <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- Imagem de arranque para iOS (Podes usar o mesmo ícone grande) -->
+<link rel="apple-touch-startup-image" href="/icon-512x512.png">
+        {{-- Apple Splash Screen Capability --}}
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+{{-- Ícone para iPhone --}}
+<link rel="apple-touch-icon" href="/icon-512x512.png">
+
+{{-- Título da App no ecrã principal --}}
+<meta name="apple-mobile-web-app-title" content="FinancePro">
+        {{-- Tags específicas para iOS (iPhone) --}}
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FinancePro">
+<link rel="apple-touch-icon" href="/icon-192x192.png">
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ config('app.name') }} — Finanças pessoais inteligentes</title>
-
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#10b981">
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
 
         <!-- Script de Deteção de Tema -->

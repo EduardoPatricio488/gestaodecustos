@@ -14,10 +14,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Traits\HasGamification;
+use NotificationChannels\WebPush\HasPushSubscriptions; // <--- 1. ADICIONADO O IMPORT
 
 class User extends Authenticatable implements PasskeyUser
 {
-    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable, HasGamification;
+    // 2. ADICIONADO O TRAIT HasPushSubscriptions NA LISTA ABAIXO
+    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable, HasGamification, HasPushSubscriptions;
 
     protected $fillable = [
         'name',

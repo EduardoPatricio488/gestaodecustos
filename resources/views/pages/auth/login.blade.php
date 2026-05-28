@@ -1,33 +1,60 @@
 <x-guest-layout>
-    <div class="space-y-8">
-        <div class="space-y-2">
-            <flux:heading size="xl" class="font-black tracking-tight">Bem-vindo</flux:heading>
-            <flux:subheading>Introduz as tuas credenciais para entrar.</flux:subheading>
+    {{-- EFEITO DE FUNDO DISCRETO --}}
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-[5%] -left-[5%] size-64 bg-brand-500/5 blur-[80px] rounded-full"></div>
+    </div>
+
+    {{-- LIMITADOR DE LARGURA (MAX-W-SM) --}}
+    <div class="mx-auto max-w-[360px] relative z-10 space-y-6">
+
+        {{-- HEADER COMPACTO --}}
+        <div class="text-center space-y-4">
+            <div class="inline-flex relative group">
+                <div class="absolute inset-0 bg-brand-500/15 blur-xl rounded-full transition-all"></div>
+                <div class="relative p-3.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl">
+                    <flux:icon name="shield-check" class="size-7 text-brand-600" />
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <h1 class="text-2xl font-black dark:text-white uppercase tracking-tighter italic">Acesso</h1>
+                <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-widest opacity-80">Terminal de Gestão</p>
+            </div>
         </div>
 
-        {{-- Status da Sessão (Erros/Mensagens) --}}
-        <x-auth-session-status class="mb-4 text-center" :status="session('status')" />
+        @if (session('status'))
+            <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                <p class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest text-center">
+                    {{ session('status') }}
+                </p>
+            </div>
+        @endif
 
-        <form method="POST" action="{{ route('login') }}" class="space-y-6">
+        <form method="POST" action="{{ route('login') }}" class="space-y-5">
             @csrf
 
-            <!-- Email -->
-            <flux:input
-                name="email"
-                :label="__('Endereço de Email')"
-                :value="old('email')"
-                type="email"
-                required
-                autofocus
-                placeholder="exemplo@email.com"
-            />
+            <!-- IDENTIFICAÇÃO (EMAIL) -->
+            <div class="space-y-1.5">
+                <flux:label class="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] px-1">Credencial</flux:label>
+                <flux:input
+                    name="email"
+                    :value="old('email')"
+                    type="email"
+                    icon="envelope"
+                    required
+                    autofocus
+                    placeholder="teu@email.com"
+                    class="font-bold !bg-zinc-50 dark:!bg-zinc-950 !border-none rounded-xl h-11 shadow-inner focus:ring-1 focus:ring-brand-500/20 text-sm"
+                />
+                <x-input-error :messages="$errors->get('email')" class="mt-1" />
+            </div>
 
-            <!-- Password -->
-            <div class="space-y-2">
-                <div class="flex justify-between items-center">
-                    <label class="text-sm font-medium">{{ __('Palavra-passe') }}</label>
+            <!-- SEGURANÇA (PASSWORD) -->
+            <div class="space-y-1.5">
+                <div class="flex justify-between items-center px-1">
+                    <flux:label class="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em]">Password</flux:label>
                     @if (Route::has('password.request'))
-                        <flux:link :href="route('password.request')" class="text-[11px] font-black uppercase tracking-tight" variant="subtle">
+                        <flux:link :href="route('password.request')" class="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-brand-500" variant="subtle">
                             {{ __('Esqueceste-te?') }}
                         </flux:link>
                     @endif
@@ -35,29 +62,82 @@
                 <flux:input
                     name="password"
                     type="password"
+                    icon="lock-closed"
                     required
                     placeholder="••••••••"
                     viewable
+                    class="font-bold !bg-zinc-50 dark:!bg-zinc-950 !border-none rounded-xl h-11 shadow-inner focus:ring-1 focus:ring-brand-500/20 text-sm"
                 />
+                <x-input-error :messages="$errors->get('password')" class="mt-1" />
             </div>
 
-            <!-- Remember Me -->
-            <flux:checkbox name="remember" :label="__('Manter sessão iniciada')" />
+            <!-- OPÇÕES ADICIONAIS -->
+            <div class="px-1 flex items-center">
+                <flux:checkbox name="remember">
+                    <x-slot:label>
+                        <span class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Sessão Ativa</span>
+                    </x-slot:label>
+                </flux:checkbox>
+            </div>
 
-            <div class="pt-2">
-                <flux:button variant="primary" type="submit" class="w-full !h-12 font-bold text-md rounded-2xl">
-                    {{ __('Entrar na Conta') }}
+            {{-- BOTÃO DE LOGIN COMPACTO --}}
+            <div class="pt-1">
+                <flux:button variant="primary" type="submit" class="w-full h-11 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 hover:bg-brand-500 transition-all hover:scale-[1.01] active:scale-95 text-xs">
+                    {{ __('Entrar') }}
                 </flux:button>
             </div>
         </form>
 
-        <flux:separator />
+        {{-- DIVISOR DISCRETO --}}
+        <div class="relative py-2">
+            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                <div class="w-full border-t border-zinc-100 dark:border-zinc-800"></div>
+            </div>
+            <div class="relative flex justify-center">
+                <span class="bg-white dark:bg-zinc-950 px-3 text-[8px] font-black uppercase tracking-[0.4em] text-zinc-400 opacity-50 italic">End-to-End Encryption</span>
+            </div>
+        </div>
 
-        <div class="text-center">
-            <p class="text-sm text-zinc-500">
-                Ainda não tens conta?
-                <flux:link :href="route('register')" wire:navigate class="font-black text-brand-600 dark:text-brand-400">Regista-te grátis</flux:link>
+        {{-- RODAPÉ MINIMALISTA --}}
+        <div class="text-center space-y-6 animate-fade-in-delayed">
+            <p class="text-xs text-zinc-500 font-medium">
+                Sem conta?
+                <flux:link :href="route('register')" wire:navigate class="font-black text-brand-600 dark:text-brand-400 hover:text-brand-500 transition-colors">Cria uma agora</flux:link>
             </p>
+
+            <footer class="pt-4">
+                <p class="text-[8px] font-black text-zinc-300 dark:text-zinc-800 uppercase tracking-[0.5em] cursor-default">
+                    &copy; {{ date('Y') }} · {{ config('app.name') }}
+                </p>
+            </footer>
         </div>
     </div>
 </x-guest-layout>
+
+{{-- 4. ESTILOS DE ANIMAÇÃO COMPACTOS --}}
+<style>
+    @keyframes compactFadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .relative.z-10 {
+        animation: compactFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .animate-fade-in-delayed {
+        opacity: 0;
+        animation: compactFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+    }
+
+    /* Melhora o aspeto do cursor no input */
+    input {
+        caret-color: #3b82f6;
+    }
+</style>

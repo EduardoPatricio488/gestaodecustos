@@ -1,0 +1,40 @@
+{
+    "name": "Finance Pro IA",
+    "short_name": "FinancePro",
+    "description": "Gestão de Custos Inteligente com IA",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#09090b",
+    "theme_color": "#10b981",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/screenshot-desktop.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Dashboard Financeira"
+        },
+        {
+            "src": "/screenshot-mobile.png",
+            "sizes": "750x1334",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Gestão Mobile"
+        }
+    ]
+}

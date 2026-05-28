@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\URL;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Blade;
@@ -27,13 +28,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->configureDefaults();
-        $this->registerViewNamespaces();
+        // 1. Configurações padrão existentes
+        // $this->configureDefaults(); // Comenta se der erro, estas funções são custom do teu kit
+        // $this->registerViewNamespaces();
 
+        // 2. Configuração de Idioma
         App::setLocale('pt');
         Carbon::setLocale('pt');
-    }
 
+        // 3. FORÇAR HTTPS (O segredo para o Ngrok e para o CSS não quebrar)
+        if (config('app.env') === 'local') {
+            URL::forceScheme('https');
+        }
+    }
     protected function registerViewNamespaces(): void
     {
         View::addNamespace('pages', resource_path('views/pages'));

@@ -74,7 +74,21 @@
             @endforelse
         </div>
     </div>
+<div class="glass-card p-6 bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-between">
+    <div class="flex items-center gap-4">
+        <div class="p-3 bg-brand-500/10 rounded-2xl text-brand-600">
+            <flux:icon name="bell" variant="outline" class="size-6" />
+        </div>
+        <div>
+            <h3 class="font-black dark:text-white uppercase text-sm">Alertas Push</h3>
+            <p class="text-[10px] text-zinc-500 uppercase font-bold">Recebe avisos de gastos e orçamentos no telemóvel</p>
+        </div>
+    </div>
 
+    <flux:button onclick="enableNotifications()" variant="primary" class="rounded-xl font-black uppercase text-[10px] px-6">
+        Ativar balões
+    </flux:button>
+</div>
     {{-- 3. HEADER PRINCIPAL --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-4">
         <div>

@@ -1,8 +1,47 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
+<!-- Splash Screen exato para o teu iPhone 15 -->
+<link rel="apple-touch-startup-image"
+      href="/pwa/splash_screens/iPhone_16__iPhone_15_Pro__iPhone_15__iPhone_14_Pro_portrait.png"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+
+{{-- Tags obrigatórias para ativar o modo App no iOS --}}
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finance Pro">
+<link rel="apple-touch-icon" href="/pwa/splash_screens/apple-icon-180x180.png">
+<!-- Configuração de UI para parecer App Nativa -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finance Pro">
+<link rel="apple-touch-icon" href="/pwa/splash_screens/apple-icon-180x180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- Imagem de arranque para iOS (Podes usar o mesmo ícone grande) -->
+<link rel="apple-touch-startup-image" href="/icon-512x512.png">
+
+    {{-- Apple Splash Screen Capability --}}
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+{{-- Ícone para iPhone --}}
+<link rel="apple-touch-icon" href="/icon-512x512.png">
+
+{{-- Título da App no ecrã principal --}}
+<meta name="apple-mobile-web-app-title" content="FinancePro">
+    {{-- Tags específicas para iOS (iPhone) --}}
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FinancePro">
+<link rel="apple-touch-icon" href="/icon-192x192.png">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{-- Link para o Manifesto PWA --}}
+<link rel="manifest" href="/manifest.json">
+{{-- Cor da barra de status no telemóvel --}}
+<meta name="theme-color" content="#10b981">
 
     <title>{{ config('app.name') }}</title>
 
@@ -29,6 +68,14 @@
 
     @livewireStyles
 </head>
+
+
+
+
+
+
+
+
 
 <body
     class="app-shell antialiased bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300"
@@ -141,6 +188,14 @@
                   '</span>'
                 : '';
     @endphp
+
+
+
+
+
+
+
+
 
     {{-- SIDEBAR --}}
     <flux:sidebar
@@ -461,6 +516,14 @@
         </form>
     </div>
 </div>
+
+
+
+
+
+
+
+
             </div>
         </div>
     </flux:header>
@@ -476,5 +539,15 @@
     @livewireScripts
     <script src="/flux/flux.js"></script>
     @fluxScripts
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker Registado!', reg))
+                .catch(err => console.log('Erro ao registar Service Worker', err));
+        });
+    }
+</script>
 </body>
 </html>
