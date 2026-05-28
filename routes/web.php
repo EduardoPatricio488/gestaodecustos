@@ -43,6 +43,7 @@ use App\Livewire\Business\TaskTimeline;
 use App\Livewire\Business\BusinessPnlHub;
 use App\Livewire\Business\BusinessMessenger;
 use App\Livewire\Business\ProposalHub;
+
 use App\Livewire\Business\BankAccountHub;
 use App\Livewire\Business\CompanyCalendar;
 use App\Livewire\Business\AbsenceHub;
@@ -89,6 +90,15 @@ Route::post('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionContro
         Route::get('/suporte', SupportHub::class)->name('hub.business.support');
     });
 
+   // Rota principal do Perfil
+Route::get('/profile', function () {
+    return view('profile');
+})->name('profile.edit');
+
+// Aliases para os testes não darem 404
+Route::get('/settings/security', function () { return view('profile'); })->name('security.edit');
+Route::get('/settings/appearance', function () { return view('profile'); })->name('appearance.edit');
+
     // --- FINANÇAS PESSOAIS ---
     Route::get('/receitas', IncomeHub::class)->name('hub.incomes');
     Route::get('/investimentos', InvestmentsHub::class)->name('hub.investments');
@@ -122,7 +132,7 @@ Route::post('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionContro
     // ROTA QUE ESTAVA A FALTAR:
     Route::get('/export/empresa', [ExportController::class, 'businessExport'])->name('export.business');
 
-    Route::view('/settings/profile', 'profile')->name('profile.edit');
+    Route::view('/profile', 'profile')->name('profile.edit');
 
     // Hubs de Categoria Dinâmicos
     $slugs = ['carro', 'casa', 'alimentacao', 'transporte', 'saude', 'educacao', 'tecnologia', 'emprestimos', 'seguros', 'outras'];

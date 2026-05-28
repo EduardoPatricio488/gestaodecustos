@@ -96,8 +96,10 @@
         {{-- RODAPÉ DE CONFIGURAÇÕES --}}
         <footer class="pt-12 text-center">
             <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">
-                {{ config('app.name') }} · Protocolo de Segurança Ativo
+                Finance Pro IA · Protocolo de Segurança Ativo
             </p>
         </footer>
+
+
     </div>
 </x-app-layout>
