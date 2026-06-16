@@ -5,8 +5,96 @@
         'alimentacao' => ['color' => 'text-orange-500', 'label' => 'Controlo de Consumo',    'budgetLabel' => 'Budget de Nutrição'],
         'saude'       => ['color' => 'text-red-500',    'label' => 'Bem-estar e Saúde',       'budgetLabel' => 'Reserva Médica'],
         'tecnologia'  => ['color' => 'text-indigo-500', 'label' => 'Infraestrutura Digital', 'budgetLabel' => 'Budget SaaS'],
+        'educacao'    => ['color' => 'text-emerald-500', 'label' => 'Educação e Formação',   'budgetLabel' => 'Investimento Educacional'],
+        'emprestimos' => ['color' => 'text-rose-500',   'label' => 'Gestão de Empréstimos', 'budgetLabel' => 'Controlo de Dívida'],
+        'seguros'     => ['color' => 'text-sky-500',    'label' => 'Proteção e Seguros',    'budgetLabel' => 'Prémios de Seguros'],
     ];
     $hubTheme = $themes[$slug] ?? ['color' => 'text-brand-600', 'label' => 'Gestão Estratégica', 'budgetLabel' => 'Teto Orçamental'];
+
+    // Definição de campos específicos por categoria
+    $categoryFields = [
+        'carro' => [
+            'icon' => 'truck',
+            'fields' => [
+                ['name' => 'km', 'label' => 'Quilometragem Atual', 'type' => 'number', 'placeholder' => 'Ex: 120000'],
+                ['name' => 'local', 'label' => 'Localização do Serviço', 'type' => 'text', 'placeholder' => 'Ex: Galp Lisboa', 'icon' => 'map-pin'],
+                ['name' => 'combustivel', 'label' => 'Consumo (L/100km)', 'type' => 'number', 'placeholder' => 'Ex: 6.5', 'step' => '0.1'],
+                ['name' => 'urgencia', 'label' => 'Prioridade', 'type' => 'select', 'options' => ['Rotina', 'Urgente', 'Preventiva']],
+                ['name' => 'estado', 'label' => 'Estado do Veículo', 'type' => 'select', 'options' => ['Bom', 'Precisa Manutenção', 'Crítico']],
+            ]
+        ],
+        'casa' => [
+            'icon' => 'home',
+            'fields' => [
+                ['name' => 'entidade', 'label' => 'Fornecedor/Proprietário', 'type' => 'text', 'placeholder' => 'Ex: EDP, Lusitaniagás', 'icon' => 'building-library'],
+                ['name' => 'piso', 'label' => 'Piso/Apartamento', 'type' => 'text', 'placeholder' => 'Ex: Apartamento 305'],
+                ['name' => 'valor_anterior', 'label' => 'Valor Mês Anterior (€)', 'type' => 'number', 'placeholder' => 'Para comparação', 'step' => '0.01'],
+                ['name' => 'anomalia', 'label' => 'Tem Anomalia', 'type' => 'checkbox', 'label_alt' => 'Problemas a reportar'],
+                ['name' => 'referencia', 'label' => 'Nº de Contrato/Referência', 'type' => 'text', 'placeholder' => 'Ex: 123456789'],
+            ]
+        ],
+        'alimentacao' => [
+            'icon' => 'shopping-cart',
+            'fields' => [
+                ['name' => 'pessoas', 'label' => 'Nº de Pessoas', 'type' => 'number', 'placeholder' => 'Ex: 2'],
+                ['name' => 'estabelecimento', 'label' => 'Estabelecimento', 'type' => 'text', 'placeholder' => 'Ex: Continente Lisboa', 'icon' => 'building-storefront'],
+                ['name' => 'dieta', 'label' => 'Tipo de Dieta', 'type' => 'select', 'options' => ['Normal', 'Vegetariana', 'Vegana', 'Sem Glúten', 'Sem Lactose', 'Outra']],
+                ['name' => 'orcamento_pessoa', 'label' => 'Orçamento por Pessoa (€)', 'type' => 'number', 'placeholder' => 'Ref. para análise', 'step' => '0.01'],
+                ['name' => 'frequencia', 'label' => 'Frequência', 'type' => 'select', 'options' => ['Diária', 'Semanal', 'Mensal', 'Ocasional']],
+            ]
+        ],
+        'saude' => [
+            'icon' => 'heart',
+            'fields' => [
+                ['name' => 'profissional', 'label' => 'Profissional/Clínica', 'type' => 'text', 'placeholder' => 'Ex: Dr. João Silva', 'icon' => 'user-md'],
+                ['name' => 'especialidade', 'label' => 'Especialidade', 'type' => 'text', 'placeholder' => 'Ex: Cardiologia'],
+                ['name' => 'cobertura_seguro', 'label' => 'Cobertura de Seguro', 'type' => 'select', 'options' => ['Sim, 100%', 'Sim, Parcial', 'Não', 'Desconhecido']],
+                ['name' => 'urgencia', 'label' => 'Tipo de Atendimento', 'type' => 'select', 'options' => ['Rotina', 'Urgente', 'Emergência', 'Preventivo']],
+                ['name' => 'prescricao', 'label' => 'Prescrição Médica', 'type' => 'checkbox', 'label_alt' => 'Tem prescrição médica'],
+            ]
+        ],
+        'tecnologia' => [
+            'icon' => 'computer-desktop',
+            'fields' => [
+                ['name' => 'fornecedor', 'label' => 'Fornecedor/Plataforma', 'type' => 'text', 'placeholder' => 'Ex: Microsoft, Adobe', 'icon' => 'building-storefront'],
+                ['name' => 'produtoServico', 'label' => 'Produto/Serviço', 'type' => 'text', 'placeholder' => 'Ex: Office 365 Pro'],
+                ['name' => 'duracao', 'label' => 'Duração', 'type' => 'select', 'options' => ['1 Mês', '3 Meses', '6 Meses', '1 Ano', 'Vitalício', 'Único']],
+                ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'options' => ['Ativo', 'Inativo', 'Cancelado']],
+                ['name' => 'roi_esperado', 'label' => 'ROI Esperado', 'type' => 'text', 'placeholder' => 'Ex: Alto / Médio / Baixo'],
+            ]
+        ],
+        'educacao' => [
+            'icon' => 'star',
+            'fields' => [
+                ['name' => 'instituicao', 'label' => 'Instituição', 'type' => 'text', 'placeholder' => 'Ex: Universidade XYZ', 'icon' => 'building-library'],
+                ['name' => 'curso', 'label' => 'Curso/Disciplina', 'type' => 'text', 'placeholder' => 'Ex: Engenharia Informática'],
+                ['name' => 'nivel', 'label' => 'Nível', 'type' => 'select', 'options' => ['Primária', 'Secundária', 'Superior', 'Pós-Graduação', 'Formação', 'Outro']],
+                ['name' => 'estado_pagamento', 'label' => 'Estado de Pagamento', 'type' => 'select', 'options' => ['Pago', 'Parcial', 'Pendente']],
+            ]
+        ],
+        'emprestimos' => [
+            'icon' => 'banknotes',
+            'fields' => [
+                ['name' => 'credor', 'label' => 'Credor/Banco', 'type' => 'text', 'placeholder' => 'Ex: Banco XYZ', 'icon' => 'building-storefront'],
+                ['name' => 'valor_inicial', 'label' => 'Valor Inicial (€)', 'type' => 'number', 'placeholder' => 'Ex: 50000', 'step' => '0.01'],
+                ['name' => 'saldo_atual', 'label' => 'Saldo Atual (€)', 'type' => 'number', 'placeholder' => 'Ex: 35000', 'step' => '0.01'],
+                ['name' => 'taxa_juros', 'label' => 'Taxa de Juros (%)', 'type' => 'number', 'placeholder' => 'Ex: 2.5', 'step' => '0.01'],
+                ['name' => 'prazo_meses', 'label' => 'Prazo Total (meses)', 'type' => 'number', 'placeholder' => 'Ex: 120'],
+                ['name' => 'data_termino', 'label' => 'Data de Término', 'type' => 'text', 'placeholder' => 'Ex: Junho 2030'],
+            ]
+        ],
+        'seguros' => [
+            'icon' => 'shield-check',
+            'fields' => [
+                ['name' => 'tipo_seguro', 'label' => 'Tipo de Seguro', 'type' => 'select', 'options' => ['Saúde', 'Vida', 'Automóvel', 'Habitação', 'Viagem', 'Responsabilidade Civil', 'Outro']],
+                ['name' => 'seguradora', 'label' => 'Seguradora', 'type' => 'text', 'placeholder' => 'Ex: AXA, Fidelidade', 'icon' => 'building-storefront'],
+                ['name' => 'numero_apolice', 'label' => 'Nº da Apólice', 'type' => 'text', 'placeholder' => 'Ex: AP-2024-001234'],
+                ['name' => 'cobertura_valor', 'label' => 'Valor de Cobertura (€)', 'type' => 'number', 'placeholder' => 'Ex: 100000', 'step' => '0.01'],
+                ['name' => 'data_renovacao', 'label' => 'Data de Renovação', 'type' => 'text', 'placeholder' => 'Ex: Junho 2025'],
+                ['name' => 'estado', 'label' => 'Estado da Apólice', 'type' => 'select', 'options' => ['Ativa', 'Cancelada', 'Suspensa', 'Em Revisão']],
+            ]
+        ]
+    ];
 @endphp
 
 <div
@@ -84,7 +172,391 @@
         @endif
     </div>
 
-    {{-- ── LEDGER ─────────────────────────────────────────────────── --}}
+    {{-- ── WIDGETS TEMÁTICOS ──────────────────────────────────────── --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        {{-- CARRO: Estatísticas Veículo --}}
+        @if($slug === 'carro')
+            @php
+                $totalGasto = $expenses->sum('amount');
+                $mediaGasto = $expenses->count() > 0 ? $totalGasto / $expenses->count() : 0;
+                $ultimoGasto = $expenses->first();
+            @endphp
+
+            <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-2xl p-6 border border-amber-200 dark:border-amber-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="bolt" class="size-8 text-amber-600" />
+                    <span class="text-xs font-black text-amber-700 dark:text-amber-400 bg-amber-200/50 dark:bg-amber-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Consumo</span>
+                </div>
+                <p class="text-xs text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider mb-1">Média por Serviço</p>
+                <p class="text-3xl font-black text-amber-700 dark:text-amber-300 tracking-tighter">{{ number_format($mediaGasto, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 rounded-2xl p-6 border border-amber-200 dark:border-amber-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="bars-3" class="size-8 text-yellow-600" />
+                    <span class="text-xs font-black text-yellow-700 dark:text-yellow-400 bg-yellow-200/50 dark:bg-yellow-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Manutenção</span>
+                </div>
+                <p class="text-xs text-yellow-600 dark:text-yellow-400 font-bold uppercase tracking-wider mb-1">Serviços Realizados</p>
+                <p class="text-3xl font-black text-yellow-700 dark:text-yellow-300 tracking-tighter">{{ $expenses->count() }}</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-amber-50 to-red-50 dark:from-amber-950/20 dark:to-red-950/20 rounded-2xl p-6 border border-amber-200 dark:border-amber-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="calendar" class="size-8 text-red-600" />
+                    <span class="text-xs font-black text-red-700 dark:text-red-400 bg-red-200/50 dark:bg-red-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Agenda</span>
+                </div>
+                <p class="text-xs text-red-600 dark:text-red-400 font-bold uppercase tracking-wider mb-1">Último Serviço</p>
+                <p class="text-2xl font-black text-red-700 dark:text-red-300 tracking-tighter">{{ $ultimoGasto ? $ultimoGasto->spent_at->translatedFormat('d M') : 'N/A' }}</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-amber-50 to-green-50 dark:from-amber-950/20 dark:to-green-950/20 rounded-2xl p-6 border border-amber-200 dark:border-amber-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="star" class="size-8 text-green-600" />
+                    <span class="text-xs font-black text-green-700 dark:text-green-400 bg-green-200/50 dark:bg-green-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Saúde</span>
+                </div>
+                <p class="text-xs text-green-600 dark:text-green-400 font-bold uppercase tracking-wider mb-1">Próxima Inspeção</p>
+                <p class="text-2xl font-black text-green-700 dark:text-green-300 tracking-tighter">{{ now()->addMonths(3)->translatedFormat('M Y') }}</p>
+            </div>
+
+        {{-- CASA: Comparativo e Utilidades --}}
+        @elseif($slug === 'casa')
+            @php
+                $totalGasto = $expenses->sum('amount');
+                $mesAnterior = $expenses->where('spent_at', '<', now()->startOfMonth())->sum('amount');
+                $economiaOuGasto = $totalGasto - $mesAnterior;
+                $percentualChange = $mesAnterior > 0 ? (($economiaOuGasto / $mesAnterior) * 100) : 0;
+            @endphp
+
+            <div class="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="banknotes" class="size-8 text-blue-600" />
+                    <span class="text-xs font-black text-blue-700 dark:text-blue-400 bg-blue-200/50 dark:bg-blue-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Custo</span>
+                </div>
+                <p class="text-xs text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mb-1">Este Mês</p>
+                <p class="text-3xl font-black text-blue-700 dark:text-blue-300 tracking-tighter">{{ number_format($totalGasto, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="{{ $economiaOuGasto < 0 ? 'arrow-down' : 'arrow-up' }}" class="size-8 {{ $economiaOuGasto < 0 ? 'text-emerald-600' : 'text-red-600' }}" />
+                    <span class="text-xs font-black {{ $economiaOuGasto < 0 ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-200/50 dark:bg-emerald-950/50' : 'text-red-700 dark:text-red-400 bg-red-200/50 dark:bg-red-950/50' }} px-3 py-1 rounded-lg uppercase tracking-wide">Variação</span>
+                </div>
+                <p class="text-xs text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider mb-1">vs Mês Anterior</p>
+                <p class="text-3xl font-black {{ $economiaOuGasto < 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300' }} tracking-tighter">{{ abs($economiaOuGasto) > 0 ? number_format(abs($economiaOuGasto), 2, ',', '.') : '0' }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-blue-50 to-violet-50 dark:from-blue-950/20 dark:to-violet-950/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="hashtag" class="size-8 text-violet-600" />
+                    <span class="text-xs font-black text-violet-700 dark:text-violet-400 bg-violet-200/50 dark:bg-violet-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Mudança</span>
+                </div>
+                <p class="text-xs text-violet-600 dark:text-violet-400 font-bold uppercase tracking-wider mb-1">Percentual</p>
+                <p class="text-3xl font-black text-violet-700 dark:text-violet-300 tracking-tighter">{{ $percentualChange > 0 ? '+' : '' }}{{ number_format($percentualChange, 1, ',', '.') }}%</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="home" class="size-8 text-purple-600" />
+                    <span class="text-xs font-black text-purple-700 dark:text-purple-400 bg-purple-200/50 dark:bg-purple-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Registos</span>
+                </div>
+                <p class="text-xs text-purple-600 dark:text-purple-400 font-bold uppercase tracking-wider mb-1">Despesas Ativas</p>
+                <p class="text-3xl font-black text-purple-700 dark:text-purple-300 tracking-tighter">{{ $expenses->count() }}</p>
+            </div>
+
+        {{-- ALIMENTAÇÃO: Análise Nutricional --}}
+        @elseif($slug === 'alimentacao')
+            @php
+                $totalGasto = $expenses->sum('amount');
+                $expensesWithPeople = $expenses->filter(fn($e) => isset(json_decode($e->meta, true)['pessoas']));
+                $custoPorPessoa = $expensesWithPeople->count() > 0
+                    ? $expensesWithPeople->sum(function($e) {
+                        $meta = json_decode($e->meta, true);
+                        return $meta['pessoas'] ? $e->amount / $meta['pessoas'] : $e->amount;
+                    }) / $expensesWithPeople->count()
+                    : 0;
+            @endphp
+
+            <div class="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 rounded-2xl p-6 border border-orange-200 dark:border-orange-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="cube" class="size-8 text-orange-600" />
+                    <span class="text-xs font-black text-orange-700 dark:text-orange-400 bg-orange-200/50 dark:bg-orange-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Gasto</span>
+                </div>
+                <p class="text-xs text-orange-600 dark:text-orange-400 font-bold uppercase tracking-wider mb-1">Total este Mês</p>
+                <p class="text-3xl font-black text-orange-700 dark:text-orange-300 tracking-tighter">{{ number_format($totalGasto, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20 rounded-2xl p-6 border border-orange-200 dark:border-orange-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="users" class="size-8 text-yellow-600" />
+                    <span class="text-xs font-black text-yellow-700 dark:text-yellow-400 bg-yellow-200/50 dark:bg-yellow-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Pessoa</span>
+                </div>
+                <p class="text-xs text-yellow-600 dark:text-yellow-400 font-bold uppercase tracking-wider mb-1">Custo Médio/Pessoa</p>
+                <p class="text-3xl font-black text-yellow-700 dark:text-yellow-300 tracking-tighter">{{ number_format($custoPorPessoa, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-orange-50 to-lime-50 dark:from-orange-950/20 dark:to-lime-950/20 rounded-2xl p-6 border border-orange-200 dark:border-orange-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="shopping-cart" class="size-8 text-lime-600" />
+                    <span class="text-xs font-black text-lime-700 dark:text-lime-400 bg-lime-200/50 dark:bg-lime-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Frequência</span>
+                </div>
+                <p class="text-xs text-lime-600 dark:text-lime-400 font-bold uppercase tracking-wider mb-1">Refeições/Compras</p>
+                <p class="text-3xl font-black text-lime-700 dark:text-lime-300 tracking-tighter">{{ $expenses->count() }}</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-orange-50 to-green-50 dark:from-orange-950/20 dark:to-green-950/20 rounded-2xl p-6 border border-orange-200 dark:border-orange-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="calendar" class="size-8 text-green-600" />
+                    <span class="text-xs font-black text-green-700 dark:text-green-400 bg-green-200/50 dark:bg-green-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Média</span>
+                </div>
+                <p class="text-xs text-green-600 dark:text-green-400 font-bold uppercase tracking-wider mb-1">por Dia</p>
+                <p class="text-3xl font-black text-green-700 dark:text-green-300 tracking-tighter">{{ number_format($totalGasto / now()->day, 2, ',', '.') }}€</p>
+            </div>
+
+        {{-- SAÚDE: Análise Cobertura --}}
+        @elseif($slug === 'saude')
+            @php
+                $totalGasto = $expenses->sum('amount');
+                $expensesComCobertura = $expenses->filter(fn($e) =>
+                    isset(json_decode($e->meta, true)['cobertura_seguro']) &&
+                    in_array(json_decode($e->meta, true)['cobertura_seguro'], ['Sim, 100%', 'Sim, Parcial'])
+                );
+                $totalCobertura = 0;
+                foreach($expensesComCobertura as $e) {
+                    $meta = json_decode($e->meta, true);
+                    if($meta['cobertura_seguro'] === 'Sim, 100%') $totalCobertura += $e->amount;
+                    else $totalCobertura += $e->amount * 0.5;
+                }
+            @endphp
+
+            <div class="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20 rounded-2xl p-6 border border-red-200 dark:border-red-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="heart" class="size-8 text-red-600" />
+                    <span class="text-xs font-black text-red-700 dark:text-red-400 bg-red-200/50 dark:bg-red-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Total</span>
+                </div>
+                <p class="text-xs text-red-600 dark:text-red-400 font-bold uppercase tracking-wider mb-1">Despesas Saúde</p>
+                <p class="text-3xl font-black text-red-700 dark:text-red-300 tracking-tighter">{{ number_format($totalGasto, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20 rounded-2xl p-6 border border-red-200 dark:border-red-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="shield-check" class="size-8 text-rose-600" />
+                    <span class="text-xs font-black text-rose-700 dark:text-rose-400 bg-rose-200/50 dark:bg-rose-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Cobertura</span>
+                </div>
+                <p class="text-xs text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wider mb-1">Valor Coberto Seguro</p>
+                <p class="text-3xl font-black text-rose-700 dark:text-rose-300 tracking-tighter">{{ number_format($totalCobertura, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20 rounded-2xl p-6 border border-red-200 dark:border-red-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="exclamation-triangle" class="size-8 text-orange-600" />
+                    <span class="text-xs font-black text-orange-700 dark:text-orange-400 bg-orange-200/50 dark:bg-orange-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Seu Custo</span>
+                </div>
+                <p class="text-xs text-orange-600 dark:text-orange-400 font-bold uppercase tracking-wider mb-1">Valor a Pagar</p>
+                <p class="text-3xl font-black text-orange-700 dark:text-orange-300 tracking-tighter">{{ number_format($totalGasto - $totalCobertura, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-red-50 to-purple-50 dark:from-red-950/20 dark:to-purple-950/20 rounded-2xl p-6 border border-red-200 dark:border-red-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="calendar" class="size-8 text-purple-600" />
+                    <span class="text-xs font-black text-purple-700 dark:text-purple-400 bg-purple-200/50 dark:bg-purple-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Consultas</span>
+                </div>
+                <p class="text-xs text-purple-600 dark:text-purple-400 font-bold uppercase tracking-wider mb-1">Atendimentos Registados</p>
+                <p class="text-3xl font-black text-purple-700 dark:text-purple-300 tracking-tighter">{{ $expenses->count() }}</p>
+            </div>
+
+        {{-- TECNOLOGIA: Status Subscrições --}}
+        @elseif($slug === 'tecnologia')
+            @php
+                $totalGasto = $expenses->sum('amount');
+                $subscricoesAtivas = $expenses->filter(fn($e) =>
+                    isset(json_decode($e->meta, true)['status']) &&
+                    json_decode($e->meta, true)['status'] === 'Ativo'
+                )->count();
+                $subscricoesInativas = $expenses->filter(fn($e) =>
+                    isset(json_decode($e->meta, true)['status']) &&
+                    json_decode($e->meta, true)['status'] === 'Inativo'
+                )->count();
+                $custoAnual = $totalGasto * 12;
+            @endphp
+
+            <div class="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 rounded-2xl p-6 border border-indigo-200 dark:border-indigo-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="computer-desktop" class="size-8 text-indigo-600" />
+                    <span class="text-xs font-black text-indigo-700 dark:text-indigo-400 bg-indigo-200/50 dark:bg-indigo-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Gasto</span>
+                </div>
+                <p class="text-xs text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider mb-1">Investimento Mensal</p>
+                <p class="text-3xl font-black text-indigo-700 dark:text-indigo-300 tracking-tighter">{{ number_format($totalGasto, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 rounded-2xl p-6 border border-indigo-200 dark:border-indigo-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="calendar" class="size-8 text-purple-600" />
+                    <span class="text-xs font-black text-purple-700 dark:text-purple-400 bg-purple-200/50 dark:bg-purple-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Anual</span>
+                </div>
+                <p class="text-xs text-purple-600 dark:text-purple-400 font-bold uppercase tracking-wider mb-1">Custo Anual Estimado</p>
+                <p class="text-3xl font-black text-purple-700 dark:text-purple-300 tracking-tighter">{{ number_format($custoAnual, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-indigo-50 to-green-50 dark:from-indigo-950/20 dark:to-green-950/20 rounded-2xl p-6 border border-indigo-200 dark:border-indigo-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="check" class="size-8 text-green-600" />
+                    <span class="text-xs font-black text-green-700 dark:text-green-400 bg-green-200/50 dark:bg-green-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Ativas</span>
+                </div>
+                <p class="text-xs text-green-600 dark:text-green-400 font-bold uppercase tracking-wider mb-1">Subscrições Ativas</p>
+                <p class="text-3xl font-black text-green-700 dark:text-green-300 tracking-tighter">{{ $subscricoesAtivas }}</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-indigo-50 to-red-50 dark:from-indigo-950/20 dark:to-red-950/20 rounded-2xl p-6 border border-indigo-200 dark:border-indigo-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="x-mark" class="size-8 text-red-600" />
+                    <span class="text-xs font-black text-red-700 dark:text-red-400 bg-red-200/50 dark:bg-red-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Inativas</span>
+                </div>
+                <p class="text-xs text-red-600 dark:text-red-400 font-bold uppercase tracking-wider mb-1">Subscrições Inativas</p>
+                <p class="text-3xl font-black text-red-700 dark:text-red-300 tracking-tighter">{{ $subscricoesInativas }}</p>
+            </div>
+
+        {{-- EDUCAÇÃO: Análise Educacional --}}
+        @elseif($slug === 'educacao')
+            @php
+                $totalGasto = $expenses->sum('amount');
+                $expensesAtivas = $expenses->count();
+            @endphp
+
+            <div class="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-2xl p-6 border border-emerald-200 dark:border-emerald-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="star" class="size-8 text-emerald-600" />
+                    <span class="text-xs font-black text-emerald-700 dark:text-emerald-400 bg-emerald-200/50 dark:bg-emerald-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Investimento</span>
+                </div>
+                <p class="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mb-1">Gasto Total em Educação</p>
+                <p class="text-3xl font-black text-emerald-700 dark:text-emerald-300 tracking-tighter">{{ number_format($totalGasto, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 rounded-2xl p-6 border border-emerald-200 dark:border-emerald-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="bars-3" class="size-8 text-green-600" />
+                    <span class="text-xs font-black text-green-700 dark:text-green-400 bg-green-200/50 dark:bg-green-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Cursos</span>
+                </div>
+                <p class="text-xs text-green-600 dark:text-green-400 font-bold uppercase tracking-wider mb-1">Programas Ativos</p>
+                <p class="text-3xl font-black text-green-700 dark:text-green-300 tracking-tighter">{{ $expensesAtivas }}</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-emerald-50 to-cyan-50 dark:from-emerald-950/20 dark:to-cyan-950/20 rounded-2xl p-6 border border-emerald-200 dark:border-emerald-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="banknotes" class="size-8 text-cyan-600" />
+                    <span class="text-xs font-black text-cyan-700 dark:text-cyan-400 bg-cyan-200/50 dark:bg-cyan-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Média</span>
+                </div>
+                <p class="text-xs text-cyan-600 dark:text-cyan-400 font-bold uppercase tracking-wider mb-1">Investimento Médio</p>
+                <p class="text-3xl font-black text-cyan-700 dark:text-cyan-300 tracking-tighter">{{ $expensesAtivas > 0 ? number_format($totalGasto / $expensesAtivas, 2, ',', '.') : '0' }}€</p>
+            </div>
+
+        {{-- EMPRÉSTIMOS: Análise de Dívida --}}
+        @elseif($slug === 'emprestimos')
+            @php
+                $totalGasto = $expenses->sum('amount');
+                $numEmprestimos = $expenses->count();
+                $saldoTotalAtual = 0;
+                foreach($expenses as $e) {
+                    $meta = json_decode($e->meta, true);
+                    if(!empty($meta['saldo_atual'])) {
+                        $saldoTotalAtual += $meta['saldo_atual'];
+                    }
+                }
+                $taxaMediaJuros = 0;
+                $countComTaxa = 0;
+                foreach($expenses as $e) {
+                    $meta = json_decode($e->meta, true);
+                    if(!empty($meta['taxa_juros'])) {
+                        $taxaMediaJuros += $meta['taxa_juros'];
+                        $countComTaxa++;
+                    }
+                }
+                $taxaMediaJuros = $countComTaxa > 0 ? $taxaMediaJuros / $countComTaxa : 0;
+            @endphp
+
+            <div class="bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950/20 dark:to-red-950/20 rounded-2xl p-6 border border-rose-200 dark:border-rose-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="banknotes" class="size-8 text-rose-600" />
+                    <span class="text-xs font-black text-rose-700 dark:text-rose-400 bg-rose-200/50 dark:bg-rose-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Dívida</span>
+                </div>
+                <p class="text-xs text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wider mb-1">Saldo Total Atual</p>
+                <p class="text-3xl font-black text-rose-700 dark:text-rose-300 tracking-tighter">{{ number_format($saldoTotalAtual, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-rose-50 to-orange-50 dark:from-rose-950/20 dark:to-orange-950/20 rounded-2xl p-6 border border-rose-200 dark:border-rose-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="hashtag" class="size-8 text-orange-600" />
+                    <span class="text-xs font-black text-orange-700 dark:text-orange-400 bg-orange-200/50 dark:bg-orange-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Juros</span>
+                </div>
+                <p class="text-xs text-orange-600 dark:text-orange-400 font-bold uppercase tracking-wider mb-1">Taxa Média de Juros</p>
+                <p class="text-3xl font-black text-orange-700 dark:text-orange-300 tracking-tighter">{{ number_format($taxaMediaJuros, 2, ',', '.') }}%</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/20 dark:to-pink-950/20 rounded-2xl p-6 border border-rose-200 dark:border-rose-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="bars-3" class="size-8 text-pink-600" />
+                    <span class="text-xs font-black text-pink-700 dark:text-pink-400 bg-pink-200/50 dark:bg-pink-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Contratos</span>
+                </div>
+                <p class="text-xs text-pink-600 dark:text-pink-400 font-bold uppercase tracking-wider mb-1">Empréstimos Ativos</p>
+                <p class="text-3xl font-black text-pink-700 dark:text-pink-300 tracking-tighter">{{ $numEmprestimos }}</p>
+            </div>
+
+        {{-- SEGUROS: Análise de Cobertura --}}
+        @elseif($slug === 'seguros')
+            @php
+                $totalPremios = $expenses->sum('amount');
+                $numSeguros = $expenses->count();
+                $coverturaTotal = 0;
+                foreach($expenses as $e) {
+                    $meta = json_decode($e->meta, true);
+                    if(!empty($meta['cobertura_valor'])) {
+                        $coverturaTotal += $meta['cobertura_valor'];
+                    }
+                }
+                $segurosAtivos = $expenses->filter(fn($e) =>
+                    isset(json_decode($e->meta, true)['estado']) &&
+                    json_decode($e->meta, true)['estado'] === 'Ativa'
+                )->count();
+            @endphp
+
+            <div class="bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-950/20 dark:to-blue-950/20 rounded-2xl p-6 border border-sky-200 dark:border-sky-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="banknotes" class="size-8 text-sky-600" />
+                    <span class="text-xs font-black text-sky-700 dark:text-sky-400 bg-sky-200/50 dark:bg-sky-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Prémios</span>
+                </div>
+                <p class="text-xs text-sky-600 dark:text-sky-400 font-bold uppercase tracking-wider mb-1">Total de Prémios Mensais</p>
+                <p class="text-3xl font-black text-sky-700 dark:text-sky-300 tracking-tighter">{{ number_format($totalPremios, 2, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-sky-50 to-cyan-50 dark:from-sky-950/20 dark:to-cyan-950/20 rounded-2xl p-6 border border-sky-200 dark:border-sky-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="shield-check" class="size-8 text-cyan-600" />
+                    <span class="text-xs font-black text-cyan-700 dark:text-cyan-400 bg-cyan-200/50 dark:bg-cyan-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Cobertura</span>
+                </div>
+                <p class="text-xs text-cyan-600 dark:text-cyan-400 font-bold uppercase tracking-wider mb-1">Valor Total Coberto</p>
+                <p class="text-3xl font-black text-cyan-700 dark:text-cyan-300 tracking-tighter">{{ number_format($coverturaTotal, 0, ',', '.') }}€</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-sky-950/20 dark:to-indigo-950/20 rounded-2xl p-6 border border-sky-200 dark:border-sky-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="check-circle" class="size-8 text-indigo-600" />
+                    <span class="text-xs font-black text-indigo-700 dark:text-indigo-400 bg-indigo-200/50 dark:bg-indigo-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Ativas</span>
+                </div>
+                <p class="text-xs text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider mb-1">Apólices Ativas</p>
+                <p class="text-3xl font-black text-indigo-700 dark:text-indigo-300 tracking-tighter">{{ $segurosAtivos }}</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-sky-50 to-violet-50 dark:from-sky-950/20 dark:to-violet-950/20 rounded-2xl p-6 border border-sky-200 dark:border-sky-800/30 shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <flux:icon name="check" class="size-8 text-violet-600" />
+                    <span class="text-xs font-black text-violet-700 dark:text-violet-400 bg-violet-200/50 dark:bg-violet-950/50 px-3 py-1 rounded-lg uppercase tracking-wide">Total</span>
+                </div>
+                <p class="text-xs text-violet-600 dark:text-violet-400 font-bold uppercase tracking-wider mb-1">Apólices Registadas</p>
+                <p class="text-3xl font-black text-violet-700 dark:text-violet-300 tracking-tighter">{{ $numSeguros }}</p>
+            </div>
+        @endif
+
+    </div>
     <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden">
         <div class="px-8 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/30 dark:bg-zinc-950/20">
             <p class="text-sm font-black dark:text-white uppercase italic tracking-tight">Histórico Detalhado: {{ $title }}</p>
@@ -94,38 +566,237 @@
             <table class="w-full text-left border-collapse">
                 <thead class="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800">
                     <tr class="text-[9px] uppercase text-zinc-400 dark:text-zinc-500 font-black tracking-[0.2em]">
-                        <th class="p-6 w-32">Data</th>
-                        <th class="p-6">Detalhes</th>
-                        <th class="p-6 text-right px-8 w-72">Montante</th>
+                        <th class="p-6 w-28">Data</th>
+                        <th class="p-6">Tipo</th>
+                        <th class="p-6">Detalhes Específicos</th>
+                        <th class="p-6">Observações</th>
+                        <th class="p-6 text-right px-8 w-32">Montante</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/50">
                     @forelse($expenses as $expense)
                     <tr class="hover:bg-zinc-50/50 dark:hover:bg-brand-500/5 transition-all duration-300 group/row">
-                        <td class="p-6 align-top">
-                            <span class="text-2xl font-black dark:text-white leading-none tracking-tighter block">{{ $expense->spent_at->format('d') }}</span>
-                            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-1.5 block">{{ $expense->spent_at->translatedFormat('M, Y') }}</span>
+                        <td class="p-6 align-top whitespace-nowrap">
+                            <span class="text-lg font-black dark:text-white leading-none tracking-tighter block">{{ $expense->spent_at->format('d') }}</span>
+                            <span class="text-[8px] font-black text-zinc-400 uppercase tracking-widest mt-1.5 block">{{ $expense->spent_at->translatedFormat('M') }}</span>
                         </td>
                         <td class="p-6 align-top">
-                            <div class="flex flex-col gap-4">
-                                <span class="text-[10px] w-fit font-black {{ $hubTheme['color'] }} uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-lg">{{ $expense->subcategory }}</span>
-                                @if($expense->description)
-                                <div class="relative pl-6 py-1">
-                                    <div class="absolute left-0 top-0 bottom-0 w-1 {{ str_replace('text','bg',$hubTheme['color']) }}/40 rounded-full"></div>
-                                    <p class="text-base font-medium text-zinc-800 dark:text-zinc-200 italic">"{{ $expense->description }}"</p>
-                                </div>
+                            <span class="text-[9px] w-fit font-black {{ $hubTheme['color'] }} uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-lg inline-block">{{ $expense->subcategory }}</span>
+                        </td>
+                        <td class="p-6 align-top">
+                            <div class="flex flex-col gap-2.5">
+                                @php $meta = is_array($expense->meta) ? $expense->meta : (json_decode($expense->meta, true) ?? []); @endphp
+
+                                {{-- CARRO --}}
+                                @if($slug === 'carro' && !empty($meta))
+                                    @if(!empty($meta['km']))
+                                        <div class="flex items-center gap-2 text-xs">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                            <span class="font-semibold text-zinc-700 dark:text-zinc-300">{{ number_format($meta['km']) }}km</span>
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['urgencia']))
+                                        <div class="text-xs font-semibold {{ $meta['urgencia'] === 'Urgente' ? 'text-red-600 dark:text-red-400' : ($meta['urgencia'] === 'Preventiva' ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400') }}">
+                                            {{ $meta['urgencia'] }}
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['local']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">📍 {{ $meta['local'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['combustivel']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400">⛽ {{ $meta['combustivel'] }}L/100km</div>
+                                    @endif
+                                    @if(!empty($meta['estado']))
+                                        <div class="text-xs font-semibold {{ $meta['estado'] === 'Crítico' ? 'text-red-600 dark:text-red-400' : ($meta['estado'] === 'Bom' ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-600 dark:text-orange-400') }}">
+                                            Estado: {{ $meta['estado'] }}
+                                        </div>
+                                    @endif
+
+                                {{-- CASA --}}
+                                @elseif($slug === 'casa' && !empty($meta))
+                                    @if(!empty($meta['entidade']))
+                                        <div class="flex items-center gap-2 text-xs">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                            <span class="font-semibold text-zinc-700 dark:text-zinc-300">{{ $meta['entidade'] }}</span>
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['piso']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">🏠 {{ $meta['piso'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['valor_anterior']))
+                                        @php $diff = $expense->amount - $meta['valor_anterior']; @endphp
+                                        <div class="text-xs {{ $diff < 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }} font-semibold">
+                                            {{ $diff < 0 ? '↓' : '↑' }} {{ abs($diff) > 0 ? number_format(abs($diff), 2, ',', '.') : '=' }}€ vs mês anterior
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['anomalia']))
+                                        <div class="text-xs text-orange-600 dark:text-orange-400 font-semibold">⚠️ Anomalia reportada</div>
+                                    @endif
+                                    @if(!empty($meta['referencia']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400">📋 {{ $meta['referencia'] }}</div>
+                                    @endif
+
+                                {{-- ALIMENTAÇÃO --}}
+                                @elseif($slug === 'alimentacao' && !empty($meta))
+                                    @if(!empty($meta['pessoas']))
+                                        <div class="flex items-center gap-2 text-xs">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                            @php $custoPessoa = $meta['pessoas'] > 0 ? $expense->amount / $meta['pessoas'] : $expense->amount; @endphp
+                                            <span class="font-semibold text-zinc-700 dark:text-zinc-300">{{ number_format($custoPessoa, 2, ',', '.') }}€/pessoa ({{ $meta['pessoas'] }})</span>
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['estabelecimento']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">🏪 {{ $meta['estabelecimento'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['dieta']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400">🥗 {{ $meta['dieta'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['frequencia']))
+                                        <div class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{{ $meta['frequencia'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['orcamento_pessoa']))
+                                        @php $estaNoOrcamento = $meta['pessoas'] > 0 && ($expense->amount / $meta['pessoas']) <= $meta['orcamento_pessoa']; @endphp
+                                        <div class="text-xs {{ $estaNoOrcamento ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-600 dark:text-orange-400' }} font-semibold">
+                                            {{ $estaNoOrcamento ? '✓ Dentro do orçamento' : '⚠️ Acima do orçamento' }} ({{ number_format($meta['orcamento_pessoa'], 2, ',', '.') }}€)
+                                        </div>
+                                    @endif
+
+                                {{-- SAÚDE --}}
+                                @elseif($slug === 'saude' && !empty($meta))
+                                    @if(!empty($meta['profissional']))
+                                        <div class="flex items-center gap-2 text-xs">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                            <span class="font-semibold text-zinc-700 dark:text-zinc-300">👨‍⚕️ {{ $meta['profissional'] }}</span>
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['especialidade']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400">🩺 {{ $meta['especialidade'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['cobertura_seguro']))
+                                        <div class="text-xs font-semibold {{ strpos($meta['cobertura_seguro'], 'Sim') !== false ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-600 dark:text-orange-400' }}">
+                                            🛡️ {{ $meta['cobertura_seguro'] }}
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['urgencia']))
+                                        <div class="text-xs font-semibold {{ $meta['urgencia'] === 'Emergência' ? 'text-red-600 dark:text-red-400' : ($meta['urgencia'] === 'Urgente' ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400') }}">
+                                            {{ $meta['urgencia'] }}
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['prescricao']))
+                                        <div class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">✓ Com prescrição</div>
+                                    @endif
+
+                                {{-- TECNOLOGIA --}}
+                                @elseif($slug === 'tecnologia' && !empty($meta))
+                                    @if(!empty($meta['fornecedor']))
+                                        <div class="flex items-center gap-2 text-xs">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                            <span class="font-semibold text-zinc-700 dark:text-zinc-300">💼 {{ $meta['fornecedor'] }}</span>
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['produtoServico']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">🔧 {{ $meta['produtoServico'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['status']))
+                                        <div class="text-xs font-semibold {{ $meta['status'] === 'Ativo' ? 'text-emerald-600 dark:text-emerald-400' : ($meta['status'] === 'Cancelado' ? 'text-red-600 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-400') }}">
+                                            Status: {{ $meta['status'] }}
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['duracao']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400">⏱️ {{ $meta['duracao'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['roi_esperado']))
+                                        <div class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">📈 ROI: {{ $meta['roi_esperado'] }}</div>
+                                    @endif
+
+                                {{-- EDUCAÇÃO --}}
+                                @elseif($slug === 'educacao' && !empty($meta))
+                                    @if(!empty($meta['instituicao']))
+                                        <div class="flex items-center gap-2 text-xs">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            <span class="font-semibold text-zinc-700 dark:text-zinc-300">🎓 {{ $meta['instituicao'] }}</span>
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['curso']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">📚 {{ $meta['curso'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['nivel']))
+                                        <div class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">🏆 {{ $meta['nivel'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['estado_pagamento']))
+                                        <div class="text-xs font-semibold {{ $meta['estado_pagamento'] === 'Pago' ? 'text-emerald-600 dark:text-emerald-400' : ($meta['estado_pagamento'] === 'Pendente' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400') }}">
+                                            💳 {{ $meta['estado_pagamento'] }}
+                                        </div>
+                                    @endif
+
+                                {{-- EMPRÉSTIMOS --}}
+                                @elseif($slug === 'emprestimos' && !empty($meta))
+                                    @if(!empty($meta['credor']))
+                                        <div class="flex items-center gap-2 text-xs">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            <span class="font-semibold text-zinc-700 dark:text-zinc-300">🏦 {{ $meta['credor'] }}</span>
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['saldo_atual']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400">Saldo: {{ number_format($meta['saldo_atual'], 2, ',', '.') }}€</div>
+                                    @endif
+                                    @if(!empty($meta['taxa_juros']))
+                                        <div class="text-xs font-semibold text-orange-600 dark:text-orange-400">📊 Taxa: {{ number_format($meta['taxa_juros'], 2, ',', '.') }}%</div>
+                                    @endif
+                                    @if(!empty($meta['data_termino']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400">📅 Término: {{ $meta['data_termino'] }}</div>
+                                    @endif
+
+                                {{-- SEGUROS --}}
+                                @elseif($slug === 'seguros' && !empty($meta))
+                                    @if(!empty($meta['tipo_seguro']))
+                                        <div class="flex items-center gap-2 text-xs">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                                            <span class="font-semibold text-zinc-700 dark:text-zinc-300">🛡️ {{ $meta['tipo_seguro'] }}</span>
+                                        </div>
+                                    @endif
+                                    @if(!empty($meta['seguradora']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">🏢 {{ $meta['seguradora'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['numero_apolice']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400">📋 {{ $meta['numero_apolice'] }}</div>
+                                    @endif
+                                    @if(!empty($meta['cobertura_valor']))
+                                        <div class="text-xs font-semibold text-sky-600 dark:text-sky-400">💰 Cobertura: {{ number_format($meta['cobertura_valor'], 0, ',', '.') }}€</div>
+                                    @endif
+                                    @if(!empty($meta['estado']))
+                                        <div class="text-xs font-semibold {{ $meta['estado'] === 'Ativa' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
+                                            Status: {{ $meta['estado'] }}
+                                        </div>
+                                    @endif
+                                @else
+                                    @if(!empty($meta))
+                                        <div class="text-xs text-zinc-500 italic">{{ count($meta) }} campo(s) registado(s)</div>
+                                    @else
+                                        <div class="text-xs text-zinc-400 italic">—</div>
+                                    @endif
                                 @endif
                             </div>
                         </td>
-                        <td class="p-6 text-right px-8 align-middle">
-                            <span class="text-xl font-black text-red-500 tracking-wide italic whitespace-nowrap block">-{{ number_format($expense->amount,2,',',' ') }}€</span>
-                            <button wire:click="deleteExpense({{ $expense->id }})" wire:confirm="Tem a certeza?" class="mt-4 p-2 text-zinc-300 hover:text-red-500 opacity-0 group-hover/row:opacity-100 transition-all inline-block">
+                        <td class="p-6 align-top">
+                            @if($expense->description)
+                            <div class="relative pl-4 py-1">
+                                <div class="absolute left-0 top-0 bottom-0 w-0.5 {{ str_replace('text','bg',$hubTheme['color']) }}/40 rounded-full"></div>
+                                <p class="text-xs font-medium text-zinc-700 dark:text-zinc-300 italic line-clamp-2">"{{ $expense->description }}"</p>
+                            </div>
+                            @else
+                            <span class="text-xs text-zinc-400">—</span>
+                            @endif
+                        </td>
+                        <td class="p-6 text-right px-8 align-middle whitespace-nowrap">
+                            <span class="text-sm font-black text-red-500 tracking-wide italic block">-{{ number_format($expense->amount,2,',',' ') }}€</span>
+                            <button wire:click="deleteExpense({{ $expense->id }})" wire:confirm="Tem a certeza?" class="mt-3 p-1.5 text-zinc-300 hover:text-red-500 opacity-0 group-hover/row:opacity-100 transition-all inline-block">
                                 <flux:icon name="trash" variant="mini" class="size-4" />
                             </button>
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="3" class="p-32 text-center text-zinc-400 italic">Sem movimentos registados neste Hub.</td></tr>
+                    <tr><td colspan="5" class="p-32 text-center text-zinc-400 italic">Sem movimentos registados neste Hub.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -135,7 +806,7 @@
     {{-- ══════════════════════════════════════════════════════════════ --}}
     {{-- MODAL 1 — SCANNER IA                                          --}}
     {{-- ══════════════════════════════════════════════════════════════ --}}
-    <flux:modal name="ai-scanner-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">
+    <flux:modal name="ai-scanner-modal" position="center">
         <div class="relative p-10 bg-zinc-950 rounded-[3rem] border border-white/10 shadow-2xl space-y-8 overflow-hidden">
 
             {{-- Loader --}}
@@ -259,7 +930,7 @@
     {{-- ══════════════════════════════════════════════════════════════ --}}
     {{-- MODAL 2 — REVISÃO IA                                          --}}
     {{-- ══════════════════════════════════════════════════════════════ --}}
-    <flux:modal name="ai-review-modal" position="center" class="md:w-[680px] !p-0 overflow-visible">
+    <flux:modal name="ai-review-modal" position="center">
         <div class="relative bg-zinc-950 rounded-[2.5rem] shadow-2xl border border-white/10 overflow-hidden">
             <div class="absolute -top-32 -right-32 size-96 bg-brand-500/10 blur-[120px] rounded-full pointer-events-none"></div>
             <div class="absolute -bottom-32 -left-32 size-80 bg-emerald-500/5 blur-[100px] rounded-full pointer-events-none"></div>
@@ -353,7 +1024,7 @@
                     @if(!empty($scannedData['invoice_number']))
                     <div class="bg-white/3 border border-white/8 rounded-2xl p-5 flex items-center gap-4">
                         <div class="p-2.5 rounded-xl bg-zinc-800 shrink-0">
-                            <flux:icon name="document-text" class="size-5 text-zinc-400" />
+                            <flux:icon name="bars-3" class="size-5 text-zinc-400" />
                         </div>
                         <div>
                             <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-0.5">Nº Fatura</p>
@@ -437,7 +1108,7 @@
     {{-- ══════════════════════════════════════════════════════════════ --}}
     {{-- MODAL 3 — REGISTO MANUAL                                      --}}
     {{-- ══════════════════════════════════════════════════════════════ --}}
-    <flux:modal name="add-expense-modal" position="center" class="md:w-[600px] !p-0 overflow-visible">
+    <flux:modal name="add-expense-modal" position="center">
         <div class="relative bg-white dark:bg-zinc-950 rounded-[2.5rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
             <div class="absolute -top-24 -right-24 size-72 bg-brand-500/10 blur-[120px] rounded-full pointer-events-none"></div>
 
@@ -487,23 +1158,61 @@
                     </flux:select>
                 </div>
 
-                <div class="p-6 rounded-[2rem] bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 space-y-4">
-                    <div class="flex items-center gap-2">
-                        <div class="size-2 rounded-full bg-brand-500 animate-pulse"></div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 italic">Detalhes Adicionais</p>
-                    </div>
-                    @if($slug == 'carro')
-                        <div class="grid grid-cols-2 gap-4">
-                            <flux:input wire:model="meta.km" label="Quilometragem" type="number" placeholder="Ex: 120000" class="rounded-xl" />
-                            <flux:input wire:model="meta.local" label="Localização" placeholder="Ex: Galp" class="rounded-xl" />
+                <div class="p-6 rounded-[2rem] bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 space-y-5">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 rounded-lg {{ str_replace('text','bg',$hubTheme['color']) }}/10">
+                            <flux:icon name="{{ $categoryFields[$slug]['icon'] ?? 'tag' }}" class="size-4 {{ $hubTheme['color'] }}" />
                         </div>
-                    @elseif($slug == 'casa' || $slug == 'seguros' || $slug == 'emprestimos')
-                        <flux:input wire:model="meta.entidade" label="Entidade" icon="building-library" class="rounded-xl" />
-                    @elseif($slug == 'alimentacao')
-                        <flux:input wire:model="meta.pessoas" type="number" label="Nº de Pessoas" icon="users" class="rounded-xl" />
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-400 italic">Informações Específicas</p>
+                            <p class="text-xs text-zinc-500 mt-0.5">Personalize de acordo com a categoria</p>
+                        </div>
+                    </div>
+
+                    @if(isset($categoryFields[$slug]))
+                        <div class="space-y-3 pt-2">
+                            @foreach($categoryFields[$slug]['fields'] as $field)
+                                @if($field['type'] === 'select')
+                                    <div class="space-y-1.5">
+                                        <flux:label class="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                                            {{ $field['label'] }}
+                                        </flux:label>
+                                        <flux:select wire:model="meta.{{ $field['name'] }}"
+                                            class="h-11 !rounded-xl font-semibold text-sm border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+                                            <option value="">Selecione...</option>
+                                            @foreach($field['options'] as $option)
+                                                <option value="{{ $option }}">{{ $option }}</option>
+                                            @endforeach
+                                        </flux:select>
+                                    </div>
+                                @elseif($field['type'] === 'number')
+                                    <flux:input wire:model="meta.{{ $field['name'] }}"
+                                        type="number"
+                                        label="{{ $field['label'] }}"
+                                        placeholder="{{ $field['placeholder'] ?? '' }}"
+                                        @if(isset($field['icon'])) icon="{{ $field['icon'] }}" @endif
+                                        class="rounded-xl" />
+                                @elseif($field['type'] === 'checkbox')
+                                    <label class="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900/80 transition-colors">
+                                        <input type="checkbox" wire:model="meta.{{ $field['name'] }}" class="w-4 h-4 rounded cursor-pointer">
+                                        <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{{ $field['label_alt'] ?? $field['label'] }}</span>
+                                    </label>
+                                @else
+                                    <flux:input wire:model="meta.{{ $field['name'] }}"
+                                        type="text"
+                                        label="{{ $field['label'] }}"
+                                        placeholder="{{ $field['placeholder'] ?? '' }}"
+                                        @if(isset($field['icon'])) icon="{{ $field['icon'] }}" @endif
+                                        class="rounded-xl" />
+                                @endif
+                            @endforeach
+                        </div>
                     @endif
-                    <flux:textarea wire:model="description" rows="2" placeholder="Nome da loja ou observação..."
-                        class="!rounded-2xl !bg-white dark:!bg-zinc-950 border-zinc-200 dark:border-zinc-800 font-medium italic" />
+
+                    <div class="pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                        <flux:textarea wire:model="description" rows="2" placeholder="Observações adicionais (ex: nome da loja, notas importantes)..."
+                            class="!rounded-xl !bg-white dark:!bg-zinc-950 border-zinc-200 dark:border-zinc-800 font-medium italic text-sm" />
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-4 pt-2">

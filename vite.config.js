@@ -21,10 +21,9 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
-        // PERMITE LIGAÇÕES EXTERNAS (TELEMÓVEL)
         host: '0.0.0.0',
         hmr: {
-            host: '192.168.1.73', // O teu IP do computador
+            host: 'localhost', // <-- Isto faz o PC funcionar SEMPRE, independente do IP
         },
         cors: true,
         watch: {

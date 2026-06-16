@@ -6,6 +6,10 @@
 
     {{-- LIMITADOR DE LARGURA (MAX-W-SM) --}}
     <div class="mx-auto max-w-[360px] relative z-10 space-y-6">
+{{-- BARRA DE TOPO COM BOTÃO VOLTAR --}}
+        <div class="flex justify-start">
+            <flux:button href="/" variant="ghost" icon="arrow-left" size="sm" wire:navigate class="rounded-xl text-zinc-400 hover:text-zinc-800 dark:hover:text-white" />
+        </div>
 
         {{-- HEADER COMPACTO --}}
         <div class="text-center space-y-4">

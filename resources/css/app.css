@@ -186,29 +186,49 @@ select:focus[data-flux-control] {
 }
 
 @layer base {
-    /* Impede o "puxar para atualizar" e o efeito elástico no topo */
-    html, body {
-        overscroll-behavior-y: contain;
-        position: fixed;
-        overflow: hidden;
+    /* 1. Bloqueia o scroll no Body para o ecrã não fugir */
+    body.layout-fixed {
+        height: 100vh !important;
+        overflow: hidden !important;
+    }
+
+    /* 2. Sidebar: Sempre "pregada" à esquerda */
+    body.layout-fixed [data-flux-sidebar] {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 16rem !important; /* Largura padrão da sidebar (64) */
+        height: 100vh !important;
+        z-index: 50;
+        background-color: white;
+    }
+    .dark body.layout-fixed [data-flux-sidebar] { background-color: #09090b; }
+
+    /* 3. Header: Fixo no topo, mas empurrado para a direita no PC */
+    body.layout-fixed [data-flux-header] {
+        position: fixed !important;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 40;
         width: 100%;
-        height: 100%;
+    }
+    [x-cloak] { display: none !important; }
+
+    /* No PC (ecrãs grandes), o Header e o Main têm de dar espaço à Sidebar */
+    @media (min-width: 1024px) {
+        body.layout-fixed [data-flux-header],
+        body.layout-fixed [data-flux-main] {
+            padding-left: 16rem !important; /* Afasta o conteúdo 64px para a direita */
+        }
     }
 
-    /* Permite scroll apenas no conteúdo principal */
-    .app-shell {
-        height: 100%;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* Remove o flash azul ao clicar em botões no mobile */
-    * {
-        -webkit-tap-highlight-color: transparent;
-    }
-
-    /* Impede seleção de texto em elementos de navegação */
-    nav, button, .flux-sidebar {
-        user-select: none;
+    /* 4. O Main: Única área que faz scroll */
+    body.layout-fixed [data-flux-main] {
+        height: 100vh !important;
+        overflow-y: auto !important;
+        padding-top: 64px; /* Espaço para o Header não tapar o conteúdo */
+        display: block;
     }
 }

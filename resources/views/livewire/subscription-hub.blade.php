@@ -21,11 +21,13 @@
             </div>
 
             <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-[1.8rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                <flux:modal.trigger name="add-sub-modal">
-                    <flux:button variant="primary" icon="plus" class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20">
-                        Nova Assinatura
-                    </flux:button>
-                </flux:modal.trigger>
+                <flux:button
+                    @click="$dispatch('modal-show-add-sub')"
+                    variant="primary"
+                    icon="plus"
+                    class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20">
+                    Nova Assinatura
+                </flux:button>
             </div>
         </header>
     </div>
@@ -125,92 +127,236 @@
             @endif
         </div>
     </div>
-    {{-- 4. MODAL: CONFIGURAR NOVA ASSINATURA (DESIGN SaaS PRO) --}}
-    <flux:modal name="add-sub-modal" position="center" class="md:w-[550px] !p-0 overflow-visible">
-        <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border border-zinc-200 dark:border-zinc-800">
+    {{-- 4. MODAL: CONFIGURAR NOVA ASSINATURA --}}
+    <div
+        x-data="{
+            open: false,
+            show() {
+                this.open = true;
+                document.documentElement.classList.add('overflow-hidden');
+            },
+            close() {
+                this.open = false;
+                document.documentElement.classList.remove('overflow-hidden');
+            }
+        }"
+        x-on:modal-show-add-sub.window="show()"
+        x-on:modal-close-add-sub.window="close()"
+        x-on:keydown.escape.window="close()">
 
-            <div class="text-center space-y-2">
-                <div class="inline-flex p-3 bg-brand-500/10 rounded-2xl mb-2 text-brand-600">
-                    <flux:icon name="plus" class="size-6" />
-                </div>
-                <flux:heading size="xl" class="font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white leading-none">Configurar Assinatura</flux:heading>
-                <p class="text-xs text-zinc-400 font-medium italic">Defina um custo fixo recorrente para projeção de cashflow.</p>
-            </div>
+        {{-- Backdrop --}}
+        <div
+            x-show="open"
+            x-cloak
+            x-transition:enter="transition-opacity ease-out duration-75"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-in duration-75"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            @click="close()"
+            class="fixed inset-0 z-50 bg-zinc-950/55 backdrop-blur-[2px] will-change-opacity">
+        </div>
 
-            <div class="space-y-6">
-                {{-- Nome da Assinatura --}}
-                <div class="space-y-2">
-                    <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest px-1">Identificação do Gasto</flux:label>
-                    <flux:input
-                        wire:model="name"
-                        placeholder="Ex: Netflix, Renda Escritório, Ginásio..."
-                        class="font-bold !bg-zinc-50 dark:!bg-zinc-900 !border-none rounded-2xl h-14 shadow-inner"
-                    />
-                </div>
+        {{-- Wrapper do modal --}}
+        <div
+            x-show="open"
+            x-cloak
+            @click.self="close()"
+            class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
 
-                <div class="grid grid-cols-2 gap-6">
-                    {{-- Valor Mensal --}}
-                    <div class="space-y-2">
-                        <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest px-1">Valor Mensal (€)</flux:label>
-                        <flux:input
-                            wire:model="amount"
-                            type="number"
-                            step="0.01"
-                            placeholder="0,00"
-                            class="font-black !bg-zinc-50 dark:!bg-zinc-900 !border-none rounded-2xl h-14 shadow-inner text-brand-600"
-                        />
+            {{-- Caixa do Modal --}}
+            <div
+                x-show="open"
+                x-transition:enter="transition ease-out duration-100 transform-gpu"
+                x-transition:enter-start="opacity-0 scale-[0.98] translate-y-1"
+                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-75 transform-gpu"
+                x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                x-transition:leave-end="opacity-0 scale-[0.98] translate-y-1"
+                class="relative z-10 w-full max-w-xl bg-white dark:bg-zinc-950 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transform-gpu will-change-transform"
+                @click.stop>
+
+                <form wire:submit.prevent="save" class="flex max-h-[86vh] flex-col">
+                    {{-- Cabeçalho --}}
+                    <div class="shrink-0 p-5 sm:p-6 pb-4 flex items-center gap-4 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+                        <div class="p-3 bg-brand-600 rounded-2xl text-white shadow-md shadow-brand-500/20">
+                            <flux:icon name="credit-card" class="size-5" />
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <flux:heading size="lg" class="font-black uppercase italic tracking-tight leading-none text-zinc-900 dark:text-white">
+                                Nova Assinatura
+                            </flux:heading>
+                            <p class="text-[10px] text-zinc-500 font-black uppercase tracking-widest mt-1.5 italic">
+                                Controlo de custo recorrente
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            @click="close()"
+                            class="rounded-full p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors duration-100">
+                            <flux:icon name="x-mark" class="size-5" />
+                        </button>
                     </div>
-                    {{-- Dia de Cobrança --}}
-                    <div class="space-y-2">
-                        <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest px-1">Dia de Débito</flux:label>
+
+                    {{-- Corpo do Formulário --}}
+                    <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-6 space-y-5">
+                        {{-- Identificação --}}
                         <flux:input
-                            wire:model="billing_day"
-                            type="number"
-                            min="1"
-                            max="31"
-                            placeholder="DD"
-                            class="font-black !bg-zinc-50 dark:!bg-zinc-900 !border-none rounded-2xl h-14 shadow-inner"
-                        />
+                            wire:model.defer="name"
+                            label="NOME DA ASSINATURA"
+                            placeholder="Ex: Netflix, Spotify, Renda, Ginásio..."
+                            class="font-bold !bg-zinc-50 dark:!bg-zinc-900 rounded-2xl h-14 border-none shadow-inner" />
+
+                        {{-- Valor + data --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <flux:input
+                                wire:model.defer="amount"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                label="VALOR"
+                                placeholder="12.99"
+                                class="font-black !bg-zinc-50 dark:!bg-zinc-900 rounded-2xl h-14 border-none shadow-inner text-brand-600" />
+
+                            <flux:input
+                                wire:model.defer="billing_day"
+                                type="number"
+                                min="1"
+                                max="31"
+                                label="DIA DE DÉBITO"
+                                placeholder="Ex: 15"
+                                class="font-black !bg-zinc-50 dark:!bg-zinc-900 rounded-2xl h-14 border-none shadow-inner" />
+                        </div>
+
+                        {{-- Categoria + ciclo --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <flux:select
+                                wire:model.defer="category_id"
+                                label="CATEGORIA"
+                                class="font-bold !bg-zinc-50 dark:!bg-zinc-900 rounded-2xl h-14 border-none shadow-inner">
+                                <option value="">Selecionar...</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                @endforeach
+                            </flux:select>
+
+                            <flux:select
+                                wire:model.defer="billing_cycle"
+                                label="CICLO"
+                                class="font-bold !bg-zinc-50 dark:!bg-zinc-900 rounded-2xl h-14 border-none shadow-inner">
+                                <option value="monthly">Mensal</option>
+                                <option value="quarterly">Trimestral</option>
+                                <option value="semiannual">Semestral</option>
+                                <option value="annual">Anual</option>
+                            </flux:select>
+                        </div>
+
+                        {{-- Método + estado --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <flux:select
+                                wire:model.defer="payment_method"
+                                label="PAGAMENTO"
+                                class="font-bold !bg-zinc-50 dark:!bg-zinc-900 rounded-2xl h-14 border-none shadow-inner">
+                                <option value="">Selecionar...</option>
+                                <option value="card">Cartão</option>
+                                <option value="direct_debit">Débito direto</option>
+                                <option value="bank_transfer">Transferência</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="cash">Numerário</option>
+                            </flux:select>
+
+                            <flux:select
+                                wire:model.defer="status"
+                                label="ESTADO"
+                                class="font-bold !bg-zinc-50 dark:!bg-zinc-900 rounded-2xl h-14 border-none shadow-inner">
+                                <option value="active">Ativa</option>
+                                <option value="paused">Pausada</option>
+                                <option value="cancelled">Cancelada</option>
+                            </flux:select>
+                        </div>
+
+                        {{-- Datas importantes --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <flux:input
+                                wire:model.defer="started_at"
+                                type="date"
+                                label="INÍCIO"
+                                class="font-bold !bg-zinc-50 dark:!bg-zinc-900 rounded-2xl h-14 border-none shadow-inner" />
+
+                            <flux:input
+                                wire:model.defer="renewal_date"
+                                type="date"
+                                label="RENOVAÇÃO"
+                                class="font-bold !bg-zinc-50 dark:!bg-zinc-900 rounded-2xl h-14 border-none shadow-inner" />
+                        </div>
+
+                        {{-- Notas --}}
+                        <flux:textarea
+                            wire:model.defer="notes"
+                            label="NOTAS"
+                            placeholder="Ex: plano familiar, contrato anual, promoção termina em breve..."
+                            rows="3"
+                            class="font-bold !bg-zinc-50 dark:!bg-zinc-900 rounded-2xl border-none shadow-inner" />
+
+                        {{-- Alertas --}}
+                        <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-4 space-y-3">
+                            <div class="flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                                        Lembrete de cobrança
+                                    </p>
+                                    <p class="text-xs font-bold text-zinc-400 mt-1">
+                                        Avisar antes da renovação ou débito.
+                                    </p>
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    wire:model.defer="notify_before_billing"
+                                    class="rounded border-zinc-300 text-brand-600 focus:ring-brand-600">
+                            </div>
+
+                            <flux:input
+                                wire:model.defer="notify_days_before"
+                                type="number"
+                                min="1"
+                                max="30"
+                                label="DIAS ANTES"
+                                placeholder="3"
+                                class="font-black !bg-white dark:!bg-zinc-950 rounded-2xl h-12 border-none shadow-inner" />
+                        </div>
                     </div>
-                </div>
 
-                {{-- Categoria --}}
-                <div class="space-y-2">
-                    <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest px-1">Categoria de Custo</flux:label>
-                    <flux:select wire:model="category_id" class="font-bold !bg-zinc-50 dark:!bg-zinc-900 !border-none rounded-2xl h-14 shadow-inner">
-                        <option value="">Selecione o centro de custo...</option>
-                        @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                        @endforeach
-                    </flux:select>
-                </div>
-            </div>
+                    {{-- Rodapé / Acções --}}
+                    <div class="shrink-0 p-5 sm:p-6 pt-4 flex gap-3 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+                        <button
+                            type="button"
+                            @click="close()"
+                            class="flex-1 uppercase font-black text-[10px] h-12 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                            Cancelar
+                        </button>
 
-            {{-- Acções --}}
-            <div class="flex gap-4 pt-4">
-                <flux:button
-                    x-on:click="$dispatch('modal-close', { name: 'add-sub-modal' })"
-                    variant="ghost"
-                    class="flex-1 font-black uppercase text-[10px] text-zinc-400 hover:text-zinc-600 h-14 rounded-2xl"
-                >
-                    Descartar
-                </flux:button>
-
-                <flux:button
-                    wire:click="save"
-                    variant="primary"
-                    class="flex-[2] font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 h-14 rounded-2xl bg-brand-600 border-none text-white"
-                >
-                    Ativar Assinatura
-                </flux:button>
+                        <button
+                            type="submit"
+                            wire:loading.attr="disabled"
+                            wire:target="save"
+                            class="flex-[2] bg-brand-600 h-12 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 border-none text-white hover:bg-brand-500 active:scale-95 transition-all">
+                            <span wire:loading.remove wire:target="save">Ativar Assinatura</span>
+                            <span wire:loading wire:target="save">A guardar...</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-    </flux:modal>
+    </div>
 
-    {{-- RODAPÉ DE PÁGINA --}}
-    <footer class="pt-20 pb-6 text-center border-t border-zinc-100 dark:border-zinc-800 mt-20 opacity-60">
+    {{-- 5. RODAPÉ DE PÁGINA --}}
+    <footer class="pt-20 pb-10 text-center border-t border-zinc-100 dark:border-zinc-800 mt-20 opacity-60">
         <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">
-            © {{ date('Y') }} {{ config('app.name') }} · Sistema de Monitorização de Recorrência
+            © {{ date('Y') }} {{ config('app.name') }} · Sistema de Monitorização
         </p>
     </footer>
-</div> {{-- FECHO DA DIV RAIZ --}}
+</div> {{-- FIM DA DIV RAIZ PRINCIPAL --}}

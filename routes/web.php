@@ -87,7 +87,7 @@ Route::post('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionContro
         Route::get('/contas', BankAccountHub::class)->name('hub.business.accounts');
         Route::get('/calendario-empresa', CompanyCalendar::class)->name('hub.business.calendar');
         Route::get('/ferias', AbsenceHub::class)->name('hub.business.absences');
-        Route::get('/suporte', SupportHub::class)->name('hub.business.support');
+
     });
 
    // Rota principal do Perfil

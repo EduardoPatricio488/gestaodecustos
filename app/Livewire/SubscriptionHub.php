@@ -11,6 +11,10 @@ use Livewire\Attributes\Layout;
 class SubscriptionHub extends Component
 {
     public $name, $amount, $category_id, $billing_day;
+    public $billing_cycle = 'monthly';
+    public $payment_method, $status = 'active', $started_at, $renewal_date, $notes;
+    public bool $notify_before_billing = false;
+    public $notify_days_before;
     public $showModal = false;
 
     public function save()
@@ -20,6 +24,8 @@ class SubscriptionHub extends Component
             'amount' => 'required|numeric',
             'category_id' => 'required',
             'billing_day' => 'required|integer|between:1,31',
+            'billing_cycle' => 'nullable|in:monthly,quarterly,semiannual,annual',
+            'status' => 'nullable|in:active,paused,cancelled',
         ]);
 
         Subscription::create([
@@ -28,10 +34,26 @@ class SubscriptionHub extends Component
             'name' => $this->name,
             'amount' => $this->amount,
             'billing_day' => $this->billing_day,
+            'cycle' => $this->billing_cycle ?: 'monthly',
+            'is_active' => ($this->status ?: 'active') === 'active',
         ]);
 
-        $this->reset(['name', 'amount', 'category_id', 'billing_day']);
-        $this->dispatch('modal-close', name: 'add-sub-modal');
+        $this->reset([
+            'name',
+            'amount',
+            'category_id',
+            'billing_day',
+            'payment_method',
+            'started_at',
+            'renewal_date',
+            'notes',
+            'notify_days_before',
+        ]);
+
+        $this->billing_cycle = 'monthly';
+        $this->status = 'active';
+        $this->notify_before_billing = false;
+        $this->dispatch('modal-close-add-sub');
     }
 
     public function delete($id)

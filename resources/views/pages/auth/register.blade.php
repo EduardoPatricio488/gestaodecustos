@@ -89,7 +89,7 @@
             {{-- BOTÃO DE REGISTO COMPACTO --}}
             <div class="pt-3">
                 <flux:button variant="primary" type="submit" class="w-full h-11 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 hover:bg-brand-500 transition-all hover:scale-[1.01] active:scale-95 text-xs">
-                    {{ __('Ativar Minha Conta') }}
+                    {{ __('Ativar a Minha Conta') }}
                 </flux:button>
             </div>
         </form>

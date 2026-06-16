@@ -160,9 +160,10 @@ class CategoryHub extends Component
         ]);
 
         $category = Category::firstOrCreate([
-            'name'         => $this->dbName,
-            'workspace_id' => auth()->user()->current_workspace_id,
-        ]);
+    'name'         => $this->dbName,
+    'workspace_id' => auth()->user()->current_workspace_id,
+    'user_id'      => auth()->id(), // ADICIONA ESTA LINHA
+]);
 
         Expense::create([
             'user_id'      => auth()->id(),
