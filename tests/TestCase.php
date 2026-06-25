@@ -3,14 +3,21 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Laravel\Fortify\Features;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 abstract class TestCase extends BaseTestCase
 {
-    protected function skipUnlessFortifyHas(string $feature, ?string $message = null): void
+    use CreatesApplication, RefreshDatabase; // RefreshDatabase limpa a BD em cada teste
+
+    protected function setUp(): void
     {
-        if (! Features::enabled($feature)) {
-            $this->markTestSkipped($message ?? "Fortify feature [{$feature}] is not enabled.");
-        }
+        parent::setUp();
+
+        // Ignora os middlewares que dependem de dados na BD
+        $this->withoutMiddleware([
+            \App\Http\Middleware\CheckMaintenanceMode::class,
+            \App\Http\Middleware\CheckRegistrationStatus::class,
+            \App\Http\Middleware\AdminMiddleware::class,
+        ]);
     }
 }
