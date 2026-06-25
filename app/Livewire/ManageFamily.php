@@ -14,7 +14,7 @@ class ManageFamily extends Component
 {
     public $workspaceName;
     public $inviteCode;
-
+public $inviteCodeInput = '';
     public function mount()
     {
         $workspace = auth()->user()->currentWorkspace;
@@ -53,6 +53,30 @@ class ManageFamily extends Component
         auth()->user()->currentWorkspace->users()->detach($userId);
         $this->dispatch('toast', text: 'Membro removido.');
     }
+    public function generateInviteCode()
+{
+    $workspace = auth()->user()->currentWorkspace;
+    if ($workspace) {
+        $workspace->update(['invite_code' => strtoupper(\Illuminate\Support\Str::random(8))]);
+        $this->inviteCode = $workspace->invite_code;
+        $this->dispatch('toast', text: 'Novo código de convite gerado!');
+    }
+}
+
+public function joinWorkspace()
+{
+    $this->validate(['inviteCodeInput' => 'required|string|exists:workspaces,invite_code']);
+    $workspace = Workspace::where('invite_code', $this->inviteCodeInput)->first();
+
+    if ($workspace->users()->where('user_id', auth()->id())->exists()) {
+        $this->dispatch('toast', variant: 'error', text: 'Já fazes parte desta conta.');
+        return;
+    }
+
+    auth()->user()->workspaces()->attach($workspace->id, ['role' => 'member']);
+    auth()->user()->update(['current_workspace_id' => $workspace->id]);
+    return redirect()->route('dashboard');
+}
 
     public function render()
     {

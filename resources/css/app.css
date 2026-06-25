@@ -40,6 +40,41 @@
     --color-accent-foreground: var(--color-white);
 }
 
+/* Performance global: menos pintura cara e navegação mais fluida. */
+[data-flux-main] {
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    min-width: 0;
+}
+
+.glass-card,
+.stat-card {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+.transition-all,
+.transition-transform,
+.transition-colors {
+    transition-duration: 150ms;
+}
+
+.animate-ping,
+.animate-pulse {
+    animation-duration: 2.4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 1ms !important;
+    }
+}
+
 @layer theme {
     .dark {
         --color-accent: var(--color-brand-400);
@@ -131,6 +166,12 @@ flux-sidebar, nav, header {
     -webkit-user-select: none;
 }
 
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 @layer components {
     .app-shell {
         @apply relative min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100;
@@ -168,6 +209,129 @@ flux-sidebar, nav, header {
 
     .category-pill {
         @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+
+    .mobile-sidebar-panel {
+        @apply transition-transform duration-200;
+    }
+
+    @media (max-width: 1023px) {
+        .mobile-sidebar-panel {
+            transform: translateX(-100%);
+        }
+
+        .mobile-sidebar-panel[data-mobile-sidebar-open] {
+            transform: translateX(0);
+        }
+    }
+}
+
+@layer utilities {
+    .break-anywhere {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+}
+
+@media (max-width: 640px) {
+    [data-flux-main] {
+        padding-top: 58px !important;
+    }
+
+    [data-flux-main] > div {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 0.875rem !important;
+        padding-right: 0.875rem !important;
+        padding-top: 1.25rem !important;
+    }
+
+    [data-flux-main] :where(h1, h2, h3, p, span, a, button, label, input, textarea, select) {
+        min-width: 0;
+    }
+
+    [data-flux-main] :where(h1, h2, h3, p, span, a, button) {
+        overflow-wrap: anywhere;
+    }
+
+    [data-flux-main] .text-7xl,
+    [data-flux-main] .sm\:text-7xl {
+        font-size: 2.75rem !important;
+        line-height: 0.95 !important;
+    }
+
+    [data-flux-main] .text-6xl,
+    [data-flux-main] .sm\:text-6xl {
+        font-size: 2.5rem !important;
+        line-height: 0.95 !important;
+    }
+
+    [data-flux-main] .text-5xl {
+        font-size: 2.25rem !important;
+        line-height: 1 !important;
+    }
+
+    [data-flux-main] .text-4xl {
+        font-size: 1.875rem !important;
+        line-height: 1.05 !important;
+    }
+
+    [data-flux-main] .text-3xl {
+        font-size: 1.5rem !important;
+        line-height: 1.1 !important;
+    }
+
+    [data-flux-main] .p-10,
+    [data-flux-main] .p-8 {
+        padding: 1.25rem !important;
+    }
+
+    [data-flux-main] .px-10,
+    [data-flux-main] .px-8 {
+        padding-left: 1.25rem !important;
+        padding-right: 1.25rem !important;
+    }
+
+    [data-flux-main] .py-10,
+    [data-flux-main] .py-8 {
+        padding-top: 1.25rem !important;
+        padding-bottom: 1.25rem !important;
+    }
+
+    [data-flux-main] .gap-10,
+    [data-flux-main] .gap-8 {
+        gap: 1.25rem !important;
+    }
+
+    [data-flux-main] .rounded-\[3rem\],
+    [data-flux-main] .rounded-\[2\.5rem\],
+    [data-flux-main] .rounded-\[2\.2rem\] {
+        border-radius: 1.5rem !important;
+    }
+
+    [data-flux-main] :where(.tracking-\[0\.5em\], .tracking-\[0\.4em\], .tracking-\[0\.3em\]) {
+        letter-spacing: 0.12em !important;
+    }
+
+    [data-flux-main] :where(table) {
+        display: block;
+        max-width: 100%;
+        min-width: 44rem;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    [data-flux-main] :where(.glass-card, .stat-card) {
+        max-width: 100%;
+    }
+
+    [data-flux-main] :where(.flex.items-center.justify-between, .flex.items-start.justify-between) {
+        min-width: 0;
+    }
+
+    [data-flux-main] :where(.fixed.inset-0) > :where(.relative, .bg-white, .bg-zinc-950, .dark\:bg-zinc-950) {
+        max-width: calc(100vw - 1rem) !important;
     }
 }
 
@@ -228,7 +392,21 @@ select:focus[data-flux-control] {
     body.layout-fixed [data-flux-main] {
         height: 100vh !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
         padding-top: 64px; /* Espaço para o Header não tapar o conteúdo */
         display: block;
+        width: 100%;
+        max-width: 100vw;
+    }
+
+    body.layout-fixed [data-flux-main] > div {
+        min-width: 0;
+    }
+
+    .finance-connect,
+    .finance-connect > .grid {
+        content-visibility: visible !important;
+        contain: none !important;
+        contain-intrinsic-size: auto !important;
     }
 }

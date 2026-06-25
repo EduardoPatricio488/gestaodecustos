@@ -7,6 +7,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Event; // <-- ADICIONAR
+use Illuminate\Auth\Events\Login;      // <-- ADICIONAR
+use App\Listeners\UpdateLastLogin;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -27,22 +30,18 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      */
     public function boot(): void
-    {
-        // 1. Configurações padrão do Starter Kit
-        $this->configureDefaults();
-        $this->registerViewNamespaces();
+{
+    $this->configureDefaults();
+    $this->registerViewNamespaces();
+Event::listen(Login::class, UpdateLastLogin::class);
+    \Illuminate\Support\Facades\App::setLocale('pt');
+    \Illuminate\Support\Carbon::setLocale('pt');
 
-        // 2. Configuração de Idioma (Português)
-        App::setLocale('pt');
-        Carbon::setLocale('pt');
-
-        // 3. FORÇAR HTTPS APENAS PARA NGROK
-        // Isto permite que o localhost continue a funcionar em HTTP
-        // Mas garante que o Ngrok e o iPhone usem HTTPS para o CSS não quebrar
-        if (str_contains(request()->getHost(), 'ngrok')) {
-            URL::forceScheme('https');
-        }
+    // FORÇAR HTTPS SEMPRE QUE ESTIVER NO NGROK
+    if (str_contains(request()->getHost(), 'ngrok-free.app') || str_contains(request()->getHost(), 'ngrok-free.dev')) {
+        \Illuminate\Support\Facades\URL::forceScheme('https');
     }
+}
 
     protected function registerViewNamespaces(): void
     {

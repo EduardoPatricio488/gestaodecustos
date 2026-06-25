@@ -36,7 +36,6 @@
 
     <body class="app-shell antialiased bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
     @php
-        // CORREÇÃO: Usamos caminhos relativos para evitar que o browser force o HTTPS do Ngrok no localhost
         $dashPath = '/dashboard';
         if(auth()->check() && auth()->user()->currentWorkspace?->type === 'company') {
             $dashPath = '/empresa/dashboard';
@@ -52,7 +51,6 @@
         </span>
 
         <nav class="flex items-center gap-4">
-            {{-- Botão de Troca de Tema --}}
             <button
                 x-data="{ darkMode: document.documentElement.classList.contains('dark') }"
                 x-on:click="darkMode = !darkMode; darkMode ? (localStorage.theme = 'dark', document.documentElement.classList.add('dark')) : (localStorage.theme = 'light', document.documentElement.classList.remove('dark'))"
@@ -69,7 +67,6 @@
                         <span class="text-sm font-bold text-zinc-900 dark:text-white">{{ auth()->user()->name }}</span>
                     </div>
 
-                    {{-- CORRIGIDO: Link Relativo --}}
                     <a href="{{ $dashPath }}" wire:navigate class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-brand-500/25 hover:bg-brand-500 transition-all">
                         Dashboard
                     </a>
@@ -82,7 +79,6 @@
                     </form>
                 </div>
             @else
-                {{-- CORRIGIDO: Links Relativos --}}
                 <a href="/login" wire:navigate class="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">Entrar</a>
                 <a href="/register" wire:navigate class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-brand-500/25 hover:bg-brand-500">Começar grátis</a>
             @endauth
@@ -106,14 +102,12 @@
                 </p>
                 <div class="mt-10 flex flex-wrap gap-4">
                     @guest
-                        {{-- CORRIGIDO: Link Relativo --}}
                         <a href="/register" wire:navigate class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-8 py-4 font-bold text-white shadow-xl shadow-brand-500/30 hover:bg-brand-500 transition-all hover:-translate-y-1">
                             Criar conta grátis
                             <flux:icon name="arrow-right" variant="micro" />
                         </a>
                     @endguest
 
-                    {{-- CORRIGIDO: Link Relativo --}}
                     <a href="{{ auth()->check() ? $dashPath : '/login' }}" wire:navigate class="inline-flex items-center rounded-xl border border-zinc-300 bg-white dark:bg-zinc-900 px-8 py-4 font-bold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 transition-all">
                         {{ auth()->check() ? 'Abrir dashboard' : 'Já tenho conta' }}
                     </a>
@@ -174,15 +168,65 @@
             </div>
         </div>
 
+        <!-- SECTION: NEW ECOSYSTEM FEATURES (Adicionado para refletir o código atual) -->
+        <div class="mt-32">
+             <div class="text-center mb-16">
+                <h2 class="text-xs font-black uppercase tracking-[0.3em] text-brand-600">Além das Finanças</h2>
+                <p class="text-4xl font-black dark:text-white tracking-tighter uppercase italic">O Ecossistema Finance Connect</p>
+            </div>
+
+            <div class="grid gap-8 md:grid-cols-2">
+                <div class="glass-card p-8 flex gap-6 items-start">
+                    <div class="size-14 shrink-0 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600">
+                        <flux:icon name="globe-alt" variant="outline" />
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-zinc-900 dark:text-white">Finance Connect (Social)</h3>
+                        <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Junta-te à comunidade. Partilha metas, segue amigos e aprende com as estratégias de outros investidores de forma anónima ou pública.</p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 flex gap-6 items-start">
+                    <div class="size-14 shrink-0 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-600">
+                        <flux:icon name="bolt" variant="outline" />
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-zinc-900 dark:text-white">Fitness & Saúde</h3>
+                        <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Sincroniza o teu Strava ou MiFitness. No {{ config('app.name') }}, acreditamos que a saúde física é o maior ativo do teu património.</p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 flex gap-6 items-start">
+                    <div class="size-14 shrink-0 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                        <flux:icon name="trophy" variant="outline" />
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-zinc-900 dark:text-white">Gamificação & Níveis</h3>
+                        <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Ganha XP ao registar despesas e concluir metas. Sobe de nível e desbloqueia medalhas exclusivas enquanto dominas o teu dinheiro.</p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 flex gap-6 items-start">
+                    <div class="size-14 shrink-0 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                        <flux:icon name="document-text" variant="outline" />
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-zinc-900 dark:text-white">Relatórios de Auditoria PDF</h3>
+                        <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Exporta relatórios certificados e detalhados. Perfeito para contabilidade, gestão de casal ou análise de auditoria profunda.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- SECTION: FEATURES -->
         <div class="mt-32 grid gap-6 sm:grid-cols-3">
             @foreach ([
                 ['briefcase', 'Património Líquido', 'Soma total dos teus ativos e investimentos menos passivos.'],
                 ['credit-card', 'Assinaturas & Fixos', 'Controlo total de débitos diretos, Netflix, rendas e ginásio.'],
-                ['trophy', 'Objetivos de Poupança', 'Define metas visuais para o teu fundo de emergência ou férias.'],
-                ['chart-bar', 'Relatórios Anuais', 'Gráficos comparativos de fluxo de caixa mês a mês.'],
-                ['building-office-2', 'Despesas Empresa', 'Gestão separada para gastos profissionais e reembolsos.'],
-                ['sparkles', 'Análise com IA', 'Previsões de fim de mês e alertas de saúde financeira.'],
+                ['magnifying-glass', 'Busca Global (Ctrl+K)', 'Encontra qualquer transação, contacto ou lembrete instantaneamente.'],
+                ['chart-bar', 'Análise de Fluxo', 'Gráficos comparativos de fluxo de caixa e rácio de poupança mensal.'],
+                ['building-office-2', 'Espaços Business', 'Gestão separada para a tua empresa: CRM, Projetos e Faturação.'],
+                ['sparkles', 'CFO Inteligente', 'O teu consultor de IA que analisa riscos e sugere melhorias no teu estilo de vida.'],
             ] as [$icon, $title, $desc])
                 <div class="glass-card p-8 group hover:border-brand-500/50 transition-all duration-300 rounded-[2rem]">
                     <span class="mb-6 flex size-12 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 group-hover:scale-110 transition-transform">
@@ -215,7 +259,6 @@
                 <span class="text-brand-500 italic underline decoration-zinc-200 dark:decoration-zinc-800">tuas finanças?</span>
             </h2>
             <div class="flex justify-center gap-4">
-                {{-- CORRIGIDO: Link Relativo --}}
                 <a href="{{ auth()->check() ? $dashPath : '/register' }}" wire:navigate class="rounded-2xl bg-brand-600 px-12 py-5 text-xl font-black text-white shadow-2xl shadow-brand-500/40 hover:bg-brand-500 transition-all hover:scale-105 uppercase tracking-tighter">
                     {{ auth()->check() ? 'Voltar ao Dashboard' : 'Começar Agora — É Grátis' }}
                 </a>

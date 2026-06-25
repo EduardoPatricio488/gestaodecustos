@@ -6,19 +6,90 @@ use Livewire\Component;
 use App\Models\{Expense, Category, Income, Goal, Investment};
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 #[Layout('components.layouts.app')]
 class AiInsights extends Component
 {
     public bool $isAnalyzing = false;
     public string $aiAnalysis = '';
+    public ?string $lastGeneratedAt = null;
+
+    public function mount()
+    {
+        $cached = Cache::get($this->cacheKey());
+        if ($cached) {
+            $this->aiAnalysis = $cached['text'];
+            $this->lastGeneratedAt = $cached['at'];
+        }
+    }
+
+    private function cacheKey(): string
+    {
+        return "ai-insights:" . auth()->id();
+    }
 
     /**
-     * Lógica de Inteligência Artificial via Gemini API
+     * Ganhos e gastos de um mês específico (reutilizável para mês atual e anterior).
      */
+    private function getMonthlyTotals(int $month, int $year): array
+    {
+        $user = auth()->user();
+
+        $earned = (float) Income::where('user_id', $user->id)
+                ->whereMonth('received_at', $month)
+                ->whereYear('received_at', $year)
+                ->sum('amount')
+            + (float) $user->recurringIncomes()->where('is_active', true)->sum('amount');
+
+        $spent = (float) Expense::where('user_id', $user->id)
+            ->where('is_company', false)
+            ->whereMonth('spent_at', $month)
+            ->whereYear('spent_at', $year)
+            ->sum('amount');
+
+        return [$earned, $spent];
+    }
+
+    /**
+     * Variação percentual entre dois valores. Devolve null se não houver
+     * base de comparação válida (evita divisão por zero / % absurdas).
+     */
+    private function percentDelta(float $current, float $previous): ?float
+    {
+        if ($previous == 0) return null;
+        return round((($current - $previous) / $previous) * 100, 1);
+    }
+
+    /**
+     * Guarda um snapshot do património no início do mês (cache, sem migração nova)
+     * e devolve a variação % vs o snapshot do mês anterior, se existir.
+     */
+    private function trackNetWorthSnapshot(float $currentNetWorth, int $year, int $month): ?float
+    {
+        $userId = auth()->id();
+        $key = "networth-snapshot:{$userId}:{$year}-{$month}";
+
+        if (!Cache::has($key)) {
+            Cache::put($key, $currentNetWorth, now()->addMonths(13));
+        }
+
+        $prevDate = Carbon::createFromDate($year, $month, 1)->subMonth();
+        $prevKey = "networth-snapshot:{$userId}:{$prevDate->year}-{$prevDate->month}";
+        $prevNetWorth = Cache::get($prevKey);
+
+        if ($prevNetWorth === null || $prevNetWorth == 0) {
+            return null; // sem dados do mês anterior — não inventamos comparação
+        }
+
+        return round((($currentNetWorth - $prevNetWorth) / $prevNetWorth) * 100, 1);
+    }
+
     public function generateInsights()
     {
+        set_time_limit(120);
         $this->isAnalyzing = true;
         $this->aiAnalysis = '';
 
@@ -26,24 +97,20 @@ class AiInsights extends Component
         $month = now()->month;
         $year = now()->year;
 
-        // 1. RECOLHA DE DADOS FINANCEIROS TOTAIS
-        $totalEarned = (float) Income::where('user_id', $user->id)->whereMonth('received_at', $month)->whereYear('received_at', $year)->sum('amount')
-                     + (float) $user->recurringIncomes()->where('is_active', true)->sum('amount');
-
-        $totalSpent = (float) Expense::where('user_id', $user->id)->where('is_company', false)->whereMonth('spent_at', $month)->whereYear('spent_at', $year)->sum('amount');
+        [$totalEarned, $totalSpent] = $this->getMonthlyTotals($month, $year);
 
         $expensesByCategory = Expense::selectRaw('categories.name as category, sum(expenses.amount) as total')
             ->join('categories', 'expenses.category_id', '=', 'categories.id')
             ->where('expenses.user_id', $user->id)
             ->where('expenses.is_company', false)
             ->whereMonth('expenses.spent_at', $month)
+            ->whereYear('expenses.spent_at', $year)
             ->groupBy('categories.name')->get()->pluck('total', 'category')->toArray();
 
         $invValue = (float) $user->investments->sum(fn($i) => $i->quantity * $i->current_price);
         $savings = $totalEarned - $totalSpent;
         $savingsRate = $totalEarned > 0 ? ($savings / $totalEarned) * 100 : 0;
 
-        // 2. CONSTRUÇÃO DO PROMPT ESTRATÉGICO
         $prompt = "Age como um Diretor Financeiro Pessoal (CFO). Analisa os meus dados deste mês:
         - Rendimento Total: {$totalEarned}€
         - Gasto Total: {$totalSpent}€
@@ -57,27 +124,37 @@ class AiInsights extends Component
         3. Dá 3 dicas práticas para aumentar a taxa de poupança.
         Responde em Português de Portugal, usa Markdown e emojis.";
 
-        // 3. CHAMADA À API GEMINI
         try {
-            $apiKey = env('GEMINI_API_KEY');
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+            $apiKey = env('OPENROUTER_API_KEY');
 
-            $response = Http::withHeaders(['Content-Type' => 'application/json'])->timeout(30)->post($url, [
-                'contents' => [['parts' => [['text' => $prompt]]]]
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type'  => 'application/json',
+                'HTTP-Referer'  => config('app.url'),
+                'X-Title'       => config('app.name'),
+            ])->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', [
+                'model' => 'openrouter/owl-alpha',
+                'messages' => [
+                    ['role' => 'user', 'content' => $prompt]
+                ],
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                $this->aiAnalysis = $data['candidates'][0]['content']['parts'][0]['text'] ?? "IA indisponível no momento.";
+                $this->aiAnalysis = $data['choices'][0]['message']['content'] ?? "Resposta vazia da IA.";
+                $this->lastGeneratedAt = now()->toIso8601String();
 
-                // Bónus de XP por consultar a IA
-                if(method_exists($user, 'addXp')) $user->addXp(150);
+                Cache::put($this->cacheKey(), [
+                    'text' => $this->aiAnalysis,
+                    'at' => $this->lastGeneratedAt,
+                ], now()->addDays(7));
 
+                if (method_exists($user, 'addXp')) $user->addXp(150);
             } else {
-                $this->aiAnalysis = "Erro na resposta da IA. Verifica a tua chave API.";
+                $this->aiAnalysis = "Erro HTTP " . $response->status() . ": " . $response->body();
             }
-        } catch (\Exception $e) {
-            $this->aiAnalysis = "Erro de ligação: " . $e->getMessage();
+        } catch (\Throwable $e) {
+            $this->aiAnalysis = "Erro: " . $e->getMessage();
         }
 
         $this->isAnalyzing = false;
@@ -87,17 +164,20 @@ class AiInsights extends Component
     {
         $user = auth()->user();
         $month = now()->month;
+        $year = now()->year;
 
-        // Dados para os Widgets Manuais
-        $earned = (float) Income::where('user_id', $user->id)->whereMonth('received_at', $month)->sum('amount')
-                + (float) $user->recurringIncomes()->where('is_active', true)->sum('amount');
+        [$earned, $spent] = $this->getMonthlyTotals($month, $year);
 
-        $spent = (float) Expense::where('user_id', $user->id)->where('is_company', false)->whereMonth('spent_at', $month)->sum('amount');
+        $prevDate = now()->subMonth();
+        [$prevEarned, $prevSpent] = $this->getMonthlyTotals($prevDate->month, $prevDate->year);
+        $hasPrevData = $prevEarned > 0 || $prevSpent > 0;
 
         $netWorth = (float) $user->currentWorkspace->getLiquidezAtual()
                   + (float) $user->investments->sum(fn($i) => $i->quantity * $i->current_price);
 
-        // Lógica de Alertas Manuais (Fallback da IA)
+        $healthScore = $this->calculateHealthScore($earned, $spent);
+        $prevHealthScore = $this->calculateHealthScore($prevEarned, $prevSpent);
+
         $manualInsights = [];
         if ($spent > $earned && $earned > 0) {
             $manualInsights[] = ['type' => 'danger', 'icon' => 'arrow-trending-down', 'title' => 'Saldo Negativo', 'text' => 'Estás a gastar mais do que ganhas este mês.'];
@@ -107,12 +187,17 @@ class AiInsights extends Component
         }
 
         return view('livewire.ai-insights', [
-            'totalEarned' => $earned,
-            'totalSpent' => $spent,
-            'netWorth' => $netWorth,
-            'healthScore' => $this->calculateHealthScore($earned, $spent),
-            'insights' => $manualInsights
-        ]);
+    'totalEarned' => $earned,
+    'totalSpent' => $spent,
+    'netWorth' => $netWorth,
+    'healthScore' => $healthScore,
+    'healthScoreDelta' => $hasPrevData ? ($healthScore - $prevHealthScore) : null,
+    'earnedDelta' => $this->percentDelta($earned, $prevEarned),
+    'spentDelta' => $this->percentDelta($spent, $prevSpent),
+    'netWorthDelta' => $this->trackNetWorthSnapshot($netWorth, $year, $month),
+    'insights' => $manualInsights,
+    'reportGeneratedAt' => $this->lastGeneratedAt ? Carbon::parse($this->lastGeneratedAt) : null,  // 👈 nome novo
+]);
     }
 
     private function calculateHealthScore($earned, $spent)
@@ -120,6 +205,6 @@ class AiInsights extends Component
         if ($earned <= 0) return 0;
         $ratio = ($spent / $earned) * 100;
         $score = 100 - $ratio;
-        return (int) max(0, min(100, $score + 20)); // Bónus de estabilidade
+        return (int) max(0, min(100, $score + 20));
     }
 }

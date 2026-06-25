@@ -1,98 +1,155 @@
-<div class="space-y-8">
+<div class="space-y-8 text-left">
     {{-- HEADER --}}
-    <x-page-header title="Segurança & Logs" description="Histórico global de todas as ações realizadas na plataforma.">
+    <x-page-header title="🛡️ Auditoria de Sistema" description="Monitorização em tempo real de todas as interações e eventos de segurança.">
         <x-slot:actions>
             <div class="flex gap-2">
-                <flux:button wire:click="clearOldLogs" wire:confirm="Eliminar logs com mais de 30 dias?" variant="ghost" icon="trash" size="sm">Limpar Antigos</flux:button>
+                <flux:button wire:click="clearOldLogs" wire:confirm="Limpar logs com +30 dias?" variant="ghost" icon="trash" size="sm" class="text-red-500">Limpar Histórico</flux:button>
                 <flux:button href="{{ route('admin.dashboard') }}" variant="ghost" icon="arrow-left" wire:navigate />
             </div>
         </x-slot:actions>
     </x-page-header>
 
-    {{-- STATS DE MONITORIZAÇÃO --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="stat-card bg-zinc-900 text-white p-6 rounded-[2rem] shadow-xl border border-zinc-800">
-            <p class="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em]">Total de Eventos</p>
-            <p class="text-3xl font-black mt-1">{{ number_format($stats['total_actions'], 0, ',', ' ') }}</p>
-            <p class="text-[9px] text-zinc-500 mt-2 italic uppercase">Registados desde o início</p>
+    {{-- FILTROS AVANÇADOS --}}
+    <div class="flex flex-wrap gap-4 items-center bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Pesquisar utilizador ou descrição..." class="flex-1 min-w-[300px]" />
+
+        <flux:select wire:model.live="filterType" class="w-48">
+            <option value="">Todos os Tipos</option>
+            <option value="seguranca">🔐 Segurança</option>
+            <option value="financeiro">💰 Financeiro</option>
+            <option value="ia">🤖 Inteligência IA</option>
+            <option value="auth">🔑 Autenticação</option>
+        </flux:select>
+
+        <flux:select wire:model.live="filterAction" class="w-48">
+            <option value="">Todas as Ações</option>
+            <option value="created">➕ Criação</option>
+            <option value="updated">📝 Edição</option>
+            <option value="deleted">🗑️ Eliminação</option>
+            <option value="login">🔓 Login</option>
+        </flux:select>
+    </div>
+
+    {{-- STATS GLOBAIS --}}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-zinc-900 text-white p-6 rounded-[2rem] shadow-xl border border-zinc-800">
+            <p class="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Registos Totais</p>
+            <p class="text-3xl font-black mt-1">{{ number_format($stats['total_actions']) }}</p>
         </div>
 
-        <div class="stat-card bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <p class="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">Utilizadores Ativos</p>
-            <p class="text-3xl font-black text-brand-600 mt-1">{{ $stats['unique_users_active'] }}</p>
-            <p class="text-[9px] text-zinc-500 mt-2 uppercase font-bold">Nas últimas 24 horas</p>
+        <div class="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <p class="text-[10px] font-black uppercase text-brand-600 tracking-widest">Ativos (24h)</p>
+            <p class="text-3xl font-black mt-1">{{ $stats['unique_users_24h'] }} <span class="text-sm text-zinc-400">users</span></p>
         </div>
 
-        <div class="stat-card bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <p class="text-[10px] font-black uppercase text-red-500 tracking-[0.2em]">Último Erro do Sistema</p>
-            <p class="text-[11px] font-mono text-zinc-600 dark:text-zinc-400 mt-2 leading-tight truncate">
+        <div class="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <p class="text-[10px] font-black uppercase text-red-500 tracking-widest">Alertas (7 dias)</p>
+            <p class="text-3xl font-black mt-1">{{ $stats['security_alerts'] }}</p>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+            <p class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Último Erro Log</p>
+            <p class="text-[10px] font-mono text-red-500 mt-2 leading-tight line-clamp-2 italic">
                 {{ $stats['last_error'] }}
             </p>
         </div>
     </div>
 
-    {{-- TABELA DE EVENTOS GLOBAIS --}}
-    <div class="glass-card bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
-        <div class="p-6 border-b dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-950/30">
-            <h3 class="text-xs font-black uppercase tracking-widest text-zinc-500">Fluxo de Atividade em Tempo Real</h3>
-            <flux:select wire:model.live="filterAction" class="w-40 text-[10px] font-bold uppercase">
-                <option value="">Todas as ações</option>
-                <option value="created">Criações ➕</option>
-                <option value="updated">Edições 📝</option>
-                <option value="deleted">Eliminações 🗑️</option>
-            </flux:select>
-        </div>
-
+    {{-- TABELA DE EVENTOS --}}
+    <div class="glass-card bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-zinc-50 dark:bg-zinc-800/50 border-b dark:border-zinc-800">
-                    <tr>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-zinc-500 tracking-tighter">Data/Hora</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-zinc-500">Utilizador</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-zinc-500">Ação</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-zinc-500">Descrição</th>
+                <thead class="bg-zinc-50 dark:bg-zinc-950/40 border-b border-zinc-100 dark:border-zinc-800">
+                    <tr class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">
+                        <th class="px-8 py-5">Timestamp</th>
+                        <th class="px-6 py-5">Utilizador</th>
+                        <th class="px-6 py-5">Evento / Ação</th>
+                        <th class="px-6 py-5">Descrição do Log</th>
+                        <th class="px-8 py-5 text-right">Info</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    @forelse($logs as $log)
-                        <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-colors">
-                            <td class="px-6 py-4 text-xs font-bold text-zinc-400 whitespace-nowrap">
+                    @foreach($logs as $log)
+                        <tr wire:click="showLogDetails({{ $log->id }})" class="group cursor-pointer hover:bg-zinc-50/80 dark:hover:bg-brand-500/[0.02] transition-all">
+                            <td class="px-8 py-5 text-xs font-mono text-zinc-400">
                                 {{ $log->created_at->format('d/m H:i:s') }}
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[8px] font-black text-zinc-500 border dark:border-zinc-700">
-                                        {{ substr($log->user->name ?? '??', 0, 2) }}
+                            <td class="px-6 py-5">
+                                <div class="flex items-center gap-3">
+                                    <div class="size-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-black text-zinc-500 border dark:border-zinc-700">
+                                        {{ substr($log->user->name ?? 'S', 0, 1) }}
                                     </div>
                                     <span class="text-xs font-bold dark:text-white">{{ $log->user->name ?? 'Sistema' }}</span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase
-                                    {{ $log->action === 'created' ? 'bg-emerald-100 text-emerald-700' : '' }}
-                                    {{ $log->action === 'updated' ? 'bg-amber-100 text-amber-700' : '' }}
-                                    {{ $log->action === 'deleted' ? 'bg-red-100 text-red-700' : '' }}">
+                            <td class="px-6 py-5">
+                                <span class="px-2 py-1 rounded-lg text-[9px] font-black uppercase border
+                                    {{ $log->action === 'created' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : '' }}
+                                    {{ $log->action === 'updated' ? 'bg-amber-50 text-amber-600 border-amber-200' : '' }}
+                                    {{ $log->action === 'deleted' ? 'bg-red-50 text-red-600 border-red-200' : '' }}
+                                    {{ !in_array($log->action, ['created','updated','deleted']) ? 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700' : '' }}">
                                     {{ $log->action }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4">
-                                <p class="text-xs text-zinc-600 dark:text-zinc-400">{{ $log->description }}</p>
-                                <p class="text-[9px] font-black text-brand-600 uppercase opacity-50 mt-0.5">{{ $log->model_type }} #{{ $log->model_id }}</p>
+                            <td class="px-6 py-5">
+                                <p class="text-xs font-medium text-zinc-600 dark:text-zinc-300 leading-snug">{{ $log->description }}</p>
+                                @if($log->model_type)
+                                    <p class="text-[9px] font-black text-brand-500 uppercase mt-1 opacity-60">REF: {{ str_replace('App\\Models\\', '', $log->model_type) }} #{{ $log->model_id }}</p>
+                                @endif
+                            </td>
+                            <td class="px-8 py-5 text-right text-zinc-300 group-hover:text-brand-500 transition-colors">
+                                <flux:icon name="information-circle" class="size-5" />
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="px-6 py-20 text-center text-zinc-400 italic font-medium">
-                                Nenhum log registado com este filtro.
-                            </td>
-                        </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>
-
-        <div class="p-4 border-t dark:border-zinc-800 bg-zinc-50/30">
+        <div class="p-4 border-t dark:border-zinc-800 bg-zinc-50/20">
             {{ $logs->links() }}
         </div>
     </div>
+
+    {{-- MODAL DE DETALHES DO LOG (JSON/METADATA) --}}
+    <flux:modal name="log-details-modal" variant="center" class="md:w-[600px] space-y-6 text-left">
+        @if($selectedLog)
+            <div class="space-y-6">
+                <div class="flex items-center gap-4 border-b dark:border-zinc-800 pb-4">
+                    <div class="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
+                        <flux:icon name="shield-check" class="size-6 text-brand-600" />
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-black uppercase italic tracking-tighter dark:text-white">Detalhes do Evento</h2>
+                        <p class="text-xs text-zinc-500 font-bold uppercase tracking-widest">Log ID: #{{ $selectedLog->id }}</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6 text-sm">
+                    <div>
+                        <p class="text-[10px] font-black text-zinc-400 uppercase">Utilizador</p>
+                        <p class="font-bold dark:text-white">{{ $selectedLog->user->name ?? 'Sistema' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-zinc-400 uppercase">Data Completa</p>
+                        <p class="font-bold dark:text-white">{{ $selectedLog->created_at->format('d/m/Y - H:i:s') }}</p>
+                    </div>
+                </div>
+
+                <div class="p-5 bg-zinc-950 rounded-2xl border border-zinc-800 overflow-hidden">
+                    <p class="text-[10px] font-black text-zinc-500 uppercase mb-3 tracking-widest">Metadata / Dados Brutos</p>
+                    <pre class="text-[11px] font-mono text-emerald-500 overflow-x-auto leading-relaxed">
+@if($selectedLog->metadata)
+{{ json_encode($selectedLog->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}
+@else
+"Nenhum dado extra registado para este evento."
+@endif
+                    </pre>
+                </div>
+
+                <div class="flex gap-3">
+                    <flux:modal.close class="flex-1"><flux:button variant="ghost" class="w-full font-black uppercase text-xs">Fechar Dossiê</flux:button></flux:modal.close>
+                </div>
+            </div>
+        @endif
+    </flux:modal>
 </div>

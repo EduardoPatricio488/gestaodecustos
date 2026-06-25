@@ -23,7 +23,7 @@ export default defineConfig({
     server: {
         host: '0.0.0.0',
         hmr: {
-            host: 'localhost', // <-- Isto faz o PC funcionar SEMPRE, independente do IP
+            host: process.env.VITE_HMR_HOST || 'localhost',
         },
         cors: true,
         watch: {

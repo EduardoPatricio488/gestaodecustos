@@ -13,11 +13,15 @@ class Income extends Model {
     protected $fillable = [
         'user_id',
         'workspace_id',
-        'bank_account_id', // ADICIONADO: Ligação à conta bancária
+        'bank_account_id',
         'description',
         'amount',
         'received_at',
-        'type'
+        'type',
+        'source',
+        'frequency',
+        'tax_estimate',
+        'notes',
     ];
 
     protected $casts = [

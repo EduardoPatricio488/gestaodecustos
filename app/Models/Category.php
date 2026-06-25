@@ -11,22 +11,35 @@ class Category extends Model
 {
     use BelongsToWorkspace;
 
-    // Colunas autorizadas
     protected $fillable = [
         'user_id',
         'workspace_id',
         'name',
+        'slug',
         'color',
+        'order',
         'icon',
         'budget_limit',
+        'is_fixed',
     ];
 
-    /**
-     * RELAÇÕES
-     */
+    protected $casts = [
+        'is_fixed' => 'boolean',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function fields(): HasMany
+    {
+        return $this->hasMany(\App\Models\CategoryField::class)->orderBy('order');
+    }
+
+    public function widgets(): HasMany
+    {
+        return $this->hasMany(CategoryWidget::class)->orderBy('order');
     }
 
     public function expenses(): HasMany

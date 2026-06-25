@@ -7,9 +7,65 @@ use App\Exports\BusinessExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use App\Models\Expense;
+use App\Models\Income;
 
 class ExportController extends Controller
 {
+    /**
+     * MÉTODO ADICIONADO: Exportação de Auditoria do Dashboard
+     */
+    public function dashboardPdf(Request $request)
+    {
+        $user = auth()->user();
+        $workspaceId = $user->current_workspace_id;
+
+        // 1. Capturar filtros da URL
+        $start = $request->query('start', now()->startOfMonth()->format('Y-m-d'));
+        $end = $request->query('end', now()->endOfMonth()->format('Y-m-d'));
+        $includeExpenses = $request->query('expenses') === '1';
+        $includeIncomes = $request->query('incomes') === '1';
+
+        // 2. Procurar Dados
+        $expenses = collect();
+        $incomes = collect();
+
+        if ($includeExpenses) {
+            $expenses = Expense::where('workspace_id', $workspaceId)
+                ->whereBetween('spent_at', [$start, $end])
+                ->with('category')
+                ->latest('spent_at')
+                ->get();
+        }
+
+        if ($includeIncomes) {
+            $incomes = Income::where('workspace_id', $workspaceId)
+                ->whereBetween('received_at', [$start, $end]) // Ajusta se a coluna for 'date'
+                ->latest('received_at')
+                ->get();
+        }
+
+        // 3. Preparar dados para a view
+        $data = [
+            'workspaceName' => $user->currentWorkspace->name,
+            'start' => Carbon::parse($start)->format('d/m/Y'),
+            'end' => Carbon::parse($end)->format('d/m/Y'),
+            'expenses' => $expenses,
+            'incomes' => $incomes,
+            'totalExpenses' => $expenses->sum('amount'),
+            'totalIncomes' => $incomes->sum('amount'),
+            'generatedAt' => now()->format('d/m/Y H:i'),
+        ];
+
+        // 4. Gerar PDF (Cria este ficheiro em resources/views/pdf/financial-report.blade.php)
+        $pdf = Pdf::loadView('pdf.financial-report', $data);
+
+        return $pdf->download('Relatorio_Financeiro_' . now()->format('dmY_Hi') . '.pdf');
+    }
+
+    /**
+     * Métodos que já tinhas (Mantidos)
+     */
     public function expensesPdf()
     {
         $user = auth()->user();
@@ -21,14 +77,8 @@ class ExportController extends Controller
     public function businessExport(Request $request)
     {
         $user = auth()->user();
-
-        // 1. Pegamos no valor e garantimos que é um NÚMERO INTEIRO
         $monthNumber = (int) $request->get('month', date('n'));
-
-        // 2. Criamos a data usando apenas números para evitar o erro de "string"
         $date = Carbon::create(date('Y'), $monthNumber, 1);
-
-        // 3. Obtemos o nome do mês traduzido
         $monthName = $date->translatedFormat('F');
 
         return Excel::download(

@@ -1,82 +1,241 @@
 <div class="space-y-10 pb-24">
+
     {{-- 1. HEADER ENTERPRISE --}}
     <div class="relative">
+
         {{-- Glow decorativo --}}
         <div class="absolute -top-10 left-0 size-72 bg-brand-500/5 blur-[120px] rounded-full pointer-events-none"></div>
 
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10 px-2">
-            <div class="flex items-center gap-6">
-                <div class="relative group">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10 px-2 w-full">
+
+            <div class="flex items-center gap-6 flex-wrap md:flex-nowrap w-full md:w-auto">
+                <div class="relative group shrink-0">
                     <div class="absolute inset-0 bg-brand-500/20 blur-2xl rounded-full transition-all duration-700"></div>
                     <div class="relative p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl">
                         <flux:icon name="user-group" class="w-10 h-10 text-brand-600" />
                     </div>
                 </div>
-                <div>
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Comando do Grupo</h1>
-                        <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1">Workspace Ativo</flux:badge>
+
+                <div class="min-w-0">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <h1 class="text-3xl sm:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                            Comando do Grupo
+                        </h1>
+
+                        <flux:badge variant="neutral"
+                            class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1">
+                            Workspace Ativo
+                        </flux:badge>
                     </div>
-                    <p class="text-sm text-zinc-500 font-medium italic mt-2">Gestão de privilégios e auditoria do espaço <span class="text-brand-600 font-bold uppercase tracking-tighter">{{ $workspaceName }}</span></p>
+
+                    <p class="text-sm text-zinc-500 font-medium italic mt-2 leading-relaxed">
+                        Gestão de privilégios e auditoria do espaço
+                        <span class="text-brand-600 font-bold uppercase tracking-tighter">{{ $workspaceName }}</span>
+                    </p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-[1.8rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                <flux:button href="{{ route('dashboard') }}" variant="ghost" icon="arrow-left" wire:navigate class="rounded-xl font-bold text-zinc-500">Voltar</flux:button>
+            {{-- Botões --}}
+            <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-[1.8rem]
+                        border border-zinc-200 dark:border-zinc-800 shadow-sm w-full md:w-auto justify-between md:justify-start">
+
+                <flux:button href="{{ route('dashboard') }}" variant="ghost" icon="arrow-left" wire:navigate
+                    class="rounded-xl font-bold text-zinc-500 whitespace-nowrap">
+                    Voltar
+                </flux:button>
+
                 <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
+
                 @if($iAmAdmin)
-                    <flux:button wire:click="updateWorkspaceName" variant="primary" icon="check" class="bg-brand-600 border-none shadow-lg shadow-brand-500/20 rounded-2xl font-black uppercase tracking-tighter px-6 text-white">
+                    <flux:button wire:click="updateWorkspaceName" variant="primary" icon="check"
+                        class="bg-brand-600 border-none shadow-lg shadow-brand-500/20 rounded-2xl font-black uppercase tracking-tighter px-6 text-white whitespace-nowrap">
                         Guardar Alterações
                     </flux:button>
                 @endif
             </div>
+
         </header>
     </div>
 
-    {{-- 2. CONFIGURAÇÕES & CONVITE (GRID SUPERIOR) --}}
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {{-- Identidade do Workspace --}}
-        <div class="lg:col-span-5 space-y-6">
-            <div class="glass-card p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                <div class="flex items-center gap-3 mb-8">
-                    <div class="p-2 bg-brand-500/10 rounded-lg text-brand-600">
-                        <flux:icon name="pencil-square" variant="outline" class="size-5" />
+    {{-- 2. CONFIGURAÇÕES & CONVITE --}}
+
+    {{-- LINHA 1: INFO + BRANDING --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {{-- INFO: O que é o Grupo --}}
+        <div class="glass-card p-6 sm:p-8 bg-zinc-950 text-white rounded-[2.5rem]
+                    border border-zinc-800 shadow-2xl relative overflow-hidden group">
+
+            <div class="absolute -right-10 -top-10 size-48 bg-brand-500/10 blur-[80px] rounded-full
+                        group-hover:bg-brand-500/20 transition-all"></div>
+
+            <div class="relative z-10 space-y-6">
+
+                <div class="flex items-center gap-3 flex-wrap">
+                    <div class="p-2 bg-brand-500/20 rounded-xl">
+                        <flux:icon name="information-circle" class="size-5 text-brand-400" />
                     </div>
+
                     <div>
-                        <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Branding do Espaço</h3>
-                        <p class="text-lg font-black dark:text-white uppercase italic tracking-tighter">Identidade</p>
+                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Sobre</p>
+                        <p class="text-lg font-black uppercase italic tracking-tighter">Conta Partilhada</p>
                     </div>
                 </div>
 
-                <flux:input wire:model="workspaceName" placeholder="Ex: Família Louro" :disabled="!$iAmAdmin" class="h-14 !bg-zinc-50 dark:!bg-zinc-950 border-none rounded-2xl font-bold shadow-inner" />
-                <p class="text-[10px] text-zinc-400 mt-4 italic">Apenas o <span class="font-black text-brand-600">Administrador Master</span> pode renomear este grupo.</p>
+                <div class="space-y-4">
+
+                    <div class="flex items-start gap-3">
+                        <div class="size-6 rounded-lg bg-brand-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                            <flux:icon name="users" class="size-3.5 text-brand-400" />
+                        </div>
+                        <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">
+                            Até <span class="text-white font-black">5 membros</span> podem partilhar o mesmo espaço financeiro.
+                        </p>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="size-6 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                            <flux:icon name="eye" class="size-3.5 text-emerald-400" />
+                        </div>
+                        <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">
+                            Cada membro vê <span class="text-white font-black">todas as despesas</span> e receitas do grupo.
+                        </p>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="size-6 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                            <flux:icon name="shield-check" class="size-3.5 text-amber-400" />
+                        </div>
+                        <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">
+                            O <span class="text-white font-black">Administrador</span> controla quem entra e que permissões tem.
+                        </p>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="size-6 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                            <flux:icon name="key" class="size-3.5 text-purple-400" />
+                        </div>
+                        <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">
+                            Partilha o <span class="text-white font-black">código de convite</span> para adicionar novos membros instantaneamente.
+                        </p>
+                    </div>
+
+                </div>
             </div>
         </div>
 
-        {{-- Código de Convite Estilo "Safe Vault" --}}
-        <div class="lg:col-span-7">
-            <div class="glass-card p-8 bg-zinc-950 text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden border border-zinc-800 group">
-                <div class="absolute -right-20 -top-20 size-64 bg-brand-500/10 blur-[100px] rounded-full group-hover:bg-brand-500/20 transition-all"></div>
+        {{-- BRANDING DO ESPAÇO --}}
+        <div class="glass-card p-6 sm:p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem]
+                    border border-zinc-200 dark:border-zinc-800 shadow-sm">
 
-                <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 h-full">
-                    <div class="space-y-2 text-center md:text-left">
-                        <div class="flex items-center gap-2 justify-center md:justify-start">
-                            <flux:icon name="key" class="size-4 text-brand-400" />
-                            <h3 class="text-xs font-black uppercase tracking-[0.3em] text-zinc-500">Chave de Acesso</h3>
-                        </div>
-                        <p class="text-2xl font-black italic uppercase tracking-tighter">Convidar Membros</p>
-                        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest max-w-[200px]">Partilhe este token para expandir o grupo.</p>
-                    </div>
+            <div class="flex items-center gap-3 mb-8 flex-wrap">
+                <div class="p-2 bg-brand-500/10 rounded-lg text-brand-600">
+                    <flux:icon name="pencil-square" variant="outline" class="size-5" />
+                </div>
 
-                    <div class="flex items-center gap-4 bg-white/5 p-4 rounded-3xl border border-white/5 backdrop-blur-md">
-                        <span class="text-4xl font-mono font-black text-brand-500 tracking-[0.3em] uppercase pl-4">{{ $inviteCode }}</span>
-                        <flux:button size="sm" variant="ghost" icon="document-duplicate" class="text-zinc-500 hover:text-white transition-colors" />
-                    </div>
+                <div>
+                    <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
+                        Branding do Espaço
+                    </h3>
+                    <p class="text-lg font-black dark:text-white uppercase italic tracking-tighter">
+                        Identidade
+                    </p>
                 </div>
             </div>
+
+            <flux:input wire:model="workspaceName"
+                placeholder="Ex: Família Louro"
+                :disabled="!$iAmAdmin"
+                class="h-14 !bg-zinc-50 dark:!bg-zinc-950 border-none rounded-2xl font-bold shadow-inner w-full" />
+
+            <p class="text-[10px] text-zinc-400 mt-4 italic leading-relaxed">
+                Apenas o <span class="font-black text-brand-600">Administrador Master</span> pode renomear este grupo.
+            </p>
+        </div>
+
+    </div>
+
+    {{-- LINHA 2: CÓDIGO + ENTRAR --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {{-- PARTILHAR CÓDIGO --}}
+        <div class="glass-card p-6 sm:p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem]
+                    border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
+
+            <div class="absolute -left-10 -bottom-10 size-48 bg-brand-500/5 blur-[80px] rounded-full
+                        group-hover:bg-brand-500/10 transition-all"></div>
+
+            <div class="relative z-10 space-y-6">
+
+                <div class="flex items-center gap-3 flex-wrap">
+                    <div class="p-2 bg-brand-500/10 rounded-xl">
+                        <flux:icon name="share" class="size-5 text-brand-600" />
+                    </div>
+
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Código</p>
+                        <p class="text-lg font-black dark:text-white uppercase italic tracking-tighter">
+                            Convidar Membros
+                        </p>
+                    </div>
+                </div>
+
+                <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-widest leading-relaxed">
+                    Partilha este código com quem queres adicionar ao teu grupo financeiro.
+                </p>
+
+                <div class="flex items-center justify-between bg-zinc-50 dark:bg-zinc-950
+                            border border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 py-4">
+
+                    <span class="text-3xl font-mono font-black text-brand-600 dark:text-brand-400 tracking-[0.3em] uppercase">
+                        {{ $inviteCode }}
+                    </span>
+
+                    <flux:button wire:click="generateInviteCode" size="sm" variant="ghost" icon="arrow-path"
+                        class="text-zinc-400 hover:text-brand-600 transition-colors"
+                        title="Gerar novo código" />
+                </div>
+
+                <p class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest italic">
+                    O código não expira. Podes regenerá-lo a qualquer momento.
+                </p>
+
+            </div>
+        </div>
+
+    {{-- ENTRAR NUM GRUPO --}}
+    <div class="glass-card p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
+        <div class="absolute -right-10 -bottom-10 size-48 bg-emerald-500/5 blur-[80px] rounded-full group-hover:bg-emerald-500/10 transition-all"></div>
+        <div class="relative z-10 space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-emerald-500/10 rounded-xl">
+                    <flux:icon name="arrow-right-circle" class="size-5 text-emerald-600" />
+                </div>
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Juntar-me</p>
+                    <p class="text-lg font-black dark:text-white uppercase italic tracking-tighter">Entrar num Grupo</p>
+                </div>
+            </div>
+            <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-widest leading-relaxed">
+                Tens um código de convite? Insere-o abaixo para te juntares a um grupo existente.
+            </p>
+            <div class="space-y-3">
+                <input
+                    wire:model="inviteCodeInput"
+                    placeholder="EX: AB12CD34"
+                    class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-5 py-4 font-mono font-black uppercase tracking-widest text-sm dark:text-white placeholder:text-zinc-400 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all shadow-inner"
+                />
+                @error('inviteCodeInput')
+                    <p class="text-[10px] font-bold text-red-500">{{ $message }}</p>
+                @enderror
+            </div>
+            <flux:button wire:click="joinWorkspace" variant="primary" icon="arrow-right-circle" class="w-full rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-brand-500/20 h-12">
+                Entrar no Grupo
+            </flux:button>
         </div>
     </div>
 
+</div>
     {{-- 3. GESTÃO DE ACESSOS (TABELA DE MEMBROS) --}}
     <div class="space-y-6">
         <div class="flex items-center justify-between px-2">
@@ -153,6 +312,32 @@
                                         @endif
                                     </div>
                                 </td>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                                 {{-- Acções --}}
                                 <td class="p-6 text-right">
@@ -247,6 +432,9 @@
                         </div>
 
                     </div>
+
+
+
                 @endforeach
             </div>
         </div>

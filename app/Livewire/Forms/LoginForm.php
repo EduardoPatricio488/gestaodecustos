@@ -18,28 +18,39 @@ class LoginForm extends Form
     #[Validate('required|string')]
     public string $password = '';
 
+
     #[Validate('boolean')]
     public bool $remember = false;
+
+    // --- NOVA PROPRIEDADE ---
+    #[Validate('boolean')]
+    public bool $privacyMode = false;
 
     /**
      * Attempt to authenticate the request's credentials.
      *
      * @throws ValidationException
      */
-    public function authenticate(): void
-    {
-        $this->ensureIsNotRateLimited();
+   public function authenticate(): void
+{
+    $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'form.email' => trans('auth.failed'),
-            ]);
-        }
-
-        RateLimiter::clear($this->throttleKey());
+    // Tenta fazer login
+    if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
+        RateLimiter::hit($this->throttleKey());
+        throw ValidationException::withMessages(['email' => trans('auth.failed')]);
     }
+
+    // AQUI: Captura se a checkbox foi marcada no POST
+    // Se o formulário enviou 'privacyMode', guardamos na sessão
+    if (request()->has('privacyMode')) {
+        session(['privacy_mode' => true]);
+    } else {
+        session(['privacy_mode' => false]);
+    }
+
+    RateLimiter::clear($this->throttleKey());
+}
 
     /**
      * Ensure the authentication request is not rate limited.

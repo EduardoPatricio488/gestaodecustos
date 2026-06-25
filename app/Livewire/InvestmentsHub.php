@@ -19,6 +19,7 @@ class InvestmentsHub extends Component
 
     public $editingId = null;
     public $search = '';
+    public bool $showNetValues = false;
     public $filterType = 'Todos';
     public bool $isRefreshing = false;
     public ?string $lastUpdated = null;
@@ -60,7 +61,10 @@ public $product_type = 'CA';
     }
 }
 
-
+public function toggleNetValues()
+{
+    $this->showNetValues = !$this->showNetValues;
+}
     public function setFilter(string $type): void
     {
         $this->filterType = $type;
@@ -448,7 +452,7 @@ $this->product_type = $asset->product_type ?? 'CA';
 
     // ─── RENDER ──────────────────────────────────────────────────────────────
 
-    public function render()
+     public function render()
     {
         $query = Investment::where('workspace_id', Auth::user()->current_workspace_id);
 
@@ -469,52 +473,42 @@ $this->product_type = $asset->product_type ?? 'CA';
             $asset->current_value = $currentValue;
             $asset->pnl           = $currentValue - $cost;
             $asset->pnl_percent   = $cost > 0 ? ($asset->pnl / $cost) * 100 : 0;
-
             return $asset;
         });
 
         $totalInvested         = $myAssets->sum('cost');
         $currentPortfolioValue = $myAssets->sum('current_value');
-        $totalProfit           = $currentPortfolioValue - $totalInvested;
-        $totalPnlPct           = $totalInvested > 0 ? ($totalProfit / $totalInvested) * 100 : 0;
+
+        // Cálculo de IRS (28%)
+        $totalEstimatedTax = $myAssets->sum(function($asset) {
+            return ($asset->type !== 'Divida' && $asset->pnl > 0) ? $asset->pnl * 0.28 : 0;
+        });
+
+        $totalProfit = $currentPortfolioValue - $totalInvested;
+        $totalPnlPct = $totalInvested > 0 ? ($totalProfit / $totalInvested) * 100 : 0;
+
+        $displayValue  = $this->showNetValues ? ($currentPortfolioValue - $totalEstimatedTax) : $currentPortfolioValue;
+        $displayProfit = $this->showNetValues ? ($totalProfit - $totalEstimatedTax) : $totalProfit;
 
         $composition = $myAssets->groupBy('type')->map(fn($group) => [
             'total'   => $group->sum('current_value'),
-            'percent' => $currentPortfolioValue > 0
-                ? round(($group->sum('current_value') / $currentPortfolioValue) * 100, 1)
-                : 0,
+            'percent' => $currentPortfolioValue > 0 ? round(($group->sum('current_value') / $currentPortfolioValue) * 100, 1) : 0,
         ]);
-
-        $bestPerformer   = $myAssets->sortByDesc('pnl_percent')->first();
-        $worstPerformer  = $myAssets->sortBy('pnl_percent')->first();
-        $highestExposure = $myAssets->sortByDesc('current_value')->first();
-
-        // ── TICKER: S&P500 real + XTB real + outros simulados ──
-        $marketData = $this->buildMarketTicker();
-$recentIncomes = InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
-    ->with('investment:id,name,symbol,product_type')
-    ->orderByDesc('reference_date')
-    ->take(10)
-    ->get();
-
-$totalIncomeNet = InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
-    ->sum('net_amount');
-
-
 
         return view('livewire.investments-hub', [
             'myAssets'        => $myAssets,
             'totalInvested'   => $totalInvested,
-            'currentValue'    => $currentPortfolioValue,
-            'totalProfit'     => $totalProfit,
+            'currentValue'    => $displayValue,
+            'totalProfit'     => $displayProfit,
             'totalPnlPct'     => $totalPnlPct,
             'composition'     => $composition,
-            'bestPerformer'   => $bestPerformer,
-            'worstPerformer'  => $worstPerformer,
-            'highestExposure' => $highestExposure,
-            'marketData'      => $marketData,
-            'recentIncomes'  => $recentIncomes,
-'totalIncomeNet' => $totalIncomeNet,
+            'bestPerformer'   => $myAssets->sortByDesc('pnl_percent')->first(),
+            'worstPerformer'  => $myAssets->sortBy('pnl_percent')->first(),
+            'highestExposure' => $myAssets->sortByDesc('current_value')->first(),
+            'marketData'      => $this->buildMarketTicker(),
+            'estimatedTax'    => $totalEstimatedTax,
+            'recentIncomes'   => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)->with('investment')->latest('reference_date')->take(10)->get(),
+            'totalIncomeNet'  => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)->sum('net_amount'),
         ]);
     }
 

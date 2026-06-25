@@ -53,36 +53,42 @@
                 <x-input-error :messages="$errors->get('email')" class="mt-1" />
             </div>
 
-            <!-- SEGURANÇA (PASSWORD) -->
-            <div class="space-y-1.5">
-                <div class="flex justify-between items-center px-1">
-                    <flux:label class="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em]">Password</flux:label>
-                    @if (Route::has('password.request'))
-                        <flux:link :href="route('password.request')" class="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-brand-500" variant="subtle">
-                            {{ __('Esqueceste-te?') }}
-                        </flux:link>
-                    @endif
-                </div>
-                <flux:input
-                    name="password"
-                    type="password"
-                    icon="lock-closed"
-                    required
-                    placeholder="••••••••"
-                    viewable
-                    class="font-bold !bg-zinc-50 dark:!bg-zinc-950 !border-none rounded-xl h-11 shadow-inner focus:ring-1 focus:ring-brand-500/20 text-sm"
-                />
-                <x-input-error :messages="$errors->get('password')" class="mt-1" />
-            </div>
+          <!-- SEGURANÇA (PASSWORD) -->
+<div class="space-y-1.5" x-data="{ showPassword: false }">
+    <div class="flex justify-between items-center px-1">
+        <flux:label class="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em]">Password</flux:label>
+        @if (Route::has('password.request'))
+            <flux:link :href="route('password.request')" class="text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-brand-500" variant="subtle">
+                {{ __('Esqueceste-te?') }}
+            </flux:link>
+        @endif
+    </div>
 
-            <!-- OPÇÕES ADICIONAIS -->
-            <div class="px-1 flex items-center">
-                <flux:checkbox name="remember">
-                    <x-slot:label>
-                        <span class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Sessão Ativa</span>
-                    </x-slot:label>
-                </flux:checkbox>
-            </div>
+    <div class="relative group">
+        {{-- Input principal --}}
+        <flux:input
+            name="password"
+            ::type="showPassword ? 'text' : 'password'"
+            icon="lock-closed"
+            required
+            placeholder="••••••••"
+            {{-- pr-10 garante que o texto não fica por baixo do olho --}}
+            class="font-bold !bg-zinc-50 dark:!bg-zinc-950 !border-none rounded-xl h-11 shadow-inner focus:ring-1 focus:ring-brand-500/20 text-sm pr-10"
+        />
+
+        {{-- Botão do Olho (Posicionamento Absoluto para não falhar) --}}
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 z-20">
+            <button type="button" @click="showPassword = !showPassword" class="text-zinc-400 hover:text-zinc-600 focus:outline-none transition-colors">
+                <flux:icon x-show="!showPassword" name="eye" class="size-4" />
+                <flux:icon x-show="showPassword" name="eye-slash" class="size-4" x-cloak />
+            </button>
+        </div>
+    </div>
+
+    <x-input-error :messages="$errors->get('password')" class="mt-1" />
+</div>
+
+
 
             {{-- BOTÃO DE LOGIN COMPACTO --}}
             <div class="pt-1">
@@ -92,15 +98,7 @@
             </div>
         </form>
 
-        {{-- DIVISOR DISCRETO --}}
-        <div class="relative py-2">
-            <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                <div class="w-full border-t border-zinc-100 dark:border-zinc-800"></div>
-            </div>
-            <div class="relative flex justify-center">
-                <span class="bg-white dark:bg-zinc-950 px-3 text-[8px] font-black uppercase tracking-[0.4em] text-zinc-400 opacity-50 italic">End-to-End Encryption</span>
-            </div>
-        </div>
+
 
         {{-- RODAPÉ MINIMALISTA --}}
         <div class="text-center space-y-6 animate-fade-in-delayed">

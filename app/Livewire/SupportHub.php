@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use Flux\Flux;
 use Livewire\Component;
 use App\Models\SupportTicket;
 use App\Models\SupportMessage;
@@ -50,7 +49,8 @@ class SupportHub extends Component
             ->with(['messages.user'])
             ->findOrFail($ticketId);
 
-        Flux::modal('ticket-chat-modal')->show();
+        // Abre o modal de chat (Alpine ouve este evento via x-on:open-chat-modal.window)
+        $this->dispatch('open-chat-modal');
     }
 
     public function sendReply()
@@ -96,7 +96,9 @@ class SupportHub extends Component
         ]);
 
         $this->reset(['subject', 'message', 'priority']);
-        Flux::modal('new-ticket-modal')->close();
+
+        // Fecha o modal de novo ticket (Alpine ouve via x-on:ticket-created.window)
+        $this->dispatch('ticket-created');
 
         $this->dispatch('toast', text: 'Ticket criado com sucesso!');
     }

@@ -34,12 +34,13 @@ new class extends Component
     }
 }; ?>
 
-<section class="space-y-6">
-    <header>
-        <flux:heading size="lg" class="font-black">Segurança da Conta</flux:heading>
+<section class="space-y-6" x-data>
+    <header class="text-left">
+        <flux:heading size="lg" class="font-black uppercase italic tracking-tighter">Segurança da Conta</flux:heading>
         <flux:subheading>Garante que a tua conta usa uma palavra-passe forte e aleatória.</flux:subheading>
     </header>
 
+    {{-- O formulário só funciona se o Modo de Privacidade estiver DESLIGADO --}}
     <form wire:submit="updatePassword" class="mt-6 space-y-6">
         <flux:input
             wire:model="current_password"
@@ -66,7 +67,15 @@ new class extends Component
         />
 
         <div class="flex items-center gap-4">
-            <flux:button type="submit" variant="primary">Atualizar Password</flux:button>
+            {{-- Botão desativado se o Modo de Privacidade estiver ativo por segurança --}}
+            <flux:button
+                type="submit"
+                variant="primary"
+                class="font-black uppercase text-[10px] tracking-widest px-8 h-12"
+                x-bind:disabled="privacyMode"
+            >
+                Atualizar Password
+            </flux:button>
         </div>
     </form>
 </section>
