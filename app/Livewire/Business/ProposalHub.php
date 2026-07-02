@@ -18,7 +18,12 @@ class ProposalHub extends Component
     public $clientFilter = '';
 
     // Campos do Formulário
-    public $title, $proposal_number, $client_id, $amount, $valid_until, $notes;
+    public $title;
+    public $proposal_number;
+    public $client_id;
+    public $amount;
+    public $valid_until;
+    public $notes;
     public $status = 'rascunho';
     public $editingId = null;
 
@@ -40,15 +45,15 @@ class ProposalHub extends Component
         auth()->user()->currentWorkspace->proposals()->updateOrCreate(
             ['id' => $this->editingId],
             [
-                'user_id' => auth()->id(),
-                'workspace_id' => auth()->user()->current_workspace_id,
-                'client_id' => $this->client_id,
-                'title' => $this->title,
-                'proposal_number' => $this->proposal_number,
-                'amount' => $this->amount,
-                'status' => $this->status,
-                'valid_until' => $this->valid_until,
-                'notes' => $this->notes,
+                'user_id'        => auth()->id(),
+                'workspace_id'   => auth()->user()->current_workspace_id,
+                'client_id'      => $this->client_id,
+                'title'          => $this->title,
+                'proposal_number'=> $this->proposal_number,
+                'amount'         => $this->amount,
+                'status'         => $this->status,
+                'valid_until'    => $this->valid_until,
+                'notes'          => $this->notes,
             ]
         );
 
@@ -58,7 +63,7 @@ class ProposalHub extends Component
     }
 
     /**
-     * A FUNÇÃO ESTRELA: Converter Proposta em Fatura
+     * Converter Proposta em Fatura
      */
     public function convertToInvoice($id)
     {
@@ -69,21 +74,19 @@ class ProposalHub extends Component
             return;
         }
 
-        // 1. Criar a Fatura baseada nos dados da Proposta
         Invoice::create([
-            'user_id' => auth()->id(),
-            'workspace_id' => $proposal->workspace_id,
-            'client_id' => $proposal->client_id,
-            'client_name' => $proposal->client->name,
-            'invoice_number' => 'FT-' . date('Y') . '/' . rand(100, 999), // Sugestão de número
-            'amount_excl_vat' => $proposal->amount,
-            'vat_amount' => $proposal->amount * 0.23, // 23% IVA padrão
-            'total_amount' => $proposal->amount * 1.23,
-            'status' => 'pendente',
-            'due_date' => now()->addDays(30),
+            'user_id'        => auth()->id(),
+            'workspace_id'   => $proposal->workspace_id,
+            'client_id'      => $proposal->client_id,
+            'client_name'    => $proposal->client->name,
+            'invoice_number' => 'FT-' . date('Y') . '/' . rand(100, 999),
+            'amount_excl_vat'=> $proposal->amount,
+            'vat_amount'     => $proposal->amount * 0.23,
+            'total_amount'   => $proposal->amount * 1.23,
+            'status'         => 'pendente',
+            'due_date'       => now()->addDays(30),
         ]);
 
-        // 2. Atualizar o estado da proposta
         $proposal->update(['status' => 'convertida']);
 
         $this->dispatch('toast', text: 'Proposta convertida em Fatura com sucesso!', variant: 'success');
@@ -97,15 +100,15 @@ class ProposalHub extends Component
 
     public function edit($id)
     {
-        $proposal = Proposal::findOrFail($id);
-        $this->editingId = $proposal->id;
-        $this->title = $proposal->title;
+        $proposal              = Proposal::findOrFail($id);
+        $this->editingId       = $proposal->id;
+        $this->title           = $proposal->title;
         $this->proposal_number = $proposal->proposal_number;
-        $this->client_id = $proposal->client_id;
-        $this->amount = $proposal->amount;
-        $this->status = $proposal->status;
-        $this->valid_until = $proposal->valid_until?->format('Y-m-d');
-        $this->notes = $proposal->notes;
+        $this->client_id       = $proposal->client_id;
+        $this->amount          = $proposal->amount;
+        $this->status          = $proposal->status;
+        $this->valid_until     = $proposal->valid_until?->format('Y-m-d');
+        $this->notes           = $proposal->notes;
 
         $this->dispatch('modal-show', name: 'proposal-modal');
     }
@@ -118,23 +121,44 @@ class ProposalHub extends Component
 
     public function resetForm()
     {
-        $this->reset(['title', 'proposal_number', 'client_id', 'amount', 'valid_until', 'notes', 'status', 'editingId']);
+        $this->reset([
+            'title',
+            'proposal_number',
+            'client_id',
+            'amount',
+            'valid_until',
+            'notes',
+            'status',
+            'editingId',
+        ]);
     }
 
     public function render()
     {
         $workspace = auth()->user()->currentWorkspace;
 
-        $query = $workspace->proposals()->with('client')
+        $query = $workspace->proposals()
+            ->with('client')
             ->where('title', 'like', '%' . $this->search . '%')
-            ->when($this->clientFilter, fn($q) => $q->where('client_id', $this->clientFilter));
+            ->when($this->clientFilter, fn ($q) => $q->where('client_id', $this->clientFilter))
+            ->orderByRaw("
+                CASE
+                    WHEN status = 'aceite' THEN 1
+                    WHEN status = 'enviada' THEN 2
+                    WHEN status = 'rascunho' THEN 3
+                    WHEN status = 'recusada' THEN 4
+                    WHEN status = 'convertida' THEN 5
+                    ELSE 6
+                END
+            ")
+            ->latest();
 
-        $proposals = $query->latest()->get();
+        $proposals = $query->get();
 
         return view('livewire.business.proposal-hub', [
-            'proposals' => $proposals,
-            'clients' => $workspace->clients()->orderBy('name')->get(),
-            'totalValue' => $proposals->where('status', '!=', 'recusada')->sum('amount'),
+            'proposals'      => $proposals,
+            'clients'        => $workspace->clients()->orderBy('name')->get(),
+            'totalValue'     => $proposals->where('status', '!=', 'recusada')->sum('amount'),
             'conversionRate' => $proposals->count() > 0
                 ? ($proposals->where('status', 'convertida')->count() / $proposals->count()) * 100
                 : 0,

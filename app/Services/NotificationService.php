@@ -13,6 +13,7 @@ class NotificationService
         self::checkSubscriptions($user);
         self::checkLowStock($user);
         self::checkOverdueInvoices($user);
+        SmartAlertService::checkAll($user);
     }
 
     private static function checkSubscriptions(User $user)
@@ -58,26 +59,31 @@ class NotificationService
     }
 
     private static function checkOverdueInvoices(User $user)
-    {
-        $workspace = $user->currentWorkspace;
-        if (!$workspace) return;
+{
+    $workspace = $user->currentWorkspace;
+    if (!$workspace) return;
 
-        $overdue = $workspace->invoices()->where('status', 'pendente')->where('due_date', '<', now())->get();
+    $overdue = $workspace->invoices()
+        ->where('status', 'pendente')
+        ->where('due_date', '<', now())
+        ->get();
 
-        foreach ($overdue as $inv) {
-            $title = "Fatura Atrasada: #{$inv->invoice_number}";
-            if (!self::alreadyNotified($user, $title)) {
-                AppNotification::create([
-                    'user_id' => $user->id,
-                    'workspace_id' => $workspace->id,
-                    'title' => $title,
-                    'message' => "O cliente {$inv->client_name} tem um pagamento pendente desde " . $inv->due_date->format('d/m'),
-                    'type' => 'danger',
-                    'link' => route('hub.business.invoices')
-                ]);
-            }
+    foreach ($overdue as $inv) {
+        $title = "Fatura Atrasada: #{$inv->invoice_number}";
+        if (!self::alreadyNotified($user, $title)) {
+            AppNotification::create([
+                'user_id' => $user->id,
+                'workspace_id' => $workspace->id,
+                'title' => $title,
+                'message' => "O cliente {$inv->client_name} tem um pagamento pendente desde "
+                    . \Carbon\Carbon::parse($inv->due_date)->format('d/m'),
+                'type' => 'danger',
+                'link' => route('hub.business.invoices')
+            ]);
         }
     }
+}
+
 
     private static function alreadyNotified($user, $title)
     {

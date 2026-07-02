@@ -4,6 +4,7 @@ namespace App\Livewire\Business;
 
 use Livewire\Component;
 use App\Models\Client;
+use App\Models\ClientPortalToken;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 
@@ -74,6 +75,14 @@ class ClientHub extends Component
     public function resetForm()
     {
         $this->reset(['name', 'legal_name', 'tax_number', 'email', 'phone', 'status', 'address', 'notes', 'editingId']);
+    }
+
+    public function generatePortalLink($id)
+    {
+        $client = auth()->user()->clients()->findOrFail($id);
+        $token = ClientPortalToken::generateFor($client);
+        $this->dispatch('toast', text: 'Link do portal gerado! Copia: '.$token->url);
+        session()->flash('portal_url', $token->url);
     }
 
     public function render()

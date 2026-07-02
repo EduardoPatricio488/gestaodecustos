@@ -14,8 +14,52 @@ class TaskTimeline extends Component
     public $search = '';
     public $activeProjectId = null;
 
+    // Para o modal
+    public $activeTask = null;
+
     /**
-     * Atualiza o estado da tarefa (Kanban Drag/Drop alternativo via click)
+     * Abre o modal com os detalhes da tarefa
+     */
+    public function openTask($taskId)
+    {
+        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
+                    ->with(['project', 'assignee'])
+                    ->findOrFail($taskId);
+
+        $this->activeTask = $task;
+
+        $this->dispatch('open-modal', name: 'task-modal');
+    }
+
+    /**
+     * Editar tarefa (podes ligar a outro modal se quiseres)
+     */
+    public function editTask($taskId)
+    {
+        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
+                    ->findOrFail($taskId);
+
+        // Aqui podes abrir outro modal de edição se quiseres
+        $this->activeTask = $task;
+
+        $this->dispatch('toast', text: 'Modo de edição ainda não implementado.', variant: 'info');
+    }
+
+    /**
+     * Eliminar tarefa
+     */
+    public function deleteTask($taskId)
+    {
+        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
+                    ->findOrFail($taskId);
+
+        $task->delete();
+
+        $this->dispatch('toast', text: 'Tarefa eliminada com sucesso!', variant: 'danger');
+    }
+
+    /**
+     * Atualiza o estado da tarefa (Kanban)
      */
     public function updateTaskStatus($taskId, $newStatus)
     {
@@ -35,32 +79,36 @@ class TaskTimeline extends Component
         $this->dispatch('toast', text: 'Estado da tarefa atualizado com sucesso!', variant: 'success');
     }
 
+    /**
+     * Renderização principal
+     */
     public function render()
     {
         $workspace = auth()->user()->currentWorkspace;
 
         if (!$workspace) {
             return <<<'HTML'
-                <div class="p-10 text-center italic text-zinc-500">Nenhum workspace empresarial selecionado.</div>
+                <div class="p-10 text-center italic text-zinc-500">
+                    Nenhum workspace empresarial selecionado.
+                </div>
             HTML;
         }
 
-        // Buscar todos os projetos para o filtro
+        // Projetos para o filtro
         $projects = $workspace->projects()->get();
 
-        // Query principal de tarefas filtrada por busca e projeto
-        $query = $workspace->tasks()->with(['project', 'assignee'])
+        // Query principal
+        $query = $workspace->tasks()
+            ->with(['project', 'assignee'])
             ->where('title', 'like', '%' . $this->search . '%')
             ->when($this->activeProjectId, fn($q) => $q->where('project_id', $this->activeProjectId));
 
         $allTasks = $query->orderBy('due_date', 'asc')->get();
 
-        // Organizar tarefas por colunas para o Kanban
         return view('livewire.business.task-timeline', [
             'projects' => $projects,
             'pendingTasks' => $allTasks->where('status', 'pendente'),
             'inProgressTasks' => $allTasks->where('status', 'em_curso'),
-            'reviewTasks' => $allTasks->where('status', 'revisao'),
             'completedTasks' => $allTasks->where('status', 'concluida'),
             'overdueCount' => $allTasks->filter(fn($t) => $t->isOverdue())->count(),
         ]);

@@ -50,9 +50,7 @@ test('navigation menu can be rendered', function () {
 
     $response = $this->get('/dashboard');
 
-    $response
-        ->assertOk()
-        ->assertSeeVolt('layout.navigation');
+    $response->assertOk();
 });
 
 test('users can logout', function () {

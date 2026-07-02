@@ -15,15 +15,22 @@ class BusinessSettings extends Component
 
     public $workspace;
 
-    // Propriedades do Formulário
-    public $name, $legal_name, $tax_number, $industry, $business_email, $address;
-    public $currency, $initial_capital, $logo;
+    // Campos do formulário
+    public $name;
+    public $legal_name;
+    public $tax_number;
+    public $industry;
+    public $business_email;
+    public $address;
+    public $currency;
+    public $initial_capital;
+    public $logo;
 
     public function mount()
     {
-        // Carrega o workspace atual do utilizador
         $this->workspace = auth()->user()->currentWorkspace;
 
+        // Preencher campos
         $this->name = $this->workspace->name;
         $this->legal_name = $this->workspace->legal_name;
         $this->tax_number = $this->workspace->tax_number;
@@ -35,16 +42,16 @@ class BusinessSettings extends Component
     }
 
     /**
-     * Lógica de Gravação Super Desenvolvida
+     * Guardar dados do perfil empresarial (Versão Diamante)
      */
     public function save()
     {
         $this->validate([
             'name' => 'required|string|max:100',
             'legal_name' => 'nullable|string|max:200',
-            'tax_number' => 'nullable|string|max:20', // Pode adicionar regex de NIF aqui
+            'tax_number' => 'nullable|string|max:20',
             'business_email' => 'nullable|email',
-            'logo' => 'nullable|image|max:2048', // Aceita até 2MB
+            'logo' => 'nullable|image|max:2048',
             'initial_capital' => 'numeric|min:0',
         ]);
 
@@ -59,25 +66,79 @@ class BusinessSettings extends Component
             'initial_capital' => $this->initial_capital,
         ];
 
-        // GESTÃO DE LOGÓTIPO
+        // Gestão de logótipo
         if ($this->logo) {
-            // 1. Remover logo antigo do disco para não encher o servidor
+
+            // Apagar logo antigo
             if ($this->workspace->logo_path) {
                 Storage::disk('public')->delete($this->workspace->logo_path);
             }
 
-            // 2. Guardar o novo
+            // Guardar novo logo
             $data['logo_path'] = $this->logo->store('logos', 'public');
 
-            // 3. LIMPAR A VARIÁVEL (Resolve o erro 500 que tiveste)
+            // Limpar variável para evitar erro 500
             $this->logo = null;
         }
 
+        // Atualizar workspace
         $this->workspace->update($data);
 
-        $this->dispatch('toast', text: 'Dados da empresa atualizados!', variant: 'success');
+        // Toast premium
+        $this->dispatch('toast', text: 'Dados da empresa atualizados com sucesso!', variant: 'success');
     }
 
+    /**
+     * Getter de URL do logo (fallback incluído)
+     */
+    public function getLogoUrlAttribute()
+    {
+        return $this->workspace->logo_path
+            ? asset('storage/' . $this->workspace->logo_path)
+            : asset('images/default-logo.png');
+    }
+
+    /**
+     * Renderização com métricas empresariais Diamante
+     */ public function leaveCompany()
+    {
+        $user = auth()->user();
+
+        // Remove a ligação na tabela pivot
+        $this->workspace->users()->detach($user->id);
+
+        // Limpa o workspace atual do utilizador
+        $user->update(['current_workspace_id' => null]);
+
+        $this->dispatch('toast', variant: 'success', heading: 'Sessão Terminada', message: 'Saíste da equipa com sucesso.');
+
+        return redirect()->route('hub.business.gateway');
+    }
+
+    /**
+     * Apagar Empresa (Apenas para o Dono)
+     */
+    public function deleteCompany()
+{
+    if (!auth()->user()->isOwner()) {
+        abort(403);
+    }
+
+    $user = auth()->user();
+
+    // Limpar apenas a referência ao workspace; o plano do utilizador mantém-se intacto
+    $user->update([
+        'current_workspace_id' => null
+    ]);
+
+    // Apagar a empresa
+    $this->workspace->employees()->delete();
+    $this->workspace->delete();
+
+    $this->dispatch('toast', variant: 'success', heading: 'Empresa Eliminada', message: 'O teu plano Business continua ativo.');
+
+    return redirect()->route('hub.business.gateway');
+}
     public function render()
     {
         return view('livewire.business.business-settings', [

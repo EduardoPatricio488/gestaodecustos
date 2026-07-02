@@ -5,6 +5,10 @@ namespace App\Livewire;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\ActivityLog;
+use App\Models\FamilyBudgetPermission;
+use App\Models\Goal;
+use App\Models\Category;
+use App\Services\FamilyBudgetService;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +18,57 @@ class ManageFamily extends Component
 {
     public $workspaceName;
     public $inviteCode;
+    public $inviteCodeInput = '';
+    public $allowanceUserId = null;
+    public $allowanceLimit = '';
+    public $permUserId = null;
+    public $permCategoryId = null;
+
+    public function setCategoryPermission(): void
+    {
+        if (! auth()->user()->is_admin) {
+            return;
+        }
+
+        $this->validate([
+            'permUserId' => 'required|exists:users,id',
+            'permCategoryId' => 'required|exists:categories,id',
+        ]);
+
+        app(FamilyBudgetService::class)->setCategoryAccess(
+            auth()->user()->currentWorkspace,
+            $this->permUserId,
+            $this->permCategoryId,
+            true
+        );
+
+        $this->reset(['permUserId', 'permCategoryId']);
+        $this->dispatch('toast', text: 'Permissão de categoria configurada!');
+    }
+
+    public function setAllowance(): void
+    {
+        if (! auth()->user()->is_admin) {
+            return;
+        }
+
+        $this->validate([
+            'allowanceUserId' => 'required|exists:users,id',
+            'allowanceLimit' => 'required|numeric|min:0',
+        ]);
+
+        FamilyBudgetPermission::updateOrCreate(
+            [
+                'workspace_id' => auth()->user()->current_workspace_id,
+                'user_id' => $this->allowanceUserId,
+                'category_id' => null,
+            ],
+            ['allowance_limit' => $this->allowanceLimit, 'can_view_all' => false, 'can_edit' => true]
+        );
+
+        $this->reset(['allowanceUserId', 'allowanceLimit']);
+        $this->dispatch('toast', text: 'Mesada digital configurada!');
+    }
 
     public function mount()
     {
@@ -53,6 +108,30 @@ class ManageFamily extends Component
         auth()->user()->currentWorkspace->users()->detach($userId);
         $this->dispatch('toast', text: 'Membro removido.');
     }
+    public function generateInviteCode()
+{
+    $workspace = auth()->user()->currentWorkspace;
+    if ($workspace) {
+        $workspace->update(['invite_code' => strtoupper(\Illuminate\Support\Str::random(8))]);
+        $this->inviteCode = $workspace->invite_code;
+        $this->dispatch('toast', text: 'Novo código de convite gerado!');
+    }
+}
+
+public function joinWorkspace()
+{
+    $this->validate(['inviteCodeInput' => 'required|string|exists:workspaces,invite_code']);
+    $workspace = Workspace::where('invite_code', $this->inviteCodeInput)->first();
+
+    if ($workspace->users()->where('user_id', auth()->id())->exists()) {
+        $this->dispatch('toast', variant: 'error', text: 'Já fazes parte desta conta.');
+        return;
+    }
+
+    auth()->user()->workspaces()->attach($workspace->id, ['role' => 'member']);
+    auth()->user()->update(['current_workspace_id' => $workspace->id]);
+    return redirect()->route('dashboard');
+}
 
     public function render()
     {
@@ -96,7 +175,14 @@ class ManageFamily extends Component
             'iAmAdmin' => auth()->user()->is_admin,
             'memberStats' => $memberStats,
             'topRecorders' => $topRecorders,
-            'recentActivities' => $recentActivities
+            'recentActivities' => $recentActivities,
+            'familyGoals' => Goal::where('workspace_id', $workspace->id)->get(),
+            'allowances' => FamilyBudgetPermission::where('workspace_id', $workspace->id)
+                ->whereNotNull('allowance_limit')
+                ->with('user')
+                ->get(),
+            'categories' => Category::where('workspace_id', $workspace->id)->orderBy('name')->get(),
+            'familyService' => app(FamilyBudgetService::class),
         ]);
     }
 }

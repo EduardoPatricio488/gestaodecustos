@@ -1,148 +1,193 @@
 <x-guest-layout>
-    {{-- EFEITO DE FUNDO DISCRETO --}}
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute -top-[5%] -left-[5%] size-64 bg-brand-500/5 blur-[80px] rounded-full"></div>
-    </div>
+    <div class="space-y-7" x-data>
 
-    {{-- LIMITADOR DE LARGURA (MAX-W-SM) --}}
-    <div class="mx-auto max-w-[360px] relative z-10 space-y-6">
-
-        {{-- HEADER COMPACTO --}}
-        <div class="text-center space-y-4">
-            <div class="inline-flex relative group">
-                <div class="absolute inset-0 bg-brand-500/15 blur-xl rounded-full transition-all"></div>
-                <div class="relative p-3.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl">
-                    <flux:icon name="user-plus" class="size-7 text-brand-600" />
+        {{-- HEADER --}}
+        <div class="text-center space-y-3">
+            <div class="inline-flex relative">
+                <div class="absolute inset-0 bg-emerald-500/20 blur-2xl rounded-full scale-150"></div>
+                <div class="relative flex items-center justify-center size-14 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl shadow-lg shadow-emerald-500/30">
+                    <flux:icon name="user-plus" class="size-7 text-white" />
                 </div>
             </div>
-
-            <div class="space-y-1">
-                <h1 class="text-2xl font-black dark:text-white uppercase tracking-tighter italic">Novo Registo</h1>
-                <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-widest opacity-80 italic">Cria a tua identidade no sistema</p>
+            <div>
+                <h1 class="text-xl font-black text-zinc-900 dark:text-white tracking-tight">Criar conta</h1>
+                <p class="text-xs text-zinc-500 mt-0.5">Regista-te para começar a gerir os teus custos</p>
             </div>
         </div>
 
-        <form method="POST" action="{{ route('register') }}" class="space-y-4">
+        {{-- FORMULÁRIO --}}
+        <form
+            method="POST"
+            action="{{ route('register') }}"
+            class="space-y-4"
+            x-data="{
+                showPass: false,
+                showConfirm: false,
+                password: '',
+                get strength() {
+                    if (!this.password) return 0;
+                    let score = 0;
+                    if (this.password.length >= 8) score++;
+                    if (this.password.length >= 12) score++;
+                    if (/[A-Z]/.test(this.password)) score++;
+                    if (/[0-9]/.test(this.password)) score++;
+                    if (/[^A-Za-z0-9]/.test(this.password)) score++;
+                    return score;
+                },
+                get strengthLabel() {
+                    const labels = ['', 'Fraca', 'Razoável', 'Boa', 'Forte', 'Excelente'];
+                    return labels[this.strength] || '';
+                },
+                get strengthColor() {
+                    const colors = ['', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-emerald-400', 'bg-emerald-500'];
+                    return colors[this.strength] || '';
+                }
+            }"
+        >
             @csrf
 
-            <!-- NOME -->
+            {{-- NOME --}}
             <div class="space-y-1.5">
-                <flux:label class="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] px-1">Nome Identificativo</flux:label>
-                <flux:input
-                    name="name"
-                    :value="old('name')"
-                    icon="user"
-                    required
-                    autofocus
-                    placeholder="O teu nome"
-                    class="font-bold !bg-zinc-50 dark:!bg-zinc-950 !border-none rounded-xl h-11 shadow-inner focus:ring-1 focus:ring-brand-500/20 text-sm"
-                />
-                <x-input-error :messages="$errors->get('name')" class="mt-1" />
+                <label class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Nome</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                        <flux:icon name="user" class="size-4 text-zinc-400" />
+                    </div>
+                    <input
+                        name="name"
+                        type="text"
+                        value="{{ old('name') }}"
+                        required
+                        autofocus
+                        autocomplete="name"
+                        placeholder="O teu nome completo"
+                        class="w-full h-11 pl-10 pr-4 bg-zinc-50 dark:bg-zinc-900 border {{ $errors->has('name') ? 'border-red-400 dark:border-red-700' : 'border-zinc-200 dark:border-zinc-800' }} rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
+                    />
+                </div>
+                <x-input-error :messages="$errors->get('name')" class="text-[11px]" />
             </div>
 
-            <!-- EMAIL -->
+            {{-- EMAIL --}}
             <div class="space-y-1.5">
-                <flux:label class="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] px-1">Email</flux:label>
-                <flux:input
-                    name="email"
-                    :value="old('email')"
-                    type="email"
-                    icon="envelope"
-                    required
-                    placeholder="teu@email.com"
-                    class="font-bold !bg-zinc-50 dark:!bg-zinc-950 !border-none rounded-xl h-11 shadow-inner focus:ring-1 focus:ring-brand-500/20 text-sm"
-                />
-                <x-input-error :messages="$errors->get('email')" class="mt-1" />
+                <label class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Email</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                        <flux:icon name="envelope" class="size-4 text-zinc-400" />
+                    </div>
+                    <input
+                        name="email"
+                        type="email"
+                        value="{{ old('email') }}"
+                        required
+                        autocomplete="email"
+                        placeholder="teu@email.com"
+                        class="w-full h-11 pl-10 pr-4 bg-zinc-50 dark:bg-zinc-900 border {{ $errors->has('email') ? 'border-red-400 dark:border-red-700' : 'border-zinc-200 dark:border-zinc-800' }} rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
+                    />
+                </div>
+                <x-input-error :messages="$errors->get('email')" class="text-[11px]" />
             </div>
 
-            <!-- PASSWORD E CONFIRMAÇÃO (LADO A LADO SE POSSÍVEL, MAS AQUI EM COLUNA PARA MANTER COMPACTO) -->
-            <div class="space-y-4">
-                <div class="space-y-1.5">
-                    <flux:label class="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] px-1">Palavra-passe</flux:label>
-                    <flux:input
+            {{-- PASSWORD --}}
+            <div class="space-y-1.5">
+                <label class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                        <flux:icon name="lock-closed" class="size-4 text-zinc-400" />
+                    </div>
+                    <input
                         name="password"
-                        type="password"
-                        icon="lock-closed"
+                        :type="showPass ? 'text' : 'password'"
+                        x-model="password"
                         required
+                        autocomplete="new-password"
                         placeholder="Mínimo 8 caracteres"
-                        viewable
-                        class="font-bold !bg-zinc-50 dark:!bg-zinc-950 !border-none rounded-xl h-11 shadow-inner focus:ring-1 focus:ring-brand-500/20 text-sm"
+                        class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border {{ $errors->has('password') ? 'border-red-400 dark:border-red-700' : 'border-zinc-200 dark:border-zinc-800' }} rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
                     />
-                    <x-input-error :messages="$errors->get('password')" class="mt-1" />
+                    <button type="button" @click="showPass = !showPass" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors focus:outline-none">
+                        <flux:icon x-show="!showPass" name="eye" class="size-4" />
+                        <flux:icon x-show="showPass" name="eye-slash" class="size-4" x-cloak />
+                    </button>
                 </div>
 
-                <div class="space-y-1.5">
-                    <flux:label class="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] px-1">Confirmar</flux:label>
-                    <flux:input
-                        name="password_confirmation"
-                        type="password"
-                        icon="shield-check"
-                        required
-                        placeholder="Repete a senha"
-                        viewable
-                        class="font-bold !bg-zinc-50 dark:!bg-zinc-950 !border-none rounded-xl h-11 shadow-inner focus:ring-1 focus:ring-brand-500/20 text-sm"
-                    />
-                    <x-input-error :messages="$errors->get('password_confirmation')" class="mt-1" />
+                {{-- INDICADOR DE FORÇA --}}
+                <div x-show="password.length > 0" x-cloak class="space-y-1.5 pt-0.5">
+                    <div class="flex gap-1">
+                        <template x-for="i in 5">
+                            <div
+                                class="h-1 flex-1 rounded-full transition-all duration-300"
+                                :class="i <= strength ? strengthColor : 'bg-zinc-200 dark:bg-zinc-800'"
+                            ></div>
+                        </template>
+                    </div>
+                    <p class="text-[11px] font-semibold transition-colors" :class="strength <= 1 ? 'text-red-500' : strength <= 2 ? 'text-orange-500' : strength <= 3 ? 'text-yellow-600' : 'text-emerald-600'">
+                        Segurança: <span x-text="strengthLabel"></span>
+                    </p>
                 </div>
+
+                <x-input-error :messages="$errors->get('password')" class="text-[11px]" />
             </div>
 
-            {{-- BOTÃO DE REGISTO COMPACTO --}}
-            <div class="pt-3">
-                <flux:button variant="primary" type="submit" class="w-full h-11 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 hover:bg-brand-500 transition-all hover:scale-[1.01] active:scale-95 text-xs">
-                    {{ __('Ativar a Minha Conta') }}
-                </flux:button>
+            {{-- CONFIRMAR PASSWORD --}}
+            <div class="space-y-1.5">
+                <label class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Confirmar password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                        <flux:icon name="shield-check" class="size-4 text-zinc-400" />
+                    </div>
+                    <input
+                        name="password_confirmation"
+                        :type="showConfirm ? 'text' : 'password'"
+                        required
+                        autocomplete="new-password"
+                        placeholder="Repete a password"
+                        class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border {{ $errors->has('password_confirmation') ? 'border-red-400 dark:border-red-700' : 'border-zinc-200 dark:border-zinc-800' }} rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
+                    />
+                    <button type="button" @click="showConfirm = !showConfirm" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors focus:outline-none">
+                        <flux:icon x-show="!showConfirm" name="eye" class="size-4" />
+                        <flux:icon x-show="showConfirm" name="eye-slash" class="size-4" x-cloak />
+                    </button>
+                </div>
+                <x-input-error :messages="$errors->get('password_confirmation')" class="text-[11px]" />
+            </div>
+
+            {{-- BOTÃO --}}
+            <div class="pt-1">
+                <button
+                    type="submit"
+                    class="group relative w-full h-11 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-200 hover:-translate-y-px active:translate-y-0 active:shadow-md"
+                >
+                    <flux:icon name="check-circle" class="size-4 opacity-80" />
+                    <span>Criar a minha conta</span>
+                </button>
             </div>
         </form>
-        {{-- DIVISOR DISCRETO --}}
-        <div class="relative py-2">
-            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+
+        {{-- SEPARADOR --}}
+        <div class="relative">
+            <div class="absolute inset-0 flex items-center">
                 <div class="w-full border-t border-zinc-100 dark:border-zinc-800"></div>
             </div>
             <div class="relative flex justify-center">
-                <span class="bg-white dark:bg-zinc-950 px-3 text-[8px] font-black uppercase tracking-[0.4em] text-zinc-400 opacity-50 italic">Security Protocol</span>
+                <span class="bg-white dark:bg-zinc-900/50 px-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">
+                    Já tens conta?
+                </span>
             </div>
         </div>
 
-        {{-- RETORNO AO LOGIN --}}
-        <div class="text-center space-y-6 animate-fade-in-delayed">
-            <p class="text-xs text-zinc-500 font-medium">
-                Já tens uma conta?
-                <flux:link :href="route('login')" wire:navigate class="font-black text-brand-600 dark:text-brand-400 hover:text-brand-500 transition-colors">Fazer Login</flux:link>
-            </p>
+        {{-- LINK LOGIN --}}
+        <a
+            href="{{ route('login') }}"
+            wire:navigate
+            class="flex items-center justify-center gap-2 w-full h-11 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-sm font-semibold text-zinc-700 dark:text-zinc-300 rounded-xl transition-all duration-200 hover:-translate-y-px"
+        >
+            <flux:icon name="arrow-right-end-on-rectangle" class="size-4 text-zinc-400" />
+            Fazer login
+        </a>
 
-            <footer class="pt-4">
-                <p class="text-[8px] font-black text-zinc-300 dark:text-zinc-800 uppercase tracking-[0.5em] cursor-default">
-                    &copy; {{ date('Y') }} · {{ config('app.name') }}
-                </p>
-            </footer>
-        </div>
     </div>
 </x-guest-layout>
 
-{{-- 4. ESTILOS DE ANIMAÇÃO E INTERFACE --}}
 <style>
-    @keyframes compactFadeUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .relative.z-10 {
-        animation: compactFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    .animate-fade-in-delayed {
-        opacity: 0;
-        animation: compactFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
-    }
-
-    /* Estilo do foco nos inputs Flux */
-    input:focus {
-        background-color: transparent !important;
-    }
+    [x-cloak] { display: none !important; }
+    input { caret-color: theme('colors.emerald.500', #10b981); }
 </style>

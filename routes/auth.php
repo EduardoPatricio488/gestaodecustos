@@ -19,7 +19,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Volt::route('verify-email', 'pages.auth.verify-email')
+    Route::get('/verify-email', fn () => view('pages::auth.verify-email'))
         ->name('verification.notice');
 
     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
@@ -28,4 +28,7 @@ Route::middleware('auth')->group(function () {
 
     Volt::route('confirm-password', 'pages.auth.confirm-password')
         ->name('password.confirm');
+
+    Route::get('/two-factor-challenge', fn () => view('pages::auth.two-factor-challenge'))
+        ->name('two-factor.login');
 });

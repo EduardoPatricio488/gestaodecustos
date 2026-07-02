@@ -8,54 +8,76 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('components.layouts.app')]
 class GlobalLogs extends Component
 {
     use WithPagination;
 
+    public $search = '';
     public $filterAction = '';
+    public $filterType = '';
 
-    /**
-     * Limpa todos os logs antigos (Manutenção).
-     */
+    // Para ver detalhes do log
+    public $selectedLog = null;
+
+    protected $queryString = ['search', 'filterAction', 'filterType'];
+
+    public function updatingSearch() { $this->resetPage(); }
+
     public function clearOldLogs()
     {
-        // Remove logs com mais de 30 dias
         ActivityLog::where('created_at', '<', now()->subDays(30))->delete();
-        $this->dispatch('toast', text: 'Logs antigos limpos com sucesso.');
+        $this->dispatch('toast', text: 'Histórico antigo (30 dias+) foi eliminado.');
+    }
+
+    public function showLogDetails($id)
+    {
+        $this->selectedLog = ActivityLog::with('user')->find($id);
+        $this->dispatch('modal-show', name: 'log-details-modal');
     }
 
     public function render()
     {
-        // Puxamos os logs de TODOS os utilizadores e espaços
-        $logs = ActivityLog::withoutGlobalScopes()
-            ->with(['user']) // Carrega o utilizador que fez a ação
+        $logs = ActivityLog::query()
+            ->with(['user'])
+            ->when($this->search, function($q) {
+                $q->where('description', 'like', "%{$this->search}%")
+                  ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$this->search}%"));
+            })
             ->when($this->filterAction, fn($q) => $q->where('action', $this->filterAction))
+            ->when($this->filterType, fn($q) => $q->where('type', $this->filterType))
             ->latest()
             ->paginate(20);
 
         return view('livewire.admin.global-logs', [
             'logs' => $logs,
             'stats' => [
-                'total_actions' => ActivityLog::withoutGlobalScopes()->count(),
-                'unique_users_active' => ActivityLog::withoutGlobalScopes()->distinct('user_id')->count(),
+                'total_actions' => ActivityLog::count(),
+                'unique_users_24h' => ActivityLog::where('created_at', '>=', now()->subDay())->distinct('user_id')->count(),
+                'security_alerts' => ActivityLog::where('type', 'seguranca')->where('created_at', '>=', now()->subWeek())->count(),
                 'last_error' => $this->getLastLaravelError(),
             ]
         ]);
     }
 
-    /**
-     * Tenta ler o último erro real do ficheiro de log do servidor.
-     */
     private function getLastLaravelError()
     {
         $logPath = storage_path('logs/laravel.log');
         if (File::exists($logPath)) {
-            $content = File::get($logPath);
-            $lines = explode("\n", $content);
-            return count($lines) > 2 ? substr(end($lines), 0, 100) . '...' : 'Sem erros recentes.';
+            $content = tailCustom($logPath, 5); // Função hipotética ou ler as últimas linhas
+            $lines = array_filter(explode("\n", $content));
+            return count($lines) > 0 ? trim(substr(end($lines), 0, 150)) : 'Silêncio no servidor...';
         }
-        return 'Log de erros não encontrado.';
+        return 'Ficheiro de logs não acessível.';
     }
+}
+
+// Helper simples para não carregar o ficheiro todo em memória
+function tailCustom($filepath, $lines = 10) {
+    $data = file_get_contents($filepath);
+    $data = explode("\n", $data);
+    $data = array_slice($data, -$lines);
+    return implode("\n", $data);
 }

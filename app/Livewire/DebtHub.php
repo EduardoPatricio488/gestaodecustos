@@ -5,78 +5,142 @@ namespace App\Livewire;
 use App\Models\Debt;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('components.layouts.app')]
 class DebtHub extends Component
 {
-    // Campos para nova dívida
-    public $type = 'owe'; // 'owe' ou 'owed'
-    public $person_name, $amount, $description, $due_at;
+    // Propriedades do Formulário - Inicializadas para evitar erros de tipo
+    public string $type = 'owe';
+    public string $person_name = '';
+    public $amount = '';
+    public string $description = '';
+    public string $due_at = '';
+    public ?int $editingId = null;
 
-    /**
-     * Guarda um novo registo de dívida ou empréstimo.
-     */
-    public function save()
+    public function openCreateModal()
+    {
+        $this->reset(['person_name', 'amount', 'description', 'due_at', 'editingId']);
+        $this->type = 'owe';
+        $this->dispatch('open-debt-modal');
+    }
+
+    public function save(): void
     {
         $this->validate([
             'person_name' => 'required|string|max:100',
-            'amount' => 'required|numeric|min:0.01',
-            'type' => 'required|in:owe,owed',
-            'due_at' => 'nullable|date',
+            'amount'      => 'required|numeric|min:0.01',
+            'type'        => 'required|in:owe,owed',
+            'due_at'      => 'nullable|date',
         ]);
 
-        Debt::create([
-            'user_id' => auth()->id(),
-            'type' => $this->type,
-            'person_name' => $this->person_name,
-            'amount' => $this->amount,
-            'description' => $this->description,
-            'due_at' => $this->due_at,
-            'is_paid' => false,
-        ]);
+        $workspaceId = auth()->user()->current_workspace_id;
 
-        // Gamificação: Ganha 30 XP por organizar dívidas
-        auth()->user()->addXp(30);
+        Debt::updateOrCreate(
+            ['id' => $this->editingId],
+            [
+                'user_id'      => auth()->id(),
+                'workspace_id' => $workspaceId,
+                'type'         => $this->type,
+                'person_name'  => $this->person_name,
+                'amount'       => (float) $this->amount,
+                'description'  => $this->description,
+                'due_at'       => $this->due_at ?: null,
+                'is_paid'      => false,
+            ]
+        );
 
-        $this->reset(['person_name', 'amount', 'description', 'due_at']);
-        $this->dispatch('modal-close', name: 'add-debt-modal');
-        $this->dispatch('toast', text: 'Registo de dívida guardado!');
+        if (!$this->editingId && method_exists(auth()->user(), 'addXp')) {
+            auth()->user()->addXp(30);
+        }
+
+        $this->dispatch('toast', text: $this->editingId ? 'Registo atualizado!' : 'Protocolo validado!');
+        $this->dispatch('close-debt-modal');
+        $this->reset(['person_name', 'amount', 'description', 'due_at', 'editingId']);
     }
 
-    /**
-     * Alterna o estado de pagamento (Liquidado / Pendente).
-     */
-    public function togglePaid($id)
+    public function edit(int $id)
     {
-        $debt = Debt::findOrFail($id);
+        $debt = Debt::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+
+        $this->editingId   = $debt->id;
+        $this->type        = $debt->type;
+        $this->person_name = $debt->person_name;
+        $this->amount      = $debt->amount;
+        $this->description = $debt->description ?? '';
+        $this->due_at      = $debt->due_at ? Carbon::parse($debt->due_at)->format('Y-m-d') : '';
+
+        $this->dispatch('open-debt-modal');
+    }
+
+    public function togglePaid(int $id)
+    {
+        $debt = Debt::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         $debt->update(['is_paid' => !$debt->is_paid]);
+        $this->dispatch('toast', text: $debt->is_paid ? 'Operação liquidada!' : 'Registo reaberto.');
+    }
 
-        $status = $debt->is_paid ? 'liquidada' : 'reaberta';
-        $this->dispatch('toast', text: "Dívida {$status}!");
+    public function delete(int $id)
+    {
+        Debt::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id)->delete();
+        $this->dispatch('toast', text: 'Registo eliminado.');
     }
 
     /**
-     * Elimina o registo.
+     * Lógica de Decoração (Extraída do Render para limpeza)
      */
-    public function delete($id)
+    private function decorateDebt($debt)
     {
-        Debt::where('id', $id)->delete();
-        $this->dispatch('toast', text: 'Registo eliminado.');
+        if ($debt->due_at) {
+            $due = Carbon::parse($debt->due_at);
+            $debt->isOverdue = $due->isPast() && !$due->isToday();
+            $debt->isUrgent  = $due->isBetween(now(), now()->addDays(7));
+        } else {
+            $debt->isOverdue = false;
+            $debt->isUrgent  = false;
+        }
+        return $debt;
     }
 
     public function render()
     {
-        // O Trait BelongsToWorkspace filtra automaticamente pelo grupo atual
-        $allDebts = Debt::latest()->get();
+        $wsId = auth()->user()->current_workspace_id;
+
+        // 1. Queries Diretas (Performance: Filtrar no SQL é melhor que em PHP)
+        $iOwe = Debt::where('workspace_id', $wsId)
+            ->where('type', 'owe')
+            ->where('is_paid', false)
+            ->orderBy('due_at', 'asc')
+            ->get()
+            ->map(fn($d) => $this->decorateDebt($d));
+
+        $theyOweMe = Debt::where('workspace_id', $wsId)
+            ->where('type', 'owed')
+            ->where('is_paid', false)
+            ->orderBy('due_at', 'asc')
+            ->get()
+            ->map(fn($d) => $this->decorateDebt($d));
+
+        $history = Debt::where('workspace_id', $wsId)
+            ->where('is_paid', true)
+            ->latest('updated_at')
+            ->take(10)
+            ->get();
+
+        // 2. Cálculos de KPI baseados nas queries já filtradas
+        $totalIOwe = $iOwe->sum('amount');
+        $totalTheyOweMe = $theyOweMe->sum('amount');
 
         return view('livewire.debt-hub', [
-            'iOwe' => $allDebts->where('type', 'owe')->where('is_paid', false),
-            'theyOweMe' => $allDebts->where('type', 'owed')->where('is_paid', false),
-            'history' => $allDebts->where('is_paid', true)->take(10),
-
-            // Totais para os cards
-            'totalIOwe' => $allDebts->where('type', 'owe')->where('is_paid', false)->sum('amount'),
-            'totalTheyOweMe' => $allDebts->where('type', 'owed')->where('is_paid', false)->sum('amount'),
+            'iOwe'           => $iOwe,
+            'theyOweMe'      => $theyOweMe,
+            'history'        => $history,
+            'totalIOwe'      => $totalIOwe,
+            'totalTheyOweMe' => $totalTheyOweMe,
+            'netBalance'     => $totalTheyOweMe - $totalIOwe,
+            'overdueCount'   => $iOwe->where('isOverdue', true)->count(),
+            'urgentCount'    => $iOwe->where('isUrgent', true)->count(),
         ]);
     }
 }

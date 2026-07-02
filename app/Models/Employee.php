@@ -15,13 +15,27 @@ class Employee extends Model
         'role',
         'salary',
         'pay_day',
-        'status'
+        'photo_path',
+        'active',
+        'suspended',
+        'terminated_at',
+        'resignation_reason', // NOVO
+        'resignation_status'  // NOVO
+    ];
+
+    /**
+     * Casts para garantir que o Laravel trata os campos corretamente
+     */
+    protected $casts = [
+        'terminated_at' => 'datetime',
+        'active' => 'boolean',
+        'suspended' => 'boolean',
+        'salary' => 'decimal:2',
     ];
 
     /**
      * RELAÇÕES
      */
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -32,7 +46,6 @@ class Employee extends Model
         return $this->belongsTo(Workspace::class);
     }
 
-    // NOVA RELAÇÃO: Histórico de Ausências e Férias
     public function absences(): HasMany
     {
         return $this->hasMany(Absence::class);
@@ -42,18 +55,17 @@ class Employee extends Model
      * INTELIGÊNCIA DE RECURSOS HUMANOS
      */
 
-    // Calcula quantos dias de férias gozou no ano atual
+    // Dias de férias usados no ano atual
     public function getVacationDaysUsedAttribute(): int
     {
         return (int) $this->absences()
             ->where('type', 'ferias')
             ->where('status', 'aprovado')
             ->whereYear('start_date', now()->year)
-            ->get()
-            ->sum('business_days'); // Usa o cálculo de dias úteis que criámos no Modelo Absence
+            ->sum('business_days');
     }
 
-    // Verifica se o colaborador está de férias ou baixa HOJE
+    // Verifica se está ausente hoje
     public function getIsAbsentTodayAttribute(): bool
     {
         return $this->absences()
@@ -63,9 +75,37 @@ class Employee extends Model
             ->exists();
     }
 
-    // Retorna o estado atual do colaborador (Ativo ou Ausente)
+    /**
+     * FOTO DO COLABORADOR
+     */
+    public function getPhotoUrlAttribute()
+    {
+        return $this->photo_path
+            ? asset('storage/' . $this->photo_path)
+            : asset('images/default-employee.png');
+    }
+
+    /**
+     * Estado atual do colaborador (Texto Dinâmico)
+     */
     public function getCurrentStatusText(): string
     {
+        if ($this->terminated_at) {
+            return "Vínculo Terminado";
+        }
+
+        if ($this->resignation_status === 'pending') {
+            return "Rescisão Pendente"; // NOVO: Prioridade visual no status
+        }
+
+        if ($this->suspended) {
+            return "Suspenso";
+        }
+
+        if (!$this->active) {
+            return "Inativo";
+        }
+
         if ($this->is_absent_today) {
             $currentAbsence = $this->absences()
                 ->where('status', 'aprovado')
@@ -73,7 +113,7 @@ class Employee extends Model
                 ->whereDate('end_date', '>=', now())
                 ->first();
 
-            return "Ausente (" . $currentAbsence->type_text . ")";
+            return "Ausente (" . ($currentAbsence->type ?? 'Férias/Baixa') . ")";
         }
 
         return "Em funções";

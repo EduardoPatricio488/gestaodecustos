@@ -123,6 +123,7 @@
                         <flux:button variant="ghost" icon="ellipsis-horizontal" size="sm" class="rounded-xl" />
                         <flux:menu class="min-w-[180px] p-2">
                             <flux:menu.item wire:click="edit({{ $client->id }})" icon="pencil-square" class="font-bold text-xs">Editar Ficha</flux:menu.item>
+                            <flux:menu.item wire:click="generatePortalLink({{ $client->id }})" icon="link" class="font-bold text-xs">Gerar Portal</flux:menu.item>
                             <flux:menu.separator />
                             <flux:menu.item wire:click="delete({{ $client->id }})" wire:confirm="Apagar cliente e todo o histórico associado?" variant="danger" icon="trash" class="font-bold text-xs">Eliminar Entidade</flux:menu.item>
                         </flux:menu>

@@ -1,9 +1,29 @@
-const cacheName = 'finance-pro-v1';
+const cacheName = 'finance-pro-v2';
+const OFFLINE_QUEUE_KEY = 'finance-pro-offline-expenses';
+
 const staticAssets = [
     '/manifest.json',
     '/icon-192x192.png',
     '/icon-512x512.png'
 ];
+
+// Sync offline expenses when back online
+self.addEventListener('sync', event => {
+    if (event.tag === 'sync-expenses') {
+        event.waitUntil(syncOfflineExpenses());
+    }
+});
+
+async function syncOfflineExpenses() {
+    const clients = await self.clients.matchAll();
+    for (const client of clients) {
+        client.postMessage({ type: 'SYNC_OFFLINE_EXPENSES' });
+    }
+}
+
+self.addEventListener('online', () => {
+    self.registration.sync.register('sync-expenses').catch(() => {});
+});
 
 
 self.addEventListener('message', event => {

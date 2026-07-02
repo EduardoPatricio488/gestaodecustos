@@ -3,10 +3,10 @@
 namespace App\Livewire;
 
 use App\Models\Investment;
-use Livewire\Component;
 use App\Models\InvestmentIncome;
 use App\Services\DebtInstrumentCalculator;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -18,7 +18,9 @@ class InvestmentsHub extends Component
     use WithFileUploads;
 
     public $editingId = null;
+    public array $suggestions = [];
     public $search = '';
+    public bool $showNetValues = false;
     public $filterType = 'Todos';
     public bool $isRefreshing = false;
     public ?string $lastUpdated = null;
@@ -26,40 +28,257 @@ class InvestmentsHub extends Component
     public $symbol, $name, $isin, $type = 'Acao';
     public $exchange, $network, $provider, $broker;
     public $operation_date, $quantity, $average_price, $fees = 0, $total_amount;
+
     public $interest_rate;        // Taxa de juro anual bruta (%)
-public $loyalty_bonus;        // Prémio de permanência (ex: +0,25%)
-public $capitalization_date;  // Data de capitalização trimestral
-public $issuer;               // Entidade emitente (ex: IGCP)
-public $series;               // Série (ex: Série F)
-public $product_type = 'CA';
+    public $loyalty_bonus;        // Prémio de permanência (ex: +0,25%)
+    public $capitalization_date;  // Data de capitalização trimestral
+    public $issuer;               // Entidade emitente (ex: IGCP)
+    public $series;               // Série (ex: Série F)
+    public $product_type = 'CA';
+
+public array $recentCompanies = [];
+public int $highlightIndex = -1;
+
+
+    // IA / Análise de empresa
+    public $companyQuery = '';
+
+    public $tab = 'portfolio';
+    public $companyAnalysis = null;
+    public string $aiProvider = 'openrouter';
+
 
     // ─── APIs ────────────────────────────────────────────────────────────────
     const ALPHA_VANTAGE_KEY = 'WPP1D4IXEJ1U7J4V';
     const CACHE_PRICES_TTL  = 900;   // 15 min para preços de ativos
-    const CACHE_TICKER_TTL  = 300;   // 5 min para o ticker do topo
+    const CACHE_TICKER_TTL  = 300;   // 5 min para o ticker do topo;
 
     public function mount(): void
     {
         $this->lastUpdated = now()->format('H:i');
     }
 
-    // ─── FORM ────────────────────────────────────────────────────────────────
+    // ─── IA: OpenRouter / Gemini + Yahoo Finance 15 ─────────────────────────
+private array $companyList = [
+    ['ticker' => 'AAPL', 'name' => 'Apple', 'logo' => 'https://logo.clearbit.com/apple.com'],
+    ['ticker' => 'MSFT', 'name' => 'Microsoft', 'logo' => 'https://logo.clearbit.com/microsoft.com'],
+    ['ticker' => 'GOOGL', 'name' => 'Alphabet (Google)', 'logo' => 'https://logo.clearbit.com/google.com'],
+    ['ticker' => 'AMZN', 'name' => 'Amazon', 'logo' => 'https://logo.clearbit.com/amazon.com'],
+    ['ticker' => 'META', 'name' => 'Meta Platforms', 'logo' => 'https://logo.clearbit.com/meta.com'],
+    ['ticker' => 'TSLA', 'name' => 'Tesla', 'logo' => 'https://logo.clearbit.com/tesla.com'],
+    ['ticker' => 'NVDA', 'name' => 'Nvidia', 'logo' => 'https://logo.clearbit.com/nvidia.com'],
+    ['ticker' => 'NFLX', 'name' => 'Netflix', 'logo' => 'https://logo.clearbit.com/netflix.com'],
+    ['ticker' => 'AMD',  'name' => 'AMD', 'logo' => 'https://logo.clearbit.com/amd.com'],
+    ['ticker' => 'INTC', 'name' => 'Intel', 'logo' => 'https://logo.clearbit.com/intel.com'],
+    ['ticker' => 'ORCL', 'name' => 'Oracle', 'logo' => 'https://logo.clearbit.com/oracle.com'],
+    ['ticker' => 'IBM',  'name' => 'IBM', 'logo' => 'https://logo.clearbit.com/ibm.com'],
+    ['ticker' => 'ADBE', 'name' => 'Adobe', 'logo' => 'https://logo.clearbit.com/adobe.com'],
+    ['ticker' => 'CRM',  'name' => 'Salesforce', 'logo' => 'https://logo.clearbit.com/salesforce.com'],
+    ['ticker' => 'V',    'name' => 'Visa', 'logo' => 'https://logo.clearbit.com/visa.com'],
+    ['ticker' => 'MA',   'name' => 'Mastercard', 'logo' => 'https://logo.clearbit.com/mastercard.com'],
+];
 
-    public function setType(string $newType): void
+
+public function updatedCompanyQuery()
 {
-     $this->type = $newType;
-    $this->reset(['exchange', 'network', 'provider', 'interest_rate',
-                  'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type']);
+    // Se a query foi alterada via código (teclado), não resetamos o index aqui
+    // a menos que a string mude drasticamente.
+    $query = strtoupper(trim($this->companyQuery));
 
-    if ($newType === 'Divida') {
-        $this->average_price = 1.00;
-        $this->fees          = 0;
-        $this->issuer        = 'IGCP / Estado Português';
-        $this->broker        = 'AforroNet';
-        $this->product_type  = 'CA';
+    if ($query === '') {
+        $this->suggestions = [];
+        $this->highlightIndex = -1;
+        return;
+    }
+
+    $this->suggestions = collect($this->companyList)
+        ->filter(fn($item) =>
+            str_contains(strtoupper($item['ticker']), $query) ||
+            str_contains(strtoupper($item['name']), $query)
+        )
+        ->take(6)
+        ->values()
+        ->toArray();
+}
+
+public function getCompanyData($ticker)
+{
+    return collect($this->companyList)->firstWhere('ticker', $ticker);
+}
+
+
+public function selectSuggestion($ticker)
+{
+    $this->companyQuery = $ticker;
+    $this->suggestions = []; // Fecha a lista imediatamente
+    $this->highlightIndex = -1;
+
+    if (!in_array($ticker, $this->recentCompanies)) {
+        array_unshift($this->recentCompanies, $ticker);
+        $this->recentCompanies = array_slice($this->recentCompanies, 0, 5);
+    }
+
+    // Dispara a análise logo após a seleção
+    $this->analyzeCompany();
+}
+public function moveHighlight($direction)
+{
+    if (empty($this->suggestions)) return;
+
+    if ($direction === 'up') {
+        $this->highlightIndex = $this->highlightIndex <= 0 ? count($this->suggestions) - 1 : $this->highlightIndex - 1;
+    } else {
+        $this->highlightIndex = $this->highlightIndex >= count($this->suggestions) - 1 ? 0 : $this->highlightIndex + 1;
+    }
+}
+public function confirmSelection()
+{
+    if ($this->highlightIndex >= 0 && isset($this->suggestions[$this->highlightIndex])) {
+        $this->selectSuggestion($this->suggestions[$this->highlightIndex]['ticker']);
+    } else {
+        // Se não houver nada destacado mas houver texto, tenta analisar direto
+        $this->analyzeCompany();
     }
 }
 
+    private function analyzeWithOpenRouter(string $company)
+    {
+        $prompt = "
+            Faz uma análise financeira profunda da empresa '{$company}'.
+            Inclui:
+            - Fundamentais (receita, margens, balanço, cashflow)
+            - Valorização (P/E, P/B, comparação setorial)
+            - Riscos (mercado, operacional, regulatório, concentração)
+            - Estratégia (drivers, moat, execução)
+            - Score (0-100)
+            - Selo: Comprar / Manter / Vender
+            - Impacto no portefólio
+            Responde em JSON estruturado.
+        ";
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+            'Content-Type'  => 'application/json',
+        ])->post('https://openrouter.ai/api/v1/chat/completions', [
+            'model' => 'openai/gpt-4o-mini',
+            'messages' => [
+                ['role' => 'system', 'content' => 'És um analista financeiro profissional.'],
+                ['role' => 'user', 'content' => $prompt],
+            ],
+            'temperature' => 0.2,
+        ]);
+
+        $json = json_decode($response->json()['choices'][0]['message']['content'] ?? '{}', true);
+
+        return $json;
+    }
+
+    private function analyzeWithGemini(string $company)
+    {
+        $prompt = "
+            Faz uma análise financeira profunda da empresa '{$company}'.
+            Inclui:
+            - Fundamentais
+            - Valorização
+            - Riscos
+            - Estratégia
+            - Score (0-100)
+            - Comprar / Manter / Vender
+            - Impacto no portefólio
+            Responde em JSON.
+        ";
+
+        $response = Http::post(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" . env('GEMINI_API_KEY'),
+            [
+                'contents' => [
+                    ['parts' => [['text' => $prompt]]]
+                ]
+            ]
+        );
+
+        $raw = $response->json()['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
+
+        return json_decode($raw, true);
+    }
+
+    private function fetchMarketDataYahoo15(string $symbol): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'X-RapidAPI-Key' => env('YAHOO_API_KEY'),
+                'X-RapidAPI-Host' => 'yahoo-finance15.p.rapidapi.com',
+            ])->get("https://yahoo-finance15.p.rapidapi.com/api/yahoo/qu/quote/" . $symbol);
+
+            $data = json_decode($response->getBody(), true);
+            $body = $data['body'] ?? [];
+
+            return [
+                'symbol'    => $body['symbol'] ?? $symbol,
+                'name'      => $body['companyName'] ?? null,
+                'price'     => $body['primaryData']['lastSalePrice'] ?? null,
+                'change'    => $body['primaryData']['percentageChange'] ?? null,
+                'netChange' => $body['primaryData']['netChange'] ?? null,
+                'volume'    => $body['primaryData']['volume'] ?? null,
+                'day_range' => $body['keyStats']['dayrange']['value'] ?? null,
+                '52w_range' => $body['keyStats']['fiftyTwoWeekHighLow']['value'] ?? null,
+                'marketStatus' => $body['marketStatus'] ?? null,
+            ];
+        } catch (\Throwable $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function analyzeCompany()
+    {
+        $company = trim($this->companyQuery);
+
+        if (!$company) {
+            $this->companyAnalysis = ['error' => 'Introduz o nome ou ticker da empresa.'];
+            return;
+        }
+
+        $analysis = $this->aiProvider === 'gemini'
+            ? $this->analyzeWithGemini($company)
+            : $this->analyzeWithOpenRouter($company);
+
+        $market = $this->fetchMarketDataYahoo15($company);
+
+        $analysis['market_data'] = $market;
+
+        $this->companyAnalysis = $analysis;
+
+        $this->dispatch('companyAnalyzed', $analysis);
+    }
+
+    public function switchTab($tab)
+    {
+        $this->tab = $tab;
+    }
+
+    // ─── FORM ────────────────────────────────────────────────────────────────
+
+    public function setType(string $newType): void
+    {
+        $this->type = $newType;
+        $this->reset([
+            'exchange', 'network', 'provider', 'interest_rate',
+            'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type'
+        ]);
+
+        if ($newType === 'Divida') {
+            $this->average_price = 1.00;
+            $this->fees          = 0;
+            $this->issuer        = 'IGCP / Estado Português';
+            $this->broker        = 'AforroNet';
+            $this->product_type  = 'CA';
+        }
+    }
+
+    public function toggleNetValues()
+    {
+        $this->showNetValues = !$this->showNetValues;
+    }
 
     public function setFilter(string $type): void
     {
@@ -83,8 +302,11 @@ public $product_type = 'CA';
 
     public function updatedAveragePrice(): void
     {
-        if ($this->total_amount > 0) $this->updatedTotalAmount();
-        elseif ($this->quantity > 0)  $this->updatedQuantity();
+        if ($this->total_amount > 0) {
+            $this->updatedTotalAmount();
+        } elseif ($this->quantity > 0) {
+            $this->updatedQuantity();
+        }
     }
 
     public function updatedFees(): void
@@ -96,15 +318,10 @@ public $product_type = 'CA';
 
     // ─── PRICE FETCHING ──────────────────────────────────────────────────────
 
-    /**
-     * Cripto: CoinGecko — suporta centenas de moedas, gratuito sem chave.
-     * Devolve ['BTC' => 62000.5, 'ETH' => 3400.0, ...]
-     */
     private function fetchCryptoPrices(array $symbols): array
     {
         if (empty($symbols)) return [];
 
-        // Mapear símbolo → id CoinGecko
         $idMap = [
             'BTC'   => 'bitcoin',       'ETH'   => 'ethereum',
             'SOL'   => 'solana',        'ADA'   => 'cardano',
@@ -155,24 +372,15 @@ public $product_type = 'CA';
         });
     }
 
-    /**
-     * Ações/ETFs/Fundos: tenta Yahoo Finance primeiro (sem chave, ilimitado),
-     * com fallback para Alpha Vantage (limitado mas oficial).
-     *
-     * Yahoo Finance endpoint não-oficial mas amplamente usado:
-     * https://query1.finance.yahoo.com/v8/finance/chart/{symbol}
-     */
     private function fetchStockPrice(string $symbol): ?float
     {
         $cacheKey = 'stock_price_' . strtoupper($symbol);
 
         return Cache::remember($cacheKey, self::CACHE_PRICES_TTL, function () use ($symbol) {
 
-            // 1. Tentar Yahoo Finance (sem limite, sem chave)
             $price = $this->fetchFromYahoo($symbol);
             if ($price) return $price;
 
-            // 2. Fallback: Alpha Vantage
             $price = $this->fetchFromAlphaVantage($symbol);
             if ($price) return $price;
 
@@ -183,7 +391,6 @@ public $product_type = 'CA';
     private function fetchFromYahoo(string $symbol): ?float
     {
         try {
-            // Yahoo usa '.' para sufixos europeus (ex: VUAA.DE, SXR8.DE)
             $res = Http::timeout(8)
                 ->withHeaders([
                     'User-Agent' => 'Mozilla/5.0',
@@ -201,12 +408,10 @@ public $product_type = 'CA';
 
             if (!$price) return null;
 
-            // Converter para EUR se necessário
             $currency = $data['chart']['result'][0]['meta']['currency'] ?? 'EUR';
             if (strtoupper($currency) === 'USD') {
                 $price = $price * $this->getEurUsdRate();
             } elseif (strtoupper($currency) === 'GBp') {
-                // Pence → EUR
                 $price = ($price / 100) * $this->getEurGbpRate();
             } elseif (strtoupper($currency) === 'GBP') {
                 $price = $price * $this->getEurGbpRate();
@@ -234,9 +439,6 @@ public $product_type = 'CA';
         }
     }
 
-    /**
-     * Taxa EUR/USD em cache (1h) — usada para converter preços USD → EUR
-     */
     private function getEurUsdRate(): float
     {
         return Cache::remember('fx_eur_usd', 3600, function () {
@@ -247,7 +449,7 @@ public $product_type = 'CA';
                 ]);
                 return $res->json()['rates']['EUR'] ?? 0.92;
             } catch (\Exception) {
-                return 0.92; // fallback razoável
+                return 0.92;
             }
         });
     }
@@ -267,62 +469,58 @@ public $product_type = 'CA';
         });
     }
 
-    // ─── REFRESH PÚBLICO (botão "Atualizar Preços") ──────────────────────────
+    // ─── REFRESH PÚBLICO ─────────────────────────────────────────────────────
 
     public function refreshPrices(): void
-{
-    $this->isRefreshing = true;
+    {
+        $this->isRefreshing = true;
 
-    try {
-        $assets = Investment::where('workspace_id', Auth::user()->current_workspace_id)->get();
+        try {
+            $assets = Investment::where('workspace_id', Auth::user()->current_workspace_id)->get();
 
-        // 0. Dívida Pública — calcular juros e capitalizar (TEM DE SER O PRIMEIRO)
-        $debtAssets = $assets->where('type', 'Divida');
-        $updated = 0;
-        foreach ($debtAssets as $debtAsset) {
-            if (!$debtAsset->operation_date || !$debtAsset->interest_rate) continue;
-            $newPrice = DebtInstrumentCalculator::process($debtAsset);
-            $debtAsset->update(['current_price' => $newPrice]);
-            $updated++;
-        }
-
-        // 1. Cripto em batch
-        $cryptoSymbols = $assets->where('type', 'Cripto')->pluck('symbol')->unique()->values()->toArray();
-        $cryptoPrices  = $this->fetchCryptoPrices($cryptoSymbols);
-
-        // 2. Ações/ETFs/Fundos
-        $stockAssets = $assets->whereIn('type', ['Acao', 'ETF', 'Fundo']);
-        $stockPrices = [];
-        foreach ($stockAssets->pluck('symbol')->unique() as $sym) {
-            Cache::forget('stock_price_' . strtoupper($sym));
-            $price = $this->fetchStockPrice($sym);
-            if ($price) $stockPrices[strtoupper($sym)] = $price;
-        }
-
-        $ids = collect($cryptoSymbols)->map(fn($s) => $this->coinGeckoId($s))->implode(',');
-        if ($ids) Cache::forget('coingecko_prices_' . md5($ids));
-
-        $allPrices = array_merge($cryptoPrices, $stockPrices);
-
-        foreach ($assets->whereIn('type', ['Acao', 'ETF', 'Fundo', 'Cripto']) as $asset) {
-            $ticker = strtoupper($asset->symbol);
-            if (isset($allPrices[$ticker]) && $allPrices[$ticker] > 0) {
-                $asset->update(['current_price' => $allPrices[$ticker]]);
+            $debtAssets = $assets->where('type', 'Divida');
+            $updated = 0;
+            foreach ($debtAssets as $debtAsset) {
+                if (!$debtAsset->operation_date || !$debtAsset->interest_rate) continue;
+                $newPrice = DebtInstrumentCalculator::process($debtAsset);
+                $debtAsset->update(['current_price' => $newPrice]);
                 $updated++;
             }
+
+            $cryptoSymbols = $assets->where('type', 'Cripto')->pluck('symbol')->unique()->values()->toArray();
+            $cryptoPrices  = $this->fetchCryptoPrices($cryptoSymbols);
+
+            $stockAssets = $assets->whereIn('type', ['Acao', 'ETF', 'Fundo']);
+            $stockPrices = [];
+            foreach ($stockAssets->pluck('symbol')->unique() as $sym) {
+                Cache::forget('stock_price_' . strtoupper($sym));
+                $price = $this->fetchStockPrice($sym);
+                if ($price) $stockPrices[strtoupper($sym)] = $price;
+            }
+
+            $ids = collect($cryptoSymbols)->map(fn($s) => $this->coinGeckoId($s))->implode(',');
+            if ($ids) Cache::forget('coingecko_prices_' . md5($ids));
+
+            $allPrices = array_merge($cryptoPrices, $stockPrices);
+
+            foreach ($assets->whereIn('type', ['Acao', 'ETF', 'Fundo', 'Cripto']) as $asset) {
+                $ticker = strtoupper($asset->symbol);
+                if (isset($allPrices[$ticker]) && $allPrices[$ticker] > 0) {
+                    $asset->update(['current_price' => $allPrices[$ticker]]);
+                    $updated++;
+                }
+            }
+
+            $this->lastUpdated = now()->format('H:i');
+            $this->dispatch('toast', text: "{$updated} ativos sincronizados com o mercado.");
+
+        } catch (\Exception $e) {
+            $this->dispatch('toast', text: 'Erro ao sincronizar preços: ' . $e->getMessage(), variant: 'error');
         }
 
-        $this->lastUpdated = now()->format('H:i');
-        $this->dispatch('toast', text: "{$updated} ativos sincronizados com o mercado.");
-
-    } catch (\Exception $e) {
-        $this->dispatch('toast', text: 'Erro ao sincronizar preços: ' . $e->getMessage(), variant: 'error');
+        $this->isRefreshing = false;
     }
 
-    $this->isRefreshing = false;
-}
-
-    // helpers legados mantidos por compatibilidade
     private function coinGeckoId(string $symbol): string
     {
         $map = ['BTC' => 'bitcoin', 'ETH' => 'ethereum', 'SOL' => 'solana', 'ADA' => 'cardano', 'DOT' => 'polkadot', 'MATIC' => 'matic-network'];
@@ -339,12 +537,12 @@ public $product_type = 'CA';
 
     public function createAsset(): void
     {
-     $this->reset([
-    'symbol', 'name', 'isin', 'quantity', 'average_price', 'fees',
-    'total_amount', 'exchange', 'network', 'provider', 'broker',
-    'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus',
-    'capitalization_date', 'issuer', 'series', 'product_type',
-]);
+        $this->reset([
+            'symbol', 'name', 'isin', 'quantity', 'average_price', 'fees',
+            'total_amount', 'exchange', 'network', 'provider', 'broker',
+            'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus',
+            'capitalization_date', 'issuer', 'series', 'product_type',
+        ]);
         $this->type = 'Acao';
         $this->fees = 0;
         $this->operation_date = now()->toDateString();
@@ -370,11 +568,11 @@ public $product_type = 'CA';
         $this->fees           = $asset->fees ?? 0;
         $this->total_amount   = round((float) $asset->quantity * (float) $asset->average_price + (float) ($asset->fees ?? 0), 2);
         $this->interest_rate       = $asset->interest_rate;
-$this->loyalty_bonus       = $asset->loyalty_bonus;
-$this->capitalization_date = $asset->capitalization_date?->toDateString();
-$this->issuer              = $asset->issuer;
-$this->series              = $asset->series;
-$this->product_type = $asset->product_type ?? 'CA';
+        $this->loyalty_bonus       = $asset->loyalty_bonus;
+        $this->capitalization_date = $asset->capitalization_date?->toDateString();
+        $this->issuer              = $asset->issuer;
+        $this->series              = $asset->series;
+        $this->product_type        = $asset->product_type ?? 'CA';
 
         $this->dispatch('modal-show-add-investment');
     }
@@ -387,11 +585,11 @@ $this->product_type = $asset->product_type ?? 'CA';
             'broker'         => 'nullable|string|max:100',
             'operation_date' => 'nullable|date',
             'quantity'       => 'required|numeric|gt:0',
-            'product_type' => 'nullable|in:CA,CT',
+            'product_type'   => 'nullable|in:CA,CT',
             'average_price'  => 'required|numeric|gt:0',
             'fees'           => 'nullable|numeric|min:0',
             'interest_rate'       => 'nullable|numeric|min:0',
-'capitalization_date' => 'nullable|date',
+            'capitalization_date' => 'nullable|date',
         ]);
 
         $data = [
@@ -410,11 +608,11 @@ $this->product_type = $asset->product_type ?? 'CA';
             'average_price'  => (float) $this->average_price,
             'fees'           => (float) ($this->fees ?? 0),
             'interest_rate'       => $this->type === 'Divida' ? (float)($this->interest_rate ?? 0) : null,
-'loyalty_bonus'       => $this->type === 'Divida' ? (float)($this->loyalty_bonus ?? 0) : null,
-'capitalization_date' => $this->type === 'Divida' ? ($this->capitalization_date ?: null) : null,
-'issuer'              => $this->issuer,
-'series'              => $this->series,
-'product_type' => $this->type === 'Divida' ? $this->product_type : null,
+            'loyalty_bonus'       => $this->type === 'Divida' ? (float)($this->loyalty_bonus ?? 0) : null,
+            'capitalization_date' => $this->type === 'Divida' ? ($this->capitalization_date ?: null) : null,
+            'issuer'              => $this->issuer,
+            'series'              => $this->series,
+            'product_type'        => $this->type === 'Divida' ? $this->product_type : null,
         ];
 
         if ($this->editingId) {
@@ -427,11 +625,11 @@ $this->product_type = $asset->product_type ?? 'CA';
         }
 
         $this->reset([
-    'symbol', 'name', 'isin', 'quantity', 'average_price', 'fees',
-    'total_amount', 'exchange', 'network', 'provider', 'broker',
-    'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus',
-    'capitalization_date', 'issuer', 'series', 'product_type',
-]);
+            'symbol', 'name', 'isin', 'quantity', 'average_price', 'fees',
+            'total_amount', 'exchange', 'network', 'provider', 'broker',
+            'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus',
+            'capitalization_date', 'issuer', 'series', 'product_type',
+        ]);
         $this->dispatch('modal-close-add-investment');
         $this->dispatch('toast', text: $msg);
     }
@@ -469,52 +667,43 @@ $this->product_type = $asset->product_type ?? 'CA';
             $asset->current_value = $currentValue;
             $asset->pnl           = $currentValue - $cost;
             $asset->pnl_percent   = $cost > 0 ? ($asset->pnl / $cost) * 100 : 0;
-
             return $asset;
         });
 
         $totalInvested         = $myAssets->sum('cost');
         $currentPortfolioValue = $myAssets->sum('current_value');
-        $totalProfit           = $currentPortfolioValue - $totalInvested;
-        $totalPnlPct           = $totalInvested > 0 ? ($totalProfit / $totalInvested) * 100 : 0;
+
+        $totalEstimatedTax = $myAssets->sum(function($asset) {
+            return ($asset->type !== 'Divida' && $asset->pnl > 0) ? $asset->pnl * 0.28 : 0;
+        });
+
+        $totalProfit = $currentPortfolioValue - $totalInvested;
+        $totalPnlPct = $totalInvested > 0 ? ($totalProfit / $totalInvested) * 100 : 0;
+
+        $displayValue  = $this->showNetValues ? ($currentPortfolioValue - $totalEstimatedTax) : $currentPortfolioValue;
+        $displayProfit = $this->showNetValues ? ($totalProfit - $totalEstimatedTax) : $totalProfit;
 
         $composition = $myAssets->groupBy('type')->map(fn($group) => [
             'total'   => $group->sum('current_value'),
-            'percent' => $currentPortfolioValue > 0
-                ? round(($group->sum('current_value') / $currentPortfolioValue) * 100, 1)
-                : 0,
+            'percent' => $currentPortfolioValue > 0 ? round(($group->sum('current_value') / $currentPortfolioValue) * 100, 1) : 0,
         ]);
-
-        $bestPerformer   = $myAssets->sortByDesc('pnl_percent')->first();
-        $worstPerformer  = $myAssets->sortBy('pnl_percent')->first();
-        $highestExposure = $myAssets->sortByDesc('current_value')->first();
-
-        // ── TICKER: S&P500 real + XTB real + outros simulados ──
-        $marketData = $this->buildMarketTicker();
-$recentIncomes = InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
-    ->with('investment:id,name,symbol,product_type')
-    ->orderByDesc('reference_date')
-    ->take(10)
-    ->get();
-
-$totalIncomeNet = InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
-    ->sum('net_amount');
-
-
 
         return view('livewire.investments-hub', [
             'myAssets'        => $myAssets,
             'totalInvested'   => $totalInvested,
-            'currentValue'    => $currentPortfolioValue,
-            'totalProfit'     => $totalProfit,
+            'currentValue'    => $displayValue,
+            'totalProfit'     => $displayProfit,
             'totalPnlPct'     => $totalPnlPct,
             'composition'     => $composition,
-            'bestPerformer'   => $bestPerformer,
-            'worstPerformer'  => $worstPerformer,
-            'highestExposure' => $highestExposure,
-            'marketData'      => $marketData,
-            'recentIncomes'  => $recentIncomes,
-'totalIncomeNet' => $totalIncomeNet,
+            'bestPerformer'   => $myAssets->sortByDesc('pnl_percent')->first(),
+            'worstPerformer'  => $myAssets->sortBy('pnl_percent')->first(),
+            'highestExposure' => $myAssets->sortByDesc('current_value')->first(),
+            'marketData'      => $this->buildMarketTicker(),
+            'estimatedTax'    => $totalEstimatedTax,
+            'recentIncomes'   => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)->with('investment')->latest('reference_date')->take(10)->get(),
+            'totalIncomeNet'  => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)->sum('net_amount'),
+            'companyAnalysis' => $this->companyAnalysis,
+            'tab'             => $this->tab,
         ]);
     }
 
@@ -522,7 +711,6 @@ $totalIncomeNet = InvestmentIncome::where('workspace_id', Auth::user()->current_
     {
         $ticker = [];
 
-        // S&P 500 via Yahoo Finance (SPY como proxy)
         $spy = Cache::remember('ticker_spy', self::CACHE_TICKER_TTL, function () {
             try {
                 $res = Http::timeout(6)->withHeaders(['User-Agent' => 'Mozilla/5.0'])
@@ -549,7 +737,6 @@ $totalIncomeNet = InvestmentIncome::where('workspace_id', Auth::user()->current_
         });
         if ($spy) $ticker['S&P500'] = $spy;
 
-        // XTB via Yahoo Finance (XTB.WA — Bolsa de Varsóvia)
         $xtb = Cache::remember('ticker_xtb', self::CACHE_TICKER_TTL, function () {
             try {
                 $res = Http::timeout(6)->withHeaders(['User-Agent' => 'Mozilla/5.0'])
@@ -561,7 +748,6 @@ $totalIncomeNet = InvestmentIncome::where('workspace_id', Auth::user()->current_
 
                 if (!$price) return null;
 
-                // XTB.WA cotada em PLN — converter para EUR
                 $plnEurRate = Cache::remember('fx_eur_pln', 3600, function () {
                     try {
                         $res = Http::timeout(5)->get('https://api.frankfurter.app/latest', ['from' => 'PLN', 'to' => 'EUR']);
@@ -582,10 +768,8 @@ $totalIncomeNet = InvestmentIncome::where('workspace_id', Auth::user()->current_
             }
         });
 
-        // Fallback para o valor que mencionaste caso a API falhe
         $ticker['XTB'] = $xtb ?? ['price' => '125,77', 'change' => '+0.00%'];
 
-        // BTC e ETH em tempo real via CoinGecko
         $crypto = Cache::remember('ticker_crypto_top', self::CACHE_TICKER_TTL, function () {
             try {
                 $res = Http::timeout(8)->get('https://api.coingecko.com/api/v3/simple/price', [

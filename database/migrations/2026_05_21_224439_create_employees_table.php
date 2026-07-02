@@ -6,24 +6,33 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void {
-    Schema::create('employees', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->string('name');
-        $table->string('role');
-        $table->decimal('salary', 10, 2);
-        $table->integer('pay_day')->default(25);
-        $table->timestamps();
-    });
-}
+    public function up(): void
+    {
+        Schema::create('employees', function (Blueprint $table) {
+            $table->id();
 
-    /**
-     * Reverse the migrations.
-     */
+            // Ligação ao utilizador
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+
+            // Ligação ao workspace
+            $table->foreignId('workspace_id')->constrained()->onDelete('cascade');
+
+            // Dados principais
+            $table->string('name');
+            $table->string('role');
+            $table->decimal('salary', 10, 2);
+            $table->integer('pay_day')->default(25);
+
+            // Estado do colaborador
+            $table->string('status')->default('ativo');
+
+            // Foto do colaborador
+            $table->string('photo_path')->nullable();
+
+            $table->timestamps();
+        });
+    }
+
     public function down(): void
     {
         Schema::dropIfExists('employees');

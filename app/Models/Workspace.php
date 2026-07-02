@@ -24,14 +24,35 @@ class Workspace extends Model
         'initial_capital',
         'business_email',
         'plan',
-         'plan_expires_at',
+        'plan_expires_at',
         'address',
         'fiscal_year_start'
     ];
 
     /**
+     * VALORES PADRÃO (Para evitar empresas "fantasmas" sem tipo)
+     */
+    protected $attributes = [
+        'type' => 'business',
+        'currency' => 'EUR'
+    ];
+
+    /**
      * IDENTIDADE VISUAL
      */
+    public function generateInviteCode()
+    {
+        if (!$this->invite_code) {
+            $prefix = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $this->name), 0, 3));
+            $random = strtoupper(bin2hex(random_bytes(3))); // Gera algo como 'A1B2C3'
+
+            $this->invite_code = $prefix . '-' . $random;
+            $this->save();
+        }
+
+        return $this->invite_code;
+    }
+
     public function getLogoUrlAttribute(): string
     {
         return $this->logo_path
@@ -65,8 +86,7 @@ class Workspace extends Model
 
 
     /**
-     * NOVA RELAÇÃO: GESTÃO DE FÉRIAS E AUSÊNCIAS
-     * Resolve o erro BadMethodCallException
+     * GESTÃO DE FÉRIAS E AUSÊNCIAS
      */
     public function absences(): HasMany
     {
@@ -82,6 +102,7 @@ class Workspace extends Model
             'personal' => 'Conta Individual',
             'couple'   => 'Conta Partilhada (Casal)',
             'family'   => 'Conta Familiar',
+            'business' => 'Gestão Empresarial', // Ajustado para coincidir com o valor da DB
             'company'  => 'Gestão Empresarial',
             default    => 'Outro'
         };
@@ -111,26 +132,26 @@ class Workspace extends Model
         $payroll = $this->employees()->sum('salary');
         return (float) ($this->initial_capital + $revenue - $spent - $payroll);
     }
-public function money($amount)
-{
-    $symbols = [
-        'EUR' => '€',
-        'USD' => '$',
-        'BRL' => 'R$',
-        'GBP' => '£',
-        'CHF' => 'CHF',
-        'JPY' => '¥'
-    ];
 
-    $symbol = $symbols[$this->currency] ?? $this->currency;
+    public function money($amount)
+    {
+        $symbols = [
+            'EUR' => '€',
+            'USD' => '$',
+            'BRL' => 'R$',
+            'GBP' => '£',
+            'CHF' => 'CHF',
+            'JPY' => '¥'
+        ];
 
-    // Formatação: Dólar e Real levam símbolo à esquerda. Euro e Libra à direita.
-    if (in_array($this->currency, ['USD', 'BRL'])) {
-        return $symbol . ' ' . number_format($amount, 2, ',', ' ');
+        $symbol = $symbols[$this->currency] ?? $this->currency;
+
+        if (in_array($this->currency, ['USD', 'BRL'])) {
+            return $symbol . ' ' . number_format($amount, 2, ',', ' ');
+        }
+
+        return number_format($amount, 2, ',', ' ') . ' ' . $symbol;
     }
-
-    return number_format($amount, 2, ',', ' ') . ' ' . $symbol;
-}
 
     public function getRunway(): string
     {

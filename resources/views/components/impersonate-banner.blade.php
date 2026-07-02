@@ -1,27 +1,33 @@
-{{-- Só aparece se existir um ID de administrador guardado na sessão --}}
+{{-- INDICADOR DE MODO VISUALIZAÇÃO CENTRADO (SUBSTITUIR A BARRA AMBER) --}}
 @if(session()->has('impersonator_id'))
-    <div class="bg-amber-600 text-white py-2 px-4 flex flex-col sm:flex-row justify-between items-center relative z-[100] shadow-2xl border-b border-amber-700 animate-in fade-in duration-500">
+    <div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[999] w-auto animate-in fade-in slide-in-from-bottom-10 duration-700">
+        <div class="relative group">
+            <!-- Aura de brilho atrás do botão -->
+            <div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
 
-        {{-- Lado Esquerdo: Mensagem de Aviso --}}
-        <div class="flex items-center gap-3 mb-2 sm:mb-0">
-            {{-- Ícone Animado de Olho/Monitorização --}}
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 animate-pulse text-amber-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
+            <div class="relative flex items-center gap-4 px-6 py-3 bg-zinc-900 dark:bg-zinc-800 border border-white/10 rounded-full shadow-2xl backdrop-blur-md">
 
-            <p class="text-sm font-bold uppercase tracking-wider leading-none">
-                Modo Suporte Ativo: <span class="text-amber-100 italic">Vedo a conta de</span> <b>{{ auth()->user()->name }}</b>
-            </p>
+                <div class="flex items-center gap-3">
+                    {{-- Ícone de Alerta Animado --}}
+                    <div class="size-8 rounded-full bg-red-600 flex items-center justify-center shadow-lg animate-pulse">
+                        <flux:icon name="eye" variant="micro" class="size-4 text-white" />
+                    </div>
+
+                    <div class="flex flex-col items-start leading-none pr-4 border-r border-white/10 text-left">
+                        <span class="text-[8px] font-black uppercase tracking-[0.2em] text-red-500">Modo Suporte</span>
+                        <span class="text-[10px] font-black uppercase tracking-tight text-white mt-0.5">
+                            {{ auth()->user()->name }}
+                        </span>
+                    </div>
+
+                    {{-- Botão de Sair --}}
+                    <a href="{{ route('admin.stop-impersonating') }}"
+                       class="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-all no-underline flex items-center gap-2 group/btn">
+                        <span>Voltar ao Admin</span>
+                        <flux:icon name="arrow-right-start-on-rectangle" variant="micro" class="size-3 group-hover/btn:translate-x-1 transition-transform" />
+                    </a>
+                </div>
+            </div>
         </div>
-
-        {{-- Lado Direito: Botão para Voltar --}}
-        <a href="{{ route('admin.stop-impersonating') }}"
-           class="bg-white text-amber-700 px-4 py-1.5 rounded-xl text-[10px] font-black hover:bg-amber-50 hover:scale-105 active:scale-95 transition-all uppercase no-underline shadow-sm flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
-            </svg>
-            Sair e Voltar ao Admin
-        </a>
     </div>
 @endif

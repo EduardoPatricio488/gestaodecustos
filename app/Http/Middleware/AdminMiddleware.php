@@ -15,7 +15,7 @@ class AdminMiddleware
     {
         // 1. Verifica se o utilizador está logado
         // 2. Verifica se a coluna 'is_admin' é verdadeira (true) na base de dados
-        if (auth()->check() && auth()->user()->is_admin) {
+        if (auth()->check() && in_array(auth()->user()->role, ['admin', 'moderator', 'analyst'])) {
             return $next($request);
         }
 

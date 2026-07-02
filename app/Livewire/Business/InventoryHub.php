@@ -16,11 +16,17 @@ class InventoryHub extends Component
     public $editingId = null;
 
     // Campos do formulário
-    public $name, $sku, $stock_quantity = 0, $min_stock_alert = 5, $unit_cost = 0, $unit_price = 0;
+    public $name;
+    public $sku;
+    public $stock_quantity = 0;
+    public $min_stock_alert = 5;
+    public $unit_cost = 0;
+    public $unit_price = 0;
 
     protected $rules = [
         'name' => 'required|string|max:255',
         'stock_quantity' => 'required|integer|min:0',
+        'min_stock_alert' => 'required|integer|min:0',
         'unit_cost' => 'required|numeric|min:0',
         'unit_price' => 'required|numeric|min:0',
     ];
@@ -50,6 +56,7 @@ class InventoryHub extends Component
     public function edit($id)
     {
         $product = auth()->user()->currentWorkspace->products()->findOrFail($id);
+
         $this->editingId = $product->id;
         $this->name = $product->name;
         $this->sku = $product->sku;
@@ -69,15 +76,27 @@ class InventoryHub extends Component
 
     public function resetForm()
     {
-        $this->reset(['name', 'sku', 'stock_quantity', 'min_stock_alert', 'unit_cost', 'unit_price', 'editingId']);
+        $this->reset([
+            'name',
+            'sku',
+            'stock_quantity',
+            'min_stock_alert',
+            'unit_cost',
+            'unit_price',
+            'editingId'
+        ]);
     }
 
     public function render()
     {
-        $products = auth()->user()->currentWorkspace->products()
-            ->where('name', 'like', '%' . $this->search . '%')
-            ->orderBy('stock_quantity', 'asc')
-            ->get();
+        $query = auth()->user()->currentWorkspace->products()
+            ->where('name', 'like', '%' . $this->search . '%');
+
+        // Ordenação inteligente: primeiro artigos em alerta, depois por nome
+        $query->orderByRaw('stock_quantity <= min_stock_alert DESC')
+              ->orderBy('name', 'asc');
+
+        $products = $query->paginate(20);
 
         return view('livewire.business.inventory-hub', [
             'products' => $products,
