@@ -9,6 +9,10 @@ class SupportMessage extends Model
 {
     protected $fillable = ['support_ticket_id', 'user_id', 'message', 'is_admin_reply'];
 
+    protected $casts = [
+        'is_admin_reply' => 'boolean',
+    ];
+
     public function user(): BelongsTo {
         return $this->belongsTo(User::class);
     }

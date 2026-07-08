@@ -14,7 +14,13 @@ class ClientHub extends Component
     use WithPagination;
 
     public $search = '';
+    public $selectedClient = null;
+
+    public $generatedPasscode = '';
+
+
     public $showModal = false;
+    public $generatedPortalUrl = '';
     public $editingId = null;
 
     // Campos do formulário
@@ -26,6 +32,15 @@ class ClientHub extends Component
         'status' => 'required|in:ativo,lead,inativo',
     ];
 
+public function openHistory($id)
+{
+    // Carregamos o cliente com as relações de faturas e projetos
+    $this->selectedClient = auth()->user()->clients()
+        ->with(['projects', 'invoices' => fn($q) => $q->latest()])
+        ->findOrFail($id);
+
+    $this->dispatch('modal-show', name: 'history-modal');
+}public $clientTaxNumber = '';
     public function save()
     {
         $this->validate();
@@ -77,13 +92,29 @@ class ClientHub extends Component
         $this->reset(['name', 'legal_name', 'tax_number', 'email', 'phone', 'status', 'address', 'notes', 'editingId']);
     }
 
-    public function generatePortalLink($id)
-    {
-        $client = auth()->user()->clients()->findOrFail($id);
-        $token = ClientPortalToken::generateFor($client);
-        $this->dispatch('toast', text: 'Link do portal gerado! Copia: '.$token->url);
-        session()->flash('portal_url', $token->url);
+public function generatePortalLink($id)
+{
+    $client = auth()->user()->clients()->findOrFail($id);
+
+    // 1. Gerar ou recuperar o token (teu código atual)
+    if (!$client->portal_token) {
+        do {
+            $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $exists = \App\Models\Client::where('portal_token', $passcode)->exists();
+        } while ($exists);
+
+        $client->update(['portal_token' => $passcode]);
     }
+
+    // 2. AGORA CARREGAMOS O NIF CORRETO PARA O MODAL
+    $this->clientTaxNumber = $client->tax_number; // ✅ ADICIONA ESTA LINHA
+
+    $this->generatedPasscode = $client->portal_token;
+    $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
+
+    $this->dispatch('modal-show', name: 'portal-link-modal');
+    $this->dispatch('toast', text: 'Chave de Acesso confirmada.');
+}
 
     public function render()
     {

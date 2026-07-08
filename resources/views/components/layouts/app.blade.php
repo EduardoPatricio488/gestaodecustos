@@ -515,6 +515,9 @@
             <flux:sidebar.item icon="chart-bar" :href="route('hub.business.cashflow')" wire:navigate.hover>
                 Fluxo de Caixa
             </flux:sidebar.item>
+            <flux:sidebar.item icon="presentation-chart-line" :href="route('hub.business.costs')" wire:navigate.hover>
+    Análise de Custos
+</flux:sidebar.item>
             <flux:sidebar.item icon="clipboard-document-check" :href="route('hub.business.expense-approvals')" wire:navigate.hover>
                 Aprovações
             </flux:sidebar.item>
@@ -585,6 +588,10 @@
             <flux:sidebar.item icon="briefcase" :href="route('hub.business.projects')" wire:navigate.hover>
                 Os Meus Projetos
             </flux:sidebar.item>
+              {{-- NOVO ITEM: GASTOS OPERACIONAIS --}}
+    <flux:sidebar.item icon="banknotes" :href="route('hub.business.my-expenses')" wire:navigate.hover>
+        Notas de Gastos
+    </flux:sidebar.item>
             <flux:sidebar.item icon="calendar-days" :href="route('hub.business.calendar')" wire:navigate.hover>
                 Calendário
             </flux:sidebar.item>
@@ -628,13 +635,12 @@
 <flux:sidebar.item icon="squares-2x2" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate.hover>
     Dashboard
 </flux:sidebar.item>
-
-{{-- Lógica de Acesso à Área Empresarial (CORRIGIDO COM ROTA REAL) --}}
+{{-- Lógica de Acesso à Área Empresarial (COM ESTADO BLOQUEADO PARA PLANO BÁSICO) --}}
 @if(!$isBusinessMode)
     <div class="px-4 mt-6 mb-4">
         @if($user->isDiamond())
+            {{-- UTILIZADOR DIAMANTE/BUSINESS: MOSTRA MENU NORMAL --}}
             <div x-data="{ openBusiness: false }" class="w-full text-center">
-
                 {{-- BOTÃO PRINCIPAL --}}
                 <button
                     @click="openBusiness = !openBusiness"
@@ -649,8 +655,7 @@
                 </button>
 
                 {{-- ABA EXPANSÍVEL (SUBMENU) --}}
-                <div x-show="openBusiness" x-cloak x-transition class="mt-3 space-y-1 border-t border-zinc-100 dark:border-zinc-800 pt-3">
-
+                <div x-show="openBusiness" x-cloak x-transition class="mt-3 space-y-1 border-t border-zinc-100 dark:border-zinc-800 pt-3 text-left">
                     {{-- MINHAS EMPRESAS (CEO) --}}
                     @if($myCompanies->count() > 0)
                         <p class="text-[8px] font-black uppercase text-zinc-400 tracking-widest text-center mb-2 opacity-60">Negócios Próprios</p>
@@ -689,26 +694,120 @@
                     </a>
                 </div>
             </div>
+        @else
+            {{-- UTILIZADOR BÁSICO: MOSTRA OPÇÃO BLOQUEADA --}}
+            <a href="{{ route('hub.pricing') }}" {{-- Altere para a sua rota de planos/pagamentos --}}
+               wire:navigate
+               class="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-2xl bg-zinc-100/50 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800/60 transition-all group opacity-70 hover:opacity-100 hover:border-amber-500/50"
+               title="Disponível no Plano Business"
+            >
+                <div class="relative">
+                    <flux:icon name="building-office" class="size-4 text-zinc-400 group-hover:text-amber-500 transition-colors" />
+                    <div class="absolute -top-1.5 -right-1.5 bg-white dark:bg-zinc-950 rounded-full p-0.5">
+                        <flux:icon name="lock-closed" variant="micro" class="size-2.5 text-amber-600" />
+                    </div>
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 italic leading-none">
+                    Área Empresarial
+                </span>
+                <span class="text-[8px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500 px-1.5 py-0.5 rounded-md font-bold ml-1 uppercase">Pro</span>
+            </a>
         @endif
     </div>
 @endif
 
 
 
+{{-- COPIA DESDE AQUI --}}
+@php
+    // Definição segura das variáveis de plano para evitar erros de variável indefinida
+    $isProUser = ($user->plan ?? '') === 'pro' || (method_exists($user, 'isDiamond') && $user->isDiamond());
+    $isPlusUser = ($user->plan ?? '') === 'plus' || (method_exists($user, 'isPlus') && $user->isPlus());
+    $hasLockInAccess = $isProUser || $isPlusUser;
+@endphp
+
+@if($hasLockInAccess)
+    {{-- ITEM COM ACESSO LIBERTADO --}}
+    <flux:sidebar.item
+        icon="lock-closed"
+        :href="route('hub.lockin')"
+        :current="request()->routeIs('hub.lockin')"
+        wire:navigate.hover
+        class="font-black group"
+        style="color: #10b981;"
+    >
+        <div class="flex items-center gap-2 flex-1">
+            <span style="background: linear-gradient(135deg, #10b981, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Lock In
+            </span>
+            {{-- Etiqueta do Plano --}}
+            <span class="text-[6px] px-1 py-0.5 rounded font-black uppercase leading-none {{ $isProUser ? 'bg-violet-500 text-white' : 'bg-emerald-500 text-white' }}">
+                {{ $isProUser ? 'Business' : 'Premium' }}
+            </span>
+        </div>
+
+    </flux:sidebar.item>
+@else
+    {{-- ITEM BLOQUEADO (REDIRECIONA PARA PLANOS) --}}
+    <flux:sidebar.item
+        icon="lock-closed"
+        :href="route('hub.pricing')"
+        wire:navigate
+        class="font-black opacity-60 grayscale group"
+    >
+        <div class="flex items-center justify-between w-full gap-2">
+            <div class="flex items-center gap-1.5">
+                <span class="text-zinc-500">Lock In</span>
+                <flux:icon name="lock-closed" variant="micro" class="size-3 text-amber-600/80" />
+            </div>
+
+            <span class="text-[7px] font-black px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-200/50 uppercase tracking-tighter">
+                Upgrade
+            </span>
+        </div>
+    </flux:sidebar.item>
+@endif
+{{-- ATÉ AQUI --}}
 
 
+@php
+    // Verifica acesso ao Inventário (Disponível em Plus e Business/Diamond)
+    $hasInventoryAccess = ($user->plan ?? '') === 'plus' ||
+                         ($user->plan ?? '') === 'pro' ||
+                         (method_exists($user, 'isPlus') && $user->isPlus()) ||
+                         (method_exists($user, 'isDiamond') && $user->isDiamond());
+@endphp
 
+@if($hasInventoryAccess)
+    {{-- INVENTÁRIO DISPONÍVEL --}}
+    <flux:sidebar.item
+        icon="archive-box"
+        :href="route('hub.inventory')"
+        :current="request()->routeIs('hub.inventory')"
+        wire:navigate
+    >
+        O Meu Inventário
+    </flux:sidebar.item>
+@else
+    {{-- INVENTÁRIO BLOQUEADO --}}
+    <flux:sidebar.item
+        icon="archive-box"
+        :href="route('hub.pricing')"
+        wire:navigate
+        class="opacity-60 grayscale group"
+    >
+        <div class="flex items-center justify-between w-full gap-2">
+            <div class="flex items-center gap-1.5">
+                <span class="text-zinc-500">O Meu Inventário</span>
+                <flux:icon name="lock-closed" variant="micro" class="size-3 text-amber-600/80" />
+            </div>
 
-
-<flux:sidebar.item
-    icon="archive-box"
-    :href="route('hub.inventory')"
-    :current="request()->routeIs('hub.inventory')"
-    wire:navigate
->
-    O Meu Inventário
-</flux:sidebar.item>
-
+            <span class="text-[7px] font-black px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-200/50 uppercase tracking-tighter">
+                Plus
+            </span>
+        </div>
+    </flux:sidebar.item>
+@endif
 
 
 
@@ -758,6 +857,16 @@
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="briefcase" :href="route('hub.networth')" wire:navigate.hover>
                         Património Real
+                    </flux:sidebar.item>
+                    <flux:sidebar.item
+                        icon="building-library"
+                        :href="route('hub.banco')"
+                        :current="request()->routeIs('hub.banco')"
+                        wire:navigate.hover
+                        class="font-black text-emerald-700 dark:text-emerald-400"
+                    >
+                        Banco
+                        <span class="ml-auto text-[8px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded uppercase">Novo</span>
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 
@@ -829,6 +938,16 @@
                     Zona de Treino
                     <span class="ml-auto text-[8px] font-black bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400 px-1.5 py-0.5 rounded uppercase">Novo</span>
                 </flux:sidebar.item>
+
+               @php
+    // Detecção simplificada e segura dos planos
+    $isProUser = ($user->plan ?? '') === 'pro' || (method_exists($user, 'isDiamond') && $user->isDiamond());
+    $isPlusUser = ($user->plan ?? '') === 'plus' || (method_exists($user, 'isPlus') && $user->isPlus());
+    $hasLockInAccess = $isProUser || $isPlusUser;
+@endphp
+
+
+
                 <flux:sidebar.item icon="chat-bubble-left-right" :href="route('support.hub')" wire:navigate.hover>
                     Suporte Técnico {!! $badge($counts['support']) !!}
                 </flux:sidebar.item>
@@ -982,12 +1101,40 @@
 <div class="flex items-center gap-2 sm:gap-3 justify-end">
 
     {{-- Loja --}}
+    @php
+    // Verifica se o utilizador tem acesso (Plus ou Pro)
+    $hasStoreAccess = ($user->plan ?? '') === 'plus' ||
+                      ($user->plan ?? '') === 'pro' ||
+                      (method_exists($user, 'isPlus') && $user->isPlus()) ||
+                      (method_exists($user, 'isDiamond') && $user->isDiamond());
+@endphp
+
+@if($hasStoreAccess)
+    {{-- LOJA DISPONÍVEL (UTILIZADOR PREMIUM/BUSINESS) --}}
     <a href="{{ route('hub.store') }}"
        wire:navigate
        class="relative p-2.5 rounded-xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-brand-600 hover:border-brand-500/30 transition-all group"
        title="Loja Digital">
         <flux:icon name="shopping-bag" class="size-5 group-hover:scale-110 transition-transform duration-300" />
     </a>
+@else
+    {{-- LOJA BLOQUEADA (REDIRECIONA PARA PLANOS) --}}
+    <a href="{{ route('hub.pricing') }}"
+       wire:navigate
+       class="relative p-2.5 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 shadow-sm border border-zinc-200/60 dark:border-zinc-800/60 text-zinc-400 opacity-80 hover:opacity-100 hover:border-amber-500/50 transition-all group"
+       title="Loja Digital (Disponível em Planos Premium)">
+
+        {{-- Ícone da Loja em tons de cinza --}}
+        <flux:icon name="shopping-bag" class="size-5 grayscale" />
+
+        {{-- CADEADO PEQUENO NO CANTO --}}
+        <div class="absolute -top-1.5 -right-1.5 bg-white dark:bg-zinc-950 rounded-full p-0.5 border border-zinc-100 dark:border-zinc-800 shadow-sm">
+            <div class="bg-amber-50 dark:bg-amber-900/20 rounded-full p-0.5">
+                <flux:icon name="lock-closed" variant="micro" class="size-2.5 text-amber-600" />
+            </div>
+        </div>
+    </a>
+@endif
 
                 {{-- Botão de Privacidade --}}
                 @if(request()->routeIs('dashboard') || request()->routeIs('social.profile') || request()->routeIs('profile.edit'))

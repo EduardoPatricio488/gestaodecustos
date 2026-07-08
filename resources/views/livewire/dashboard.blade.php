@@ -445,41 +445,46 @@
 
 
 
+{{-- 4. SELETOR DE ESPAÇO (WORKSPACE SWITCHER) - APENAS PARA PLANO BUSINESS --}}
+@php
+    // Define se o utilizador é Business de forma segura
+    $isBusiness = ($user->plan ?? '') === 'pro' || (method_exists($user, 'isDiamond') && $user->isDiamond());
+@endphp
 
-{{-- 4. SELETOR DE ESPAÇO (WORKSPACE SWITCHER) --}}
-@if($userWorkspaces->count() >= 1)
-    <div class="flex items-center gap-4 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl w-fit border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+@if($isBusiness && $userWorkspaces->count() >= 1)
+    <div class="flex items-center gap-4 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl w-fit border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500">
 
-        <div class="px-3 py-1 text-[9px] font-black uppercase text-zinc-500 tracking-widest border-r border-zinc-200 dark:border-zinc-800">
+        <div class="px-3 py-1 text-[9px] font-black uppercase text-zinc-500 tracking-widest border-r border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
+            <flux:icon name="building-office-2" variant="micro" class="size-3 text-violet-500" />
             Espaços
         </div>
 
         <div class="flex gap-1.5 overflow-x-auto no-scrollbar items-center">
-           @foreach($userWorkspaces as $ws)
-    @php $isActive = ($ws->id == $currentWs->id); @endphp
-    <button
-        wire:click="switchWorkspace({{ $ws->id }})"
-        wire:loading.class="opacity-50 cursor-wait"
-        wire:target="switchWorkspace({{ $ws->id }})"
-        class="group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 cursor-pointer select-none
-        {{ $isActive
-            ? 'bg-white dark:bg-zinc-800 shadow-md text-brand-600 font-black scale-[1.02]'
-            : 'text-zinc-500 hover:bg-white dark:hover:bg-zinc-800 hover:text-zinc-800 dark:hover:text-white hover:shadow-md hover:scale-[1.02] active:scale-95' }}"
-    >
-        <div class="size-1.5 rounded-full transition-all duration-200
-            {{ $isActive
-                ? 'bg-brand-500 shadow-[0_0_8px_#3b82f6]'
-                : 'bg-zinc-300 group-hover:bg-brand-400 group-hover:shadow-[0_0_6px_#3b82f6]' }}">
-        </div>
-        <span class="text-xs uppercase tracking-tighter">{{ $ws->name }}</span>
+            @foreach($userWorkspaces as $ws)
+                @php $isActive = ($ws->id == $currentWs->id); @endphp
+                <button
+                    wire:click="switchWorkspace({{ $ws->id }})"
+                    wire:loading.class="opacity-50 cursor-wait"
+                    wire:target="switchWorkspace({{ $ws->id }})"
+                    class="group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 cursor-pointer select-none
+                    {{ $isActive
+                        ? 'bg-white dark:bg-zinc-800 shadow-md text-brand-600 font-black scale-[1.02]'
+                        : 'text-zinc-500 hover:bg-white dark:hover:bg-zinc-800 hover:text-zinc-800 dark:hover:text-white hover:shadow-md hover:scale-[1.02] active:scale-95' }}"
+                >
+                    <div class="size-1.5 rounded-full transition-all duration-200
+                        {{ $isActive
+                            ? 'bg-brand-500 shadow-[0_0_8px_#3b82f6]'
+                            : 'bg-zinc-300 group-hover:bg-brand-400 group-hover:shadow-[0_0_6px_#3b82f6]' }}">
+                    </div>
+                    <span class="text-xs uppercase tracking-tighter">{{ $ws->name }}</span>
 
-        @if($ws->type !== 'personal')
-            <flux:icon name="arrow-right-circle" variant="micro"
-                class="size-3 transition-all duration-200
-                {{ $isActive ? 'opacity-60' : 'opacity-0 group-hover:opacity-70 group-hover:translate-x-0.5' }}" />
-        @endif
-    </button>
-@endforeach
+                    @if($ws->type !== 'personal')
+                        <flux:icon name="arrow-right-circle" variant="micro"
+                            class="size-3 transition-all duration-200
+                            {{ $isActive ? 'opacity-60' : 'opacity-0 group-hover:opacity-70 group-hover:translate-x-0.5' }}" />
+                    @endif
+                </button>
+            @endforeach
         </div>
 
         {{-- Botão Adicionar (+) --}}
@@ -490,7 +495,6 @@
         </a>
     </div>
 @endif
-
 
 
 

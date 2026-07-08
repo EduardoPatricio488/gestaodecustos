@@ -20,9 +20,9 @@
         <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-[1.8rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
             {{-- BOTÃO NOVA DESPESA --}}
             <flux:modal.trigger name="add-company-expense-modal">
-                <flux:button variant="primary" icon="plus" class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20">
-                    Nova Despesa
-                </flux:button>
+                <flux:button variant="primary" icon="plus" wire:click="resetForm" x-on:click="$dispatch('modal-show', { name: 'add-company-expense-modal' })" class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20">
+    Nova Despesa
+</flux:button>
             </flux:modal.trigger>
 
             <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
@@ -109,55 +109,80 @@
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/50">
                     @forelse($expenses as $exp)
-                        <tr class="hover:bg-zinc-50 dark:hover:bg-brand-500/5 transition-all duration-300 group/row">
-                            {{-- COLUNA DATA (ESTILO VERTICAL) --}}
-                            <td class="p-6">
-                                <div class="flex flex-col">
-                                    <span class="text-lg font-black dark:text-white leading-none tracking-tighter">{{ \Carbon\Carbon::parse($exp->spent_at)->format('d') }}</span>
-                                    <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-1">{{ \Carbon\Carbon::parse($exp->spent_at)->translatedFormat('M, Y') }}</span>
-                                </div>
-                            </td>
+                       <tr wire:key="exp-row-{{ $exp->id }}"
+    class="hover:bg-zinc-50 dark:hover:bg-brand-500/5 transition-all duration-300 group/row relative hover:z-50">
 
-                            {{-- COLUNA FORNECEDOR --}}
-                            <td class="p-6">
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-tight">{{ $exp->title }}</span>
-                                    @if($exp->description)
-                                        <span class="text-[10px] text-zinc-500 font-bold italic mt-0.5 max-w-[200px] truncate">"{{ $exp->description }}"</span>
-                                    @endif
-                                </div>
-                            </td>
+    <td class="p-6">
+        <div class="flex flex-col text-left">
+            <span class="text-lg font-black dark:text-white leading-none tracking-tighter">{{ \Carbon\Carbon::parse($exp->spent_at)->format('d') }}</span>
+            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-1">{{ \Carbon\Carbon::parse($exp->spent_at)->translatedFormat('M, Y') }}</span>
+        </div>
+    </td>
 
-                            {{-- COLUNA CATEGORIA --}}
-                            <td class="p-6 text-center text-xs">
-                                <span class="inline-flex px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-black uppercase text-[8px] tracking-widest rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                    {{ $exp->category->name }}
-                                </span>
-                            </td>
+    <td class="p-6 text-left">
+        <div class="flex flex-col">
+            <span class="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-tight">{{ $exp->title }}</span>
+            @if($exp->description)
+                <span class="text-[10px] text-zinc-500 font-bold italic mt-0.5 max-w-[200px] truncate">"{{ $exp->description }}"</span>
+            @endif
+        </div>
+    </td>
 
-                            {{-- COLUNA IVA --}}
-                            <td class="p-6 text-right font-bold text-xs text-zinc-500 italic">
-                                <span :class="privacyMode ? 'blur-sm select-none' : ''" class="transition-all duration-500">
-                                    {{ number_format($exp->vat_amount, 2, ',', ' ') }} €
-                                </span>
-                            </td>
+    <td class="p-6 text-center text-xs">
+        <span class="inline-flex px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-black uppercase text-[8px] tracking-widest rounded-xl border border-zinc-200 dark:border-zinc-700">
+            {{ $exp->category->name }}
+        </span>
+    </td>
 
-                            {{-- COLUNA VALOR TOTAL --}}
-                            <td class="p-6 text-right px-10 align-middle">
-                                <div class="flex flex-col items-end">
-                                    <span class="text-xl font-black text-red-500 tracking-tighter italic">
-                                        <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
-                                            -{{ number_format($exp->amount, 2, ',', ' ') }} €
-                                        </span>
-                                    </span>
-                                </div>
-                            </td>
+    <td class="p-6 text-right font-bold text-xs text-zinc-500 italic">
+        <span :class="privacyMode ? 'blur-sm select-none' : ''">
+            {{ number_format($exp->vat_amount, 2, ',', ' ') }} €
+        </span>
+    </td>
 
-                            {{-- AÇÕES DISCRETAS --}}
-                            <td class="p-6 text-right pr-8">
-                                <flux:button wire:click="delete({{ $exp->id }})" wire:confirm="Eliminar registo de custo?" variant="ghost" icon="trash" size="sm" color="red" class="opacity-0 group-hover/row:opacity-100 transition-opacity" />
-                            </td>
-                        </tr>
+    <td class="p-6 text-right px-10 align-middle">
+        <span class="text-xl font-black text-red-500 tracking-tighter italic">
+            <span :class="privacyMode ? 'blur-md select-none' : ''">
+                -{{ number_format($exp->amount, 2, ',', ' ') }} €
+            </span>
+        </span>
+    </td>
+
+    {{-- COLUNA DE AÇÕES CORRIGIDA --}}
+    <td class="p-6 text-right pr-8" x-data="{ optionsOpen: false }">
+        <div class="relative inline-block text-left">
+            <button type="button" @click.stop="optionsOpen = !optionsOpen"
+                    class="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 opacity-0 group-hover/row:opacity-100">
+                <flux:icon name="ellipsis-horizontal" class="size-5" />
+            </button>
+
+            {{-- MENU COM Z-INDEX 100 --}}
+            <div x-show="optionsOpen"
+                 x-cloak
+                 @click.outside="optionsOpen = false"
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 {{-- O z-[100] garante que fica à frente de tudo --}}
+                 class="absolute right-0 top-10 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-2xl z-[100] overflow-hidden text-left ring-1 ring-black/5">
+
+                <div class="p-1.5 space-y-0.5">
+                    <button type="button" wire:click="edit({{ $exp->id }})" @click="optionsOpen = false"
+                        class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 hover:text-brand-600 transition-all">
+                        <flux:icon name="pencil-square" class="size-4 text-brand-500" /> Editar
+                    </button>
+
+                    <div class="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+
+                    <button type="button" wire:click="delete({{ $exp->id }})" wire:confirm="Eliminar registo?" @click="optionsOpen = false"
+                        class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 transition-all">
+                        <flux:icon name="trash" class="size-4 text-red-500" /> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </td>
+</tr>
                     @empty
                         <tr>
                             <td colspan="6" class="p-24 text-center">
@@ -201,7 +226,9 @@
                     <flux:icon name="document-text" class="size-6" />
                 </div>
                 <div>
-                    <flux:heading size="xl" class="font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white">Registo de Custo</flux:heading>
+                   <flux:heading size="xl" class="font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white">
+    {{ $editingId ? 'Editar Custo' : 'Registo de Custo' }}
+</flux:heading>
                     <p class="text-xs text-zinc-400 font-medium">Introduz os dados da fatura para controlo de OpEx.</p>
                 </div>
             </div>
@@ -272,8 +299,8 @@
                 </flux:modal.close>
 
                 <flux:button wire:click="saveExpense" variant="primary" class="flex-[2] font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 h-14 rounded-2xl">
-                    Confirmar Lançamento
-                </flux:button>
+    {{ $editingId ? 'Atualizar Lançamento' : 'Confirmar Lançamento' }}
+</flux:button>
             </div>
         </div>
     </flux:modal>

@@ -233,10 +233,19 @@
                     {{-- DIREITA: PRIORIDADE & AÇÕES --}}
                     <div
                         class="p-6 flex items-center gap-6 bg-white dark:bg-zinc-900 min-w-[220px] justify-between md:justify-end">
-                        <flux:badge :variant="$task->priority_color" size="sm"
-                            class="font-black text-[9px] uppercase px-3 shadow-sm border-none">
-                            {{ $task->priority }}
-                        </flux:badge>
+                         <flux:button
+        x-on:click="$dispatch('open-expense-modal', { taskId: {{ $task->id }}, projectId: {{ $task->project_id }} })"
+        variant="ghost"
+        icon="currency-euro"
+        size="sm"
+        class="text-emerald-500 rounded-xl hover:bg-emerald-50"
+        title="Registar Gasto nesta Tarefa"
+    />
+
+    <flux:badge :variant="$task->priority_color" size="sm" class="font-black text-[9px] uppercase px-3 shadow-sm border-none">
+        {{ $task->priority }}
+    </flux:badge>
+
 
                         <div
                             class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

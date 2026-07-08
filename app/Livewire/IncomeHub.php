@@ -51,10 +51,6 @@ public $selectedFixedId;
 
     public function saveExtra()
 {
-    if (auth()->user()->isViewer()) {
-        $this->dispatch('toast', variant: 'error', text: 'Permissão negada.');
-        return;
-    }
         $this->validate([
             'description'  => 'required|string|max:255',
             'amount'       => 'required|numeric|min:0.01',
@@ -154,12 +150,6 @@ public function applyRaise()
     }
     public function saveFixed()
     {
-        // 1. Alterado: Apenas bloqueia se for estritamente um "viewer" (leitura)
-        if (auth()->user()->isViewer()) {
-            $this->dispatch('toast', variant: 'error', text: 'Não tens permissão para gravar dados.');
-            return;
-        }
-
         $this->validate([
             'recDescription'  => 'required|string|max:255',
             'recAmount'       => 'required|numeric|min:0.01',

@@ -74,18 +74,18 @@ Operações & OpEx <?php echo $__env->renderComponent(); ?>
 
                 <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'primary','icon' => 'plus','class' => 'rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'primary','icon' => 'plus','wire:click' => 'resetForm','xOn:click' => '$dispatch(\'modal-show\', { name: \'add-company-expense-modal\' })','class' => 'rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['variant' => 'primary','icon' => 'plus','class' => 'rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20']); ?>
+<?php $component->withAttributes(['variant' => 'primary','icon' => 'plus','wire:click' => 'resetForm','x-on:click' => '$dispatch(\'modal-show\', { name: \'add-company-expense-modal\' })','class' => 'rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                    Nova Despesa
-                 <?php echo $__env->renderComponent(); ?>
+    Nova Despesa
+ <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
 <?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
@@ -316,77 +316,144 @@ Operações & OpEx <?php echo $__env->renderComponent(); ?>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/50">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $expenses; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $exp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <tr class="hover:bg-zinc-50 dark:hover:bg-brand-500/5 transition-all duration-300 group/row">
-                            
-                            <td class="p-6">
-                                <div class="flex flex-col">
-                                    <span class="text-lg font-black dark:text-white leading-none tracking-tighter"><?php echo e(\Carbon\Carbon::parse($exp->spent_at)->format('d')); ?></span>
-                                    <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-1"><?php echo e(\Carbon\Carbon::parse($exp->spent_at)->translatedFormat('M, Y')); ?></span>
-                                </div>
-                            </td>
+                       <tr <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'exp-row-'.e($exp->id).''; ?>wire:key="exp-row-<?php echo e($exp->id); ?>"
+    class="hover:bg-zinc-50 dark:hover:bg-brand-500/5 transition-all duration-300 group/row relative hover:z-50">
 
-                            
-                            <td class="p-6">
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-tight"><?php echo e($exp->title); ?></span>
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($exp->description): ?>
-                                        <span class="text-[10px] text-zinc-500 font-bold italic mt-0.5 max-w-[200px] truncate">"<?php echo e($exp->description); ?>"</span>
-                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                </div>
-                            </td>
+    <td class="p-6">
+        <div class="flex flex-col text-left">
+            <span class="text-lg font-black dark:text-white leading-none tracking-tighter"><?php echo e(\Carbon\Carbon::parse($exp->spent_at)->format('d')); ?></span>
+            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-1"><?php echo e(\Carbon\Carbon::parse($exp->spent_at)->translatedFormat('M, Y')); ?></span>
+        </div>
+    </td>
 
-                            
-                            <td class="p-6 text-center text-xs">
-                                <span class="inline-flex px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-black uppercase text-[8px] tracking-widest rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                    <?php echo e($exp->category->name); ?>
+    <td class="p-6 text-left">
+        <div class="flex flex-col">
+            <span class="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-tight"><?php echo e($exp->title); ?></span>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($exp->description): ?>
+                <span class="text-[10px] text-zinc-500 font-bold italic mt-0.5 max-w-[200px] truncate">"<?php echo e($exp->description); ?>"</span>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+        </div>
+    </td>
 
-                                </span>
-                            </td>
+    <td class="p-6 text-center text-xs">
+        <span class="inline-flex px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-black uppercase text-[8px] tracking-widest rounded-xl border border-zinc-200 dark:border-zinc-700">
+            <?php echo e($exp->category->name); ?>
 
-                            
-                            <td class="p-6 text-right font-bold text-xs text-zinc-500 italic">
-                                <span :class="privacyMode ? 'blur-sm select-none' : ''" class="transition-all duration-500">
-                                    <?php echo e(number_format($exp->vat_amount, 2, ',', ' ')); ?> €
-                                </span>
-                            </td>
+        </span>
+    </td>
 
-                            
-                            <td class="p-6 text-right px-10 align-middle">
-                                <div class="flex flex-col items-end">
-                                    <span class="text-xl font-black text-red-500 tracking-tighter italic">
-                                        <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
-                                            -<?php echo e(number_format($exp->amount, 2, ',', ' ')); ?> €
-                                        </span>
-                                    </span>
-                                </div>
-                            </td>
+    <td class="p-6 text-right font-bold text-xs text-zinc-500 italic">
+        <span :class="privacyMode ? 'blur-sm select-none' : ''">
+            <?php echo e(number_format($exp->vat_amount, 2, ',', ' ')); ?> €
+        </span>
+    </td>
 
-                            
-                            <td class="p-6 text-right pr-8">
-                                <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'delete('.e($exp->id).')','wire:confirm' => 'Eliminar registo de custo?','variant' => 'ghost','icon' => 'trash','size' => 'sm','color' => 'red','class' => 'opacity-0 group-hover/row:opacity-100 transition-opacity']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::button'); ?>
+    <td class="p-6 text-right px-10 align-middle">
+        <span class="text-xl font-black text-red-500 tracking-tighter italic">
+            <span :class="privacyMode ? 'blur-md select-none' : ''">
+                -<?php echo e(number_format($exp->amount, 2, ',', ' ')); ?> €
+            </span>
+        </span>
+    </td>
+
+    
+    <td class="p-6 text-right pr-8" x-data="{ optionsOpen: false }">
+        <div class="relative inline-block text-left">
+            <button type="button" @click.stop="optionsOpen = !optionsOpen"
+                    class="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 opacity-0 group-hover/row:opacity-100">
+                <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'ellipsis-horizontal','class' => 'size-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'delete('.e($exp->id).')','wire:confirm' => 'Eliminar registo de custo?','variant' => 'ghost','icon' => 'trash','size' => 'sm','color' => 'red','class' => 'opacity-0 group-hover/row:opacity-100 transition-opacity']); ?>
+<?php $component->withAttributes(['name' => 'ellipsis-horizontal','class' => 'size-5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
-                            </td>
-                        </tr>
+            </button>
+
+            
+            <div x-show="optionsOpen"
+                 x-cloak
+                 @click.outside="optionsOpen = false"
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 
+                 class="absolute right-0 top-10 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-2xl z-[100] overflow-hidden text-left ring-1 ring-black/5">
+
+                <div class="p-1.5 space-y-0.5">
+                    <button type="button" wire:click="edit(<?php echo e($exp->id); ?>)" @click="optionsOpen = false"
+                        class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 hover:text-brand-600 transition-all">
+                        <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'pencil-square','class' => 'size-4 text-brand-500']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'pencil-square','class' => 'size-4 text-brand-500']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?> Editar
+                    </button>
+
+                    <div class="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+
+                    <button type="button" wire:click="delete(<?php echo e($exp->id); ?>)" wire:confirm="Eliminar registo?" @click="optionsOpen = false"
+                        class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 transition-all">
+                        <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'trash','class' => 'size-4 text-red-500']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'trash','class' => 'size-4 text-red-500']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </td>
+</tr>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                         <tr>
                             <td colspan="6" class="p-24 text-center">
@@ -525,7 +592,7 @@ Operações & OpEx <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
                 </div>
                 <div>
-                    <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
+                   <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => ['size' => 'xl','class' => 'font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::heading'); ?>
@@ -536,7 +603,10 @@ Operações & OpEx <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php $component->withAttributes(['size' => 'xl','class' => 'font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-Registo de Custo <?php echo $__env->renderComponent(); ?>
+
+    <?php echo e($editingId ? 'Editar Custo' : 'Registo de Custo'); ?>
+
+ <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9)): ?>
 <?php $attributes = $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9; ?>
@@ -896,8 +966,9 @@ Cancelar <?php echo $__env->renderComponent(); ?>
 <?php $component->withAttributes(['wire:click' => 'saveExpense','variant' => 'primary','class' => 'flex-[2] font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 h-14 rounded-2xl']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                    Confirmar Lançamento
-                 <?php echo $__env->renderComponent(); ?>
+    <?php echo e($editingId ? 'Atualizar Lançamento' : 'Confirmar Lançamento'); ?>
+
+ <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
 <?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>

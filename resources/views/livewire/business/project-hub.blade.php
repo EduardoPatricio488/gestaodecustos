@@ -116,46 +116,100 @@
     {{-- 3. GRELHA DE PROJETOS --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-        @forelse($projects as $project)
-            @php
-                $margin = min(max($project->margin, 0), 100);
-                $isProfitable = $project->profit >= 0;
-            @endphp
+      @forelse($projects as $project)
+    @php
+        $margin = min(max($project->margin, 0), 100);
+        $isProfitable = $project->profit >= 0;
+    @endphp
 
-            <div class="glass-card p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm hover:border-brand-500/30 transition-all group relative">
+    {{-- 1. ADICIONA x-data PARA CONTROLAR O MENU E wire:key PARA O LIVEWIRE --}}
+    <div wire:key="project-card-{{ $project->id }}"
+         x-data="{ menuOpen: false }"
+         class="glass-card p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm hover:border-brand-500/30 transition-all group relative">
 
-                {{-- Cabeçalho --}}
-                <div class="flex justify-between items-start mb-8">
-                    <div>
-                        <span class="inline-flex px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-black uppercase text-[8px] tracking-widest rounded-lg border border-zinc-200 dark:border-zinc-700 mb-3">
-                            {{ $project->status }}
+        <div class="flex justify-between items-start mb-8 gap-4">
+            <div class="flex-1 min-w-0 text-left">
+                <span class="inline-flex px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-black uppercase text-[8px] tracking-widest rounded-lg border border-zinc-200 dark:border-zinc-700 mb-3">
+                    {{ $project->status }}
+                </span>
+
+                <h3 class="text-xl font-black dark:text-white uppercase tracking-tight leading-none group-hover:text-brand-600 transition-colors truncate">
+                    {{ $project->name }}
+                </h3>
+
+                @if($project->client)
+                    <div class="flex items-center gap-1.5 mt-2">
+                        <flux:icon name="building-office" variant="micro" class="size-3 text-brand-500" />
+                        <span class="text-[10px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-tighter">
+                            {{ $project->client->name }}
                         </span>
-                        <h3 class="text-xl font-black dark:text-white uppercase tracking-tight leading-none group-hover:text-brand-600 transition-colors">
-                            {{ $project->name }}
-                        </h3>
-
-                        {{-- Responsável --}}
-                        @if($project->manager)
-                            <p class="text-[10px] text-zinc-400 font-bold mt-1">
-                                👤 Responsável: {{ $project->manager->name }}
-                            </p>
-                        @endif
                     </div>
+                @endif
+            </div>
 
-                    <flux:dropdown>
-                        <flux:button variant="ghost" icon="ellipsis-horizontal" size="sm" class="rounded-xl" />
-                        <flux:menu class="min-w-[180px] p-2">
-                            <flux:menu.item wire:click="edit({{ $project->id }})" icon="pencil-square" class="font-bold text-xs">
-                                Editar Projeto
-                            </flux:menu.item>
-                            <flux:menu.separator />
-                            <flux:menu.item wire:click="delete({{ $project->id }})" wire:confirm="Apagar projeto?"
-                                variant="danger" icon="trash" class="font-bold text-xs">
-                                Eliminar Operação
-                            </flux:menu.item>
-                        </flux:menu>
-                    </flux:dropdown>
+            <div class="flex items-center gap-2 shrink-0 relative">
+                {{-- SELECT DO CLIENTE --}}
+                <div class="w-32 md:w-44">
+                    <flux:select
+                        wire:change="updateProjectClient({{ $project->id }}, $event.target.value)"
+                        class="font-black uppercase text-[9px] !bg-zinc-50 dark:!bg-zinc-800 !border-none rounded-xl h-10 shadow-sm"
+                    >
+                        <option value="">Sem Cliente</option>
+                        @foreach($clients as $client)
+                            <option value="{{ $client->id }}" @selected($project->client_id == $client->id)>
+                                {{ $client->name }}
+                            </option>
+                        @endforeach
+                    </flux:select>
                 </div>
+
+                {{-- MENU MANUAL (ESTILO TEAM HUB) --}}
+                <div class="relative">
+                    <button type="button" @click.stop="menuOpen = !menuOpen"
+                        class="text-zinc-400 hover:text-zinc-900 dark:hover:text-white p-2 transition-colors cursor-pointer">
+                        <flux:icon name="ellipsis-horizontal" class="size-5" />
+                    </button>
+
+                    <div
+                        x-show="menuOpen"
+                        x-cloak
+                        @click.outside="menuOpen = false"
+                        x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
+                        class="absolute right-0 top-10 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-xl z-[100] overflow-hidden"
+                    >
+                        <div class="p-1.5 space-y-0.5">
+                            <button
+                                type="button"
+                                @click="menuOpen = false"
+                                wire:click="edit({{ $project->id }})"
+                                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 transition-all text-left"
+                            >
+                                <flux:icon name="pencil-square" class="size-4 text-brand-500" />
+                                Editar Projeto
+                            </button>
+
+                            <div class="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+
+                            <button
+                                type="button"
+                                @click="menuOpen = false"
+                                wire:click="delete({{ $project->id }})"
+                                wire:confirm="Eliminar permanentemente este projeto?"
+                                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all text-left"
+                            >
+                                <flux:icon name="trash" class="size-4 text-red-500" />
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
                 {{-- Rentabilidade --}}
                 <div class="space-y-5">
@@ -302,7 +356,19 @@
                     @endforeach
                 </flux:select>
             </div>
-
+{{-- ADICIONA ESTE BLOCO AQUI PARA O CLIENTE --}}
+<div class="space-y-2">
+    <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">
+        Cliente Associado
+    </flux:label>
+    <flux:select wire:model="client_id"
+        class="font-black uppercase text-[10px] !bg-white dark:!bg-zinc-950 !border-none rounded-xl h-12 shadow-sm">
+        <option value="">-- Sem Cliente (Projeto Interno) --</option>
+        @foreach($clients as $client)
+            <option value="{{ $client->id }}">🏢 {{ $client->name }}</option>
+        @endforeach
+    </flux:select>
+</div>
             {{-- Painel Financeiro --}}
             <div class="p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 space-y-6 shadow-inner">
 

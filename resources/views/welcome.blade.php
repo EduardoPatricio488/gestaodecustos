@@ -79,9 +79,111 @@
                     </form>
                 </div>
             @else
-                <a href="/login" wire:navigate class="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">Entrar</a>
-                <a href="/register" wire:navigate class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-brand-500/25 hover:bg-brand-500">Começar grátis</a>
-            @endauth
+               <div class="flex items-center gap-2">
+    {{-- 1. Botão Entrar --}}
+    <a href="/login" wire:navigate class="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">
+        Entrar
+    </a>
+
+    {{-- 2. Botão Começar Grátis --}}
+    <a href="/register" wire:navigate class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-brand-500/25 hover:bg-brand-500">
+        Começar grátis
+    </a>
+
+    {{-- 3. Botão Sou Cliente (Ajustado para ser igual aos outros) --}}
+   {{-- 1. GATILHO E ESTADO DO MODAL --}}
+<div x-data="{ openExternal: false }" class="inline-block">
+
+    {{-- O BOTÃO NA NAVBAR --}}
+    <button @click="openExternal = true"
+        class="px-5 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm uppercase tracking-tight">
+        Área Externa
+    </button>
+
+    {{-- 2. O MODAL DE SELEÇÃO DE PERFIL --}}
+    <template x-teleport="body">
+        <div x-show="openExternal"
+             x-transition.opacity
+             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-md">
+
+            <div @click.outside="openExternal = false"
+                 x-show="openExternal"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-[3rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+
+                {{-- Cabeçalho do Modal --}}
+                <div class="p-10 pb-0 flex justify-between items-start text-left">
+                    <div>
+                        <h2 class="text-3xl font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white leading-none">Selecione o seu Perfil</h2>
+                        <p class="text-sm text-zinc-500 mt-2 font-medium">Escolha a porta de entrada para o ecossistema empresarial.</p>
+                    </div>
+                    <button @click="openExternal = false" class="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                        <flux:icon name="x-mark" class="size-6" />
+                    </button>
+                </div>
+
+                <div class="p-10 space-y-10">
+
+                    {{-- GRUPO 1: TERMINAL DE NEGÓCIOS --}}
+                    <div class="space-y-4">
+                        <p class="text-[10px] font-black uppercase text-zinc-400 tracking-[0.3em] px-1">Terminal de Negócios</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                            {{-- SOU CLIENTE --}}
+                            <a href="{{ route('client.login') }}" class="group p-6 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-3xl hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/5 transition-all text-left">
+                                <flux:icon name="user-group" variant="outline" class="size-8 text-emerald-600 mb-4 group-hover:scale-110 transition-transform" />
+                                <span class="block font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white">Sou Cliente</span>
+                                <span class="block text-[10px] text-zinc-500 mt-1 uppercase font-bold leading-tight">Acesso ao Portal e Faturação</span>
+                            </a>
+
+                            {{-- SOU FORNECEDOR --}}
+                            <a href="{{ route('supplier.portal') }}" class="group p-6 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-3xl hover:border-brand-500/50 hover:shadow-xl hover:shadow-brand-500/5 transition-all text-left">
+                                <flux:icon name="building-storefront" variant="outline" class="size-8 text-brand-600 mb-4 group-hover:scale-110 transition-transform" />
+                                <span class="block font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white">Sou Fornecedor</span>
+                                <span class="block text-[10px] text-zinc-500 mt-1 uppercase font-bold leading-tight">Gestão de Encomendas e Pagamentos</span>
+                            </a>
+
+                            {{-- SOU O BANCO --}}
+                            <a href="{{ route('bank.portal') }}" class="group p-6 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-3xl hover:border-zinc-400 transition-all text-left">
+                                <flux:icon name="building-library" variant="outline" class="size-8 text-zinc-600 dark:text-zinc-400 mb-4 group-hover:scale-110 transition-transform" />
+                                <span class="block font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white">Entidade Bancária</span>
+                                <span class="block text-[10px] text-zinc-500 mt-1 uppercase font-bold leading-tight">Auditoria e Verificação de Fundos</span>
+                            </a>
+
+                        </div>
+                    </div>
+
+                    {{-- GRUPO 2: CARREIRAS (DESTAQUE SEPARADO) --}}
+                    <div class="space-y-4">
+                        <p class="text-[10px] font-black uppercase text-zinc-400 tracking-[0.3em] px-1">Talento & Carreiras</p>
+                        <a href="{{ route('careers.apply') }}" class="flex items-center justify-between p-6 bg-zinc-950 rounded-3xl border border-zinc-800 group hover:border-brand-500 transition-all shadow-xl">
+                            <div class="flex items-center gap-6 text-left">
+                                <div class="size-14 rounded-2xl bg-brand-500/10 flex items-center justify-center text-brand-500">
+                                    <flux:icon name="briefcase" variant="solid" class="size-7" />
+                                </div>
+                                <div>
+                                    <span class="block font-black uppercase italic tracking-tighter text-white text-xl">Candidato a Emprego</span>
+                                    <span class="block text-xs text-zinc-500 mt-1 font-medium">Submeta a sua candidatura e junte-se à nossa equipa.</span>
+                                </div>
+                            </div>
+                            <flux:icon name="arrow-right" class="size-6 text-zinc-700 group-hover:text-brand-500 group-hover:translate-x-2 transition-all" />
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Rodapé --}}
+                <div class="px-10 py-6 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-800 text-center">
+                    <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">Protocolo de Acesso Seguro · {{ date('Y') }}</p>
+                </div>
+
+            </div>
+        </div>
+    </template>
+</div>
+</div>
+                @endauth
         </nav>
     </header>
 

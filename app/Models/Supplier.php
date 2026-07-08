@@ -18,6 +18,7 @@ class Supplier extends Model
         'phone',
         'website',
         'address',
+         'portal_token',
         'payment_terms'
     ];
 

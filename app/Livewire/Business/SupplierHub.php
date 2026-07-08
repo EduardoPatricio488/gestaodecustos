@@ -16,8 +16,39 @@ class SupplierHub extends Component
     // Propriedades do Formulário
     public $name, $legal_name, $tax_number, $email, $phone, $payment_terms, $address;
     public $editingId = null;
+   public $generatedPasscode = '';
+public $supplierTaxNumber = '';
+public $generatedPortalUrl = '';
     public $search = '';
 
+// No topo da classe, garante que tens estas 3 variáveis públicas
+
+
+public function generatePortalLink($id)
+{
+    // 1. Procurar o fornecedor
+    $supplier = auth()->user()->suppliers()->findOrFail($id);
+
+    // 2. Se o fornecedor ainda não tiver código, gerar um agora
+    if (!$supplier->portal_token) {
+        do {
+            $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $exists = \App\Models\Supplier::where('portal_token', $passcode)->exists();
+        } while ($exists);
+
+        $supplier->update(['portal_token' => $passcode]);
+        // Atualiza a instância local para ter o código novo
+        $supplier->refresh();
+    }
+
+    // 3. ATRIBUIR OS VALORES ÀS VARIÁVEIS PÚBLICAS (Obrigatório para o Blade ver)
+    $this->generatedPasscode = $supplier->portal_token;
+    $this->supplierTaxNumber = $supplier->tax_number;
+    $this->generatedPortalUrl = route('supplier.portal');
+
+    // 4. Abrir o modal
+    $this->dispatch('modal-show', name: 'supplier-portal-modal');
+}
     // Filtros de Visualização
     public $viewMode = 'grid'; // 'grid' ou 'list'
 

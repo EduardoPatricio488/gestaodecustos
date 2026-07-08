@@ -17,6 +17,12 @@ class BankAccount extends Model
         'type',
         'is_business',
         'color',
+        'icon',
+        'status',
+        'description',
+        'opened_at',
+        'include_in_total',
+        'alert_below',
 
         // Dados bancários
         'bank_name',
@@ -24,6 +30,7 @@ class BankAccount extends Model
         'iban',
         'swift',
         'holder_name',
+        'currency',
 
         // Financeiro
         'balance',
@@ -37,12 +44,15 @@ class BankAccount extends Model
     ];
 
     protected $casts = [
-        'tags' => 'array',
-        'is_business' => 'boolean',
-        'balance' => 'float',
-        'credit_limit' => 'float',
+        'tags'             => 'array',
+        'is_business'      => 'boolean',
+        'include_in_total' => 'boolean',
+        'balance'          => 'float',
+        'credit_limit'     => 'float',
         'forecast_balance' => 'float',
-        'risk_score' => 'integer',
+        'alert_below'      => 'float',
+        'risk_score'       => 'integer',
+        'opened_at'        => 'date',
     ];
 
     /* ============================================================
@@ -67,6 +77,21 @@ class BankAccount extends Model
     public function incomes(): HasMany
     {
         return $this->hasMany(Income::class);
+    }
+
+    public function reserves(): HasMany
+    {
+        return $this->hasMany(BankReserve::class);
+    }
+
+    public function transfersOut(): HasMany
+    {
+        return $this->hasMany(BankTransfer::class, 'from_account_id');
+    }
+
+    public function transfersIn(): HasMany
+    {
+        return $this->hasMany(BankTransfer::class, 'to_account_id');
     }
 
     /* ============================================================

@@ -232,7 +232,7 @@
             </div>
 
             <div class="mt-8 pt-6 border-t border-white/5 flex justify-between items-center">
-                <span class="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em]">Gemini 1.5 Flash Engine</span>
+                <span class="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em]">Gemini 2.5 Flash Engine</span>
                 <flux:badge variant="success" size="sm" class="bg-brand-500/10 text-brand-400 border-none">+150 XP GANHOS</flux:badge>
             </div>
         </div>

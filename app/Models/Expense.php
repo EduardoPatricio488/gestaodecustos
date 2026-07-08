@@ -11,20 +11,11 @@ class Expense extends Model {
     use BelongsToWorkspace, LogsActivity;
 
     protected $fillable = [
-        'user_id',
-        'category_id',
-        'workspace_id',
-        'bank_account_id', // ADICIONADO: Ligação à conta bancária
-        'title',
-        'amount',
-        'vat_amount',
-        'description',
-        'spent_at',
-        'subcategory',
-        'metadata',
-        'receipt_path',
-        'is_company'
-    ];
+    'user_id', 'category_id', 'workspace_id', 'bank_account_id',
+    'amount', 'description', 'status', 'spent_at', 'receipt_path',
+    'is_company', 'project_id', 'task_id' // Adicionados aqui
+];
+
 
     protected $casts = [
         'spent_at' => 'date',
@@ -35,6 +26,13 @@ class Expense extends Model {
     ];
 
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function project() {
+    return $this->belongsTo(Project::class);
+}
+
+public function task() {
+    return $this->belongsTo(Task::class);
+}
     public function category(): BelongsTo { return $this->belongsTo(Category::class); }
 
     // RELAÇÃO ADICIONADA: De onde saiu o dinheiro?

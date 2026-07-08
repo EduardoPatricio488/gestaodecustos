@@ -14,6 +14,8 @@ class BankAccountHub extends Component
     // CAMPOS PRINCIPAIS
     public $name;
     public $type = 'corrente';
+    public $historyTransactions = [];
+public $selectedAccountName = '';
     public $balance = 0;
     public $color = '#6366f1';
     public $editingId = null;
@@ -31,6 +33,9 @@ class BankAccountHub extends Component
     public $credit_limit;
     public $forecast_balance;
     public $risk_score;
+    public $generatedAuditCode = '';
+public $companyTaxNumber = '';
+
 
     // TAGS E NOTAS
     public $tags_input;
@@ -52,6 +57,31 @@ class BankAccountHub extends Component
         'notes' => 'nullable|string',
     ];
 
+
+
+public function generateAuditCode()
+{
+    $workspace = auth()->user()->currentWorkspace;
+
+    // 1. Verificamos se a empresa já tem um token de auditoria.
+    // Se não tiver (estiver NULL ou vazio), geramos um NOVO para sempre.
+    if (!$workspace->audit_token) {
+        do {
+            $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            // Garante que este token não existe em mais nenhuma empresa na BD
+            $exists = \App\Models\Workspace::where('audit_token', $passcode)->exists();
+        } while ($exists);
+
+        $workspace->update(['audit_token' => $passcode]);
+    }
+
+    // 2. Preenchemos as variáveis do modal com o código permanente da base de dados
+    $this->generatedAuditCode = $workspace->audit_token;
+    $this->companyTaxNumber = $workspace->tax_number;
+
+    // 3. Abrimos o modal
+    $this->dispatch('modal-show', name: 'audit-code-modal');
+}
     public function mount()
     {
         $this->isBusinessMode = request()->routeIs('hub.business.*');
@@ -101,7 +131,35 @@ class BankAccountHub extends Component
         $this->dispatch('modal-close', name: 'bank-modal');
         $this->dispatch('toast', text: 'Conta guardada com sucesso!');
     }
+public function openHistory($id)
+{
+    $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+    $this->selectedAccountName = $account->name;
 
+    // Buscar as últimas 30 despesas desta conta
+    $expenses = $account->expenses()->with('category')->latest()->take(30)->get()->map(fn($e) => [
+        'date' => $e->spent_at,
+        'desc' => $e->description ?: $e->category->name,
+        'amount' => -$e->amount,
+        'type' => 'expense'
+    ]);
+
+    // Buscar as últimas 30 receitas desta conta
+    $incomes = $account->incomes()->latest()->take(30)->get()->map(fn($i) => [
+        'date' => $i->received_at,
+        'desc' => $i->description,
+        'amount' => $i->amount,
+        'type' => 'income'
+    ]);
+
+    // Juntar tudo, ordenar por data e transformar em array
+    $this->historyTransactions = $expenses->concat($incomes)
+        ->sortByDesc('date')
+        ->take(30)
+        ->toArray();
+
+    $this->dispatch('modal-show', name: 'account-history-modal');
+}
     public function edit($id)
     {
         $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);

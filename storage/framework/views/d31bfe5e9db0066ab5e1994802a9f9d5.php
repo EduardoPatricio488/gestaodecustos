@@ -927,46 +927,25 @@
 
 
 
+<?php
+    // Define se o utilizador é Business de forma segura
+    $isBusiness = ($user->plan ?? '') === 'pro' || (method_exists($user, 'isDiamond') && $user->isDiamond());
+?>
 
-<?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($userWorkspaces->count() >= 1): ?>
-    <div class="flex items-center gap-4 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl w-fit border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+<?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isBusiness && $userWorkspaces->count() >= 1): ?>
+    <div class="flex items-center gap-4 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl w-fit border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500">
 
-        <div class="px-3 py-1 text-[9px] font-black uppercase text-zinc-500 tracking-widest border-r border-zinc-200 dark:border-zinc-800">
-            Espaços
-        </div>
-
-        <div class="flex gap-1.5 overflow-x-auto no-scrollbar items-center">
-           <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $userWorkspaces; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ws): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-    <?php $isActive = ($ws->id == $currentWs->id); ?>
-    <button
-        wire:click="switchWorkspace(<?php echo e($ws->id); ?>)"
-        wire:loading.class="opacity-50 cursor-wait"
-        wire:target="switchWorkspace(<?php echo e($ws->id); ?>)"
-        class="group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 cursor-pointer select-none
-        <?php echo e($isActive
-            ? 'bg-white dark:bg-zinc-800 shadow-md text-brand-600 font-black scale-[1.02]'
-            : 'text-zinc-500 hover:bg-white dark:hover:bg-zinc-800 hover:text-zinc-800 dark:hover:text-white hover:shadow-md hover:scale-[1.02] active:scale-95'); ?>"
-    >
-        <div class="size-1.5 rounded-full transition-all duration-200
-            <?php echo e($isActive
-                ? 'bg-brand-500 shadow-[0_0_8px_#3b82f6]'
-                : 'bg-zinc-300 group-hover:bg-brand-400 group-hover:shadow-[0_0_6px_#3b82f6]'); ?>">
-        </div>
-        <span class="text-xs uppercase tracking-tighter"><?php echo e($ws->name); ?></span>
-
-        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($ws->type !== 'personal'): ?>
+        <div class="px-3 py-1 text-[9px] font-black uppercase text-zinc-500 tracking-widest border-r border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
             <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'arrow-right-circle','variant' => 'micro','class' => 'size-3 transition-all duration-200
-                '.e($isActive ? 'opacity-60' : 'opacity-0 group-hover:opacity-70 group-hover:translate-x-0.5').'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'building-office-2','variant' => 'micro','class' => 'size-3 text-violet-500']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['name' => 'arrow-right-circle','variant' => 'micro','class' => 'size-3 transition-all duration-200
-                '.e($isActive ? 'opacity-60' : 'opacity-0 group-hover:opacity-70 group-hover:translate-x-0.5').'']); ?>
+<?php $component->withAttributes(['name' => 'building-office-2','variant' => 'micro','class' => 'size-3 text-violet-500']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -979,9 +958,56 @@
 <?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
 <?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
-        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-    </button>
-<?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+            Espaços
+        </div>
+
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar items-center">
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $userWorkspaces; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ws): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                <?php $isActive = ($ws->id == $currentWs->id); ?>
+                <button
+                    wire:click="switchWorkspace(<?php echo e($ws->id); ?>)"
+                    wire:loading.class="opacity-50 cursor-wait"
+                    wire:target="switchWorkspace(<?php echo e($ws->id); ?>)"
+                    class="group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 cursor-pointer select-none
+                    <?php echo e($isActive
+                        ? 'bg-white dark:bg-zinc-800 shadow-md text-brand-600 font-black scale-[1.02]'
+                        : 'text-zinc-500 hover:bg-white dark:hover:bg-zinc-800 hover:text-zinc-800 dark:hover:text-white hover:shadow-md hover:scale-[1.02] active:scale-95'); ?>"
+                >
+                    <div class="size-1.5 rounded-full transition-all duration-200
+                        <?php echo e($isActive
+                            ? 'bg-brand-500 shadow-[0_0_8px_#3b82f6]'
+                            : 'bg-zinc-300 group-hover:bg-brand-400 group-hover:shadow-[0_0_6px_#3b82f6]'); ?>">
+                    </div>
+                    <span class="text-xs uppercase tracking-tighter"><?php echo e($ws->name); ?></span>
+
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($ws->type !== 'personal'): ?>
+                        <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'arrow-right-circle','variant' => 'micro','class' => 'size-3 transition-all duration-200
+                            '.e($isActive ? 'opacity-60' : 'opacity-0 group-hover:opacity-70 group-hover:translate-x-0.5').'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'arrow-right-circle','variant' => 'micro','class' => 'size-3 transition-all duration-200
+                            '.e($isActive ? 'opacity-60' : 'opacity-0 group-hover:opacity-70 group-hover:translate-x-0.5').'']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </button>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
         </div>
 
         
@@ -1013,7 +1039,6 @@
         </a>
     </div>
 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-
 
 
 

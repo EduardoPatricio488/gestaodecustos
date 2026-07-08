@@ -22,6 +22,7 @@ class Workspace extends Model
         'industry',
         'currency',
         'initial_capital',
+         'audit_token',
         'business_email',
         'plan',
         'plan_expires_at',

@@ -127,6 +127,7 @@ private function saveMessages()
 
 public function sendMessage()
 {
+
     $text = trim($this->userInput);
     if ($text === '') return;
 
@@ -231,14 +232,17 @@ if ($intent === 'expense' && $amount && $category['id']) {
         // INVESTIMENTO DIRETO
         if ($intent === 'investment' && $amount) {
 
-            Investment::create([
-                'user_id'        => Auth::id(),
-                'workspace_id'   => Auth::user()->current_workspace_id,
-                'asset'          => $desc ?: 'Investimento',
-                'amount'         => $amount,
-                'current_value'  => $amount,
-                'invested_at'    => now(),
-            ]);
+     Investment::create([
+    'user_id'        => Auth::id(),
+    'workspace_id'   => Auth::user()->current_workspace_id,
+    'name'           => $desc ?: 'Investimento',
+    'type'           => str_contains(mb_strtolower($text), 'bitcoin') ? 'Cripto' : 'Outro',
+    'product_type'   => 'Ativo',           // Obrigatório
+    'quantity'       => 1,                 // Obrigatório
+    'average_price'  => $amount,           // Obrigatório
+    'current_price'  => $amount,           // O erro atual era aqui
+    'operation_date' => now(),             // Usa este em vez de invested_at
+]);
 
             $this->messages[] = $this->botMessage(
                 "Registei investimento de **{$amount}€** em **" . ($desc ?: 'Investimento') . "**. 📈"
@@ -332,7 +336,46 @@ if ($intent === 'expense' && $amount && $category['id']) {
             }
         }
     }
+$isQuestion = str_contains($lower, '?') ||
+              str_contains($lower, 'achas') ||
+              str_contains($lower, 'posso') ||
+              str_contains($lower, 'devo') ||
+              str_contains($lower, 'como');
 
+// 2. Só entra nos FLUXOS GUIADOS se NÃO for uma pergunta
+if ($this->flow === null && !$isQuestion) {
+
+    if (str_contains($lower, 'gastei') || str_contains($lower, 'despesa')) {
+        $this->handleAction('flow:add_expense');
+        $this->isTyping = false;
+        return;
+    }
+
+    if (str_contains($lower, 'recebi') || str_contains($lower, 'rendimento')) {
+        $this->handleAction('flow:add_income');
+        $this->isTyping = false;
+        return;
+    }
+
+    // Agora o "invest" só dispara se não houver "?" ou "achas"
+    if (str_contains($lower, 'invest')) {
+        $this->handleAction('flow:add_invest');
+        $this->isTyping = false;
+        return;
+    }
+
+    if (str_contains($lower, 'subscri') || str_contains($lower, 'mensalidade')) {
+        $this->handleAction('flow:add_sub');
+        $this->isTyping = false;
+        return;
+    }
+
+    if (str_contains($lower, 'meta') || str_contains($lower, 'objetivo')) {
+        $this->handleAction('flow:add_goal');
+        $this->isTyping = false;
+        return;
+    }
+}
     // FLUXO ATIVO
     if ($this->flow) {
         $this->processFlow($text);
@@ -775,6 +818,7 @@ private function askAi(string $userText)
                 $history,
                 [['role' => 'user', 'content' => $userText]]
             ),
+            'max_tokens' => 2000,
         ]);
 
         $reply = $response->json('choices.0.message.content') ?? "Erro ao processar.";
@@ -863,14 +907,17 @@ private function executeAction(string $text): void
             'active'         => true,
         ]),
 
-        'CREATE_INVEST' => Investment::create([
-            'user_id'       => $userId,
-            'workspace_id'  => $wsId,
-            'asset'         => $params->get('asset'),
-            'amount'        => (float) $params->get('amount', 0),
-            'current_value' => (float) $params->get('amount', 0),
-            'invested_at'   => now(),
-        ]),
+       'CREATE_INVEST' => Investment::create([
+    'user_id'        => $userId,
+    'workspace_id'  => $wsId,
+    'name'           => $params->get('asset') ?: 'Investimento',
+    'type'           => 'Outro',
+    'product_type'   => 'Ativo',
+    'quantity'       => 1,
+    'average_price'  => (float) $params->get('amount', 0),
+    'current_price'  => (float) $params->get('amount', 0),
+    'operation_date' => now(),
+]),
 
         'CREATE_GOAL' => Goal::create([
             'user_id'        => $userId,
@@ -1035,19 +1082,22 @@ public function handleAction($action)
             $this->messages[] = $this->botMessage("Nome do ativo (ex: S&P500, CT 2024)?");
         },
 
-        'flow:add_invest_finish' => function () {
-            Investment::create([
-                'user_id'        => Auth::id(),
-                'workspace_id'   => Auth::user()->current_workspace_id,
-                'asset'          => $this->flowData['asset'],
-                'amount'         => $this->flowData['amount'],
-                'current_value'  => $this->flowData['amount'],
-                'invested_at'    => now(),
-            ]);
+       'flow:add_invest_finish' => function () {
+    Investment::create([
+        'user_id'        => Auth::id(),
+        'workspace_id'   => Auth::user()->current_workspace_id,
+        'name'           => $this->flowData['asset'],
+        'type'           => 'Outro',
+        'product_type'   => 'Ativo',
+        'quantity'       => 1,
+        'average_price'  => $this->flowData['amount'],
+        'current_price'  => $this->flowData['amount'],
+        'operation_date' => now(),
+    ]);
 
-            $this->messages[] = $this->botMessage("Investimento registado! 📈");
-            $this->endFlow();
-        },
+    $this->messages[] = $this->botMessage("Investimento registado! 📈");
+    $this->endFlow();
+},
 
         // -----------------------------------------
         // SUBSCRIÇÕES
@@ -1303,21 +1353,35 @@ private function detectCategoryByName($text)
 private function detectIntent(string $text): ?string
 {
     $lower = mb_strtolower($text);
-if (
-    str_contains($lower, 'lembrete') ||
-    str_contains($lower, 'lembrar') ||
-    str_contains($lower, 'recorda') ||
-    str_contains($lower, 'avisa')
-) {
-    return 'reminder';
-}
-if (
-    str_contains($lower, 'lembrete') &&
-    (str_contains($lower, 'tenho') || str_contains($lower, 'ver') || str_contains($lower, 'quais'))
-) {
-    return 'list_reminders';
-}
-    // Despesa
+
+    // --- BLOCO DE SEGURANÇA: DETETAR PERGUNTAS/TEORIA ---
+    // Se houver um ponto de interrogação ou palavras de dúvida, não registamos nada.
+    $isQuestion = str_contains($lower, '?') ||
+                  str_contains($lower, 'posso') ||
+                  str_contains($lower, 'devo') ||
+                  str_contains($lower, 'achas') ||
+                  str_contains($lower, 'como') ||
+                  str_contains($lower, 'quanto');
+
+    if ($isQuestion) {
+        return null; // Força o Bot a ir para a IA (askAi) em vez de criar registos
+    }
+
+    // --- DETEÇÃO DE LEMBRETES ---
+    if (
+        str_contains($lower, 'lembrete') ||
+        str_contains($lower, 'lembrar') ||
+        str_contains($lower, 'recorda') ||
+        str_contains($lower, 'avisa')
+    ) {
+        // Se for para listar/ver lembretes
+        if (str_contains($lower, 'tenho') || str_contains($lower, 'ver') || str_contains($lower, 'quais')) {
+            return 'list_reminders';
+        }
+        return 'reminder';
+    }
+
+    // --- DETEÇÃO DE DESPESA ---
     if (
         str_contains($lower, 'gastei') ||
         str_contains($lower, 'paguei') ||
@@ -1327,7 +1391,7 @@ if (
         return 'expense';
     }
 
-    // Rendimento
+    // --- DETEÇÃO DE RENDIMENTO ---
     if (
         str_contains($lower, 'recebi') ||
         str_contains($lower, 'ganhei') ||
@@ -1338,7 +1402,7 @@ if (
         return 'income';
     }
 
-    // Subscrição
+    // --- DETEÇÃO DE SUBSCRIÇÃO ---
     if (
         str_contains($lower, 'subscri') ||
         str_contains($lower, 'mensalidade') ||
@@ -1348,9 +1412,10 @@ if (
         return 'subscription';
     }
 
-    // Investimento
+    // --- DETEÇÃO DE INVESTIMENTO ---
+    // Note: 'investi' agora é validado para não confundir com 'investir' em perguntas
     if (
-        str_contains($lower, 'investi') ||
+        str_contains($lower, 'investi ') || // Espaço no fim ajuda a focar na ação
         str_contains($lower, 'investimento') ||
         str_contains($lower, 'ações') ||
         str_contains($lower, 'acções') ||
@@ -1360,7 +1425,7 @@ if (
         return 'investment';
     }
 
-    // Meta
+    // --- DETEÇÃO DE META ---
     if (
         str_contains($lower, 'meta') ||
         str_contains($lower, 'objetivo') ||

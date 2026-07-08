@@ -1,7 +1,7 @@
 <div x-data="{ showTaskModal: false, activeTask: null }" class="space-y-10 pb-20">
 
     
-    <div class="relative">
+    <div class="relative text-left">
         <div class="absolute -top-10 left-0 size-64 bg-brand-500/5 blur-[100px] rounded-full pointer-events-none"></div>
 
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
@@ -35,19 +35,19 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black uppercase tracking-tighter italic leading-none dark:text-white">
+                        <h1 class="text-4xl font-black uppercase tracking-tighter italic leading-none dark:text-white text-zinc-900">
                             Timeline de Fluxo
                         </h1>
                         <?php if (isset($component)) { $__componentOriginal4cc377eda9b63b796b6668ee7832d023 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal4cc377eda9b63b796b6668ee7832d023 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::badge.index','data' => ['variant' => 'neutral','class' => 'bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::badge.index','data' => ['variant' => 'neutral','class' => 'bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest text-zinc-500']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::badge'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['variant' => 'neutral','class' => 'bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest']); ?>
+<?php $component->withAttributes(['variant' => 'neutral','class' => 'bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest text-zinc-500']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             Workflow
@@ -62,13 +62,13 @@
 <?php unset($__componentOriginal4cc377eda9b63b796b6668ee7832d023); ?>
 <?php endif; ?>
                     </div>
-                    <p class="text-sm text-zinc-500 font-medium italic mt-2">
+                    <p class="text-sm text-zinc-500 font-medium italic mt-2 text-zinc-400">
                         Monitorização de estados e missões do grupo
                     </p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 rounded-[1.8rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 rounded-[1.8rem] border border-zinc-200 dark:border-zinc-800 shadow-sm w-full lg:w-auto">
                 <div class="relative flex-1 min-w-[220px]">
                     <?php if (isset($component)) { $__componentOriginal26c546557cdc09040c8dd00b2090afd0 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal26c546557cdc09040c8dd00b2090afd0 = $attributes; } ?>
@@ -96,14 +96,14 @@
                 <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
                 <?php if (isset($component)) { $__componentOriginala467913f9ff34913553be64599ec6e92 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginala467913f9ff34913553be64599ec6e92 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::select.index','data' => ['wire:model.live' => 'activeProjectId','class' => 'w-full md:w-52 font-bold uppercase text-[10px] !bg-transparent border-none shadow-none']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::select.index','data' => ['wire:model.live' => 'activeProjectId','class' => 'w-full md:w-52 font-black uppercase text-[10px] !bg-transparent border-none shadow-none']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::select'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:model.live' => 'activeProjectId','class' => 'w-full md:w-52 font-bold uppercase text-[10px] !bg-transparent border-none shadow-none']); ?>
+<?php $component->withAttributes(['wire:model.live' => 'activeProjectId','class' => 'w-full md:w-52 font-black uppercase text-[10px] !bg-transparent border-none shadow-none']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     <option value="">Todas as Unidades</option>
@@ -131,20 +131,20 @@
             
             <div class="flex-shrink-0 w-[320px] space-y-6">
                 <div class="flex justify-between items-center px-6 py-4 bg-zinc-100/80 dark:bg-zinc-800/50 rounded-2xl border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 text-left">
                         <div class="size-2 rounded-full bg-zinc-400"></div>
                         <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">A Aguardar</span>
                     </div>
                     <?php if (isset($component)) { $__componentOriginal4cc377eda9b63b796b6668ee7832d023 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal4cc377eda9b63b796b6668ee7832d023 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::badge.index','data' => ['variant' => 'neutral','size' => 'sm','class' => 'font-black bg-white dark:bg-zinc-800']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::badge.index','data' => ['variant' => 'neutral','size' => 'sm','class' => 'font-black bg-white dark:bg-zinc-800 text-zinc-500 shadow-sm']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::badge'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['variant' => 'neutral','size' => 'sm','class' => 'font-black bg-white dark:bg-zinc-800']); ?>
+<?php $component->withAttributes(['variant' => 'neutral','size' => 'sm','class' => 'font-black bg-white dark:bg-zinc-800 text-zinc-500 shadow-sm']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                         <?php echo e($pendingTasks->count()); ?>
@@ -163,211 +163,23 @@
 
                 <div class="space-y-4">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $pendingTasks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <div class="glass-card p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-sm relative group">
+                        <div <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'pending-task-'.e($task->id).''; ?>wire:key="pending-task-<?php echo e($task->id); ?>" x-data="{ optionsOpen: false }"
+                             class="glass-card p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-sm relative group">
 
                             
-                            <div class="absolute top-4 right-4">
-                                <?php if (isset($component)) { $__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::dropdown','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::dropdown'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes([]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'ghost','icon' => 'ellipsis-horizontal','size' => 'sm','class' => 'rounded-xl opacity-0 group-hover:opacity-100 transition-opacity']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['variant' => 'ghost','icon' => 'ellipsis-horizontal','size' => 'sm','class' => 'rounded-xl opacity-0 group-hover:opacity-100 transition-opacity']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
-<?php endif; ?>
-
-                                    <?php if (isset($component)) { $__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.index','data' => ['class' => 'min-w-[180px] p-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['class' => 'min-w-[180px] p-2']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                                        <?php if (isset($component)) { $__componentOriginal5027d420cfeeb03dd925cfc08ae44851 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.item','data' => ['wire:click' => 'openTask('.e($task->id).')','icon' => 'eye','class' => 'font-bold text-xs uppercase']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu.item'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'openTask('.e($task->id).')','icon' => 'eye','class' => 'font-bold text-xs uppercase']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                                            Ver Detalhes
-                                         <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $attributes = $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $component = $__componentOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-
-                                        <?php if (isset($component)) { $__componentOriginal5027d420cfeeb03dd925cfc08ae44851 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.item','data' => ['wire:click' => 'editTask('.e($task->id).')','icon' => 'pencil-square','class' => 'font-bold text-xs uppercase']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu.item'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'editTask('.e($task->id).')','icon' => 'pencil-square','class' => 'font-bold text-xs uppercase']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                                            Editar
-                                         <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $attributes = $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $component = $__componentOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-
-                                        <?php if (isset($component)) { $__componentOriginald5e1eb3ae521062f8474178ba08933ca = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginald5e1eb3ae521062f8474178ba08933ca = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.separator','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu.separator'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes([]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginald5e1eb3ae521062f8474178ba08933ca)): ?>
-<?php $attributes = $__attributesOriginald5e1eb3ae521062f8474178ba08933ca; ?>
-<?php unset($__attributesOriginald5e1eb3ae521062f8474178ba08933ca); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginald5e1eb3ae521062f8474178ba08933ca)): ?>
-<?php $component = $__componentOriginald5e1eb3ae521062f8474178ba08933ca; ?>
-<?php unset($__componentOriginald5e1eb3ae521062f8474178ba08933ca); ?>
-<?php endif; ?>
-
-                                        <?php if (isset($component)) { $__componentOriginal5027d420cfeeb03dd925cfc08ae44851 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.item','data' => ['wire:click' => 'deleteTask('.e($task->id).')','variant' => 'danger','icon' => 'trash','class' => 'font-bold text-xs uppercase']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu.item'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'deleteTask('.e($task->id).')','variant' => 'danger','icon' => 'trash','class' => 'font-bold text-xs uppercase']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                                            Eliminar
-                                         <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $attributes = $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $component = $__componentOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-                                     <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a)): ?>
-<?php $attributes = $__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a; ?>
-<?php unset($__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a)): ?>
-<?php $component = $__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a; ?>
-<?php unset($__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a); ?>
-<?php endif; ?>
-                                 <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888)): ?>
-<?php $attributes = $__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888; ?>
-<?php unset($__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888)): ?>
-<?php $component = $__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888; ?>
-<?php unset($__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888); ?>
-<?php endif; ?>
-                            </div>
-
-                            <div class="flex justify-between items-start mb-3">
-                                <?php if (isset($component)) { $__componentOriginal4cc377eda9b63b796b6668ee7832d023 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal4cc377eda9b63b796b6668ee7832d023 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::badge.index','data' => ['variant' => $task->priority_color,'size' => 'sm','class' => 'text-[7px] font-black uppercase px-2 border-none']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::badge'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['variant' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($task->priority_color),'size' => 'sm','class' => 'text-[7px] font-black uppercase px-2 border-none']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                                    <?php echo e($task->priority); ?>
-
-                                 <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal4cc377eda9b63b796b6668ee7832d023)): ?>
-<?php $attributes = $__attributesOriginal4cc377eda9b63b796b6668ee7832d023; ?>
-<?php unset($__attributesOriginal4cc377eda9b63b796b6668ee7832d023); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal4cc377eda9b63b796b6668ee7832d023)): ?>
-<?php $component = $__componentOriginal4cc377eda9b63b796b6668ee7832d023; ?>
-<?php unset($__componentOriginal4cc377eda9b63b796b6668ee7832d023); ?>
-<?php endif; ?>
-
-                                <button wire:click="updateTaskStatus(<?php echo e($task->id); ?>, 'em_curso')"
-                                    class="p-2 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-zinc-400 hover:bg-brand-500 hover:text-white transition-all shadow-inner">
+                            <div class="absolute top-4 right-4 z-30">
+                                <button type="button" @click.stop="optionsOpen = !optionsOpen"
+                                        class="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 opacity-0 group-hover:opacity-100">
                                     <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'play','variant' => 'solid','class' => 'size-3']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'ellipsis-horizontal','class' => 'size-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['name' => 'play','variant' => 'solid','class' => 'size-3']); ?>
+<?php $component->withAttributes(['name' => 'ellipsis-horizontal','class' => 'size-4']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -381,9 +193,121 @@
 <?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
                                 </button>
-                            </div>
 
-                            <h4 class="text-sm font-black dark:text-white uppercase leading-snug mb-5 line-clamp-2">
+                                <div x-show="optionsOpen" x-cloak @click.outside="optionsOpen = false"
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     class="absolute right-0 top-8 w-44 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl z-50 overflow-hidden text-left">
+                                    <div class="p-1.5 space-y-0.5">
+                                        <button type="button" wire:click="openTask(<?php echo e($task->id); ?>)" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 hover:text-brand-600 transition-all">
+                                            <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'eye','class' => 'size-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'eye','class' => 'size-3.5']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?> Ver Detalhes
+                                        </button>
+                                        <button type="button" wire:click="deleteTask(<?php echo e($task->id); ?>)" wire:confirm="Eliminar missão?" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[10px] font-black uppercase text-red-500 hover:bg-red-50 transition-all">
+                                            <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'trash','class' => 'size-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'trash','class' => 'size-3.5']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?> Eliminar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+<div class="flex justify-between items-start mb-4">
+    <?php if (isset($component)) { $__componentOriginal4cc377eda9b63b796b6668ee7832d023 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal4cc377eda9b63b796b6668ee7832d023 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::badge.index','data' => ['variant' => $task->priority_color,'size' => 'sm','class' => 'text-[7px] font-black uppercase px-2 border-none']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::badge'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['variant' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($task->priority_color),'size' => 'sm','class' => 'text-[7px] font-black uppercase px-2 border-none']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+        <?php echo e($task->priority); ?>
+
+     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal4cc377eda9b63b796b6668ee7832d023)): ?>
+<?php $attributes = $__attributesOriginal4cc377eda9b63b796b6668ee7832d023; ?>
+<?php unset($__attributesOriginal4cc377eda9b63b796b6668ee7832d023); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal4cc377eda9b63b796b6668ee7832d023)): ?>
+<?php $component = $__componentOriginal4cc377eda9b63b796b6668ee7832d023; ?>
+<?php unset($__componentOriginal4cc377eda9b63b796b6668ee7832d023); ?>
+<?php endif; ?>
+</div>
+
+
+<div class="flex justify-center mb-6">
+    <button wire:click="updateTaskStatus(<?php echo e($task->id); ?>, 'em_curso')"
+        class="size-14 flex items-center justify-center bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full hover:bg-emerald-600 hover:text-white transition-all shadow-lg group/play">
+        <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'play','variant' => 'solid','class' => 'size-6 group-hover/play:scale-110 transition-transform ml-1']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'play','variant' => 'solid','class' => 'size-6 group-hover/play:scale-110 transition-transform ml-1']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+    </button>
+</div>
+
+                            <h4 class="text-sm font-black dark:text-white uppercase leading-snug mb-5 line-clamp-2 text-left">
                                 <?php echo e($task->title); ?>
 
                             </h4>
@@ -406,20 +330,20 @@
             
             <div class="flex-shrink-0 w-[320px] space-y-6">
                 <div class="flex justify-between items-center px-6 py-4 bg-brand-500/10 rounded-2xl border border-brand-500/20">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 text-left">
                         <div class="size-2 rounded-full bg-brand-500 animate-pulse"></div>
                         <span class="text-[10px] font-black uppercase tracking-widest text-brand-600">Em Curso</span>
                     </div>
                     <?php if (isset($component)) { $__componentOriginal4cc377eda9b63b796b6668ee7832d023 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal4cc377eda9b63b796b6668ee7832d023 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::badge.index','data' => ['variant' => 'success','size' => 'sm','class' => 'bg-brand-600 text-white font-black']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::badge.index','data' => ['variant' => 'success','size' => 'sm','class' => 'bg-brand-600 text-white font-black shadow-sm']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::badge'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['variant' => 'success','size' => 'sm','class' => 'bg-brand-600 text-white font-black']); ?>
+<?php $component->withAttributes(['variant' => 'success','size' => 'sm','class' => 'bg-brand-600 text-white font-black shadow-sm']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                         <?php echo e($inProgressTasks->count()); ?>
@@ -438,168 +362,95 @@
 
                 <div class="space-y-4">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $inProgressTasks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <div class="glass-card p-6 bg-white dark:bg-zinc-900 border-l-4 border-l-brand-600 rounded-[2rem] shadow-xl relative group">
+                        <div <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'progress-task-'.e($task->id).''; ?>wire:key="progress-task-<?php echo e($task->id); ?>" x-data="{ optionsOpen: false }"
+                             class="glass-card p-6 bg-white dark:bg-zinc-900 border-l-4 border-l-brand-600 rounded-[2rem] shadow-xl relative group">
 
                             
-                            <div class="absolute top-4 right-4">
-                                <?php if (isset($component)) { $__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::dropdown','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::dropdown'); ?>
+                            <div class="absolute top-4 right-4 z-30">
+                                <button type="button" @click.stop="optionsOpen = !optionsOpen"
+                                        class="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 opacity-0 group-hover:opacity-100">
+                                    <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'ellipsis-horizontal','class' => 'size-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes([]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'ghost','icon' => 'ellipsis-horizontal','size' => 'sm','class' => 'rounded-xl opacity-0 group-hover:opacity-100 transition-opacity']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['variant' => 'ghost','icon' => 'ellipsis-horizontal','size' => 'sm','class' => 'rounded-xl opacity-0 group-hover:opacity-100 transition-opacity']); ?>
+<?php $component->withAttributes(['name' => 'ellipsis-horizontal','class' => 'size-4']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
-
-                                    <?php if (isset($component)) { $__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.index','data' => ['class' => 'min-w-[180px] p-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu'); ?>
+                                </button>
+                                <div x-show="optionsOpen" x-cloak @click.outside="optionsOpen = false"
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     class="absolute right-0 top-8 w-44 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl z-50 text-left">
+                                    <div class="p-1.5 space-y-0.5">
+                                        <button type="button" wire:click="openTask(<?php echo e($task->id); ?>)" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 hover:text-brand-600 transition-all">
+                                            <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'eye','class' => 'size-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'min-w-[180px] p-2']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                                        <?php if (isset($component)) { $__componentOriginal5027d420cfeeb03dd925cfc08ae44851 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.item','data' => ['wire:click' => 'openTask('.e($task->id).')','icon' => 'eye']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu.item'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'openTask('.e($task->id).')','icon' => 'eye']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-Ver Detalhes <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $attributes = $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $component = $__componentOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-
-                                        <?php if (isset($component)) { $__componentOriginal5027d420cfeeb03dd925cfc08ae44851 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.item','data' => ['wire:click' => 'editTask('.e($task->id).')','icon' => 'pencil-square']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu.item'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'editTask('.e($task->id).')','icon' => 'pencil-square']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-Editar <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $attributes = $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $component = $__componentOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-
-                                        <?php if (isset($component)) { $__componentOriginald5e1eb3ae521062f8474178ba08933ca = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginald5e1eb3ae521062f8474178ba08933ca = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.separator','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu.separator'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes([]); ?>
+<?php $component->withAttributes(['name' => 'eye','class' => 'size-3.5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginald5e1eb3ae521062f8474178ba08933ca)): ?>
-<?php $attributes = $__attributesOriginald5e1eb3ae521062f8474178ba08933ca; ?>
-<?php unset($__attributesOriginald5e1eb3ae521062f8474178ba08933ca); ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginald5e1eb3ae521062f8474178ba08933ca)): ?>
-<?php $component = $__componentOriginald5e1eb3ae521062f8474178ba08933ca; ?>
-<?php unset($__componentOriginald5e1eb3ae521062f8474178ba08933ca); ?>
-<?php endif; ?>
-
-                                        <?php if (isset($component)) { $__componentOriginal5027d420cfeeb03dd925cfc08ae44851 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.item','data' => ['wire:click' => 'deleteTask('.e($task->id).')','variant' => 'danger','icon' => 'trash']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu.item'); ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?> Ver Detalhes
+                                        </button>
+                                        <button type="button" wire:click="updateTaskStatus(<?php echo e($task->id); ?>, 'pendente')" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 transition-all">
+                                            <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'arrow-uturn-left','class' => 'size-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'deleteTask('.e($task->id).')','variant' => 'danger','icon' => 'trash']); ?>
+<?php $component->withAttributes(['name' => 'arrow-uturn-left','class' => 'size-3.5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-Eliminar <?php echo $__env->renderComponent(); ?>
+
+<?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $attributes = $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $component = $__componentOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-                                     <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a)): ?>
-<?php $attributes = $__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a; ?>
-<?php unset($__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a)): ?>
-<?php $component = $__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a; ?>
-<?php unset($__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a); ?>
-<?php endif; ?>
-                                 <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888)): ?>
-<?php $attributes = $__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888; ?>
-<?php unset($__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888)): ?>
-<?php $component = $__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888; ?>
-<?php unset($__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888); ?>
-<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?> Recuar Estado
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
-                            <h4 class="text-sm font-black dark:text-white uppercase leading-snug mb-8 line-clamp-2">
+                            <h4 class="text-sm font-black dark:text-white uppercase leading-snug mb-8 line-clamp-2 text-left">
                                 <?php echo e($task->title); ?>
 
                             </h4>
@@ -617,7 +468,7 @@ Eliminar <?php echo $__env->renderComponent(); ?>
                                 </div>
 
                                 <button wire:click="updateTaskStatus(<?php echo e($task->id); ?>, 'concluida')"
-                                    class="px-4 py-2 bg-zinc-950 dark:bg-brand-600 text-white text-[9px] font-black uppercase rounded-xl hover:scale-105 transition-all">
+                                    class="px-4 py-2 bg-zinc-950 dark:bg-brand-600 text-white text-[9px] font-black uppercase rounded-xl hover:scale-105 transition-all shadow-md">
                                     Finalizar
                                 </button>
                             </div>
@@ -629,7 +480,7 @@ Eliminar <?php echo $__env->renderComponent(); ?>
             
             <div class="flex-shrink-0 w-[320px] space-y-6">
                 <div class="flex justify-between items-center px-6 py-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 text-left">
                         <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'check-circle','variant' => 'solid','class' => 'size-4 text-emerald-500']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -658,123 +509,95 @@ Eliminar <?php echo $__env->renderComponent(); ?>
 
                 <div class="space-y-4 opacity-70 hover:opacity-100 transition-all">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $completedTasks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <div class="glass-card p-5 bg-zinc-50/50 dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] relative group">
+                        <div <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'done-task-'.e($task->id).''; ?>wire:key="done-task-<?php echo e($task->id); ?>" x-data="{ optionsOpen: false }"
+                             class="glass-card p-5 bg-zinc-50/50 dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] relative group">
 
                             
-                            <div class="absolute top-4 right-4">
-                                <?php if (isset($component)) { $__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::dropdown','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::dropdown'); ?>
+                            <div class="absolute top-4 right-4 z-30">
+                                <button type="button" @click.stop="optionsOpen = !optionsOpen"
+                                        class="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 opacity-0 group-hover:opacity-100">
+                                    <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'ellipsis-horizontal','class' => 'size-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes([]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'ghost','icon' => 'ellipsis-horizontal','size' => 'sm','class' => 'rounded-xl opacity-0 group-hover:opacity-100 transition-opacity']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['variant' => 'ghost','icon' => 'ellipsis-horizontal','size' => 'sm','class' => 'rounded-xl opacity-0 group-hover:opacity-100 transition-opacity']); ?>
+<?php $component->withAttributes(['name' => 'ellipsis-horizontal','class' => 'size-4']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
-<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
-<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
-
-                                    <?php if (isset($component)) { $__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.index','data' => ['class' => 'min-w-[180px] p-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu'); ?>
+                                </button>
+                                <div x-show="optionsOpen" x-cloak @click.outside="optionsOpen = false"
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     class="absolute right-0 top-8 w-44 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl z-50 text-left">
+                                    <div class="p-1.5 space-y-0.5">
+                                        <button type="button" wire:click="openTask(<?php echo e($task->id); ?>)" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 transition-all">
+                                            <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'eye','class' => 'size-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'min-w-[180px] p-2']); ?>
+<?php $component->withAttributes(['name' => 'eye','class' => 'size-3.5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                                        <?php if (isset($component)) { $__componentOriginal5027d420cfeeb03dd925cfc08ae44851 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.item','data' => ['wire:click' => 'openTask('.e($task->id).')','icon' => 'eye']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu.item'); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?> Ver Detalhes
+                                        </button>
+                                        <button type="button" wire:click="updateTaskStatus(<?php echo e($task->id); ?>, 'em_curso')" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[10px] font-black uppercase text-brand-600 hover:bg-brand-50 transition-all">
+                                            <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'arrow-path','class' => 'size-3.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'openTask('.e($task->id).')','icon' => 'eye']); ?>
+<?php $component->withAttributes(['name' => 'arrow-path','class' => 'size-3.5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-Ver Detalhes <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $attributes = $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $component = $__componentOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
 
-                                        <?php if (isset($component)) { $__componentOriginal5027d420cfeeb03dd925cfc08ae44851 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.item','data' => ['wire:click' => 'deleteTask('.e($task->id).')','variant' => 'danger','icon' => 'trash']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu.item'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'deleteTask('.e($task->id).')','variant' => 'danger','icon' => 'trash']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-Eliminar <?php echo $__env->renderComponent(); ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $attributes = $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>
-<?php $component = $__componentOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
-<?php unset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
-<?php endif; ?>
-                                     <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a)): ?>
-<?php $attributes = $__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a; ?>
-<?php unset($__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a)): ?>
-<?php $component = $__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a; ?>
-<?php unset($__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a); ?>
-<?php endif; ?>
-                                 <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888)): ?>
-<?php $attributes = $__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888; ?>
-<?php unset($__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888)): ?>
-<?php $component = $__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888; ?>
-<?php unset($__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888); ?>
-<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?> Reativar Missão
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="flex items-center gap-3 mb-3">
+                            <div class="flex items-center gap-3 mb-3 text-left">
                                 <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'check','class' => 'size-3 text-emerald-600']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -839,19 +662,19 @@ Eliminar <?php echo $__env->renderComponent(); ?>
 
     
     <div class="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-10 border-t border-zinc-100 dark:border-zinc-800 mt-10">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 text-left">
             <div class="size-2.5 rounded-full bg-red-500"></div>
             <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Missão Crítica</span>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 text-left">
             <div class="size-2.5 rounded-full bg-orange-500"></div>
             <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Prioridade Alta</span>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 text-left">
             <div class="size-2.5 rounded-full bg-blue-500"></div>
             <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Fluxo Normal</span>
         </div>
-        <div class="flex items-center gap-3 opacity-50">
+        <div class="flex items-center gap-3 opacity-50 text-left">
             <div class="size-2.5 rounded-full bg-zinc-400"></div>
             <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Baixa Prioridade</span>
         </div>
@@ -860,17 +683,17 @@ Eliminar <?php echo $__env->renderComponent(); ?>
     
     <?php if (isset($component)) { $__componentOriginal8cc9d3143946b992b324617832699c5f = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal8cc9d3143946b992b324617832699c5f = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::modal.index','data' => ['name' => 'task-modal','position' => 'center','class' => 'md:w-[600px] !p-0 overflow-visible']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::modal.index','data' => ['name' => 'task-modal','position' => 'center','class' => 'md:w-[600px] !p-0 overflow-visible','wire:ignore.self' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::modal'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['name' => 'task-modal','position' => 'center','class' => 'md:w-[600px] !p-0 overflow-visible']); ?>
+<?php $component->withAttributes(['name' => 'task-modal','position' => 'center','class' => 'md:w-[600px] !p-0 overflow-visible','wire:ignore.self' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-        <div class="p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 border border-zinc-200 dark:border-zinc-800">
+        <div class="p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 border border-zinc-200 dark:border-zinc-800 text-left">
 
             <div class="absolute top-6 right-6">
                 <?php if (isset($component)) { $__componentOriginalda55eef372798476d918d03158796935 = $component; } ?>
@@ -920,32 +743,37 @@ Eliminar <?php echo $__env->renderComponent(); ?>
             </div>
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($activeTask): ?>
-                <h2 class="text-2xl font-black uppercase tracking-tight dark:text-white">
+                <h2 class="text-2xl font-black uppercase tracking-tight dark:text-white leading-tight">
                     <?php echo e($activeTask->title); ?>
 
                 </h2>
 
-                <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                    <?php echo e($activeTask->description ?? 'Sem descrição disponível.'); ?>
-
+                <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed italic">
+                    "<?php echo e($activeTask->description ?? 'Sem descrição disponível para esta missão.'); ?>"
                 </p>
 
-                <div class="grid grid-cols-2 gap-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+                <div class="grid grid-cols-2 gap-8 pt-8 border-t border-zinc-200 dark:border-zinc-800">
                     <div>
-                        <p class="text-[10px] uppercase font-black text-zinc-400">Projeto</p>
-                        <p class="font-bold"><?php echo e($activeTask->project->name); ?></p>
+                        <p class="text-[9px] uppercase font-black text-zinc-400 mb-1 tracking-widest">Unidade de Negócio</p>
+                        <p class="text-sm font-black dark:text-zinc-200 uppercase"><?php echo e($activeTask->project->name); ?></p>
                     </div>
                     <div>
-                        <p class="text-[10px] uppercase font-black text-zinc-400">Responsável</p>
-                        <p class="font-bold"><?php echo e($activeTask->assignee->name ?? '---'); ?></p>
+                        <p class="text-[9px] uppercase font-black text-zinc-400 mb-1 tracking-widest">Responsável</p>
+                        <p class="text-sm font-black dark:text-zinc-200 uppercase"><?php echo e($activeTask->assignee->name ?? 'Pendente'); ?></p>
                     </div>
                     <div>
-                        <p class="text-[10px] uppercase font-black text-zinc-400">Prioridade</p>
-                        <p class="font-bold"><?php echo e($activeTask->priority); ?></p>
+                        <p class="text-[9px] uppercase font-black text-zinc-400 mb-1 tracking-widest">Prioridade</p>
+                        <p class="text-sm font-black uppercase <?php echo e($activeTask->priority === 'critica' ? 'text-red-500' : 'text-brand-500'); ?>">
+                            <?php echo e($activeTask->priority); ?>
+
+                        </p>
                     </div>
                     <div>
-                        <p class="text-[10px] uppercase font-black text-zinc-400">Prazo</p>
-                        <p class="font-bold"><?php echo e($activeTask->due_date ? $activeTask->due_date->format('d/m/Y') : '---'); ?></p>
+                        <p class="text-[9px] uppercase font-black text-zinc-400 mb-1 tracking-widest">Prazo Final</p>
+                        <p class="text-sm font-black dark:text-zinc-200">
+                            <?php echo e($activeTask->due_date ? $activeTask->due_date->format('d M, Y') : 'Sem Prazo'); ?>
+
+                        </p>
                     </div>
                 </div>
             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>

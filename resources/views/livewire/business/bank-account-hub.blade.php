@@ -184,165 +184,243 @@
 
 
 
-    {{-- 3. GRELHA DE CONTAS (ESTILO DIGITAL WALLET PREMIUM) --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        @forelse($accounts as $account)
-            <div class="relative group">
-                {{-- Efeito de Sombra Colorida no Hover --}}
-                <div class="absolute inset-0 rounded-[2.5rem] opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl" style="background-color: {{ $account->color }}"></div>
 
-                <div
-    x-data="{ expanded: false }"
-    class="glass-card relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800
-           rounded-[2.5rem] shadow-sm transition-all duration-500 group-hover:-translate-y-1
-           group-hover:shadow-xl flex flex-col p-8 min-h-[380px]"
->
 
-    {{-- Barra de cor superior --}}
-    <div class="h-2 w-full rounded-t-[2.5rem] mb-5" style="background-color: {{ $account->color }}"></div>
 
-    {{-- Topo --}}
-    <div class="flex justify-between items-start mb-6">
-        <div class="flex items-start gap-4">
-            <div class="size-14 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-inner"
-                 style="background-color: {{ $account->color }}">
-                <flux:icon name="{{ $account->getIcon() }}" variant="mini" class="size-7" />
-            </div>
 
-            <div class="space-y-1">
-                <h4 class="font-black dark:text-white uppercase text-base tracking-tight leading-none">
-                    {{ $account->name }}
-                </h4>
+{{-- 3. LISTAGEM DE CONTAS — DOSSIÊ EXECUTIVO (VERSÃO FINAL COM MENU 3 PONTOS) --}}
+<div class="flex flex-col gap-6 w-full">
+    @forelse($accounts as $account)
+        <div wire:key="account-row-{{ $account->id }}" x-data="{ isOpen: false }" class="relative w-full group">
 
-                @if($account->bank_name)
-                    <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-tight mt-1">
-                        {{ $account->bank_name }} · {{ $account->country }}
-                    </p>
-                @endif
+            {{-- 1. CARTÃO PRINCIPAL (VISÍVEL) --}}
+            <div class="glass-card relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-sm transition-all duration-500 hover:shadow-xl w-full overflow-hidden text-left">
 
-                <span class="inline-flex mt-2 px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500
-                             text-[9px] font-black uppercase tracking-[0.15em] rounded-md border
-                             border-zinc-200 dark:border-zinc-700">
-                    {{ $account->type }}
-                </span>
+                <div class="absolute left-0 top-0 bottom-0 w-1.5" style="background-color: {{ $account->color }}"></div>
 
-                {{-- Tags --}}
-                @if($account->tags)
-                    <div class="flex flex-wrap gap-1 mt-3">
-                        @foreach($account->tags as $tag)
-                            <span class="px-2 py-0.5 bg-brand-500/10 text-brand-600 text-[9px]
-                                         font-black uppercase rounded-md">
-                                {{ $tag }}
-                            </span>
-                        @endforeach
+                <div class="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+
+                    {{-- Identificação --}}
+                    <div class="flex items-center gap-5 flex-1 min-w-0 w-full text-left">
+                        <div class="size-12 rounded-xl flex items-center justify-center text-white shadow-md shrink-0" style="background-color: {{ $account->color }}">
+                            <flux:icon name="{{ $account->getIcon() }}" variant="mini" class="size-6" />
+                        </div>
+
+                        <div class="truncate">
+                            <h4 class="font-black dark:text-white uppercase text-lg tracking-tight leading-none truncate">{{ $account->name }}</h4>
+                            <div class="flex flex-wrap items-center gap-3 mt-2">
+                                <p class="text-[9px] text-zinc-500 font-black uppercase tracking-[0.2em]">{{ $account->bank_name ?? 'Instituição' }}</p>
+                                @if($account->tags)
+                                    <div class="flex gap-1.5">
+                                        @foreach($account->tags as $tag)
+                                            <span class="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[7px] font-black uppercase tracking-widest rounded border border-zinc-200 dark:border-zinc-700">{{ $tag }}</span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
                     </div>
-                @endif
-            </div>
-        </div>
 
-        {{-- Risco + Menu --}}
-        <div class="flex flex-col items-end gap-3">
-            @if(!is_null($account->risk_score))
-                <span class="inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
-                    @if($account->risk_score < 30) bg-emerald-500/10 text-emerald-600
-                    @elseif($account->risk_score < 60) bg-amber-500/10 text-amber-600
-                    @else bg-red-500/10 text-red-600 @endif">
-                    Risco {{ $account->risk_score }}%
-                </span>
+                    {{-- Health Score --}}
+                    <div class="hidden xl:flex flex-col items-center px-8 border-l border-zinc-100 dark:border-zinc-800">
+                        <div class="flex items-center gap-1.5 mb-1 relative group/tip">
+                            <p class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Health Score</p>
+                            <flux:icon name="information-circle" variant="micro" class="size-3 text-zinc-300 cursor-help" />
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-zinc-950 text-white text-[10px] font-bold rounded-xl opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl border border-white/10 text-center uppercase tracking-tighter leading-relaxed">
+                                Indica a robustez financeira baseada na liquidez disponível.
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-zinc-950"></div>
+                            </div>
+                        </div>
+                        <span class="text-base font-black {{ $account->risk_score < 30 ? 'text-emerald-500' : 'text-amber-500' }}">{{ 100 - ($account->risk_score ?? 0) }}%</span>
+                    </div>
+
+                    {{-- Risco --}}
+                    <div class="hidden xl:flex flex-col items-center px-8 border-x border-zinc-100 dark:border-zinc-800">
+                        <div class="flex items-center gap-1.5 mb-1 relative group/tip">
+                            <p class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Risco</p>
+                            <flux:icon name="information-circle" variant="micro" class="size-3 text-zinc-300 cursor-help" />
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-zinc-950 text-white text-[10px] font-bold rounded-xl opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl border border-white/10 text-center uppercase tracking-tighter leading-relaxed">
+                                Probabilidade de rutura de tesouraria ou excesso de alavancagem.
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-zinc-950"></div>
+                            </div>
+                        </div>
+                        <span class="text-base font-black {{ $account->risk_score > 60 ? 'text-red-500' : 'text-emerald-500' }}">{{ $account->risk_score ?? 0 }}%</span>
+                    </div>
+
+                    {{-- Saldo --}}
+                    <div class="flex items-center gap-8 w-full md:w-auto justify-between md:justify-end">
+                        <div class="text-right">
+                            <div class="flex items-center justify-end gap-1.5 mb-1 relative group/tip">
+                                <p class="text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em]">Saldo Disponível</p>
+                                <flux:icon name="information-circle" variant="micro" class="size-3 text-zinc-300 cursor-help" />
+                                <div class="absolute bottom-full right-0 mb-2 w-40 p-2 bg-zinc-950 text-white text-[9px] font-bold rounded-lg opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-50 text-center uppercase border border-white/10">
+                                    Capital líquido real que pode ser movimentado hoje.
+                                    <div class="absolute top-full right-4 border-4 border-transparent border-t-zinc-950"></div>
+                                </div>
+                            </div>
+                            <h3 class="text-3xl font-black dark:text-white tracking-tighter italic leading-none">{{ number_format($account->current_balance, 2, ',', ' ') }}€</h3>
+                        </div>
+                        <button @click="isOpen = !isOpen" class="size-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-brand-500 transition-all shadow-inner" :class="isOpen ? 'rotate-180 bg-brand-50/10 text-brand-600' : ''">
+                            <flux:icon name="chevron-down" class="size-4" />
+                        </button>
+                    </div>
+                </div>
+
+                {{-- 2. CONTEÚDO EXPANSÍVEL (DADOS TÉCNICOS + NOTAS + LOG) --}}
+                <div x-show="isOpen" x-collapse x-cloak class="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-black/10">
+                    <div class="p-8 space-y-10 text-left">
+
+                       {{-- GRELHA DE DADOS REFEITA EM DUAS LINHAS --}}
+<div class="grid grid-cols-1 md:grid-cols-12 gap-y-10 gap-x-8 items-start">
+
+    {{-- LINHA 1: IDENTIFICAÇÃO --}}
+    {{-- IBAN --}}
+    <div class="md:col-span-5 space-y-2">
+        <div class="flex items-center gap-1.5 relative group/tip">
+            <span class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">IBAN Internacional</span>
+            <flux:icon name="information-circle" variant="micro" class="size-2.5 text-zinc-300" />
+            <div class="absolute bottom-full left-0 mb-2 w-48 p-2 bg-zinc-950 text-white text-[8px] rounded opacity-0 group-hover/tip:opacity-100 transition-opacity z-50">Identificação completa da conta para transferências.</div>
+        </div>
+        <div class="flex items-center gap-3 bg-white dark:bg-zinc-800 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800 w-fit shadow-sm">
+            <p class="text-xs font-mono font-black dark:text-zinc-100 tracking-tight whitespace-nowrap">{{ $account->iban ?? '---' }}</p>
+            @if($account->iban)
+                <button @click="navigator.clipboard.writeText('{{ $account->iban }}')" class="p-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-md transition-all text-zinc-400 hover:text-brand-500"><flux:icon name="clipboard" variant="micro" class="size-3.5" /></button>
             @endif
-
-            <flux:dropdown>
-                <flux:button variant="ghost" icon="ellipsis-horizontal" size="sm"
-                             class="rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                <flux:menu class="min-w-[200px] p-2">
-                    <flux:menu.item wire:click="edit({{ $account->id }})" icon="pencil-square"
-                                    class="font-bold text-xs uppercase">Configurar Conta</flux:menu.item>
-                    <flux:menu.item wire:click="openHistory({{ $account->id }})" icon="clock"
-                                    class="font-bold text-xs uppercase">Histórico Financeiro</flux:menu.item>
-                    <flux:menu.separator />
-                    <flux:menu.item wire:click="delete({{ $account->id }})"
-                                    wire:confirm="Eliminar conta e todo o histórico associado?"
-                                    variant="danger" icon="trash"
-                                    class="font-bold text-xs uppercase text-red-500">
-                        Remover do Sistema
-                    </flux:menu.item>
-                </flux:menu>
-            </flux:dropdown>
         </div>
     </div>
 
-
-
-    {{-- Compacto --}}
-    <div class="space-y-1 text-[11px] text-zinc-500 font-mono"
-         x-show="!expanded"
-         x-transition.opacity>
-        @if($account->iban)
-            <p><span class="font-bold uppercase">IBAN:</span> {{ Str::limit($account->iban, 28) }}</p>
-        @endif
-
-        @if($account->swift)
-            <p><span class="font-bold uppercase">SWIFT:</span> {{ $account->swift }}</p>
-        @endif
+    {{-- SWIFT --}}
+    <div class="md:col-span-3 space-y-1">
+        <div class="flex items-center gap-1.5 relative group/tip">
+            <span class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">SWIFT / BIC</span>
+            <flux:icon name="information-circle" variant="micro" class="size-2.5 text-zinc-300" />
+            <div class="absolute bottom-full left-0 mb-2 w-40 p-2 bg-zinc-950 text-white text-[8px] rounded opacity-0 group-hover/tip:opacity-100 transition-opacity z-50">Código mundial de identificação do banco.</div>
+        </div>
+        <p class="text-sm font-mono font-bold dark:text-zinc-200 uppercase">{{ $account->swift ?? '---' }}</p>
     </div>
 
-    {{-- Expandido --}}
-    <div class="space-y-3 text-[11px] text-zinc-500 font-mono"
-         x-show="expanded"
-         x-transition>
-        @if($account->iban)
-            <p><span class="font-bold uppercase">IBAN:</span> {{ $account->iban }}</p>
-        @endif
-
-        @if($account->swift)
-            <p><span class="font-bold uppercase">SWIFT:</span> {{ $account->swift }}</p>
-        @endif
-
-        @if($account->holder_name)
-            <p><span class="font-bold uppercase">Titular:</span> {{ $account->holder_name }}</p>
-        @endif
-
-        @if($account->credit_limit)
-            <p><span class="font-bold uppercase">Limite Crédito:</span>
-                {{ number_format($account->credit_limit, 2, ',', ' ') }} €
-            </p>
-        @endif
-
-        @if($account->notes)
-            <p class="text-[10px] leading-relaxed">
-                <span class="font-bold uppercase">Notas:</span> {{ $account->notes }}
-            </p>
-        @endif
+    {{-- TITULAR --}}
+    <div class="md:col-span-4 space-y-1">
+        <div class="flex items-center gap-1.5 relative group/tip">
+            <span class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Titular da Conta</span>
+            <flux:icon name="information-circle" variant="micro" class="size-2.5 text-zinc-300" />
+            <div class="absolute bottom-full left-0 mb-2 w-40 p-2 bg-zinc-950 text-white text-[8px] rounded opacity-0 group-hover/tip:opacity-100 transition-opacity z-50">Nome oficial da entidade dona da conta.</div>
+        </div>
+        <p class="text-xs font-black dark:text-white uppercase truncate">{{ $account->holder_name ?? '---' }}</p>
     </div>
 
-    {{-- Botão --}}
-    <button
-        @click="expanded = !expanded"
-        class="mt-4 text-[10px] font-black uppercase tracking-widest text-brand-600 hover:text-brand-700">
-        <span x-show="!expanded">Expandir detalhes</span>
-        <span x-show="expanded">Recolher detalhes</span>
+    {{-- LINHA 2: FINANCEIRO (Abaixo) --}}
+    {{-- LIMITE --}}
+    <div class="md:col-span-5 space-y-2 border-t border-zinc-100 dark:border-zinc-800 pt-6">
+        <div class="flex items-center gap-1.5 relative group/tip">
+            <span class="text-[8px] font-black text-red-500 uppercase tracking-widest">Limite de Crédito Atribuído</span>
+            <flux:icon name="information-circle" variant="micro" class="size-2.5 text-red-300" />
+            <div class="absolute bottom-full left-0 mb-2 w-48 p-2 bg-red-950 text-white text-[8px] rounded opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 italic">Plafond máximo de crédito ou descoberto autorizado.</div>
+        </div>
+        <p class="text-2xl font-black text-red-500 italic tracking-tighter">
+            {{ number_format($account->credit_limit ?? 0, 2, ',', ' ') }}€
+        </p>
+    </div>
+
+    {{-- PROJEÇÃO --}}
+    <div class="md:col-span-5 space-y-2 border-t border-zinc-100 dark:border-zinc-800 pt-6">
+        <div class="flex items-center gap-1.5 relative group/tip">
+            <span class="text-[8px] font-black text-amber-600 uppercase tracking-widest">Saldo Projetado (30 Dias)</span>
+            <flux:icon name="information-circle" variant="micro" class="size-2.5 text-amber-300" />
+            <div class="absolute bottom-full left-0 mb-2 w-48 p-2 bg-amber-950 text-white text-[8px] rounded opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 italic">Estimativa de capital baseado no fluxo histórico.</div>
+        </div>
+        <p class="text-2xl font-black text-amber-600 italic tracking-tighter">
+            {{ number_format($account->forecast_balance ?? $account->current_balance, 2, ',', ' ') }}€
+        </p>
+    </div>
+
+    {{-- AÇÕES (MENU 3 PONTOS) --}}
+    <div class="md:col-span-2 flex justify-end items-end pt-6 border-t border-zinc-100 dark:border-zinc-800 h-full" x-data="{ optionsOpen: false }">
+        <div class="relative mb-1">
+            <button type="button" @click.stop="optionsOpen = !optionsOpen" class="flex items-center gap-2 px-3 py-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700">
+                <flux:icon name="ellipsis-horizontal" class="size-4" />
+            </button>
+
+            <div x-show="optionsOpen" x-cloak @click.outside="optionsOpen = false" class="absolute right-0 bottom-full mb-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-2xl z-[100] overflow-hidden text-left">
+                <div class="p-1.5 space-y-0.5">
+                    <button type="button" wire:click="edit({{ $account->id }})" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 hover:text-brand-600 transition-all">
+                        <flux:icon name="pencil-square" class="size-4 text-brand-500" /> Configurar Conta
+                    </button>
+                     {{-- ✅ ADICIONA ESTE NOVO BOTÃO AQUI --}}
+    <button type="button" wire:click="generateAuditCode" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 transition-all">
+        <flux:icon name="shield-check" class="size-4 text-zinc-900 dark:text-white" /> Gerar Acesso Bancário
     </button>
 
-    {{-- Saldos --}}
-    <div class="mt-8 flex justify-between items-end">
-        <div>
-            <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-1">Saldo Disponível</p>
-            <h3 class="text-4xl font-black dark:text-white tracking-tighter italic leading-none">
-                {{ number_format($account->current_balance, 2, ',', ' ') }} €
-            </h3>
-        </div>
-
-        <div class="text-right">
-            <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Saldo Projetado</p>
-            <p class="text-lg font-black text-amber-600 italic">
-                {{ number_format($account->forecast_balance ?? $account->current_balance, 2, ',', ' ') }} €
-            </p>
+    <div class="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+                    <div class="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+                    <button type="button" wire:click="delete({{ $account->id }})" wire:confirm="Eliminar conta permanentemente?" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 transition-all">
+                        <flux:icon name="trash" class="size-4 text-red-500" /> Remover
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+                        {{-- NOTAS ADMINISTRATIVAS --}}
+                        @if($account->notes)
+                            <div class="p-5 bg-white dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-inner">
+                                <div class="flex items-center gap-2 mb-2 relative group/tip">
+                                    <flux:icon name="chat-bubble-bottom-center-text" variant="mini" class="size-3 text-zinc-400" />
+                                    <span class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Notas Administrativas</span>
+                                    <flux:icon name="information-circle" variant="micro" class="size-2.5 text-zinc-300" />
+                                    <div class="absolute bottom-full left-6 mb-2 w-48 p-2 bg-zinc-950 text-white text-[8px] rounded opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 italic">Observações e memorandos internos sobre a conta.</div>
+                                </div>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400 italic leading-relaxed">"{{ $account->notes }}"</p>
+                            </div>
+                        @endif
+
+                        {{-- LOG DE ATIVIDADE --}}
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between px-1">
+                                <div class="flex items-center gap-2 relative group/tip">
+                                    <h5 class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em]">Log de Atividade</h5>
+                                    <flux:icon name="information-circle" variant="micro" class="size-2.5 text-zinc-300" />
+                                    <div class="absolute bottom-full left-0 mb-2 w-48 p-2 bg-zinc-950 text-white text-[8px] rounded opacity-0 group-hover/tip:opacity-100 transition-opacity z-50">Transações recentes processadas nesta conta.</div>
+                                </div>
+                                <button wire:click="openHistory({{ $account->id }})" class="text-[9px] font-black text-brand-600 uppercase hover:underline">Abrir Extrato Digital →</button>
+                            </div>
+
+                            <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+                                <table class="w-full text-left border-collapse">
+                                    <tbody class="divide-y divide-zinc-50 dark:divide-zinc-800">
+                                        @php $miniLogs = collect($historyTransactions)->where('account_id', $account->id)->take(3); @endphp
+                                        @forelse($miniLogs as $t)
+                                            <tr class="text-[10px] font-bold text-zinc-600 dark:text-zinc-300">
+                                                <td class="px-6 py-3 uppercase">{{ \Carbon\Carbon::parse($t['date'])->format('d M') }}</td>
+                                                <td class="px-6 py-3">{{ $t['desc'] }}</td>
+                                                <td class="px-6 py-3 text-right font-black {{ $t['amount'] > 0 ? 'text-emerald-500' : 'text-red-500' }}">{{ number_format($t['amount'], 2, ',', ' ') }}€</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td class="px-6 py-8 text-center text-zinc-400 text-[9px] font-black uppercase italic">Sincronização de dados em curso...</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        @empty
+        </div>
+    @empty
+        <div class="py-24 text-center opacity-30 flex flex-col items-center">
+            <flux:icon name="building-library" class="size-16 mb-4" />
+            <p class="text-xs font-black uppercase tracking-widest italic">Cofre de Tesouraria Vazio</p>
+        </div>
+
+</div>
+
+
+
+
+
+
+
             <div class="col-span-full py-24 text-center">
                 <div class="flex flex-col items-center justify-center gap-4">
                     <div class="p-8 bg-zinc-50 dark:bg-zinc-900 rounded-[3rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 shadow-inner">
@@ -428,14 +506,36 @@
                         <p class="text-[9px] font-black uppercase text-brand-600 tracking-[0.2em]">Dados Bancários</p>
                     </div>
 
-                    <div class="space-y-2">
-                        <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">IBAN</flux:label>
-                        <flux:input
-                            wire:model="iban"
-                            placeholder="PT50 0000 0000 0000 0000 0000 0"
-                            class="font-mono text-xs !bg-white dark:!bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl h-12 shadow-sm"
-                        />
-                    </div>
+                    {{-- ZONA DO IBAN NO PAINEL EXPANSÍVEL --}}
+<div class="space-y-1 col-span-2"> {{-- Col-span-2 para dar mais largura --}}
+    <div class="flex items-center gap-1.5 relative group/tip">
+        <span class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">IBAN Internacional</span>
+        <flux:icon name="information-circle" variant="micro" class="size-2.5 text-zinc-300" />
+        <div class="absolute bottom-full left-0 mb-2 w-40 p-2 bg-zinc-950 text-white text-[9px] rounded-lg opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 uppercase tracking-tighter">
+            Número completo para transferências.
+        </div>
+    </div>
+
+    <div class="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-800/50 p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 w-fit">
+        {{-- Removido o TRUNCATE para ver tudo --}}
+        <p class="text-xs font-mono font-black dark:text-zinc-100 tracking-tight">
+            {{ $account->iban ?? '---' }}
+        </p>
+
+        {{-- BOTÃO DE CÓPIA RÁPIDA --}}
+        @if($account->iban)
+            <button
+                x-data="{ copied: false }"
+                @click="navigator.clipboard.writeText('{{ $account->iban }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                class="p-1 hover:bg-white dark:hover:bg-zinc-700 rounded transition-all shadow-sm"
+                title="Copiar IBAN"
+            >
+                <flux:icon x-show="!copied" name="clipboard" variant="micro" class="size-3 text-zinc-400" />
+                <flux:icon x-show="copied" name="check" variant="micro" class="size-3 text-emerald-500" />
+            </button>
+        @endif
+    </div>
+</div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
@@ -579,7 +679,139 @@
             </div>
         </div>
     </flux:modal>
+{{-- MODAL DE HISTÓRICO FINANCEIRO --}}
+    <flux:modal name="account-history-modal" position="center" class="md:w-[700px] !p-0 overflow-hidden" wire:ignore.self>
+        <div class="p-10 bg-white dark:bg-zinc-950 space-y-8">
 
+            <div class="flex items-center gap-4 text-left">
+                <div class="p-3 bg-brand-600 rounded-2xl text-white shadow-lg">
+                    <flux:icon name="clock" class="size-6" />
+                </div>
+                <div>
+                    <h2 class="text-xl font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white leading-none">
+                        Extrato de Movimentos
+                    </h2>
+                    <p class="text-xs text-zinc-500 font-bold uppercase mt-1 tracking-widest">{{ $selectedAccountName }}</p>
+                </div>
+            </div>
+
+            <div class="glass-card border border-zinc-200 dark:border-zinc-800 rounded-[2rem] overflow-hidden shadow-inner max-h-[450px] overflow-y-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 text-[9px] font-black uppercase text-zinc-400 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-4">Data</th>
+                            <th class="px-6 py-4">Descrição</th>
+                            <th class="px-6 py-4 text-right">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-50 dark:divide-zinc-800">
+                        @forelse($historyTransactions as $trans)
+                            <tr class="text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors">
+                                <td class="px-6 py-4 uppercase text-[10px]">
+                                    {{ \Carbon\Carbon::parse($trans['date'])->translatedFormat('d M, Y') }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="size-1.5 rounded-full {{ $trans['type'] === 'income' ? 'bg-emerald-500' : 'bg-red-500' }}"></div>
+                                        <span class="truncate max-w-[200px]">{{ $trans['desc'] }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right font-black {{ $trans['amount'] > 0 ? 'text-emerald-500' : 'text-red-500' }}">
+                                    {{ number_format($trans['amount'], 2, ',', ' ') }} €
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="px-6 py-20 text-center text-zinc-400 uppercase text-[10px] font-black italic">
+                                    <flux:icon name="magnifying-glass" class="size-10 mx-auto mb-4 opacity-20" />
+                                    Sem movimentos registados nesta conta
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex gap-4">
+                <flux:modal.close class="w-full">
+                    <flux:button variant="ghost" class="w-full font-black uppercase text-[10px] h-12 rounded-xl">Fechar Extrato</flux:button>
+                </flux:modal.close>
+            </div>
+        </div>
+    </flux:modal>
+    {{-- MODAL: CREDENCIAIS DE AUDITORIA BANCÁRIA --}}
+    <flux:modal name="audit-code-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">
+        <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
+
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-zinc-900 rounded-2xl text-white shadow-lg">
+                    <flux:icon name="shield-check" class="size-6" />
+                </div>
+                <div>
+                    <flux:heading size="xl" class="font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white leading-none">Protocolo de Auditoria</flux:heading>
+                    <p class="text-xs text-zinc-400 font-medium mt-1">Chave de acesso seguro para instituições financeiras.</p>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                {{-- O CÓDIGO (PIN) --}}
+                <div class="p-8 bg-zinc-950 rounded-[2rem] border border-zinc-800 text-center relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-zinc-500/5 blur-3xl rounded-full"></div>
+                    <p class="relative z-10 text-[9px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-4">Token de Verificação Ativo</p>
+
+                    <div class="relative z-10 flex items-center justify-center gap-6">
+                        <span class="text-5xl font-mono font-black text-white tracking-[0.2em]">
+                            {{ $generatedAuditCode }}
+                        </span>
+
+                        <button
+                            x-data="{ copiedAudit: false }"
+                            @click="navigator.clipboard.writeText('{{ $generatedAuditCode }}'); copiedAudit = true; setTimeout(() => copiedAudit = false, 2000)"
+                            class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 transition-all border border-white/5"
+                        >
+                            <flux:icon x-show="!copiedAudit" name="clipboard" variant="micro" class="size-5" />
+                            <flux:icon x-show="copiedAudit" name="check" variant="micro" class="size-5 text-emerald-500" />
+                        </button>
+                    </div>
+                </div>
+
+                {{-- INSTRUÇÕES PARA O BANCO --}}
+                <div class="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-4">
+                    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest text-left">Como o Auditor entra:</p>
+                    <div class="space-y-3">
+                        <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-start gap-3">
+                            <span class="size-4 shrink-0 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[8px] mt-0.5">1</span>
+                            <span>Endereço: <br><span class="text-zinc-900 dark:text-zinc-100 font-mono break-all text-[10px]">http://localhost:8000/portal/banco</span></span>
+                        </p>
+                        <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-3">
+                            <span class="size-4 shrink-0 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[8px]">2</span>
+                            <span>NIF da Empresa: <span class="font-black text-zinc-900 dark:text-white">{{ $companyTaxNumber }}</span></span>
+                        </p>
+                        <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-3">
+                            <span class="size-4 shrink-0 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[8px]">3</span>
+                            <span>Token Único: <span class="font-black text-zinc-900 dark:text-white">{{ $generatedAuditCode }}</span></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-4 pt-2">
+                <flux:modal.close class="flex-1">
+                    <flux:button variant="ghost" class="w-full font-black uppercase text-[10px]">Fechar</flux:button>
+                </flux:modal.close>
+
+                <button
+                    x-data="{ copiedPortal: false }"
+                    @click="navigator.clipboard.writeText('http://localhost:8000/portal/banco'); copiedPortal = true; setTimeout(() => copiedPortal = false, 2000)"
+                    class="flex-[2] h-14 bg-zinc-900 text-white rounded-2xl font-black uppercase text-xs shadow-xl hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 border-none"
+                >
+                    <flux:icon x-show="!copiedPortal" name="share" class="size-4" />
+                    <flux:icon x-show="copiedPortal" name="check" class="size-4" />
+                    <span x-text="copiedPortal ? 'Link Copiado!' : 'Partilhar Acesso'"></span>
+                </button>
+            </div>
+        </div>
+    </flux:modal>
     {{-- RODAPÉ DE PÁGINA --}}
     <footer class="pt-20 pb-6 text-center border-t border-zinc-100 dark:border-zinc-800 mt-20">
         <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">

@@ -166,6 +166,7 @@ public function confirmSelection()
                 ['role' => 'user', 'content' => $prompt],
             ],
             'temperature' => 0.2,
+            'max_tokens' => 2000,
         ]);
 
         $json = json_decode($response->json()['choices'][0]['message']['content'] ?? '{}', true);

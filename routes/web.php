@@ -1,14 +1,15 @@
 <?php
 
 use App\Livewire\{
-    AiInsights, Categories, Dashboard, Expenses, ManageExpense, CompanyExpenses,
+    AiInsights, Categories, Dashboard, Expenses, ManageExpense,
     CategoryHub, SubscriptionHub, GoalsHub, YearlyReport, IncomeHub,
     InvestmentsHub, NetWorthHub, FinancialCalendar, ActivityFeed,
     GlobalSearch, SubscriptionPlans, FamilyRanking, DebtHub, SupportHub,
     PersonalCalendar, CategoryFields, ManageFamily, FitnessHub,
-    BudgetHub, StatementImportHub, WrappedReport
+    BudgetHub, StatementImportHub, WrappedReport, LockInHub, BancoHub
 };
 use App\Livewire\Admin\AiMonitor;
+use App\Livewire\Business\CollaboratorExpenseHub;
 use App\Livewire\Admin\GamificationHub;
 
 use App\Livewire\Admin\ProductivityHub;
@@ -31,17 +32,44 @@ use App\Livewire\Business\{
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Route, Mail, DB, Auth};
 use App\Mail\MonthlyReportMail;
+use App\Livewire\ClientPortal;
+use App\Livewire\Business\ClientLogin;
 use App\Livewire\Admin\AnalyticsHub;
 use App\Livewire\Business\BusinessGateway;
 use App\Livewire\Admin\RemindersMonitor;
 use App\Livewire\Admin\SubscriptionHub as AdminSubscriptionHub;
+// --- ÁREAS EXTERNAS (ACESSOS PARA NÃO-UTILIZADORES) ---
+
+Route::prefix('portal')->group(function () {
+    // Portal de Fornecedores (Login/Envio de faturas)
+    Route::get('/fornecedor', \App\Livewire\Public\SupplierPortal::class)->name('supplier.portal');
+
+    // Portal Bancário (Acesso para auditoria/verificação)
+    Route::get('/banco', \App\Livewire\Public\BankPortal::class)->name('bank.portal');
+});
+Route::get('/portal/fornecedor/dashboard/{token}', \App\Livewire\Public\SupplierDashboard::class)->name('supplier.dashboard');
 
 
+
+Route::get('/portal/banco/dashboard/{token}', \App\Livewire\Public\BankDashboard::class)->name('bank.dashboard');
+
+
+
+
+// Área de Recrutamento (Página de candidaturas)
+Route::get('/carreiras', \App\Livewire\Public\CareersHub::class)->name('careers.apply');
+Route::get('/portal/login', \App\Livewire\Business\ClientLogin::class)->name('client.login');
+Route::get('/portal/{token}', \App\Livewire\ClientPortal::class)->name('client.portal');
 // --- 1. PÁGINA INICIAL ---
 Route::view('/', 'welcome')->name('home');
 
-Route::get('/portal/{token}', [ClientPortalController::class, 'show'])->name('client.portal');
+// Ponto de entrada (Público)
+Route::get('/carreiras', \App\Livewire\Public\CareersHub::class)->name('careers.apply');
 
+// Portal de Empresas (Apenas para logados)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/carreiras/portal', \App\Livewire\Public\CareersPortal::class)->name('careers.portal');
+});
 Route::get('/api/whatsapp/webhook', [\App\Http\Controllers\Api\WhatsappWebhookController::class, 'verify']);
 Route::post('/api/whatsapp/webhook', [\App\Http\Controllers\Api\WhatsappWebhookController::class, 'handle']);
 
@@ -120,16 +148,19 @@ Route::get('/meu-perfil', \App\Livewire\Business\MyCompanyProfile::class)->name(
         // 2. FERRAMENTAS E HUBS
         Route::get('/ia-estrategista', BusinessAiHub::class)->name('hub.business.ai');
         Route::get('/arquivo', DocumentVault::class)->name('hub.business.vault');
-        Route::get('/despesas', CompanyExpenses::class)->name('company-expenses');
+
+        Route::get('/despesas', \App\Livewire\Business\CompanyExpenses::class)->name('company-expenses');
         Route::get('/faturacao', InvoicingHub::class)->name('hub.business.invoices');
         Route::get('/propostas', ProposalHub::class)->name('hub.business.proposals');
         Route::get('/clientes', ClientHub::class)->name('hub.business.clients');
         Route::get('/projetos', ProjectHub::class)->name('hub.business.projects');
+        Route::get('/empresa/analise-custos', \App\Livewire\Business\ProjectCostsHub::class)->name('hub.business.costs');
         Route::get('/stock', InventoryHub::class)->name('hub.business.inventory');
         Route::get('/fornecedores', SupplierHub::class)->name('hub.business.suppliers');
         Route::get('/lembretes', \App\Livewire\Hub\RemindersHub::class)->name('hub.reminders');
         Route::get('/equipa', TeamHub::class)->name('hub.business.team');
         Route::get('/impostos', TaxHub::class)->name('hub.business.taxes');
+         Route::get('/minhas-despesas', CollaboratorExpenseHub::class)->name('hub.business.my-expenses');
         Route::get('/perfil', BusinessSettings::class)->name('hub.business.settings');
         Route::get('/tarefas', TaskHub::class)->name('hub.business.tasks');
         Route::get('/timeline', TaskTimeline::class)->name('hub.business.timeline');
@@ -179,10 +210,12 @@ Route::get('/meu-perfil', \App\Livewire\Business\MyCompanyProfile::class)->name(
     Route::get('/ranking', FamilyRanking::class)->name('hub.ranking');
     Route::get('/dividas', DebtHub::class)->name('hub.debts');
     Route::get('/minhas-contas', BankAccountHub::class)->name('hub.personal.accounts');
+    Route::get('/banco', BancoHub::class)->name('hub.banco');
     Route::get('/familia/gestao', ManageFamily::class)->name('hub.family.manage');
     Route::get('/orcamento', BudgetHub::class)->name('hub.budget');
     Route::get('/importar-extrato', StatementImportHub::class)->name('hub.import');
     Route::get('/wrapped', WrappedReport::class)->name('hub.wrapped');
+    Route::get('/lock-in', LockInHub::class)->name('hub.lockin');
 
     // --- MARKETPLACE PRO (LOJA & INVENTÁRIO) ---
     Route::get('/loja', HubStore::class)->name('hub.store');

@@ -90,66 +90,133 @@
         </div>
     </div>
 
-    {{-- 3. GRELHA DE PARCEIROS (ESTILO SaaS AUDIT) --}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{{-- 3. GRELHA DE PARCEIROS (DOSSIÊ COMPLETO) --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         @forelse($suppliers as $supplier)
-            <div class="glass-card bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm hover:border-brand-500/30 transition-all duration-300 group overflow-hidden flex flex-col h-full">
+            <div wire:key="supplier-card-{{ $supplier->id }}"
+                 x-data="{ optionsOpen: false }"
+                 class="glass-card bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm hover:border-brand-500/30 transition-all duration-300 group flex flex-col h-full relative">
 
-                {{-- Topo do Card: Identidade --}}
-                <div class="p-7 flex justify-between items-start">
-                    <div class="flex items-center gap-5">
-                        <div class="size-16 rounded-[1.5rem] bg-brand-500/10 text-brand-600 flex items-center justify-center font-black text-2xl shadow-inner border border-brand-500/20 uppercase">
+                {{-- Cabeçalho: Nome e NIF --}}
+                <div class="p-7 flex justify-between items-start pb-4">
+                    <div class="flex items-center gap-4">
+                        <div class="size-14 rounded-2xl bg-zinc-950 text-brand-400 flex items-center justify-center font-black text-xl shadow-inner border border-white/5 uppercase shrink-0">
                             {{ substr($supplier->name, 0, 1) }}
                         </div>
-                        <div>
-                            <h4 class="font-black dark:text-white uppercase text-base tracking-tight leading-none group-hover:text-brand-600 transition-colors">{{ $supplier->name }}</h4>
-                            <span class="inline-flex mt-2 px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[8px] font-black uppercase tracking-widest rounded-md border border-zinc-200 dark:border-zinc-700">
-                                {{ $supplier->industry ?? 'Entidade / Fornecedor' }}
-                            </span>
+                        <div class="text-left">
+                            <h4 class="font-black dark:text-white uppercase text-base tracking-tight leading-none truncate w-40">{{ $supplier->name }}</h4>
+                            <p class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mt-1.5 italic">{{ $supplier->legal_name ?? 'Designação Social n/d' }}</p>
                         </div>
                     </div>
 
-                    <flux:dropdown>
-                        <flux:button variant="ghost" icon="ellipsis-horizontal" size="sm" class="rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <flux:menu class="min-w-[180px] p-2">
-                            <flux:menu.item wire:click="edit({{ $supplier->id }})" icon="pencil-square" class="font-bold text-xs uppercase">Editar Ficha</flux:menu.item>
-                            <flux:menu.separator />
-                            <flux:menu.item wire:click="delete({{ $supplier->id }})" wire:confirm="Eliminar fornecedor e histórico?" variant="danger" icon="trash" class="font-bold text-xs uppercase text-red-500">Remover Parceiro</flux:menu.item>
-                        </flux:menu>
-                    </flux:dropdown>
+                    <div class="relative">
+                        <button type="button" @click.stop="optionsOpen = !optionsOpen"
+                                class="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 opacity-0 group-hover:opacity-100">
+                            <flux:icon name="ellipsis-horizontal" class="size-5" />
+
+                        </button>
+
+                        <div x-show="optionsOpen" x-cloak @click.outside="optionsOpen = false" class="absolute right-0 top-10 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-2xl z-[100] overflow-hidden text-left">
+                            <div class="p-1.5 space-y-0.5">
+                                <button type="button" wire:click="edit({{ $supplier->id }})" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 hover:text-brand-600 transition-all">
+                                    <flux:icon name="pencil-square" class="size-4 text-brand-500" /> Editar Ficha
+                                </button>
+<button type="button" wire:click="generatePortalLink({{ $supplier->id }})" @click="optionsOpen = false"
+    class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 transition-all">
+    <flux:icon name="link" class="size-4 text-zinc-400" />
+    Gerar Portal
+</button>
+                                <div class="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+                                <button type="button" wire:click="delete({{ $supplier->id }})" @click="optionsOpen = false" wire:confirm="Remover parceiro?" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase text-red-500 hover:bg-red-50 transition-all">
+                                    <flux:icon name="trash" class="size-4 text-red-500" /> Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {{-- Meio do Card: Contactos e Condições --}}
-                <div class="px-7 space-y-3 mb-8">
-                    @if($supplier->email)
-                        <div class="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 group/info">
-                            <flux:icon name="envelope" variant="micro" class="size-3.5 group-hover/info:text-brand-500 transition-colors" />
-                            <span :class="privacyMode ? 'blur-sm select-none' : ''" class="text-[11px] font-bold transition-all duration-500 truncate">
-                                {{ $supplier->email }}
-                            </span>
-                        </div>
-                    @endif
+                {{-- Corpo do Card: Dados Detalhados --}}
+                <div class="px-7 py-4 space-y-5 flex-1 border-t border-zinc-50 dark:border-zinc-800/50">
 
-                    @if($supplier->payment_terms)
-                        <div class="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 group/info">
-                            <flux:icon name="credit-card" variant="micro" class="size-3.5 group-hover/info:text-brand-500 transition-colors" />
-                            <span class="text-[10px] font-black uppercase tracking-tight">Acordo: {{ $supplier->payment_terms }}</span>
+                    {{-- Info Fiscal & Acesso --}}
+<div class="space-y-2">
+    {{-- NIF --}}
+    <div class="flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-inner">
+        <span class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">NIF / VAT</span>
+        <span class="text-[10px] font-mono font-bold dark:text-zinc-200 uppercase tracking-widest">{{ $supplier->tax_number ?? '---' }}</span>
+    </div>
+
+    {{-- CHAVE DO PORTAL (NOVO BLOCO) --}}
+    <div class="flex justify-between items-center bg-zinc-950 p-3 rounded-2xl border border-zinc-800 shadow-xl group/key">
+        <span class="text-[8px] font-black text-brand-400 uppercase tracking-widest">Chave Portal</span>
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono font-black text-white uppercase tracking-[0.15em]">
+                {{ $supplier->portal_token ?? '--- ---' }}
+            </span>
+            @if($supplier->portal_token)
+                <button
+                    @click.stop="navigator.clipboard.writeText('{{ $supplier->portal_token }}')"
+                    class="text-zinc-600 hover:text-white transition-colors"
+                    title="Copiar Chave"
+                >
+                    <flux:icon name="clipboard" variant="micro" class="size-3" />
+                </button>
+            @endif
+        </div>
+    </div>
+</div>
+
+                    {{-- Contactos --}}
+                    <div class="space-y-3 text-left">
+                        <div class="flex items-center gap-3 text-zinc-500 group/info">
+                            <flux:icon name="envelope" variant="micro" class="size-3.5 text-zinc-400" />
+                            <span :class="privacyMode ? 'blur-sm' : ''" class="text-[11px] font-bold truncate">{{ $supplier->email ?? 'Sem email registado' }}</span>
                         </div>
-                    @endif
+                        <div class="flex items-center gap-3 text-zinc-500 group/info">
+                            <flux:icon name="phone" variant="micro" class="size-3.5 text-zinc-400" />
+                            <span class="text-[11px] font-bold">{{ $supplier->phone ?? 'Sem telefone' }}</span>
+                        </div>
+                    </div>
+
+                    {{-- Acordo e Morada --}}
+                    <div class="space-y-3 pt-2 border-t border-zinc-50 dark:border-zinc-800/50 text-left">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[8px] font-black text-brand-600 uppercase tracking-widest">Acordo Comercial</span>
+                            <p class="text-[10px] font-black dark:text-white uppercase italic tracking-tighter">{{ $supplier->payment_terms ?? 'Pronto Pagamento' }}</p>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Sede Fiscal / Morada</span>
+                            <p class="text-[10px] text-zinc-500 font-medium leading-relaxed line-clamp-2 italic">"{{ $supplier->address ?? 'Morada não especificada' }}"</p>
+                        </div>
+                    </div>
                 </div>
 
-                {{-- Rodapé do Card: Performance Financeira (Ledger Style) --}}
-                <div class="mt-auto p-7 bg-zinc-50/50 dark:bg-zinc-800/40 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-end">
-                    <div>
+                {{-- Rodapé: Métricas Financeiras --}}
+                <div class="mt-auto p-7 bg-zinc-50/50 dark:bg-zinc-800/40 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-end rounded-b-[2.5rem]">
+                    <div class="text-left">
                         <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Total Transacionado</p>
                         <h3 class="text-xl font-black dark:text-zinc-100 tracking-tighter italic leading-none">
-                            <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
+                            <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500">
                                 {{ number_format($supplier->total_spent, 2, ',', ' ') }}
                             </span> €
                         </h3>
                     </div>
                     <div class="text-right">
-                        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Volume</p>
+                        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Audit</p>
                         <span class="inline-flex px-2 py-0.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[10px] font-black dark:text-white shadow-sm">
                             {{ $supplier->bills_count }} Docs
                         </span>
@@ -157,19 +224,24 @@
                 </div>
             </div>
         @empty
-            <div class="col-span-full py-24 text-center">
-                <div class="flex flex-col items-center justify-center gap-4">
-                    <div class="p-8 bg-zinc-50 dark:bg-zinc-900 rounded-[3rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 shadow-inner">
-                        <flux:icon name="user-group" class="size-12 text-zinc-200 dark:text-zinc-700" />
-                    </div>
-                    <div class="space-y-1 text-center">
-                        <p class="text-zinc-500 font-black uppercase text-[10px] tracking-[0.3em]">Cadeia de Abastecimento Vazia</p>
-                        <p class="text-zinc-400 text-xs italic font-medium">Ainda não registaste nenhum parceiro de negócio.</p>
-                    </div>
-                </div>
+            <div class="col-span-full py-24 text-center opacity-30">
+                <flux:icon name="user-group" class="size-12 mx-auto mb-4" />
+                <p class="text-xs font-black uppercase">Cadeia de Abastecimento Vazia</p>
             </div>
         @endforelse
     </div>
+
+
+
+
+
+
+
+
+
+
+
+
 
     {{-- 4. MODAL: FICHA EXECUTIVA DE FORNECEDOR (DESIGN SaaS PRO) --}}
     <flux:modal name="supplier-modal" position="center" class="md:w-[650px] !p-0 overflow-visible">
@@ -280,7 +352,81 @@
             </div>
         </div>
     </flux:modal>
+{{-- MODAL: ACESSO AO PORTAL DO FORNECEDOR --}}
+   {{-- 5. MODAL: ACESSO AO PORTAL DO FORNECEDOR --}}
+    <flux:modal name="supplier-portal-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">
+        <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
 
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-zinc-900 rounded-2xl text-white shadow-lg">
+                    <flux:icon name="shield-check" class="size-6" />
+                </div>
+                <div>
+                    <flux:heading size="xl" class="font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white leading-none">Chave de Parceiro</flux:heading>
+                    <p class="text-xs text-zinc-400 font-medium mt-1">Credenciais para o Portal do Fornecedor.</p>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                {{-- O CÓDIGO (PIN) --}}
+                <div class="p-8 bg-zinc-950 rounded-[2rem] border border-zinc-800 text-center relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-brand-500/5 blur-3xl rounded-full"></div>
+                    <p class="relative z-10 text-[9px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-4">Código Único de Entrada</p>
+
+                    <div class="relative z-10 flex items-center justify-center gap-6">
+                        {{-- AQUI APARECERÁ O CÓDIGO --}}
+                        <span class="text-5xl font-mono font-black text-white tracking-[0.2em]">
+                            {{ $generatedPasscode }}
+                        </span>
+
+                        <button
+                            x-data="{ copiedCode: false }"
+                            @click="navigator.clipboard.writeText('{{ $generatedPasscode }}'); copiedCode = true; setTimeout(() => copiedCode = false, 2000)"
+                            class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 transition-all border border-white/5"
+                        >
+                            <flux:icon x-show="!copiedCode" name="clipboard" variant="micro" class="size-5" />
+                            <flux:icon x-show="copiedCode" name="check" variant="micro" class="size-5 text-emerald-500" />
+                        </button>
+                    </div>
+                </div>
+
+                {{-- INSTRUÇÕES DE ACESSO --}}
+                <div class="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-4">
+                    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Protocolo de Acesso:</p>
+                    <div class="space-y-3">
+                        <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-start gap-3">
+                            <span class="size-4 shrink-0 rounded-full bg-brand-500 text-white flex items-center justify-center text-[8px] mt-0.5">1</span>
+                            <span>Aceder a: <br><span class="text-brand-600 dark:text-brand-400 font-mono break-all">{{ $generatedPortalUrl }}</span></span>
+                        </p>
+                        <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-3">
+                            <span class="size-4 shrink-0 rounded-full bg-brand-500 text-white flex items-center justify-center text-[8px]">2</span>
+                            <span>Introduzir NIF: <span class="font-black text-zinc-900 dark:text-white">{{ $supplierTaxNumber }}</span></span>
+                        </p>
+                        <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-3">
+                            <span class="size-4 shrink-0 rounded-full bg-brand-500 text-white flex items-center justify-center text-[8px]">3</span>
+                            <span>Usar Código: <span class="font-black text-zinc-900 dark:text-white">{{ $generatedPasscode }}</span></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-4">
+                <flux:modal.close class="flex-1">
+                    <flux:button variant="ghost" class="w-full font-black uppercase text-[10px]">Fechar</flux:button>
+                </flux:modal.close>
+
+                <button
+                    x-data="{ copiedLink: false }"
+                    @click="navigator.clipboard.writeText('{{ $generatedPortalUrl }}'); copiedLink = true; setTimeout(() => copiedLink = false, 2000)"
+                    class="flex-[2] h-14 bg-brand-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-brand-500/20 hover:bg-brand-700 transition-all flex items-center justify-center gap-2"
+                >
+                    <flux:icon x-show="!copiedLink" name="share" class="size-4" />
+                    <flux:icon x-show="copiedLink" name="check" class="size-4" />
+                    <span x-text="copiedLink ? 'Link Copiado!' : 'Copiar Link de Login'"></span>
+                </button>
+            </div>
+        </div>
+    </flux:modal>
     {{-- RODAPÉ DE PÁGINA --}}
     <footer class="pt-20 pb-6 text-center border-t border-zinc-100 dark:border-zinc-800 mt-20">
         <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">
