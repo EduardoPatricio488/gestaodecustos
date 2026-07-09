@@ -2,8 +2,7 @@
 
 namespace App\Livewire\Public;
 
-use App\Models\Workspace;
-use App\Models\User;
+use App\Models\{Workspace, User};
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Layout;
@@ -13,56 +12,87 @@ class CareersPortal extends Component
 {
     use WithFileUploads;
 
-    // Dados da Candidatura
-    public $selectedCompanyId;
-    public $selectedCompanyName;
-    public $role_applied, $cv, $phone, $notes;
 
-    protected $rules = [
-        'role_applied' => 'required|min:3',
-        'phone' => 'required',
-        'cv' => 'required|file|mimes:pdf|max:5120', // Máx 5MB
-    ];
+    public $selectedCompanyId, $selectedCompanyName;
+    public $viewingCompany = null; // ✅ Para o modal de detalhes
+    public $role_applied, $cv, $phone, $notes;
+    public $hasApplied = false;
+
+
+
+
+
+    // Estado para saber se estamos a rever ou a criar
+
+    public $existingApplication = null;
 
     /**
-     * Abre o formulário para uma empresa específica
+     * Abre o modal e preenche os dados automaticamente
      */
-    public function openApplication($companyId, $companyName)
+
+     public function openDetails($companyId)
+    {
+        $this->viewingCompany = Workspace::find($companyId);
+        $this->dispatch('modal-show', name: 'company-details-modal');
+    }
+     public function openApplication($companyId, $companyName)
     {
         $this->selectedCompanyId = $companyId;
         $this->selectedCompanyName = $companyName;
+
+        $existing = DB::table('job_applications')
+            ->where('user_id', auth()->id())
+            ->where('workspace_id', $companyId)
+            ->first();
+
+        if ($existing) {
+            $this->hasApplied = true;
+            $this->role_applied = $existing->role;
+            $this->phone = $existing->phone;
+            $this->notes = $existing->notes;
+        } else {
+            $this->hasApplied = false;
+            $this->role_applied = ''; $this->phone = ''; $this->notes = ''; $this->cv = null;
+        }
+
         $this->dispatch('modal-show', name: 'apply-form-modal');
     }
 
-    /**
-     * Submete a candidatura final
-     */
+
     public function submitApplication()
     {
-        $this->validate();
+        $this->validate([
+            'role_applied' => 'required|min:3',
+            'phone' => 'required',
+            'cv' => 'required|file|mimes:pdf|max:5120',
+        ]);
 
-        // Lógica: Aqui guardarias na tabela 'job_applications' (que deves criar se necessário)
-        // Exemplo:
-        // DB::table('job_applications')->insert([
-        //     'user_id' => auth()->id(),
-        //     'workspace_id' => $this->selectedCompanyId,
-        //     'role' => $this->role_applied,
-        //     'phone' => $this->phone,
-        //     'cv_path' => $this->cv->store('cvs', 'local'),
-        //     'created_at' => now()
-        // ]);
+        DB::table('job_applications')->insert([
+            'user_id' => auth()->id(),
+            'workspace_id' => $this->selectedCompanyId,
+            'role' => $this->role_applied,
+            'phone' => $this->phone,
+            'notes' => $this->notes,
+            'cv_path' => $this->cv->store('cvs', 'public'),
+            'status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $this->dispatch('modal-close', name: 'apply-form-modal');
-        $this->dispatch('toast', text: 'Candidatura enviada para ' . $this->selectedCompanyName, variant: 'success');
-        $this->reset(['role_applied', 'cv', 'phone', 'notes', 'selectedCompanyId', 'selectedCompanyName']);
+        $this->dispatch('toast', text: 'Candidatura submetida com sucesso!', variant: 'success');
     }
 
-    #[Layout('layouts.guest')]
+     #[Layout('layouts.guest')]
     public function render()
-{
-    return view('livewire.public.careers-portal', [
-        // Procuramos por 'business' e também pelo erro 'bussiness' que está na tua BD
-        'companies' => Workspace::whereIn('type', ['business', 'bussiness'])->get()
-    ]);
-}
+    {
+        $userAppliedIds = DB::table('job_applications')
+            ->where('user_id', auth()->id())
+            ->pluck('workspace_id')->toArray();
+
+        return view('livewire.public.careers-portal', [
+            'companies' => Workspace::whereIn('type', ['business', 'bussiness'])->get(),
+            'userAppliedIds' => $userAppliedIds
+        ]);
+    }
 }

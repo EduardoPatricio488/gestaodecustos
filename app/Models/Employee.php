@@ -19,8 +19,10 @@ class Employee extends Model
         'active',
         'suspended',
         'terminated_at',
-        'resignation_reason', // NOVO
-        'resignation_status'  // NOVO
+        'resignation_reason',
+         'cv_path',
+        'resignation_status',
+        'portal_token' // <--- ADICIONADO: Agora o sistema já consegue gravar o código!
     ];
 
     /**
@@ -95,7 +97,7 @@ class Employee extends Model
         }
 
         if ($this->resignation_status === 'pending') {
-            return "Rescisão Pendente"; // NOVO: Prioridade visual no status
+            return "Rescisão Pendente";
         }
 
         if ($this->suspended) {

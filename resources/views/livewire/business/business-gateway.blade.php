@@ -1,14 +1,14 @@
-<div class="min-h-[85vh] flex flex-col items-center justify-center py-12 px-6">
+<div class="min-h-[85vh] flex flex-col items-center justify-center py-12 px-6 text-left">
 
     {{-- CABEÇALHO --}}
     <div class="text-center mb-16 animate-in fade-in slide-in-from-bottom-6 duration-1000">
         <div class="inline-flex p-4 bg-brand-500/10 rounded-[2rem] mb-6 shadow-inner">
             <flux:icon name="building-office-2" class="size-10 text-brand-600" />
         </div>
-        <h1 class="text-5xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+        <h1 class="text-5xl font-black dark:text-white uppercase tracking-tighter italic leading-none text-left">
             Hub Business
         </h1>
-        <p class="text-zinc-500 font-bold mt-4 uppercase tracking-[0.3em] text-[11px] opacity-80">
+        <p class="text-zinc-500 font-bold mt-4 uppercase tracking-[0.3em] text-[11px] opacity-80 text-center w-full">
             Selecione o seu portal de entrada
         </p>
     </div>
@@ -16,7 +16,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 w-full max-w-5xl">
 
         {{-- OPÇÃO 1: CEO / FUNDADOR --}}
-        <div class="group relative flex flex-col h-full">
+        <div class="group relative flex flex-col h-full text-left">
             <div class="absolute -inset-1 bg-gradient-to-br from-brand-600 to-indigo-600 rounded-[3rem] blur opacity-10 group-hover:opacity-30 transition duration-700"></div>
 
             <div class="relative flex-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[3rem] p-10 flex flex-col shadow-sm group-hover:border-brand-500/50 transition-all">
@@ -57,10 +57,10 @@
         </div>
 
         {{-- OPÇÃO 2: COLABORADOR / EQUIPA --}}
-        <div class="group relative flex flex-col h-full">
+        <div class="group relative flex flex-col h-full text-left">
             <div class="absolute -inset-1 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-[3rem] blur opacity-10 group-hover:opacity-30 transition duration-700"></div>
 
-            <div class="relative flex-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[3rem] p-10 flex flex-col shadow-sm group-hover:border-emerald-500/50 transition-all">
+            <div class="relative flex-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[3rem] p-10 flex flex-col shadow-sm group-hover:border-emerald-500/50 transition-all text-left">
                 <div class="flex items-center gap-4 mb-8 text-left">
                     <div class="size-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
                         <flux:icon name="users" class="size-7" />
@@ -109,7 +109,7 @@
 
     {{-- RODAPÉ --}}
     <div class="mt-16 flex flex-col items-center">
-        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em] opacity-50 mb-4">
+        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em] opacity-50 mb-4 text-center">
             Finance Pro · Protocolo de Segurança Empresarial
         </p>
         <flux:button href="{{ route('dashboard') }}" variant="ghost" size="sm" class="text-[10px] font-black uppercase tracking-widest">

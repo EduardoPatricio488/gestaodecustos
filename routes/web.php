@@ -95,13 +95,8 @@ Route::middleware('auth')->group(function () {
         return back()->withErrors(['code' => 'O código de segurança está incorreto.']);
     })->name('verification.verify-code');
 
-    Route::post('/verification-notification', function (Request $request) {
-        $user = $request->user();
-        $newCode = rand(100000, 999999);
-        $user->update(['verification_code' => $newCode]);
-        Mail::to($user->email)->send(new \App\Mail\VerifyAccountMail($newCode));
-        return back()->with('status', 'Novo código enviado!');
-    })->name('verification.send');
+
+
 
     Route::post('/logout', function () {
         Auth::logout();
@@ -163,6 +158,7 @@ Route::get('/meu-perfil', \App\Livewire\Business\MyCompanyProfile::class)->name(
          Route::get('/minhas-despesas', CollaboratorExpenseHub::class)->name('hub.business.my-expenses');
         Route::get('/perfil', BusinessSettings::class)->name('hub.business.settings');
         Route::get('/tarefas', TaskHub::class)->name('hub.business.tasks');
+        Route::get('/recrutamento', \App\Livewire\Business\RecruitmentHub::class)->name('hub.business.recruitment');
         Route::get('/timeline', TaskTimeline::class)->name('hub.business.timeline');
         Route::get('/resultados', BusinessPnlHub::class)->name('hub.business.pnl');
         Route::get('/fluxo-caixa', CashFlowHub::class)->name('hub.business.cashflow');
@@ -303,6 +299,39 @@ Route::get('/estatisticas', AnalyticsHub::class)->name('admin.stats');
         })->name('admin.impersonate');
     });
 
+
+
+
+
+
+
+
+
+
+
+
+Route::get('/trocar-contexto/{id}', function ($id) {
+    $user = auth()->user();
+    $ws = $user->workspaces()->findOrFail($id);
+
+    // Altera o Workspace Ativo
+    $user->update(['current_workspace_id' => $ws->id]);
+
+    // Redirecionamento Inteligente
+    if (in_array($ws->type, ['business', 'company'])) {
+        return redirect()->route('hub.business.dashboard');
+    }
+
+    return redirect()->route('dashboard');
+})->name('workspace.switch.fast');
+
+
+
+
+
+
+
+
 Route::get('/trocar-espaco/{id}', function ($id) {
     $user = auth()->user();
     $ws = $user->workspaces()->findOrFail($id);
@@ -347,28 +376,29 @@ Route::get('/empresa/dashboard', function() {
     return app()->make(\App\Livewire\Business\BusinessDashboard::class)();
 })->name('hub.business.dashboard');
     // --- TESTE DE EMAIL ---
-    Route::get('/test-email', function() {
-        $user = auth()->user();
-        $lastMonth = now()->subMonth();
-        $data = [
-            'spent' => (float) ($user->expenses()->whereMonth('spent_at', $lastMonth->month)->sum('amount') ?? 0),
-            'earned' => (float) (($user->incomes()->whereMonth('received_at', $lastMonth->month)->sum('amount') ?? 0) + ($user->recurringIncomes()->sum('amount') ?? 0)),
-            'categoryStats' => $user->expenses()->whereMonth('spent_at', $lastMonth->month)
-                ->select('categories.name', DB::raw('SUM(expenses.amount) as total'))
-                ->join('categories', 'expenses.category_id', '=', 'categories.id')
-                ->groupBy('categories.name')->get(),
-            'monthName' => $lastMonth->translatedFormat('F'),
-            'year' => $lastMonth->year
-        ];
-        try {
-            Mail::to($user->email)->send(new MonthlyReportMail($user, $data));
-            return "Email enviado!";
-        } catch (\Exception $e) {
-            return "Erro: " . $e->getMessage();
-        }
-    });
-});
 
+});
+// --- ÚNICA ROTA DE REENVIO ---
+Route::post('/email/verification-notification', function (Request $request) {
+    $user = $request->user();
+    $newCode = rand(100000, 999999);
+
+    $user->update(['verification_code' => $newCode]);
+
+    try {
+        Mail::to($user->email)->send(new \App\Mail\VerifyAccountMail($newCode));
+        // Log para termos certeza absoluta no laravel.log
+        Log::info("Reenvio de e-mail disparado para {$user->email} com o código {$newCode}");
+        return back()->with('status', 'verification-link-sent');
+    } catch (\Exception $e) {
+        Log::error("Erro no MailHog: " . $e->getMessage());
+        return back()->withErrors(['code' => 'Erro ao conectar ao MailHog.']);
+    }
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
+require __DIR__.'/auth.php'; // Deixa o require depois da nossa rota
 
 require __DIR__.'/auth.php';
 require __DIR__.'/settings.php';
+
+

@@ -6,6 +6,9 @@ use Livewire\Component;
 use App\Models\{Employee, User, Workspace};
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Layout;
+use App\Mail\BusinessPlanActivatedMail;
+use App\Mail\EmployeeDataUpdatedMail; // Importa o novo mail
+use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,10 +21,14 @@ class TeamHub extends Component
     // Propriedades do Formulário Principal
     public $name, $role, $salary, $pay_day = 25;
     public $editingId = null;
+    public bool $showingRaiseModal = false;
      public $selectedMonth;
      public $employeeDocuments = [];
+     public $selectedEmployee = null;
 public $selectedEmployeeName = '';
     public $selectedYear;
+    public $generatedToken = '';
+public $tokenEmployeeId = null;
     public $viewingAttendanceId = null;
 
 public $attendanceEmployeeName = '';
@@ -70,12 +77,15 @@ public $attendanceEmployeeName = '';
 
 public function viewDocuments($employeeId)
 {
-    $employee = Employee::findOrFail($employeeId);
-    $this->selectedEmpIdForUpload = $employeeId; // Reutilizamos para saber de quem estamos a ver
-    $this->selectedEmployeeName = $employee->name;
+    // 1. Carregamos o colaborador para aceder ao cv_path
+    $this->selectedEmployee = Employee::findOrFail($employeeId);
 
+    $this->selectedEmpIdForUpload = $employeeId;
+    $this->selectedEmployeeName = $this->selectedEmployee->name;
+
+    // 2. Buscamos os restantes documentos
     $this->employeeDocuments = DB::table('business_documents')
-        ->where('user_id', $employee->user_id)
+        ->where('user_id', $this->selectedEmployee->user_id)
         ->where('workspace_id', auth()->user()->current_workspace_id)
         ->orderBy('created_at', 'desc')
         ->get();
@@ -118,18 +128,7 @@ public function updatedSelectedYear($value)
 {
     $this->selectedYear = (int) $value;
 }
-    public function generateNewInviteCode()
-    {
-        $workspace = Auth::user()->currentWorkspace;
 
-        $prefix = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $workspace->name), 0, 3));
-        $random = strtoupper(bin2hex(random_bytes(3)));
-
-        $workspace->invite_code = $prefix . '-' . $random;
-        $workspace->save();
-
-        $this->dispatch('toast', variant: 'success', heading: 'Token Atualizado', message: 'O novo código de acesso é: ' . $workspace->invite_code);
-    }
 
     public function setFilter($status)
     {
@@ -158,6 +157,77 @@ public function updatedSelectedYear($value)
     /**
      * Rejeitar Pedido de Demissão
      */
+
+public function sendInviteEmail($id)
+{
+    $emp = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+    $workspace = auth()->user()->currentWorkspace;
+
+    // 1. Verificar se temos um e-mail para enviar
+    // Se o colaborador já tiver conta vinculada, usamos o e-mail do User.
+    // Se não, tentamos buscar na tabela de candidaturas (job_applications).
+    $email = $emp->user?->email;
+
+    if (!$email) {
+        $application = DB::table('job_applications')
+            ->where('workspace_id', $workspace->id)
+            ->where('user_id', $emp->user_id) // Tentativa por user_id
+            ->orWhere('name', 'like', '%' . $emp->name . '%') // Tentativa por nome
+            ->first();
+
+        $email = $application?->email;
+    }
+
+    if (!$email) {
+        $this->dispatch('toast', variant: 'error', text: 'Não foi possível encontrar o e-mail deste colaborador.');
+        return;
+    }
+
+    // 2. Enviar o E-mail
+    try {
+        Mail::to($email)->send(new \App\Mail\WorkspaceInviteMail(
+            $workspace->name,
+            $workspace->invite_code,
+            $emp->name
+        ));
+
+        $this->dispatch('toast', variant: 'success', text: 'Convite enviado para ' . $email);
+    } catch (\Exception $e) {
+        $this->dispatch('toast', variant: 'error', text: 'Erro ao enviar e-mail.');
+    }
+}
+   public function activateBusinessPlan($id)
+{
+    $emp = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+
+    if (!$emp->user_id) {
+        $this->dispatch('toast', variant: 'error', heading: 'Ação Bloqueada', message: 'Este colaborador não tem conta de utilizador vinculada.');
+        return;
+    }
+
+    $user = \App\Models\User::find($emp->user_id);
+    $workspace = auth()->user()->currentWorkspace;
+
+    // 1. Upgrade na Base de Dados
+    $user->update(['plan' => 'pro']);
+
+    // 2. Envio do Email Real
+    try {
+        Mail::to($user->email)->send(new BusinessPlanActivatedMail($user->name, $workspace->name));
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error("Erro ao enviar email de upgrade: " . $e->getMessage());
+    }
+
+    // 3. Notificação no Site
+    $this->notifyUser(
+        $user->id,
+        'Upgrade de Conta! 💎',
+        'O Plano Business foi ativado. Já tens acesso a todas as ferramentas premium.',
+        'success'
+    );
+
+    $this->dispatch('toast', variant: 'success', heading: 'Plano Ativado', message: "Upgrade efetuado e e-mail enviado a {$user->name}.");
+}
     public function rejectResignation($id)
     {
         $emp = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
@@ -173,7 +243,7 @@ public function updatedSelectedYear($value)
 
         $this->dispatch('toast', variant: 'info', heading: 'Pedido Rejeitado', message: 'O colaborador foi notificado da decisão.');
     }
-    public function save()
+   public function save()
     {
         $this->validate();
 
@@ -190,25 +260,43 @@ public function updatedSelectedYear($value)
             $data['photo_path'] = $this->photo->store('employees', 'public');
         }
 
+        // 1. Guardar/Atualizar na Base de Dados
         $emp = Employee::updateOrCreate(['id' => $this->editingId], $data);
 
-        // Notifica o colaborador se ele tiver um user_id associado
-        if ($this->editingId) {
-            $this->notifyUser($emp->user_id, 'Perfil Atualizado 👤', 'A tua ficha de colaborador foi editada pela administração.');
+        // 2. Lógica de Notificação por E-mail (Apenas se for uma EDIÇÃO)
+        if ($this->editingId && $emp->user_id) {
+            $userAccount = User::find($emp->user_id);
+            $companyName = Auth::user()->currentWorkspace->name;
+
+            if ($userAccount) {
+                // Envio de E-mail Real
+                try {
+                    Mail::to($userAccount->email)->send(new EmployeeDataUpdatedMail($emp, $companyName));
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Falha ao notificar colaborador: " . $e->getMessage());
+                }
+
+                // Notificação interna (Balão no site)
+                $this->notifyUser($emp->user_id, 'Ficha Atualizada 📝', 'A administração atualizou os teus parâmetros contratuais.');
+            }
         }
 
         $this->reset(['name', 'role', 'salary', 'pay_day', 'editingId', 'photo', 'employee']);
         $this->dispatch('modal-close', name: 'add-employee-modal');
-        $this->dispatch('toast', heading: 'Sucesso', message: 'Dados guardados no sistema.');
+        $this->dispatch('toast', heading: 'Sucesso', message: 'Ficha atualizada e colaborador notificado.');
     }
 
-    public function openRaiseModal($id)
-    {
-        $this->raiseEmployeeId = $id;
-        $this->raiseAmount = 0;
-        $this->dispatch('modal-show', name: 'raise-salary-modal');
-    }
+public function openRaiseModal($id)
+{
+    $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
 
+    $this->raiseEmployeeId = $id;
+    $this->selectedEmployeeName = $emp->name;
+    $this->raiseAmount = 0;
+
+    // 2. Ativa a visibilidade do modal
+    $this->showingRaiseModal = true;
+}
     public function applyRaise()
     {
         if ($this->raiseAmount <= 0) return;
@@ -228,8 +316,18 @@ public function updatedSelectedYear($value)
         $this->reset(['raiseEmployeeId', 'raiseAmount']);
         $this->dispatch('modal-close', name: 'raise-salary-modal');
         $this->dispatch('toast', heading: 'Aumento Aplicado', message: 'Vencimento atualizado com sucesso.');
+         $this->showingRaiseModal = false;
+    $this->dispatch('toast', heading: 'Sucesso', message: 'Aumento aplicado.');
     }
-
+public function generateNewInviteCode()
+    {
+        $workspace = Auth::user()->currentWorkspace;
+        $prefix = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $workspace->name), 0, 3));
+        $random = strtoupper(bin2hex(random_bytes(3)));
+        $workspace->invite_code = $prefix . '-' . $random;
+        $workspace->save();
+        $this->dispatch('toast', variant: 'success', text: 'Token interno atualizado.');
+    }
     public function edit($id)
     {
         $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
@@ -245,12 +343,27 @@ public function updatedSelectedYear($value)
     public function activate($id)
     {
         $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
-        $emp->update(['active' => true, 'suspended' => false, 'terminated_at' => null]);
 
-        // NOTIFICAÇÃO DE ATIVAÇÃO
-        $this->notifyUser($emp->user_id, 'Conta Ativada ✅', 'O teu acesso ao terminal de equipa foi restabelecido.', 'success');
+        // Remove suspensão, ativa e limpa data de término caso existisse
+        $emp->update([
+            'active' => true,
+            'suspended' => false,
+            'terminated_at' => null
+        ]);
 
-        $this->dispatch('toast', message: 'Colaborador reativado.');
+        // Enviar E-mail se houver utilizador vinculado
+        if ($emp->user) {
+            try {
+                Mail::to($emp->user->email)->send(new \App\Mail\EmployeeReactivatedMail($emp->name, Auth::user()->currentWorkspace->name));
+
+                // Notificação interna no site
+                $this->notifyUser($emp->user_id, 'Conta Reativada ✅', 'O teu acesso foi restabelecido pela administração.', 'success');
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Erro ao enviar email de reativação: " . $e->getMessage());
+            }
+        }
+
+        $this->dispatch('toast', variant: 'success', message: 'Colaborador reativado e notificado.');
     }
 
     public function suspend($id)
@@ -258,10 +371,12 @@ public function updatedSelectedYear($value)
         $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
         $emp->update(['suspended' => true]);
 
-        // NOTIFICAÇÃO DE SUSPENSÃO
-        $this->notifyUser($emp->user_id, 'Conta Suspensa ⚠️', 'O teu acesso foi temporariamente suspenso pela administração.', 'warning');
+        if ($emp->user) {
+            Mail::to($emp->user->email)->send(new \App\Mail\EmployeeSuspendedMail($emp->name, Auth::user()->currentWorkspace->name));
+            $this->notifyUser($emp->user_id, 'Conta Suspensa ⚠️', 'O teu acesso foi suspenso pela administração.', 'warning');
+        }
 
-        $this->dispatch('toast', message: 'Vínculo suspenso.');
+        $this->dispatch('toast', message: 'Vínculo suspenso e colaborador notificado.');
     }
 
     public function terminate($id)
@@ -269,17 +384,29 @@ public function updatedSelectedYear($value)
         $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
         $emp->update(['active' => false, 'terminated_at' => now()]);
 
-        // NOTIFICAÇÃO DE DESPEDIMENTO
-        $this->notifyUser($emp->user_id, 'Vínculo Terminado 🛑', 'A tua ligação contratual com a empresa foi encerrada no sistema.', 'danger');
+        if ($emp->user) {
+            Mail::to($emp->user->email)->send(new \App\Mail\EmployeeTerminatedMail($emp->name, Auth::user()->currentWorkspace->name));
+            $this->notifyUser($emp->user_id, 'Vínculo Terminado 🛑', 'A tua ligação com a empresa foi encerrada.', 'danger');
+        }
 
-        $this->dispatch('toast', message: 'Vínculo terminado.');
+        $this->dispatch('toast', message: 'Vínculo terminado e e-mail enviado.');
     }
 
     public function deleteEmployee($id)
     {
         $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
+
+        // Guardamos os dados ANTES de apagar o funcionário da base de dados
+        $email = $emp->user?->email;
+        $name = $emp->name;
+
         $emp->delete();
-        $this->dispatch('toast', variant: 'success', heading: 'Eliminado', message: 'Registo removido permanentemente.');
+
+        if ($email) {
+            Mail::to($email)->send(new \App\Mail\EmployeeDeletedMail($name));
+        }
+
+        $this->dispatch('toast', variant: 'success', heading: 'Eliminado', message: 'Registo removido e colaborador avisado.');
     }
     public function openUploadModal($employeeId)
     {
@@ -345,6 +472,24 @@ public function updatedSelectedYear($value)
         // A tua rota inteligente (web.php) vai ler esta sessão e mostrar o terminal operacional.
         return redirect()->route('hub.business.dashboard');
     }
+  public function generateEmployeeAccessCode($id)
+{
+    $emp = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+
+    // Gera um código único (ex: EMP-A1B2C3)
+    $token = 'EMP-' . strtoupper(\Illuminate\Support\Str::random(6));
+
+    $emp->update([
+        'portal_token' => $token
+    ]);
+
+    $this->generatedToken = $token;
+    $this->selectedEmployeeName = $emp->name;
+    $this->tokenEmployeeId = $id;
+
+    $this->dispatch('modal-show', name: 'employee-token-modal');
+    $this->dispatch('toast', variant: 'success', heading: 'Chave Gerada', message: 'O acesso ao portal foi configurado.');
+}
   public function render()
     {
         $workspace = Auth::user()->currentWorkspace;

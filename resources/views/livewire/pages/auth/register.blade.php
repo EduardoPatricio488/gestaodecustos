@@ -19,21 +19,38 @@ new #[Layout('layouts.guest')] class extends Component
      * Handle an incoming registration request.
      */
     public function register(): void
-    {
-        $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
-        ]);
+{
+    $validated = $this->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+        'password' => ['required', 'string', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+    ]);
 
-        $validated['password'] = Hash::make($validated['password']);
+    // 1. Gerar o código de 6 dígitos
+    $code = rand(100000, 999999);
 
-        event(new Registered($user = User::create($validated)));
+    // 2. Criar o utilizador
+    $user = User::create([
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'password' => Hash::make($validated['password']),
+        'verification_code' => $code, // Guarda o código na BD
+    ]);
 
-        Auth::login($user);
-
-        $this->redirect(route('dashboard', absolute: false), navigate: true);
+    // 3. Enviar o e-mail (usando o teu Mailable)
+    try {
+        \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\VerifyAccountMail($code));
+        \Illuminate\Support\Facades\Log::info("E-mail enviado para: " . $user->email);
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error("Erro ao enviar e-mail: " . $e->getMessage());
     }
+
+    event(new \Illuminate\Auth\Events\Registered($user));
+
+    auth()->login($user);
+
+    $this->redirect(route('verification.notice', absolute: false), navigate: true);
+}
 }; ?>
 
 <div

@@ -14,7 +14,7 @@
                 </div>
                 <div class="text-left">
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Equipa & RH</h1>
+                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Equipa</h1>
                         <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1 text-zinc-500">Capital Humano</flux:badge>
                     </div>
                     <p class="text-sm text-zinc-500 font-medium italic mt-2">Gestão de competências e estrutura organizacional</p>
@@ -35,70 +35,14 @@
                     <flux:icon x-show="privacyMode" name="eye-slash" class="size-5" />
                 </button>
 
-                <flux:modal.trigger name="add-employee-modal">
-                    <flux:button variant="primary" icon="user-plus" wire:click="$set('editingId', null)" class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20">
-                        Novo Colaborador
-                    </flux:button>
-                </flux:modal.trigger>
+
 
                 <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
                 <flux:button href="{{ route('hub.business.dashboard') }}" variant="ghost" icon="arrow-left" wire:navigate title="Voltar" class="rounded-xl" />
             </div>
         </header>
     </div>
-{{-- WIDGET DE CONVITE PARA COLABORADORES --}}
-    <div class="relative overflow-hidden bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl group animate-in fade-in slide-in-from-top-4 duration-1000">
-        {{-- Aura de brilho decorativa --}}
-        <div class="absolute -right-20 -top-20 size-64 bg-brand-500/10 blur-[100px] rounded-full pointer-events-none"></div>
 
-        <div class="flex flex-col lg:flex-row items-center justify-between gap-8 relative z-10">
-            <div class="flex items-center gap-6">
-                <div class="size-16 rounded-2xl bg-brand-500/20 flex items-center justify-center text-brand-400 shadow-inner">
-                    <flux:icon name="user-plus" variant="outline" class="size-8" />
-                </div>
-                <div class="text-left">
-                    <h3 class="text-xl font-black text-white uppercase italic tracking-tighter leading-none">Recrutamento Ativo</h3>
-                    <p class="text-xs text-zinc-400 font-medium mt-2 leading-relaxed">
-                        Partilha este código com os teus colaboradores para que eles possam <br class="hidden md:block">
-                        aceder ao terminal operacional da <span class="text-brand-400 font-bold">{{ $workspace->name }}</span>.
-                    </p>
-                </div>
-            </div>
-
-            <div class="flex flex-col items-center lg:items-end gap-3 w-full lg:w-auto">
-                <div class="flex items-center gap-2 p-1.5 bg-black/40 border border-white/10 rounded-2xl shadow-inner w-full lg:w-auto justify-between lg:justify-start">
-
-                    <span class="px-6 py-2 text-2xl font-black tracking-[0.4em] text-white uppercase font-mono">
-                        {{ $workspace->invite_code ?? 'SEM-CODIGO' }}
-                    </span>
-
-                    <div class="flex items-center gap-1">
-                        {{-- Botão Copiar --}}
-                        <button
-                            x-data="{ copied: false }"
-                            @click="navigator.clipboard.writeText('{{ $workspace->invite_code }}'); copied = true; setTimeout(() => copied = false, 2000)"
-                            class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all border border-white/5"
-                            title="Copiar Código"
-                        >
-                            <flux:icon x-show="!copied" name="clipboard" class="size-5" />
-                            <flux:icon x-show="copied" name="check" class="size-5 text-emerald-500" />
-                        </button>
-
-                        {{-- Botão Gerar Novo --}}
-                        <button
-                            wire:click="generateNewInviteCode"
-                            wire:confirm="Ao gerar um novo código, o antigo deixará de funcionar. Continuar?"
-                            class="p-3 rounded-xl bg-white/5 hover:bg-brand-500/20 text-zinc-400 hover:text-brand-400 transition-all border border-white/5"
-                            title="Gerar Novo Código"
-                        >
-                            <flux:icon name="arrow-path" class="size-5" />
-                        </button>
-                    </div>
-                </div>
-                <p class="text-[9px] font-black uppercase text-zinc-500 tracking-[0.3em]">Token de Acesso Workspace</p>
-            </div>
-        </div>
-    </div>
 
     {{-- ALERTAS DE RESCISÃO PENDENTES --}}
     @php
@@ -133,6 +77,39 @@
             @endforeach
         </div>
     @endif
+
+
+ {{-- 2. WIDGET DE CONVITE INTERNO --}}
+    <div class="relative overflow-hidden bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl group animate-in fade-in slide-in-from-top-4 duration-1000">
+        <div class="absolute -right-20 -top-20 size-64 bg-brand-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-8 relative z-10 text-left">
+            <div class="flex items-center gap-6">
+                <div class="size-16 rounded-2xl bg-brand-500/20 flex items-center justify-center text-brand-400 shadow-inner">
+                    <flux:icon name="user-plus" variant="outline" class="size-8" />
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-white uppercase italic tracking-tighter leading-none">Acesso de Colaborador</h3>
+                    <p class="text-xs text-zinc-400 font-medium mt-2 leading-relaxed">
+                        Código para funcionários já contratados criarem conta na <span class="text-brand-400 font-bold">{{ $workspace->name }}</span>.
+                    </p>
+                </div>
+            </div>
+            <div class="flex flex-col items-center lg:items-end gap-3 w-full lg:w-auto">
+                <div class="flex items-center gap-2 p-1.5 bg-black/40 border border-white/10 rounded-2xl shadow-inner w-full lg:w-auto justify-between lg:justify-start">
+                    <span class="px-6 py-2 text-2xl font-black tracking-[0.4em] text-white uppercase font-mono">{{ $workspace->invite_code ?? '---' }}</span>
+                    <div class="flex items-center gap-1">
+                        <button x-data="{ copied: false }" @click="navigator.clipboard.writeText('{{ $workspace->invite_code }}'); copied = true; setTimeout(() => copied = false, 2000)" class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400">
+                            <flux:icon x-show="!copied" name="clipboard" class="size-5" />
+                            <flux:icon x-show="copied" name="check" class="size-5 text-emerald-500" />
+                        </button>
+                        <button wire:click="generateNewInviteCode" class="p-3 rounded-xl bg-white/5 hover:bg-brand-500/20 text-zinc-400"><flux:icon name="arrow-path" class="size-5" /></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     {{-- 2. KPIs INICIAIS --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
@@ -448,6 +425,9 @@
                 </div>
                 <div class="min-w-0 text-left">
                     <h4 class="font-black dark:text-white uppercase text-base tracking-tight leading-none truncate mb-1">{{ $emp->name }}</h4>
+                      @if($emp->user?->plan === 'pro' || $emp->user?->isDiamond())
+        <span title="Membro Business" class="text-indigo-500 text-xs">💎</span>
+    @endif
                     <p class="text-[10px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-[0.15em]">{{ $emp->role }}</p>
                 </div>
             </div>
@@ -476,15 +456,45 @@
                         <flux:icon name="pencil-square" class="size-4 shrink-0 text-brand-500" />
                         Editar Ficha
                     </button>
+{{-- ABAIXO DE EDITAR FICHA --}}
+<button
+    @click="open = false"
+    wire:click="generateEmployeeAccessCode({{ $emp->id }})"
+    class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all text-left"
+>
+    <flux:icon name="key" class="size-4 shrink-0 text-zinc-900 dark:text-white" />
+    Gerar Chave de Acesso
+</button>
 
-                    <button
-                        @click="open = false"
-                        wire:click="openRaiseModal({{ $emp->id }})"
-                        class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-600 transition-all text-left"
-                    >
-                        <flux:icon name="arrow-up-circle" class="size-4 shrink-0 text-emerald-500" />
-                        Aumento Salarial
-                    </button>
+{{-- OPÇÃO ATIVAR PLANO BUSINESS --}}
+<button
+    @click="open = false"
+    wire:click="activateBusinessPlan({{ $emp->id }})"
+    wire:confirm="Desejas oferecer acesso Premium/Business a este utilizador?"
+    class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all text-left"
+>
+    <flux:icon name="sparkles" variant="solid" class="size-4 shrink-0 text-indigo-500" />
+    Ativar Plano Business
+</button>
+<button
+    @click="open = false"
+    wire:click="sendInviteEmail({{ $emp->id }})"
+    class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-all text-left"
+>
+    <flux:icon name="paper-airplane" class="size-4 shrink-0 text-emerald-500" />
+    Enviar Token Empresa
+</button>
+          <button
+    type="button"
+    {{-- Alpine abre o modal instantaneamente --}}
+    @click="$dispatch('modal-show', { name: 'raise-salary-modal' }); open = false;"
+    {{-- Livewire carrega os dados --}}
+    wire:click="openRaiseModal({{ $emp->id }})"
+    class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-600 transition-all text-left"
+>
+    <flux:icon name="arrow-up-circle" class="size-4 shrink-0 text-emerald-500" />
+    Aumento Salarial
+</button>
 
                     <button
                         @click="open = false"
@@ -535,15 +545,7 @@
                             Terminar Vínculo
                         </button>
                     @endunless
-<button
-    type="button"
-    wire:click="openUploadModal({{ $emp->id }})"
-    @click.stop="open = false"
-    class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-all text-left"
->
-    <flux:icon name="document-plus" class="size-4 shrink-0 text-brand-500" />
-    Anexar Documento
-</button>
+
                     <button
                         @click="open = false"
                         wire:click="deleteEmployee({{ $emp->id }})"
@@ -794,44 +796,72 @@
             </div>
         </div>
     </flux:modal>
-
-    {{-- 5. MODAL: AUMENTO SALARIAL --}}
-    <flux:modal name="raise-salary-modal" position="center" class="md:w-[500px] !p-0 overflow-visible" wire:ignore.self>
-        <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800">
+{{-- 5. MODAL: AUMENTO SALARIAL --}}
+    <flux:modal name="raise-salary-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">
+        <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
 
             <div class="flex items-center gap-4">
                 <div class="p-3 bg-emerald-600 rounded-2xl text-white shadow-lg">
                     <flux:icon name="arrow-up-circle" class="size-6" />
                 </div>
-                <flux:heading size="xl" class="font-black uppercase italic tracking-tighter">Aumentar Salário</flux:heading>
+                <div>
+                    <flux:heading size="xl" class="font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white leading-none">Aumento Salarial</flux:heading>
+                    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Revisão de Vencimento</p>
+                </div>
             </div>
 
-            @if ($raiseEmployeeId)
-                @php $rEmp = \App\Models\Employee::find($raiseEmployeeId); @endphp
-                <div class="space-y-6">
-                    <div>
-                        <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Colaborador</p>
-                        <p class="text-xl font-black dark:text-white">{{ $rEmp->name }}</p>
-                    </div>
+            {{-- O conteúdo interno é que espera pelo ID --}}
+            <div class="min-h-[250px]">
+                @if($raiseEmployeeId)
+                    <div class="space-y-6 animate-in fade-in duration-300">
+                        <div class="text-left">
+                            <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 leading-none">Colaborador em análise</p>
+                            <p class="text-xl font-black dark:text-white uppercase italic">{{ $selectedEmployeeName }}</p>
+                        </div>
 
-                    <div class="p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                        <flux:input wire:model.live="raiseAmount" type="number" label="Valor do Aumento (€)" placeholder="0.00" />
+                        <div class="p-6 bg-zinc-50 dark:bg-zinc-900 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 shadow-inner">
+                            <flux:input
+                                wire:model.live="raiseAmount"
+                                type="number"
+                                step="0.01"
+                                label="Valor do Aumento (€)"
+                                placeholder="0.00"
+                                class="font-black text-xl"
+                            />
 
-                        <div class="mt-6 flex justify-between items-end border-t border-zinc-200 dark:border-zinc-800 pt-4">
-                            <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Novo Vencimento</p>
-                            <p class="text-2xl font-black text-emerald-500 tracking-tighter italic">
-                                {{ number_format((float)($rEmp->salary + $raiseAmount), 2, ',', ' ') }} €
-                            </p>
+                            @php
+                                $currentSalary = \App\Models\Employee::find($raiseEmployeeId)?->salary ?? 0;
+                            @endphp
+
+                            <div class="mt-6 flex justify-between items-end border-t border-zinc-200 dark:border-zinc-800 pt-4">
+                                <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Novo Vencimento Final</p>
+                                <p class="text-2xl font-black text-emerald-500 tracking-tighter italic leading-none">
+                                    {{ number_format((float)($currentSalary + (float)$raiseAmount), 2, ',', ' ') }} €
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <flux:modal.close class="flex-1">
+                                <flux:button variant="ghost" class="w-full font-black uppercase text-[10px]">Cancelar</flux:button>
+                            </flux:modal.close>
+
+                            <flux:button
+                                wire:click="applyRaise"
+                                variant="primary"
+                                class="flex-[2] !bg-emerald-600 border-none font-black uppercase h-14 rounded-2xl shadow-xl"
+                            >
+                                Confirmar Aumento
+                            </flux:button>
                         </div>
                     </div>
-                </div>
-            @endif
-
-            <div class="flex gap-4">
-                <flux:modal.close>
-                    <flux:button variant="ghost" class="flex-1 font-black uppercase">Cancelar</flux:button>
-                </flux:modal.close>
-                <flux:button wire:click="applyRaise" variant="primary" class="flex-[2] font-black uppercase h-14 rounded-2xl">Confirmar Aumento</flux:button>
+                @else
+                    {{-- Loader enquanto o Livewire termina o wire:click --}}
+                    <div class="flex flex-col items-center justify-center py-12 space-y-4 opacity-40">
+                        <flux:icon name="arrow-path" class="size-10 animate-spin" />
+                        <p class="text-[10px] font-black uppercase tracking-widest">A carregar dados...</p>
+                    </div>
+                @endif
             </div>
         </div>
     </flux:modal>
@@ -955,10 +985,10 @@
 
     {{-- MODAL: HISTÓRICO DE DOCUMENTOS --}}
 <flux:modal name="view-documents-modal" position="center" class="md:w-[600px] !p-0 overflow-visible" wire:ignore.self>
-    <div class="p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border dark:border-zinc-800">
+    <div class="p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border dark:border-zinc-800 text-left">
 
         <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-4 text-left">
                 <div class="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-zinc-900 dark:text-white shadow-sm">
                     <flux:icon name="folder" class="size-6" />
                 </div>
@@ -973,6 +1003,31 @@
         </div>
 
         <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+
+            {{-- 1. DOCUMENTO MESTRE: CURRÍCULO (CV) --}}
+            @if($selectedEmployee && $selectedEmployee->cv_path)
+                <div class="group flex items-center justify-between p-4 bg-brand-50/50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-800 rounded-2xl hover:border-brand-500/30 transition-all border-l-4 border-l-brand-500">
+                    <div class="flex items-center gap-4 text-left">
+                        <div class="size-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm">
+                            <flux:icon name="identification" class="size-5" />
+                        </div>
+                        <div>
+                            <p class="text-xs font-black dark:text-white uppercase truncate max-w-[200px]">Curriculum Vitae (CV)</p>
+                            <p class="text-[9px] font-black text-brand-600 uppercase tracking-widest italic">Documento de Recrutamento</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <a href="{{ asset('storage/' . $selectedEmployee->cv_path) }}"
+                           target="_blank"
+                           class="inline-flex items-center justify-center size-8 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-brand-600 hover:bg-brand-600 hover:text-white transition-all shadow-sm">
+                            <flux:icon name="cloud-arrow-down" variant="micro" class="size-4" />
+                        </a>
+                    </div>
+                </div>
+            @endif
+
+            {{-- 2. RESTANTES DOCUMENTOS (RECIBOS, CONTRATOS, ETC) --}}
             @forelse($employeeDocuments as $doc)
                 <div class="group flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl hover:border-brand-500/30 transition-all">
                     <div class="flex items-center gap-4 text-left">
@@ -994,7 +1049,6 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                        {{-- O download exige uma rota específica, aqui podemos simular ou usar uma função de download do Livewire --}}
                         <flux:button variant="ghost" size="sm" icon="cloud-arrow-down" class="text-zinc-400 hover:text-brand-600" />
 
                         <button
@@ -1007,20 +1061,74 @@
                     </div>
                 </div>
             @empty
-                <div class="py-12 text-center opacity-30">
-                    <flux:icon name="folder-open" class="size-12 mx-auto mb-3" />
-                    <p class="text-[10px] font-black uppercase tracking-[0.2em]">Nenhum documento arquivado</p>
-                </div>
+                @if(!$selectedEmployee?->cv_path) {{-- Só mostra vazio se também não houver CV --}}
+                    <div class="py-12 text-center opacity-30">
+                        <flux:icon name="folder-open" class="size-12 mx-auto mb-3" />
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em]">Nenhum documento arquivado</p>
+                    </div>
+                @endif
             @endforelse
         </div>
 
         <div class="pt-4">
-            <flux:button wire:click="openUploadModal({{ $selectedEmpIdForUpload }})" variant="primary" class="w-full h-14 font-black uppercase tracking-widest rounded-2xl">
+            <flux:button wire:click="openUploadModal({{ $selectedEmpIdForUpload }})" variant="primary" class="w-full h-14 font-black uppercase tracking-widest rounded-2xl border-none shadow-xl">
                 Carregar Novo Documento
             </flux:button>
         </div>
     </div>
 </flux:modal>
+{{-- 8. MODAL: EXIBIÇÃO DE CHAVE DE ACESSO --}}
+    <flux:modal name="employee-token-modal" position="center" class="md:w-[450px] !p-0 overflow-visible" wire:ignore.self>
+        <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-center">
+
+            {{-- Ícone com Aura --}}
+            <div class="flex justify-center">
+                <div class="relative">
+                    <div class="absolute inset-0 bg-brand-500/20 blur-2xl rounded-full scale-150"></div>
+                    <div class="relative size-16 bg-zinc-900 rounded-2xl flex items-center justify-center text-white shadow-xl">
+                        <flux:icon name="key" variant="solid" class="size-8 text-brand-400" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-2xl font-black dark:text-white uppercase italic tracking-tighter leading-none">Chave de Acesso</h2>
+                <p class="text-[10px] font-black text-brand-600 uppercase tracking-[0.2em]">{{ $selectedEmployeeName }}</p>
+            </div>
+
+            <p class="text-xs text-zinc-500 font-medium leading-relaxed italic px-4">
+                Partilha este código com o colaborador. Com ele, poderá aceder ao Portal da Equipa para consultar recibos e assiduidade.
+            </p>
+
+            {{-- O CÓDIGO --}}
+            <div class="p-6 bg-zinc-50 dark:bg-zinc-900 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 shadow-inner relative group">
+                <span class="text-3xl font-mono font-black text-zinc-900 dark:text-white tracking-[0.3em] uppercase select-all">
+                    {{ $generatedToken }}
+                </span>
+
+                <div class="absolute -top-3 right-4">
+                    <button x-data="{ copied: false }"
+                            @click="navigator.clipboard.writeText('{{ $generatedToken }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                            class="p-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm hover:scale-110 transition-all">
+                        <flux:icon x-show="!copied" name="clipboard" class="size-3.5 text-zinc-400" />
+                        <flux:icon x-show="copied" name="check" class="size-3.5 text-emerald-500" />
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <flux:modal.close class="w-full">
+                    <flux:button variant="primary" class="w-full h-14 bg-zinc-950 dark:bg-brand-600 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl border-none">
+                        Concluído
+                    </flux:button>
+                </flux:modal.close>
+
+                <p class="text-[8px] font-black text-zinc-400 uppercase tracking-widest opacity-50 italic">
+                    Segurança Financeira Finance Pro • Chave Privada
+                </p>
+            </div>
+        </div>
+    </flux:modal>
     {{-- RODAPÉ DE PÁGINA --}}
     <footer class="pt-20 pb-6 text-center border-t border-zinc-100 dark:border-zinc-800 mt-20 opacity-50">
         <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">

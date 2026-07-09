@@ -87,12 +87,11 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 
                 <div class="mt-10 pt-8 border-t border-zinc-100 dark:border-zinc-800">
                     <form action="<?php echo e(route('verification.send')); ?>" method="POST" class="text-center">
-                        <?php echo csrf_field(); ?>
-                        <p class="text-xs text-zinc-400 font-medium mb-4 italic text-center w-full">Não recebeste nada?</p>
-                        <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors">
-                            Reenviar Código de Segurança
-                        </button>
-                    </form>
+    <?php echo csrf_field(); ?>
+    <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors">
+        Reenviar Código de Segurança
+    </button>
+</form>
                 </div>
             </div>
 

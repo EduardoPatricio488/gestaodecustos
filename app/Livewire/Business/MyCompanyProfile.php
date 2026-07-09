@@ -13,8 +13,6 @@ use Carbon\Carbon;
 class MyCompanyProfile extends Component
 {
     public $resignationReason = '';
-
-    // Filtros de Assiduidade
     public $selectedMonth;
     public $selectedYear;
 
@@ -25,37 +23,37 @@ class MyCompanyProfile extends Component
     }
 
     /**
-     * Permite ao colaborador descarregar os seus documentos (PDFs)
+     * Download de documentos da tabela business_documents
      */
     public function downloadDocument($id)
     {
-        // 1. Procura o documento na base de dados
         $doc = DB::table('business_documents')
             ->where('id', $id)
-            ->where('user_id', Auth::id()) // Segurança: Garante que só baixa os próprios ficheiros
+            ->where('user_id', Auth::id())
             ->first();
 
-        // 2. Verifica se o registo existe e se o ficheiro está fisicamente no disco
         if ($doc && Storage::disk('local')->exists($doc->file_path)) {
-            // Retorna o download do ficheiro
-            return Storage::disk('local')->download(
-                $doc->file_path,
-                $doc->title . '.pdf'
-            );
+            return Storage::disk('local')->download($doc->file_path, $doc->title . '.pdf');
         }
 
-        // 3. Se houver erro, envia um aviso via toast
-        $this->dispatch('toast', variant: 'error', heading: 'Erro', message: 'Ficheiro não encontrado ou acesso negado.');
+        $this->dispatch('toast', variant: 'error', text: 'Ficheiro não encontrado.');
     }
 
     /**
-     * Envia o pedido de demissão para o CEO
+     * NOVO: Método para descarregar o CV vindo da tabela job_applications
      */
+    public function downloadCV($path)
+    {
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->download($path, 'O-Meu-Curriculo.pdf');
+        }
+
+        $this->dispatch('toast', variant: 'error', text: 'O currículo original não foi encontrado.');
+    }
+
     public function requestResignation()
     {
-        $this->validate([
-            'resignationReason' => 'required|min:10'
-        ]);
+        $this->validate(['resignationReason' => 'required|min:10']);
 
         $user = Auth::user();
         $employee = Employee::where('user_id', $user->id)
@@ -67,22 +65,9 @@ class MyCompanyProfile extends Component
             'resignation_status' => 'pending'
         ]);
 
-        // NOTIFICAR O CEO/ADMIN
-        $owner = $user->currentWorkspace->users()->wherePivot('role', 'admin')->first();
-        if ($owner) {
-            DB::table('app_notifications')->insert([
-                'user_id' => $owner->id,
-                'title' => 'Pedido de Rescisão 🛑',
-                'message' => $user->name . " solicitou a demissão da empresa.",
-                'type' => 'warning',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
         $this->resignationReason = '';
         $this->dispatch('modal-close', name: 'resignation-modal');
-        $this->dispatch('toast', variant: 'success', heading: 'Pedido Enviado');
+        $this->dispatch('toast', variant: 'success', text: 'Pedido de demissão enviado.');
     }
 
     public function render()
@@ -96,14 +81,14 @@ class MyCompanyProfile extends Component
 
         $ceo = $workspace->users()->wherePivot('role', 'admin')->first();
 
-        // 1. BUSCAR OS DOCUMENTOS DO UTILIZADOR
+        // BUSCAR DOCUMENTOS
         $myDocuments = DB::table('business_documents')
             ->where('user_id', $user->id)
             ->where('workspace_id', $workspace->id)
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 2. BUSCAR OS LOGS DE ASSIDUIDADE
+        // BUSCAR LOGS
         $myLogs = DB::table('attendance_logs')
             ->where('user_id', $user->id)
             ->where('workspace_id', $workspace->id)
@@ -112,12 +97,20 @@ class MyCompanyProfile extends Component
             ->orderBy('date', 'desc')
             ->get();
 
+        // --- NOVO: BUSCAR O CV NA TABELA job_applications ---
+        $application = DB::table('job_applications')
+            ->where('user_id', $user->id)
+            ->where('workspace_id', $workspace->id)
+            ->where('status', 'accepted') // Só o que foi aceite
+            ->first();
+
         return view('livewire.business.my-company-profile', [
             'employee' => $employee,
             'workspace' => $workspace,
             'ceoName' => $ceo ? $ceo->name : 'Administrador',
             'attendanceLogs' => $myLogs,
-            'myDocuments' => $myDocuments
+            'myDocuments' => $myDocuments,
+            'userCV' => $application ? $application->cv_path : null // Passa o caminho do ficheiro
         ]);
     }
 }

@@ -22,10 +22,42 @@
             {{ $isRegistering ? 'Criar Conta e Explorar Empresas' : 'Entrar no Portal' }}
         </flux:button>
     </form>
+{{-- RODAPÉ DE NAVEGAÇÃO EXPANDIDO --}}
+    <div class="text-center pt-6 border-t border-zinc-100 dark:border-zinc-800/50 space-y-4">
 
-    <div class="text-center pt-4 border-t border-zinc-100 dark:border-zinc-800">
-        <button wire:click="$toggle('isRegistering')" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-brand-600 transition-colors">
-            {{ $isRegistering ? 'Já tenho conta de candidato' : 'Ainda não tenho conta' }}
-        </button>
+        {{-- Alternador entre Registo e Login --}}
+       <button wire:click="$toggle('isRegistering')"
+    class="w-full py-4 px-6 rounded-2xl bg-brand-500/5 dark:bg-brand-500/10 border border-brand-500/10 dark:border-brand-500/20 hover:bg-brand-500/10 dark:hover:bg-brand-500/20 hover:border-brand-500/30 transition-all duration-300 group">
+
+    <div class="flex items-center justify-center gap-3">
+        {{-- Ícone que roda no hover --}}
+        <flux:icon name="arrow-path" class="size-3 text-brand-600 dark:text-brand-400 group-hover:rotate-180 transition-transform duration-500" />
+
+        <span class="text-[10px] font-black uppercase tracking-[0.15em] text-brand-700 dark:text-brand-400">
+            {{ $isRegistering ? 'Já tenho conta de candidato' : 'Ainda não tenho conta de candidato' }}
+        </span>
+    </div>
+</button>
+
+        <div class="flex items-center justify-center gap-6 pt-2">
+            {{-- Link para voltar à Home --}}
+            <a href="/" class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] hover:text-emerald-600 transition-colors flex items-center gap-2">
+                <flux:icon name="arrow-left" variant="micro" class="size-3" />
+                Voltar ao Início
+            </a>
+
+            {{-- Botão de Sair (Apenas visível se estiver logado) --}}
+            @auth
+                <div class="h-3 w-px bg-zinc-200 dark:bg-zinc-800"></div>
+
+                <form method="POST" action="{{ route('logout') }}" class="inline">
+                    @csrf
+                    <button type="submit" class="text-[9px] font-black text-red-500 uppercase tracking-[0.3em] hover:text-red-600 transition-colors flex items-center gap-2">
+                        <flux:icon name="arrow-right-start-on-rectangle" variant="micro" class="size-3" />
+                        Terminar Sessão
+                    </button>
+                </form>
+            @endauth
+        </div>
     </div>
 </div>

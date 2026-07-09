@@ -59,12 +59,11 @@
                 {{-- REENVIAR CÓDIGO --}}
                 <div class="mt-10 pt-8 border-t border-zinc-100 dark:border-zinc-800">
                     <form action="{{ route('verification.send') }}" method="POST" class="text-center">
-                        @csrf
-                        <p class="text-xs text-zinc-400 font-medium mb-4 italic text-center w-full">Não recebeste nada?</p>
-                        <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors">
-                            Reenviar Código de Segurança
-                        </button>
-                    </form>
+    @csrf
+    <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors">
+        Reenviar Código de Segurança
+    </button>
+</form>
                 </div>
             </div>
 

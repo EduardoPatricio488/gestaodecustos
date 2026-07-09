@@ -69,7 +69,145 @@
     @livewireStyles
 </head>
 
+
+
+
+
+
+
+
+
+
+
+
+
+@php
+    $user = auth()->user();
+    $currentWs = $user ? $user->currentWorkspace : null;
+// --- LÓGICA DE MODO DE OBSERVAÇÃO ---
+$myPersonalWsId = $user->workspaces()->where('type', 'personal')->first()?->id;
+// Verificamos se o espaço atual não é o teu pessoal e se é do tipo 'personal' (ou seja, gestão de outra pessoa)
+$isViewingOthers = $currentWs && $myPersonalWsId && ($currentWs->id !== $myPersonalWsId) && ($currentWs->type === 'personal');
+    // 1. DEFINIÇÃO GLOBAL DE EMPRESAS
+    $allBusinessWs = ($user)
+        ? $user->workspaces()->where('type', '!=', 'personal')->get()
+        : collect();
+
+    $myCompanies = $allBusinessWs->filter(fn($ws) => $ws->pivot->role === 'admin');
+    $collabCompanies = $allBusinessWs->filter(fn($ws) => $ws->pivot->role !== 'admin');
+
+    // 2. MODOS DE VISUALIZAÇÃO E "SHADOW MODE"
+    $isViewingAsCollab = session()->has('viewing_as_collaborator_id'); // Deteta se o CEO está a espreitar
+    $isAdminMode = request()->routeIs('admin.*');
+
+    $isBusinessMode = (
+        request()->routeIs('hub.business.*') ||
+        request()->routeIs('company-expenses')
+    )
+    && !request()->routeIs('hub.business.gateway')
+    && !$isAdminMode;
+
+    // 3. LÓGICA DE PERMISSÃO (SideBar Dinâmica)
+    // Se o CEO estiver em "Shadow Mode", o $isManager passa a ser FALSE para a sidebar mostrar apenas o menu do colaborador
+    $isManager = ($user && ($user->isAdminRole() || $user->isOwner())) && !$isViewingAsCollab;
+
+    // 4. PLANOS E PERMISSÕES
+    $userPlan = $currentWs->plan ?? 'free';
+    $isDiamond = $user ? $user->isDiamond() : false;
+    $isAnyPremium = $user ? $user->isAnyPremium() : false;
+
+    if ($isDiamond) {
+        $planEmoji = '💎'; $planText = 'Plano Diamante'; $planColor = 'text-indigo-600';
+    } elseif ($user && $user->isStar()) {
+        $planEmoji = '⭐'; $planText = 'Plano Premium'; $planColor = 'text-amber-500';
+    } else {
+        $planEmoji = '👤'; $planText = 'Plano Básico'; $planColor = 'text-zinc-400';
+    }
+
+    $workspaceId = $currentWs?->id ?? 0;
+
+    // 4. CACHE DE CONTAGENS DA SIDEBAR
+    $counts = \Illuminate\Support\Facades\Cache::remember(
+        "layout:sidebar-counts:v2:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
+        60,
+        function () use ($user, $currentWs, $workspaceId, $isAdminMode, $isBusinessMode) {
+            if ($isAdminMode) {
+                return [
+                    'users'   => \App\Models\User::count(),
+                    'support' => \App\Models\SupportTicket::where('status', 'open')->count(),
+                ];
+            }
+
+            if ($isBusinessMode) {
+                return [
+                    'company_expenses' => \App\Models\Expense::where('workspace_id', $workspaceId)->count(),
+                    'invoices'   => \App\Models\Invoice::where('workspace_id', $workspaceId)->count(),
+                    'proposals'  => \App\Models\Proposal::where('workspace_id', $workspaceId)->count(),
+                    'clients'    => \App\Models\Client::where('workspace_id', $workspaceId)->count(),
+                    'projects'   => \App\Models\Project::where('workspace_id', $workspaceId)->count(),
+                    'inventory'  => \App\Models\Product::where('workspace_id', $workspaceId)->count(),
+                    'accounts'   => \App\Models\BankAccount::where('workspace_id', $workspaceId)->count(),
+                    'suppliers'  => \App\Models\Supplier::where('workspace_id', $workspaceId)->count(),
+                    'employees'  => \App\Models\Employee::where('workspace_id', $workspaceId)->count(),
+                    'tasks'      => \App\Models\Task::where('workspace_id', $workspaceId)->where('status', '!=', 'concluido')->count(),
+                    'absences'   => \App\Models\Absence::where('workspace_id', $workspaceId)->where('status', 'pendente')->count(),
+                    'support'    => \App\Models\SupportTicket::where('status', 'open')->where('workspace_id', $workspaceId)->count(),
+                ];
+            }
+
+            return [
+                'incomes'       => \App\Models\Income::where('workspace_id', $workspaceId)->count(),
+                'investments'   => \App\Models\Investment::where('workspace_id', $workspaceId)->count(),
+                'subscriptions' => \App\Models\Subscription::where('workspace_id', $workspaceId)->count(),
+                'activity'      => \App\Models\ActivityLog::where('workspace_id', $workspaceId)->count(),
+                'goals'         => \App\Models\Goal::where('workspace_id', $workspaceId)->count(),
+                'debts'         => \App\Models\Debt::where('workspace_id', $workspaceId)->count(),
+                'reminders'     => \App\Models\Reminder::where('workspace_id', $workspaceId)->where('is_completed', false)->count(),
+                'members'       => $currentWs?->users()->count() ?? 0,
+                'ranking'       => $currentWs?->users()->count() ?? 0,
+                'support'       => \App\Models\SupportTicket::where('status', 'open')->count(),
+            ];
+        }
+    );
+
+    // 5. CACHE DE CATEGORIAS
+    $catCounts = \Illuminate\Support\Facades\Cache::remember(
+        "layout:category-counts:v10:{$workspaceId}",
+        60,
+        fn () => \App\Models\Expense::selectRaw('categories.name, count(*) as total')
+            ->join('categories', 'expenses.category_id', '=', 'categories.id')
+            ->where('expenses.workspace_id', $workspaceId)
+            ->whereMonth('spent_at', now()->month)
+            ->whereYear('spent_at', now()->year)
+            ->groupBy('categories.name')
+            ->pluck('total', 'name')
+            ->mapWithKeys(fn ($item, $key) => [mb_strtolower(trim($key), 'UTF-8') => $item])
+            ->toArray()
+    );
+
+    // 6. HELPER DE BADGES
+    $badge = fn ($val) =>
+        $val > 0
+            ? '<span class="ml-auto text-[10px] font-black bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full text-zinc-500 group-hover:text-brand-600 transition-colors">'.$val.'</span>'
+            : '';
+
+
+@endphp
+
+
+
+
+
+
+
+
+
+
+
+
+
 <body
+
     class="layout-fixed app-shell antialiased bg-zinc-50 dark:bg-zinc-950 h-screen overflow-hidden flex"
     x-data="{
         privacyMode: localStorage.getItem('privacyMode') === 'true',
@@ -79,6 +217,10 @@
     x-on:privacy-changed.window="privacyMode = $event.detail.state"
     :class="{ 'privacy-mode': privacyMode }"
 >
+ {{-- Se estiver na conta de outros, mete uma linha amarela no topo de tudo --}}
+    @if($isViewingOthers && $currentWs->type !== 'business')
+        <div class="fixed top-0 left-0 right-0 h-1 bg-amber-500 z-[100]"></div>
+    @endif
 
     {{-- 1. PESQUISA GLOBAL --}}
     <livewire:global-search />
@@ -192,114 +334,6 @@
 
 
 
-@php
-    $user = auth()->user();
-    $currentWs = $user ? $user->currentWorkspace : null;
-
-    // 1. DEFINIÇÃO GLOBAL DE EMPRESAS
-    $allBusinessWs = ($user)
-        ? $user->workspaces()->where('type', '!=', 'personal')->get()
-        : collect();
-
-    $myCompanies = $allBusinessWs->filter(fn($ws) => $ws->pivot->role === 'admin');
-    $collabCompanies = $allBusinessWs->filter(fn($ws) => $ws->pivot->role !== 'admin');
-
-    // 2. MODOS DE VISUALIZAÇÃO E "SHADOW MODE"
-    $isViewingAsCollab = session()->has('viewing_as_collaborator_id'); // Deteta se o CEO está a espreitar
-    $isAdminMode = request()->routeIs('admin.*');
-
-    $isBusinessMode = (
-        request()->routeIs('hub.business.*') ||
-        request()->routeIs('company-expenses')
-    )
-    && !request()->routeIs('hub.business.gateway')
-    && !$isAdminMode;
-
-    // 3. LÓGICA DE PERMISSÃO (SideBar Dinâmica)
-    // Se o CEO estiver em "Shadow Mode", o $isManager passa a ser FALSE para a sidebar mostrar apenas o menu do colaborador
-    $isManager = ($user && ($user->isAdminRole() || $user->isOwner())) && !$isViewingAsCollab;
-
-    // 4. PLANOS E PERMISSÕES
-    $userPlan = $currentWs->plan ?? 'free';
-    $isDiamond = $user ? $user->isDiamond() : false;
-    $isAnyPremium = $user ? $user->isAnyPremium() : false;
-
-    if ($isDiamond) {
-        $planEmoji = '💎'; $planText = 'Plano Diamante'; $planColor = 'text-indigo-600';
-    } elseif ($user && $user->isStar()) {
-        $planEmoji = '⭐'; $planText = 'Plano Premium'; $planColor = 'text-amber-500';
-    } else {
-        $planEmoji = '👤'; $planText = 'Plano Básico'; $planColor = 'text-zinc-400';
-    }
-
-    $workspaceId = $currentWs?->id ?? 0;
-
-    // 4. CACHE DE CONTAGENS DA SIDEBAR
-    $counts = \Illuminate\Support\Facades\Cache::remember(
-        "layout:sidebar-counts:v2:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
-        60,
-        function () use ($user, $currentWs, $workspaceId, $isAdminMode, $isBusinessMode) {
-            if ($isAdminMode) {
-                return [
-                    'users'   => \App\Models\User::count(),
-                    'support' => \App\Models\SupportTicket::where('status', 'open')->count(),
-                ];
-            }
-
-            if ($isBusinessMode) {
-                return [
-                    'company_expenses' => \App\Models\Expense::where('workspace_id', $workspaceId)->count(),
-                    'invoices'   => \App\Models\Invoice::where('workspace_id', $workspaceId)->count(),
-                    'proposals'  => \App\Models\Proposal::where('workspace_id', $workspaceId)->count(),
-                    'clients'    => \App\Models\Client::where('workspace_id', $workspaceId)->count(),
-                    'projects'   => \App\Models\Project::where('workspace_id', $workspaceId)->count(),
-                    'inventory'  => \App\Models\Product::where('workspace_id', $workspaceId)->count(),
-                    'accounts'   => \App\Models\BankAccount::where('workspace_id', $workspaceId)->count(),
-                    'suppliers'  => \App\Models\Supplier::where('workspace_id', $workspaceId)->count(),
-                    'employees'  => \App\Models\Employee::where('workspace_id', $workspaceId)->count(),
-                    'tasks'      => \App\Models\Task::where('workspace_id', $workspaceId)->where('status', '!=', 'concluido')->count(),
-                    'absences'   => \App\Models\Absence::where('workspace_id', $workspaceId)->where('status', 'pendente')->count(),
-                    'support'    => \App\Models\SupportTicket::where('status', 'open')->where('workspace_id', $workspaceId)->count(),
-                ];
-            }
-
-            return [
-                'incomes'       => \App\Models\Income::where('workspace_id', $workspaceId)->count(),
-                'investments'   => \App\Models\Investment::where('workspace_id', $workspaceId)->count(),
-                'subscriptions' => \App\Models\Subscription::where('workspace_id', $workspaceId)->count(),
-                'activity'      => \App\Models\ActivityLog::where('workspace_id', $workspaceId)->count(),
-                'goals'         => \App\Models\Goal::where('workspace_id', $workspaceId)->count(),
-                'debts'         => \App\Models\Debt::where('workspace_id', $workspaceId)->count(),
-                'reminders'     => \App\Models\Reminder::where('workspace_id', $workspaceId)->where('is_completed', false)->count(),
-                'members'       => $currentWs?->users()->count() ?? 0,
-                'ranking'       => $currentWs?->users()->count() ?? 0,
-                'support'       => \App\Models\SupportTicket::where('status', 'open')->count(),
-            ];
-        }
-    );
-
-    // 5. CACHE DE CATEGORIAS
-    $catCounts = \Illuminate\Support\Facades\Cache::remember(
-        "layout:category-counts:v10:{$workspaceId}",
-        60,
-        fn () => \App\Models\Expense::selectRaw('categories.name, count(*) as total')
-            ->join('categories', 'expenses.category_id', '=', 'categories.id')
-            ->where('expenses.workspace_id', $workspaceId)
-            ->whereMonth('spent_at', now()->month)
-            ->whereYear('spent_at', now()->year)
-            ->groupBy('categories.name')
-            ->pluck('total', 'name')
-            ->mapWithKeys(fn ($item, $key) => [mb_strtolower(trim($key), 'UTF-8') => $item])
-            ->toArray()
-    );
-
-    // 6. HELPER DE BADGES
-    $badge = fn ($val) =>
-        $val > 0
-            ? '<span class="ml-auto text-[10px] font-black bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full text-zinc-500 group-hover:text-brand-600 transition-colors">'.$val.'</span>'
-            : '';
-@endphp
-
   {{-- ═══════════════════════════════════════════ --}}
     {{-- SIDEBAR LATERAL FIXA (CORRIGIDA)            --}}
     {{-- ═══════════════════════════════════════════ --}}
@@ -318,18 +352,45 @@
         x-on:click="if (window.innerWidth < 1024 && $event.target.closest('a')) mobileSidebarOpen = false"
         class="mobile-sidebar-panel h-screen z-50 border-e border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex flex-col"
     >
-        <flux:sidebar.header class="flex items-center justify-between gap-3 px-6 py-4">
-            <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate.hover />
+       <flux:sidebar.header class="flex items-center justify-between gap-3 px-6 py-4">
+    {{-- LOGO DINÂMICO --}}
+    <a href="{{ route('dashboard') }}" wire:navigate.hover class="flex items-center gap-3 group no-underline">
 
-            <flux:button
-                class="lg:hidden"
-                variant="subtle"
-                square
-                icon="x-mark"
-                x-on:click="mobileSidebarOpen = false"
-                aria-label="Fechar menu"
-            />
-        </flux:sidebar.header>
+        {{-- Container da Imagem ou Inicial --}}
+        <div class="shrink-0 size-9 rounded-xl overflow-hidden bg-emerald-600 flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform duration-300">
+            @if($currentWs && $currentWs->logo_path)
+                {{-- Mostra a foto se ela existir --}}
+                <img src="{{ $currentWs->logo_url }}?t={{ time() }}" class="size-full object-cover">
+            @else
+                {{-- Mostra a inicial se não houver foto --}}
+                <span class="text-lg font-black italic">
+                    {{ substr($currentWs->name ?? 'F', 0, 1) }}
+                </span>
+            @endif
+        </div>
+
+        {{-- Nome do Workspace --}}
+        <div class="flex flex-col justify-center min-w-0">
+            <span class="text-[13px] font-black uppercase tracking-tighter text-zinc-800 dark:text-white leading-[1.1] whitespace-normal break-words">
+                {{ $currentWs->name ?? 'Finance Pro' }}
+            </span>
+            <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-[0.2em] mt-1">
+                @if($isAdminMode) Administração
+                @elseif($isBusinessMode) Negócio
+                @else Gestão Pessoal
+                @endif
+            </span>
+        </div>
+    </a>
+
+    <flux:button
+        class="lg:hidden"
+        variant="subtle"
+        square
+        icon="x-mark"
+        x-on:click="mobileSidebarOpen = false"
+    />
+</flux:sidebar.header>
 <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
     @csrf
 </form>
@@ -350,6 +411,17 @@
 
 
 <flux:sidebar.nav>
+      @if($isViewingOthers)
+        {{-- BOTÃO DE RETORNO RÁPIDO NA SIDEBAR --}}
+        <flux:sidebar.item
+            icon="arrow-left-circle"
+            :href="route('workspace.switch.fast', $myPersonalWsId)"
+            class="text-amber-600 dark:text-amber-500 font-black animate-in slide-in-from-left-4"
+        >
+            Sair da Gestão Externa
+        </flux:sidebar.item>
+        <flux:separator class="my-4 mx-2" />
+    @endif
     @if($isAdminMode)
         @php $adminUser = auth()->user(); @endphp
         <div class="flex flex-col h-full justify-between">
@@ -556,8 +628,15 @@
 
         <flux:sidebar.group heading="Administrativo" class="mt-4">
             <flux:sidebar.item icon="users" :href="route('hub.business.team')" wire:navigate.hover>
-                Recursos Humanos {!! $badge($counts['employees']) !!}
+                Equipa {!! $badge($counts['employees']) !!}
             </flux:sidebar.item>
+            <flux:sidebar.item
+    icon="user-plus"
+    :href="route('hub.business.recruitment')"
+    wire:navigate.hover
+>
+    Recrutamento
+</flux:sidebar.item>
             <flux:sidebar.item icon="calendar-days" :href="route('hub.business.absences')" wire:navigate.hover>
                 Férias & Ausências {!! $badge($counts['absences']) !!}
             </flux:sidebar.item>
@@ -724,6 +803,9 @@
     $isProUser = ($user->plan ?? '') === 'pro' || (method_exists($user, 'isDiamond') && $user->isDiamond());
     $isPlusUser = ($user->plan ?? '') === 'plus' || (method_exists($user, 'isPlus') && $user->isPlus());
     $hasLockInAccess = $isProUser || $isPlusUser;
+
+$hasInventoryAccess = $isProUser || $isPlusUser;
+$hasStoreAccess = $isProUser || $isPlusUser;
 @endphp
 
 @if($hasLockInAccess)
@@ -1088,7 +1170,24 @@
 
 
  {{-- Centro: Barra de Pesquisa --}}
-  <div class="flex justify-center">
+  {{-- Centro: Barra de Pesquisa + Aviso de Contexto --}}
+ <div class="flex items-center justify-center gap-4 w-full"> {{-- Adicionei gap-4 e items-center --}}
+
+    {{-- AVISO: MODO DE OBSERVAÇÃO --}}
+    @if($isViewingOthers)
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl animate-in slide-in-from-top-2">
+            <div class="relative flex items-center justify-center">
+                <div class="size-1.5 rounded-full bg-amber-500 animate-ping absolute"></div>
+                <flux:icon name="eye" variant="micro" class="size-3.5 text-amber-600 relative" />
+            </div>
+            <span class="text-[9px] font-black uppercase text-amber-600 tracking-widest whitespace-nowrap">
+                A visualizar: <span class="text-amber-800 dark:text-amber-400 italic">{{ $currentWs->name }}</span>
+            </span>
+            <a href="{{ route('workspace.switch.fast', $myPersonalWsId) }}" class="ml-1 p-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors" title="Voltar à minha conta">
+                <flux:icon name="arrow-uturn-left" variant="micro" class="size-3" />
+            </a>
+        </div>
+    @endif
                 <button x-on:click="$dispatch('open-global-search')" class="flex items-center gap-3 px-4 py-2 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all group w-full shadow-sm">
                     <flux:icon name="magnifying-glass" class="size-4 group-hover:text-brand-500 transition-colors" />
                     <span class="text-sm font-medium text-left flex-1">Procurar tudo... (Ctrl K)</span>
@@ -1380,5 +1479,48 @@
             </div>
         </div>
     @endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    {{-- ═══════════════════════════════════════════════════════════════ --}}
+    {{-- BARRA FLUTUANTE DE CONTEXTO EXTERNO (FIXA EM BAIXO)            --}}
+    {{-- ═══════════════════════════════════════════════════════════════ --}}
+    @if($isViewingOthers)
+    <div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[999] w-auto animate-in fade-in slide-in-from-bottom-10 duration-700">
+        <div class="relative group">
+            <div class="absolute -inset-1 bg-gradient-to-r from-amber-600 to-orange-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+
+            <div class="relative flex items-center gap-6 px-8 py-4 bg-white dark:bg-zinc-900 border border-amber-500/30 rounded-full shadow-2xl backdrop-blur-md">
+                <div class="flex flex-col text-left leading-tight pr-6 border-r border-zinc-100 dark:border-zinc-800">
+                    <span class="text-[8px] font-black uppercase text-amber-600 tracking-[0.2em]">Modo de Consulta Ativo</span>
+                    <span class="text-sm font-black dark:text-white uppercase italic">{{ $currentWs->name }}</span>
+                </div>
+
+                {{-- O BOTÃO PARA VOLTAR --}}
+                <a href="{{ route('workspace.switch.fast', $myPersonalWsId) }}"
+                   class="flex items-center gap-3 px-6 py-2 bg-zinc-950 dark:bg-brand-600 text-white rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                    <flux:icon name="arrow-uturn-left" variant="micro" class="size-4 transition-transform group-hover/btn:-translate-x-1" />
+                    <span class="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Voltar à Minha Gestão</span>
+                </a>
+            </div>
+        </div>
+    </div>
+@endif
 </body>
 </html>

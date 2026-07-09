@@ -11,49 +11,33 @@ class BusinessGateway extends Component
 {
     public $accessCode = '';
 
-    /**
-     * O mount decide se mostra as opções ou se entra direto.
-     */
     public function mount()
     {
         $user = Auth::user();
 
-        // Se clicaste no "+ Novo Espaço" (parâmetro 'new'), limpamos a seleção
-        // para forçar a visualização dos dois cartões de escolha.
         if (request()->has('new')) {
             $user->update(['current_workspace_id' => null]);
             return;
         }
 
-        // Se já tens uma empresa selecionada (via clique na sidebar),
-        // o sistema deixa-te passar direto para o Dashboard.
         if ($user->current_workspace_id) {
             return redirect()->route('hub.business.dashboard');
         }
     }
 
-    /**
-     * Opção: Entrar como CEO
-     * CORREÇÃO: Agora ele verifica primeiro se já selecionaste uma empresa
-     * antes de tentar adivinhar qual é a primeira.
-     */
     public function enterAsOwner()
     {
         $user = auth()->user();
 
-        // 1. Tentar encontrar o workspace que já está definido no teu perfil (vencendo o erro do 'first()')
         $workspace = $user->workspaces()
             ->where('workspaces.id', $user->current_workspace_id)
             ->wherePivot('role', 'admin')
             ->first();
 
-        // 2. Se o ID atual não for de uma empresa tua (ou estiver vazio),
-        // aí sim procuramos a primeira empresa onde és Admin.
         if (!$workspace) {
             $workspace = $user->workspaces()->wherePivot('role', 'admin')->first();
         }
 
-        // 3. SE NÃO EXISTIR NENHUMA: Criamos a tua primeira empresa agora.
         if (!$workspace) {
             $workspace = Workspace::create([
                 'name'     => 'Gestão de ' . explode(' ', $user->name)[0],
@@ -62,20 +46,19 @@ class BusinessGateway extends Component
                 'owner_id' => $user->id,
             ]);
 
-            // Vincula o utilizador como Administrador
             $workspace->users()->attach($user->id, ['role' => 'admin']);
 
             $this->dispatch('toast', variant: 'success', heading: 'Negócio Configurado', message: 'O teu novo espaço de trabalho foi criado com sucesso.');
         }
 
-        // 4. Atualizar o workspace atual e entrar
         $user->update(['current_workspace_id' => $workspace->id]);
 
         return redirect()->route('hub.business.dashboard');
     }
 
     /**
-     * Opção: Entrar como Colaborador (Validando o Token)
+     * Opção: Entrar como Colaborador
+     * ADAPTADO: Agora valida Tokens de Colaborador (EMP-...) e Códigos de Empresa
      */
     public function joinAsCollaborator()
     {
@@ -85,50 +68,52 @@ class BusinessGateway extends Component
             'accessCode.required' => 'Insira o código fornecido pelo seu administrador.'
         ]);
 
-        // 1. Procurar o workspace pelo código
-        $workspace = Workspace::where('invite_code', strtoupper($this->accessCode))->first();
-
-        if (!$workspace) {
-            $this->addError('accessCode', 'Este token de acesso é inválido ou não existe.');
-            return;
-        }
-
+        $code = strtoupper(trim($this->accessCode));
         $user = Auth::user();
 
-        // 2. Vincular o utilizador ao workspace na tabela pivot (Viewer/Colaborador)
-        $workspace->users()->syncWithoutDetaching([$user->id => ['role' => 'viewer']]);
+        // 1. TENTAR ENCONTRAR PELO TOKEN DE COLABORADOR (Gerado no TeamHub)
+        $employee = Employee::where('portal_token', $code)->first();
 
-        // 3. Criar ficha de colaborador para aparecer no painel de RH
-        Employee::firstOrCreate(
-            ['user_id' => $user->id, 'workspace_id' => $workspace->id],
-            [
-                'name' => $user->name,
-                'role' => 'Colaborador',
-                'salary' => 0,
-                'pay_day' => 25,
-                'active' => true
-            ]
-        );
+        if ($employee) {
+            // Vincula este utilizador à ficha de colaborador existente
+            $employee->update(['user_id' => $user->id]);
 
-        // 4. Ativar o workspace na sessão do utilizador
-        $user->update(['current_workspace_id' => $workspace->id]);
+            $workspace = $employee->workspace;
 
-        // 5. NOTIFICAR O CEO
-        $owner = $workspace->users()->wherePivot('role', 'admin')->first();
-        if ($owner) {
-            DB::table('app_notifications')->insert([
-                'user_id'    => $owner->id,
-                'title'      => 'Novo Colaborador 👤',
-                'message'    => $user->name . " entrou na empresa através do token de acesso.",
-                'type'       => 'info',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Garante que o utilizador está na lista de acessos do workspace
+            $workspace->users()->syncWithoutDetaching([$user->id => ['role' => 'editor']]);
+
+            // Define o workspace ativo e redireciona
+            $user->update(['current_workspace_id' => $workspace->id]);
+
+            $this->dispatch('toast', variant: 'success', heading: 'Sucesso', message: 'Ligação à ficha de colaborador efetuada!');
+            return redirect()->route('hub.business.dashboard');
         }
 
-        $this->dispatch('toast', variant: 'success', heading: 'Sucesso', message: 'Acesso validado. Bem-vindo à equipa!');
+        // 2. TENTAR ENCONTRAR PELO CÓDIGO GERAL DA EMPRESA (Invite Code)
+        $workspace = Workspace::where('invite_code', $code)->first();
 
-        return redirect()->route('hub.business.dashboard');
+        if ($workspace) {
+            $workspace->users()->syncWithoutDetaching([$user->id => ['role' => 'viewer']]);
+
+            Employee::firstOrCreate(
+                ['user_id' => $user->id, 'workspace_id' => $workspace->id],
+                [
+                    'name' => $user->name,
+                    'role' => 'Colaborador',
+                    'salary' => 0,
+                    'active' => true
+                ]
+            );
+
+            $user->update(['current_workspace_id' => $workspace->id]);
+
+            $this->dispatch('toast', variant: 'success', heading: 'Sucesso', message: 'Bem-vindo à equipa!');
+            return redirect()->route('hub.business.dashboard');
+        }
+
+        // Se nenhum código for válido
+        $this->addError('accessCode', 'Este código de acesso é inválido ou já expirou.');
     }
 
     public function render()

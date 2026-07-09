@@ -1,159 +1,441 @@
 <div class="space-y-10 pb-24">
+    @php
+        $user = auth()->user();
+        $workspace = $user->currentWorkspace;
 
-    {{-- 1. HEADER ENTERPRISE --}}
-    <div class="relative">
+        // 1. IDENTIFICAR O TEU COFRE PRIVADO
+        $myPersonalWs = $user->workspaces()->where('type', 'personal')->where('owner_id', $user->id)->first();
 
-        {{-- Glow decorativo --}}
-        <div class="absolute -top-10 left-0 size-72 bg-brand-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+        // 2. IDENTIFICAR A GESTÃO PARTILHADA (Onde és convidado)
+        $sharedWs = $user->workspaces()->where('owner_id', '!=', $user->id)->where('type', '!=', 'business')->first();
+        $sharedMembers = $sharedWs ? $sharedWs->users()->withPivot('role')->get() : collect();
 
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10 px-2 w-full">
+        // 3. LOGICA DE ESTADO
+        $isAtPersonal = $myPersonalWs && $workspace->id === $myPersonalWs->id;
+        $isAtShared = $sharedWs && $workspace->id === $sharedWs->id;
 
-            <div class="flex items-center gap-6 flex-wrap md:flex-nowrap w-full md:w-auto">
-                <div class="relative group shrink-0">
-                    <div class="absolute inset-0 bg-brand-500/20 blur-2xl rounded-full transition-all duration-700"></div>
-                    <div class="relative p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl">
-                        <flux:icon name="user-group" class="w-10 h-10 text-brand-600" />
-                    </div>
+        // 4. DEFINIR O TIPO DE CONTEXTO
+        if ($isAtPersonal) { $contextType = 'private'; }
+        elseif ($isAtShared) { $contextType = 'external'; }
+        else { $contextType = 'shared_by_me'; }
+
+        $ownerModel = \App\Models\User::find($workspace->owner_id);
+    @endphp
+
+    {{-- 1. HEADER & BREADCRUMB --}}
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2">
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm">
+                <flux:icon name="user-group" class="size-6 text-brand-600" />
+            </div>
+            <div>
+                <h1 class="text-3xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                    Comando do Grupo
+                </h1>
+                <p class="text-sm text-zinc-500 font-medium italic mt-1">
+                    Gestão de privilégios e auditoria do espaço <span class="text-brand-600 font-bold uppercase">{{ $workspace->name }}</span>
+                </p>
+            </div>
+        </div>
+        <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-4 py-2">
+            Workspace Ativo
+        </flux:badge>
+    </div>
+
+    {{-- 2. HERO CARD (CONTEXTO ATUAL) --}}
+    <div class="relative overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[3rem] p-10 shadow-xl">
+        {{-- Glow Decorativo --}}
+        <div class="absolute -right-20 -top-20 size-80 {{ $contextType === 'private' ? 'bg-emerald-500/10' : 'bg-brand-500/10' }} blur-[100px] rounded-full"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-8 text-left">
+                <div class="size-24 rounded-[2.5rem] {{ $contextType === 'private' ? 'bg-emerald-600' : 'bg-brand-600' }} flex items-center justify-center text-white shadow-2xl shrink-0">
+                    <flux:icon name="{{ $contextType === 'private' ? 'lock-closed' : 'users' }}" variant="solid" class="size-12" />
                 </div>
 
-                <div class="min-w-0">
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <h1 class="text-3xl sm:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
-                            Comando do Grupo
-                        </h1>
-
-                        <flux:badge variant="neutral"
-                            class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1">
-                            Workspace Ativo
-                        </flux:badge>
+                <div>
+                    <div class="flex items-center gap-3 mb-3">
+                        @if($contextType === 'private')
+                            <span class="px-3 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-widest">🔒 Cofre Privado</span>
+                        @else
+                            <span class="px-3 py-1 bg-brand-500/10 text-brand-600 border border-brand-500/20 rounded-full text-[10px] font-black uppercase tracking-widest">👥 Gestão Partilhada</span>
+                        @endif
                     </div>
 
-                    <p class="text-sm text-zinc-500 font-medium italic mt-2 leading-relaxed">
-                        Gestão de privilégios e auditoria do espaço
-                        <span class="text-brand-600 font-bold uppercase tracking-tighter">{{ $workspaceName }}</span>
+                    <h2 class="text-5xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                        {{ $workspace->name }}
+                    </h2>
+
+                    <p class="mt-4 text-base text-zinc-500 font-medium italic">
+                        @if($contextType === 'private')
+                            Este espaço é exclusivo para os teus dados. Ninguém mais tem acesso.
+                        @else
+                            Estás a visualizar a gestão de <span class="text-brand-600 font-black">{{ $ownerModel->name }}</span>.
+                        @endif
                     </p>
                 </div>
             </div>
 
-            {{-- Botões --}}
-            <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-[1.8rem]
-                        border border-zinc-200 dark:border-zinc-800 shadow-sm w-full md:w-auto justify-between md:justify-start">
-
-                <flux:button href="{{ route('dashboard') }}" variant="ghost" icon="arrow-left" wire:navigate
-                    class="rounded-xl font-bold text-zinc-500 whitespace-nowrap">
-                    Voltar
-                </flux:button>
-
-                <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
-
-                @if($iAmAdmin)
-                    <flux:button wire:click="updateWorkspaceName" variant="primary" icon="check"
-                        class="bg-brand-600 border-none shadow-lg shadow-brand-500/20 rounded-2xl font-black uppercase tracking-tighter px-6 text-white whitespace-nowrap">
-                        Guardar Alterações
-                    </flux:button>
-                @endif
-            </div>
-
-        </header>
+            @if(!$isAtPersonal)
+                <a href="{{ route('workspace.switch.fast', $myPersonalWs->id) }}"
+                   class="group flex items-center gap-3 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all active:scale-95">
+                    <flux:icon name="arrow-uturn-left" variant="micro" class="size-4" />
+                    Voltar ao Meu Cofre
+                </a>
+            @endif
+        </div>
     </div>
 
-    {{-- 2. CONFIGURAÇÕES & CONVITE --}}
 
-    {{-- LINHA 1: INFO + BRANDING --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        {{-- INFO: O que é o Grupo --}}
-        <div class="glass-card p-6 sm:p-8 bg-zinc-950 text-white rounded-[2.5rem]
-                    border border-zinc-800 shadow-2xl relative overflow-hidden group">
 
-            <div class="absolute -right-10 -top-10 size-48 bg-brand-500/10 blur-[80px] rounded-full
-                        group-hover:bg-brand-500/20 transition-all"></div>
 
-            <div class="relative z-10 space-y-6">
 
-                <div class="flex items-center gap-3 flex-wrap">
-                    <div class="p-2 bg-brand-500/20 rounded-xl">
-                        <flux:icon name="information-circle" class="size-5 text-brand-400" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="space-y-10 pb-24">
+    @php
+        $user = auth()->user();
+        $workspace = $user->currentWorkspace;
+
+        // 1. IDENTIFICAR O TEU COFRE PRIVADO
+        $myPersonalWs = $user->workspaces()->where('type', 'personal')->where('owner_id', $user->id)->first();
+
+        // 2. IDENTIFICAR A GESTÃO PARTILHADA (Onde és convidado)
+        $sharedWs = $user->workspaces()->where('owner_id', '!=', $user->id)->where('type', '!=', 'business')->first();
+        $sharedMembers = $sharedWs ? $sharedWs->users()->withPivot('role')->get() : collect();
+
+        // 3. LOGICA DE ESTADO
+        $isAtPersonal = $myPersonalWs && $workspace->id === $myPersonalWs->id;
+        $isAtShared = $sharedWs && $workspace->id === $sharedWs->id;
+
+        // 4. DEFINIR O TIPO DE CONTEXTO
+        if ($isAtPersonal) { $contextType = 'private'; }
+        elseif ($isAtShared) { $contextType = 'external'; }
+        else { $contextType = 'shared_by_me'; }
+
+        $ownerModel = \App\Models\User::find($workspace->owner_id);
+    @endphp
+
+
+
+
+    {{-- 3. GRID: PARTILHADO VS PRIVADO --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+       {{-- COLUNA A: ESPAÇO PARTILHADO --}}
+<div class="space-y-6">
+    <div class="flex items-center justify-between px-4 text-left w-full">
+        <div class="flex items-center gap-4">
+            <div class="p-2 bg-brand-500/10 rounded-lg text-brand-600">
+                <flux:icon name="users" variant="outline" class="size-4" />
+            </div>
+            <h2 class="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-white leading-none">
+                Espaço Partilhado
+            </h2>
+
+            {{-- INFO COM ALPINE.JS --}}
+            <div x-data="{ open: false }" class="relative">
+                <button @click="open = !open" type="button"
+                    class="flex items-center justify-center size-7 rounded-full bg-brand-600 text-white shadow-lg shadow-brand-500/40 ring-4 ring-brand-500/20 hover:scale-110 hover:bg-brand-500 transition-all group">
+                    <flux:icon name="information-circle" variant="solid" class="size-5" />
+                </button>
+                <div x-show="open" @click.away="open = false" x-transition x-cloak class="absolute left-0 mt-3 w-80 p-6 bg-zinc-950 text-white border border-zinc-800 shadow-2xl rounded-[2rem] z-50">
+                    <p class="text-[11px] text-zinc-400 leading-relaxed">
+                        • Até <span class="text-white font-bold">5 membros</span> no mesmo grupo.<br>
+                        • <span class="text-white font-bold">Transparência total:</span> todos vêem as despesas comuns.
+                    </p>
+                </div>
+            </div>
+        </div>
+        @if($isAtShared) <flux:badge variant="neutral" size="sm" class="text-[7px] font-black uppercase">Ativo Agora</flux:badge> @endif
+    </div>
+
+    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[3rem] p-8 shadow-sm min-h-[400px] flex flex-col items-center">
+        @if($sharedWs)
+            {{-- AVATAR DO PROPRIETÁRIO --}}
+            <div class="flex flex-col items-center text-center space-y-4 w-full">
+                <div class="size-32 rounded-[2.5rem] overflow-hidden border-4 border-white dark:border-zinc-800 shadow-2xl bg-zinc-100 flex items-center justify-center">
+    @if($sharedWs->logo_path)
+        {{-- MUDANÇA AQUI: Usamos logo_url em vez de asset(logo_path) --}}
+        <img src="{{ $sharedWs->logo_url }}?t={{ time() }}" class="size-full object-cover">
+    @else
+        <span class="text-3xl font-black text-brand-600 uppercase italic">{{ substr($sharedWs->name, 0, 2) }}</span>
+    @endif
+</div>
+
+                <div>
+                    <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-1">Proprietário</p>
+                    <h3 class="text-xl font-black dark:text-white uppercase italic tracking-tighter">{{ $sharedWs->name }}</h3>
+                </div>
+
+                {{-- --- LISTA DE PESSOAS (MEMBROS) --- --}}
+                <div class="w-full mt-6 pt-6 border-t border-zinc-100 dark:border-zinc-800">
+                    <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-4">Pessoas Autorizadas</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                        @foreach($sharedMembers as $sm)
+                            <div class="flex items-center gap-3 p-3 bg-zinc-50/50 dark:bg-zinc-950/50 rounded-2xl border border-zinc-100 dark:border-zinc-800/50">
+                                <flux:avatar initials="{{ substr($sm->name, 0, 2) }}" class="size-8 shadow-sm border border-white dark:border-zinc-800" />
+                                <div class="flex flex-col text-left min-w-0">
+                                    <span class="text-[10px] font-black dark:text-white uppercase truncate">{{ $sm->name }}</span>
+                                    <span class="text-[8px] font-bold text-brand-600 uppercase tracking-widest">{{ $sm->pivot->role ?? 'Membro' }}</span>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
+                </div>
 
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Sobre</p>
-                        <p class="text-lg font-black uppercase italic tracking-tighter">Conta Partilhada</p>
+                @if(!$isAtShared)
+                    <div class="w-full mt-6">
+                        <flux:button href="{{ route('workspace.switch.fast', $sharedWs->id) }}" variant="primary" class="w-full rounded-2xl bg-zinc-950 dark:bg-zinc-800 font-black uppercase text-[10px] h-12 shadow-lg">
+                            Entrar nesta Gestão
+                        </flux:button>
+                    </div>
+                @endif
+            </div>
+        @else
+            <div class="text-center">
+                <div class="size-20 mx-auto bg-zinc-50 dark:bg-zinc-800/50 rounded-full flex items-center justify-center mb-4">
+                    <flux:icon name="users" class="size-8 text-zinc-300" />
+                </div>
+                <p class="text-xs font-black uppercase text-zinc-400 tracking-widest italic">Sem grupos partilhados ativos</p>
+            </div>
+        @endif
+    </div>
+</div>
+
+        {{-- COLUNA B: O MEU COFRE PRIVADO --}}
+        <div class="space-y-6">
+            <div class="flex items-center justify-between px-4 text-left w-full">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-600">
+                        <flux:icon name="lock-closed" variant="outline" class="size-4" />
+                    </div>
+                    <h2 class="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-white leading-none">O Meu Cofre Privado</h2>
+
+                    {{-- INFO ALPINE --}}
+                   <div x-data="{ open: false }" class="relative">
+    <button @click="open = !open" type="button"
+        class="flex items-center justify-center size-7 rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-500/40 ring-4 ring-emerald-500/20 hover:scale-110 hover:bg-emerald-500 transition-all group">
+        <flux:icon name="information-circle" variant="solid" class="size-5 group-hover:rotate-12 transition-transform" />
+    </button>
+                        <div x-show="open" @click.away="open = false" x-transition x-cloak class="absolute left-0 mt-2 w-80 p-6 bg-zinc-950 text-white border border-zinc-800 shadow-2xl rounded-[2rem] z-50">
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <flux:icon name="shield-check" class="size-4 text-emerald-400" />
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Privacidade Total</span>
+                                </div>
+
+
+
+
+                <div>
+
+                    <p class="text-lg font-black uppercase italic tracking-tighter">Cofre Privado</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-start gap-3">
+                    <div class="size-6 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5"><flux:icon name="user" class="size-3.5 text-emerald-400" /></div>
+                    <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">Acesso <span class="text-white font-black">exclusivo e único</span>. Só tu tens a chave deste espaço.</p>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="size-6 rounded-lg bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5"><flux:icon name="eye-slash" class="size-3.5 text-red-400" /></div>
+                    <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">Estes dados são <span class="text-white font-black">invisíveis</span> para membros de outros grupos.</p>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="size-6 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0 mt-0.5"><flux:icon name="sparkles" class="size-3.5 text-purple-400" /></div>
+                    <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">Ideal para gerir <span class="text-white font-black">gastos pessoais</span>, hobbies ou surpresas.</p>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="size-6 rounded-lg bg-zinc-500/20 flex items-center justify-center shrink-0 mt-0.5"><flux:icon name="no-symbol" class="size-3.5 text-zinc-400" /></div>
+                    <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">Não permite convites. É o teu <span class="text-white font-black">bunker financeiro</span> pessoal.</p>
+                </div>
+            </div>
+
+
+
+
+
+
+
+
+
+
+                        </div>
+                    </div>
+                </div>
+                @if($isAtPersonal) <flux:badge variant="success" size="sm" class="text-[7px] font-black uppercase">Ativo Agora</flux:badge> @endif
+            </div>
+
+            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[3rem] p-8 shadow-sm space-y-8 min-h-[400px] flex flex-col justify-center">
+                <div class="flex flex-col items-center">
+                    <div class="relative group">
+                        <div class="size-32 rounded-[2.5rem] overflow-hidden border-4 border-emerald-50 dark:border-zinc-800 shadow-xl bg-zinc-50 flex items-center justify-center">
+                            <img src="{{ $myPersonalWs->logo_url }}?v={{ time() }}" class="size-full object-cover">
+                        </div>
+                        <label class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-all cursor-pointer rounded-[2.5rem] backdrop-blur-[2px]">
+                            <input type="file" wire:model="personalPhoto" class="hidden" accept="image/*">
+                            <flux:icon name="camera" class="size-8 text-white" />
+                        </label>
                     </div>
                 </div>
 
                 <div class="space-y-4">
-
-                    <div class="flex items-start gap-3">
-                        <div class="size-6 rounded-lg bg-brand-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                            <flux:icon name="users" class="size-3.5 text-brand-400" />
-                        </div>
-                        <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">
-                            Até <span class="text-white font-black">5 membros</span> podem partilhar o mesmo espaço financeiro.
-                        </p>
+                    <flux:label class="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Nome da Minha Gestão</flux:label>
+                    <div class="flex gap-2">
+                        <flux:input wire:model="personalWorkspaceName" class="flex-1 h-12 !bg-zinc-50 dark:!bg-zinc-950 border-none rounded-xl font-bold shadow-inner" />
+                        <flux:button wire:click="updatePersonalName" variant="primary" class="rounded-xl bg-emerald-600 shadow-lg shadow-emerald-500/20"><flux:icon name="check" variant="micro" /></flux:button>
                     </div>
-
-                    <div class="flex items-start gap-3">
-                        <div class="size-6 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                            <flux:icon name="eye" class="size-3.5 text-emerald-400" />
-                        </div>
-                        <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">
-                            Cada membro vê <span class="text-white font-black">todas as despesas</span> e receitas do grupo.
-                        </p>
+                    <div class="flex flex-wrap gap-2">
+                        <button wire:click="$set('personalWorkspaceName', 'Cofre de {{ explode(' ', auth()->user()->name)[0] }}')" class="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-500 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">✨ Sugerir Individual</button>
+                        <button wire:click="$set('personalWorkspaceName', 'Gestão Familiar {{ collect(explode(' ', auth()->user()->name))->last() }}')" class="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-brand-600 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">✨ Sugerir Família</button>
                     </div>
+                </div>
 
-                    <div class="flex items-start gap-3">
-                        <div class="size-6 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                            <flux:icon name="shield-check" class="size-3.5 text-amber-400" />
-                        </div>
-                        <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">
-                            O <span class="text-white font-black">Administrador</span> controla quem entra e que permissões tem.
-                        </p>
-                    </div>
-
-                    <div class="flex items-start gap-3">
-                        <div class="size-6 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                            <flux:icon name="key" class="size-3.5 text-purple-400" />
-                        </div>
-                        <p class="text-[11px] text-zinc-400 font-medium leading-relaxed">
-                            Partilha o <span class="text-white font-black">código de convite</span> para adicionar novos membros instantaneamente.
-                        </p>
-                    </div>
-
+                <div class="p-4 bg-zinc-50 dark:bg-zinc-950 rounded-2xl border border-zinc-100 dark:border-zinc-800 text-center">
+                    <p class="text-[10px] text-zinc-500 italic leading-relaxed">Só tu tens as chaves de acesso a este espaço. Estes dados não são partilhados.</p>
                 </div>
             </div>
         </div>
-
-        {{-- BRANDING DO ESPAÇO --}}
-        <div class="glass-card p-6 sm:p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem]
-                    border border-zinc-200 dark:border-zinc-800 shadow-sm">
-
-            <div class="flex items-center gap-3 mb-8 flex-wrap">
-                <div class="p-2 bg-brand-500/10 rounded-lg text-brand-600">
-                    <flux:icon name="pencil-square" variant="outline" class="size-5" />
-                </div>
-
-                <div>
-                    <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
-                        Branding do Espaço
-                    </h3>
-                    <p class="text-lg font-black dark:text-white uppercase italic tracking-tighter">
-                        Identidade
-                    </p>
-                </div>
-            </div>
-
-            <flux:input wire:model="workspaceName"
-                placeholder="Ex: Família Louro"
-                :disabled="!$iAmAdmin"
-                class="h-14 !bg-zinc-50 dark:!bg-zinc-950 border-none rounded-2xl font-bold shadow-inner w-full" />
-
-            <p class="text-[10px] text-zinc-400 mt-4 italic leading-relaxed">
-                Apenas o <span class="font-black text-brand-600">Administrador Master</span> pode renomear este grupo.
-            </p>
-        </div>
-
     </div>
+
+    {{-- 4. TABELA DE AUDITORIA (SÓ APARECE SE NÃO ESTIVER NO COFRE) --}}
+    @if(!$isAtPersonal)
+        <div class="space-y-6 pt-10">
+            <div class="flex items-center gap-3 px-4">
+                <div class="p-2 bg-brand-600 rounded-lg text-white"><flux:icon name="presentation-chart-line" variant="mini" class="size-4" /></div>
+                <h2 class="text-sm font-black uppercase tracking-widest text-zinc-400">Auditoria de Rendimento</h2>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-zinc-50/50 dark:bg-zinc-950/30 text-[9px] font-black uppercase text-zinc-400 tracking-widest border-b dark:border-zinc-800">
+                                <th class="p-6">Membro</th>
+                                <th class="p-6 text-right">Rendimento</th>
+                                <th class="p-6 text-right">Despesas</th>
+                                <th class="p-6 text-right">Net Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                            @foreach($memberStats as $stat)
+                                <tr class="hover:bg-zinc-50 dark:hover:bg-brand-500/5 transition-all">
+                                    <td class="p-6">
+                                        <div class="flex items-center gap-3">
+                                            <flux:avatar initials="{{ substr($stat->name, 0, 2) }}" class="size-10 shadow-sm" />
+                                            <span class="text-sm font-black dark:text-white uppercase">{{ $stat->name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-6 text-right font-black text-emerald-600">+{{ number_format($stat->total_incomes, 2, ',', ' ') }}€</td>
+                                    <td class="p-6 text-right font-black text-red-500">-{{ number_format($stat->total_expenses, 2, ',', ' ') }}€</td>
+                                    <td class="p-6 text-right font-black {{ $stat->net_balance >= 0 ? 'text-emerald-500' : 'text-red-500' }} italic">
+                                        {{ number_format($stat->net_balance, 2, ',', ' ') }}€
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    {{-- 4. ZONA DE AUDITORIA (TABELA) --}}
+    @if(!$isAtPersonal)
+    <div class="pt-10 space-y-8">
+        <div class="flex items-center gap-3 px-4">
+            <div class="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-500">
+                <flux:icon name="shield-check" variant="outline" class="size-4" />
+            </div>
+            <h2 class="text-sm font-black uppercase tracking-widest text-zinc-400">Auditoria de Rendimento</h2>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-zinc-50/50 dark:bg-zinc-950/20 border-b dark:border-zinc-800">
+                    <tr class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">
+                        <th class="p-6">Membro</th>
+                        <th class="p-6 text-right">Rendimento</th>
+                        <th class="p-6 text-right">Despesas</th>
+                        <th class="p-6 text-right">Balanço</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    @foreach($memberStats as $stat)
+                    <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-all">
+                        <td class="p-6">
+                            <div class="flex items-center gap-3">
+                                <flux:avatar initials="{{ substr($stat->name, 0, 2) }}" class="size-10 rounded-xl" />
+                                <span class="text-sm font-black dark:text-white uppercase">{{ $stat->name }}</span>
+                            </div>
+                        </td>
+                        <td class="p-6 text-right font-bold text-emerald-600">+{{ number_format($stat->total_incomes, 2) }}€</td>
+                        <td class="p-6 text-right font-bold text-red-500">-{{ number_format($stat->total_expenses, 2) }}€</td>
+                        <td class="p-6 text-right font-black {{ $stat->net_balance >= 0 ? 'text-emerald-600' : 'text-red-500' }}">
+                            {{ number_format($stat->net_balance, 2) }}€
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
+
+{{-- SEPARADOR DE SECÇÃO --}}
+    <div class="relative py-12">
+        <div class="absolute inset-0 flex items-center" aria-hidden="true">
+            <div class="w-full border-t border-zinc-200 dark:border-zinc-800"></div>
+        </div>
+        <div class="relative flex justify-center">
+            <div class="bg-zinc-50 dark:bg-zinc-950 px-6 flex items-center gap-3">
+                <div class="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                    <flux:icon name="key" variant="micro" class="size-4 text-zinc-400" />
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Acessos e Convites</span>
+            </div>
+        </div>
+    </div>
+
 
     {{-- LINHA 2: CÓDIGO + ENTRAR --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -167,40 +449,54 @@
 
             <div class="relative z-10 space-y-6">
 
-                <div class="flex items-center gap-3 flex-wrap">
-                    <div class="p-2 bg-brand-500/10 rounded-xl">
-                        <flux:icon name="share" class="size-5 text-brand-600" />
-                    </div>
+    <div class="flex items-center gap-3 flex-wrap">
+        <div class="p-2 bg-brand-500/10 rounded-xl">
+            <flux:icon name="share" class="size-5 text-brand-600" />
+        </div>
 
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Código</p>
-                        <p class="text-lg font-black dark:text-white uppercase italic tracking-tighter">
-                            Convidar Membros
-                        </p>
-                    </div>
-                </div>
+        <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Código</p>
+            <p class="text-lg font-black dark:text-white uppercase italic tracking-tighter">
+                Convidar Membros
+            </p>
+        </div>
+    </div>
 
-                <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-widest leading-relaxed">
-                    Partilha este código com quem queres adicionar ao teu grupo financeiro.
-                </p>
+    <p class="text-[11px] text-zinc-500 font-bold uppercase tracking-widest leading-relaxed">
+        Partilha este código com quem queres adicionar ao teu grupo financeiro.
+    </p>
 
-                <div class="flex items-center justify-between bg-zinc-50 dark:bg-zinc-950
-                            border border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 py-4">
+    <div class="flex items-center justify-between bg-zinc-50 dark:bg-zinc-950
+                border border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 py-4">
 
-                    <span class="text-3xl font-mono font-black text-brand-600 dark:text-brand-400 tracking-[0.3em] uppercase">
-                        {{ $inviteCode }}
-                    </span>
+        <span class="text-3xl font-mono font-black text-brand-600 dark:text-brand-400 tracking-[0.3em] uppercase">
+            {{ $inviteCode }}
+        </span>
 
-                    <flux:button wire:click="generateInviteCode" size="sm" variant="ghost" icon="arrow-path"
-                        class="text-zinc-400 hover:text-brand-600 transition-colors"
-                        title="Gerar novo código" />
-                </div>
+        <div class="flex items-center gap-2">
+            {{-- BOTÃO COPIAR --}}
+            <button
+                x-data="{ copied: false }"
+                @click="navigator.clipboard.writeText('{{ $inviteCode }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                class="p-2 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all group/copy"
+                title="Copiar código"
+            >
+                <flux:icon x-show="!copied" name="clipboard" variant="micro" class="size-4 text-zinc-400 group-hover/copy:text-brand-600" />
+                <flux:icon x-show="copied" x-cloak name="check" variant="micro" class="size-4 text-emerald-500" />
+            </button>
 
-                <p class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest italic">
-                    O código não expira. Podes regenerá-lo a qualquer momento.
-                </p>
+            {{-- BOTÃO REGENERAR --}}
+            <flux:button wire:click="generateInviteCode" size="sm" variant="ghost" icon="arrow-path"
+                class="text-zinc-400 hover:text-brand-600 transition-colors"
+                title="Gerar novo código" />
+        </div>
+    </div>
 
-            </div>
+    <p class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest italic">
+        O código não expira. Podes regenerá-lo a qualquer momento.
+    </p>
+
+</div>
         </div>
 
     {{-- ENTRAR NUM GRUPO --}}
@@ -659,4 +955,5 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 10px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; }
     </style>
+
 </div> {{-- FECHO DA DIV RAIZ PRINCIPAL --}}

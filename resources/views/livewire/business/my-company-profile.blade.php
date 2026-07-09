@@ -34,6 +34,54 @@
         </header>
     </div>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         {{-- COLUNA: DADOS CONTRATUAIS --}}
@@ -170,63 +218,97 @@
                             <th class="p-6 text-right pr-10">Download</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-zinc-50 dark:divide-zinc-800">
-                        @forelse($myDocuments as $doc)
-                            <tr class="group hover:bg-emerald-50/30 dark:hover:bg-emerald-500/5 transition-all duration-300">
-                                {{-- NOME DO FICHEIRO --}}
-                                <td class="p-6">
-                                    <div class="flex items-center gap-4">
-                                        <div class="size-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 group-hover:text-emerald-600 transition-colors shadow-sm">
-                                            <flux:icon name="document-text" class="size-5" />
-                                        </div>
-                                        <span class="text-sm font-black dark:text-white uppercase tracking-tight">{{ $doc->title }}</span>
-                                    </div>
-                                </td>
+                   <tbody class="divide-y divide-zinc-50 dark:divide-zinc-800">
+    {{-- 1. DOCUMENTO DE RECRUTAMENTO: O TEU CV --}}
+    @if($userCV)
+        <tr class="bg-brand-50/30 dark:bg-brand-500/5 border-l-4 border-brand-500 group transition-all duration-300">
+            <td class="p-6">
+                <div class="flex items-center gap-4 text-left">
+                    <div class="size-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                        <flux:icon name="identification" variant="outline" class="size-5" />
+                    </div>
+                    <div class="flex flex-col text-left">
+                        <span class="text-sm font-black dark:text-white uppercase tracking-tight">Curriculum Vitae (CV)</span>
+                        <span class="text-[9px] text-brand-600 font-bold uppercase italic mt-0.5">Ficheiro de Recrutamento</span>
+                    </div>
+                </div>
+            </td>
 
-                                {{-- TIPO --}}
-                                <td class="p-6 text-center">
-                                    <span class="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-lg text-[8px] font-black uppercase tracking-widest border border-zinc-200 dark:border-zinc-700 leading-none">
-                                        {{ $doc->type === 'recibo' ? '📄 Recibo' : ($doc->type === 'contrato' ? '📜 Contrato' : '📁 Outro') }}
-                                    </span>
-                                </td>
+            <td class="p-6 text-center">
+                <span class="px-3 py-1 bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-400 rounded-lg text-[8px] font-black uppercase tracking-widest border border-brand-200 dark:border-brand-800 leading-none">
+            📜Profissional
+                </span>
+            </td>
 
-                                {{-- DATA --}}
-                                <td class="p-6 text-center text-xs font-bold text-zinc-500 uppercase leading-none">
-                                    {{ \Carbon\Carbon::parse($doc->created_at)->translatedFormat('d M, Y') }}
-                                </td>
+            <td class="p-6 text-center text-xs font-bold text-zinc-500 uppercase leading-none italic">
+                Arquivo de Candidatura
+            </td>
 
-                                {{-- TAMANHO --}}
-                                <td class="p-6 text-center text-[10px] font-mono text-zinc-400 leading-none">
-                                    {{ $doc->file_size ?? '---' }}
-                                </td>
+            <td class="p-6 text-center text-[10px] font-mono text-zinc-400 leading-none">
+                PDF
+            </td>
 
-                                {{-- AÇÃO DE DOWNLOAD --}}
-                                <td class="p-6 text-center pr-8 ">
-                                    <flux:button
-    wire:click="downloadDocument({{ $doc->id }})"
-    variant="ghost"
-    size="sm"
-    icon="cloud-arrow-down"
-    class="text-zinc-400 hover:text-emerald-600"
-/>
+            <td class="p-6 text-center pr-8">
+                <a href="{{ asset('storage/' . $userCV) }}"
+                   target="_blank"
+                   class="inline-flex items-center justify-center size-8 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-brand-600 hover:bg-brand-600 hover:text-white transition-all shadow-sm">
+                    <flux:icon name="cloud-arrow-down" variant="micro" class="size-4" />
+                </a>
+            </td>
+        </tr>
+    @endif
 
-                                    </button>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="p-24 text-center">
-                                    <div class="flex flex-col items-center justify-center gap-4">
-                                        <div class="p-8 bg-zinc-50 dark:bg-zinc-900 rounded-[3rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 shadow-inner">
-                                            <flux:icon name="shield-check" class="size-12 text-zinc-200 dark:text-zinc-700" />
-                                        </div>
-                                        <p class="text-zinc-500 font-black uppercase text-[10px] tracking-[0.3em]">Cofre Vazio</p>
-                                        <p class="text-zinc-400 text-xs italic font-medium">A administração ainda não carregou documentos oficiais para o teu perfil.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
+    {{-- 2. DOCUMENTOS EMITIDOS PELA ADMINISTRAÇÃO (O TEU CÓDIGO ATUAL) --}}
+    @forelse($myDocuments as $doc)
+        <tr class="group hover:bg-emerald-50/30 dark:hover:bg-emerald-500/5 transition-all duration-300">
+            <td class="p-6 text-left">
+                <div class="flex items-center gap-4">
+                    <div class="size-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 group-hover:text-emerald-600 transition-colors shadow-sm">
+                        <flux:icon name="document-text" class="size-5" />
+                    </div>
+                    <span class="text-sm font-black dark:text-white uppercase tracking-tight">{{ $doc->title }}</span>
+                </div>
+            </td>
+
+            <td class="p-6 text-center">
+                <span class="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-lg text-[8px] font-black uppercase tracking-widest border border-zinc-200 dark:border-zinc-700 leading-none">
+                    {{ $doc->type === 'recibo' ? '📄 Recibo' : ($doc->type === 'contrato' ? '📜 Contrato' : '📁 Outro') }}
+                </span>
+            </td>
+
+            <td class="p-6 text-center text-xs font-bold text-zinc-500 uppercase leading-none">
+                {{ \Carbon\Carbon::parse($doc->created_at)->translatedFormat('d M, Y') }}
+            </td>
+
+            <td class="p-6 text-center text-[10px] font-mono text-zinc-400 leading-none">
+                {{ $doc->file_size ?? '---' }}
+            </td>
+
+            <td class="p-6 text-center pr-8">
+                <flux:button
+                    wire:click="downloadDocument({{ $doc->id }})"
+                    variant="ghost"
+                    size="sm"
+                    icon="cloud-arrow-down"
+                    class="text-zinc-400 hover:text-emerald-600"
+                />
+            </td>
+        </tr>
+    @empty
+        @if(!$userCV) {{-- Só mostra o vazio se também não houver CV --}}
+        <tr>
+            <td colspan="5" class="p-24 text-center">
+                <div class="flex flex-col items-center justify-center gap-4">
+                    <div class="p-8 bg-zinc-50 dark:bg-zinc-900 rounded-[3rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 shadow-inner">
+                        <flux:icon name="shield-check" class="size-12 text-zinc-200 dark:text-zinc-700" />
+                    </div>
+                    <p class="text-zinc-500 font-black uppercase text-[10px] tracking-[0.3em]">Cofre Vazio</p>
+                </div>
+            </td>
+        </tr>
+        @endif
+    @endforelse
+</tbody>
                 </table>
             </div>
         </div>
@@ -254,6 +336,45 @@
             </div>
         </div>
     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     {{-- ZONA DE RESCISÃO --}}
     <div class="mt-20 pt-10 border-t border-red-500/20 text-left">
 

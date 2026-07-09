@@ -23,10 +23,16 @@ class Workspace extends Model
         'currency',
         'initial_capital',
          'audit_token',
+          'recruitment_extra_info',
         'business_email',
         'plan',
         'plan_expires_at',
         'address',
+         'recruitment_active',
+    'recruitment_description',
+    'recruitment_announcement',
+    'recruitment_vacancies',
+    'recruitment_extra_info',
         'fiscal_year_start'
     ];
 

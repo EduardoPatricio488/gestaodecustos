@@ -386,24 +386,34 @@ public function editExpense(int $id)
     }
 
     private function trackPriceHistory(Expense $expense, Category $category): void
-    {
-        $meta = is_array($expense->metadata) ? $expense->metadata : [];
-        $unitPrice = $meta['preco_litro'] ?? $meta['preco_unitario'] ?? $meta['unit_price'] ?? null;
-        $unitType = $meta['preco_litro'] ? 'litro' : ($meta['preco_unitario'] ? 'unidade' : null);
-        $merchant = $meta['local'] ?? $meta['supermercado'] ?? $meta['estabelecimento'] ?? $expense->subcategory;
+{
+    $meta = is_array($expense->metadata) ? $expense->metadata : [];
 
-        if ($unitPrice && is_numeric($unitPrice)) {
-            PriceHistory::create([
-                'workspace_id' => $expense->workspace_id,
-                'category_id' => $category->id,
-                'expense_id' => $expense->id,
-                'unit_price' => $unitPrice,
-                'unit_type' => $unitType,
-                'merchant' => $merchant,
-                'recorded_at' => $expense->spent_at,
-            ]);
-        }
+    // 1. Pegamos os valores de forma segura
+    $precoLitro = $meta['preco_litro'] ?? null;
+    $precoUnitario = $meta['preco_unitario'] ?? $meta['unit_price'] ?? null;
+
+    // 2. Definimos o preço final (Prioridade ao litro)
+    $unitPrice = $precoLitro ?? $precoUnitario;
+
+    // 3. Definimos o tipo de unidade de forma segura (usando as variáveis já protegidas)
+    $unitType = $precoLitro ? 'litro' : ($precoUnitario ? 'unidade' : null);
+
+    $merchant = $meta['local'] ?? $meta['supermercado'] ?? $meta['estabelecimento'] ?? $expense->subcategory;
+
+    // 4. Só grava se houver um preço válido
+    if ($unitPrice && is_numeric($unitPrice)) {
+        \App\Models\PriceHistory::create([
+            'workspace_id' => $expense->workspace_id,
+            'category_id'  => $category->id,
+            'expense_id'   => $expense->id,
+            'unit_price'   => $unitPrice,
+            'unit_type'    => $unitType,
+            'merchant'     => $merchant,
+            'recorded_at'  => $expense->spent_at,
+        ]);
     }
+}
 
     // ─────────────────────────────────────────────────────────────────
     //  RENDER
