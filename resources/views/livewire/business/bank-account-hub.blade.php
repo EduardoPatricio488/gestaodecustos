@@ -433,7 +433,7 @@
                 </div>
             </div>
         @endforelse
-    </div>
+
 
     {{-- 4. MODAL: CONFIGURAÇÃO DE CONTA (mantido como está) --}}
     <flux:modal name="bank-modal" position="center" class="md:w-[650px] !p-0">
@@ -499,63 +499,48 @@
                     </div>
                 </div>
 
-                {{-- SECÇÃO: DADOS BANCÁRIOS --}}
-                <div class="p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 space-y-6 shadow-inner">
-                    <div class="flex items-center gap-2">
-                        <flux:icon name="credit-card" class="size-3 text-brand-500" />
-                        <p class="text-[9px] font-black uppercase text-brand-600 tracking-[0.2em]">Dados Bancários</p>
-                    </div>
 
-                    {{-- ZONA DO IBAN NO PAINEL EXPANSÍVEL --}}
-<div class="space-y-1 col-span-2"> {{-- Col-span-2 para dar mais largura --}}
-    <div class="flex items-center gap-1.5 relative group/tip">
-        <span class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">IBAN Internacional</span>
-        <flux:icon name="information-circle" variant="micro" class="size-2.5 text-zinc-300" />
-        <div class="absolute bottom-full left-0 mb-2 w-40 p-2 bg-zinc-950 text-white text-[9px] rounded-lg opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 uppercase tracking-tighter">
-            Número completo para transferências.
+
+
+
+
+
+                {{-- SECÇÃO: DADOS BANCÁRIOS --}}
+<div class="p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 space-y-6 shadow-inner">
+    <div class="flex items-center gap-2">
+        <flux:icon name="credit-card" class="size-3 text-brand-500" />
+        <p class="text-[9px] font-black uppercase text-brand-600 tracking-[0.2em]">Dados Bancários</p>
+    </div>
+
+    {{-- ZONA DO IBAN CORRIGIDA: Agora é um campo de texto para inserir o IBAN --}}
+    <div class="space-y-2">
+        <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">IBAN Internacional</flux:label>
+        <flux:input
+            wire:model="iban"
+            placeholder="PT50 0000 0000 0000 0000 0000 0"
+            class="font-mono text-sm !bg-white dark:!bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl h-12 shadow-sm"
+        />
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-2">
+            <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">SWIFT / BIC</flux:label>
+            <flux:input
+                wire:model="swift"
+                placeholder="BCOMPTPL"
+                class="font-mono text-xs !bg-white dark:!bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl h-12 shadow-sm"
+            />
+        </div>
+        <div class="space-y-2">
+            <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Titular da Conta</flux:label>
+            <flux:input
+                wire:model="holder_name"
+                placeholder="Nome do titular"
+                class="font-bold !bg-white dark:!bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl h-12 shadow-sm"
+            />
         </div>
     </div>
-
-    <div class="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-800/50 p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 w-fit">
-        {{-- Removido o TRUNCATE para ver tudo --}}
-        <p class="text-xs font-mono font-black dark:text-zinc-100 tracking-tight">
-            {{ $account->iban ?? '---' }}
-        </p>
-
-        {{-- BOTÃO DE CÓPIA RÁPIDA --}}
-        @if($account->iban)
-            <button
-                x-data="{ copied: false }"
-                @click="navigator.clipboard.writeText('{{ $account->iban }}'); copied = true; setTimeout(() => copied = false, 2000)"
-                class="p-1 hover:bg-white dark:hover:bg-zinc-700 rounded transition-all shadow-sm"
-                title="Copiar IBAN"
-            >
-                <flux:icon x-show="!copied" name="clipboard" variant="micro" class="size-3 text-zinc-400" />
-                <flux:icon x-show="copied" name="check" variant="micro" class="size-3 text-emerald-500" />
-            </button>
-        @endif
-    </div>
 </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">SWIFT / BIC</flux:label>
-                            <flux:input
-                                wire:model="swift"
-                                placeholder="BCOMPTPL"
-                                class="font-mono text-xs !bg-white dark:!bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl h-12 shadow-sm"
-                            />
-                        </div>
-                        <div class="space-y-2">
-                            <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Titular da Conta</flux:label>
-                            <flux:input
-                                wire:model="holder_name"
-                                placeholder="Nome do titular"
-                                class="font-bold !bg-white dark:!bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl h-12 shadow-sm"
-                            />
-                        </div>
-                    </div>
-                </div>
 
                 {{-- SECÇÃO: CONFIGURAÇÃO FINANCEIRA --}}
                 <div class="p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 space-y-6 shadow-inner">

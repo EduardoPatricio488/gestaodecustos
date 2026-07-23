@@ -11,6 +11,7 @@ use App\Livewire\{
 use App\Livewire\Admin\AiMonitor;
 use App\Livewire\Business\CollaboratorExpenseHub;
 use App\Livewire\Admin\GamificationHub;
+use App\Models\Expense;
 
 use App\Livewire\Admin\ProductivityHub;
 use App\Livewire\Store\{HubStore, Checkout, ShoppingCart, WishlistHub, ProductCompare};
@@ -33,13 +34,31 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Route, Mail, DB, Auth};
 use App\Mail\MonthlyReportMail;
 use App\Livewire\ClientPortal;
+use App\Livewire\Business\BusinessGateway;
+use App\Livewire\Business\BusinessOnboarding;
 use App\Livewire\Business\ClientLogin;
 use App\Livewire\Admin\AnalyticsHub;
-use App\Livewire\Business\BusinessGateway;
+
 use App\Livewire\Admin\RemindersMonitor;
 use App\Livewire\Admin\SubscriptionHub as AdminSubscriptionHub;
 // --- ÁREAS EXTERNAS (ACESSOS PARA NÃO-UTILIZADORES) ---
+Route::post('/api/offline/sync', function (Illuminate\Http\Request $request) {
+    $expenses = $request->input('expenses');
+    $user = auth()->user();
 
+    foreach ($expenses as $item) {
+        Expense::create([
+            'user_id' => $user->id,
+            'workspace_id' => $user->current_workspace_id,
+            'amount' => $item['amount'],
+            'description' => '[OFFLINE] ' . $item['description'],
+            'spent_at' => $item['date'],
+            'category_id' => 11 // Atribui a "Outros" ou uma padrão
+        ]);
+    }
+
+    return response()->json(['status' => 'success']);
+})->middleware(['auth']);
 Route::prefix('portal')->group(function () {
     // Portal de Fornecedores (Login/Envio de faturas)
     Route::get('/fornecedor', \App\Livewire\Public\SupplierPortal::class)->name('supplier.portal');
@@ -122,6 +141,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/ai', AiInsights::class)->name('ai');
     Route::get('/insights', AiInsights::class)->name('insights');
     Route::get('/empresa/acesso', BusinessGateway::class)->name('hub.business.gateway');
+    Route::get('/empresa/onboarding', BusinessOnboarding::class)->name('hub.business.onboarding');
     Route::get('/atividades', ActivityFeed::class)->name('activity-log');
     Route::get('/planos', SubscriptionPlans::class)->name('hub.pricing');
 // --- MÓDULO EMPRESARIAL (MODO BUSINESS) ---
@@ -147,6 +167,7 @@ Route::get('/meu-perfil', \App\Livewire\Business\MyCompanyProfile::class)->name(
         Route::get('/despesas', \App\Livewire\Business\CompanyExpenses::class)->name('company-expenses');
         Route::get('/faturacao', InvoicingHub::class)->name('hub.business.invoices');
         Route::get('/propostas', ProposalHub::class)->name('hub.business.proposals');
+
         Route::get('/clientes', ClientHub::class)->name('hub.business.clients');
         Route::get('/projetos', ProjectHub::class)->name('hub.business.projects');
         Route::get('/empresa/analise-custos', \App\Livewire\Business\ProjectCostsHub::class)->name('hub.business.costs');

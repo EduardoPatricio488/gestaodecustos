@@ -22,9 +22,22 @@ class BudgetHub extends Component
     public int $challengeDays = 30;
 
     public function mount(): void
-    {
-        $this->selectedMonth = now()->format('Y-m');
+{
+    // 1. SEGURANÇA: Verificar se o utilizador atual tem permissão
+    $isRestricted = \App\Models\FamilyBudgetPermission::where('user_id', auth()->id())
+        ->where('workspace_id', auth()->user()->current_workspace_id)
+        ->whereNull('category_id') // Puxar o registo de permissões globais
+        ->where('restrict_budget', true)
+        ->exists();
+
+    if ($isRestricted) {
+        // Se estiver bloqueado, trava a entrada imediatamente com erro 403
+        abort(403, 'Área Restrita: O teu administrador bloqueou o acesso ao Orçamento.');
     }
+
+    // 2. LÓGICA ORIGINAL: Definir o mês selecionado
+    $this->selectedMonth = now()->format('Y-m');
+}
 
     public function previousMonth(): void
     {

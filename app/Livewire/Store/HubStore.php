@@ -61,30 +61,40 @@ class HubStore extends Component
         $this->onlyFeatured = false;
     }
 
-    public function render()
-    {
-        $catalog = app(StoreCatalogService::class);
-        $query = StoreProduct::query();
+ public function render()
+{
+    $catalog = app(StoreCatalogService::class);
+    $query = StoreProduct::query();
 
-        $catalog->applyFilters($query, [
-            'tab' => $this->activeTab,
-            'search' => $this->search,
-            'priceMin' => $this->priceMin,
-            'priceMax' => $this->priceMax,
-            'sortBy' => $this->sortBy,
-            'onlyFeatured' => $this->onlyFeatured,
-        ]);
+    $catalog->applyFilters($query, [
+        'tab' => $this->activeTab,
+        'search' => $this->search,
+        'priceMin' => $this->priceMin,
+        'priceMax' => $this->priceMax,
+        'sortBy' => $this->sortBy,
+        'onlyFeatured' => $this->onlyFeatured,
+    ]);
 
-        return view('livewire.store.hub-store', [
-            'products' => $query->get(),
-            'planProducts' => StoreProduct::where('type', 'plan')->orderBy('price')->get(),
-            'bundles' => StoreBundle::where('is_active', true)->with('products')->get(),
-            'cartCount' => app(StoreCartService::class)->count(),
-            'wishlistIds' => app(StoreWishlistService::class)->ids(),
-            'compareCount' => app(StoreCompareService::class)->count(),
-            'inventoryCount' => Auth::check()
-                ? StorePurchase::where('user_id', Auth::id())->where('payment_status', 'completed')->count()
-                : 0,
-        ]);
-    }
+    // --- BUSCAR DADOS DO CARRINHO DIRETAMENTE DA SESSÃO ---
+    $cartItems = session()->get('cart', []);
+    $cartTotal = collect($cartItems)->sum('price');
+    // ----------------------------------------------------
+
+    return view('livewire.store.hub-store', [
+        'products' => $query->get(),
+        'planProducts' => StoreProduct::where('type', 'plan')->orderBy('price')->get(),
+        'bundles' => StoreBundle::where('is_active', true)->with('products')->get(),
+
+        // Passamos as variáveis que o Blade (aba lateral) precisa
+        'cartItems' => $cartItems,
+        'cartTotal' => $cartTotal,
+        'cartCount' => count($cartItems),
+
+        'wishlistIds' => app(StoreWishlistService::class)->ids(),
+        'compareCount' => app(StoreCompareService::class)->count(),
+        'inventoryCount' => Auth::check()
+            ? StorePurchase::where('user_id', Auth::id())->where('payment_status', 'completed')->count()
+            : 0,
+    ]);
+}
 }

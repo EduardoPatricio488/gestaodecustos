@@ -79,15 +79,25 @@
 
 
 
-
-
 @php
     $user = auth()->user();
     $currentWs = $user ? $user->currentWorkspace : null;
-// --- LÓGICA DE MODO DE OBSERVAÇÃO ---
-$myPersonalWsId = $user->workspaces()->where('type', 'personal')->first()?->id;
-// Verificamos se o espaço atual não é o teu pessoal e se é do tipo 'personal' (ou seja, gestão de outra pessoa)
-$isViewingOthers = $currentWs && $myPersonalWsId && ($currentWs->id !== $myPersonalWsId) && ($currentWs->type === 'personal');
+
+    // 1. Procurar o cofre pessoal onde o Eduardo é o DONO real
+    $myPersonalWs = $user ? $user->workspaces()
+        ->where('type', 'personal')
+        ->where('owner_id', $user->id)
+        ->first() : null;
+
+    // Garantimos que o ID é um número ou null
+    $myPersonalWsId = $myPersonalWs?->id;
+
+    // 2. Lógica de Observação: Só é verdade se o dono do cofre ATUAL não for o Eduardo
+    // E se o Eduardo tiver um cofre dele para onde possa voltar (myPersonalWsId não nulo)
+    $isViewingOthers = $currentWs &&
+                       ($currentWs->type === 'personal') &&
+                       ($currentWs->owner_id !== $user?->id) &&
+                       ($myPersonalWsId !== null);
     // 1. DEFINIÇÃO GLOBAL DE EMPRESAS
     $allBusinessWs = ($user)
         ? $user->workspaces()->where('type', '!=', 'personal')->get()
@@ -95,7 +105,10 @@ $isViewingOthers = $currentWs && $myPersonalWsId && ($currentWs->id !== $myPerso
 
     $myCompanies = $allBusinessWs->filter(fn($ws) => $ws->pivot->role === 'admin');
     $collabCompanies = $allBusinessWs->filter(fn($ws) => $ws->pivot->role !== 'admin');
-
+  $myRestrictions = \App\Models\FamilyBudgetPermission::where('user_id', auth()->id())
+        ->where('workspace_id', auth()->user()->current_workspace_id)
+        ->whereNull('category_id')
+        ->first();
     // 2. MODOS DE VISUALIZAÇÃO E "SHADOW MODE"
     $isViewingAsCollab = session()->has('viewing_as_collaborator_id'); // Deteta se o CEO está a espreitar
     $isAdminMode = request()->routeIs('admin.*');
@@ -204,19 +217,238 @@ $isViewingOthers = $currentWs && $myPersonalWsId && ($currentWs->id !== $myPerso
 
 
 
-
-
 <body
-
     class="layout-fixed app-shell antialiased bg-zinc-50 dark:bg-zinc-950 h-screen overflow-hidden flex"
     x-data="{
         privacyMode: localStorage.getItem('privacyMode') === 'true',
-        mobileSidebarOpen: false
+        mobileSidebarOpen: false,
+        isOnline: navigator.onLine, {{-- Adicionamos aqui --}}
+        offlineQueueCount: JSON.parse(localStorage.getItem('offline_vault') || '[]').length
     }"
-    x-init="$watch('privacyMode', v => localStorage.setItem('privacyMode', v))"
+    x-init="
+        $watch('privacyMode', v => localStorage.setItem('privacyMode', v));
+        window.addEventListener('online', () => { isOnline = true; syncOfflineData(); });
+        window.addEventListener('offline', () => { isOnline = false; });
+    "
     x-on:privacy-changed.window="privacyMode = $event.detail.state"
     :class="{ 'privacy-mode': privacyMode }"
 >
+
+{{-- ═══════════════════════════════════════════════════════════════ --}}
+{{-- 1. ECRÃ TOTAL OFFLINE (BUNKER LIGHT PRO)                        --}}
+{{-- ═══════════════════════════════════════════════════════════════ --}}
+<div x-show="!isOnline" x-cloak
+     x-data="{
+        statusNotice: '',
+        amount: '',
+        desc: '',
+        cat: 'Geral',
+        calcTotal: 0,
+        calcInput: '',
+
+        saveOffline() {
+            if(!this.amount) return;
+
+            const newItem = {
+                id: Date.now(),
+                amount: this.amount,
+                description: this.desc || 'Sem descrição',
+                category: this.cat,
+                date: new Date().toISOString()
+            };
+
+            // Guardar e atualizar array para reatividade imediata
+            offlineQueue.push(newItem);
+            localStorage.setItem('offline_vault', JSON.stringify(offlineQueue));
+
+            // Feedback visual para o utilizador
+            this.statusNotice = `✅ Adicionado: ${newItem.description} (${newItem.amount}€)`;
+
+            // Limpar campos
+            this.amount = '';
+            this.desc = '';
+
+            // Esconder aviso após 3 segundos
+            setTimeout(() => { this.statusNotice = ''; }, 4000);
+        }
+     }"
+     class="fixed inset-0 z-[10000] overflow-y-auto bg-zinc-50 text-zinc-900 flex flex-col font-sans">
+
+    {{-- HEADER SUPERIOR --}}
+    <nav class="h-20 bg-white border-b border-zinc-200 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm">
+        <div class="flex items-center gap-4">
+            <div class="size-10 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-lg animate-pulse">
+                <flux:icon name="bolt-slash" variant="solid" class="size-5" />
+            </div>
+            <div class="text-left">
+                <h2 class="text-sm font-black uppercase tracking-widest italic leading-none">Bunker Offline</h2>
+                <p class="text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] mt-1.5">Eduardo Patricio · <span class="text-emerald-600">Modo Local</span></p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="text-right">
+                <p class="text-[10px] font-black leading-none text-zinc-400 uppercase tracking-widest">Estado</p>
+                <p class="text-[11px] font-black text-amber-500 mt-1 uppercase" x-text="offlineQueue.length > 0 ? 'Sincronização Pendente' : 'Standby'"></p>
+            </div>
+            <div class="size-2.5 rounded-full" :class="offlineQueue.length > 0 ? 'bg-amber-500 animate-ping' : 'bg-zinc-300'"></div>
+        </div>
+    </nav>
+
+    <div class="relative w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 md:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+
+        {{-- COLUNA ESQUERDA: FORMULÁRIO (TEMA BRANCO) --}}
+        <div class="lg:col-span-7 space-y-6">
+
+            {{-- CAMADA DE SINALIZAÇÃO DE SUCESSO --}}
+            <div x-show="statusNotice"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 -translate-y-4"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="p-4 bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-black uppercase tracking-widest text-center shadow-sm">
+                <span x-text="statusNotice"></span>
+            </div>
+
+            <section class="bg-white border border-zinc-200 p-8 rounded-[3rem] shadow-xl shadow-zinc-200/50 space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                    <div class="space-y-3">
+                        <label class="text-[9px] font-black uppercase text-zinc-400 ml-4 tracking-[0.2em]">Quanto gastaste?</label>
+                        <div class="relative group">
+                            <span class="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-zinc-300 italic transition-colors group-focus-within:text-brand-600">€</span>
+                            <input type="number" x-model="amount" placeholder="0.00"
+                                   class="w-full h-24 bg-zinc-50 border-2 border-zinc-100 rounded-[2rem] text-5xl font-black text-center text-zinc-900 focus:border-brand-500 focus:ring-0 focus:bg-white transition-all shadow-inner">
+                        </div>
+                    </div>
+
+                    <div class="space-y-6 pt-1">
+                        <div>
+                            <label class="text-[9px] font-black uppercase text-zinc-400 ml-4 tracking-[0.2em]">Onde?</label>
+                            <input type="text" x-model="desc" placeholder="Ex: Café, Lidl..."
+                                   class="w-full h-14 bg-zinc-50 border border-zinc-200 rounded-2xl px-6 font-bold text-sm text-zinc-800 focus:bg-white transition-all">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-black uppercase text-zinc-400 ml-4 tracking-[0.2em]">Categoria</label>
+                            <select x-model="cat" class="w-full h-14 bg-zinc-50 border border-zinc-200 rounded-2xl px-4 font-black uppercase text-[10px] tracking-widest text-zinc-600 outline-none transition-all">
+                                <option value="Geral">📂 Geral</option>
+                                <option value="Alimentação">🛒 Alimentação</option>
+                                <option value="Transporte">⛽ Transporte</option>
+                                <option value="Lazer">🍿 Lazer</option>
+                                <option value="Saúde">💊 Saúde</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="saveOffline"
+                    class="w-full h-20 bg-zinc-900 hover:bg-black text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-xs shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4">
+                    <flux:icon name="document-plus" variant="solid" class="size-6 text-brand-500" />
+                    Confirmar Registo 🟢
+                </button>
+            </section>
+
+            {{-- CALCULADORA LIGHT --}}
+            <div class="bg-white border border-zinc-200 p-6 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="text-left">
+                    <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 italic">Soma de tickets rápida</p>
+                    <p class="text-4xl font-black text-zinc-900 italic tracking-tighter" x-text="calcTotal.toFixed(2) + ' €'"></p>
+                </div>
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <input type="number" x-model="calcInput" placeholder="Soma..." class="flex-1 md:w-28 h-14 bg-zinc-100 border-none rounded-2xl text-center text-zinc-900 font-black">
+                    <button @click="calcTotal += parseFloat(calcInput || 0); calcInput = ''" class="size-14 bg-brand-600 text-white rounded-2xl shadow-lg font-black text-xl">+</button>
+                    <button @click="calcTotal = 0" class="px-5 h-14 border border-zinc-200 rounded-2xl text-red-500 font-black">C</button>
+                </div>
+            </div>
+        </div>
+
+        {{-- COLUNA DIREITA: LOG DE GASTOS (LIGHT DRAWER) --}}
+        <div class="lg:col-span-5 space-y-6">
+
+            {{-- CONTA ATIVA --}}
+            <div class="p-6 bg-zinc-100 rounded-[2.5rem] border border-zinc-200 flex items-center gap-5">
+                <div class="size-16 bg-white rounded-2xl border-4 border-white shadow-xl overflow-hidden shrink-0">
+                    <img src="{{ asset($currentWs->logo_path ?? 'icon-192x192.png') }}" class="size-full object-cover">
+                </div>
+                <div class="text-left truncate">
+                    <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em]">Cofre Ativo</p>
+                    <p class="text-lg font-black text-zinc-900 uppercase italic truncate leading-none mt-1">{{ $currentWs->name }}</p>
+                </div>
+            </div>
+
+            {{-- LISTA DE PENDENTES REATIVA --}}
+            <div class="bg-white border border-zinc-200 rounded-[3rem] p-8 shadow-sm flex flex-col max-h-[600px]">
+                <div class="flex items-center justify-between mb-8 border-b border-zinc-100 pb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="size-5 rounded bg-brand-100 text-brand-600 flex items-center justify-center text-[10px] font-black" x-text="offlineQueue.length"></span>
+                        <span class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Logs Pendentes</span>
+                    </div>
+                    <button @click="if(confirm('Apagar histórico offline?')){ offlineQueue = []; localStorage.setItem('offline_vault', '[]'); }"
+                            class="text-[9px] font-black text-red-400 hover:text-red-600 uppercase tracking-tighter transition-colors">Limpar Tudo</button>
+                </div>
+
+                <div class="overflow-y-auto custom-scrollbar space-y-4 pr-1 flex-1 text-left">
+                    <template x-for="(item, index) in offlineQueue" :key="item.id">
+                        <div class="p-5 bg-zinc-50 border border-zinc-100 rounded-3xl group transition-all">
+                            <div class="flex justify-between items-start">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 mb-1.5">
+                                        <span class="px-2 py-0.5 bg-white border border-zinc-200 rounded text-[7px] font-black uppercase text-zinc-400" x-text="item.category"></span>
+                                        <span class="text-[7px] font-black text-zinc-300 uppercase italic" x-text="new Date(item.date).toLocaleTimeString()"></span>
+                                    </div>
+                                    <h5 class="text-xs font-black text-zinc-900 uppercase truncate" x-text="item.description"></h5>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-lg font-black text-emerald-600 tracking-tighter italic" x-text="parseFloat(item.amount).toFixed(2) + '€'"></p>
+                                    <button @click="offlineQueue.splice(index, 1); localStorage.setItem('offline_vault', JSON.stringify(offlineQueue))"
+                                            class="mt-2 size-6 rounded-lg text-zinc-300 hover:text-red-500 transition-colors flex items-center justify-center">
+                                        <flux:icon name="trash" variant="micro" class="size-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="offlineQueue.length === 0">
+                        <div class="py-24 text-center space-y-3 opacity-20 italic">
+                            <flux:icon name="archive-box" class="size-12 mx-auto" />
+                            <p class="text-[9px] font-black uppercase tracking-widest">Bunker Vazio</p>
+                        </div>
+                    </template>
+                </div>
+
+                {{-- TOTAL ACUMULADO --}}
+                <div x-show="offlineQueue.length > 0" class="mt-6 pt-6 border-t border-zinc-100 flex justify-between items-center">
+                    <span class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Total na Fila:</span>
+                    <span class="text-3xl font-black text-emerald-600 italic tracking-tighter"
+                          x-text="offlineQueue.reduce((acc, curr) => acc + parseFloat(curr.amount), 0).toFixed(2) + '€'"></span>
+                </div>
+            </div>
+
+            <div class="p-6 bg-zinc-950 text-white rounded-[2.5rem] flex items-center gap-4">
+                <flux:icon name="signal-slash" variant="solid" class="size-6 text-brand-400" />
+                <p class="text-[9px] font-bold uppercase tracking-widest opacity-80 leading-relaxed text-left">
+                    Os dados estão a ser cifrados e guardados localmente. Ao recuperar sinal de internet, serão processados pelo motor de auditoria PRO.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+    {{-- ═══════════════════════════════════════════════════════════════ --}}
+    {{-- 2. SITE COMPLETO (SÓ VISÍVEL SE ONLINE)                         --}}
+    {{-- ═══════════════════════════════════════════════════════════════ --}}
+    <div x-show="isOnline" class="flex w-full"> {{-- Envolver todo o layout original aqui --}}
+
+
+
+
+
+
+
+
+
+
+
+
+
  {{-- Se estiver na conta de outros, mete uma linha amarela no topo de tudo --}}
     @if($isViewingOthers && $currentWs->type !== 'business')
         <div class="fixed top-0 left-0 right-0 h-1 bg-amber-500 z-[100]"></div>
@@ -353,43 +585,38 @@ $isViewingOthers = $currentWs && $myPersonalWsId && ($currentWs->id !== $myPerso
         class="mobile-sidebar-panel h-screen z-50 border-e border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex flex-col"
     >
        <flux:sidebar.header class="flex items-center justify-between gap-3 px-6 py-4">
-    {{-- LOGO DINÂMICO --}}
     <a href="{{ route('dashboard') }}" wire:navigate.hover class="flex items-center gap-3 group no-underline">
 
-        {{-- Container da Imagem ou Inicial --}}
-        <div class="shrink-0 size-9 rounded-xl overflow-hidden bg-emerald-600 flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform duration-300">
+        {{-- Foto ou Inicial --}}
+        <div class="shrink-0 size-9 rounded-xl overflow-hidden bg-emerald-600 flex items-center justify-center text-white shadow-lg">
             @if($currentWs && $currentWs->logo_path)
-                {{-- Mostra a foto se ela existir --}}
-                <img src="{{ $currentWs->logo_url }}?t={{ time() }}" class="size-full object-cover">
+                <img src="{{ asset($currentWs->logo_path) }}?t={{ time() }}" class="size-full object-cover">
             @else
-                {{-- Mostra a inicial se não houver foto --}}
                 <span class="text-lg font-black italic">
                     {{ substr($currentWs->name ?? 'F', 0, 1) }}
                 </span>
             @endif
         </div>
 
-        {{-- Nome do Workspace --}}
+        {{-- Texto Dinâmico --}}
         <div class="flex flex-col justify-center min-w-0">
             <span class="text-[13px] font-black uppercase tracking-tighter text-zinc-800 dark:text-white leading-[1.1] whitespace-normal break-words">
                 {{ $currentWs->name ?? 'Finance Pro' }}
             </span>
+
             <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-[0.2em] mt-1">
-                @if($isAdminMode) Administração
-                @elseif($isBusinessMode) Negócio
-                @else Gestão Pessoal
+                @if($isAdminMode)
+                    Administração
+                @elseif($currentWs && $currentWs->type === 'business')
+                    Negócio
+                @else
+                    Gestão Pessoal
                 @endif
             </span>
         </div>
     </a>
 
-    <flux:button
-        class="lg:hidden"
-        variant="subtle"
-        square
-        icon="x-mark"
-        x-on:click="mobileSidebarOpen = false"
-    />
+    <flux:button class="lg:hidden" variant="subtle" square icon="x-mark" x-on:click="mobileSidebarOpen = false" />
 </flux:sidebar.header>
 <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
     @csrf
@@ -412,10 +639,9 @@ $isViewingOthers = $currentWs && $myPersonalWsId && ($currentWs->id !== $myPerso
 
 <flux:sidebar.nav>
       @if($isViewingOthers)
-        {{-- BOTÃO DE RETORNO RÁPIDO NA SIDEBAR --}}
         <flux:sidebar.item
             icon="arrow-left-circle"
-            :href="route('workspace.switch.fast', $myPersonalWsId)"
+            :href="route('workspace.switch.fast', ['id' => $myPersonalWsId])"
             class="text-amber-600 dark:text-amber-500 font-black animate-in slide-in-from-left-4"
         >
             Sair da Gestão Externa
@@ -919,9 +1145,29 @@ $hasStoreAccess = $isProUser || $isPlusUser;
                 <flux:separator class="my-4 mx-2" />
 
                 <flux:sidebar.group heading="Finanças">
-                    <flux:sidebar.item icon="calculator" :href="route('hub.budget')" :current="request()->routeIs('hub.budget')" wire:navigate.hover>
-                        Orçamento
-                    </flux:sidebar.item>
+                    @if($myRestrictions?->restrict_budget)
+    {{-- VERSÃO BLOQUEADA (APARECE MAS NÃO CLICA) --}}
+    <flux:sidebar.item
+        icon="lock-closed"
+        class="opacity-50 grayscale cursor-not-allowed"
+        title="Área Bloqueada pelo Administrador"
+    >
+        <span class="flex items-center justify-between w-full">
+            Orçamento
+            <flux:icon name="lock-closed" variant="micro" class="size-3 text-amber-600" />
+        </span>
+    </flux:sidebar.item>
+@else
+    {{-- VERSÃO LIBERTADA (ORIGINAL) --}}
+    <flux:sidebar.item
+        icon="calculator"
+        :href="route('hub.budget')"
+        :current="request()->routeIs('hub.budget')"
+        wire:navigate.hover
+    >
+        Orçamento
+    </flux:sidebar.item>
+@endif
                     <flux:sidebar.item icon="arrow-up-tray" :href="route('hub.import')" :current="request()->routeIs('hub.import')" wire:navigate.hover>
                         Importar Extrato
                     </flux:sidebar.item>
@@ -1453,6 +1699,9 @@ $hasStoreAccess = $isProUser || $isPlusUser;
         });
     }
     window.adjustPageContainer && window.adjustPageContainer();
+
+
+
     </script>
 
     {{-- MODAL PRIVACIDADE --}}
@@ -1522,5 +1771,48 @@ $hasStoreAccess = $isProUser || $isPlusUser;
         </div>
     </div>
 @endif
+
+<script>
+    // 1. Registo do Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+    }
+
+    // 2. Função de Sincronização
+    async function syncOfflineData() {
+        const queue = JSON.parse(localStorage.getItem('offline_vault') || '[]');
+
+        if (queue.length > 0) {
+            console.log('📦 Sincronizando dados offline...');
+
+            try {
+                const response = await fetch('/api/offline/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ expenses: queue })
+                });
+
+                if (response.ok) {
+                    localStorage.removeItem('offline_vault');
+                    console.log('✅ Sincronização completa!');
+
+                    // Avisar o utilizador
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { text: 'Gastos offline sincronizados! ✅' }
+                    }));
+                }
+            } catch (error) {
+                console.error('❌ Falha ao sincronizar:', error);
+            }
+        }
+    }
+
+    // Tenta sincronizar mal a página carrega e deteta internet
+    window.addEventListener('online', syncOfflineData);
+    if (navigator.onLine) syncOfflineData();
+</script>
 </body>
 </html>

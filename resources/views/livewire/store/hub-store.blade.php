@@ -1,5 +1,4 @@
-<div class="space-y-8 pb-20">
-
+<div class="space-y-8 pb-20" x-data="{ cartOpen: false }" @open-cart.window="cartOpen = true">
     {{-- HEADER --}}
     <header class="relative overflow-hidden bg-zinc-100 rounded-[3rem] p-10 border border-zinc-300 shadow-xl">
         <div class="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
@@ -26,16 +25,97 @@
                         <span class="bg-brand-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{{ $compareCount }}</span>
                     @endif
                 </a>
-                <a href="{{ route('store.cart') }}" wire:navigate class="relative px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 flex items-center gap-2 shadow-lg">
-                    <flux:icon name="shopping-cart" class="size-4" /> Carrinho
-                    @if($cartCount > 0)
-                        <span class="absolute -top-2 -right-2 min-w-5 h-5 px-1 flex items-center justify-center bg-white text-emerald-700 text-[9px] font-black rounded-full border-2 border-emerald-600">{{ $cartCount }}</span>
-                    @endif
-                </a>
+                {{-- Mudámos de <a> para <button> e adicionámos o @click --}}
+{{-- NOVO BOTÃO QUE APENAS ABRE A ABA --}}
+<button @click="cartOpen = true" type="button" class="relative px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 flex items-center gap-2 shadow-lg transition-all active:scale-95">
+    <flux:icon name="shopping-cart" class="size-4" />
+    Carrinho
+    @if($cartCount > 0)
+        <span class="absolute -top-2 -right-2 min-w-5 h-5 px-1 flex items-center justify-center bg-white text-emerald-700 text-[9px] font-black rounded-full border-2 border-emerald-600 animate-bounce">
+            {{ $cartCount }}
+        </span>
+    @endif
+</button>
+                {{-- Removido o bloco duplicado do carrinho --}}
             </div>
         </div>
     </header>
+ {{-- ABA LATERAL DO CARRINHO (DRAWER) --}}
+    <template x-teleport="body">
+        <div>
+            <!-- Fundo escurecido (Backdrop) -->
+            <div x-show="cartOpen"
+                 x-transition.opacity
+                 @click="cartOpen = false"
+                 class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-[999]">
+            </div>
 
+            <!-- Painel Lateral -->
+            <div x-show="cartOpen"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="translate-x-full"
+                 x-transition:enter-end="translate-x-0"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="translate-x-0"
+                 x-transition:leave-end="translate-x-full"
+                 class="fixed right-0 top-0 h-screen w-full max-w-sm bg-white dark:bg-zinc-900 shadow-2xl z-[1000] flex flex-col border-l border-zinc-200 dark:border-zinc-800">
+
+                <div class="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-zinc-950">
+                    <div class="flex items-center gap-3">
+                        <flux:icon name="shopping-cart" class="size-5 text-emerald-600" />
+                        <h2 class="text-sm font-black uppercase tracking-widest text-zinc-800 dark:text-white leading-none">O Teu Carrinho</h2>
+                    </div>
+                    <button @click="cartOpen = false" class="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-full transition-colors">
+                        <flux:icon name="x-mark" variant="micro" class="size-4" />
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar text-left">
+                    @forelse($cartItems as $item)
+                        <div class="flex gap-4 group animate-in slide-in-from-right-4 duration-300 items-center text-left">
+                            <div class="size-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-3xl shadow-inner shrink-0">
+                                {{ $item['image'] }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-[11px] font-black uppercase text-zinc-800 dark:text-white truncate">{{ $item['title'] }}</h4>
+                                <p class="text-[10px] text-emerald-600 font-bold mt-1 uppercase">{{ number_format($item['price'], 2, ',', '.') }} €</p>
+
+                                <button wire:click="removeFromCart({{ $item['id'] }})" class="mt-2 text-[8px] font-black text-red-500 uppercase hover:underline">Remover</button>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-30">
+                            <flux:icon name="shopping-cart" class="size-12" />
+                            <p class="text-[10px] font-black uppercase tracking-widest">O carrinho está vazio</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                @if(count($cartItems) > 0)
+                    <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 space-y-4">
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="text-[10px] font-black uppercase text-zinc-400">Total:</span>
+                            <span class="text-2xl font-black italic text-zinc-900 dark:text-white">
+                                {{ number_format($cartTotal, 2, ',', '.') }} €
+                            </span>
+                        </div>
+
+                        <div class="grid gap-3">
+    {{-- Finalizar Compra Direto --}}
+    <a href="{{ route('store.checkout') }}" wire:navigate class="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase text-[11px] tracking-[0.2em] shadow-lg transition-all active:scale-95">
+        Finalizar Compra
+    </a>
+
+    {{-- OPÇÃO PARA IR PARA A PÁGINA QUE MOSTRASTE NO PRINT --}}
+    <a href="{{ route('store.cart') }}" wire:navigate class="w-full py-3 text-center bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:bg-zinc-200 transition-colors">
+        Ver Carrinho Detalhado
+    </a>
+</div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </template>
     {{-- ACESSO RÁPIDO AO INVENTÁRIO --}}
     <a href="{{ route('hub.inventory') }}" wire:navigate
        class="group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-3xl text-white shadow-xl hover:shadow-2xl hover:from-emerald-500 hover:to-emerald-400 transition-all">

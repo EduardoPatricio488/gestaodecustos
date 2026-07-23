@@ -50,7 +50,7 @@
                     </li>
                 </ul>
 
-                <flux:button wire:click="enterAsOwner" variant="primary" class="w-full h-16 rounded-2xl font-black uppercase tracking-widest bg-brand-600 hover:bg-brand-700 border-none shadow-lg shadow-brand-500/20 text-sm">
+                <flux:button href="{{ route('hub.business.onboarding') }}" wire:navigate variant="primary" class="w-full h-16 rounded-2xl font-black uppercase tracking-widest bg-brand-600 hover:bg-brand-700 border-none shadow-lg shadow-brand-500/20 text-sm">
                     Entrar como Administrador
                 </flux:button>
             </div>

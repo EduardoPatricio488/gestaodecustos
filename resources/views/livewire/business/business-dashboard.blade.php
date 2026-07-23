@@ -74,8 +74,7 @@
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
             <div class="flex items-center gap-6 text-left">
                 <div class="relative group">
-                    <img src="{{ $workspace->logo_url }}" class="size-24 rounded-[2.5rem] shadow-2xl border-4 border-white dark:border-zinc-800 object-cover bg-white">
-                    <div class="absolute -bottom-1 -right-1 size-7 bg-emerald-500 border-4 border-zinc-50 dark:border-zinc-950 rounded-full shadow-lg"></div>
+ <img src="{{ asset($workspace->logo_path) }}?t={{ time() }}" class="size-24 rounded-[2.5rem] shadow-2xl border-4 border-white dark:border-zinc-800 object-cover bg-white">                    <div class="absolute -bottom-1 -right-1 size-7 bg-emerald-500 border-4 border-zinc-50 dark:border-zinc-950 rounded-full shadow-lg"></div>
                 </div>
 
                 <div>
@@ -215,26 +214,23 @@
         </div>
 
         {{-- Resultado Líquido --}}
-        <div class="relative overflow-hidden bg-zinc-950 p-7 rounded-[2.5rem]
-            shadow-2xl border border-zinc-800 group">
+        <div class="relative overflow-hidden bg-zinc-950 p-7 rounded-[2.5rem] shadow-2xl border border-zinc-800 group">
+    <p class="text-[10px] font-black text-brand-400 uppercase tracking-[0.2em] mb-1">
+        Disponibilidade em Caixa
+    </p>
 
-            <p class="text-[10px] font-black text-brand-400 uppercase tracking-[0.2em] mb-1">
-                Resultado Líquido
-            </p>
+    <h3 class="text-3xl font-black text-white tracking-tighter">
+        <span :class="privacyMode ? 'blur-md select-none' : ''">
+            {{ number_format($totalBalance, 2, ',', ' ') }} €
+        </span>
+    </h3>
 
-            <h3 class="text-3xl font-black {{ $netProfit >= 0 ? 'text-white' : 'text-red-400' }} tracking-tighter">
-                <span :class="privacyMode ? 'blur-md select-none' : ''"
-                    class="transition-all duration-500 inline-block">
-                    {{ number_format($netProfit, 2, ',', ' ') }} €
-                </span>
-            </h3>
-
-            <div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                <div class="h-full bg-brand-500 shadow-[0_0_10px_#3b82f6]"
-                    style="width: {{ min(100, max(0, abs($margin))) }}%">
-                </div>
-            </div>
+    <div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+        <div class="h-full bg-brand-500 shadow-[0_0_10px_#3b82f6]"
+            style="width: 100%">
         </div>
+    </div>
+</div>
 
         {{-- Runway --}}
         <div class="glass-card bg-white dark:bg-zinc-900 p-7 rounded-[2.5rem]

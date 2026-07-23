@@ -1,0 +1,62 @@
+<!-- public/offline.html -->
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Pro - Modo de Emergência</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-white flex items-center justify-center min-h-screen p-6">
+    <div class="w-full max-w-md space-y-8 text-center">
+        <div class="p-4 bg-red-500/10 rounded-2xl border border-red-500/20 text-red-500 font-black uppercase text-[10px] tracking-widest inline-block">
+            Sem Ligação à Internet
+        </div>
+
+        <h1 class="text-4xl font-black italic tracking-tighter uppercase">Bunker Offline</h1>
+        <p class="text-zinc-400 text-sm italic">Podes registar gastos agora. Eles serão sincronizados automaticamente assim que recuperares rede.</p>
+
+        <div class="space-y-4 bg-zinc-900 p-8 rounded-[2.5rem] border border-white/5">
+            <input type="number" id="offAmount" placeholder="Valor €" class="w-full h-16 bg-black/40 border-none rounded-2xl text-3xl font-black text-center focus:ring-2 focus:ring-emerald-500">
+            <input type="text" id="offDesc" placeholder="Descrição (Ex: Café)" class="w-full h-12 bg-black/40 border-none rounded-xl text-center">
+
+            <button onclick="saveToVault()" class="w-full h-14 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-emerald-500/10">
+                Guardar no Cofre Local
+            </button>
+        </div>
+
+        <div id="statusMsg" class="text-[10px] font-black uppercase text-zinc-500"></div>
+    </div>
+
+    <script>
+        function saveToVault() {
+            const amount = document.getElementById('offAmount').value;
+            const desc = document.getElementById('offDesc').value;
+
+            if(!amount) return alert('Insere um valor.');
+
+            const expense = {
+                id: Date.now(),
+                amount: amount,
+                description: desc,
+                date: new Date().toISOString(),
+                synced: false
+            };
+
+            const queue = JSON.parse(localStorage.getItem('offline_vault') || '[]');
+            queue.push(expense);
+            localStorage.setItem('offline_vault', JSON.stringify(queue));
+
+            document.getElementById('offAmount').value = '';
+            document.getElementById('offDesc').value = '';
+            document.getElementById('statusMsg').innerText = `Sucesso! Tens ${queue.length} despesa(s) em espera.`;
+        }
+
+        // Tentar voltar para a home automaticamente quando a net voltar
+        window.addEventListener('online', () => {
+            document.body.innerHTML = "<div class='text-center animate-pulse'><h1 class='text-2xl font-black'>A REESTABELECER CONEXÃO...</h1></div>";
+            setTimeout(() => window.location.href = '/dashboard', 2000);
+        });
+    </script>
+</body>
+</html>

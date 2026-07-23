@@ -121,58 +121,63 @@ public function stopViewingAsCollaborator()
     return redirect()->route('hub.business.dashboard');
 }
     public function render()
-    {
-        $user = Auth::user();
-        $workspace = $user->currentWorkspace;
+{
+    $user = Auth::user();
+    $workspace = $user->currentWorkspace;
 
-        if (!$workspace) {
-            return <<<'HTML'
-                <div class="p-10 text-center italic text-zinc-500">Nenhum workspace selecionado.</div>
-            HTML;
-        }
-
-        $month = now()->month;
-        $year  = now()->year;
-
-        // --- CÁLCULOS FINANCEIROS (VISTA CEO) ---
-        $revenue = (float) $workspace->invoices()->whereYear('created_at', $year)->whereMonth('created_at', $month)->where('status', 'paga')->sum('total_amount');
-        $opEx = (float) $workspace->expenses()->where('is_company', true)->whereYear('spent_at', $year)->whereMonth('spent_at', $month)->sum('amount');
-        $payroll = (float) $workspace->employees()->sum('salary');
-        $totalCosts = $opEx + $payroll;
-        $netProfit  = $revenue - $totalCosts;
-
-        // --- OPERAÇÕES ---
-        $activeProjects = $workspace->projects()->where('status', 'em_curso')->get();
-        $lowStockCount = $workspace->products()->whereColumn('stock', '<=', 'min_stock')->count();
-        $criticalDocsCount = $workspace->documents()->where(fn($q) => $q->where('expires_at', '<', now())->orWhere('expires_at', '<=', now()->addDays(15)))->count();
-        $overdueTasksCount = $workspace->tasks()->where('due_date', '<', now())->where('status', '!=', 'concluido')->count();
-
-        // Workspaces para o seletor da sidebar
-        $businessWorkspaces = $user->workspaces()
-            ->where('type', '!=', 'personal')
-            ->get()
-            ->map(function ($ws) use ($user) {
-                $ws->user_role = $ws->users()->where('users.id', $user->id)->first()?->pivot->role ?? 'viewer';
-                return $ws;
-            });
-
-        return view('livewire.business.business-dashboard', [
-            'workspace'           => $workspace,
-            'businessWorkspaces'  => $businessWorkspaces,
-            'revenue'             => $revenue,
-            'totalCosts'          => $totalCosts,
-            'payroll'             => $payroll,
-            'netProfit'           => $netProfit,
-            'vatProvision'        => max(0, $workspace->invoices()->whereYear('created_at', $year)->whereMonth('created_at', $month)->sum('vat_amount') - $workspace->expenses()->where('is_company', true)->whereYear('spent_at', $year)->whereMonth('spent_at', $month)->sum('vat_amount')),
-            'ircProvision'        => $netProfit > 0 ? ($netProfit * 0.21) : 0,
-            'runway'              => $workspace->getRunway(),
-            'margin'              => $revenue > 0 ? ($netProfit / $revenue) * 100 : 0,
-            'accountsReceivable'  => (float) $workspace->invoices()->where('status', 'pendente')->sum('total_amount'),
-            'activeProjects'      => $activeProjects,
-            'lowStockCount'       => $lowStockCount,
-            'criticalDocsCount'   => $criticalDocsCount,
-            'overdueTasksCount'   => $overdueTasksCount,
-            'teamCount'           => $workspace->employees()->count(),
-        ]);
+    if (!$workspace) {
+        return <<<'HTML'
+            <div class="p-10 text-center italic text-zinc-500">Nenhum workspace selecionado.</div>
+        HTML;
     }
+
+    $month = now()->month;
+    $year  = now()->year;
+
+    // --- CÁLCULOS FINANCEIROS ---
+    // 1. Faturação Paga este mês
+    $revenue = (float) $workspace->invoices()->whereYear('created_at', $year)->whereMonth('created_at', $month)->where('status', 'paga')->sum('total_amount');
+
+    // 2. Custos Operacionais este mês
+    $opEx = (float) $workspace->expenses()->where('workspace_id', $workspace->id)->whereYear('spent_at', $year)->whereMonth('spent_at', $month)->sum('amount');
+
+    // 3. Salários (Payroll)
+    $payroll = (float) $workspace->employees()->sum('salary');
+
+    $totalCosts = $opEx + $payroll;
+    $netProfit  = $revenue - $totalCosts;
+
+    // 4. SALDO TOTAL (Capital Inicial do Onboarding + Receitas Totais - Despesas Totais)
+    // Usamos o campo 'initial_capital' que criámos na base de dados
+    $totalBalance = ($workspace->initial_capital ?? 0) + $revenue - $totalCosts;
+
+    // --- OPERAÇÕES ---
+    $activeProjects = $workspace->projects()->where('status', 'em_curso')->get();
+    $lowStockCount = $workspace->products()->whereColumn('stock', '<=', 'min_stock')->count();
+    $criticalDocsCount = $workspace->documents()->where(fn($q) => $q->where('expires_at', '<', now())->orWhere('expires_at', '<=', now()->addDays(15)))->count();
+    $overdueTasksCount = $workspace->tasks()->where('due_date', '<', now())->where('status', '!=', 'concluido')->count();
+
+    // Workspaces para a sidebar
+    $businessWorkspaces = $user->workspaces()->where('type', '!=', 'personal')->get();
+
+    return view('livewire.business.business-dashboard', [
+        'workspace'           => $workspace,
+        'businessWorkspaces'  => $businessWorkspaces,
+        'revenue'             => $revenue,
+        'totalCosts'          => $totalCosts,
+        'payroll'             => $payroll,
+        'netProfit'           => $netProfit,
+        'totalBalance'        => $totalBalance, // Variável com o capital inicial
+        'runway'              => $workspace->getRunway(),
+        'margin'              => $revenue > 0 ? ($netProfit / $revenue) * 100 : 0,
+        'accountsReceivable'  => (float) $workspace->invoices()->where('status', 'pendente')->sum('total_amount'),
+        'activeProjects'      => $activeProjects,
+        'lowStockCount'       => $lowStockCount,
+        'criticalDocsCount'   => $criticalDocsCount,
+        'overdueTasksCount'   => $overdueTasksCount,
+        'teamCount'           => $workspace->employees()->count(),
+        'vatProvision'        => 0, // Pode ser calculado depois
+        'ircProvision'        => 0,
+    ]);
+}
 }
