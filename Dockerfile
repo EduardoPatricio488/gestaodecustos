@@ -15,6 +15,8 @@ RUN apk add --no-cache \
     icu-dev \
     nodejs \
     npm \
+    nginx \
+    gettext \
     supervisor
 
 # Instalar extensões PHP necessárias
@@ -52,9 +54,10 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Copiar configuração do PHP
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/supervisord.conf /etc/supervisord.conf
+COPY docker/nginx/default.conf /etc/nginx/nginx.conf.template
 COPY docker/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
-EXPOSE 9000
+EXPOSE 10000
 
 CMD ["/usr/local/bin/start.sh"]
