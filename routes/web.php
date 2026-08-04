@@ -100,7 +100,7 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('dashboard');
         }
         return view('auth.verify-email');
-    })->name('verification.notice');
+    })->name('verificar.conta');
 
     Route::post('/verificar-codigo', function (Request $request) {
         $request->validate(['code' => 'required|size:6']);
@@ -416,8 +416,6 @@ Route::post('/email/verification-notification', function (Request $request) {
         return back()->withErrors(['code' => 'Erro ao conectar ao MailHog.']);
     }
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
-
-require __DIR__.'/auth.php'; // Deixa o require depois da nossa rota
 
 require __DIR__.'/auth.php';
 require __DIR__.'/settings.php';
