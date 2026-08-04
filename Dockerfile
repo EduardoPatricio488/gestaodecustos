@@ -13,6 +13,7 @@ RUN apk add --no-cache \
     freetype-dev \
     oniguruma-dev \
     icu-dev \
+    postgresql-dev \
     nodejs \
     npm \
     nginx \
