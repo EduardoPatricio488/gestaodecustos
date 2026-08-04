@@ -361,7 +361,7 @@ Route::get('/trocar-espaco/{id}', function ($id) {
     return $ws->type === 'personal'
         ? redirect()->route('dashboard')
         : redirect()->route('hub.business.dashboard');
-})->name('workspace.switch.fast');
+})->name('workspace.switch');
     // Parar Personificação
    Route::get('/stop-impersonating', function () {
     if (!session()->has('impersonator_id')) return redirect('/');
