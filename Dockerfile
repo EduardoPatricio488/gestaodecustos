@@ -24,6 +24,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         pdo \
         pdo_mysql \
+        pdo_pgsql \
+        pgsql \
         mbstring \
         zip \
         exif \
