@@ -27,8 +27,8 @@ fi
         sleep 2
     done
 
-    echo "==> [bg] A executar migrações (fresh)..."
-    php artisan migrate:fresh --force --no-interaction 2>&1 || echo "WARN: migrate:fresh falhou"
+    echo "==> [bg] A executar migrações..."
+    php artisan migrate --force --no-interaction 2>&1 || echo "WARN: migrações falharam"
 
     echo "==> [bg] A cachear configurações..."
     php artisan config:cache 2>&1 || true
