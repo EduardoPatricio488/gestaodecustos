@@ -13,15 +13,18 @@ class BusinessDashboard extends Component
 {
     public function mount()
     {
-        NotificationService::checkAll(auth()->user());
+        if (Auth::check()) {
+            NotificationService::checkAll(Auth::user());
+        }
     }
 
     /**
      * Gera colaboradores de teste (Seed)
+     * Útil para o comprador testar a funcionalidade de equipa imediatamente.
      */
     public function createTestEmployees()
     {
-        $workspace = auth()->user()->currentWorkspace;
+        $workspace = Auth::user()->currentWorkspace;
 
         $colaboradores = [
             ['name' => 'Sara Oliveira', 'role' => 'Gestora de Projetos', 'email' => 'sara@exemplo.com'],
@@ -47,16 +50,16 @@ class BusinessDashboard extends Component
                 [
                     'name' => $data['name'],
                     'role' => $data['role'],
-                    'salary' => rand(1000, 2500)
+                    'salary' => rand(1500, 3000)
                 ]
             );
         }
 
-        $this->dispatch('toast', variant: 'success', heading: 'Colaboradores Criados!');
+        $this->dispatch('toast', variant: 'success', heading: 'Modo Demo Ativo', text: 'Colaboradores criados com sucesso!');
     }
 
     /**
-     * Trocar entre as tuas empresas (CEO) ou onde és colaborador
+     * Trocar entre as empresas do utilizador
      */
     public function switchBusinessWorkspace(int $workspaceId): void
     {
@@ -68,116 +71,131 @@ class BusinessDashboard extends Component
             return;
         }
 
-        // Limpa qualquer visualização de colaborador ativa ao mudar de empresa
         session()->forget('viewing_as_collaborator_id');
-
         $user->update(['current_workspace_id' => $workspaceId]);
+
         $this->redirect(route('hub.business.dashboard'), navigate: true);
     }
 
     /**
-     * MUDANÇA AQUI: Entrar em "Modo Visualização"
-     * Não faz login real, apenas guarda na sessão para a Rota e o Dashboard saberem
+     * Shadow Mode: Visualizar como colaborador
      */
     public function switchToEmployee($id)
     {
         $employee = Employee::find($id);
 
         if (!$employee || !$employee->user_id) {
-            $this->dispatch('toast', variant: 'error', heading: 'Erro', message: 'Utilizador não vinculado.');
+            $this->dispatch('toast', variant: 'error', text: 'Utilizador não vinculado.');
             return;
         }
 
-        // EM VEZ DE Auth::login(), guardamos apenas o ID do colaborador na sessão
         session()->put('viewing_as_collaborator_id', $id);
-
-        // Redireciona para o dashboard (a rota agora vai carregar o terminal do colaborador)
         return redirect()->route('hub.business.dashboard');
     }
-public function exitBusinessMode()
-{
-    $user = auth()->user();
 
-    // 1. Procurar o teu workspace pessoal (Individual)
-    $personalWs = $user->workspaces()->where('type', 'personal')->first();
+    /**
+     * Sair do modo empresa para o cofre pessoal
+     */
+    public function exitBusinessMode()
+    {
+        $user = Auth::user();
+        $personalWs = $user->workspaces()->where('type', 'personal')->first();
 
-    if ($personalWs) {
-        // 2. Atualizar o ID para o pessoal
-        $user->update(['current_workspace_id' => $personalWs->id]);
+        if ($personalWs) {
+            $user->update(['current_workspace_id' => $personalWs->id]);
+            session()->forget('viewing_as_collaborator_id');
+            return redirect()->route('dashboard');
+        }
+    }
 
-        // 3. Limpar qualquer visualização de colaborador ativa
+    public function stopViewingAsCollaborator()
+    {
         session()->forget('viewing_as_collaborator_id');
-
-        return redirect()->route('dashboard');
+        return redirect()->route('hub.business.dashboard');
     }
-}
 
-/**
- * Se estiveres a ver um colaborador, este botão volta para a tua vista de CEO
- */
-public function stopViewingAsCollaborator()
-{
-    session()->forget('viewing_as_collaborator_id');
-    return redirect()->route('hub.business.dashboard');
-}
     public function render()
-{
-    $user = Auth::user();
-    $workspace = $user->currentWorkspace;
+    {
+        $user = Auth::user();
+        $workspace = $user->currentWorkspace;
 
-    if (!$workspace) {
-        return <<<'HTML'
-            <div class="p-10 text-center italic text-zinc-500">Nenhum workspace selecionado.</div>
-        HTML;
+        if (!$workspace) {
+            return <<<'HTML'
+                <div class="p-20 text-center italic text-zinc-500 font-medium">Nenhum workspace empresarial detetado.</div>
+            HTML;
+        }
+
+        $month = now()->month;
+        $year  = now()->year;
+
+        // --- CÁLCULOS FINANCEIROS (MÉTRICAS DO MÊS ATUAL) ---
+        $revenue = (float) $workspace->invoices()
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->where('status', 'paga')
+            ->sum('total_amount');
+
+        $opEx = (float) $workspace->expenses()
+            ->where('workspace_id', $workspace->id)
+            ->where('is_company', true)
+            ->whereYear('spent_at', $year)
+            ->whereMonth('spent_at', $month)
+            ->sum('amount');
+
+        $payroll = (float) $workspace->employees()->sum('salary');
+        $totalCosts = $opEx + $payroll;
+        $netProfit  = $revenue - $totalCosts;
+
+        // SALDO TOTAL: Capital Inicial + Fluxo de Caixa acumulado
+        $totalBalance = (float) ($workspace->initial_capital ?? 0) + $revenue - $totalCosts;
+
+        // --- FISCALIDADE (ESTIMATIVAS PREMIUM) ---
+        // Cálculo simplificado de IVA (Ex: 23%) - Mostra que o sistema pensa no fisco
+        $vatProvision = max(0, ($revenue * 0.23) - ($opEx * 0.23));
+
+        // Provisão de IRC (Ex: 21% sobre o lucro líquido)
+        $ircProvision = $netProfit > 0 ? ($netProfit * 0.21) : 0;
+
+        // --- OPERAÇÕES ---
+        $activeProjects = $workspace->projects()->where('status', 'em_curso')->get();
+
+        // Alerta de Stock Baixo
+        $lowStockCount = $workspace->products()
+            ->whereRaw('stock <= min_stock')
+            ->count();
+
+        // Alerta de Documentos Críticos (Expirados ou a expirar em 15 dias)
+        $criticalDocsCount = $workspace->documents()
+            ->where(fn($q) => $q->where('expires_at', '<', now())->orWhere('expires_at', '<=', now()->addDays(15)))
+            ->count();
+
+        // Alerta de Tarefas em Atraso
+        $overdueTasksCount = $workspace->tasks()
+            ->where('due_date', '<', now())
+            ->where('status', '!=', 'concluido')
+            ->count();
+
+        // Workspaces para o switcher da sidebar
+        $businessWorkspaces = $user->workspaces()->where('type', '!=', 'personal')->get();
+
+        return view('livewire.business.business-dashboard', [
+            'workspace'           => $workspace,
+            'businessWorkspaces'  => $businessWorkspaces,
+            'revenue'             => $revenue,
+            'totalCosts'          => $totalCosts,
+            'payroll'             => $payroll,
+            'netProfit'           => $netProfit,
+            'totalBalance'        => $totalBalance,
+            'runway'              => $workspace->getRunway(),
+            'margin'              => $revenue > 0 ? ($netProfit / $revenue) * 100 : 0,
+            'accountsReceivable'  => (float) $workspace->invoices()->where('status', 'pendente')->sum('total_amount'),
+            'activeProjects'      => $activeProjects,
+            'lowStockCount'       => $lowStockCount,
+            'criticalDocsCount'   => $criticalDocsCount,
+            'overdueTasksCount'   => $overdueTasksCount,
+            'teamCount'           => $workspace->employees()->count(),
+            'vatProvision'        => $vatProvision,
+            'ircProvision'        => $ircProvision,
+        ]);
     }
-
-    $month = now()->month;
-    $year  = now()->year;
-
-    // --- CÁLCULOS FINANCEIROS ---
-    // 1. Faturação Paga este mês
-    $revenue = (float) $workspace->invoices()->whereYear('created_at', $year)->whereMonth('created_at', $month)->where('status', 'paga')->sum('total_amount');
-
-    // 2. Custos Operacionais este mês
-    $opEx = (float) $workspace->expenses()->where('workspace_id', $workspace->id)->whereYear('spent_at', $year)->whereMonth('spent_at', $month)->sum('amount');
-
-    // 3. Salários (Payroll)
-    $payroll = (float) $workspace->employees()->sum('salary');
-
-    $totalCosts = $opEx + $payroll;
-    $netProfit  = $revenue - $totalCosts;
-
-    // 4. SALDO TOTAL (Capital Inicial do Onboarding + Receitas Totais - Despesas Totais)
-    // Usamos o campo 'initial_capital' que criámos na base de dados
-    $totalBalance = ($workspace->initial_capital ?? 0) + $revenue - $totalCosts;
-
-    // --- OPERAÇÕES ---
-    $activeProjects = $workspace->projects()->where('status', 'em_curso')->get();
-    $lowStockCount = $workspace->products()->whereColumn('stock', '<=', 'min_stock')->count();
-    $criticalDocsCount = $workspace->documents()->where(fn($q) => $q->where('expires_at', '<', now())->orWhere('expires_at', '<=', now()->addDays(15)))->count();
-    $overdueTasksCount = $workspace->tasks()->where('due_date', '<', now())->where('status', '!=', 'concluido')->count();
-
-    // Workspaces para a sidebar
-    $businessWorkspaces = $user->workspaces()->where('type', '!=', 'personal')->get();
-
-    return view('livewire.business.business-dashboard', [
-        'workspace'           => $workspace,
-        'businessWorkspaces'  => $businessWorkspaces,
-        'revenue'             => $revenue,
-        'totalCosts'          => $totalCosts,
-        'payroll'             => $payroll,
-        'netProfit'           => $netProfit,
-        'totalBalance'        => $totalBalance, // Variável com o capital inicial
-        'runway'              => $workspace->getRunway(),
-        'margin'              => $revenue > 0 ? ($netProfit / $revenue) * 100 : 0,
-        'accountsReceivable'  => (float) $workspace->invoices()->where('status', 'pendente')->sum('total_amount'),
-        'activeProjects'      => $activeProjects,
-        'lowStockCount'       => $lowStockCount,
-        'criticalDocsCount'   => $criticalDocsCount,
-        'overdueTasksCount'   => $overdueTasksCount,
-        'teamCount'           => $workspace->employees()->count(),
-        'vatProvision'        => 0, // Pode ser calculado depois
-        'ircProvision'        => 0,
-    ]);
-}
 }

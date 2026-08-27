@@ -35,6 +35,11 @@ use Illuminate\Support\Facades\{Route, Mail, DB, Auth, Log};
 // 1. ÁREAS EXTERNAS E PÚBLICAS
 // ══════════════════════════════════════════════════════════════════
 
+// Páginas Institucionais e Legais
+Route::view('/termos', 'pages.legal.terms')->name('legal.terms');
+Route::view('/privacidade', 'pages.legal.privacy')->name('legal.privacy');
+Route::get('/contacto', \App\Livewire\Public\ContactPage::class)->name('public.contact');
+
 Route::view('/', 'welcome')->name('home');
 
 // Sincronização Offline
@@ -227,6 +232,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             })->name('hub.business.dashboard');
 
             // --- OPERAÇÕES E FINANCEIRO ---
+            Route::get('/analise-custos', \App\Livewire\Business\ProjectCostsHub::class)->name('hub.business.costs');
             Route::get('/ia-estrategista', BusinessAiHub::class)->name('hub.business.ai');
             Route::get('/arquivo', DocumentVault::class)->name('hub.business.vault');
             Route::get('/despesas', \App\Livewire\Business\CompanyExpenses::class)->name('company-expenses');

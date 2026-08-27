@@ -27,8 +27,8 @@ class AdminDashboard extends Component
         $growthRate = round(($newUsers30Days / $totalUsersCount) * 100, 1);
 
         // 2. FINANCEIRO GLOBAL (Soma de todas as transações do site)
-        $totalExpenses = Expense::withoutGlobalScopes()->sum('amount');
-        $totalIncomes = Income::withoutGlobalScopes()->sum('amount');
+        $totalExpenses = Expense::withoutGlobalScopes()->sum('amount') ?: 0;
+        $totalIncomes = Income::withoutGlobalScopes()->sum('amount') ?: 0;
 
         // 3. INTELIGÊNCIA IA (Dados Reais da tabela de chat)
         $aiMessagesToday = 0;
@@ -37,12 +37,19 @@ class AdminDashboard extends Component
         } catch (\Exception $e) { $aiMessagesToday = 0; }
 
         // 4. TAXA DE ADOÇÃO REAL (Quem usa o quê?)
-        // Calculamos a % de utilizadores únicos que têm pelo menos 1 registo em cada tabela
         $usageStats = [
-            'Chatbot IA' => round((DB::table('chat_messages')->distinct('user_id')->count() / $totalUsersCount) * 100),
-            'Lembretes'  => round((DB::table('reminders')->distinct('user_id')->count() / $totalUsersCount) * 100),
-            'Objetivos'  => round((DB::table('goals')->distinct('user_id')->count() / $totalUsersCount) * 100),
+            'Chatbot IA' => 0,
+            'Lembretes'  => 0,
+            'Objetivos'  => 0,
         ];
+
+        try {
+            $usageStats['Chatbot IA'] = round((DB::table('chat_messages')->distinct('user_id')->count() / $totalUsersCount) * 100);
+            $usageStats['Lembretes']  = round((DB::table('reminders')->distinct('user_id')->count() / $totalUsersCount) * 100);
+            $usageStats['Objetivos']  = round((DB::table('goals')->distinct('user_id')->count() / $totalUsersCount) * 100);
+        } catch (\Exception $e) {
+            // Mantém em 0 se as tabelas não existirem ou estiverem vazias
+        }
 
         // 5. MÉTRICAS DE RETENÇÃO (Onboarding)
         $onboardingCompletedCount = User::where('onboarding_completed', true)->count();
@@ -59,16 +66,29 @@ class AdminDashboard extends Component
                 ->get();
         } catch (\Exception $e) { $securityLogs = collect(); }
 
-        // 7. PERFORMANCE DE TAREFAS
-        $totalReminders = DB::table('reminders')->count() ?: 1;
-        $completionRate = round((DB::table('reminders')->where('completed', true)->count() / $totalReminders) * 100);
+        // 7. PERFORMANCE DE TAREFAS (CORRIGIDO: is_completed)
+        $totalReminders = 0;
+        $completionRate = 0;
+        $remindersThisMonth = 0;
+
+        try {
+            $totalReminders = DB::table('reminders')->count() ?: 0;
+            if ($totalReminders > 0) {
+                // 🔥 MUDANÇA AQUI: de 'completed' para 'is_completed'
+                $completedCount = DB::table('reminders')->where('is_completed', true)->count();
+                $completionRate = round(($completedCount / $totalReminders) * 100);
+            }
+            $remindersThisMonth = DB::table('reminders')->whereMonth('created_at', now()->month)->count();
+        } catch (\Exception $e) {
+            $totalReminders = 0;
+        }
 
         return view('livewire.admin.admin-dashboard', [
             'totalUsers' => $totalUsersCount,
             'activeUsersToday' => $activeUsersToday,
             'growthRate' => $growthRate,
             'aiMessagesToday' => $aiMessagesToday,
-            'aiErrorRate' => 0.2, // Simulação de taxa de erro da API
+            'aiErrorRate' => 0.2,
             'totalCashflow' => $totalExpenses + $totalIncomes,
             'onboardingRate' => $onboardingRate,
             'usageStats' => $usageStats,
@@ -76,7 +96,7 @@ class AdminDashboard extends Component
             'securityLogs' => $securityLogs,
             'totalWorkspaces' => Workspace::count(),
             'completionRate' => $completionRate,
-            'totalReminders' => DB::table('reminders')->whereMonth('created_at', now()->month)->count(),
+            'totalReminders' => $remindersThisMonth,
         ]);
     }
 }

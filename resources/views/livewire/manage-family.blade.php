@@ -30,9 +30,7 @@
     $contextType = $isAtPrivate ? 'private' : 'external';
     $ownerModel = \App\Models\User::find($workspace->owner_id);
 @endphp
-<div class="bg-red-500 text-white p-2">
-   Eu sou Admin deste espaço? {{ $iAmAdmin ? 'SIM' : 'NÃO' }}
-</div>
+
     {{-- 1. HEADER & BREADCRUMB --}}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2">
         <div class="flex items-center gap-4">

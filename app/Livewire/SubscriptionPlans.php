@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 #[Layout('components.layouts.app')]
 class SubscriptionPlans extends Component
@@ -13,47 +14,61 @@ class SubscriptionPlans extends Component
     public $newPlanData = [];
 
     /**
-     * Inicia o processo de Upgrade via Stripe
+     * Inicia o processo de Upgrade via Stripe Checkout
+     * Configuramos as chaves no .env para facilitar a vida ao comprador.
      */
     public function upgrade($plan)
     {
         $user = Auth::user();
 
-        // 1. Se for o plano grátis, fazemos o downgrade local imediato
+        // 1. Tratamento de Downgrade para plano grátis
         if ($plan === 'free') {
             $user->update(['plan' => 'free']);
+
             if ($user->currentWorkspace) {
                 $user->currentWorkspace->update(['plan' => 'free']);
             }
+
             $this->showSuccessFor('free');
             return;
         }
 
-        // 2. Mapeamento de IDs do Stripe
-        $prices = [
-            'plus' => 'price_1TosJDH35BygzIwGXxaIKBjZ',
-            'pro'  => 'price_1TosJuH35BygzIwGL7R3R2TH',
-        ];
+        // 2. Mapeamento dinâmico via Variáveis de Ambiente (.env)
+        // Isso é o que torna o software "vendável" e fácil de configurar.
+        $priceId = match ($plan) {
+            'plus' => env('STRIPE_PRICE_PLUS'), // Definir no .env
+            'pro'  => env('STRIPE_PRICE_BUSINESS'), // Definir no .env
+            default => null,
+        };
 
-        if (!isset($prices[$plan])) {
-            $this->dispatch('toast', variant: 'error', text: 'Plano inválido.');
+        if (!$priceId) {
+            Log::error("Tentativa de upgrade falhou: Preço para o plano [{$plan}] não configurado no .env");
+            $this->dispatch('toast', variant: 'error', text: 'Este plano ainda não foi configurado pelo administrador.');
             return;
         }
 
-        // 3. Gerar a sessão de Checkout do Stripe
-        $checkout = $user->newSubscription($plan, $prices[$plan])
-            ->checkout([
-                'success_url' => route('dashboard', ['checkout' => 'success']),
-                'cancel_url' => route('hub.pricing', ['checkout' => 'cancel']),
-                // 🔥 SEGURANÇA PARA A VENDA: Passamos o ID do utilizador como referência.
-                // Isto garante que o Webhook saiba exatamente quem pagou.
-                'client_reference_id' => $user->id,
-            ]);
+        try {
+            // 3. Gerar a sessão de Checkout do Stripe
+            // Usamos o client_reference_id para o Webhook saber quem pagou.
+            $checkout = $user->newSubscription($plan, $priceId)
+                ->checkout([
+                    'success_url' => route('dashboard', ['checkout' => 'success']),
+                    'cancel_url' => route('hub.pricing', ['checkout' => 'cancel']),
+                    'client_reference_id' => $user->id,
+                ]);
 
-        // Redirecionamos manualmente para o URL do Stripe (Compatível com Livewire 3)
-        return redirect($checkout->url);
+            // Redirecionamento seguro para o Stripe
+            return redirect($checkout->url);
+
+        } catch (\Exception $e) {
+            Log::error("Erro no Stripe Checkout: " . $e->getMessage());
+            $this->dispatch('toast', variant: 'error', text: 'Erro ao conectar com o provedor de pagamentos.');
+        }
     }
 
+    /**
+     * Prepara os dados para o modal de sucesso (após upgrade ou downgrade grátis)
+     */
     private function showSuccessFor(string $plan): void
     {
         $this->newPlanData = [
@@ -77,6 +92,9 @@ class SubscriptionPlans extends Component
         $this->showSuccessModal = true;
     }
 
+    /**
+     * Finaliza o processo e redireciona o utilizador
+     */
     public function finish()
     {
         if (in_array($this->newPlanData['raw'] ?? '', ['pro', 'company'])) {

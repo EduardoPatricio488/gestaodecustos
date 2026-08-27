@@ -1,4 +1,4 @@
-<x-guest-layout>
+    <x-guest-layout>
     <div class="space-y-7" x-data>
 
         {{-- HEADER --}}
