@@ -52,6 +52,13 @@ foreach ($attributes->all() as $__key => $__value) {
 unset($__defined_vars, $__key, $__value); ?>
 
 <?php
+// Normalize the "indicator" prop into a position while preserving the previous truthy/falsy behavior...
+$indicatorPosition = $indicator ? 'end' : false;
+
+if ($indicator === 'start' || $indicator === 'left') {
+    $indicatorPosition = 'start';
+}
+
 $iconClasses = Flux::classes()
     ->add('inline-block mt-0.5 text-zinc-400 [ui-radio[data-checked]_&]:text-zinc-800 dark:[ui-radio[data-checked]_&]:text-white')
     // When using the outline icon variant, we need to size it down to match the default icon sizes...
@@ -59,7 +66,8 @@ $iconClasses = Flux::classes()
     ;
 
 $classes = Flux::classes()
-    ->add('relative flex justify-between gap-3 flex-1 p-4')
+    ->add('relative flex gap-3 flex-1 p-4')
+    ->add($indicatorPosition === 'start' ? 'justify-start' : 'justify-between')
     ->add('rounded-lg shadow-xs')
     ->add('bg-white dark:bg-white/10 dark:hover:bg-white/15 dark:data-checked:bg-white/15')
     ->add('after:absolute after:-inset-px after:rounded-lg')
@@ -92,6 +100,31 @@ $classes = Flux::classes()
 
 <ui-radio <?php echo e($attributes->class($classes)); ?> data-flux-control data-flux-radio-cards tabindex="-1" data-flux-field>
     <?php if ($label): ?>
+        <?php if ($indicatorPosition === 'start'): ?>
+            <?php if (isset($component)) { $__componentOriginald3bd261c5373ff9954a38b731d107a2d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginald3bd261c5373ff9954a38b731d107a2d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::radio.indicator','data' => ['class' => 'mt-px']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::radio.indicator'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'mt-px']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginald3bd261c5373ff9954a38b731d107a2d)): ?>
+<?php $attributes = $__attributesOriginald3bd261c5373ff9954a38b731d107a2d; ?>
+<?php unset($__attributesOriginald3bd261c5373ff9954a38b731d107a2d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginald3bd261c5373ff9954a38b731d107a2d)): ?>
+<?php $component = $__componentOriginald3bd261c5373ff9954a38b731d107a2d; ?>
+<?php unset($__componentOriginald3bd261c5373ff9954a38b731d107a2d); ?>
+<?php endif; ?>
+        <?php endif; ?>
+
         <div class="flex-1 flex gap-2">
             <?php if (is_string($icon) && $icon !== ''): ?>
                 <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
@@ -170,17 +203,17 @@ $classes = Flux::classes()
             </div>
         </div>
 
-        <?php if ($indicator): ?>
+        <?php if ($indicatorPosition === 'end'): ?>
             <?php if (isset($component)) { $__componentOriginald3bd261c5373ff9954a38b731d107a2d = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald3bd261c5373ff9954a38b731d107a2d = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::radio.indicator','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::radio.indicator','data' => ['class' => 'mt-px']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::radio.indicator'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes([]); ?>
+<?php $component->withAttributes(['class' => 'mt-px']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>

@@ -22,6 +22,8 @@ class BusinessPlanActivatedMail extends Mailable
 
     public function build()
     {
+        $appName = config('app.name');
+
         return $this->subject('Plano Business Ativado! 💎 - '.$this->companyName)
             ->html("
                 <div style='font-family: sans-serif; background-color: #f5f3ff; padding: 40px; color: #1e1b4b;'>
@@ -32,7 +34,7 @@ class BusinessPlanActivatedMail extends Mailable
                                 <span style='font-size: 30px;'>💎</span>
                             </div>
                             <h1 style='margin: 20px 0 10px; color: #1e1b4b; font-size: 26px; font-weight: 800; text-transform: uppercase;'>Acesso Premium Ativo</h1>
-                            <p style='margin: 0; font-size: 11px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 2px;'>Finance Pro Business</p>
+                            <p style='margin: 0; font-size: 11px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 2px;'>{$appName} Business</p>
                         </div>
 
                         <div style='line-height: 1.6; color: #4b5563; font-size: 15px;'>
@@ -53,7 +55,7 @@ class BusinessPlanActivatedMail extends Mailable
                         </div>
 
                         <div style='margin-top: 40px; text-align: center; border-top: 1px solid #f3f4f6; padding-top: 20px;'>
-                            <p style='font-size: 10px; color: #94a3b8; text-transform: uppercase;'>Powered by Finance Pro IA</p>
+                            <p style='font-size: 10px; color: #94a3b8; text-transform: uppercase;'>Powered by {$appName}</p>
                         </div>
                     </div>
                 </div>

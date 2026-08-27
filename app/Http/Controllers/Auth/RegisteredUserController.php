@@ -37,8 +37,9 @@ class RegisteredUserController extends Controller
             // Tenta enviar o e-mail
             Mail::to($user->email)->send(new VerifyAccountMail($verificationCode));
         } catch (\Exception $e) {
-            // Se falhar, ele vai mostrar o erro no ecrã em vez de ficar parado
-            dd('O e-mail falhou! Erro: '.$e->getMessage());
+            return redirect()->back()->withErrors([
+                'email' => 'Não foi possível enviar a verificação. Tenta novamente.',
+            ]);
         }
 
         return redirect()->route('verification.notice');

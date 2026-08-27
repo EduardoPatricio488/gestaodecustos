@@ -19,13 +19,15 @@ class VerifyAccountMail extends Mailable
 
     public function build()
     {
-        return $this->subject($this->code.' é o teu código de verificação - Finance Pro IA')
+        $appName = config('app.name');
+
+        return $this->subject($this->code.' é o teu código de verificação - '.$appName)
             ->html("
                 <div style='font-family: sans-serif; background-color: #f8fafc; padding: 40px; color: #1e293b;'>
                     <div style='max-width: 400px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;'>
 
                         <div style='text-align: center; margin-bottom: 25px;'>
-                            <h2 style='margin: 0; color: #4f46e5; font-size: 24px; font-weight: 800; letter-spacing: -1px;'>Finance Pro IA</h2>
+                            <h2 style='margin: 0; color: #4f46e5; font-size: 24px; font-weight: 800; letter-spacing: -1px;'>{$appName}</h2>
                             <p style='margin: 5px 0 0; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px;'>Segurança de Protocolo</p>
                         </div>
 
@@ -43,7 +45,7 @@ class VerifyAccountMail extends Mailable
                     </div>
 
                     <div style='text-align: center; margin-top: 20px; font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;'>
-                        &copy; ".date('Y').' Finance Pro IA — Encriptação de Ponta-a-Ponta
+                        &copy; ".date('Y').' {$appName} — Encriptação de Ponta-a-Ponta
                     </div>
                 </div>
             ');

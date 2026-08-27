@@ -250,9 +250,8 @@ PROMPT;
     public function render()
     {
         $wsId = auth()->user()->current_workspace_id;
-        $exclude = ['Streaming (Vídeo/TV)', 'Música & Podcasts', 'Software & SaaS', 'Gaming', 'Fitness & Ginásio', 'Cloud & Armazenamento', 'Notícias & Revistas', 'Educação & Cursos', 'VPN & Segurança', 'Seguros & Finanças', 'Serviços Casa (Net/TV)', 'Outros'];
 
-        $categories = Category::where('workspace_id', $wsId)->whereNotIn('name', $exclude)->orderBy('order')->get();
+        $categories = Category::where('workspace_id', $wsId)->orderBy('order')->get();
         $selectedCat = $this->category_id ? Category::find($this->category_id) : null;
 
         $categoryFields = [];

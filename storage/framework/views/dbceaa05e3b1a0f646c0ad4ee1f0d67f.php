@@ -116,8 +116,8 @@ $iconAttributes = Flux::attributesAfter('icon:', $attributes, [
 
     <?php endif; ?>
 
-    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($slot->isNotEmpty() || isset($label)): ?>
+    <?php if ($slot->isNotEmpty() || isset($label)): ?>
         <span><?php echo e($slot->isNotEmpty() ? $slot : $label); ?></span>
-    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    <?php endif; ?>
 </ui-radio>
 <?php /**PATH C:\Projetos\gestao-de-custos\vendor\livewire\flux\stubs\resources\views\flux\radio\variants\buttons.blade.php ENDPATH**/ ?>

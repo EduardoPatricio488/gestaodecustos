@@ -22,6 +22,8 @@ class EmployeeDataUpdatedMail extends Mailable
 
     public function build()
     {
+        $appName = config('app.name');
+
         return $this->subject('Atualização na tua Ficha de Colaborador 👤 - '.$this->companyName)
             ->html("
                 <div style='font-family: sans-serif; background-color: #f8fafc; padding: 40px; color: #1e293b;'>
@@ -52,7 +54,7 @@ class EmployeeDataUpdatedMail extends Mailable
                         </div>
 
                         <div style='margin-top: 40px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 20px;'>
-                            <p style='font-size: 10px; color: #94a3b8; text-transform: uppercase;'>Mensagem automática gerada pelo Finance Pro IA</p>
+                            <p style='font-size: 10px; color: #94a3b8; text-transform: uppercase;'>Mensagem automática gerada pelo {$appName}</p>
                         </div>
                     </div>
                 </div>

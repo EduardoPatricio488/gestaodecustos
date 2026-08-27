@@ -36,7 +36,7 @@ unset($__defined_vars, $__key, $__value); ?>
 
 <?php
 $trackClasses = Flux::classes()
-    ->add('h-1.5 relative w-full overflow-hidden bg-zinc-200 dark:bg-white/10')
+    ->add('[:where(&)]:h-1.5 relative w-full overflow-hidden [:where(&)]:bg-zinc-200 dark:[:where(&)]:bg-white/10')
     ->add('[print-color-adjust:exact]')
     ->add('rounded-full')
     ->add(match ($color) {

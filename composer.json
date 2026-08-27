@@ -1,23 +1,18 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "finance-pro/finance-pro",
+    "name": "laravel/livewire-starter-kit",
     "type": "project",
-    "description": "AI-powered personal finance and business management SaaS.",
+    "description": "The official Laravel starter kit for Livewire.",
     "keywords": [
-        "finance",
-        "personal-finance",
-        "business-management",
-        "erp",
-        "saas",
         "laravel",
-        "livewire"
+        "framework"
     ],
     "license": "MIT",
     "require": {
         "php": "^8.3",
         "barryvdh/laravel-dompdf": "^3.1",
-        "guzzlehttp/guzzle": "^7.10",
-        "laravel-notification-channels/webpush": "^11.0",
+        "guzzlehttp/guzzle": "7.10.x-dev",
+        "laravel-notification-channels/webpush": "*",
         "laravel/cashier": "^16.7",
         "laravel/chisel": "^0.1.0",
         "laravel/fortify": "^1.37.2",
@@ -27,7 +22,8 @@
         "livewire/livewire": "^4.3",
         "livewire/volt": "^1.7.0",
         "maatwebsite/excel": "^3.1",
-        "openai-php/laravel": "^0.19"
+        "openai-php/laravel": "*",
+        "stripe/stripe-php": "^20.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",
@@ -64,7 +60,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve --no-reload\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names=\"server,queue,vite\""
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve --no-reload\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"
         ],
         "lint": [
             "pint --parallel"
@@ -87,6 +83,7 @@
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""

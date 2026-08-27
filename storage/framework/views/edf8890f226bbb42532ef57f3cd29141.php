@@ -65,7 +65,7 @@ $trailingIconClasses = Flux::classes()
     ;
 
 $classes = Flux::classes()
-    ->add('flex items-center px-2 py-1.5 w-full focus:outline-hidden')
+    ->add('flex items-center px-2 py-1.5 w-full focus:outline-hidden select-none')
     ->add('rounded-md')
     ->add('text-start text-sm font-medium')
     ->add('[&[disabled]]:opacity-50')
@@ -131,16 +131,14 @@ $suffixClasses = Flux::classes()
     <?php echo e($slot); ?>
 
 
-    <?php if ($suffix): ?>
-        <?php if (is_string($suffix)): ?>
-            <div class="<?php echo e($suffixClasses); ?>">
-                <?php echo e($suffix); ?>
-
-            </div>
-        <?php else: ?>
+    <?php if (is_string($suffix) && $suffix !== ''): ?>
+        <div class="<?php echo e($suffixClasses); ?>">
             <?php echo e($suffix); ?>
 
-        <?php endif; ?>
+        </div>
+    <?php elseif ($suffix): ?>
+        <?php echo e($suffix); ?>
+
     <?php endif; ?>
 
     <?php if (is_string($iconTrailing) && $iconTrailing !== ''): ?>

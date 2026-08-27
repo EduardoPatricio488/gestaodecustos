@@ -38,7 +38,8 @@ unset($__defined_vars, $__key, $__value); ?>
 
 <?php
 $classes = Flux::classes()
-    ->add('flex items-center gap-1 -my-1 -ms-2 -me-2 px-2 py-1 ')
+    ->add('flex items-center gap-1 -my-1 -ms-2 -me-2 px-2 py-1')
+    ->add('[text-align:inherit] [text-indent:inherit] [text-shadow:inherit] [text-transform:inherit] [word-spacing:inherit]')
     ->add('in-[.group\/end-align]:flex-row-reverse in-[.group\/end-align]:-me-2 in-[.group\/end-align]:-ms-8')
     ;
 ?>
@@ -48,8 +49,8 @@ $classes = Flux::classes()
 
 
     <div class="rounded-sm text-zinc-400 group-hover/sortable:text-zinc-800 dark:group-hover/sortable:text-white">
-        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($sorted): ?>
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($direction === 'asc'): ?>
+        <?php if ($sorted): ?>
+            <?php if ($direction === 'asc'): ?>
                 <?php if (isset($component)) { $__componentOriginal6b14ccea37ceba802c7692663ec127c4 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal6b14ccea37ceba802c7692663ec127c4 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.chevron-up','data' => ['variant' => 'micro']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -72,7 +73,7 @@ $classes = Flux::classes()
 <?php $component = $__componentOriginal6b14ccea37ceba802c7692663ec127c4; ?>
 <?php unset($__componentOriginal6b14ccea37ceba802c7692663ec127c4); ?>
 <?php endif; ?>
-            <?php elseif($direction === 'desc'): ?>
+            <?php elseif ($direction === 'desc'): ?>
                 <?php if (isset($component)) { $__componentOriginal298ff21bbc41cebb188cbb18c6c11bc0 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal298ff21bbc41cebb188cbb18c6c11bc0 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.chevron-down','data' => ['variant' => 'micro']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -118,7 +119,7 @@ $classes = Flux::classes()
 <?php $component = $__componentOriginal298ff21bbc41cebb188cbb18c6c11bc0; ?>
 <?php unset($__componentOriginal298ff21bbc41cebb188cbb18c6c11bc0); ?>
 <?php endif; ?>
-            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            <?php endif; ?>
         <?php else: ?>
             <div class="opacity-0 group-hover/sortable:opacity-100">
                 <?php if (isset($component)) { $__componentOriginal298ff21bbc41cebb188cbb18c6c11bc0 = $component; } ?>
@@ -144,7 +145,7 @@ $classes = Flux::classes()
 <?php unset($__componentOriginal298ff21bbc41cebb188cbb18c6c11bc0); ?>
 <?php endif; ?>
             </div>
-        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+        <?php endif; ?>
     </div>
 </button>
 <?php /**PATH C:\Projetos\gestao-de-custos\vendor\livewire\flux\stubs\resources\views\flux\table\sortable.blade.php ENDPATH**/ ?>

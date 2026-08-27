@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Verificar Conta | Finance Pro</title>
+    <title>Verificar Conta | <?php echo e(config('app.name')); ?></title>
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
 </head>
 <body class="h-full antialiased font-sans">
@@ -109,7 +109,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
         
         <p class="mt-12 text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em] opacity-50">
-            Finance Pro · Protocolo de Segurança Ativo
+            <?php echo e(config('app.name')); ?> · Protocolo de Segurança Ativo
         </p>
     </div>
 </body>

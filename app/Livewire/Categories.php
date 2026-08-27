@@ -229,22 +229,13 @@ class Categories extends Component
     {
         $monthStart = Carbon::now()->startOfMonth();
 
-        // 1. Lista de exclusão (Para não misturar Assinaturas no Cofre de Categorias)
-        $exclude = [
-            'Streaming (Vídeo/TV)', 'Música & Podcasts', 'Software & SaaS', 'Gaming',
-            'Fitness & Ginásio', 'Cloud & Armazenamento', 'Notícias & Revistas',
-            'Educação & Cursos', 'VPN & Segurança', 'Seguros & Finanças',
-            'Serviços Casa (Net/TV)', 'Outros',
-        ];
-
-        // 2. Busca sincronizada: tudo do Workspace, ordenado por 'order'
+        // 1. Mostra todas as categorias do workspace atual, sem exclusões manuais.
         $categories = Category::where('workspace_id', $this->workspaceId())
-            ->whereNotIn('name', $exclude)
             ->withCount(['expenses as expenses_count' => fn ($q) => $q->where('workspace_id', $this->workspaceId())
                 ->where('spent_at', '>=', $monthStart),
             ])
-            ->orderBy('order', 'asc') // Segue o arrastar e largar
-            ->orderBy('name', 'asc')  // Fallback alfabético
+            ->orderBy('order', 'asc')
+            ->orderBy('name', 'asc')
             ->get()
             ->unique('name');
 

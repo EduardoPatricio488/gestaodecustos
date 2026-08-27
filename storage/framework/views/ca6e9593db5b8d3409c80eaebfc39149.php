@@ -61,10 +61,10 @@
                             <div class="flex justify-between items-end">
                                 <span class="text-sm font-bold capitalize text-zinc-700 dark:text-zinc-300">
                                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php switch($feature):
-                                        case ('reminders'): ?> Lembretes <?php break; ?>
-                                        <?php case ('chatbot'): ?> Chatbot IA <?php break; ?>
-                                        <?php case ('goals'): ?> Objetivos <?php break; ?>
-                                        <?php case ('investments'): ?> Investimentos <?php break; ?>
+                                        case ('reminders'): ?> Lembretes <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
+                                        <?php case ('chatbot'): ?> Chatbot IA <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
+                                        <?php case ('goals'): ?> Objetivos <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
+                                        <?php case ('investments'): ?> Investimentos <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
                                         <?php default: ?> <?php echo e(ucfirst($feature)); ?>
 
                                     <?php endswitch; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>

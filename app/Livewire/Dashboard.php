@@ -197,14 +197,13 @@ class Dashboard extends Component
 
             foreach ($fixedCategories as $slug => $data) {
                 Category::firstOrCreate(
-                    ['user_id' => $user->id, 'slug' => $slug],
+                    ['user_id' => $user->id, 'workspace_id' => $ws->id, 'slug' => $slug],
                     [
                         'name' => $data['name'],
                         'icon' => $data['icon'],
                         'color' => $data['color'],
                         'is_fixed' => true,
                         'order' => $data['order'],
-                        'workspace_id' => $ws->id,
                     ]
                 );
             }

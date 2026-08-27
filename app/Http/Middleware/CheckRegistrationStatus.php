@@ -11,10 +11,6 @@ class CheckRegistrationStatus
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // TESTE: Se vires um ecrã preto com "Middleware a funcionar", então o erro é na lógica abaixo.
-        // Se NÃO vires o ecrã preto, o erro é no bootstrap/app.php
-        // dd('Middleware a funcionar');
-
         $isRegisterRoute = $request->is('register') || $request->is('register/*');
 
         if ($isRegisterRoute) {

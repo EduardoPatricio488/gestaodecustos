@@ -63,6 +63,7 @@ unset($__defined_vars, $__key, $__value); ?>
             'fuchsia' => '[--color-accent:var(--color-fuchsia-600)] [--color-accent-content:var(--color-fuchsia-600)] [--color-accent-foreground:var(--color-white)] dark:[--color-accent:var(--color-fuchsia-600)] dark:[--color-accent-content:var(--color-fuchsia-400)] dark:[--color-accent-foreground:var(--color-white)]',
             'pink' => '[--color-accent:var(--color-pink-600)] [--color-accent-content:var(--color-pink-600)] [--color-accent-foreground:var(--color-white)] dark:[--color-accent:var(--color-pink-600)] dark:[--color-accent-content:var(--color-pink-400)] dark:[--color-accent-foreground:var(--color-white)]',
             'rose' => '[--color-accent:var(--color-rose-500)] [--color-accent-content:var(--color-rose-500)] [--color-accent-foreground:var(--color-white)] dark:[--color-accent:var(--color-rose-500)] dark:[--color-accent-content:var(--color-rose-400)] dark:[--color-accent-foreground:var(--color-white)]',
+            default => '',
         })
         ;
 ?>
@@ -70,4 +71,5 @@ unset($__defined_vars, $__key, $__value); ?>
 <div <?php echo e($attributes->class($classes)); ?>>
     <?php echo e($slot); ?>
 
-</div><?php /**PATH C:\Projetos\gestao-de-custos\vendor\livewire\flux\stubs\resources\views\flux\accent.blade.php ENDPATH**/ ?>
+</div>
+<?php /**PATH C:\Projetos\gestao-de-custos\vendor\livewire\flux\stubs\resources\views\flux\accent.blade.php ENDPATH**/ ?>

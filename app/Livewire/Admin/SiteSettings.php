@@ -38,7 +38,7 @@ class SiteSettings extends Component
 
     public function mount()
     {
-        $this->site_name = Setting::get('site_name', 'Finance Pro IA');
+        $this->site_name = Setting::get('site_name', config('app.name'));
         $this->default_currency = Setting::get('default_currency', 'EUR');
         $this->support_email = Setting::get('support_email', 'suporte@financepro.com');
 

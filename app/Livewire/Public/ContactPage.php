@@ -5,7 +5,7 @@ namespace App\Livewire\Public;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('components.layouts.app')]
+#[Layout('layouts.guest')]
 class ContactPage extends Component
 {
     public $name;

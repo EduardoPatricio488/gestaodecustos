@@ -19,7 +19,6 @@ const staticAssets = [
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(cacheName).then(cache => {
-            console.log('📦 PWA: Cache de emergência ativado');
             return cache.addAll(staticAssets);
         })
     );

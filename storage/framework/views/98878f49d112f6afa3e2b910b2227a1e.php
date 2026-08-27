@@ -58,14 +58,14 @@ unset($__defined_vars, $__key, $__value); ?>
             <?php echo e($label); ?>
 
         </p>
-    <?php break; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
 
     
     <?php case ('value'): ?>
         <p class="text-7xl md:text-8xl font-black italic tabular-nums tracking-tighter">
             <?php echo e(number_format($amount, 0, ',', ' ')); ?>€
         </p>
-    <?php break; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
 
     
     <?php case ('subtext'): ?>
@@ -73,7 +73,7 @@ unset($__defined_vars, $__key, $__value); ?>
             <?php echo e($text); ?>
 
         </p>
-    <?php break; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
 
     
     <?php case ('badge'): ?>
@@ -82,7 +82,7 @@ unset($__defined_vars, $__key, $__value); ?>
                 <?php echo e(number_format($amount, 0, ',', ' ')); ?>€
             </span>
         </div>
-    <?php break; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
 
     
     <?php case ('record'): ?>
@@ -90,7 +90,7 @@ unset($__defined_vars, $__key, $__value); ?>
             <span class="font-black uppercase"><?php echo e($label); ?></span>
             <span class="font-black"><?php echo e(number_format($value, 0, ',', ' ')); ?>€</span>
         </div>
-    <?php break; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
 
     
     <?php case ('card'): ?>
@@ -99,7 +99,7 @@ unset($__defined_vars, $__key, $__value); ?>
             <?php echo e($slot); ?>
 
         </div>
-    <?php break; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
 
 <?php endswitch; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 <?php /**PATH C:\Projetos\gestao-de-custos\resources\views\components\wrapped.blade.php ENDPATH**/ ?>

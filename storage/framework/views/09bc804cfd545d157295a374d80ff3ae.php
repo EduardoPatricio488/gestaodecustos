@@ -56,19 +56,19 @@ $classes = Flux::classes()
 <?php switch ((int) $level): case(1): ?>
         <h1 <?php echo e($attributes->class($classes)); ?> data-flux-heading><?php echo e($slot); ?></h1>
 
-        <?php break; ?>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
     <?php case(2): ?>
         <h2 <?php echo e($attributes->class($classes)); ?> data-flux-heading><?php echo e($slot); ?></h2>
 
-        <?php break; ?>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
     <?php case(3): ?>
         <h3 <?php echo e($attributes->class($classes)); ?> data-flux-heading><?php echo e($slot); ?></h3>
 
-        <?php break; ?>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
     <?php case(4): ?>
         <h4 <?php echo e($attributes->class($classes)); ?> data-flux-heading><?php echo e($slot); ?></h4>
 
-        <?php break; ?>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php break; ?>
     <?php default: ?>
         <div <?php echo e($attributes->class($classes)); ?> data-flux-heading><?php echo e($slot); ?></div>
 <?php endswitch; ?>

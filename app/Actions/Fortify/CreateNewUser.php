@@ -49,14 +49,13 @@ class CreateNewUser implements CreatesNewUsers
 
         foreach ($this->fixedCategories as $slug => $data) {
             Category::firstOrCreate(
-                ['user_id' => $user->id, 'slug' => $slug],
+                ['user_id' => $user->id, 'workspace_id' => $workspaceId, 'slug' => $slug],
                 [
                     'name' => $data['name'],
                     'icon' => $data['icon'],
                     'color' => $data['color'],
                     'is_fixed' => true,
                     'order' => $data['order'],
-                    'workspace_id' => $workspaceId,
                 ]
             );
         }

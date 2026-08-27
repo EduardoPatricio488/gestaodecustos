@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance Pro — SaaS Finance Management</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a2a;
+      --card: #182336;
+      --text: #edf2ff;
+      --muted: #a7b4d0;
+      --primary: #7c9cff;
+      --primary-2: #43d9ad;
+      --accent: #f5b14d;
+      --border: rgba(255,255,255,0.08);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #09111d 0%, #0d1729 100%);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    header {
+      padding: 26px 0;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 15, 24, 0.7);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .nav a {
+      color: var(--muted);
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 0.95rem;
+    }
+
+    .cta {
+      display: inline-block;
+      padding: 14px 22px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-2));
+      color: #08111b;
+      font-weight: 700;
+      text-decoration: none;
+      margin-top: 18px;
+    }
+
+    .ghost {
+      display: inline-block;
+      padding: 14px 22px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+      margin-left: 12px;
+      margin-top: 18px;
+    }
+
+    .hero {
+      padding: 90px 0 60px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 3.4rem;
+      line-height: 1.05;
+      margin: 0 0 18px;
+    }
+
+    .hero p {
+      font-size: 1.08rem;
+      color: var(--muted);
+      max-width: 640px;
+      line-height: 1.7;
+    }
+
+    .hero-card {
+      background: linear-gradient(180deg, rgba(27,39,57,0.95), rgba(18,26,42,0.95));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    }
+
+    .mockup {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .grid-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.8rem;
+      margin-top: 8px;
+    }
+
+    section {
+      padding: 60px 0;
+    }
+
+    .section-title {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .section-title h2 {
+      font-size: 2.3rem;
+      margin: 0 0 10px;
+    }
+
+    .section-title p {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 22px;
+    }
+
+    .feature {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+    }
+
+    .feature h3 {
+      margin: 12px 0 10px;
+      font-size: 1.2rem;
+    }
+
+    .feature p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .pricing {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 22px;
+    }
+
+    .plan {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 26px;
+    }
+
+    .plan.featured {
+      border-color: rgba(124, 156, 255, 0.8);
+      background: rgba(124, 156, 255, 0.07);
+    }
+
+    .plan h3 {
+      font-size: 1.3rem;
+      margin: 0 0 10px;
+    }
+
+    .price {
+      font-size: 2.5rem;
+      margin: 16px 0;
+      font-weight: 700;
+    }
+
+    .plan ul {
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 2;
+    }
+
+    .final {
+      text-align: center;
+      padding: 80px 0 120px;
+    }
+
+    @media (max-width: 900px) {
+      .hero-grid,
+      .features,
+      .pricing {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 2.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">Finance Pro</div>
+      <nav>
+        <a href="#features">Funcionalidades</a>
+        <a href="#pricing">Planos</a>
+        <a href="#demo">Demo</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <h1>Controla as tuas finanças como um negócio.</h1>
+          <p>
+            Finance Pro é uma plataforma SaaS para gerir receitas, despesas, categorias, orçamentos,
+            subscrições, dashboards e visão financeira pessoal e empresarial em um único lugar.
+          </p>
+          <a class="cta" href="#pricing">Ver planos</a>
+          <a class="ghost" href="#demo">Solicitar demo</a>
+        </div>
+
+        <div class="hero-card">
+          <div class="mockup">
+            <div class="topbar">
+              <span>Finance Pro</span>
+              <span>Dashboard</span>
+            </div>
+            <div class="grid-box">
+              <div class="stat">
+                <span>Receitas</span>
+                <strong>€6.480</strong>
+              </div>
+              <div class="stat">
+                <span>Despesas</span>
+                <strong>€3.980</strong>
+              </div>
+              <div class="stat">
+                <span>Saldo</span>
+                <strong>€2.500</strong>
+              </div>
+              <div class="stat">
+                <span>Orçamento</span>
+                <strong>72%</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="container">
+        <div class="section-title">
+          <h2>Funcionalidades principais</h2>
+          <p>Construído para gestão financeira pessoal e empresarial.</p>
+        </div>
+
+        <div class="features">
+          <div class="feature">
+            <div>📊</div>
+            <h3>Dashboard financeiro</h3>
+            <p>Visualiza receitas, despesas, tendências e saúde financeira em tempo real.</p>
+          </div>
+
+          <div class="feature">
+            <div>💳</div>
+            <h3>Subscripções e recorrentes</h3>
+            <p>Controla pagamentos mensais, alertas e riscos de gasto recorrente.</p>
+          </div>
+
+          <div class="feature">
+            <div>🏢</div>
+            <h3>Gestão empresarial</h3>
+            <p>Workspaces empresariais, colaboradores, finanças e faturação em um lugar.</p>
+          </div>
+
+          <div class="feature">
+            <div>🧠</div>
+            <h3>Insights com IA</h3>
+            <p>Ajuda com análise financeira, previsões e recomendações inteligentes.</p>
+          </div>
+
+          <div class="feature">
+            <div>📦</div>
+            <h3>Categorias e orçamentos</h3>
+            <p>Organiza gastos, define limites e mantém o controlo por categoria.</p>
+          </div>
+
+          <div class="feature">
+            <div>📱</div>
+            <h3>PWA / Mobile</h3>
+            <p>Experiência responsiva para desktop, tablet e mobile com instalação em app.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="container">
+        <div class="section-title">
+          <h2>Planos</h2>
+          <p>Estrutura de SaaS pronta para monetização.</p>
+        </div>
+
+        <div class="pricing">
+          <div class="plan">
+            <h3>Free</h3>
+            <div class="price">€0</div>
+            <ul>
+              <li>Dashboard básico</li>
+              <li>Gestão simples</li>
+              <li>1 workspace</li>
+            </ul>
+          </div>
+
+          <div class="plan featured">
+            <h3>Plus</h3>
+            <div class="price">€19</div>
+            <ul>
+              <li>Dashboards avançados</li>
+              <li>Mais categorias</li>
+              <li>Relatórios e insights</li>
+            </ul>
+          </div>
+
+          <div class="plan">
+            <h3>Pro</h3>
+            <div class="price">€39</div>
+            <ul>
+              <li>Gestão empresarial</li>
+              <li>IA e automações</li>
+              <li>Workspaces e colaboração</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo">
+      <div class="container final">
+        <h2>Pronto para crescer como SaaS financeiro.</h2>
+        <p style="color: var(--muted); max-width: 700px; margin: 14px auto 20px; line-height: 1.7;">
+          Finance Pro combina gestão financeira pessoal e empresarial num produto moderno, com base tecnológica sólida,
+          monetização por planos e design preparado para escalar.
+        </p>
+        <a class="cta" href="mailto:vendas@financepro.app">Solicitar demo</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

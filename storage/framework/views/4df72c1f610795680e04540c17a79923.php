@@ -527,7 +527,7 @@ unset($__split);
 
         <footer class="pt-12 text-center opacity-50">
             <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">
-                Finance Pro IA · Protocolo de Segurança v3.4
+                <?php echo e(config('app.name')); ?> · Protocolo de Segurança v3.4
             </p>
         </footer>
 

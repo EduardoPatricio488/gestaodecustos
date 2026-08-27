@@ -21,8 +21,10 @@ $scrollIntoViewJsSnippet = ($scrollTo !== false)
                     </li>
                 <?php else: ?>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(method_exists($paginator,'getCursorName')): ?>
+                        
+                        <?php ($previousCursor = $paginator->previousCursor() ?? $paginator->cursor()); ?>
                         <li class="page-item">
-                            <button dusk="previousPage" type="button" class="page-link" <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'cursor-'.e($paginator->getCursorName()).'-'.e($paginator->previousCursor()->encode()).''; ?>wire:key="cursor-<?php echo e($paginator->getCursorName()); ?>-<?php echo e($paginator->previousCursor()->encode()); ?>" wire:click="setPage('<?php echo e($paginator->previousCursor()->encode()); ?>','<?php echo e($paginator->getCursorName()); ?>')" x-on:click="<?php echo e($scrollIntoViewJsSnippet); ?>" wire:loading.attr="disabled"><?php echo app('translator')->get('pagination.previous'); ?></button>
+                            <button dusk="previousPage" type="button" class="page-link" <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'cursor-'.e($paginator->getCursorName()).'-'.e($previousCursor?->encode()).''; ?>wire:key="cursor-<?php echo e($paginator->getCursorName()); ?>-<?php echo e($previousCursor?->encode()); ?>" wire:click="setPage('<?php echo e($previousCursor?->encode()); ?>','<?php echo e($paginator->getCursorName()); ?>')" x-on:click="<?php echo e($scrollIntoViewJsSnippet); ?>" wire:loading.attr="disabled"><?php echo app('translator')->get('pagination.previous'); ?></button>
                         </li>
                     <?php else: ?>
                         <li class="page-item">
@@ -34,8 +36,10 @@ $scrollIntoViewJsSnippet = ($scrollTo !== false)
                 
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($paginator->hasMorePages()): ?>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(method_exists($paginator,'getCursorName')): ?>
+                        
+                        <?php ($nextCursor = $paginator->nextCursor() ?? $paginator->cursor()); ?>
                         <li class="page-item">
-                            <button dusk="nextPage" type="button" class="page-link" <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'cursor-'.e($paginator->getCursorName()).'-'.e($paginator->nextCursor()->encode()).''; ?>wire:key="cursor-<?php echo e($paginator->getCursorName()); ?>-<?php echo e($paginator->nextCursor()->encode()); ?>" wire:click="setPage('<?php echo e($paginator->nextCursor()->encode()); ?>','<?php echo e($paginator->getCursorName()); ?>')" x-on:click="<?php echo e($scrollIntoViewJsSnippet); ?>" wire:loading.attr="disabled"><?php echo app('translator')->get('pagination.next'); ?></button>
+                            <button dusk="nextPage" type="button" class="page-link" <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'cursor-'.e($paginator->getCursorName()).'-'.e($nextCursor?->encode()).''; ?>wire:key="cursor-<?php echo e($paginator->getCursorName()); ?>-<?php echo e($nextCursor?->encode()); ?>" wire:click="setPage('<?php echo e($nextCursor?->encode()); ?>','<?php echo e($paginator->getCursorName()); ?>')" x-on:click="<?php echo e($scrollIntoViewJsSnippet); ?>" wire:loading.attr="disabled"><?php echo app('translator')->get('pagination.next'); ?></button>
                         </li>
                     <?php else: ?>
                         <li class="page-item">

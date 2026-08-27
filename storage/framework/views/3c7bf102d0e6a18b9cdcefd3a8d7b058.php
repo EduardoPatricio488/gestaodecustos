@@ -72,7 +72,7 @@ $indicatorClasses = Flux::classes()
     ]);
 ?>
 
-<?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($align === 'left' || $align === 'start'): ?>
+<?php if ($align === 'left' || $align === 'start'): ?>
     <?php if (isset($component)) { $__componentOriginalaa38908a80414b887e964866233e69a0 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalaa38908a80414b887e964866233e69a0 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::with-inline-field','data' => ['attributes' => $attributes]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -124,5 +124,5 @@ $indicatorClasses = Flux::classes()
 <?php $component = $__componentOriginal1d609ace4b6b0700d4da371cfad55492; ?>
 <?php unset($__componentOriginal1d609ace4b6b0700d4da371cfad55492); ?>
 <?php endif; ?>
-<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+<?php endif; ?>
 <?php /**PATH C:\Projetos\gestao-de-custos\vendor\livewire\flux\stubs\resources\views\flux\switch.blade.php ENDPATH**/ ?>

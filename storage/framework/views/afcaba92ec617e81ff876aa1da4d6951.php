@@ -5,6 +5,7 @@
 $__newAttributes = [];
 $__propNames = \Illuminate\View\ComponentAttributeBag::extractPropNames(([
     'dismissible' => null,
+    'escapable' => null,
     'position' => null,
     'closable' => null,
     'trigger' => null,
@@ -29,6 +30,7 @@ unset($__newAttributes);
 
 foreach (array_filter(([
     'dismissible' => null,
+    'escapable' => null,
     'position' => null,
     'closable' => null,
     'trigger' => null,
@@ -130,6 +132,10 @@ if ($attributes['@cancel'] ?? null) {
 
 if ($dismissible === false) {
     $attributes = $attributes->merge(['disable-click-outside' => '']);
+}
+
+if ($escapable === false) {
+    $attributes = $attributes->merge(['disable-escape' => '']);
 }
 
 [ $contentAttributes, $attributes ] = Flux::splitAttributes($attributes, ['autofocus', 'class', 'style']);

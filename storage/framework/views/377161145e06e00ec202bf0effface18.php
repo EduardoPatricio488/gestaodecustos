@@ -14,7 +14,7 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Finance Pro">
+    <meta name="apple-mobile-web-app-title" content="<?php echo e(config('app.name')); ?>">
 
     
     <link rel="apple-touch-icon" href="/pwa/splash_screens/apple-icon-180x180.png">
@@ -101,10 +101,12 @@
 
     $myCompanies = $allBusinessWs->filter(fn($ws) => $ws->pivot->role === 'admin');
     $collabCompanies = $allBusinessWs->filter(fn($ws) => $ws->pivot->role !== 'admin');
-  $myRestrictions = \App\Models\FamilyBudgetPermission::where('user_id', auth()->id())
-        ->where('workspace_id', auth()->user()->current_workspace_id)
-        ->whereNull('category_id')
-        ->first();
+    $myRestrictions = $user
+        ? \App\Models\FamilyBudgetPermission::where('user_id', $user->id)
+            ->where('workspace_id', $user->current_workspace_id)
+            ->whereNull('category_id')
+            ->first()
+        : null;
     // 2. MODOS DE VISUALIZAÇÃO E "SHADOW MODE"
     $isViewingAsCollab = session()->has('viewing_as_collaborator_id'); // Deteta se o CEO está a espreitar
     $isAdminMode = request()->routeIs('admin.*');
@@ -121,7 +123,7 @@
     $isManager = ($user && ($user->isAdminRole() || $user->isOwner())) && !$isViewingAsCollab;
 
     // 4. PLANOS E PERMISSÕES
-    $userPlan = $currentWs->plan ?? 'free';
+    $userPlan = $currentWs?->plan ?? 'free';
     $isDiamond = $user ? $user->isDiamond() : false;
     $isAnyPremium = $user ? $user->isAnyPremium() : false;
 
@@ -887,7 +889,7 @@ unset($__split);
         
         <div class="flex flex-col justify-center min-w-0">
             <span class="text-[13px] font-black uppercase tracking-tighter text-zinc-800 dark:text-white leading-[1.1] whitespace-normal break-words">
-                <?php echo e($currentWs->name ?? 'Finance Pro'); ?>
+                <?php echo e($currentWs->name ?? config('app.name')); ?>
 
             </span>
 
@@ -3881,12 +3883,9 @@ $hasStoreAccess = $isProUser || $isPlusUser;
                    <?php
     $catCounts = is_array($catCounts ?? null) ? $catCounts : [];
 
-    $exclude = ['Streaming (Vídeo/TV)', 'Música & Podcasts', 'Software & SaaS', 'Gaming', 'Fitness & Ginásio', 'Cloud & Armazenamento', 'Notícias & Revistas', 'Educação & Cursos', 'VPN & Segurança', 'Seguros & Finanças', 'Serviços Casa (Net/TV)', 'Outros'];
-
     \App\Models\Category::backfillMissingSlugs($workspaceId ?: null);
 
     $sidebarCategories = \App\Models\Category::where('workspace_id', $workspaceId)
-        ->whereNotIn('name', $exclude)
         ->whereNotNull('slug')
         ->where('slug', '!=', '')
         ->orderBy('order', 'asc')
@@ -5160,8 +5159,6 @@ Desbloquear 🟢 <?php echo $__env->renderComponent(); ?>
         const queue = JSON.parse(localStorage.getItem('offline_vault') || '[]');
 
         if (queue.length > 0) {
-            console.log('📦 Sincronizando dados offline...');
-
             try {
                 const response = await fetch('/api/offline/sync', {
                     method: 'POST',
@@ -5174,15 +5171,13 @@ Desbloquear 🟢 <?php echo $__env->renderComponent(); ?>
 
                 if (response.ok) {
                     localStorage.removeItem('offline_vault');
-                    console.log('✅ Sincronização completa!');
 
-                    // Avisar o utilizador
                     window.dispatchEvent(new CustomEvent('toast', {
                         detail: { text: 'Gastos offline sincronizados! ✅' }
                     }));
                 }
             } catch (error) {
-                console.error('❌ Falha ao sincronizar:', error);
+                // Erro silencioso: a UI mostra o estado correto sem expor detalhes técnicos.
             }
         }
     }

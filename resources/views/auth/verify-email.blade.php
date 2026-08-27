@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Verificar Conta | Finance Pro</title>
+    <title>Verificar Conta | {{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full antialiased font-sans">
@@ -81,7 +81,7 @@
 
         {{-- RODAPÉ --}}
         <p class="mt-12 text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em] opacity-50">
-            Finance Pro · Protocolo de Segurança Ativo
+            {{ config('app.name') }} · Protocolo de Segurança Ativo
         </p>
     </div>
 </body>

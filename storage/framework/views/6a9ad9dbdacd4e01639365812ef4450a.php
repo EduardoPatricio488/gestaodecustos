@@ -45,18 +45,18 @@ $classes = Flux::classes()
     ->add('block p-3 w-full')
     ->add('shadow-xs disabled:shadow-none border rounded-lg')
     ->add('bg-white dark:bg-white/10 dark:disabled:bg-white/[7%]')
-    ->add($resize ? 'resize-y' : 'resize-none')
+    ->add($resize ? match ($resize) {
+        'none' => 'resize-none',
+        'both' => 'resize',
+        'horizontal' => 'resize-x',
+        'vertical' => 'resize-y',
+        default => 'resize-y',
+    } : 'resize-none')
+    ->add($rows === 'auto' ? 'field-sizing-content' : '')
     ->add('text-base sm:text-sm text-zinc-700 disabled:text-zinc-500 placeholder-zinc-400 disabled:placeholder-zinc-400/70 dark:text-zinc-300 dark:disabled:text-zinc-400 dark:placeholder-zinc-400 dark:disabled:placeholder-zinc-500')
     ->add('border-zinc-200 border-b-zinc-300/80 dark:border-white/10')
     ->add('data-invalid:shadow-none data-invalid:border-red-500 dark:data-invalid:border-red-500')
     ;
-
-$resizeStyle = match ($resize) {
-    'none' => 'resize: none',
-    'both' => 'resize: both',
-    'horizontal' => 'resize: horizontal',
-    'vertical' => 'resize: vertical',
-};
 ?>
 
 <?php if (isset($component)) { $__componentOriginal33e2911d6f1e72999cb4ebd3c5d00431 = $component; } ?>
@@ -75,7 +75,6 @@ $resizeStyle = match ($resize) {
         <?php echo e($attributes->class($classes)); ?>
 
         rows="<?php echo e($rows); ?>"
-        style="<?php echo e($resizeStyle); ?>; <?php echo e($rows === 'auto' ? 'field-sizing: content' : ''); ?>"
         <?php if(isset($name)): ?> name="<?php echo e($name); ?>" <?php endif; ?>
         <?php $__getScope = fn($scope = []) => $scope; ?><?php if (isset($scope)) $__scope = $scope; ?><?php $scope = $__getScope(scope: ['name' => $name ?? null, 'invalid' => $invalid ?? false]); ?>
         <?php if ($scope['invalid'] || ($scope['name'] && $errors->has($scope['name']))): ?>

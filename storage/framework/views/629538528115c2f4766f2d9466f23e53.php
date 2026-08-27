@@ -70,7 +70,7 @@ if ($collapsibleOnMobile) {
 }
 ?>
 
-<?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($collapsibleOnMobile): ?>
+<?php if ($collapsibleOnMobile): ?>
     <?php if (isset($component)) { $__componentOriginalb789a575a15f5f184ee0fb1f2cfab391 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalb789a575a15f5f184ee0fb1f2cfab391 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.backdrop','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -93,7 +93,7 @@ if ($collapsibleOnMobile) {
 <?php $component = $__componentOriginalb789a575a15f5f184ee0fb1f2cfab391; ?>
 <?php unset($__componentOriginalb789a575a15f5f184ee0fb1f2cfab391); ?>
 <?php endif; ?>
-<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+<?php endif; ?>
 
 <ui-sidebar
     <?php echo e($attributes->class($classes)); ?>

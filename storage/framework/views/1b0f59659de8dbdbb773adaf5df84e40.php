@@ -4,6 +4,7 @@
 
 $__newAttributes = [];
 $__propNames = \Illuminate\View\ComponentAttributeBag::extractPropNames(([
+    'variant' => 'outline',
     'size' => null,
 ]));
 
@@ -21,6 +22,7 @@ unset($__propNames);
 unset($__newAttributes);
 
 foreach (array_filter(([
+    'variant' => 'outline',
     'size' => null,
 ]), 'is_string', ARRAY_FILTER_USE_KEY) as $__key => $__value) {
     $$__key = $$__key ?? $__value;
@@ -36,8 +38,11 @@ unset($__defined_vars, $__key, $__value); ?>
 
 <?php
 $classes = Flux::classes()
-    ->add('[:where(&)]:bg-white dark:[:where(&)]:bg-white/10')
-    ->add('border border-zinc-200 dark:border-white/10')
+    ->add('border')
+    ->add(match ($variant) {
+        'soft' => '[:where(&)]:bg-black/[0.02] [:where(&)]:border-black/[0.025] dark:[:where(&)]:bg-white/[0.06] dark:[:where(&)]:border-white/[0.065]',
+        default => '[:where(&)]:bg-white [:where(&)]:border-zinc-200 dark:[:where(&)]:bg-white/10 dark:[:where(&)]:border-white/10',
+    })
     ->add(match ($size) {
         default => '[:where(&)]:p-6 [:where(&)]:rounded-xl',
         'sm' => '[:where(&)]:p-4 [:where(&)]:rounded-lg',

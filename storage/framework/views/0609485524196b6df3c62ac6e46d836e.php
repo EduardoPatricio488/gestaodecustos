@@ -58,12 +58,12 @@ $classes = Flux::classes('border-0 [print-color-adjust:exact]')
 ?>
 
 <?php if ($text): ?>
-    <div data-orientation="<?php echo e($orientation); ?>" class="flex items-center w-full" role="none" data-flux-separator>
-        <div <?php echo e($attributes->class([$classes, 'grow'])); ?>></div>
+    <div data-orientation="<?php echo e($orientation); ?>" role="none" <?php echo e($attributes->class('flex items-center w-full')); ?> data-flux-separator>
+        <div class="<?php echo e($classes); ?> grow"></div>
 
         <span class="shrink mx-6 font-medium text-sm text-zinc-500 dark:text-zinc-300 whitespace-nowrap"><?php echo e($text); ?></span>
 
-        <div <?php echo e($attributes->class([$classes, 'grow'])); ?>></div>
+        <div class="<?php echo e($classes); ?> grow"></div>
     </div>
 <?php else: ?>
     <div data-orientation="<?php echo e($orientation); ?>" role="none" <?php echo e($attributes->class($classes, 'shrink-0')); ?> data-flux-separator></div>

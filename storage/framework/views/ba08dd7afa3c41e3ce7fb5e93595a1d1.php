@@ -54,7 +54,7 @@ foreach ($attributes->all() as $__key => $__value) {
 
 unset($__defined_vars, $__key, $__value); ?>
 
-<?php if (isset($label) || isset($description)): ?>
+<?php if (isset($label) || isset($description) || isset($descriptionTrailing)): ?>
     <?php
 
         $fieldAttributes = Flux::attributesAfter('field:', $attributes, []);

@@ -1,7 +1,7 @@
 <div class="max-w-7xl mx-auto space-y-10 pb-20" x-data="{ modal: <?php if ((object) ('openModal') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('openModal'->value()); ?>')<?php echo e('openModal'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('openModal'); ?>')<?php endif; ?> }">
 
     
-    <?php if (! $__env->hasRenderedOnce('c984d8ea-96e5-4be3-ba4e-626901a9a8f1')): $__env->markAsRenderedOnce('c984d8ea-96e5-4be3-ba4e-626901a9a8f1'); ?>
+    <?php if (! $__env->hasRenderedOnce('94363e82-4c21-4b1b-a2c6-a926a7052640')): $__env->markAsRenderedOnce('94363e82-4c21-4b1b-a2c6-a926a7052640'); ?>
     <style>
         .reminder-card {
             background: rgba(255, 255, 255, 0.75);

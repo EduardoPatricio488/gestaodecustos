@@ -489,10 +489,7 @@ class ManageFamily extends Component
         $recentActivities = ActivityLog::whereIn('user_id', $memberIds)->latest()->take(10)->get();
 
         // 5. LÓGICA DA SIDEBAR PARA CATEGORIAS
-        $exclude = ['Streaming (Vídeo/TV)', 'Música & Podcasts', 'Software & SaaS', 'Gaming', 'Fitness & Ginásio', 'Cloud & Armazenamento', 'Notícias & Revistas', 'Educação & Cursos', 'VPN & Segurança', 'Seguros & Finanças', 'Serviços Casa (Net/TV)', 'Outros'];
-
         $sidebarCategories = Category::where('workspace_id', $workspaceId)
-            ->whereNotIn('name', $exclude)
             ->whereNotNull('slug')
             ->where('slug', '!=', '')
             ->orderBy('order', 'asc')

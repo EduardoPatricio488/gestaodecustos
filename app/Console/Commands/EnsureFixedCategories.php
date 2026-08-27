@@ -30,21 +30,23 @@ class EnsureFixedCategories extends Command
         $users = User::all();
 
         foreach ($users as $user) {
-            foreach ($this->fixed as $slug => $data) {
-                Category::firstOrCreate(
-                    [
-                        'user_id' => $user->id,
-                        'slug' => $slug,
-                    ],
-                    [
-                        'name' => $data['name'],
-                        'icon' => $data['icon'],
-                        'color' => $data['color'],
-                        'order' => $data['order'],
-                        'is_fixed' => true,
-                        'workspace_id' => $user->currentWorkspace?->id,
-                    ]
-                );
+            foreach ($user->workspaces as $workspace) {
+                foreach ($this->fixed as $slug => $data) {
+                    Category::firstOrCreate(
+                        [
+                            'user_id' => $user->id,
+                            'workspace_id' => $workspace->id,
+                            'slug' => $slug,
+                        ],
+                        [
+                            'name' => $data['name'],
+                            'icon' => $data['icon'],
+                            'color' => $data['color'],
+                            'order' => $data['order'],
+                            'is_fixed' => true,
+                        ]
+                    );
+                }
             }
         }
 
