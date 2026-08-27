@@ -20,6 +20,7 @@ use App\Livewire\Admin\RemindersMonitor;
 use App\Livewire\Admin\SiteSettings;
 use App\Livewire\Admin\StoreHub;
 use App\Livewire\Admin\SubscriptionHub as AdminSubscriptionHub;
+use App\Livewire\Admin\SupportManager;
 use App\Livewire\Admin\UserManagement;
 use App\Livewire\AiInsights;
 use App\Livewire\AnomalyHub;
@@ -106,7 +107,6 @@ use App\Models\Expense;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
@@ -133,6 +133,7 @@ Route::post('/api/offline/sync', function (Request $request) {
             'category_id' => 11,
         ]);
     }
+
     return response()->json(['status' => 'success']);
 })->middleware(['auth']);
 
@@ -152,7 +153,6 @@ Route::get('/carreiras', CareersHub::class)->name('careers.apply');
 Route::get('/api/whatsapp/webhook', [WhatsappWebhookController::class, 'verify']);
 Route::post('/api/whatsapp/webhook', [WhatsappWebhookController::class, 'handle']);
 
-
 // ══════════════════════════════════════════════════════════════════
 // 2. SISTEMA DE VERIFICAÇÃO E LOGOUT
 // ══════════════════════════════════════════════════════════════════
@@ -162,6 +162,7 @@ Route::middleware('auth')->group(function () {
         if (Auth::user()->hasVerifiedEmail()) {
             return redirect()->route('dashboard');
         }
+
         return view('auth.verify-email');
     })->name('verificar.conta');
 
@@ -171,13 +172,16 @@ Route::middleware('auth')->group(function () {
         if ($request->code == $user->verification_code) {
             $user->markEmailAsVerified();
             $user->update(['verification_code' => null]);
+
             return redirect()->route('dashboard')->with('ok', 'Conta ativada!');
         }
+
         return back()->withErrors(['code' => 'Código incorreto.']);
     })->name('verification.verify-code');
 
     Route::post('/logout', function () {
         Auth::logout();
+
         return redirect('/');
     })->name('logout');
 });
@@ -238,6 +242,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         if ($personal) {
             $user->update(['current_workspace_id' => $personal->id]);
         }
+
         return redirect()->route('dashboard');
     })->name('hub.business.exit');
 
@@ -253,7 +258,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/social', SocialHub::class)->name('social.hub');
     Route::get('/social/u/{username}', SocialProfile::class)->name('social.profile');
 });
-
 
 // ══════════════════════════════════════════════════════════════════
 // 4. MÓDULO PREMIUM (REQUER PLANO PLUS OU SUPERIOR)
@@ -306,9 +310,10 @@ Route::middleware(['auth', 'verified', 'plan:business'])->group(function () {
             if (session()->has('viewing_as_collaborator_id')) {
                 return app()->make(CollaboratorDashboard::class)();
             }
-            if (!($user->isOwner() || $user->isAdminRole())) {
+            if (! ($user->isOwner() || $user->isAdminRole())) {
                 return app()->make(CollaboratorDashboard::class)();
             }
+
             return app()->make(BusinessDashboard::class)();
         })->name('hub.business.dashboard');
 
@@ -353,6 +358,7 @@ Route::middleware(['auth', 'verified', 'plan:business'])->group(function () {
         $user = auth()->user();
         $ws = $user->workspaces()->findOrFail($id);
         $user->update(['current_workspace_id' => $ws->id]);
+
         return in_array($ws->type, ['business', 'company'])
             ? redirect()->route('hub.business.dashboard')
             : redirect()->route('dashboard');
@@ -361,14 +367,20 @@ Route::middleware(['auth', 'verified', 'plan:business'])->group(function () {
 
 // --- ROTAS DE SESSÃO ESPECIAL ---
 Route::get('/empresa/sair-modo-colaborador', function () {
-    if (!session()->has('impersonator_id')) return redirect()->route('dashboard');
+    if (! session()->has('impersonator_id')) {
+        return redirect()->route('dashboard');
+    }
     $ceo = User::find(session()->pull('impersonator_id'));
-    if ($ceo) Auth::login($ceo);
+    if ($ceo) {
+        Auth::login($ceo);
+    }
+
     return redirect()->route('hub.business.dashboard');
 })->name('hub.business.leave-impersonation');
 
 Route::get('/empresa/sair-vista-colaborador', function () {
     session()->forget('viewing_as_collaborator_id');
+
     return redirect()->route('hub.business.dashboard');
 })->name('hub.business.stop-viewing-collaborator');
 
@@ -376,43 +388,56 @@ Route::get('/empresa/sair-vista-colaborador', function () {
 // 6. ÁREA DE ADMINISTRAÇÃO (APENAS EQUIPA INTERNA)
 // ══════════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+
+    // Dashboards e Monitorização
     Route::get('/dashboard', AdminDashboard::class)->name('admin.dashboard');
     Route::get('/estatisticas', AnalyticsHub::class)->name('admin.stats');
     Route::get('/ai-monitor', AiMonitor::class)->name('admin.ai');
     Route::get('/produtividade', ProductivityHub::class)->name('admin.productivity');
     Route::get('/lembretes', RemindersMonitor::class)->name('admin.reminders');
+
+    // Gestão de Utilizadores e Faturação
     Route::get('/utilizadores', UserManagement::class)->name('admin.users');
     Route::get('/faturacao', AdminSubscriptionHub::class)->name('admin.billing');
     Route::get('/suporte-global', SupportManager::class)->name('admin.support');
     Route::get('/comunicacao', CommunicationManager::class)->name('admin.communication');
     Route::get('/gamificacao', GamificationHub::class)->name('admin.gamification');
     Route::get('/loja', StoreHub::class)->name('admin.store');
+
+    // Configurações e Logs
     Route::get('/logs', GlobalLogs::class)->name('admin.logs');
     Route::get('/configuracoes', SiteSettings::class)->name('admin.settings');
 
-    // Personificação
+    // Personificação (CEO entra na conta do Colaborador)
     Route::get('/impersonate/{user}', function (User $user) {
-        if (!auth()->user()->isAdminRole()) abort(403);
+        if (! auth()->user()->isAdminRole()) {
+            abort(403);
+        }
         session()->put('impersonator_id', auth()->id());
         Auth::login($user);
+
         return redirect()->route('dashboard');
     })->name('admin.impersonate');
 });
 
+// Sair da Personificação
 Route::get('/stop-impersonating', function () {
-    if (!session()->has('impersonator_id')) return redirect('/');
+    if (! session()->has('impersonator_id')) {
+        return redirect('/');
+    }
     $admin = User::find(session()->pull('impersonator_id'));
     if ($admin) {
         Auth::login($admin);
+
         return $admin->isAdminRole() ? redirect()->route('admin.users') : redirect()->route('dashboard');
     }
+
     return redirect()->route('dashboard');
 })->name('admin.stop-impersonating');
-
 // ══════════════════════════════════════════════════════════════════
 // 7. EXPORTAÇÕES E APIS EXTERNAS
 // ══════════════════════════════════════════════════════════════════
-Route::middleware(['auth'])->group(function() {
+Route::middleware(['auth'])->group(function () {
     Route::get('/export/dashboard-pdf', [ExportController::class, 'dashboardPdf'])->name('export.dashboard.pdf');
     Route::get('/export/expenses', [ExportController::class, 'expensesPdf'])->name('export.expenses');
     Route::get('/export/empresa', [ExportController::class, 'businessExport'])->name('export.business');
@@ -434,6 +459,7 @@ Route::post('/email/verification-notification', function (Request $request) {
     $user->update(['verification_code' => $newCode]);
     try {
         Mail::to($user->email)->send(new VerifyAccountMail($newCode));
+
         return back()->with('status', 'verification-link-sent');
     } catch (Exception $e) {
         return back()->withErrors(['code' => 'Erro de conexão ao servidor de e-mail.']);

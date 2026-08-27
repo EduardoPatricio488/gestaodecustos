@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('workspaces', function (Blueprint $table) {
-            $table->string('invite_code')->nullable()->unique()->after('type');
-        });
+        if (! Schema::hasColumn('workspaces', 'invite_code')) {
+            Schema::table('workspaces', function (Blueprint $table) {
+                $table->string('invite_code')->nullable()->unique()->after('type');
+            });
+        }
     }
 
     /**

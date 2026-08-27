@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('workspaces', function (Blueprint $table) {
-            // Tipos: personal, couple, family, company
-            $table->string('type')->default('personal')->after('name');
-        });
+        if (! Schema::hasColumn('workspaces', 'type')) {
+            Schema::table('workspaces', function (Blueprint $table) {
+                // Tipos: personal, couple, family, company
+                $table->string('type')->default('personal')->after('name');
+            });
+        }
     }
 
     /**
