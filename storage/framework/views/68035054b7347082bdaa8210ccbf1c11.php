@@ -1064,12 +1064,12 @@
                     </div>
 
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
                         <div class="relative transition-all duration-150 ease-out">
                             <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
                                            text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
-                                Valor (€)
+                                Valor (<?php echo e(strtoupper($currency)); ?>)
                             </label>
                             <input
                                 type="number"
@@ -1081,6 +1081,24 @@
                                        transition-all duration-150 ease-out
                                        focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/20"
                             >
+                        </div>
+
+                        <div class="relative transition-all duration-150 ease-out">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
+                                           text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                                Moeda
+                            </label>
+                            <select
+                                wire:model="currency"
+                                class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
+                                       text-sm font-bold text-white outline-none appearance-none
+                                       transition-all duration-150 ease-out
+                                       focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/20"
+                            >
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $currencyOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $code => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <option value="<?php echo e($code); ?>"><?php echo e($code); ?></option>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            </select>
                         </div>
 
                         <div class="relative transition-all duration-150 ease-out">
@@ -1167,8 +1185,10 @@
 
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($tax_estimate && $amount): ?>
                             <p class="text-[10px] text-amber-400 font-bold mt-1.5 transition-all duration-150 ease-out">
-                                Imposto estimado: ~<?php echo e(number_format($amount * $tax_estimate / 100, 2, ',', '.')); ?>€
-                                · Líquido: ~<?php echo e(number_format($amount - ($amount * $tax_estimate / 100), 2, ',', '.')); ?>€
+                                Imposto estimado: ~<?php echo e(number_format($amount * $tax_estimate / 100, 2, ',', '.')); ?> <?php echo e(strtoupper($currency)); ?>
+
+                                · Líquido: ~<?php echo e(number_format($amount - ($amount * $tax_estimate / 100), 2, ',', '.')); ?> <?php echo e(strtoupper($currency)); ?>
+
                             </p>
                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </div>

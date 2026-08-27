@@ -47,11 +47,33 @@
     </div>
 
     {{-- ── 2. BARRA DE FILTROS (COLLAPSIBLE) ── --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Entradas previstas</p>
+            <p class="text-2xl font-black text-emerald-600 italic tabular-nums">{{ number_format($monthSummary['income'], 0, ',', '.') }}â‚¬</p>
+        </div>
+        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Saidas previstas</p>
+            <p class="text-2xl font-black text-red-500 italic tabular-nums">{{ number_format($monthSummary['outflow'], 0, ',', '.') }}â‚¬</p>
+        </div>
+        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Vencimentos fixos</p>
+            <p class="text-2xl font-black text-amber-500 italic tabular-nums">{{ number_format($monthSummary['fixed_outflow'], 0, ',', '.') }}â‚¬</p>
+        </div>
+        <div class="bg-zinc-950 text-white border border-zinc-800 rounded-3xl p-5 shadow-xl">
+            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2">Dias de risco</p>
+            <p class="text-2xl font-black {{ $monthSummary['risk_days'] > 0 ? 'text-red-400' : 'text-emerald-400' }} italic tabular-nums">{{ $monthSummary['risk_days'] }}</p>
+            <p class="text-[9px] text-zinc-500 mt-1">saldo final {{ number_format($monthSummary['projected_balance'], 0, ',', '.') }}â‚¬</p>
+        </div>
+    </div>
+
     <div x-show="filterOpen" x-collapse x-cloak>
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 flex flex-wrap gap-4 shadow-sm mb-6">
             @foreach([
                 'incomes' => ['label' => 'Receitas', 'color' => 'emerald'],
                 'expenses' => ['label' => 'Despesas', 'color' => 'red'],
+                'subscriptions' => ['label' => 'Assinaturas', 'color' => 'purple'],
+                'debts' => ['label' => 'Parcelas', 'color' => 'amber'],
                 'fitness' => ['label' => 'Treino', 'color' => 'orange'],
                 'reminders' => ['label' => 'Lembretes', 'color' => 'indigo']
             ] as $key => $filter)
@@ -90,14 +112,16 @@
                     $dateKey = sprintf('%04d-%02d-%02d', $year, $month, $day);
                     $events = $this->dayEvents->get($dateKey, collect());
                     $isToday = $dateKey === now()->format('Y-m-d');
+                    $isRiskDay = $riskDays->has($dateKey);
+                    $riskBalance = $riskDays->get($dateKey)['projected_balance'] ?? null;
 
-                    $dailyIncome = $events->where('type', 'income')->sum('amount');
-                    $dailyExpense = $events->where('type', 'expense')->sum('amount');
+                    $dailyIncome = $events->whereIn('type', ['income', 'salary'])->sum('amount');
+                    $dailyExpense = $events->whereIn('type', ['expense', 'subscription', 'debt'])->sum('amount');
                 @endphp
 
                 <div
                     {{-- wire:click="openDayDetail('{{ $dateKey }}')" --}}
-                    class="relative min-h-[110px] sm:min-h-[150px] border-r border-b border-zinc-100 dark:border-zinc-800 p-3 transition-all hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group/day cursor-pointer"
+                    class="relative min-h-[110px] sm:min-h-[150px] border-r border-b border-zinc-100 dark:border-zinc-800 p-3 transition-all hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group/day cursor-pointer {{ $isRiskDay ? 'bg-red-50/70 dark:bg-red-950/20 ring-1 ring-inset ring-red-200 dark:ring-red-900' : '' }}"
                 >
                     {{-- Cabeçalho da Célula --}}
                     <div class="flex justify-between items-start mb-2">

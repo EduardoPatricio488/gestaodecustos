@@ -102,15 +102,26 @@
                 <form wire:submit.prevent="save" class="p-6 sm:p-10 space-y-8" autocomplete="off">
 
                     {{-- Valor e Data --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         <label class="block space-y-2">
                             <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Valor da Transação</span>
                             <div class="relative">
                                 <input wire:model="amount" type="number" step="0.01" placeholder="0.00"
                                     class="w-full h-16 rounded-2xl border-0 bg-zinc-50 dark:bg-zinc-950 px-6 text-2xl font-black text-brand-600 shadow-inner outline-none ring-0 focus:ring-2 focus:ring-brand-500/20 transition-all">
-                                <span class="absolute right-6 top-1/2 -translate-y-1/2 font-black text-zinc-400">€</span>
+                                <span class="absolute right-6 top-1/2 -translate-y-1/2 font-black text-zinc-400">{{ strtoupper($currency) }}</span>
                             </div>
                         </label>
+
+                        <label class="block space-y-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Moeda</span>
+                            <select wire:model="currency"
+                                class="w-full h-16 rounded-2xl border-0 bg-zinc-50 dark:bg-zinc-950 px-6 text-sm font-black shadow-inner outline-none ring-0 focus:ring-2 focus:ring-brand-500/20 transition-all dark:text-white">
+                                @foreach($currencyOptions as $code => $label)
+                                    <option value="{{ $code }}">{{ $code }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+
                         <label class="block space-y-2">
                             <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Data do Registo</span>
                             <input wire:model="spent_at" type="date"
@@ -130,15 +141,16 @@
                     </label>
 
                     {{-- Campos Dinâmicos (Hub Específico) --}}
-                    @if(isset($categoryFields[$activeSlug]))
+                    @php $activeSlugKey = is_string($activeSlug) ? $activeSlug : null; @endphp
+                    @if($activeSlugKey && isset($categoryFields[$activeSlugKey]))
                     <div class="rounded-3xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-6 sm:p-8 space-y-6 animate-in fade-in slide-in-from-top-2 duration-500">
                         <div class="flex items-center gap-3 border-b border-zinc-200/50 dark:border-zinc-800 pb-4">
-                            <flux:icon name="{{ $categoryFields[$activeSlug]['icon'] ?? 'tag' }}" class="size-4" style="color: var(--cat-color);" />
+                            <flux:icon name="{{ $categoryFields[$activeSlugKey]['icon'] ?? 'tag' }}" class="size-4" style="color: var(--cat-color);" />
                             <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Informações de Contexto</span>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            @foreach($categoryFields[$activeSlug]['fields'] as $field)
+                            @foreach($categoryFields[$activeSlugKey]['fields'] as $field)
                                 <label class="block space-y-2">
                                     <span class="text-[10px] font-bold uppercase text-zinc-400 ml-1">{{ $field['label'] }}</span>
                                     @if($field['type'] === 'select')

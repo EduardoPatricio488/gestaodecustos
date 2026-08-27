@@ -198,6 +198,71 @@ unset($__split);
         
         <div class="space-y-6">
             <div class="flex items-center gap-3 px-4">
+<<<<<<< HEAD
+=======
+                <div class="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-600">
+                    <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'envelope','variant' => 'outline','class' => 'size-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'envelope','variant' => 'outline','class' => 'size-4']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+                </div>
+                <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 text-left">Automação de Relatórios</h2>
+            </div>
+
+            <div class="glass-card p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md">
+                <div class="max-w-2xl text-left">
+                    <?php
+$__split = function ($name, $params = []) {
+    return [$name, $params];
+};
+[$__name, $__params] = $__split('profile.monthly-report-settings', []);
+
+$__keyOuter = $__key ?? null;
+
+$__key = null;
+$__componentSlots = [];
+
+$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3605688787-2', $__key);
+
+$__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
+
+echo $__html;
+
+unset($__html);
+unset($__key);
+$__key = $__keyOuter;
+unset($__keyOuter);
+unset($__name);
+unset($__params);
+unset($__componentSlots);
+unset($__split);
+?>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="space-y-6">
+            <div class="flex items-center gap-3 px-4">
+>>>>>>> 512abb8 (Update 2.0)
                 <div class="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-500">
                     <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
@@ -238,7 +303,11 @@ $__keyOuter = $__key ?? null;
 $__key = null;
 $__componentSlots = [];
 
+<<<<<<< HEAD
 $__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3605688787-2', $__key);
+=======
+$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3605688787-3', $__key);
+>>>>>>> 512abb8 (Update 2.0)
 
 $__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
 
@@ -289,6 +358,46 @@ unset($__split);
 
     <div class="glass-card p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md relative min-h-[350px] flex flex-col justify-center">
 
+<<<<<<< HEAD
+=======
+        <div class="mb-8 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Proteção Avançada</p>
+                <p class="text-xs text-zinc-500 mt-1">
+                    2FA e passkeys são configurados na página de segurança dedicada.
+                </p>
+                <p class="text-[10px] font-black mt-2 <?php echo e(auth()->user()->hasEnabledTwoFactorAuthentication() ? 'text-emerald-600' : 'text-amber-600'); ?>">
+                    <?php echo e(auth()->user()->hasEnabledTwoFactorAuthentication() ? '2FA ativo' : '2FA ainda não ativado'); ?>
+
+                </p>
+            </div>
+
+            <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['href' => ''.e(route('security.edit')).'','wire:navigate' => true,'variant' => 'primary','icon' => 'shield-check','class' => 'rounded-2xl px-6 h-12 font-black uppercase tracking-widest text-[10px]']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['href' => ''.e(route('security.edit')).'','wire:navigate' => true,'variant' => 'primary','icon' => 'shield-check','class' => 'rounded-2xl px-6 h-12 font-black uppercase tracking-widest text-[10px]']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                Abrir Segurança
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+        </div>
+
+>>>>>>> 512abb8 (Update 2.0)
         
         <div x-show="!privacyMode" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" class="w-full">
             <div class="max-w-2xl text-left">
@@ -303,7 +412,11 @@ $__keyOuter = $__key ?? null;
 $__key = null;
 $__componentSlots = [];
 
+<<<<<<< HEAD
 $__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3605688787-3', $__key);
+=======
+$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3605688787-4', $__key);
+>>>>>>> 512abb8 (Update 2.0)
 
 $__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
 
@@ -407,7 +520,11 @@ $__keyOuter = $__key ?? null;
 $__key = null;
 $__componentSlots = [];
 
+<<<<<<< HEAD
 $__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3605688787-4', $__key);
+=======
+$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3605688787-5', $__key);
+>>>>>>> 512abb8 (Update 2.0)
 
 $__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
 

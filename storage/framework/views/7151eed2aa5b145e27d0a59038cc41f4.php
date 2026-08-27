@@ -3189,6 +3189,75 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 <?php endif; ?>
                     <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'users','href' => route('hub.split'),'wire:navigate.hover' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::sidebar.item'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['icon' => 'users','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.split')),'wire:navigate.hover' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Dividir Despesas
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+                    <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'exclamation-triangle','href' => route('hub.anomalies'),'wire:navigate.hover' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::sidebar.item'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['icon' => 'exclamation-triangle','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.anomalies')),'wire:navigate.hover' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Anomalias IA
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+                    <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'chart-pie','href' => route('hub.expense-forecast'),'wire:navigate.hover' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::sidebar.item'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['icon' => 'chart-pie','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.expense-forecast')),'wire:navigate.hover' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Previsão Despesas
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+                    <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'chart-bar-square','href' => route('hub.investments'),'wire:navigate.hover' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar.item'); ?>
 <?php if ($component->shouldRender()): ?>
@@ -3237,6 +3306,29 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 <?php endif; ?>
                     <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'magnifying-glass','href' => route('hub.subscriptions.scanner'),'wire:navigate.hover' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::sidebar.item'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['icon' => 'magnifying-glass','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.subscriptions.scanner')),'wire:navigate.hover' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Scanner Subscrições
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+                    <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'briefcase','href' => route('hub.networth'),'wire:navigate.hover' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar.item'); ?>
 <?php if ($component->shouldRender()): ?>
@@ -3248,6 +3340,52 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                         Património Real
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+                    <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'clock','href' => route('hub.retirement'),'wire:navigate.hover' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::sidebar.item'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['icon' => 'clock','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.retirement')),'wire:navigate.hover' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Simulador de Reforma
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+                    <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'fire','href' => route('hub.inflation'),'wire:navigate.hover' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::sidebar.item'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['icon' => 'fire','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.inflation')),'wire:navigate.hover' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Análise de Inflação
                      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -3448,6 +3586,30 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 
                         Família <?php echo $badge($counts['ranking']); ?>
 
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+
+                    <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'beaker','href' => route('hub.family.scenario'),'current' => request()->routeIs('hub.family.scenario'),'wire:navigate.hover' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::sidebar.item'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['icon' => 'beaker','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.family.scenario')),'current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('hub.family.scenario')),'wire:navigate.hover' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Simulação Familiar
                      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -4331,6 +4493,10 @@ unset($__split);
                         <div class="py-1">
                             <a href="<?php echo e(route('profile.edit')); ?>" wire:navigate.hover class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
                                 👤 O meu perfil
+                            </a>
+
+                            <a href="<?php echo e(route('hub.ranking')); ?>" wire:navigate.hover class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
+                                🏆 Ranking
                             </a>
 
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($user->isDiamond() || $user->isStar()): ?>

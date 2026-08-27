@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Business;
 
+use App\Services\CurrencyService;
 use Livewire\Component;
 use App\Models\Invoice;
 use Livewire\Attributes\Layout;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
@@ -18,10 +20,19 @@ class InvoicingHub extends Component
     public $amount_excl_vat;
     public $vat_amount;
     public $total_amount;
+    public string $currency = 'EUR';
     public $due_date;
     public $status = 'pendente';
 
     public $statusFilter = '';
+    public array $currencyOptions = [];
+
+    public function mount(): void
+    {
+        $workspaceCurrency = strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR'));
+        $this->currency = $workspaceCurrency;
+        $this->currencyOptions = CurrencyService::getSymbols();
+    }
 
     public function rules()
 {
@@ -29,6 +40,7 @@ class InvoicingHub extends Component
         'client_name' => 'required|string|max:255',
         'amount_excl_vat' => 'required|numeric|min:0.01',
         'due_date' => 'required|date',
+        'currency' => 'required|string|size:3',
 
         'invoice_number' => [
             'required',
@@ -87,12 +99,14 @@ class InvoicingHub extends Component
             'amount_excl_vat'=> $this->amount_excl_vat,
             'vat_amount'     => $this->vat_amount,
             'total_amount'   => $this->total_amount,
+            'currency'       => strtoupper($this->currency),
             'status'         => $this->status,
             'due_date'       => $this->due_date,
         ]);
 
         $this->resetExcept('statusFilter');
         $this->status = 'pendente';
+        $this->currency = strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR'));
 
         $this->dispatch('modal-close', name: 'add-invoice-modal');
         $this->dispatch('toast', text: 'Fatura registada!', variant: 'success');
@@ -146,9 +160,11 @@ class InvoicingHub extends Component
 
     return view('livewire.business.invoicing-hub', [
         'invoices'     => $query->paginate(10),
-        'totalBilled'  => (clone $query)->where('status', 'paga')->sum('total_amount'),
-        'totalPending' => (clone $query)->where('status', 'pendente')->sum('total_amount'),
-        'vatToPay'     => (clone $query)->sum('vat_amount'),
+        'workspaceCurrency' => strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR')),
+        'currencyOptions' => $this->currencyOptions,
+        'totalBilled'  => (clone $query)->where('status', 'paga')->sum(DB::raw('COALESCE(total_amount_converted, total_amount)')),
+        'totalPending' => (clone $query)->where('status', 'pendente')->sum(DB::raw('COALESCE(total_amount_converted, total_amount)')),
+        'vatToPay'     => (clone $query)->sum(DB::raw('COALESCE(vat_amount_converted, vat_amount)')),
     ]);
 }
 

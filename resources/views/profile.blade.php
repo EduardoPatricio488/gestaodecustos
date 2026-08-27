@@ -51,6 +51,22 @@
             </div>
         </div>
 
+        {{-- 3b. SECÇÃO: RELATÓRIO MENSAL POR EMAIL --}}
+        <div class="space-y-6">
+            <div class="flex items-center gap-3 px-4">
+                <div class="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-600">
+                    <flux:icon name="envelope" variant="outline" class="size-4" />
+                </div>
+                <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 text-left">Automação de Relatórios</h2>
+            </div>
+
+            <div class="glass-card p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md">
+                <div class="max-w-2xl text-left">
+                    <livewire:profile.monthly-report-settings />
+                </div>
+            </div>
+        </div>
+
         {{-- 4. SECÇÃO: DADOS DE IDENTIDADE --}}
         <div class="space-y-6">
             <div class="flex items-center gap-3 px-4">
@@ -77,6 +93,28 @@
     </div>
 
     <div class="glass-card p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md relative min-h-[350px] flex flex-col justify-center">
+
+        <div class="mb-8 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Proteção Avançada</p>
+                <p class="text-xs text-zinc-500 mt-1">
+                    2FA e passkeys são configurados na página de segurança dedicada.
+                </p>
+                <p class="text-[10px] font-black mt-2 {{ auth()->user()->hasEnabledTwoFactorAuthentication() ? 'text-emerald-600' : 'text-amber-600' }}">
+                    {{ auth()->user()->hasEnabledTwoFactorAuthentication() ? '2FA ativo' : '2FA ainda não ativado' }}
+                </p>
+            </div>
+
+            <flux:button
+                href="{{ route('security.edit') }}"
+                wire:navigate
+                variant="primary"
+                icon="shield-check"
+                class="rounded-2xl px-6 h-12 font-black uppercase tracking-widest text-[10px]"
+            >
+                Abrir Segurança
+            </flux:button>
+        </div>
 
         {{-- CASO 1: PRIVACIDADE DESATIVADA (Mostra o Formulário) --}}
         <div x-show="!privacyMode" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" class="w-full">

@@ -734,12 +734,12 @@
                     </div>
 
                     {{-- Valor + Data --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
                         <div class="relative transition-all duration-150 ease-out">
                             <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
                                            text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
-                                Valor (€)
+                                Valor ({{ strtoupper($currency) }})
                             </label>
                             <input
                                 type="number"
@@ -751,6 +751,24 @@
                                        transition-all duration-150 ease-out
                                        focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/20"
                             >
+                        </div>
+
+                        <div class="relative transition-all duration-150 ease-out">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
+                                           text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                                Moeda
+                            </label>
+                            <select
+                                wire:model="currency"
+                                class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
+                                       text-sm font-bold text-white outline-none appearance-none
+                                       transition-all duration-150 ease-out
+                                       focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/20"
+                            >
+                                @foreach($currencyOptions as $code => $label)
+                                    <option value="{{ $code }}">{{ $code }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="relative transition-all duration-150 ease-out">
@@ -837,8 +855,8 @@
 
                         @if($tax_estimate && $amount)
                             <p class="text-[10px] text-amber-400 font-bold mt-1.5 transition-all duration-150 ease-out">
-                                Imposto estimado: ~{{ number_format($amount * $tax_estimate / 100, 2, ',', '.') }}€
-                                · Líquido: ~{{ number_format($amount - ($amount * $tax_estimate / 100), 2, ',', '.') }}€
+                                Imposto estimado: ~{{ number_format($amount * $tax_estimate / 100, 2, ',', '.') }} {{ strtoupper($currency) }}
+                                · Líquido: ~{{ number_format($amount - ($amount * $tax_estimate / 100), 2, ',', '.') }} {{ strtoupper($currency) }}
                             </p>
                         @endif
                     </div>

@@ -68,7 +68,7 @@
 
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Total Recebido (Pagas)</p>
             <h3 class="text-4xl font-black text-emerald-600 tracking-tighter">
-                {{ number_format($totalBilled, 2, ',', ' ') }} €
+                {{ number_format($totalBilled, 2, ',', ' ') }} {{ $workspaceCurrency }}
             </h3>
         </div>
 
@@ -85,7 +85,7 @@
 
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Contas a Receber</p>
             <h3 class="text-4xl font-black text-amber-600 tracking-tighter">
-                {{ number_format($totalPending, 2, ',', ' ') }} €
+                {{ number_format($totalPending, 2, ',', ' ') }} {{ $workspaceCurrency }}
             </h3>
         </div>
 
@@ -96,7 +96,7 @@
             <div class="relative z-10">
                 <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1">IVA Total Acumulado</p>
                 <h3 class="text-4xl font-black text-white tracking-tighter italic">
-                    {{ number_format($vatToPay, 2, ',', ' ') }} €
+                    {{ number_format($vatToPay, 2, ',', ' ') }} {{ $workspaceCurrency }}
                 </h3>
                 <p class="mt-4 text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Reserva Fiscal Obrigatória</p>
             </div>
@@ -172,10 +172,13 @@
                             {{-- Valor --}}
                             <td class="p-6 text-right px-10">
                                 <span class="text-xl font-black {{ $inv->status === 'paga' ? 'text-emerald-600' : 'text-zinc-900 dark:text-white' }} italic">
-                                    {{ number_format($inv->total_amount, 2, ',', ' ') }} €
+                                    {{ number_format($inv->total_amount, 2, ',', ' ') }} {{ strtoupper($inv->currency ?? $workspaceCurrency) }}
                                 </span>
                                 <span class="text-[8px] font-black text-zinc-400 uppercase opacity-70">
-                                    Base: {{ number_format($inv->amount_excl_vat, 2, ',', ' ') }}€
+                                    Base: {{ number_format($inv->amount_excl_vat, 2, ',', ' ') }} {{ strtoupper($inv->currency ?? $workspaceCurrency) }}
+                                </span>
+                                <span class="block text-[8px] font-black text-brand-600 uppercase opacity-80">
+                                    Conv.: {{ number_format($inv->total_amount_converted ?? $inv->total_amount, 2, ',', ' ') }} {{ $workspaceCurrency }}
                                 </span>
                             </td>
 

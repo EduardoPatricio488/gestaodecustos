@@ -6,7 +6,9 @@ use App\Livewire\{
     InvestmentsHub, NetWorthHub, FinancialCalendar, ActivityFeed,
     GlobalSearch, SubscriptionPlans, FamilyRanking, DebtHub, SupportHub,
     PersonalCalendar, CategoryFields, ManageFamily, FitnessHub,
-    BudgetHub, StatementImportHub, WrappedReport, LockInHub, BancoHub
+    BudgetHub, StatementImportHub, WrappedReport, LockInHub, BancoHub,
+    RetirementSimulator, SplitHub, InflationHub, AnomalyHub, ExpenseForecastHub,
+    SubscriptionScannerHub, FamilyScenarioHub
 };
 use App\Livewire\Admin\AiMonitor;
 use App\Livewire\Business\CollaboratorExpenseHub;
@@ -220,15 +222,22 @@ Route::get('/meu-perfil', \App\Livewire\Business\MyCompanyProfile::class)->name(
     Route::get('/receitas', IncomeHub::class)->name('hub.incomes');
     Route::get('/investimentos', InvestmentsHub::class)->name('hub.investments');
     Route::get('/patrimonio', NetWorthHub::class)->name('hub.networth');
+    Route::get('/reforma', RetirementSimulator::class)->name('hub.retirement');
+    Route::get('/inflacao', InflationHub::class)->name('hub.inflation');
     Route::get('/calendario', PersonalCalendar::class)->name('hub.calendar');
     Route::get('/assinaturas', SubscriptionHub::class)->name('hub.subscriptions');
+    Route::get('/assinaturas/scanner', SubscriptionScannerHub::class)->name('hub.subscriptions.scanner');
     Route::get('/objetivos', GoalsHub::class)->name('hub.goals');
     Route::get('/relatorios', YearlyReport::class)->name('hub.reports');
     Route::get('/ranking', FamilyRanking::class)->name('hub.ranking');
     Route::get('/dividas', DebtHub::class)->name('hub.debts');
+    Route::get('/dividir', SplitHub::class)->name('hub.split');
+    Route::get('/anomalias', AnomalyHub::class)->name('hub.anomalies');
+    Route::get('/previsao-despesas', ExpenseForecastHub::class)->name('hub.expense-forecast');
     Route::get('/minhas-contas', BankAccountHub::class)->name('hub.personal.accounts');
     Route::get('/banco', BancoHub::class)->name('hub.banco');
     Route::get('/familia/gestao', ManageFamily::class)->name('hub.family.manage');
+    Route::get('/familia/simulacao', FamilyScenarioHub::class)->name('hub.family.scenario');
     Route::get('/orcamento', BudgetHub::class)->name('hub.budget');
     Route::get('/importar-extrato', StatementImportHub::class)->name('hub.import');
     Route::get('/wrapped', WrappedReport::class)->name('hub.wrapped');

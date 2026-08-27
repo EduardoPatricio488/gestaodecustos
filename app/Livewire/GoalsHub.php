@@ -2,10 +2,13 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
+use App\Models\AutoSavingsRule;
 use App\Models\Goal;
+use App\Models\GoalContribution;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class GoalsHub extends Component
@@ -21,6 +24,12 @@ class GoalsHub extends Component
     public ?int $depositGoalId = null;
     public $depositAmount = '';
 
+    public ?int $autoGoalId = null;
+    public string $autoProfile = 'equilibrado';
+    public $autoPercent = 20;
+    public $autoMinIncomeAmount = '';
+    public string $autoAppliesTo = 'all';
+
     /**
      * Criar ou atualizar meta
      */
@@ -35,7 +44,10 @@ class GoalsHub extends Component
 
         $workspaceId = auth()->user()->current_workspace_id;
 
-        Goal::updateOrCreate(
+        $initialAmount = (float) $this->current_amount;
+        $isCreating = $this->editingGoalId === null;
+
+        $goal = Goal::updateOrCreate(
             ['id' => $this->editingGoalId],
             [
                 'user_id'        => auth()->id(),
@@ -46,6 +58,18 @@ class GoalsHub extends Component
                 'deadline'       => $this->deadline ?: null,
             ]
         );
+
+        if ($isCreating && $initialAmount > 0) {
+            GoalContribution::create([
+                'workspace_id' => $workspaceId,
+                'goal_id' => $goal->id,
+                'user_id' => auth()->id(),
+                'amount' => $initialAmount,
+                'source' => 'initial',
+                'note' => 'Valor inicial da meta.',
+                'contributed_at' => now(),
+            ]);
+        }
 
         // FECHAR MODAL
         $this->dispatch('modal-close-goal');
@@ -118,7 +142,21 @@ class GoalsHub extends Component
         $goal = Goal::where('workspace_id', auth()->user()->current_workspace_id)
             ->findOrFail($this->depositGoalId);
 
-        $goal->increment('current_amount', (float) $this->depositAmount);
+        DB::transaction(function () use ($goal) {
+            $amount = (float) $this->depositAmount;
+
+            GoalContribution::create([
+                'workspace_id' => $goal->workspace_id,
+                'goal_id' => $goal->id,
+                'user_id' => auth()->id(),
+                'amount' => $amount,
+                'source' => 'manual',
+                'note' => 'Deposito manual.',
+                'contributed_at' => now(),
+            ]);
+
+            $goal->increment('current_amount', $amount);
+        });
 
         // FECHAR MODAL
         $this->dispatch('modal-close-deposit');
@@ -130,26 +168,134 @@ class GoalsHub extends Component
         $this->reset(['depositGoalId', 'depositAmount']);
     }
 
+    public function updatedAutoProfile(string $profile): void
+    {
+        $defaults = $this->autoProfiles();
+
+        if (isset($defaults[$profile])) {
+            $this->autoPercent = $defaults[$profile]['percent'];
+        }
+    }
+
+    public function saveAutoSavingsRule(): void
+    {
+        $profiles = implode(',', array_keys($this->autoProfiles()));
+
+        $this->validate([
+            'autoGoalId' => 'required|integer|exists:goals,id',
+            'autoProfile' => 'required|in:'.$profiles,
+            'autoPercent' => 'required|numeric|min:1|max:80',
+            'autoMinIncomeAmount' => 'nullable|numeric|min:0',
+            'autoAppliesTo' => 'required|in:all,recurring,one_off',
+        ]);
+
+        $workspaceId = auth()->user()->current_workspace_id;
+        $goal = Goal::where('workspace_id', $workspaceId)->findOrFail($this->autoGoalId);
+
+        AutoSavingsRule::updateOrCreate(
+            [
+                'workspace_id' => $workspaceId,
+                'user_id' => auth()->id(),
+                'goal_id' => $goal->id,
+            ],
+            [
+                'profile' => $this->autoProfile,
+                'percent' => (float) $this->autoPercent,
+                'min_income_amount' => $this->autoMinIncomeAmount !== '' ? (float) $this->autoMinIncomeAmount : null,
+                'applies_to' => $this->autoAppliesTo,
+                'is_active' => true,
+            ]
+        );
+
+        $this->autoProfile = 'equilibrado';
+        $this->autoPercent = 20;
+        $this->autoMinIncomeAmount = '';
+        $this->autoAppliesTo = 'all';
+
+        $this->dispatch('toast', variant: 'success', text: 'Regra de autopoupanca guardada!');
+    }
+
+    public function toggleAutoSavingsRule(int $id): void
+    {
+        $rule = AutoSavingsRule::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->findOrFail($id);
+
+        $rule->update(['is_active' => ! $rule->is_active]);
+    }
+
+    public function deleteAutoSavingsRule(int $id): void
+    {
+        AutoSavingsRule::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->findOrFail($id)
+            ->delete();
+
+        $this->dispatch('toast', text: 'Regra removida.');
+    }
+
+    private function autoProfiles(): array
+    {
+        return [
+            'conservador' => ['label' => 'Conservador', 'percent' => 10],
+            'equilibrado' => ['label' => 'Equilibrado', 'percent' => 20],
+            'agressivo' => ['label' => 'Agressivo', 'percent' => 30],
+        ];
+    }
+
     public function render()
     {
         $workspaceId = auth()->user()->current_workspace_id;
-        $goalsRaw    = Goal::where('workspace_id', $workspaceId)->orderBy('deadline')->get();
+        $goalsRaw    = Goal::with(['contributions.user'])
+            ->where('workspace_id', $workspaceId)
+            ->orderBy('deadline')
+            ->get();
 
         $goals = $goalsRaw->map(function ($goal) {
             $perc     = $goal->target_amount > 0 ? ($goal->current_amount / $goal->target_amount) * 100 : 0;
             $gap      = max(0, $goal->target_amount - $goal->current_amount);
             $daysLeft = $goal->deadline ? now()->diffInDays(Carbon::parse($goal->deadline), false) : null;
+            $recentContributions = $goal->contributions
+                ->sortByDesc('contributed_at')
+                ->take(3)
+                ->values();
 
             $monthsLeft    = ($daysLeft !== null && $daysLeft > 0) ? max(1, ceil($daysLeft / 30)) : null;
             $monthlyNeeded = ($monthsLeft && $gap > 0) ? $gap / $monthsLeft : null;
+            $last90DaysTotal = (float) $goal->contributions
+                ->filter(fn ($contribution) => $contribution->contributed_at && $contribution->contributed_at->gte(now()->subDays(90)))
+                ->sum('amount');
+            $monthlyPace = $last90DaysTotal > 0 ? $last90DaysTotal / 3 : 0.0;
+            $predictedCompletionDate = null;
+
+            if ($perc >= 100) {
+                $predictedCompletionDate = now();
+            } elseif ($gap > 0 && $monthlyPace > 0) {
+                $predictedCompletionDate = now()->copy()->addMonths((int) ceil($gap / $monthlyPace));
+            }
 
             $goal->perc          = $perc;
             $goal->gap           = $gap;
             $goal->daysLeft      = $daysLeft;
             $goal->monthlyNeeded = $monthlyNeeded;
+            $goal->monthlyPace   = $monthlyPace;
+            $goal->predictedCompletionDate = $predictedCompletionDate;
+            $goal->isLateByForecast = $goal->deadline
+                && $predictedCompletionDate
+                && $predictedCompletionDate->gt(Carbon::parse($goal->deadline))
+                && $perc < 100;
             $goal->isCompleted   = $perc >= 100;
             $goal->isOverdue     = $daysLeft !== null && $daysLeft < 0 && !$goal->isCompleted;
             $goal->isUrgent      = $daysLeft !== null && $daysLeft >= 0 && $daysLeft <= 30 && !$goal->isCompleted;
+            $goal->contributors   = $goal->contributions
+                ->groupBy('user_id')
+                ->map(fn ($rows) => [
+                    'name' => $rows->first()->user?->name ?? 'Membro',
+                    'amount' => (float) $rows->sum('amount'),
+                ])
+                ->sortByDesc('amount')
+                ->values();
+            $goal->recentContributions = $recentContributions;
 
             return $goal;
         });
@@ -180,6 +326,12 @@ class GoalsHub extends Component
             'completed'    => $completed,
             'urgent'       => $urgent,
             'overdue'      => $overdue,
+            'autoProfiles' => $this->autoProfiles(),
+            'autoSavingsRules' => AutoSavingsRule::with('goal')
+                ->where('workspace_id', $workspaceId)
+                ->where('user_id', auth()->id())
+                ->latest()
+                ->get(),
         ]);
     }
 }

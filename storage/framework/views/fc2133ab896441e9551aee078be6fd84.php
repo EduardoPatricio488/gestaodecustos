@@ -312,6 +312,108 @@ Voltar <?php echo $__env->renderComponent(); ?>
     
     
     
+    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+                <h2 class="font-black text-zinc-900 dark:text-white uppercase tracking-tight text-sm">Histórico de Património Líquido</h2>
+                <p class="text-xs text-zinc-400 mt-0.5">Evolução estimada dos últimos 12 meses</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[9px] uppercase font-black tracking-widest text-zinc-400">Variação no Período</p>
+                <p class="text-lg font-black tabular-nums <?php echo e($historyDelta >= 0 ? 'text-emerald-500' : 'text-red-500'); ?>">
+                    <?php echo e($historyDelta >= 0 ? '+' : ''); ?><?php echo e(number_format($historyDelta, 0, ',', ' ')); ?> €
+                </p>
+            </div>
+        </div>
+
+        <?php
+            $nwSeries = $netWorthHistory->values();
+            $nwMin = (float) $nwSeries->min('value');
+            $nwMax = (float) $nwSeries->max('value');
+            $range = max(1, $nwMax - $nwMin);
+            $w = 100;
+            $h = 32;
+            $pts = [];
+            $lastIndex = max(1, $nwSeries->count() - 1);
+
+            foreach ($nwSeries as $idx => $point) {
+                $x = ($idx / $lastIndex) * $w;
+                $y = $h - ((($point['value'] - $nwMin) / $range) * $h);
+                $pts[] = round($x, 2).','.round($y, 2);
+            }
+
+            $polyline = implode(' ', $pts);
+        ?>
+
+        <div class="rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/40 p-4">
+            <svg viewBox="0 0 100 40" class="w-full h-44">
+                <defs>
+                    <linearGradient id="nwArea" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.28" />
+                        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
+
+                <line x1="0" y1="34" x2="100" y2="34" stroke="rgba(148,163,184,0.25)" stroke-width="0.4" />
+                <line x1="0" y1="22" x2="100" y2="22" stroke="rgba(148,163,184,0.15)" stroke-width="0.3" />
+                <line x1="0" y1="10" x2="100" y2="10" stroke="rgba(148,163,184,0.15)" stroke-width="0.3" />
+
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($polyline): ?>
+                    <polygon
+                        points="<?php echo e($polyline); ?> 100,34 0,34"
+                        fill="url(#nwArea)"
+                    />
+                    <polyline
+                        points="<?php echo e($polyline); ?>"
+                        fill="none"
+                        stroke="#3b82f6"
+                        stroke-width="1.2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $nwSeries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idx => $point): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                    <?php
+                        $x = ($idx / $lastIndex) * $w;
+                        $y = $h - ((($point['value'] - $nwMin) / $range) * $h);
+                    ?>
+                    <circle cx="<?php echo e(round($x,2)); ?>" cy="<?php echo e(round($y,2)); ?>" r="0.9" fill="#2563eb" />
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+            </svg>
+
+            <div class="mt-2 flex justify-between text-[9px] font-black uppercase tracking-widest text-zinc-400">
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $nwSeries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idx => $point): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($idx % 3 === 0 || $loop->last): ?>
+                        <span><?php echo e($point['label']); ?></span>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+            <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                <p class="text-[9px] uppercase font-black tracking-widest text-zinc-400">Início</p>
+                <p class="text-sm font-black dark:text-white tabular-nums mt-1"><?php echo e(number_format($historyStart, 0, ',', ' ')); ?> €</p>
+            </div>
+            <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                <p class="text-[9px] uppercase font-black tracking-widest text-zinc-400">Atual</p>
+                <p class="text-sm font-black dark:text-white tabular-nums mt-1"><?php echo e(number_format($historyEnd, 0, ',', ' ')); ?> €</p>
+            </div>
+            <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                <p class="text-[9px] uppercase font-black tracking-widest text-zinc-400">Pico</p>
+                <p class="text-sm font-black text-emerald-500 tabular-nums mt-1"><?php echo e(number_format($historyPeak, 0, ',', ' ')); ?> €</p>
+            </div>
+            <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                <p class="text-[9px] uppercase font-black tracking-widest text-zinc-400">Mínimo</p>
+                <p class="text-sm font-black text-red-500 tabular-nums mt-1"><?php echo e(number_format($historyLow, 0, ',', ' ')); ?> €</p>
+            </div>
+        </div>
+    </div>
+
+    
+    
+    
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         

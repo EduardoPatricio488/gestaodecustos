@@ -1177,14 +1177,32 @@ $hasStoreAccess = $isProUser || $isPlusUser;
                     <flux:sidebar.item icon="hand-raised" :href="route('hub.debts')" wire:navigate.hover>
                         Dívidas {!! $badge($counts['debts']) !!}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="users" :href="route('hub.split')" wire:navigate.hover>
+                        Dividir Despesas
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="exclamation-triangle" :href="route('hub.anomalies')" wire:navigate.hover>
+                        Anomalias IA
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="chart-pie" :href="route('hub.expense-forecast')" wire:navigate.hover>
+                        Previsão Despesas
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="chart-bar-square" :href="route('hub.investments')" wire:navigate.hover>
                         Investimentos {!! $badge($counts['investments']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="credit-card" :href="route('hub.subscriptions')" wire:navigate.hover>
                         Assinaturas {!! $badge($counts['subscriptions']) !!}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="magnifying-glass" :href="route('hub.subscriptions.scanner')" wire:navigate.hover>
+                        Scanner Subscrições
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="briefcase" :href="route('hub.networth')" wire:navigate.hover>
                         Património Real
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="clock" :href="route('hub.retirement')" wire:navigate.hover>
+                        Simulador de Reforma
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="fire" :href="route('hub.inflation')" wire:navigate.hover>
+                        Análise de Inflação
                     </flux:sidebar.item>
                     <flux:sidebar.item
                         icon="building-library"
@@ -1244,6 +1262,10 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 
                     <flux:sidebar.item icon="user-group" :href="route('hub.family.manage')" :current="request()->routeIs('hub.family.manage')" wire:navigate.hover>
                         Família {!! $badge($counts['ranking']) !!}
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="beaker" :href="route('hub.family.scenario')" :current="request()->routeIs('hub.family.scenario')" wire:navigate.hover>
+                        Simulação Familiar
                     </flux:sidebar.item>
 
 
@@ -1513,6 +1535,10 @@ $hasStoreAccess = $isProUser || $isPlusUser;
                         <div class="py-1">
                             <a href="{{ route('profile.edit') }}" wire:navigate.hover class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
                                 👤 O meu perfil
+                            </a>
+
+                            <a href="{{ route('hub.ranking') }}" wire:navigate.hover class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
+                                🏆 Ranking
                             </a>
 
                             @if($user->isDiamond() || $user->isStar())

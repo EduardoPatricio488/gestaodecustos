@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Category;
 use App\Models\Expense;
+use App\Services\CurrencyService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -67,11 +68,19 @@ class ManageExpense extends Component
         if ($expense && $expense->exists) {
             $this->expense = $expense;
             $this->amount = $expense->amount;
-            $this->spent_at = $expense->spent_at->format('Y-m-d');
+            $this->spent_at = \Carbon\Carbon::parse((string) $expense->spent_at)->format('Y-m-d');
             $this->category_id = $expense->category_id;
             $this->subcategory = $expense->subcategory;
             $this->description = $expense->description;
-            $this->meta = is_array($expense->metadata) ? $expense->metadata : (json_decode($expense->metadata, true) ?? []);
+            $rawMetadata = $expense->getRawOriginal('metadata');
+            if (is_array($expense->metadata)) {
+                $this->meta = $expense->metadata;
+            } elseif (is_string($rawMetadata)) {
+                $decoded = json_decode($rawMetadata, true);
+                $this->meta = is_array($decoded) ? $decoded : [];
+            } else {
+                $this->meta = [];
+            }
         } else {
             $this->spent_at = now()->format('Y-m-d');
         }
@@ -185,6 +194,7 @@ PROMPT;
     {
         $this->validate([
             'amount'      => 'required|numeric|min:0.01',
+            'currency'    => 'required|string|size:3',
             'spent_at'    => 'required|date',
             'category_id' => 'required',
         ]);
@@ -194,7 +204,7 @@ PROMPT;
             'category_id'  => $this->category_id,
             'subcategory'  => $this->subcategory,
             'amount'       => $this->amount,
-            'currency'     => $this->currency,
+            'currency'     => strtoupper((string) $this->currency),
             'description'  => $this->description,
             'spent_at'     => $this->spent_at,
             'workspace_id' => auth()->user()->current_workspace_id,
@@ -239,6 +249,7 @@ PROMPT;
 
         return view('livewire.manage-expense', [
             'categories'    => $categories,
+            'currencyOptions' => CurrencyService::getSymbols(),
             'categoryColor' => $selectedCat->color ?? '#6366f1',
             'categoryFields'=> $categoryFields,
             'activeSlug'    => $selectedCat->slug ?? null,

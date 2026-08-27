@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AppNotification;
+use App\Models\Category;
 use App\Models\Debt;
 use App\Models\Expense;
 use App\Models\Reminder;
@@ -16,6 +17,7 @@ class SmartAlertService
     {
         self::checkBudgetThresholds($user);
         self::checkExpenseSpikes($user);
+        self::checkBehaviorAnomalies($user);
         self::checkUnusedSubscriptions($user);
         self::checkUpcomingPayments($user);
     }
@@ -113,6 +115,95 @@ class SmartAlertService
                     'type' => 'info',
                     'link' => route('hub.subscriptions'),
                 ]);
+            }
+        }
+    }
+
+    public static function checkBehaviorAnomalies(User $user): void
+    {
+        $workspace = $user->currentWorkspace;
+        if (! $workspace) {
+            return;
+        }
+
+        $thisMonthStart = now()->startOfMonth();
+        $lastMonthEnd = now()->subMonth()->endOfMonth();
+        $historyStart = now()->subMonths(3)->startOfMonth();
+
+        $memberCount = max(1, $workspace->users()->count());
+
+        $personalCurrent = Expense::query()
+            ->where('workspace_id', $workspace->id)
+            ->where('user_id', $user->id)
+            ->where('is_company', false)
+            ->whereBetween('spent_at', [$thisMonthStart, now()])
+            ->selectRaw('category_id, SUM(COALESCE(amount_converted, amount)) as total')
+            ->groupBy('category_id')
+            ->pluck('total', 'category_id');
+
+        $personalHistoryRows = Expense::query()
+            ->where('workspace_id', $workspace->id)
+            ->where('user_id', $user->id)
+            ->where('is_company', false)
+            ->whereBetween('spent_at', [$historyStart, $lastMonthEnd])
+            ->selectRaw('category_id, spent_at, COALESCE(amount_converted, amount) as value')
+            ->get();
+
+        $personalAvgByCategory = $personalHistoryRows
+            ->groupBy('category_id')
+            ->map(function ($rows) {
+                $monthly = $rows->groupBy(fn ($row) => Carbon::parse($row->spent_at)->format('Y-m'))
+                    ->map(fn ($group) => (float) $group->sum('value'));
+
+                return $monthly->isNotEmpty() ? (float) $monthly->avg() : 0.0;
+            });
+
+        $groupCurrentByCategory = Expense::query()
+            ->where('workspace_id', $workspace->id)
+            ->where('is_company', false)
+            ->whereBetween('spent_at', [$thisMonthStart, now()])
+            ->selectRaw('category_id, SUM(COALESCE(amount_converted, amount)) as total')
+            ->groupBy('category_id')
+            ->pluck('total', 'category_id');
+
+        foreach ($personalCurrent as $categoryId => $spentCurrent) {
+            $category = Category::find($categoryId);
+            if (! $category) {
+                continue;
+            }
+
+            $spentCurrent = (float) $spentCurrent;
+            $personalAvg = (float) ($personalAvgByCategory[$categoryId] ?? 0);
+            $groupPerMember = ((float) ($groupCurrentByCategory[$categoryId] ?? 0)) / $memberCount;
+
+            if ($personalAvg > 0 && $spentCurrent > ($personalAvg * 1.45) && ($spentCurrent - $personalAvg) >= 35) {
+                $title = "Padrão Pessoal: {$category->name}";
+                if (! self::alreadyNotified($user, $title)) {
+                    $ratio = round(($spentCurrent / max(1, $personalAvg)) * 100);
+                    AppNotification::create([
+                        'user_id' => $user->id,
+                        'workspace_id' => $workspace->id,
+                        'title' => $title,
+                        'message' => "Estás a gastar {$ratio}% do teu padrão médio em {$category->name} este mês.",
+                        'type' => 'warning',
+                        'link' => route('hub.category', $category->resolveSlug()),
+                    ]);
+                }
+            }
+
+            if ($groupPerMember > 0 && $spentCurrent > ($groupPerMember * 1.7) && ($spentCurrent - $groupPerMember) >= 40) {
+                $title = "Padrão Grupo: {$category->name}";
+                if (! self::alreadyNotified($user, $title)) {
+                    $ratio = round(($spentCurrent / max(1, $groupPerMember)) * 100);
+                    AppNotification::create([
+                        'user_id' => $user->id,
+                        'workspace_id' => $workspace->id,
+                        'title' => $title,
+                        'message' => "Os teus gastos em {$category->name} estão em {$ratio}% da média por membro do grupo.",
+                        'type' => 'info',
+                        'link' => route('hub.category', $category->resolveSlug()),
+                    ]);
+                }
             }
         }
     }

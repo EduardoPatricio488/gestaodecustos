@@ -63,26 +63,41 @@
             </div>
 
             {{-- VALOR BASE --}}
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    Valor Base (€)
-                </label>
-                <input
-                    type="number"
-                    step="0.01"
-                    wire:model.live="amount_excl_vat"
-                    class="w-full mt-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm"
-                    placeholder="0.00"
-                >
-                @error('amount_excl_vat')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                        Valor Base
+                    </label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        wire:model.live="amount_excl_vat"
+                        class="w-full mt-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm"
+                        placeholder="0.00"
+                    >
+                    @error('amount_excl_vat')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                        Moeda
+                    </label>
+                    <select wire:model="currency" class="w-full mt-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm font-bold">
+                        @foreach($currencyOptions as $code => $label)
+                            <option value="{{ $code }}">{{ $code }}</option>
+                        @endforeach
+                    </select>
+                    @error('currency')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
 
             {{-- IVA --}}
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    IVA (€)
+                    IVA ({{ strtoupper($currency) }})
                 </label>
                 <input
                     type="number"
@@ -96,7 +111,7 @@
             {{-- TOTAL --}}
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    Total (€)
+                    Total ({{ strtoupper($currency) }})
                 </label>
                 <input
                     type="number"
@@ -106,6 +121,10 @@
                     class="w-full mt-1 rounded-xl bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm opacity-70"
                 >
             </div>
+
+            <p class="text-[10px] text-zinc-500 font-bold">
+                Conversão automática para {{ $workspaceCurrency }} aplicada ao guardar.
+            </p>
 
             {{-- DATA LIMITE --}}
             <div>

@@ -50,7 +50,15 @@ class NetWorthHub extends Component
 
         // Top 5 investimentos por valor
         $topInvestments = $investments
-            ->map(fn($i) => array_merge($i->toArray(), ['current_value' => $i->quantity * $i->current_price]))
+            ->map(fn($i) => [
+                'name' => $i->name,
+                'symbol' => $i->symbol,
+                'type' => $i->type,
+                'quantity' => $i->quantity,
+                'average_price' => $i->average_price,
+                'current_price' => $i->current_price,
+                'current_value' => $i->quantity * $i->current_price,
+            ])
             ->sortByDesc('current_value')
             ->take(5)
             ->values();
@@ -155,6 +163,31 @@ class NetWorthHub extends Component
             + (min(100, $goalsProgress) * 0.1)
         ));
 
+        // ─── 8. HISTÓRICO ESTIMADO DE PATRIMÓNIO LÍQUIDO (12 MESES) ───────
+        $historyMonths = $last12Months->values();
+        $netSeries = $historyMonths->pluck('net')->values();
+
+        // Estimativa retrospetiva com base no patrimônio atual e no fluxo mensal.
+        $netWorthHistory = collect();
+        $count = $historyMonths->count();
+
+        for ($i = 0; $i < $count; $i++) {
+            $after = $netSeries->slice($i + 1)->sum();
+            $estimatedValue = $netWorth - $after;
+
+            $netWorthHistory->push([
+                'month' => $historyMonths[$i]['month'],
+                'label' => $historyMonths[$i]['label'],
+                'value' => (float) $estimatedValue,
+            ]);
+        }
+
+        $historyStart = (float) ($netWorthHistory->first()['value'] ?? $netWorth);
+        $historyEnd   = (float) ($netWorthHistory->last()['value'] ?? $netWorth);
+        $historyDelta = $historyEnd - $historyStart;
+        $historyPeak  = (float) $netWorthHistory->max('value');
+        $historyLow   = (float) $netWorthHistory->min('value');
+
         return view('livewire.net-worth-hub', [
             // Totais
             'totalAssets'          => $totalAssets,
@@ -206,6 +239,14 @@ class NetWorthHub extends Component
             'activeSubscriptions'  => $activeSubscriptions,
             'monthlySubscriptionCost' => $monthlySubscriptionCost,
             'totalAnnualSubscriptions'=> $totalAnnualSubscriptions,
+
+            // Histórico patrimônio
+            'netWorthHistory'      => $netWorthHistory,
+            'historyStart'         => $historyStart,
+            'historyEnd'           => $historyEnd,
+            'historyDelta'         => $historyDelta,
+            'historyPeak'          => $historyPeak,
+            'historyLow'           => $historyLow,
         ]);
     }
 }

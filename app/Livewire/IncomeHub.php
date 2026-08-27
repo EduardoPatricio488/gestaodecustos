@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Income;
 use App\Models\RecurringIncome;
+use App\Services\CurrencyService;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Workspace; // <--- FALTA ISTO
 use App\Models\Employee;
@@ -18,6 +19,7 @@ class IncomeHub extends Component
     // Receita Extra
     public $description = '';
     public $amount = '';
+    public string $currency = 'EUR';
     public bool $showExtraModal = false;
 
     public $received_at = '';
@@ -47,6 +49,7 @@ public $selectedFixedId;
     public function mount()
     {
         $this->received_at = now()->format('Y-m-d');
+        $this->currency = strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR'));
     }
 
     public function saveExtra()
@@ -54,6 +57,7 @@ public $selectedFixedId;
         $this->validate([
             'description'  => 'required|string|max:255',
             'amount'       => 'required|numeric|min:0.01',
+            'currency'     => 'required|string|size:3',
             'received_at'  => 'required|date',
             'source'       => 'required|in:emprego,freelance,investimento,outro',
             'frequency'    => 'required|in:pontual,semanal,mensal,anual',
@@ -66,6 +70,7 @@ public $selectedFixedId;
             'workspace_id' => auth()->user()->current_workspace_id,
             'description'  => $this->description,
             'amount'       => $this->amount,
+            'currency'     => strtoupper($this->currency),
             'received_at'  => $this->received_at,
             'type'         => 'Extra',
             'source'       => $this->source,
@@ -75,6 +80,7 @@ public $selectedFixedId;
         ]);
 
         $this->reset(['description', 'amount', 'tax_estimate', 'notes']);
+        $this->currency = strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR'));
         $this->received_at = now()->format('Y-m-d');
         $this->source = 'emprego';
         $this->frequency = 'pontual';
@@ -180,6 +186,7 @@ public function applyRaise()
 public function openExtraModal()
 {
     $this->reset(['description', 'amount', 'tax_estimate', 'notes']);
+    $this->currency = strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR'));
     $this->received_at = now()->format('Y-m-d');
     $this->source = 'emprego';
     $this->frequency = 'pontual';
@@ -290,7 +297,7 @@ public function closeRaiseModal()
         ->latest()
         ->get();
 
-    $totalMonthly = $fixedIncomes->sum('amount') + $extraIncomes->sum('amount');
+    $totalMonthly = $fixedIncomes->sum('amount') + $extraIncomes->sum(fn($i) => (float) ($i->amount_converted ?? $i->amount));
 
     // Estatísticas
     $allIncomes = Income::where('workspace_id', $workspaceId)->get();
@@ -307,7 +314,7 @@ public function closeRaiseModal()
         $monthExtra = (float) Income::where('workspace_id', $workspaceId)
             ->whereMonth('received_at', $date->month)
             ->whereYear('received_at', $date->year)
-            ->sum('amount');
+            ->sum(DB::raw('COALESCE(amount_converted, amount)'));
         $monthlyTotals->push([
             'label' => $date->translatedFormat('M'),
             'total' => $monthExtra + $monthlySalary,
@@ -321,10 +328,10 @@ public function closeRaiseModal()
     $monthsElapsed = min(now()->month, 12);
     $totalYear = (float) Income::where('workspace_id', $workspaceId)
         ->whereYear('received_at', now()->year)
-        ->sum('amount') + ($monthlySalary * $monthsElapsed);
+        ->sum(DB::raw('COALESCE(amount_converted, amount)')) + ($monthlySalary * $monthsElapsed);
 
     // Breakdown por fonte
-    $bySource = $allIncomes->groupBy('source')->map->sum('amount');
+    $bySource = $allIncomes->groupBy('source')->map(fn($group) => $group->sum(fn($i) => (float) ($i->amount_converted ?? $i->amount)));
 
     // Imposto estimado
     $taxEstimated = $extraIncomes->sum(function ($i) {
@@ -342,6 +349,8 @@ public function closeRaiseModal()
         'monthlyTotals'    => $monthlyTotals,
         'bySource'         => $bySource,
         'taxEstimated'     => $taxEstimated,
+        'currencyOptions'  => CurrencyService::getSymbols(),
+        'workspaceCurrency'=> strtoupper((string) ($user->currentWorkspace?->currency ?? 'EUR')),
         'isOwner'          => $user->isOwner(),
         'canManage'        => !$user->isViewer(),
     ]);

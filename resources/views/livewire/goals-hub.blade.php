@@ -50,13 +50,12 @@
         <div class="flex items-center gap-3">
             {{-- BOTÃO NOVA META --}}
             <flux:button
-    @click="$dispatch('modal-show-goal')"
-
-    variant="primary"
-    class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20">
-    <flux:icon name="calendar-days" class="size-4 mr-2" />
-    Nova Meta
-</flux:button>
+                wire:click="openGoalModal"
+                variant="primary"
+                class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20">
+                <flux:icon name="calendar-days" class="size-4 mr-2" />
+                Nova Meta
+            </flux:button>
 
         </div>
     </div>
@@ -277,6 +276,46 @@
                         </div>
                     @endif
                 </div>
+
+                <div class="pl-2 mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 p-3">
+                            <p class="text-[8px] font-black uppercase tracking-widest text-zinc-400">Ritmo 90 dias</p>
+                            <p class="text-sm font-black dark:text-white tabular-nums">{{ number_format($goal->monthlyPace, 0, ',', ' ') }} â‚¬/mes</p>
+                        </div>
+                        <div class="rounded-2xl {{ $goal->isLateByForecast ? 'bg-red-50 dark:bg-red-950/30' : 'bg-emerald-50 dark:bg-emerald-950/30' }} p-3">
+                            <p class="text-[8px] font-black uppercase tracking-widest {{ $goal->isLateByForecast ? 'text-red-500' : 'text-emerald-600' }}">Previsao</p>
+                            <p class="text-sm font-black {{ $goal->isLateByForecast ? 'text-red-500' : 'text-emerald-600' }}">
+                                {{ $goal->predictedCompletionDate ? $goal->predictedCompletionDate->format('m/Y') : 'Sem ritmo' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    @if($goal->contributors->isNotEmpty())
+                        <div>
+                            <p class="text-[8px] font-black uppercase tracking-widest text-zinc-400 mb-2">Contribuicoes do grupo</p>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($goal->contributors->take(4) as $contributor)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black text-zinc-600 dark:text-zinc-300">
+                                        {{ \Illuminate\Support\Str::limit($contributor['name'], 14) }}
+                                        <strong class="text-emerald-600">{{ number_format($contributor['amount'], 0, ',', ' ') }}â‚¬</strong>
+                                    </span>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($goal->recentContributions->isNotEmpty())
+                        <div class="space-y-1.5">
+                            @foreach($goal->recentContributions as $contribution)
+                                <div class="flex items-center justify-between text-[9px] text-zinc-500">
+                                    <span class="font-bold">{{ $contribution->user?->name ?? 'Membro' }} · {{ $contribution->contributed_at?->format('d/m') }}</span>
+                                    <span class="font-black text-emerald-600">{{ number_format($contribution->amount, 2, ',', '.') }}â‚¬</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
             </div>
         @empty
             <div class="col-span-full py-20 text-center rounded-3xl border-2 border-dashed border-zinc-200 dark:border-zinc-800">
@@ -285,7 +324,7 @@
                     Sem metas definidas
                 </p>
                 <flux:button
-                    @click="$dispatch('modal-show-goal')"
+                    wire:click="openGoalModal"
                     variant="primary"
                     size="sm"
                     icon="plus"
@@ -295,6 +334,87 @@
                 </flux:button>
             </div>
         @endforelse
+    </div>
+
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-1 bg-zinc-950 text-white rounded-3xl p-7 border border-zinc-800 shadow-xl">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="p-2 rounded-2xl bg-emerald-500/15 text-emerald-400">
+                    <flux:icon name="banknotes" class="size-5" />
+                </div>
+                <div>
+                    <p class="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400">Autopoupanca</p>
+                    <h3 class="text-xl font-black uppercase italic">Separar ao receber</h3>
+                </div>
+            </div>
+
+            <form wire:submit.prevent="saveAutoSavingsRule" class="space-y-4">
+                <flux:select wire:model="autoGoalId" label="Meta de destino">
+                    <option value="">Escolher meta</option>
+                    @foreach($goals as $goal)
+                        <option value="{{ $goal->id }}">{{ $goal->name }}</option>
+                    @endforeach
+                </flux:select>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <flux:select wire:model.live="autoProfile" label="Perfil">
+                        @foreach($autoProfiles as $key => $profile)
+                            <option value="{{ $key }}">{{ $profile['label'] }}</option>
+                        @endforeach
+                    </flux:select>
+                    <flux:input wire:model="autoPercent" type="number" min="1" max="80" step="1" label="% da renda" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <flux:input wire:model="autoMinIncomeAmount" type="number" step="0.01" label="Renda minima" placeholder="Opcional" />
+                    <flux:select wire:model="autoAppliesTo" label="Aplicar em">
+                        <option value="all">Todas</option>
+                        <option value="recurring">Recorrentes</option>
+                        <option value="one_off">Pontuais</option>
+                    </flux:select>
+                </div>
+
+                <flux:button type="submit" variant="primary" icon="check" class="w-full rounded-2xl font-black uppercase tracking-widest !bg-emerald-600 hover:!bg-emerald-500">
+                    Guardar regra
+                </flux:button>
+            </form>
+        </div>
+
+        <div class="xl:col-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-7 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <div class="flex items-center justify-between gap-4 mb-5">
+                <div>
+                    <p class="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-400">Regras ativas</p>
+                    <h3 class="text-xl font-black dark:text-white uppercase italic">Poupanca automatica</h3>
+                </div>
+                <span class="text-[10px] font-black uppercase text-emerald-600">{{ $autoSavingsRules->where('is_active', true)->count() }} ligadas</span>
+            </div>
+
+            <div class="space-y-3">
+                @forelse($autoSavingsRules as $rule)
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800">
+                        <div>
+                            <p class="text-sm font-black dark:text-white">{{ $rule->goal?->name ?? 'Meta removida' }}</p>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                                {{ ucfirst($rule->profile) }} · {{ number_format($rule->percent, 0, ',', '.') }}% · {{ $rule->applies_to === 'recurring' ? 'recorrentes' : ($rule->applies_to === 'one_off' ? 'pontuais' : 'todas') }}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button wire:click="toggleAutoSavingsRule({{ $rule->id }})" class="px-3 py-2 rounded-xl text-[9px] font-black uppercase {{ $rule->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-200 text-zinc-600' }}">
+                                {{ $rule->is_active ? 'Ativa' : 'Pausada' }}
+                            </button>
+                            <button wire:click="deleteAutoSavingsRule({{ $rule->id }})" wire:confirm="Remover esta regra?" class="p-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100">
+                                <flux:icon name="trash" class="size-4" />
+                            </button>
+                        </div>
+                    </div>
+                @empty
+                    <div class="py-14 text-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Sem regras de autopoupanca</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
     </div>
 
 
