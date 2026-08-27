@@ -1,105 +1,510 @@
-# 🏦 Finance Pro - Premium Personal & Business ERP 💎
+# Finance Pro
 
-[![Laravel](https://img.shields.io/badge/Laravel-11-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com)
-[![Livewire](https://img.shields.io/badge/Livewire-3-4e5ee4?style=for-the-badge&logo=livewire)](https://livewire.laravel.com)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind-3.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com)
-[![License](https://img.shields.io/badge/License-Commercial-gold?style=for-the-badge)](https://github.com/)
+> **Premium Personal Finance & Business Management SaaS**
 
-**Finance Pro** é um ecossistema SaaS de alta performance desenvolvido para unificar a disciplina financeira pessoal com a gestão empresarial avançada. Foi desenhado para oferecer uma experiência de "Centro de Comando" para indivíduos e CEOs de pequenas empresas.
+Finance Pro é uma plataforma SaaS desenvolvida em Laravel para gestão financeira pessoal e empresarial. O projeto combina controlo de despesas, análise financeira, gestão empresarial, subscrições e funcionalidades baseadas em Inteligência Artificial numa única aplicação web.
 
----
-
-## ✨ Funcionalidades em Destaque
-
-### 👤 Gestão Pessoal (Cofre Privado)
-*   **Experiência Gamificada:** Sistema de XP e Níveis para incentivar a disciplina financeira.
-*   **CFO Inteligente (IA):** Insights em tempo real sobre hábitos de consumo alimentados por Gemini 2.0.
-*   **Vault Blindado:** Espaço 100% privado e invisível para membros de outros workspaces.
-*   **Gestor de Assinaturas:** Monitorização visual de custos recorrentes e renovações.
-*   **Dropbox Familiar:** Arquivo digital seguro para documentos sensíveis (IDs, Contratos).
-
-### 💼 ERP Empresarial (Modo CEO)
-*   **Dashboard Executivo:** P&L em tempo real, contas a receber e provisões fiscais automáticas.
-*   **Inteligência de Projetos:** Monitorização de margens de lucro e rentabilidade por projeto.
-*   **Colaborador Shadow Mode:** Permite ao CEO visualizar o terminal como se fosse um colaborador para suporte.
-*   **Controlo de Inventário:** Alertas inteligentes para níveis críticos de stock.
-*   **Faturação Digital:** Sistema profissional de faturação integrado com Stripe.
+O sistema foi desenvolvido com uma arquitetura preparada para funcionar como **SaaS multi-utilizador**, com diferentes planos de subscrição e suporte para utilização em desktop e dispositivos móveis através de PWA.
 
 ---
 
-## 🛠 Stack Tecnológica
+## ✨ Principais Funcionalidades
 
-*   **Framework:** Laravel 11 & PHP 8.3+
-*   **Frontend:** Livewire 3 (SPA Experience) & Alpine.js
-*   **Design System:** Flux UI (Interface limpa, moderna e minimalista)
-*   **Base de Dados:** MySQL / PostgreSQL / SQLite
-*   **Pagamentos:** Stripe (Laravel Cashier)
-*   **Inteligência Artificial:** Integração via OpenRouter (Gemini / GPT-4)
-*   **Mobile:** Suporte completo a **PWA** (Instalável em iOS e Android)
+### 👤 Gestão Financeira Pessoal
+
+* Gestão de receitas e despesas
+* Categorias personalizadas
+* Dashboard financeiro
+* Análise de hábitos de consumo
+* Gestão de despesas recorrentes
+* Gestão de subscrições
+* Objetivos financeiros
+* Sistema de XP e níveis
+* Área privada para dados financeiros
+* Organização de documentos
+* Insights financeiros através de IA
+
+### 💼 Gestão Empresarial
+
+* Dashboard empresarial
+* Análise de receitas e despesas
+* Profit & Loss (P&L)
+* Gestão de colaboradores
+* Gestão de clientes
+* Gestão de projetos
+* Análise de rentabilidade
+* Gestão de inventário
+* Controlo de stock
+* Controlo de despesas empresariais
+* Ferramentas de gestão para administradores
+
+### 🤖 Inteligência Artificial
+
+O Finance Pro inclui integração com serviços de IA para funcionalidades como:
+
+* Análise de despesas
+* Geração de insights financeiros
+* Interpretação de dados
+* Assistência financeira
+* Análise de documentos/recibos, quando configurada
+
+A integração de IA utiliza uma camada de API compatível com fornecedores como **OpenRouter**, permitindo utilizar diferentes modelos de linguagem.
+
+> As funcionalidades de IA requerem configuração das respetivas API keys.
+
+### 💳 Subscrições e Pagamentos
+
+Integração com **Stripe** através do Laravel Cashier.
+
+O sistema suporta diferentes níveis de subscrição, permitindo configurar funcionalidades e acesso de acordo com o plano do utilizador.
+
+Exemplo de estrutura:
+
+* Free
+* Plus
+* Pro
+
+A configuração dos preços e produtos Stripe é feita através das variáveis de ambiente da aplicação.
+
+### 📱 Progressive Web App
+
+O Finance Pro pode ser instalado como uma **Progressive Web App (PWA)** em dispositivos compatíveis.
+
+A interface foi desenvolvida para proporcionar uma experiência responsiva em:
+
+* Desktop
+* Tablet
+* Android
+* iOS
 
 ---
 
-## 📦 Guia de Instalação Rápida
+# 🛠️ Stack Tecnológica
 
-Siga estes passos para ter o ambiente local a funcionar em minutos:
+| Tecnologia      | Utilização                   |
+| --------------- | ---------------------------- |
+| PHP 8.3+        | Backend                      |
+| Laravel 11      | Framework                    |
+| Livewire 3      | Interfaces dinâmicas         |
+| Alpine.js       | Interações frontend          |
+| Tailwind CSS    | Estilos e UI                 |
+| Flux UI         | Componentes de interface     |
+| MySQL           | Base de dados                |
+| PostgreSQL      | Base de dados                |
+| SQLite          | Desenvolvimento/testes       |
+| Laravel Cashier | Integração Stripe            |
+| Stripe          | Pagamentos e subscrições     |
+| OpenRouter      | Integração com modelos de IA |
+| Vite            | Build frontend               |
+| PWA             | Experiência mobile           |
 
-### 1. Requisitos
-*   PHP 8.3 ou superior
-*   Composer
-*   Node.js & NPM
+---
 
-### 2. Configuração do Projeto
+# 🏗️ Arquitetura
+
+O projeto segue a arquitetura padrão do Laravel e está organizado de forma a facilitar manutenção e extensão.
+
+Principais diretórios:
+
+```text
+app/
+├── Livewire/
+├── Models/
+├── Services/
+├── Providers/
+└── ...
+
+database/
+├── migrations/
+├── seeders/
+└── factories/
+
+resources/
+├── views/
+├── css/
+└── js/
+
+routes/
+├── web.php
+└── ...
+
+public/
+└── ...
+
+tests/
+└── ...
+```
+
+A aplicação utiliza migrations, models, seeders e componentes Livewire para estruturar a lógica e as interfaces do sistema.
+
+---
+
+# 📋 Requisitos
+
+Antes de instalar o projeto, certifique-se de ter:
+
+* PHP 8.3 ou superior
+* Composer
+* Node.js
+* NPM
+* Uma base de dados MySQL, PostgreSQL ou SQLite
+* Git
+
+Para funcionalidades específicas:
+
+* Conta Stripe para pagamentos
+* Stripe CLI para desenvolvimento de webhooks
+* API key de um fornecedor de IA, caso pretenda utilizar as funcionalidades de IA
+
+---
+
+# 🚀 Instalação
+
+## 1. Clonar o projeto
+
 ```bash
-# Clonar o repositório
 git clone https://github.com/EduardoPatricio488/gestaodecustos.git
+
 cd gestaodecustos
+```
 
-# Instalar dependências do PHP
+## 2. Instalar dependências
+
+```bash
 composer install
+```
 
-# Instalar dependências de JS e compilar assets
-npm install && npm run build
+```bash
+npm install
+```
 
-# Configurar Ambiente
+## 3. Configurar o ambiente
+
+Copie o ficheiro `.env.example`:
+
+### Linux / macOS
+
+```bash
 cp .env.example .env
+```
+
+### Windows
+
+```bash
+copy .env.example .env
+```
+
+Depois gere a chave da aplicação:
+
+```bash
 php artisan key:generate
+```
 
-3. Base de Dados e Dados de Demo
-code Bash
+---
 
-# Correr as migrações
+# 🗄️ Base de Dados
+
+Configure as variáveis da base de dados no ficheiro `.env`.
+
+Exemplo com SQLite:
+
+```env
+DB_CONNECTION=sqlite
+```
+
+Depois execute:
+
+```bash
 php artisan migrate
+```
 
-# Popular com dados profissionais de demonstração (Essencial para testes)
+Para criar os dados de demonstração:
+
+```bash
 php artisan db:seed --class=DemoSeeder
+```
 
-4. Integração Stripe (Testes Locais)
-code Bash
+> Recomenda-se utilizar dados de demonstração apenas em ambientes de desenvolvimento ou demonstração.
 
-# Num terminal separado, inicie o listener de webhooks
+---
+
+# 🎨 Compilar os Assets
+
+Durante o desenvolvimento:
+
+```bash
+npm run dev
+```
+
+Para produção:
+
+```bash
+npm run build
+```
+
+---
+
+# ▶️ Executar Localmente
+
+Pode iniciar o servidor Laravel com:
+
+```bash
+php artisan serve
+```
+
+A aplicação ficará disponível em:
+
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+# 💳 Configuração Stripe
+
+Para utilizar pagamentos e subscrições, é necessário configurar uma conta Stripe.
+
+No `.env`, configure as credenciais correspondentes:
+
+```env
+STRIPE_KEY=
+STRIPE_SECRET=
+STRIPE_WEBHOOK_SECRET=
+```
+
+Durante o desenvolvimento local, pode utilizar o Stripe CLI para encaminhar os webhooks:
+
+```bash
 stripe listen --forward-to localhost:8000/stripe/webhook
+```
 
-Nota: Copie o whsec_... gerado para a variável STRIPE_WEBHOOK_SECRET no seu ficheiro .env.
-👤 Acesso de Demonstração
+O comando irá fornecer um `whsec_...` que deve ser colocado em:
 
-Após rodar o seeder, pode entrar com a conta de teste:
+```env
+STRIPE_WEBHOOK_SECRET=
+```
 
-    Utilizador: eduardo@financepro.com
+> Nunca publique chaves Stripe ou outras credenciais no repositório.
 
-    Password: password
+---
 
-💸 Oportunidade Comercial
+# 🤖 Configuração de IA
 
-Este projeto está pronto para ser lançado como um modelo de negócio SaaS. Com o sistema de subscrições Stripe já integrado e a separação clara entre planos Free, Plus e Pro, o comprador pode começar a monetizar a plataforma imediatamente após o deploy.
-🛡️ Licença
+Para ativar as funcionalidades de Inteligência Artificial, configure a API utilizada pelo projeto no `.env`.
 
-Este é um script comercial. Todos os direitos reservados.
+Exemplo:
 
-Desenvolvido com precisão para quem leva a gestão financeira a sério.
+```env
+OPENROUTER_API_KEY=
+```
 
-## 🗺️ Roteiro (Recursos Futuros)
-Estes recursos estão atualmente em fase final de desenvolvimento e serão disponibilizados em atualizações futuras:
-- [ ] **Previsão com IA Avançada:** Análise preditiva aprofundada de fluxo de caixa.
-- [ ] **Integração com APIs Bancárias:** Sincronização automática com contas bancárias reais.
-- [ ] **Aplicativo Móvel (Nativo):** Lançamento na App Store e no Google Play.
-- [ ] **Relatórios White-label:** Relatórios em PDF personalizáveis ​​com a logomarca do utilizador.
+Dependendo da configuração utilizada, podem ser necessários outros parâmetros relacionados com o fornecedor ou modelo de IA.
+
+> As API keys são fornecidas pelo utilizador final e não devem ser incluídas no código-fonte.
+
+---
+
+# 🧪 Testes
+
+Os testes podem ser executados através do PHPUnit/Pest configurado no projeto:
+
+```bash
+php artisan test
+```
+
+Antes de colocar a aplicação em produção, recomenda-se executar toda a suite de testes e validar manualmente os principais fluxos da aplicação.
+
+---
+
+# 🔐 Segurança
+
+Antes de realizar um deployment em produção:
+
+1. Defina `APP_ENV=production`
+2. Defina `APP_DEBUG=false`
+3. Utilize HTTPS
+4. Configure corretamente a base de dados
+5. Configure os webhooks Stripe
+6. Proteja todas as API keys
+7. Nunca publique o ficheiro `.env`
+8. Utilize credenciais diferentes para desenvolvimento e produção
+9. Configure corretamente os mecanismos de autenticação e autorização
+10. Execute `php artisan optimize`
+
+Exemplo:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+```
+
+---
+
+# 📦 Deployment
+
+O projeto pode ser adaptado para diferentes ambientes de alojamento compatíveis com aplicações Laravel.
+
+Para um ambiente de produção, devem ser configurados:
+
+* PHP
+* Composer
+* Base de dados
+* Node.js/build dos assets
+* Variáveis de ambiente
+* HTTPS
+* Queue workers, quando aplicável
+* Cron scheduler, quando aplicável
+* Stripe webhooks
+* Serviço de IA, quando utilizado
+
+O processo exato de deployment depende do fornecedor de hosting escolhido.
+
+---
+
+# 📊 Estado Atual do Projeto
+
+O Finance Pro encontra-se numa fase de **MVP avançado / SaaS em desenvolvimento**, com uma base funcional preparada para evolução e comercialização.
+
+### Implementado
+
+* [x] Gestão financeira pessoal
+* [x] Gestão de receitas e despesas
+* [x] Categorias
+* [x] Dashboard financeiro
+* [x] Gestão empresarial
+* [x] Dashboard empresarial
+* [x] Gestão de projetos
+* [x] Inventário
+* [x] Gestão de colaboradores
+* [x] Sistema de subscrições
+* [x] Integração Stripe
+* [x] Integração com IA
+* [x] PWA
+* [x] Sistema de planos
+* [x] Dados de demonstração
+
+### Em desenvolvimento / Roadmap
+
+* [ ] Análise preditiva avançada
+* [ ] Integrações bancárias
+* [ ] Aplicação mobile nativa
+* [ ] Relatórios PDF avançados
+* [ ] Relatórios white-label
+* [ ] Mais integrações externas
+* [ ] Expansão das funcionalidades de automação
+
+---
+
+# 💰 Modelo de Negócio
+
+O Finance Pro foi concebido para funcionar como um produto **SaaS por subscrição**.
+
+Uma possível estrutura comercial:
+
+| Plano | Modelo                     |
+| ----- | -------------------------- |
+| Free  | Utilização limitada        |
+| Plus  | Funcionalidades adicionais |
+| Pro   | Funcionalidades avançadas  |
+
+Os preços, limites e funcionalidades podem ser configurados de acordo com a estratégia comercial do proprietário do produto.
+
+---
+
+# 📸 Demo
+
+> Adicionar aqui o endereço da demonstração online quando o projeto estiver publicado num domínio próprio.
+
+**Live Demo:** `https://your-domain.com`
+
+**Demo Account:** disponibilizada separadamente.
+
+> Não colocar credenciais reais de administrador ou contas pessoais neste README público.
+
+---
+
+# 🧑‍💻 Desenvolvimento
+
+Para contribuir ou continuar o desenvolvimento:
+
+```bash
+git checkout -b feature/nova-funcionalidade
+```
+
+Faça as alterações necessárias e execute os testes:
+
+```bash
+php artisan test
+```
+
+Depois compile os assets:
+
+```bash
+npm run build
+```
+
+---
+
+# 📁 Configuração
+
+As principais configurações da aplicação encontram-se no ficheiro:
+
+```text
+.env
+```
+
+O projeto inclui:
+
+```text
+.env.example
+```
+
+que deve servir como base para a configuração do ambiente.
+
+**Nunca faça commit do ficheiro ****`.env`****.**
+
+---
+
+# 📄 Licença
+
+Este projeto é disponibilizado sob uma licença comercial.
+
+Todos os direitos relativos ao código-fonte pertencem ao respetivo proprietário, salvo componentes, bibliotecas ou dependências de terceiros que estejam sujeitos às suas próprias licenças.
+
+As dependências utilizadas pelo projeto permanecem sujeitas às respetivas licenças.
+
+---
+
+# 🛒 Disponibilidade
+
+O **Finance Pro** está disponível para aquisição como projeto SaaS.
+
+A aquisição pode incluir, dependendo do acordo:
+
+* Código-fonte
+* Base de dados/migrations
+* Documentação
+* Configuração de deployment
+* Integrações existentes
+* Sistema de subscrições
+* Configuração inicial
+* Transferência do repositório
+* Apoio à instalação
+
+Os termos exatos da transferência devem ser definidos entre comprador e vendedor.
+
+---
+
+## 📬 Contacto
+
+Para informações sobre o projeto, aquisição ou colaboração, contactar o proprietário através do canal definido para o efeito.
+
+---
+
+## ⭐ Sobre o Projeto
+
+O Finance Pro foi desenvolvido com foco em criar uma plataforma moderna de gestão financeira capaz de servir tanto utilizadores individuais como pequenas empresas.
+
+A arquitetura Laravel + Livewire permite continuar a expandir o produto com novas integrações, funcionalidades e modelos de negócio.
+
+**Built with Laravel, Livewire and modern web technologies.**

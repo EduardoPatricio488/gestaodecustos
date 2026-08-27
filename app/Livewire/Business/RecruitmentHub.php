@@ -13,7 +13,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
- // <--- IMPORTANTE: Importar a Facade Mail
+// <--- IMPORTANTE: Importar a Facade Mail
 
 #[Layout('components.layouts.app')]
 class RecruitmentHub extends Component
