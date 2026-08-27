@@ -96,3 +96,10 @@ Este projeto está pronto para ser lançado como um modelo de negócio SaaS. Com
 Este é um script comercial. Todos os direitos reservados.
 
 Desenvolvido com precisão para quem leva a gestão financeira a sério.
+
+## 🗺️ Roteiro (Recursos Futuros)
+Estes recursos estão atualmente em fase final de desenvolvimento e serão disponibilizados em atualizações futuras:
+- [ ] **Previsão com IA Avançada:** Análise preditiva aprofundada de fluxo de caixa.
+- [ ] **Integração com APIs Bancárias:** Sincronização automática com contas bancárias reais.
+- [ ] **Aplicativo Móvel (Nativo):** Lançamento na App Store e no Google Play.
+- [ ] **Relatórios White-label:** Relatórios em PDF personalizáveis ​​com a logomarca do utilizador.
