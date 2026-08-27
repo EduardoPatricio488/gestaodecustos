@@ -10,11 +10,11 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::table('bank_accounts', function (Blueprint $table) {
-        $table->boolean('is_business')->default(false)->after('type');
-    });
-}
+    {
+        Schema::table('bank_accounts', function (Blueprint $table) {
+            $table->boolean('is_business')->default(false)->after('type');
+        });
+    }
 
     /**
      * Reverse the migrations.

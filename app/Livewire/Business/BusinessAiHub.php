@@ -2,16 +2,16 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\{Project, Product, Invoice, Expense, Employee};
-use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class BusinessAiHub extends Component
 {
     public $lastAudit = null;
+
     public $targetHourlyRate = 50.00;
 
     /**
@@ -28,7 +28,7 @@ class BusinessAiHub extends Component
     {
         $workspace = Auth::user()->currentWorkspace;
 
-        if (!$workspace) {
+        if (! $workspace) {
             return <<<'HTML'
                 <div class="p-10 text-center italic text-zinc-500">Nenhum workspace empresarial detetado.</div>
             HTML;
@@ -52,7 +52,7 @@ class BusinessAiHub extends Component
         $riskConcentration = ($totalRevenue > 0 && $topClient) ? ($topClient->total / $totalRevenue) * 100 : 0;
 
         // 3. PERFORMANCE DE PROJETOS (Lucro por Hora)
-        $projects = $workspace->projects()->get()->map(function($p) {
+        $projects = $workspace->projects()->get()->map(function ($p) {
             return [
                 'name' => $p->name,
                 'hourly_profit' => (float) $p->hourly_profit,
@@ -63,8 +63,8 @@ class BusinessAiHub extends Component
 
         // 4. AUDITORIA DE STOCK (Património Imobilizado)
         $products = $workspace->products()->get();
-        $inventoryValue = (float) $products->sum(fn($p) => $p->stock_quantity * $p->unit_cost);
-        $lowStockCount = $products->filter(fn($p) => $p->isLowStock())->count();
+        $inventoryValue = (float) $products->sum(fn ($p) => $p->stock_quantity * $p->unit_cost);
+        $lowStockCount = $products->filter(fn ($p) => $p->isLowStock())->count();
 
         // 5. CÁLCULO DE SCORE DE RESILIÊNCIA
         $healthScore = $this->calculateBusinessHealth($cash, $totalPayroll, $riskConcentration, $lowStockCount);
@@ -79,7 +79,7 @@ class BusinessAiHub extends Component
             'inventoryValue' => $inventoryValue,
             'lowStockCount' => $lowStockCount,
             'projects' => $projects,
-            'insights' => $this->generateStrategicInsights($cash, $totalPayroll, $riskConcentration, $lowStockCount, $projects)
+            'insights' => $this->generateStrategicInsights($cash, $totalPayroll, $riskConcentration, $lowStockCount, $projects),
         ]);
     }
 
@@ -102,7 +102,7 @@ class BusinessAiHub extends Component
         }
 
         // Insight: Operações
-        $inefficient = $projects->filter(fn($p) => $p['hourly_profit'] > 0 && $p['hourly_profit'] < $this->targetHourlyRate)->count();
+        $inefficient = $projects->filter(fn ($p) => $p['hourly_profit'] > 0 && $p['hourly_profit'] < $this->targetHourlyRate)->count();
         if ($inefficient > 0) {
             $insights[] = ['type' => 'warning', 'title' => 'Dreno de Produtividade', 'text' => "Tens $inefficient projetos a render menos de {$this->targetHourlyRate}€/hora. Revê processos."];
         }
@@ -118,9 +118,16 @@ class BusinessAiHub extends Component
     private function calculateBusinessHealth($cash, $payroll, $risk, $lowStock)
     {
         $score = 100;
-        if ($payroll > 0 && $cash < $payroll) $score -= 40;
-        if ($risk > 50) $score -= 20;
-        if ($lowStock > 3) $score -= 10;
+        if ($payroll > 0 && $cash < $payroll) {
+            $score -= 40;
+        }
+        if ($risk > 50) {
+            $score -= 20;
+        }
+        if ($lowStock > 3) {
+            $score -= 10;
+        }
+
         return max(5, $score);
     }
 }

@@ -13,11 +13,13 @@ class SupportMessage extends Model
         'is_admin_reply' => 'boolean',
     ];
 
-    public function user(): BelongsTo {
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function ticket(): BelongsTo {
+    public function ticket(): BelongsTo
+    {
         return $this->belongsTo(SupportTicket::class, 'support_ticket_id');
     }
 }

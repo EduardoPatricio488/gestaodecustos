@@ -7,12 +7,12 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     public function up(): void
-{
-    Schema::table('support_tickets', function (Blueprint $table) {
-        // Adicionamos nullable() para evitar o erro no SQLite
-        $table->foreignId('workspace_id')->nullable()->after('user_id')->constrained()->onDelete('cascade');
-    });
-}
+    {
+        Schema::table('support_tickets', function (Blueprint $table) {
+            // Adicionamos nullable() para evitar o erro no SQLite
+            $table->foreignId('workspace_id')->nullable()->after('user_id')->constrained()->onDelete('cascade');
+        });
+    }
 
     public function down(): void
     {

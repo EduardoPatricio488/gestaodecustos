@@ -55,7 +55,7 @@ class FitnessActivity extends Model
 
     public function getTypeIconAttribute(): string
     {
-        return match($this->type) {
+        return match ($this->type) {
             'corrida' => '🏃',
             'ciclismo' => '🚴',
             'ginasio' => '🏋️',
@@ -68,7 +68,7 @@ class FitnessActivity extends Model
 
     public function getTypeColorAttribute(): string
     {
-        return match($this->type) {
+        return match ($this->type) {
             'corrida' => 'text-orange-500 bg-orange-500/10',
             'ciclismo' => 'text-blue-500 bg-blue-500/10',
             'ginasio' => 'text-purple-500 bg-purple-500/10',
@@ -83,6 +83,7 @@ class FitnessActivity extends Model
     {
         $hours = intdiv($this->duration_minutes, 60);
         $minutes = $this->duration_minutes % 60;
+
         return $hours > 0 ? "{$hours}h {$minutes}min" : "{$minutes}min";
     }
 

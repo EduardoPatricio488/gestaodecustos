@@ -2,18 +2,20 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
 use App\Models\Employee;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\{Auth, DB};
-use Carbon\Carbon;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class MyCompanyProfile extends Component
 {
     public $resignationReason = '';
+
     public $selectedMonth;
+
     public $selectedYear;
 
     public function mount()
@@ -33,7 +35,7 @@ class MyCompanyProfile extends Component
             ->first();
 
         if ($doc && Storage::disk('local')->exists($doc->file_path)) {
-            return Storage::disk('local')->download($doc->file_path, $doc->title . '.pdf');
+            return Storage::disk('local')->download($doc->file_path, $doc->title.'.pdf');
         }
 
         $this->dispatch('toast', variant: 'error', text: 'Ficheiro não encontrado.');
@@ -62,7 +64,7 @@ class MyCompanyProfile extends Component
 
         $employee->update([
             'resignation_reason' => $this->resignationReason,
-            'resignation_status' => 'pending'
+            'resignation_status' => 'pending',
         ]);
 
         $this->resignationReason = '';
@@ -110,7 +112,7 @@ class MyCompanyProfile extends Component
             'ceoName' => $ceo ? $ceo->name : 'Administrador',
             'attendanceLogs' => $myLogs,
             'myDocuments' => $myDocuments,
-            'userCV' => $application ? $application->cv_path : null // Passa o caminho do ficheiro
+            'userCV' => $application ? $application->cv_path : null, // Passa o caminho do ficheiro
         ]);
     }
 }

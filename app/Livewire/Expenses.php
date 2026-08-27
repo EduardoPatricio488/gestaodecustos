@@ -13,6 +13,7 @@ class Expenses extends Component
     use WithPagination;
 
     public string $search = '';
+
     public ?int $filterCategory = null;
 
     /**
@@ -31,6 +32,7 @@ class Expenses extends Component
     {
         if (auth()->user()->isViewer()) {
             $this->dispatch('toast', variant: 'error', text: 'Apenas leitura: não tens permissão para criar registos.');
+
             return;
         }
 
@@ -45,6 +47,7 @@ class Expenses extends Component
     {
         if (auth()->user()->isViewer()) {
             $this->dispatch('toast', variant: 'error', text: 'Apenas leitura: não podes editar este registo.');
+
             return;
         }
 
@@ -57,8 +60,9 @@ class Expenses extends Component
      */
     public function delete(int $id): void
     {
-        if (!auth()->user()->isOwner()) {
+        if (! auth()->user()->isOwner()) {
             $this->dispatch('toast', variant: 'error', text: 'Ação negada: apenas o administrador do grupo pode apagar dados.');
+
             return;
         }
 
@@ -74,11 +78,9 @@ class Expenses extends Component
 
         // Consulta filtrada automaticamente pelo Workspace ativo via Trait
         $expenses = Expense::with(['category', 'user'])
-            ->when($this->search, fn ($q) =>
-                $q->where('description', 'like', '%'.$this->search.'%')
+            ->when($this->search, fn ($q) => $q->where('description', 'like', '%'.$this->search.'%')
             )
-            ->when($this->filterCategory, fn ($q) =>
-                $q->where('category_id', $this->filterCategory)
+            ->when($this->filterCategory, fn ($q) => $q->where('category_id', $this->filterCategory)
             )
             ->latest('spent_at')
             ->latest('id')
@@ -87,14 +89,14 @@ class Expenses extends Component
         $monthTotal = (float) Expense::where('spent_at', '>=', now()->startOfMonth())->sum('amount');
 
         return view('livewire.expenses', [
-            'expenses'   => $expenses,
+            'expenses' => $expenses,
             'categories' => $user->categories()->orderBy('name')->get(),
             'monthTotal' => $monthTotal,
-            'isShared'   => $user->currentWorkspace->users()->count() > 1,
+            'isShared' => $user->currentWorkspace->users()->count() > 1,
 
             // Passamos as permissões para a vista esconder os botões visualmente
-            'canEdit'    => !$user->isViewer(),
-            'canDelete'  => $user->isOwner(),
+            'canEdit' => ! $user->isViewer(),
+            'canDelete' => $user->isOwner(),
         ]);
     }
 }

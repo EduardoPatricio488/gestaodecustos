@@ -9,19 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up()
-{
-    Schema::table('support_tickets', function (Blueprint $table) {
-        if (!Schema::hasColumn('support_tickets', 'workspace_id')) {
-            $table->unsignedBigInteger('workspace_id')->nullable()->after('user_id');
-        }
-    });
-}
+    public function up()
+    {
+        Schema::table('support_tickets', function (Blueprint $table) {
+            if (! Schema::hasColumn('support_tickets', 'workspace_id')) {
+                $table->unsignedBigInteger('workspace_id')->nullable()->after('user_id');
+            }
+        });
+    }
 
-public function down()
-{
-    Schema::table('support_tickets', function (Blueprint $table) {
-        $table->dropColumn('workspace_id');
-    });
-}}
-    ;
+    public function down()
+    {
+        Schema::table('support_tickets', function (Blueprint $table) {
+            $table->dropColumn('workspace_id');
+        });
+    }
+};

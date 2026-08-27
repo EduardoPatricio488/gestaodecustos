@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\ClientPortalToken;
 use App\Models\Invoice;
-use App\Models\Proposal;
 use App\Models\Project;
+use App\Models\Proposal;
 
 class ClientPortalController extends Controller
 {

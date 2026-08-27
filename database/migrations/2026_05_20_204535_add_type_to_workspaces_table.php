@@ -9,12 +9,13 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void {
-    Schema::table('workspaces', function (Blueprint $table) {
-        // Tipos: personal, couple, family, company
-        $table->string('type')->default('personal')->after('name');
-    });
-}
+    public function up(): void
+    {
+        Schema::table('workspaces', function (Blueprint $table) {
+            // Tipos: personal, couple, family, company
+            $table->string('type')->default('personal')->after('name');
+        });
+    }
 
     /**
      * Reverse the migrations.

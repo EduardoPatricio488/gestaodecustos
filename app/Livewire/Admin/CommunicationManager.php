@@ -3,13 +3,19 @@
 namespace App\Livewire\Admin;
 
 use Illuminate\Support\Facades\DB;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class CommunicationManager extends Component
 {
-    public $title, $message, $type = 'info', $expires_at;
+    public $title;
+
+    public $message;
+
+    public $type = 'info';
+
+    public $expires_at;
 
     /**
      * Envia o aviso para a base de dados
@@ -19,7 +25,7 @@ class CommunicationManager extends Component
         $this->validate([
             'title' => 'required|min:3',
             'message' => 'required',
-            'type' => 'required'
+            'type' => 'required',
         ]);
 
         DB::table('site_announcements')->insert([
@@ -48,7 +54,7 @@ class CommunicationManager extends Component
     public function render()
     {
         return view('livewire.admin.communication-manager', [
-            'announcements' => DB::table('site_announcements')->latest()->get()
+            'announcements' => DB::table('site_announcements')->latest()->get(),
         ]);
     }
 }

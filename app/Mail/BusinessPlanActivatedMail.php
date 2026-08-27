@@ -11,6 +11,7 @@ class BusinessPlanActivatedMail extends Mailable
     use Queueable, SerializesModels;
 
     public $userName;
+
     public $companyName;
 
     public function __construct($userName, $companyName)
@@ -21,7 +22,7 @@ class BusinessPlanActivatedMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Plano Business Ativado! 💎 - ' . $this->companyName)
+        return $this->subject('Plano Business Ativado! 💎 - '.$this->companyName)
             ->html("
                 <div style='font-family: sans-serif; background-color: #f5f3ff; padding: 40px; color: #1e1b4b;'>
                     <div style='max-width: 500px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 30px; box-shadow: 0 10px 15px rgba(0,0,0,0.05); border: 1px solid #ddd6fe;'>

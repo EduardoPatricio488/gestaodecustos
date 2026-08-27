@@ -10,28 +10,28 @@ return new class extends Migration
     {
         // ─── 1. MELHORIAS À TABELA BANK_ACCOUNTS ──────────────────────────────
         Schema::table('bank_accounts', function (Blueprint $table) {
-            if (!Schema::hasColumn('bank_accounts', 'icon')) {
+            if (! Schema::hasColumn('bank_accounts', 'icon')) {
                 $table->string('icon')->nullable()->after('color');
             }
-            if (!Schema::hasColumn('bank_accounts', 'status')) {
+            if (! Schema::hasColumn('bank_accounts', 'status')) {
                 $table->string('status')->default('active')->after('icon'); // active, archived, hidden
             }
-            if (!Schema::hasColumn('bank_accounts', 'description')) {
+            if (! Schema::hasColumn('bank_accounts', 'description')) {
                 $table->text('description')->nullable()->after('status');
             }
-            if (!Schema::hasColumn('bank_accounts', 'opened_at')) {
+            if (! Schema::hasColumn('bank_accounts', 'opened_at')) {
                 $table->date('opened_at')->nullable()->after('description');
             }
-            if (!Schema::hasColumn('bank_accounts', 'include_in_total')) {
+            if (! Schema::hasColumn('bank_accounts', 'include_in_total')) {
                 $table->boolean('include_in_total')->default(true)->after('opened_at');
             }
-            if (!Schema::hasColumn('bank_accounts', 'alert_below')) {
+            if (! Schema::hasColumn('bank_accounts', 'alert_below')) {
                 $table->decimal('alert_below', 12, 2)->nullable()->after('include_in_total');
             }
         });
 
         // ─── 2. TRANSFERÊNCIAS ENTRE CONTAS ──────────────────────────────────
-        if (!Schema::hasTable('bank_transfers')) {
+        if (! Schema::hasTable('bank_transfers')) {
             Schema::create('bank_transfers', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('workspace_id')->constrained()->onDelete('cascade');
@@ -51,7 +51,7 @@ return new class extends Migration
         }
 
         // ─── 3. RESERVAS FINANCEIRAS ──────────────────────────────────────────
-        if (!Schema::hasTable('bank_reserves')) {
+        if (! Schema::hasTable('bank_reserves')) {
             Schema::create('bank_reserves', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('workspace_id')->constrained()->onDelete('cascade');
@@ -71,7 +71,7 @@ return new class extends Migration
         }
 
         // ─── 4. DINHEIRO EM TRÂNSITO ──────────────────────────────────────────
-        if (!Schema::hasTable('bank_transit_items')) {
+        if (! Schema::hasTable('bank_transit_items')) {
             Schema::create('bank_transit_items', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('workspace_id')->constrained()->onDelete('cascade');
@@ -92,7 +92,7 @@ return new class extends Migration
         }
 
         // ─── 5. CRÉDITOS (DINHEIRO A RECEBER) ────────────────────────────────
-        if (!Schema::hasTable('bank_credits')) {
+        if (! Schema::hasTable('bank_credits')) {
             Schema::create('bank_credits', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('workspace_id')->constrained()->onDelete('cascade');
@@ -110,7 +110,7 @@ return new class extends Migration
         }
 
         // ─── 6. PATRIMÓNIO (ATIVOS NÃO-BANCÁRIOS) ────────────────────────────
-        if (!Schema::hasTable('bank_patrimony')) {
+        if (! Schema::hasTable('bank_patrimony')) {
             Schema::create('bank_patrimony', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('workspace_id')->constrained()->onDelete('cascade');

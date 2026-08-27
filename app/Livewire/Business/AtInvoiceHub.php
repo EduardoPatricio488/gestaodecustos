@@ -14,10 +14,15 @@ class AtInvoiceHub extends Component
     use WithFileUploads;
 
     public $importFile;
+
     public string $nifToValidate = '';
+
     public ?bool $nifValid = null;
+
     public ?array $lastImport = null;
+
     public int $vatYear;
+
     public int $vatQuarter = 1;
 
     public function mount(): void

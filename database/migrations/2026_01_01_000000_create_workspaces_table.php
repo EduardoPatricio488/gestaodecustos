@@ -4,10 +4,12 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         // 1. Criar Tabela de Workspaces
-        if (!Schema::hasTable('workspaces')) {
+        if (! Schema::hasTable('workspaces')) {
             Schema::create('workspaces', function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
@@ -17,7 +19,7 @@ return new class extends Migration {
         }
 
         // 2. Tabela Pivot para Membros
-        if (!Schema::hasTable('workspace_user')) {
+        if (! Schema::hasTable('workspace_user')) {
             Schema::create('workspace_user', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('workspace_id')->constrained()->cascadeOnDelete();
@@ -29,7 +31,7 @@ return new class extends Migration {
 
         // 3. Adicionar current_workspace_id ao Utilizador
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'current_workspace_id')) {
+            if (! Schema::hasColumn('users', 'current_workspace_id')) {
                 $table->foreignId('current_workspace_id')->nullable()->constrained('workspaces')->nullOnDelete();
             }
         });
@@ -40,7 +42,7 @@ return new class extends Migration {
         foreach ($tables as $tableName) {
             if (Schema::hasTable($tableName)) {
                 Schema::table($tableName, function (Blueprint $table) use ($tableName) {
-                    if (!Schema::hasColumn($tableName, 'workspace_id')) {
+                    if (! Schema::hasColumn($tableName, 'workspace_id')) {
                         $table->foreignId('workspace_id')->nullable()->constrained()->cascadeOnDelete();
                     }
                 });
@@ -48,7 +50,8 @@ return new class extends Migration {
         }
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('workspace_user');
         Schema::dropIfExists('workspaces');
     }

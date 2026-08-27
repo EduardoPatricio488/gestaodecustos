@@ -2,13 +2,12 @@
 
 namespace App\Livewire\Social;
 
-use Livewire\Component;
-use App\Models\User;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
-
-use Livewire\Attributes\On;
+use App\Models\User;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 class ChatPanel extends Component
 {
@@ -49,29 +48,31 @@ class ChatPanel extends Component
     #[Computed]
     public function activeConversation()
     {
-        if (!$this->activeConversationId) {
+        if (! $this->activeConversationId) {
             return null;
         }
 
         return ChatConversation::with(['users', 'messages.user'])
             ->find($this->activeConversationId);
     }
-#[On('open-chat-with')]
-public function openDirectChatWith($userId)
-{
-    $this->open = true;      // Ativa no servidor
-    $this->showNewChat = false;
-    $this->startDirectChat($userId); // Abre a conversa com a pessoa
-}
-    #[Computed]
-public function conversationMessages()
-{
-    if (!$this->activeConversation) {
-        return collect();
+
+    #[On('open-chat-with')]
+    public function openDirectChatWith($userId)
+    {
+        $this->open = true;      // Ativa no servidor
+        $this->showNewChat = false;
+        $this->startDirectChat($userId); // Abre a conversa com a pessoa
     }
 
-    return $this->activeConversation->messages()->with('user')->oldest()->get();
-}
+    #[Computed]
+    public function conversationMessages()
+    {
+        if (! $this->activeConversation) {
+            return collect();
+        }
+
+        return $this->activeConversation->messages()->with('user')->oldest()->get();
+    }
 
     /**
      * Resultados de pesquisa de utilizadores para iniciar novo chat
@@ -86,7 +87,7 @@ public function conversationMessages()
         return User::where('id', '!=', auth()->id())
             ->where(function ($q) {
                 $q->where('name', 'like', '%'.$this->userSearch.'%')
-                  ->orWhere('username', 'like', '%'.$this->userSearch.'%');
+                    ->orWhere('username', 'like', '%'.$this->userSearch.'%');
             })
             ->limit(8)
             ->get();
@@ -99,14 +100,14 @@ public function conversationMessages()
 
         foreach ($this->conversations as $conversation) {
             $lastMessage = $conversation->messages->first();
-            if (!$lastMessage) {
+            if (! $lastMessage) {
                 continue;
             }
 
             $pivot = $conversation->users->firstWhere('id', auth()->id())?->pivot;
             $lastRead = $pivot?->last_read_at;
 
-            if ($lastMessage->user_id !== auth()->id() && (!$lastRead || $lastMessage->created_at->gt($lastRead))) {
+            if ($lastMessage->user_id !== auth()->id() && (! $lastRead || $lastMessage->created_at->gt($lastRead))) {
                 $total++;
             }
         }
@@ -116,7 +117,7 @@ public function conversationMessages()
 
     public function toggleOpen()
     {
-        $this->open = !$this->open;
+        $this->open = ! $this->open;
     }
 
     public function openConversation(int $conversationId)
@@ -133,7 +134,7 @@ public function conversationMessages()
 
     public function markAsRead()
     {
-        if (!$this->activeConversation) {
+        if (! $this->activeConversation) {
             return;
         }
 
@@ -151,11 +152,12 @@ public function conversationMessages()
 
         if ($existing) {
             $this->openConversation($existing->id);
+
             return;
         }
 
         $conversation = ChatConversation::create([
-            'is_group'   => false,
+            'is_group' => false,
             'created_by' => auth()->id(),
         ]);
 
@@ -170,13 +172,13 @@ public function conversationMessages()
     public function startGroupChat()
     {
         $this->validate([
-            'groupName'       => 'required|string|max:50',
+            'groupName' => 'required|string|max:50',
             'selectedUserIds' => 'required|array|min:1',
         ]);
 
         $conversation = ChatConversation::create([
-            'name'       => $this->groupName,
-            'is_group'   => true,
+            'name' => $this->groupName,
+            'is_group' => true,
             'created_by' => auth()->id(),
         ]);
 
@@ -202,14 +204,14 @@ public function conversationMessages()
             'newMessage' => 'required|string|max:1000',
         ]);
 
-        if (!$this->activeConversation) {
+        if (! $this->activeConversation) {
             return;
         }
 
         ChatMessage::create([
             'chat_conversation_id' => $this->activeConversationId,
-            'user_id'              => auth()->id(),
-            'content'              => $this->newMessage,
+            'user_id' => auth()->id(),
+            'content' => $this->newMessage,
         ]);
 
         $this->newMessage = '';
@@ -220,5 +222,4 @@ public function conversationMessages()
     {
         return view('livewire.social.chat-panel');
     }
-
 }

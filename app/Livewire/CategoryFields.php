@@ -4,15 +4,24 @@ namespace App\Livewire;
 
 use App\Models\Category;
 use App\Models\CategoryField;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class CategoryFields extends Component
 {
     public Category $category;
+
     public $editingFieldId = null; // Controla se estamos a criar ou editar
-    public $label, $type = 'text', $optionsRaw, $placeholder;
+
+    public $label;
+
+    public $type = 'text';
+
+    public $optionsRaw;
+
+    public $placeholder;
+
     public bool $required = false;
 
     protected $rules = [
@@ -100,7 +109,9 @@ class CategoryFields extends Component
     public function removeField($id)
     {
         $this->category->fields()->findOrFail($id)->delete();
-        if ($this->editingFieldId == $id) $this->cancelEdit();
+        if ($this->editingFieldId == $id) {
+            $this->cancelEdit();
+        }
     }
 
     public function render()
@@ -113,7 +124,7 @@ class CategoryFields extends Component
                 'select' => 'Lista de Seleção',
                 'date' => 'Data Específica',
                 'checkbox' => 'Sim/Não (Check)',
-            ]
+            ],
         ]);
     }
 }

@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use App\Traits\BelongsToWorkspace;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Investment extends Model
 {
-    use HasFactory, BelongsToWorkspace;
+    use BelongsToWorkspace, HasFactory;
 
     protected $fillable = [
         'issuer', 'series', 'interest_rate', 'loyalty_bonus', 'capitalization_date',
@@ -32,17 +32,18 @@ class Investment extends Model
 
     protected $casts = [
         'operation_date' => 'date',
-        'quantity'       => 'float',
+        'quantity' => 'float',
         'product_type' => 'string',
-        'average_price'  => 'float',
-        'current_price'  => 'float',
-        'fees'           => 'float',
-        'interest_rate'       => 'float',
-'loyalty_bonus'       => 'float',
-'capitalization_date' => 'date',
+        'average_price' => 'float',
+        'current_price' => 'float',
+        'fees' => 'float',
+        'interest_rate' => 'float',
+        'loyalty_bonus' => 'float',
+        'capitalization_date' => 'date',
     ];
-public function incomes()
-{
-    return $this->hasMany(InvestmentIncome::class);
-}
+
+    public function incomes()
+    {
+        return $this->hasMany(InvestmentIncome::class);
     }
+}

@@ -3,22 +3,26 @@
 namespace App\Livewire;
 
 use App\Models\Client;
-use App\Models\Project;
 use App\Models\Invoice;
+use App\Models\Project;
 use App\Models\Proposal;
-use App\Models\SupportTicket;
 use App\Models\SupportMessage;
+use App\Models\SupportTicket;
 use App\Models\Task;
-use Livewire\Component;
-use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 class ClientPortal extends Component
 {
     public $client;
+
     public $subject = '';
+
     public $message = '';
+
     public $activeTicketId = null;
+
     public $replyMessage = '';
 
     public function mount($token)
@@ -41,20 +45,20 @@ class ClientPortal extends Component
         // 2. Criar o Ticket
         $ticket = SupportTicket::create([
             'workspace_id' => $this->client->workspace_id,
-            'client_id'    => $this->client->id,
-            'user_id'      => $adminId,
-            'subject'      => "[PORTAL] " . $this->subject,
-            'message'      => $this->message,
-            'status'       => 'open',
-            'priority'     => 'high',
+            'client_id' => $this->client->id,
+            'user_id' => $adminId,
+            'subject' => '[PORTAL] '.$this->subject,
+            'message' => $this->message,
+            'status' => 'open',
+            'priority' => 'high',
         ]);
 
         // 3. Criar a Mensagem no histórico (Passando o user_id do admin para satisfazer a BD)
         SupportMessage::create([
             'support_ticket_id' => $ticket->id,
-            'user_id'           => $adminId,
-            'message'           => $this->message,
-            'is_admin_reply'    => false // Importante: define que veio do cliente
+            'user_id' => $adminId,
+            'message' => $this->message,
+            'is_admin_reply' => false, // Importante: define que veio do cliente
         ]);
 
         $this->reset(['subject', 'message']);
@@ -71,9 +75,9 @@ class ClientPortal extends Component
         // Enviar a resposta usando o user_id que o ticket já tem
         SupportMessage::create([
             'support_ticket_id' => $this->activeTicketId,
-            'user_id'           => $ticket->user_id,
-            'message'           => $this->replyMessage,
-            'is_admin_reply'    => false
+            'user_id' => $ticket->user_id,
+            'message' => $this->replyMessage,
+            'is_admin_reply' => false,
         ]);
 
         $this->replyMessage = '';
@@ -92,7 +96,7 @@ class ClientPortal extends Component
         $projectIds = Project::where('client_id', $this->client->id)->pluck('id');
 
         return view('livewire.client-portal', [
-            'projects' => Project::where('client_id', $this->client->id)->withCount(['tasks' => fn($q) => $q->where('status', '!=', 'concluida')])->get(),
+            'projects' => Project::where('client_id', $this->client->id)->withCount(['tasks' => fn ($q) => $q->where('status', '!=', 'concluida')])->get(),
             'invoices' => Invoice::where('client_id', $this->client->id)->latest()->get(),
             'proposals' => Proposal::where('client_id', $this->client->id)->where('status', 'pendente')->get(),
             'recentActivity' => Task::whereIn('project_id', $projectIds)->where('status', 'concluida')->whereNotNull('completed_at')->latest('completed_at')->limit(5)->get(),

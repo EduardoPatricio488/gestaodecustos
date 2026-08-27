@@ -31,7 +31,7 @@ return new class extends Migration
         Schema::table('workspaces', function (Blueprint $table) {
             $table->dropColumn([
                 'logo_path', 'legal_name', 'tax_number', 'industry',
-                'currency', 'initial_capital', 'business_email', 'address', 'fiscal_year_start'
+                'currency', 'initial_capital', 'business_email', 'address', 'fiscal_year_start',
             ]);
         });
     }

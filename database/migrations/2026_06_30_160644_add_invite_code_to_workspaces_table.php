@@ -7,14 +7,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     public function up(): void
-{
-    // Só executa o código se a coluna NÃO existir na tabela
-    if (!Schema::hasColumn('workspaces', 'invite_code')) {
-        Schema::table('workspaces', function (Blueprint $table) {
-            $table->string('invite_code', 20)->nullable()->unique()->after('name');
-        });
+    {
+        // Só executa o código se a coluna NÃO existir na tabela
+        if (! Schema::hasColumn('workspaces', 'invite_code')) {
+            Schema::table('workspaces', function (Blueprint $table) {
+                $table->string('invite_code', 20)->nullable()->unique()->after('name');
+            });
+        }
     }
-}
 
     public function down(): void
     {

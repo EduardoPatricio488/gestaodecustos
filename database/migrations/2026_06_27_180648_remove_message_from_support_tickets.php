@@ -10,19 +10,18 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up()
-{
-    if (Schema::hasColumn('support_tickets', 'message')) {
+    {
+        if (Schema::hasColumn('support_tickets', 'message')) {
+            Schema::table('support_tickets', function (Blueprint $table) {
+                $table->dropColumn('message');
+            });
+        }
+    }
+
+    public function down()
+    {
         Schema::table('support_tickets', function (Blueprint $table) {
-            $table->dropColumn('message');
+            $table->text('message')->nullable();
         });
     }
-}
-
-public function down()
-{
-    Schema::table('support_tickets', function (Blueprint $table) {
-        $table->text('message')->nullable();
-    });
-}
-
 };

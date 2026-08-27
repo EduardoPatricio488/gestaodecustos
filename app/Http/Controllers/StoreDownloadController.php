@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\StorePurchase;
 use App\Services\StoreDownloadService;
+use App\Services\StoreLicenseService;
 use App\Services\StorePurchaseService;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,7 @@ class StoreDownloadController extends Controller
     {
         abort_unless($downloads->canDownload($purchase, auth()->id()), 403);
 
-        $license = $purchase->license ?? app(\App\Services\StoreLicenseService::class)->issue($purchase);
+        $license = $purchase->license ?? app(StoreLicenseService::class)->issue($purchase);
 
         if ($downloads->hourlyDownloadsExceeded($license)) {
             return back()->with('error', 'Limite de downloads por hora atingido. Tenta novamente mais tarde.');
@@ -39,7 +40,7 @@ class StoreDownloadController extends Controller
     {
         abort_unless($downloads->canDownload($purchase, auth()->id()), 403);
 
-        $license = $purchase->license ?? app(\App\Services\StoreLicenseService::class)->issue($purchase);
+        $license = $purchase->license ?? app(StoreLicenseService::class)->issue($purchase);
 
         $token = $request->query('token', '');
         abort_unless($downloads->validateToken($license, $token), 403, 'Token inválido ou expirado.');

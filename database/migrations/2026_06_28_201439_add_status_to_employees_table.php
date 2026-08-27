@@ -9,19 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void
-{
-    Schema::table('employees', function (Blueprint $table) {
-        if (!Schema::hasColumn('employees', 'status')) {
-            $table->string('status')->default('Ativo');
-        }
-    });
-}
+    public function up(): void
+    {
+        Schema::table('employees', function (Blueprint $table) {
+            if (! Schema::hasColumn('employees', 'status')) {
+                $table->string('status')->default('Ativo');
+            }
+        });
+    }
 
-public function down(): void
-{
-    Schema::table('employees', function (Blueprint $table) {
-        $table->dropColumn('status');
-    });
-}
+    public function down(): void
+    {
+        Schema::table('employees', function (Blueprint $table) {
+            $table->dropColumn('status');
+        });
+    }
 };

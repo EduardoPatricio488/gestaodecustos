@@ -18,7 +18,7 @@ class StravaController extends Controller
     {
         session(['strava_state' => $state = bin2hex(random_bytes(16))]);
 
-        $url = $this->strava->authUrl() . '&state=' . $state;
+        $url = $this->strava->authUrl().'&state='.$state;
 
         return redirect($url);
     }
@@ -55,26 +55,26 @@ class StravaController extends Controller
             ->delete();
 
         ConnectedDevice::create([
-            'user_id'          => Auth::id(),
-            'name'             => 'Strava — ' . ($athlete['firstname'] ?? '') . ' ' . ($athlete['lastname'] ?? ''),
-            'brand'            => 'Strava',
-            'emoji'            => '🚴',
-            'provider'         => 'strava',
-            'provider_user_id' => (string)($athlete['id'] ?? ''),
-            'access_token'     => $data['access_token'],
-            'refresh_token'    => $data['refresh_token'],
+            'user_id' => Auth::id(),
+            'name' => 'Strava — '.($athlete['firstname'] ?? '').' '.($athlete['lastname'] ?? ''),
+            'brand' => 'Strava',
+            'emoji' => '🚴',
+            'provider' => 'strava',
+            'provider_user_id' => (string) ($athlete['id'] ?? ''),
+            'access_token' => $data['access_token'],
+            'refresh_token' => $data['refresh_token'],
             'token_expires_at' => now()->addSeconds($data['expires_in'] ?? 21600),
-            'is_active'        => true,
-            'meta'             => [
-                'athlete_id'   => $athlete['id'] ?? null,
-                'username'     => $athlete['username'] ?? null,
-                'firstname'    => $athlete['firstname'] ?? null,
-                'lastname'     => $athlete['lastname'] ?? null,
-                'profile'      => $athlete['profile'] ?? null,
-                'city'         => $athlete['city'] ?? null,
-                'country'      => $athlete['country'] ?? null,
+            'is_active' => true,
+            'meta' => [
+                'athlete_id' => $athlete['id'] ?? null,
+                'username' => $athlete['username'] ?? null,
+                'firstname' => $athlete['firstname'] ?? null,
+                'lastname' => $athlete['lastname'] ?? null,
+                'profile' => $athlete['profile'] ?? null,
+                'city' => $athlete['city'] ?? null,
+                'country' => $athlete['country'] ?? null,
                 'follower_count' => $athlete['follower_count'] ?? 0,
-                'friend_count'   => $athlete['friend_count'] ?? 0,
+                'friend_count' => $athlete['friend_count'] ?? 0,
             ],
         ]);
 

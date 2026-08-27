@@ -2,14 +2,14 @@
 
 namespace App\Livewire\Admin;
 
-use App\Models\SupportTicket;
+use App\Models\SocialReport;
 use App\Models\SupportMessage;
-use App\Models\SocialReport; // Certifica-te que este Model existe
-use App\Models\SocialPost;   // Certifica-te que este Model existe
+use App\Models\SupportTicket; // Certifica-te que este Model existe
+// Certifica-te que este Model existe
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Computed;
 
 #[Layout('components.layouts.app')]
 class SupportManager extends Component
@@ -18,12 +18,16 @@ class SupportManager extends Component
 
     // --- ESTADOS DE NAVEGAÇÃO E FILTRO ---
     public $activeTab = 'tickets'; // 'tickets' ou 'denuncias'
+
     public $search = '';
+
     public $statusFilter = 'open';
 
     // --- ESTADOS DE SELECÇÃO ---
     public $activeTicketId;
+
     public $selectedReportId;
+
     public $replyMessage;
 
     /**
@@ -32,7 +36,9 @@ class SupportManager extends Component
     #[Computed]
     public function activeTicket()
     {
-        if (!$this->activeTicketId) return null;
+        if (! $this->activeTicketId) {
+            return null;
+        }
 
         return SupportTicket::with(['messages.user', 'workspace', 'user'])
             ->find($this->activeTicketId);
@@ -44,7 +50,9 @@ class SupportManager extends Component
     #[Computed]
     public function selectedReport()
     {
-        if (!$this->selectedReportId) return null;
+        if (! $this->selectedReportId) {
+            return null;
+        }
 
         return SocialReport::with(['user', 'social_post.user'])
             ->find($this->selectedReportId);
@@ -131,10 +139,10 @@ class SupportManager extends Component
     {
         // Lista de Tickets
         $tickets = SupportTicket::with(['user', 'workspace'])
-            ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
-            ->when($this->search, function($q) {
+            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
+            ->when($this->search, function ($q) {
                 $q->where('subject', 'like', '%'.$this->search.'%')
-                  ->orWhereHas('user', fn($u) => $u->where('name', 'like', '%'.$this->search.'%'));
+                    ->orWhereHas('user', fn ($u) => $u->where('name', 'like', '%'.$this->search.'%'));
             })
             ->latest('updated_at')
             ->paginate(10);
@@ -142,7 +150,7 @@ class SupportManager extends Component
         // Lista de Denúncias
         $reports = SocialReport::with(['user', 'social_post'])
             ->where('status', 'pending')
-            ->when($this->search, function($q) {
+            ->when($this->search, function ($q) {
                 $q->where('reason', 'like', '%'.$this->search.'%');
             })
             ->latest()

@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SiteSetting;
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\SiteSetting;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckRegistrationStatus

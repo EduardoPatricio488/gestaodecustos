@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\{Workspace, Employee};
+use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class BusinessGateway extends Component
 {
@@ -16,6 +16,7 @@ class BusinessGateway extends Component
 
         if (request()->has('new')) {
             $user->update(['current_workspace_id' => null]);
+
             return;
         }
 
@@ -43,6 +44,7 @@ class BusinessGateway extends Component
             $workspace = $employee->workspace;
             $workspace->users()->syncWithoutDetaching([$user->id => ['role' => 'editor']]);
             $user->update(['current_workspace_id' => $workspace->id]);
+
             return redirect()->route('hub.business.dashboard');
         }
 

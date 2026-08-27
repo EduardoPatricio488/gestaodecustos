@@ -236,7 +236,7 @@ class BankImportService
 
     private function extractOfxField(string $block, string $field): ?string
     {
-        if (! preg_match('/<' . preg_quote($field, '/') . '>([^<\r\n]+)/i', $block, $m)) {
+        if (! preg_match('/<'.preg_quote($field, '/').'>([^<\r\n]+)/i', $block, $m)) {
             return null;
         }
 

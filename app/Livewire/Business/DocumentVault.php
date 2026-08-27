@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use Livewire\WithFileUploads;
-use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\Storage;
 use App\Models\BusinessDocument;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('components.layouts.app')]
 class DocumentVault extends Component
@@ -16,13 +16,18 @@ class DocumentVault extends Component
 
     // Filtros e Pesquisa
     public $search = '';
+
     public $categoryFilter = '';
 
     // Campos do formulário
     public $name;
+
     public $category = 'Legal';
+
     public $expiry_date;
+
     public $file;
+
     public $notes;
 
     // Estado de Edição
@@ -108,8 +113,8 @@ class DocumentVault extends Component
 
         // 1. Query Principal para a Lista
         $documents = BusinessDocument::where('workspace_id', $workspaceId)
-            ->where('name', 'like', '%' . $this->search . '%')
-            ->when($this->categoryFilter, fn($q) => $q->where('category', $this->categoryFilter))
+            ->where('name', 'like', '%'.$this->search.'%')
+            ->when($this->categoryFilter, fn ($q) => $q->where('category', $this->categoryFilter))
             ->latest()
             ->get();
 

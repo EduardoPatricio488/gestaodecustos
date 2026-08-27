@@ -2,12 +2,8 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\Expense;
-use App\Models\Invoice;
-use App\Models\Employee;
 use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class BusinessPnlHub extends Component
@@ -28,7 +24,7 @@ class BusinessPnlHub extends Component
     {
         $workspace = auth()->user()->currentWorkspace;
 
-        if (!$workspace) {
+        if (! $workspace) {
             return <<<'HTML'
                 <div class="p-10 text-center italic text-zinc-500">Nenhum workspace empresarial selecionado.</div>
             HTML;
@@ -77,7 +73,7 @@ class BusinessPnlHub extends Component
                 'costs' => $opEx + $payroll,
                 'vat' => $netVat,
                 'profit' => $netProfit,
-                'margin' => $revenue > 0 ? ($netProfit / $revenue) * 100 : 0
+                'margin' => $revenue > 0 ? ($netProfit / $revenue) * 100 : 0,
             ];
         });
 
@@ -91,7 +87,7 @@ class BusinessPnlHub extends Component
             'yearlyRevenue' => $yearlyRevenue,
             'yearlyProfit' => $yearlyProfit,
             'avgMargin' => $avgMargin,
-            'chartMax' => max($monthlyData->max('revenue'), $monthlyData->max('costs'), 1)
+            'chartMax' => max($monthlyData->max('revenue'), $monthlyData->max('costs'), 1),
         ]);
     }
 }

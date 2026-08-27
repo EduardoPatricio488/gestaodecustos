@@ -11,6 +11,7 @@ class HiredNotificationMail extends Mailable
     use Queueable, SerializesModels;
 
     public $name;
+
     public $companyName;
 
     public function __construct($name, $companyName)
@@ -21,7 +22,7 @@ class HiredNotificationMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Bem-vindo(a) à Equipa! 🎉 - ' . $this->companyName)
+        return $this->subject('Bem-vindo(a) à Equipa! 🎉 - '.$this->companyName)
             ->html("
                 <div style='font-family: sans-serif; background-color: #f0fdf4; padding: 40px; color: #1e293b;'>
                     <div style='max-width: 500px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 30px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid #dcfce7;'>

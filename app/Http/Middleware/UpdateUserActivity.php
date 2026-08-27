@@ -16,7 +16,7 @@ class UpdateUserActivity
 
             // Só atualizamos a base de dados se o último registo for superior a 5 minutos
             // para não sobrecarregar o servidor em cada clique.
-            if (!$user->last_login_at || $user->last_login_at->diffInMinutes(now()) >= 5) {
+            if (! $user->last_login_at || $user->last_login_at->diffInMinutes(now()) >= 5) {
                 $user->forceFill([
                     'last_login_at' => now(),
                     'last_ip' => $request->ip(),

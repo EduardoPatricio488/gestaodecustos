@@ -2,24 +2,26 @@
 
 namespace App\Livewire;
 
+use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Goal;
 use App\Models\Income;
-use App\Models\Category;
 use App\Models\Investment;
-use App\Models\Subscription;
 use App\Models\SocialPost;
+use App\Models\Subscription;
 use App\Services\FinanceScoreService;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 #[Layout('components.layouts.app')]
 class WrappedReport extends Component
 {
     public string $view = 'year';
+
     public int $year;
+
     public int $month;
 
     public function mount(): void
@@ -46,11 +48,11 @@ class WrappedReport extends Component
         try {
             SocialPost::create([
                 'user_id' => $user->id,
-                'content' => "💰 O meu Wrapped de " . ($this->view === 'year' ? $this->year : Carbon::create()->month($this->month)->translatedFormat('F')) . " está aqui!\n\n" .
-                             "🔹 Gastei: " . number_format($data['spent'], 2) . "€\n" .
-                             "🔹 Poupei: " . number_format($data['saved'], 2) . "€\n" .
-                             "🏆 Score Financeiro: " . $data['score'] . " (" . $data['scoreGrade'] . ")\n\n" .
-                             "#FinanceProWrapped #FinancialFreedom",
+                'content' => '💰 O meu Wrapped de '.($this->view === 'year' ? $this->year : Carbon::create()->month($this->month)->translatedFormat('F'))." está aqui!\n\n".
+                             '🔹 Gastei: '.number_format($data['spent'], 2)."€\n".
+                             '🔹 Poupei: '.number_format($data['saved'], 2)."€\n".
+                             '🏆 Score Financeiro: '.$data['score'].' ('.$data['scoreGrade'].")\n\n".
+                             '#FinanceProWrapped #FinancialFreedom',
                 'type' => 'wrapped',
                 'metadata' => json_encode($data),
             ]);
@@ -110,9 +112,11 @@ class WrappedReport extends Component
         $biggestExpense = (clone $expenseQuery)->orderByDesc('amount')->first();
 
         $topCategories = Category::where('workspace_id', $workspaceId)
-            ->withSum(['expenses' => function($q) {
+            ->withSum(['expenses' => function ($q) {
                 $q->whereYear('spent_at', $this->year)->where('is_company', false);
-                if ($this->view === 'month') $q->whereMonth('spent_at', $this->month);
+                if ($this->view === 'month') {
+                    $q->whereMonth('spent_at', $this->month);
+                }
             }], 'amount')
             ->orderByDesc('expenses_sum_amount')
             ->take(3)

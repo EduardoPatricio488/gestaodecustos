@@ -18,7 +18,6 @@ class LoginForm extends Form
     #[Validate('required|string')]
     public string $password = '';
 
-
     #[Validate('boolean')]
     public bool $remember = false;
 
@@ -31,26 +30,26 @@ class LoginForm extends Form
      *
      * @throws ValidationException
      */
-   public function authenticate(): void
-{
-    $this->ensureIsNotRateLimited();
+    public function authenticate(): void
+    {
+        $this->ensureIsNotRateLimited();
 
-    // Tenta fazer login
-    if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
-        RateLimiter::hit($this->throttleKey());
-        throw ValidationException::withMessages(['email' => trans('auth.failed')]);
+        // Tenta fazer login
+        if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
+            RateLimiter::hit($this->throttleKey());
+            throw ValidationException::withMessages(['email' => trans('auth.failed')]);
+        }
+
+        // AQUI: Captura se a checkbox foi marcada no POST
+        // Se o formulário enviou 'privacyMode', guardamos na sessão
+        if (request()->has('privacyMode')) {
+            session(['privacy_mode' => true]);
+        } else {
+            session(['privacy_mode' => false]);
+        }
+
+        RateLimiter::clear($this->throttleKey());
     }
-
-    // AQUI: Captura se a checkbox foi marcada no POST
-    // Se o formulário enviou 'privacyMode', guardamos na sessão
-    if (request()->has('privacyMode')) {
-        session(['privacy_mode' => true]);
-    } else {
-        session(['privacy_mode' => false]);
-    }
-
-    RateLimiter::clear($this->throttleKey());
-}
 
     /**
      * Ensure the authentication request is not rate limited.

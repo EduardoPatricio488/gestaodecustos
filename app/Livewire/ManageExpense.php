@@ -5,12 +5,12 @@ namespace App\Livewire;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Services\CurrencyService;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 #[Layout('components.layouts.app')]
 class ManageExpense extends Component
@@ -20,25 +20,42 @@ class ManageExpense extends Component
     public ?Expense $expense = null;
 
     // Propriedades do Form
-    public $amount, $description, $spent_at, $category_id, $subcategory, $meta = [];
-    public $currency = 'EUR', $receipt;
+    public $amount;
+
+    public $description;
+
+    public $spent_at;
+
+    public $category_id;
+
+    public $subcategory;
+
+    public $meta = [];
+
+    public $currency = 'EUR';
+
+    public $receipt;
+
     public $previousUrl; // <--- NOVA PROPRIEDADE
 
     // Estado do Scanner
-    public $isScanning  = false;
+    public $isScanning = false;
+
     public $scannedData = [];
+
     public $scanSuccess = false;
-    public $scanError   = '';
+
+    public $scanError = '';
 
     public array $hubConfigs = [
-        'carro'       => ['subs' => ['Gasolina', 'Manutenção', 'Seguro', 'Portagens', 'Estacionamento', 'Lavagem', 'Multa', 'Inspeção']],
-        'casa'        => ['subs' => ['Renda', 'Luz/Água', 'Internet', 'Gás', 'Condomínio', 'Obras', 'Mobiliário', 'Limpeza']],
+        'carro' => ['subs' => ['Gasolina', 'Manutenção', 'Seguro', 'Portagens', 'Estacionamento', 'Lavagem', 'Multa', 'Inspeção']],
+        'casa' => ['subs' => ['Renda', 'Luz/Água', 'Internet', 'Gás', 'Condomínio', 'Obras', 'Mobiliário', 'Limpeza']],
         'alimentacao' => ['subs' => ['Supermercado', 'Restaurante', 'Café', 'Takeaway', 'Delivery', 'Padaria', 'Mercado']],
-        'saude'       => ['subs' => ['Consulta', 'Farmácia', 'Exame', 'Dentista', 'Óptica', 'Ginásio', 'Seguro Saúde']],
-        'tecnologia'  => ['subs' => ['Software', 'Hardware', 'Subscrição', 'Domínio', 'Hosting', 'Acessório', 'Reparação']],
-        'educacao'    => ['subs' => ['Propinas', 'Livros', 'Curso', 'Certificação', 'Material', 'Formação']],
+        'saude' => ['subs' => ['Consulta', 'Farmácia', 'Exame', 'Dentista', 'Óptica', 'Ginásio', 'Seguro Saúde']],
+        'tecnologia' => ['subs' => ['Software', 'Hardware', 'Subscrição', 'Domínio', 'Hosting', 'Acessório', 'Reparação']],
+        'educacao' => ['subs' => ['Propinas', 'Livros', 'Curso', 'Certificação', 'Material', 'Formação']],
         'emprestimos' => ['subs' => ['Prestação', 'Juros', 'Amortização', 'Seguro Associado']],
-        'seguros'     => ['subs' => ['Automóvel', 'Habitação', 'Saúde', 'Vida', 'Multirriscos']],
+        'seguros' => ['subs' => ['Automóvel', 'Habitação', 'Saúde', 'Vida', 'Multirriscos']],
     ];
 
     protected $rules = [
@@ -54,13 +71,13 @@ class ManageExpense extends Component
             $this->validate([
                 'receipt' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:20480',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->scanError = 'Ficheiro inválido: ' . collect($e->errors())->flatten()->first();
-            $this->receipt   = null;
+        } catch (ValidationException $e) {
+            $this->scanError = 'Ficheiro inválido: '.collect($e->errors())->flatten()->first();
+            $this->receipt = null;
         }
     }
 
-    public function mount(Expense $expense = null): void
+    public function mount(?Expense $expense = null): void
     {
         // GUARDA A URL DE ONDE O UTILIZADOR VEIO
         $this->previousUrl = url()->previous();
@@ -68,7 +85,7 @@ class ManageExpense extends Component
         if ($expense && $expense->exists) {
             $this->expense = $expense;
             $this->amount = $expense->amount;
-            $this->spent_at = \Carbon\Carbon::parse((string) $expense->spent_at)->format('Y-m-d');
+            $this->spent_at = Carbon::parse((string) $expense->spent_at)->format('Y-m-d');
             $this->category_id = $expense->category_id;
             $this->subcategory = $expense->subcategory;
             $this->description = $expense->description;
@@ -90,25 +107,26 @@ class ManageExpense extends Component
     public function scanReceiptWithAI(): void
     {
         $this->scanSuccess = false;
-        $this->scanError   = '';
+        $this->scanError = '';
         $this->scannedData = [];
-        $this->isScanning  = true;
+        $this->isScanning = true;
 
-        if (!$this->receipt) {
-            $this->scanError  = 'Nenhum ficheiro selecionado.';
+        if (! $this->receipt) {
+            $this->scanError = 'Nenhum ficheiro selecionado.';
             $this->isScanning = false;
+
             return;
         }
 
         try {
             $imageFullPath = $this->receipt->getRealPath();
             $imageData = base64_encode(file_get_contents($imageFullPath));
-            $mimeType  = $this->receipt->getMimeType() ?: 'image/jpeg';
+            $mimeType = $this->receipt->getMimeType() ?: 'image/jpeg';
 
             $selectedCat = Category::find($this->category_id);
             $subsStr = ($selectedCat && isset($this->hubConfigs[$selectedCat->slug]))
                 ? implode(', ', $this->hubConfigs[$selectedCat->slug]['subs'])
-                : "Geral, Outros";
+                : 'Geral, Outros';
 
             $prompt = <<<PROMPT
 Analisa esta fatura/recibo com atenção. Devolve APENAS um objeto JSON válido, sem markdown, sem explicações.
@@ -127,23 +145,23 @@ O JSON deve ter exatamente estes campos:
 PROMPT;
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
-                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer '.env('OPENROUTER_API_KEY'),
+                'Content-Type' => 'application/json',
             ])->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model'      => 'google/gemini-2.5-flash',
+                'model' => 'google/gemini-2.5-flash',
                 'max_tokens' => 2000,
-                'messages'   => [
+                'messages' => [
                     [
-                        'role'    => 'user',
+                        'role' => 'user',
                         'content' => [
-                            ['type' => 'text',      'text'      => $prompt],
-                            ['type' => 'image_url', 'image_url' => ['url' => 'data:' . $mimeType . ';base64,' . $imageData]],
+                            ['type' => 'text',      'text' => $prompt],
+                            ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$imageData]],
                         ],
                     ],
                 ],
             ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw new \Exception('Erro na API.');
             }
 
@@ -166,7 +184,7 @@ PROMPT;
 
                 $date = $result['date'] ?? null;
                 try {
-                    $date = $date ? \Carbon\Carbon::parse($date)->format('Y-m-d') : now()->format('Y-m-d');
+                    $date = $date ? Carbon::parse($date)->format('Y-m-d') : now()->format('Y-m-d');
                 } catch (\Exception $e) {
                     $date = now()->format('Y-m-d');
                 }
@@ -175,8 +193,8 @@ PROMPT;
                 $this->scannedData['amount'] = $amount;
                 $this->scannedData['date'] = $date;
 
-                $this->amount      = $amount;
-                $this->spent_at    = $date;
+                $this->amount = $amount;
+                $this->spent_at = $date;
                 $this->description = trim($result['store'] ?? '');
                 $this->subcategory = $result['subcategory'] ?? $this->subcategory;
 
@@ -193,22 +211,22 @@ PROMPT;
     public function save()
     {
         $this->validate([
-            'amount'      => 'required|numeric|min:0.01',
-            'currency'    => 'required|string|size:3',
-            'spent_at'    => 'required|date',
+            'amount' => 'required|numeric|min:0.01',
+            'currency' => 'required|string|size:3',
+            'spent_at' => 'required|date',
             'category_id' => 'required',
         ]);
 
         $data = [
-            'user_id'      => auth()->id(),
-            'category_id'  => $this->category_id,
-            'subcategory'  => $this->subcategory,
-            'amount'       => $this->amount,
-            'currency'     => strtoupper((string) $this->currency),
-            'description'  => $this->description,
-            'spent_at'     => $this->spent_at,
+            'user_id' => auth()->id(),
+            'category_id' => $this->category_id,
+            'subcategory' => $this->subcategory,
+            'amount' => $this->amount,
+            'currency' => strtoupper((string) $this->currency),
+            'description' => $this->description,
+            'spent_at' => $this->spent_at,
             'workspace_id' => auth()->user()->current_workspace_id,
-            'metadata'     => !empty($this->meta) ? $this->meta : null,
+            'metadata' => ! empty($this->meta) ? $this->meta : null,
         ];
 
         if ($this->receipt) {
@@ -241,18 +259,18 @@ PROMPT;
         if ($selectedCat && $selectedCat->fields->count() > 0) {
             $categoryFields[$selectedCat->slug] = [
                 'icon' => $selectedCat->icon ?? 'tag',
-                'fields' => $selectedCat->fields->sortBy('order')->map(fn($f) => [
-                    'name' => $f->key, 'label' => $f->label, 'type' => $f->type, 'options' => $f->options ?? []
+                'fields' => $selectedCat->fields->sortBy('order')->map(fn ($f) => [
+                    'name' => $f->key, 'label' => $f->label, 'type' => $f->type, 'options' => $f->options ?? [],
                 ])->toArray(),
             ];
         }
 
         return view('livewire.manage-expense', [
-            'categories'    => $categories,
+            'categories' => $categories,
             'currencyOptions' => CurrencyService::getSymbols(),
             'categoryColor' => $selectedCat->color ?? '#6366f1',
-            'categoryFields'=> $categoryFields,
-            'activeSlug'    => $selectedCat->slug ?? null,
+            'categoryFields' => $categoryFields,
+            'activeSlug' => $selectedCat->slug ?? null,
             'subcategories' => ($selectedCat && isset($this->hubConfigs[$selectedCat->slug]))
                                ? $this->hubConfigs[$selectedCat->slug]['subs']
                                : ['Geral', 'Outros'],

@@ -2,11 +2,20 @@
 
 namespace Database\Seeders;
 
+use App\Models\BankAccount;
+use App\Models\BusinessDocument;
+use App\Models\Category;
+use App\Models\Client;
+use App\Models\Expense;
+use App\Models\Income;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\Workspace;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use App\Models\{User, Workspace, Expense, Income, Project, Task, BankAccount, Category, Client, BusinessDocument};
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class DemoSeeder extends Seeder
 {
@@ -23,7 +32,7 @@ class DemoSeeder extends Seeder
                 'is_admin' => true,
                 'email_verified_at' => now(),
                 'username' => 'admin_master',
-                'plan' => 'pro'
+                'plan' => 'pro',
             ]
         );
 
@@ -39,7 +48,7 @@ class DemoSeeder extends Seeder
                 'email_verified_at' => now(),
                 'username' => 'eduardo_ceo',
                 'xp' => 2500,
-                'level' => 12
+                'level' => 12,
             ]
         );
 
@@ -51,7 +60,7 @@ class DemoSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'role' => 'user',
                 'email_verified_at' => now(),
-                'username' => 'joao_member'
+                'username' => 'joao_member',
             ]
         );
 
@@ -70,7 +79,7 @@ class DemoSeeder extends Seeder
                 'name' => 'Tech Solutions SaaS',
                 'invite_code' => 'BUSINESS2024',
                 'plan' => 'pro',
-                'initial_capital' => 10000.00
+                'initial_capital' => 10000.00,
             ]
         );
         $eduardo->workspaces()->syncWithoutDetaching([$businessWs->id => ['role' => 'admin']]);
@@ -99,43 +108,43 @@ class DemoSeeder extends Seeder
 
             Income::create([
                 'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
-                'description' => 'Venda de Licença SaaS - ' . $date->format('F'),
-                'amount' => rand(4000, 7000), 'received_at' => $date, 'type' => 'business'
+                'description' => 'Venda de Licença SaaS - '.$date->format('F'),
+                'amount' => rand(4000, 7000), 'received_at' => $date, 'type' => 'business',
             ]);
 
             Expense::create([
                 'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
                 'description' => 'Cloud Hosting AWS', 'amount' => rand(300, 600), 'spent_at' => $date,
                 'category_id' => Category::where('name', 'Servidores')->first()->id ?? null,
-                'is_company' => true, 'status' => 'aprovado'
+                'is_company' => true, 'status' => 'aprovado',
             ]);
         }
 
         // 7. OPERAÇÕES EMPRESARIAIS
         $client = Client::create([
             'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
-            'name' => 'Google Portugal', 'email' => 'ads-contact@google.pt'
+            'name' => 'Google Portugal', 'email' => 'ads-contact@google.pt',
         ]);
 
         $project = Project::create([
             'workspace_id' => $businessWs->id, 'client_id' => $client->id,
-            'name' => 'Expansão Cloud 2024', 'budget' => 15000, 'status' => 'em_curso'
+            'name' => 'Expansão Cloud 2024', 'budget' => 15000, 'status' => 'em_curso',
         ]);
 
         Task::create([
             'workspace_id' => $businessWs->id, 'project_id' => $project->id, 'user_id' => $eduardo->id,
-            'title' => 'Ligar Webhooks Stripe', 'status' => 'pendente'
+            'title' => 'Ligar Webhooks Stripe', 'status' => 'pendente',
         ]);
 
         BusinessDocument::create([
             'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
-            'title' => 'Contrato de Termos de Uso', 'type' => 'legal', 'file_path' => 'documents/demo.pdf'
+            'title' => 'Contrato de Termos de Uso', 'type' => 'legal', 'file_path' => 'documents/demo.pdf',
         ]);
 
         BankAccount::create([
             'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
             'bank_name' => 'Banco Empresa', 'name' => 'Conta Corrente Principal',
-            'balance' => 15750.00, 'is_business' => true
+            'balance' => 15750.00, 'is_business' => true,
         ]);
 
         $this->command->info('--------------------------------------------');

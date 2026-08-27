@@ -11,7 +11,9 @@ class SmartwatchController extends Controller
     public function info(Request $request)
     {
         $device = trim($request->input('device', ''));
-        if (!$device) return response()->json(['error' => 'Nome do dispositivo em falta.'], 400);
+        if (! $device) {
+            return response()->json(['error' => 'Nome do dispositivo em falta.'], 400);
+        }
 
         // Prompt detalhado para garantir a resposta em JSON
         $prompt = "És um analista técnico de wearables. Analisa o dispositivo: \"{$device}\".
@@ -37,14 +39,14 @@ Estrutura:
 
             // USANDO O MESMO MODELO E HEADERS QUE FUNCIONAM NO TEU AI-INSIGHTS
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Content-Type'  => 'application/json',
-                'HTTP-Referer'  => config('app.url'),
-                'X-Title'       => config('app.name'),
+                'Authorization' => 'Bearer '.$apiKey,
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => config('app.url'),
+                'X-Title' => config('app.name'),
             ])->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => 'google/gemini-2.5-flash',
                 'messages' => [
-                    ['role' => 'user', 'content' => $prompt]
+                    ['role' => 'user', 'content' => $prompt],
                 ],
                 'max_tokens' => 2000,
             ]);
@@ -59,18 +61,21 @@ Estrutura:
 
                 $data = json_decode(trim($content), true);
 
-                if (!$data) {
-                    Log::error("IA Response Inválida: " . $content);
+                if (! $data) {
+                    Log::error('IA Response Inválida: '.$content);
+
                     return response()->json(['error' => 'A IA não enviou dados num formato legível.'], 500);
                 }
 
                 return response()->json($data);
             } else {
-                Log::error("OpenRouter Error: " . $response->body());
-                return response()->json(['error' => 'Erro ' . $response->status() . ' do OpenRouter.'], 500);
+                Log::error('OpenRouter Error: '.$response->body());
+
+                return response()->json(['error' => 'Erro '.$response->status().' do OpenRouter.'], 500);
             }
         } catch (\Throwable $e) {
-            Log::error("Falha Smartwatch IA: " . $e->getMessage());
+            Log::error('Falha Smartwatch IA: '.$e->getMessage());
+
             return response()->json(['error' => 'Falha técnica na ligação.'], 500);
         }
     }

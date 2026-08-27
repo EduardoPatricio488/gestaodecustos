@@ -2,11 +2,10 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
 use App\Models\Client;
-use App\Models\ClientPortalToken;
-use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
 class ClientHub extends Component
@@ -14,17 +13,33 @@ class ClientHub extends Component
     use WithPagination;
 
     public $search = '';
+
     public $selectedClient = null;
 
     public $generatedPasscode = '';
 
-
     public $showModal = false;
+
     public $generatedPortalUrl = '';
+
     public $editingId = null;
 
     // Campos do formulário
-    public $name, $legal_name, $tax_number, $email, $phone, $status = 'ativo', $address, $notes;
+    public $name;
+
+    public $legal_name;
+
+    public $tax_number;
+
+    public $email;
+
+    public $phone;
+
+    public $status = 'ativo';
+
+    public $address;
+
+    public $notes;
 
     protected $rules = [
         'name' => 'required|string|max:100',
@@ -32,15 +47,18 @@ class ClientHub extends Component
         'status' => 'required|in:ativo,lead,inativo',
     ];
 
-public function openHistory($id)
-{
-    // Carregamos o cliente com as relações de faturas e projetos
-    $this->selectedClient = auth()->user()->clients()
-        ->with(['projects', 'invoices' => fn($q) => $q->latest()])
-        ->findOrFail($id);
+    public function openHistory($id)
+    {
+        // Carregamos o cliente com as relações de faturas e projetos
+        $this->selectedClient = auth()->user()->clients()
+            ->with(['projects', 'invoices' => fn ($q) => $q->latest()])
+            ->findOrFail($id);
 
-    $this->dispatch('modal-show', name: 'history-modal');
-}public $clientTaxNumber = '';
+        $this->dispatch('modal-show', name: 'history-modal');
+    }
+
+    public $clientTaxNumber = '';
+
     public function save()
     {
         $this->validate();
@@ -92,34 +110,34 @@ public function openHistory($id)
         $this->reset(['name', 'legal_name', 'tax_number', 'email', 'phone', 'status', 'address', 'notes', 'editingId']);
     }
 
-public function generatePortalLink($id)
-{
-    $client = auth()->user()->clients()->findOrFail($id);
+    public function generatePortalLink($id)
+    {
+        $client = auth()->user()->clients()->findOrFail($id);
 
-    // 1. Gerar ou recuperar o token (teu código atual)
-    if (!$client->portal_token) {
-        do {
-            $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-            $exists = \App\Models\Client::where('portal_token', $passcode)->exists();
-        } while ($exists);
+        // 1. Gerar ou recuperar o token (teu código atual)
+        if (! $client->portal_token) {
+            do {
+                $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+                $exists = Client::where('portal_token', $passcode)->exists();
+            } while ($exists);
 
-        $client->update(['portal_token' => $passcode]);
+            $client->update(['portal_token' => $passcode]);
+        }
+
+        // 2. AGORA CARREGAMOS O NIF CORRETO PARA O MODAL
+        $this->clientTaxNumber = $client->tax_number; // ✅ ADICIONA ESTA LINHA
+
+        $this->generatedPasscode = $client->portal_token;
+        $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
+
+        $this->dispatch('modal-show', name: 'portal-link-modal');
+        $this->dispatch('toast', text: 'Chave de Acesso confirmada.');
     }
-
-    // 2. AGORA CARREGAMOS O NIF CORRETO PARA O MODAL
-    $this->clientTaxNumber = $client->tax_number; // ✅ ADICIONA ESTA LINHA
-
-    $this->generatedPasscode = $client->portal_token;
-    $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
-
-    $this->dispatch('modal-show', name: 'portal-link-modal');
-    $this->dispatch('toast', text: 'Chave de Acesso confirmada.');
-}
 
     public function render()
     {
         $clients = auth()->user()->clients()
-            ->where('name', 'like', '%' . $this->search . '%')
+            ->where('name', 'like', '%'.$this->search.'%')
             ->get();
 
         return view('livewire.business.client-hub', [

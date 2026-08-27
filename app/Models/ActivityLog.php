@@ -13,7 +13,7 @@ class ActivityLog extends Model
         'description',
         'model_type',
         'model_id',
-        'metadata'
+        'metadata',
     ];
 
     protected $casts = [

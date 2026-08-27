@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Business;
 
-use App\Services\CurrencyService;
-use Livewire\Component;
 use App\Models\Invoice;
-use Livewire\Attributes\Layout;
-use Illuminate\Validation\Rule;
+use App\Services\CurrencyService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
@@ -16,15 +16,23 @@ class InvoicingHub extends Component
     use WithPagination;
 
     public $client_name;
+
     public $invoice_number;
+
     public $amount_excl_vat;
+
     public $vat_amount;
+
     public $total_amount;
+
     public string $currency = 'EUR';
+
     public $due_date;
+
     public $status = 'pendente';
 
     public $statusFilter = '';
+
     public array $currencyOptions = [];
 
     public function mount(): void
@@ -35,23 +43,21 @@ class InvoicingHub extends Component
     }
 
     public function rules()
-{
-    return [
-        'client_name' => 'required|string|max:255',
-        'amount_excl_vat' => 'required|numeric|min:0.01',
-        'due_date' => 'required|date',
-        'currency' => 'required|string|size:3',
+    {
+        return [
+            'client_name' => 'required|string|max:255',
+            'amount_excl_vat' => 'required|numeric|min:0.01',
+            'due_date' => 'required|date',
+            'currency' => 'required|string|size:3',
 
-        'invoice_number' => [
-            'required',
-            'string',
-            Rule::unique('invoices')->where(fn ($q) =>
-                $q->where('workspace_id', auth()->user()->current_workspace_id)
-            ),
-        ],
-    ];
-}
-
+            'invoice_number' => [
+                'required',
+                'string',
+                Rule::unique('invoices')->where(fn ($q) => $q->where('workspace_id', auth()->user()->current_workspace_id)
+                ),
+            ],
+        ];
+    }
 
     /**
      * Recalcular IVA e total quando o valor base muda
@@ -81,27 +87,28 @@ class InvoicingHub extends Component
         $this->validate();
 
         // Gerar número automático se vazio
-        if (!$this->invoice_number) {
+        if (! $this->invoice_number) {
             $next = Invoice::where('workspace_id', auth()->user()->current_workspace_id)->max('id') + 1;
-            $this->invoice_number = 'FT-' . now()->year . '/' . str_pad($next, 3, '0', STR_PAD_LEFT);
+            $this->invoice_number = 'FT-'.now()->year.'/'.str_pad($next, 3, '0', STR_PAD_LEFT);
         }
 
         if ($this->total_amount <= 0) {
             $this->dispatch('toast', text: 'Montante inválido.', variant: 'danger');
+
             return;
         }
 
         Invoice::create([
-            'user_id'        => auth()->id(),
-            'workspace_id'   => auth()->user()->current_workspace_id,
-            'client_name'    => $this->client_name,
+            'user_id' => auth()->id(),
+            'workspace_id' => auth()->user()->current_workspace_id,
+            'client_name' => $this->client_name,
             'invoice_number' => $this->invoice_number,
-            'amount_excl_vat'=> $this->amount_excl_vat,
-            'vat_amount'     => $this->vat_amount,
-            'total_amount'   => $this->total_amount,
-            'currency'       => strtoupper($this->currency),
-            'status'         => $this->status,
-            'due_date'       => $this->due_date,
+            'amount_excl_vat' => $this->amount_excl_vat,
+            'vat_amount' => $this->vat_amount,
+            'total_amount' => $this->total_amount,
+            'currency' => strtoupper($this->currency),
+            'status' => $this->status,
+            'due_date' => $this->due_date,
         ]);
 
         $this->resetExcept('statusFilter');
@@ -139,33 +146,31 @@ class InvoicingHub extends Component
     /**
      * Renderização
      */
-
     public function openInvoiceModal()
-{
-    $this->dispatch('open-modal', name: 'add-invoice-modal');
-}
+    {
+        $this->dispatch('open-modal', name: 'add-invoice-modal');
+    }
 
     public function render()
-{
-    $query = Invoice::where('workspace_id', auth()->user()->current_workspace_id)
-        ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
-        ->orderByRaw("
+    {
+        $query = Invoice::where('workspace_id', auth()->user()->current_workspace_id)
+            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
+            ->orderByRaw("
             CASE
                 WHEN status = 'pendente' THEN 1
                 WHEN status = 'paga' THEN 2
                 ELSE 3
             END
         ")
-        ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'desc');
 
-    return view('livewire.business.invoicing-hub', [
-        'invoices'     => $query->paginate(10),
-        'workspaceCurrency' => strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR')),
-        'currencyOptions' => $this->currencyOptions,
-        'totalBilled'  => (clone $query)->where('status', 'paga')->sum(DB::raw('COALESCE(total_amount_converted, total_amount)')),
-        'totalPending' => (clone $query)->where('status', 'pendente')->sum(DB::raw('COALESCE(total_amount_converted, total_amount)')),
-        'vatToPay'     => (clone $query)->sum(DB::raw('COALESCE(vat_amount_converted, vat_amount)')),
-    ]);
-}
-
+        return view('livewire.business.invoicing-hub', [
+            'invoices' => $query->paginate(10),
+            'workspaceCurrency' => strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR')),
+            'currencyOptions' => $this->currencyOptions,
+            'totalBilled' => (clone $query)->where('status', 'paga')->sum(DB::raw('COALESCE(total_amount_converted, total_amount)')),
+            'totalPending' => (clone $query)->where('status', 'pendente')->sum(DB::raw('COALESCE(total_amount_converted, total_amount)')),
+            'vatToPay' => (clone $query)->sum(DB::raw('COALESCE(vat_amount_converted, vat_amount)')),
+        ]);
+    }
 }

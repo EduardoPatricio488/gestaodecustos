@@ -13,19 +13,19 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // Adicionamos os campos logo a seguir à coluna 'role' que criámos antes
-            if (!Schema::hasColumn('users', 'xp')) {
+            if (! Schema::hasColumn('users', 'xp')) {
                 $table->integer('xp')->default(0)->after('role');
             }
-            if (!Schema::hasColumn('users', 'level')) {
+            if (! Schema::hasColumn('users', 'level')) {
                 $table->integer('level')->default(1)->after('xp');
             }
-            if (!Schema::hasColumn('users', 'points')) {
+            if (! Schema::hasColumn('users', 'points')) {
                 $table->integer('points')->default(0)->after('level');
             }
-            if (!Schema::hasColumn('users', 'streak')) {
+            if (! Schema::hasColumn('users', 'streak')) {
                 $table->integer('streak')->default(0)->after('points');
             }
-            if (!Schema::hasColumn('users', 'badges')) {
+            if (! Schema::hasColumn('users', 'badges')) {
                 $table->json('badges')->nullable()->after('streak');
             }
         });

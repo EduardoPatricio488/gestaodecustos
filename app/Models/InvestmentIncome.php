@@ -14,13 +14,13 @@ class InvestmentIncome extends Model
 
     protected $casts = [
         'reference_date' => 'date',
-        'gross_amount'   => 'float',
-        'tax_amount'     => 'float',
-        'net_amount'     => 'float',
-        'base_rate'      => 'float',
-        'loyalty_bonus'  => 'float',
+        'gross_amount' => 'float',
+        'tax_amount' => 'float',
+        'net_amount' => 'float',
+        'base_rate' => 'float',
+        'loyalty_bonus' => 'float',
         'capital_before' => 'float',
-        'capital_after'  => 'float',
+        'capital_after' => 'float',
     ];
 
     public function investment()

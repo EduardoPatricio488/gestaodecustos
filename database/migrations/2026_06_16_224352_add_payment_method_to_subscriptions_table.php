@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('subscriptions', function (Blueprint $table) {
             // Adiciona a coluna apenas se ela não existir
-            if (!Schema::hasColumn('subscriptions', 'payment_method')) {
+            if (! Schema::hasColumn('subscriptions', 'payment_method')) {
                 $table->string('payment_method')->nullable()->after('status');
             }
         });

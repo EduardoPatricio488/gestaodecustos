@@ -24,10 +24,10 @@ class BankCredit extends Model
     ];
 
     protected $casts = [
-        'amount'          => 'float',
+        'amount' => 'float',
         'received_amount' => 'float',
-        'due_date'        => 'date',
-        'is_business'     => 'boolean',
+        'due_date' => 'date',
+        'is_business' => 'boolean',
     ];
 
     public function user(): BelongsTo

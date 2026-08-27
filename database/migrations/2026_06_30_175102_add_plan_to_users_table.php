@@ -10,12 +10,12 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::table('users', function (Blueprint $table) {
-        // Cria a coluna plan, por defeito 'free'
-        $table->string('plan')->default('free')->after('email');
-    });
-}
+    {
+        Schema::table('users', function (Blueprint $table) {
+            // Cria a coluna plan, por defeito 'free'
+            $table->string('plan')->default('free')->after('email');
+        });
+    }
 
     /**
      * Reverse the migrations.

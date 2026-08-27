@@ -8,7 +8,8 @@ class Badge extends Model
 {
     protected $fillable = ['name', 'description', 'icon', 'color'];
 
-    public function users() {
+    public function users()
+    {
         return $this->belongsToMany(User::class);
     }
 }

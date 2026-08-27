@@ -6,10 +6,14 @@ use App\Traits\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class RecurringIncome extends Model {
+class RecurringIncome extends Model
+{
     use BelongsToWorkspace;
 
     protected $fillable = ['user_id', 'workspace_id', 'description', 'amount', 'day_of_month', 'is_active', 'source', 'frequency', 'tax_estimate', 'notes'];
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

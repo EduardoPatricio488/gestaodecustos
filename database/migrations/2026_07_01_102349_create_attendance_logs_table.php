@@ -9,19 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void
-{
-    Schema::create('attendance_logs', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->foreignId('workspace_id')->constrained()->onDelete('cascade');
-        $table->date('date');
-        $table->dateTime('clock_in');
-        $table->dateTime('clock_out')->nullable();
-        $table->integer('total_minutes')->default(0);
-        $table->timestamps();
-    });
-}
+    public function up(): void
+    {
+        Schema::create('attendance_logs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('workspace_id')->constrained()->onDelete('cascade');
+            $table->date('date');
+            $table->dateTime('clock_in');
+            $table->dateTime('clock_out')->nullable();
+            $table->integer('total_minutes')->default(0);
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

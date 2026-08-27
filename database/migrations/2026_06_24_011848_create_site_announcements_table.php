@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('site_announcements', function (Blueprint $table) {
-    $table->id();
-    $table->string('title');
-    $table->text('message');
-    $table->string('type')->default('info');
-    $table->boolean('is_active')->default(true);
-    $table->timestamp('expires_at')->nullable();
-    $table->timestamps();
-});
+        Schema::create('site_announcements', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->text('message');
+            $table->string('type')->default('info');
+            $table->boolean('is_active')->default(true);
+            $table->timestamp('expires_at')->nullable();
+            $table->timestamps();
+        });
     }
 
     /**

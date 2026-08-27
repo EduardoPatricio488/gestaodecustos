@@ -2,12 +2,13 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use App\Models\Expense;
 use App\Models\Category;
+use App\Models\Expense;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
 class CompanyExpenses extends Component
@@ -15,11 +16,22 @@ class CompanyExpenses extends Component
     use WithPagination;
 
     public $search = '';
+
     public $editingId = null;
+
     public $categoryFilter = '';
 
     // Campos do formulário
-    public $title, $amount, $category_id, $description, $spent_at;
+    public $title;
+
+    public $amount;
+
+    public $category_id;
+
+    public $description;
+
+    public $spent_at;
+
     public $vat_amount = 0;
 
     protected $rules = [
@@ -30,8 +42,15 @@ class CompanyExpenses extends Component
         'vat_amount' => 'nullable|numeric',
     ];
 
-    public function updatingSearch() { $this->resetPage(); }
-    public function updatingCategoryFilter() { $this->resetPage(); }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingCategoryFilter()
+    {
+        $this->resetPage();
+    }
 
     public function openModal()
     {
@@ -49,7 +68,7 @@ class CompanyExpenses extends Component
         $this->vat_amount = $exp->vat_amount;
         $this->category_id = $exp->category_id;
         $this->description = $exp->description;
-        $this->spent_at = \Carbon\Carbon::parse($exp->spent_at)->format('Y-m-d');
+        $this->spent_at = Carbon::parse($exp->spent_at)->format('Y-m-d');
 
         $this->dispatch('modal-show', name: 'add-company-expense-modal');
     }
@@ -105,11 +124,11 @@ class CompanyExpenses extends Component
         $statsQuery = (clone $query)->whereMonth('spent_at', now()->month);
 
         $expenses = $query->with('category')
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->where('expenses.description', 'like', "%{$this->search}%")
-                  ->orWhere('expenses.title', 'like', "%{$this->search}%");
+                    ->orWhere('expenses.title', 'like', "%{$this->search}%");
             })
-            ->when($this->categoryFilter, fn($q) => $q->where('category_id', $this->categoryFilter))
+            ->when($this->categoryFilter, fn ($q) => $q->where('category_id', $this->categoryFilter))
             ->orderBy('spent_at', 'desc')
             ->paginate(10);
 

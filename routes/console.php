@@ -1,4 +1,5 @@
 <?php
+
 use App\Models\User;
 use App\Services\MonthlyReportService;
 use App\Services\NotificationService;

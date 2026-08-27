@@ -8,6 +8,7 @@ use Livewire\Component;
 class MonthlyReportSettings extends Component
 {
     public bool $enabled = true;
+
     public int $day = 1;
 
     public function mount(): void

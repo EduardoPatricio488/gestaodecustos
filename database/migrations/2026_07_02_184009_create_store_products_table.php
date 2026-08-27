@@ -10,21 +10,21 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('store_products', function (Blueprint $table) {
-        $table->id();
-        $table->string('title');
-        $table->string('slug')->unique();
-        $table->string('type'); // ia, course, guide, pack, widget
-        $table->text('description');
-        $table->text('long_content')->nullable();
-        $table->decimal('price', 10, 2);
-        $table->string('image')->nullable();
-        $table->string('badge')->nullable();
-        $table->json('features')->nullable();
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('store_products', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->string('slug')->unique();
+            $table->string('type'); // ia, course, guide, pack, widget
+            $table->text('description');
+            $table->text('long_content')->nullable();
+            $table->decimal('price', 10, 2);
+            $table->string('image')->nullable();
+            $table->string('badge')->nullable();
+            $table->json('features')->nullable();
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

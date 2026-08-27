@@ -2,11 +2,10 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\Proposal;
-use App\Models\Client;
 use App\Models\Invoice;
+use App\Models\Proposal;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
@@ -15,16 +14,24 @@ class ProposalHub extends Component
     use WithPagination;
 
     public $search = '';
+
     public $clientFilter = '';
 
     // Campos do Formulário
     public $title;
+
     public $proposal_number;
+
     public $client_id;
+
     public $amount;
+
     public $valid_until;
+
     public $notes;
+
     public $status = 'rascunho';
+
     public $editingId = null;
 
     protected $rules = [
@@ -45,15 +52,15 @@ class ProposalHub extends Component
         auth()->user()->currentWorkspace->proposals()->updateOrCreate(
             ['id' => $this->editingId],
             [
-                'user_id'        => auth()->id(),
-                'workspace_id'   => auth()->user()->current_workspace_id,
-                'client_id'      => $this->client_id,
-                'title'          => $this->title,
-                'proposal_number'=> $this->proposal_number,
-                'amount'         => $this->amount,
-                'status'         => $this->status,
-                'valid_until'    => $this->valid_until,
-                'notes'          => $this->notes,
+                'user_id' => auth()->id(),
+                'workspace_id' => auth()->user()->current_workspace_id,
+                'client_id' => $this->client_id,
+                'title' => $this->title,
+                'proposal_number' => $this->proposal_number,
+                'amount' => $this->amount,
+                'status' => $this->status,
+                'valid_until' => $this->valid_until,
+                'notes' => $this->notes,
             ]
         );
 
@@ -71,20 +78,21 @@ class ProposalHub extends Component
 
         if ($proposal->status === 'convertida') {
             $this->dispatch('toast', text: 'Esta proposta já foi faturada.', variant: 'warning');
+
             return;
         }
 
         Invoice::create([
-            'user_id'        => auth()->id(),
-            'workspace_id'   => $proposal->workspace_id,
-            'client_id'      => $proposal->client_id,
-            'client_name'    => $proposal->client->name,
-            'invoice_number' => 'FT-' . date('Y') . '/' . rand(100, 999),
-            'amount_excl_vat'=> $proposal->amount,
-            'vat_amount'     => $proposal->amount * 0.23,
-            'total_amount'   => $proposal->amount * 1.23,
-            'status'         => 'pendente',
-            'due_date'       => now()->addDays(30),
+            'user_id' => auth()->id(),
+            'workspace_id' => $proposal->workspace_id,
+            'client_id' => $proposal->client_id,
+            'client_name' => $proposal->client->name,
+            'invoice_number' => 'FT-'.date('Y').'/'.rand(100, 999),
+            'amount_excl_vat' => $proposal->amount,
+            'vat_amount' => $proposal->amount * 0.23,
+            'total_amount' => $proposal->amount * 1.23,
+            'status' => 'pendente',
+            'due_date' => now()->addDays(30),
         ]);
 
         $proposal->update(['status' => 'convertida']);
@@ -100,15 +108,15 @@ class ProposalHub extends Component
 
     public function edit($id)
     {
-        $proposal              = Proposal::findOrFail($id);
-        $this->editingId       = $proposal->id;
-        $this->title           = $proposal->title;
+        $proposal = Proposal::findOrFail($id);
+        $this->editingId = $proposal->id;
+        $this->title = $proposal->title;
         $this->proposal_number = $proposal->proposal_number;
-        $this->client_id       = $proposal->client_id;
-        $this->amount          = $proposal->amount;
-        $this->status          = $proposal->status;
-        $this->valid_until     = $proposal->valid_until?->format('Y-m-d');
-        $this->notes           = $proposal->notes;
+        $this->client_id = $proposal->client_id;
+        $this->amount = $proposal->amount;
+        $this->status = $proposal->status;
+        $this->valid_until = $proposal->valid_until?->format('Y-m-d');
+        $this->notes = $proposal->notes;
 
         $this->dispatch('modal-show', name: 'proposal-modal');
     }
@@ -139,7 +147,7 @@ class ProposalHub extends Component
 
         $query = $workspace->proposals()
             ->with('client')
-            ->where('title', 'like', '%' . $this->search . '%')
+            ->where('title', 'like', '%'.$this->search.'%')
             ->when($this->clientFilter, fn ($q) => $q->where('client_id', $this->clientFilter))
             ->orderByRaw("
                 CASE
@@ -156,9 +164,9 @@ class ProposalHub extends Component
         $proposals = $query->get();
 
         return view('livewire.business.proposal-hub', [
-            'proposals'      => $proposals,
-            'clients'        => $workspace->clients()->orderBy('name')->get(),
-            'totalValue'     => $proposals->where('status', '!=', 'recusada')->sum('amount'),
+            'proposals' => $proposals,
+            'clients' => $workspace->clients()->orderBy('name')->get(),
+            'totalValue' => $proposals->where('status', '!=', 'recusada')->sum('amount'),
             'conversionRate' => $proposals->count() > 0
                 ? ($proposals->where('status', 'convertida')->count() / $proposals->count()) * 100
                 : 0,

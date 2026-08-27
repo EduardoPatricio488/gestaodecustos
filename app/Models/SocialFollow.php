@@ -44,11 +44,12 @@ class SocialFollow extends Model
 
         if ($existing) {
             $existing->delete();
+
             return false;
         }
 
         static::create([
-            'follower_id'  => $followerId,
+            'follower_id' => $followerId,
             'following_id' => $followingId,
         ]);
 

@@ -11,6 +11,7 @@ class EmployeeDataUpdatedMail extends Mailable
     use Queueable, SerializesModels;
 
     public $employee;
+
     public $companyName;
 
     public function __construct($employee, $companyName)
@@ -21,7 +22,7 @@ class EmployeeDataUpdatedMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Atualização na tua Ficha de Colaborador 👤 - ' . $this->companyName)
+        return $this->subject('Atualização na tua Ficha de Colaborador 👤 - '.$this->companyName)
             ->html("
                 <div style='font-family: sans-serif; background-color: #f8fafc; padding: 40px; color: #1e293b;'>
                     <div style='max-width: 500px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 30px; border: 1px solid #e2e8f0; shadow: 0 4px 6px -1px rgba(0,0,0,0.1);'>
@@ -43,7 +44,7 @@ class EmployeeDataUpdatedMail extends Mailable
                                 <ul style='margin: 10px 0 0; padding-left: 20px; font-size: 13px;'>
                                     <li><strong>Cargo:</strong> {$this->employee->role}</li>
                                     <li><strong>Dia de Pagamento:</strong> Dia {$this->employee->pay_day}</li>
-                                    <li><strong>Vencimento:</strong> " . number_format($this->employee->salary, 2, ',', ' ') . "€</li>
+                                    <li><strong>Vencimento:</strong> ".number_format($this->employee->salary, 2, ',', ' ')."€</li>
                                 </ul>
                             </div>
 

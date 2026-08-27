@@ -33,7 +33,7 @@ class FitnessGoal extends Model
 
     public function getTypeUnitAttribute(): string
     {
-        return match($this->type) {
+        return match ($this->type) {
             'distancia_semanal' => 'km esta semana',
             'calorias_mensais' => 'kcal este mês',
             'sessoes_semanais' => 'sessões esta semana',
@@ -44,7 +44,7 @@ class FitnessGoal extends Model
 
     public function getTypeLabelAttribute(): string
     {
-        return match($this->type) {
+        return match ($this->type) {
             'distancia_semanal' => '📍 Distância Semanal',
             'calorias_mensais' => '🔥 Calorias Mensais',
             'sessoes_semanais' => '⚡ Sessões Semanais',

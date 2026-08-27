@@ -19,7 +19,7 @@ class Client extends Model
         'status',
         'address',
         'notes',
-        'portal_token' // 1. ADICIONA ISTO para poderes gravar o código de acesso
+        'portal_token', // 1. ADICIONA ISTO para poderes gravar o código de acesso
     ];
 
     /**
@@ -50,7 +50,6 @@ class Client extends Model
     /**
      * INTELIGÊNCIA COMERCIAL
      */
-
     public function getTotalRevenueAttribute(): float
     {
         return (float) $this->invoices()
@@ -67,16 +66,16 @@ class Client extends Model
 
     public function getAvatarUrlAttribute(): string
     {
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=059669&background=ecfdf5&bold=true';
+        return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=059669&background=ecfdf5&bold=true';
     }
 
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
-            'ativo'   => 'success',
-            'lead'    => 'warning',
+        return match ($this->status) {
+            'ativo' => 'success',
+            'lead' => 'warning',
             'inativo' => 'neutral',
-            default   => 'neutral'
+            default => 'neutral'
         };
     }
 }

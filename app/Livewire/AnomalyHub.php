@@ -10,7 +10,9 @@ use Livewire\Component;
 class AnomalyHub extends Component
 {
     public int $lookbackMonths = 6;
+
     public float $sensitivity = 2.8;
+
     public float $minMultiplier = 1.5;
 
     private function median(array $values): float
@@ -96,6 +98,7 @@ class AnomalyHub extends Component
 
         $prev3Months = collect(range(1, 3))->map(function ($i) use ($workspaceId) {
             $date = now()->copy()->subMonths($i);
+
             return (float) Expense::where('workspace_id', $workspaceId)
                 ->whereYear('spent_at', $date->year)
                 ->whereMonth('spent_at', $date->month)

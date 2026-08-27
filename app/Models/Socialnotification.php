@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class SocialNotification extends Model
 {
@@ -44,11 +45,11 @@ class SocialNotification extends Model
         }
 
         static::create([
-            'user_id'  => $recipientId,
+            'user_id' => $recipientId,
             'actor_id' => $actorId,
-            'type'     => $type,
-            'post_id'  => $postId,
-            'preview'  => $preview ? \Illuminate\Support\Str::limit($preview, 80) : null,
+            'type' => $type,
+            'post_id' => $postId,
+            'preview' => $preview ? Str::limit($preview, 80) : null,
         ]);
     }
 }

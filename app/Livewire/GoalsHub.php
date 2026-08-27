@@ -15,19 +15,28 @@ class GoalsHub extends Component
 {
     // Formulário de Meta
     public string $name = '';
+
     public $target_amount = '';
+
     public $current_amount = 0;
+
     public $deadline = '';
+
     public ?int $editingGoalId = null;
 
     // Depósito rápido
     public ?int $depositGoalId = null;
+
     public $depositAmount = '';
 
     public ?int $autoGoalId = null;
+
     public string $autoProfile = 'equilibrado';
+
     public $autoPercent = 20;
+
     public $autoMinIncomeAmount = '';
+
     public string $autoAppliesTo = 'all';
 
     /**
@@ -36,10 +45,10 @@ class GoalsHub extends Component
     public function save()
     {
         $this->validate([
-            'name'           => 'required|string|max:255',
-            'target_amount'  => 'required|numeric|min:1',
+            'name' => 'required|string|max:255',
+            'target_amount' => 'required|numeric|min:1',
             'current_amount' => 'required|numeric|min:0',
-            'deadline'       => 'nullable|date',
+            'deadline' => 'nullable|date',
         ]);
 
         $workspaceId = auth()->user()->current_workspace_id;
@@ -50,12 +59,12 @@ class GoalsHub extends Component
         $goal = Goal::updateOrCreate(
             ['id' => $this->editingGoalId],
             [
-                'user_id'        => auth()->id(),
-                'workspace_id'   => $workspaceId,
-                'name'           => $this->name,
-                'target_amount'  => (float) $this->target_amount,
+                'user_id' => auth()->id(),
+                'workspace_id' => $workspaceId,
+                'name' => $this->name,
+                'target_amount' => (float) $this->target_amount,
                 'current_amount' => (float) $this->current_amount,
-                'deadline'       => $this->deadline ?: null,
+                'deadline' => $this->deadline ?: null,
             ]
         );
 
@@ -97,14 +106,14 @@ class GoalsHub extends Component
     {
         $goal = Goal::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
 
-        $this->editingGoalId   = $goal->id;
-        $this->name            = $goal->name;
-        $this->target_amount   = $goal->target_amount;
-        $this->current_amount  = $goal->current_amount;
-        $this->deadline        = $goal->deadline ? Carbon::parse($goal->deadline)->format('Y-m-d') : '';
+        $this->editingGoalId = $goal->id;
+        $this->name = $goal->name;
+        $this->target_amount = $goal->target_amount;
+        $this->current_amount = $goal->current_amount;
+        $this->deadline = $goal->deadline ? Carbon::parse($goal->deadline)->format('Y-m-d') : '';
 
         // ABRIR MODAL
-       $this->dispatch('modal-show-goal');
+        $this->dispatch('modal-show-goal');
     }
 
     /**
@@ -246,21 +255,21 @@ class GoalsHub extends Component
     public function render()
     {
         $workspaceId = auth()->user()->current_workspace_id;
-        $goalsRaw    = Goal::with(['contributions.user'])
+        $goalsRaw = Goal::with(['contributions.user'])
             ->where('workspace_id', $workspaceId)
             ->orderBy('deadline')
             ->get();
 
         $goals = $goalsRaw->map(function ($goal) {
-            $perc     = $goal->target_amount > 0 ? ($goal->current_amount / $goal->target_amount) * 100 : 0;
-            $gap      = max(0, $goal->target_amount - $goal->current_amount);
+            $perc = $goal->target_amount > 0 ? ($goal->current_amount / $goal->target_amount) * 100 : 0;
+            $gap = max(0, $goal->target_amount - $goal->current_amount);
             $daysLeft = $goal->deadline ? now()->diffInDays(Carbon::parse($goal->deadline), false) : null;
             $recentContributions = $goal->contributions
                 ->sortByDesc('contributed_at')
                 ->take(3)
                 ->values();
 
-            $monthsLeft    = ($daysLeft !== null && $daysLeft > 0) ? max(1, ceil($daysLeft / 30)) : null;
+            $monthsLeft = ($daysLeft !== null && $daysLeft > 0) ? max(1, ceil($daysLeft / 30)) : null;
             $monthlyNeeded = ($monthsLeft && $gap > 0) ? $gap / $monthsLeft : null;
             $last90DaysTotal = (float) $goal->contributions
                 ->filter(fn ($contribution) => $contribution->contributed_at && $contribution->contributed_at->gte(now()->subDays(90)))
@@ -274,20 +283,20 @@ class GoalsHub extends Component
                 $predictedCompletionDate = now()->copy()->addMonths((int) ceil($gap / $monthlyPace));
             }
 
-            $goal->perc          = $perc;
-            $goal->gap           = $gap;
-            $goal->daysLeft      = $daysLeft;
+            $goal->perc = $perc;
+            $goal->gap = $gap;
+            $goal->daysLeft = $daysLeft;
             $goal->monthlyNeeded = $monthlyNeeded;
-            $goal->monthlyPace   = $monthlyPace;
+            $goal->monthlyPace = $monthlyPace;
             $goal->predictedCompletionDate = $predictedCompletionDate;
             $goal->isLateByForecast = $goal->deadline
                 && $predictedCompletionDate
                 && $predictedCompletionDate->gt(Carbon::parse($goal->deadline))
                 && $perc < 100;
-            $goal->isCompleted   = $perc >= 100;
-            $goal->isOverdue     = $daysLeft !== null && $daysLeft < 0 && !$goal->isCompleted;
-            $goal->isUrgent      = $daysLeft !== null && $daysLeft >= 0 && $daysLeft <= 30 && !$goal->isCompleted;
-            $goal->contributors   = $goal->contributions
+            $goal->isCompleted = $perc >= 100;
+            $goal->isOverdue = $daysLeft !== null && $daysLeft < 0 && ! $goal->isCompleted;
+            $goal->isUrgent = $daysLeft !== null && $daysLeft >= 0 && $daysLeft <= 30 && ! $goal->isCompleted;
+            $goal->contributors = $goal->contributions
                 ->groupBy('user_id')
                 ->map(fn ($rows) => [
                     'name' => $rows->first()->user?->name ?? 'Membro',
@@ -300,32 +309,32 @@ class GoalsHub extends Component
             return $goal;
         });
 
-        $totalTarget  = $goals->sum('target_amount');
+        $totalTarget = $goals->sum('target_amount');
         $totalCurrent = $goals->sum('current_amount');
-        $totalGap     = max(0, $totalTarget - $totalCurrent);
-        $globalPct    = $totalTarget > 0 ? ($totalCurrent / $totalTarget) * 100 : 0;
+        $totalGap = max(0, $totalTarget - $totalCurrent);
+        $globalPct = $totalTarget > 0 ? ($totalCurrent / $totalTarget) * 100 : 0;
 
-        $completed    = $goals->where('isCompleted', true)->count();
-        $urgent       = $goals->where('isUrgent', true)->count();
-        $overdue      = $goals->where('isOverdue', true)->count();
+        $completed = $goals->where('isCompleted', true)->count();
+        $urgent = $goals->where('isUrgent', true)->count();
+        $overdue = $goals->where('isOverdue', true)->count();
 
-        $sortedGoals = $goals->sortBy(fn($g) => match (true) {
-            $g->isOverdue   => 0,
-            $g->isUrgent    => 1,
-            !$g->isCompleted && $g->deadline => 2,
+        $sortedGoals = $goals->sortBy(fn ($g) => match (true) {
+            $g->isOverdue => 0,
+            $g->isUrgent => 1,
+            ! $g->isCompleted && $g->deadline => 2,
             $g->isCompleted => 4,
-            default         => 3,
+            default => 3,
         })->values();
 
         return view('livewire.goals-hub', [
-            'goals'        => $sortedGoals,
-            'totalTarget'  => $totalTarget,
+            'goals' => $sortedGoals,
+            'totalTarget' => $totalTarget,
             'totalCurrent' => $totalCurrent,
-            'totalGap'     => $totalGap,
-            'globalPct'    => $globalPct,
-            'completed'    => $completed,
-            'urgent'       => $urgent,
-            'overdue'      => $overdue,
+            'totalGap' => $totalGap,
+            'globalPct' => $globalPct,
+            'completed' => $completed,
+            'urgent' => $urgent,
+            'overdue' => $overdue,
             'autoProfiles' => $this->autoProfiles(),
             'autoSavingsRules' => AutoSavingsRule::with('goal')
                 ->where('workspace_id', $workspaceId)

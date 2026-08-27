@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
 
 class Task extends Model
 {
@@ -22,7 +22,7 @@ class Task extends Model
         'estimated_hours',
         'is_timer_running',
         'timer_started_at',
-        'total_seconds'
+        'total_seconds',
     ];
 
     protected $casts = [
@@ -37,9 +37,20 @@ class Task extends Model
         return $this->hasMany(Expense::class);
     }
 
-    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
-    public function project(): BelongsTo { return $this->belongsTo(Project::class); }
-    public function assignee(): BelongsTo { return $this->belongsTo(User::class, 'user_id'); }
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
     /**
      * Verifica se a tarefa está atrasada
@@ -51,7 +62,7 @@ class Task extends Model
         }
 
         // Como due_date está no $casts como 'date', ele já é um objeto Carbon
-        return $this->due_date->isPast() && !$this->due_date->isToday();
+        return $this->due_date->isPast() && ! $this->due_date->isToday();
     }
 
     /**
@@ -59,12 +70,12 @@ class Task extends Model
      */
     public function getPriorityColorAttribute(): string
     {
-        return match($this->priority) {
-            'baixa'    => 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
-            'media'    => 'text-amber-600 bg-amber-50 dark:bg-amber-900/20',
-            'alta'     => 'text-orange-600 bg-orange-50 dark:bg-orange-900/20',
-            'critica'  => 'text-red-600 bg-red-50 dark:bg-red-900/20',
-            default    => 'text-zinc-600 bg-zinc-50 dark:bg-zinc-900/20',
+        return match ($this->priority) {
+            'baixa' => 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
+            'media' => 'text-amber-600 bg-amber-50 dark:bg-amber-900/20',
+            'alta' => 'text-orange-600 bg-orange-50 dark:bg-orange-900/20',
+            'critica' => 'text-red-600 bg-red-50 dark:bg-red-900/20',
+            default => 'text-zinc-600 bg-zinc-50 dark:bg-zinc-900/20',
         };
     }
 
@@ -77,6 +88,7 @@ class Task extends Model
         if ($this->is_timer_running && $this->timer_started_at) {
             $seconds += now()->diffInSeconds($this->timer_started_at);
         }
-        return gmdate("H:i:s", $seconds);
+
+        return gmdate('H:i:s', $seconds);
     }
 }

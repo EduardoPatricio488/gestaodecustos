@@ -11,11 +11,11 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
 
             // Só adiciona se NÃO existir
-            if (!Schema::hasColumn('users', 'last_login_at')) {
+            if (! Schema::hasColumn('users', 'last_login_at')) {
                 $table->dateTime('last_login_at')->nullable();
             }
 
-            if (!Schema::hasColumn('users', 'last_login_ip')) {
+            if (! Schema::hasColumn('users', 'last_login_ip')) {
                 $table->string('last_login_ip')->nullable();
             }
         });

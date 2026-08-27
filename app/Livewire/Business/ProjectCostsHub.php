@@ -2,11 +2,10 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\Project;
 use App\Models\Expense;
-use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
 class ProjectCostsHub extends Component
@@ -14,8 +13,11 @@ class ProjectCostsHub extends Component
     use WithPagination;
 
     public $search = '';
+
     public $filterProject = '';
+
     public $filterUser = '';
+
     public $filterStatus = '';
 
     public function approve($id)
@@ -41,6 +43,7 @@ class ProjectCostsHub extends Component
             ->map(function ($project) {
                 $project->total_costs = $project->expenses->where('status', 'aprovado')->sum('amount');
                 $project->pending_costs = $project->expenses->where('status', 'pendente')->sum('amount');
+
                 return $project;
             });
 
@@ -57,16 +60,16 @@ class ProjectCostsHub extends Component
             ->where('is_company', true)
             ->whereIn('status', ['aprovado', 'rejeitado']) // Apenas o que já foi decidido
             ->with(['user', 'project', 'task', 'category'])
-            ->when($this->search, fn($q) => $q->where('description', 'like', "%{$this->search}%"))
-            ->when($this->filterProject, fn($q) => $q->where('project_id', $this->filterProject))
-            ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus));
+            ->when($this->search, fn ($q) => $q->where('description', 'like', "%{$this->search}%"))
+            ->when($this->filterProject, fn ($q) => $q->where('project_id', $this->filterProject))
+            ->when($this->filterStatus, fn ($q) => $q->where('status', $this->filterStatus));
 
         return view('livewire.business.project-costs-hub', [
             'projects' => $projects,
             'pendingExpenses' => $pendingExpenses,
             'history' => $historyQuery->latest('spent_at')->paginate(10),
             'totalOperationalCost' => $projects->sum('total_costs'),
-            'allUsers' => $workspace->users // Para o filtro
+            'allUsers' => $workspace->users, // Para o filtro
         ]);
     }
 }

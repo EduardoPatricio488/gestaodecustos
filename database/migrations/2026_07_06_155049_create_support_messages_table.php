@@ -9,20 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
- public function up(): void
-{
-    // Só cria se a tabela NÃO existir
-    if (!Schema::hasTable('support_messages')) {
-        Schema::create('support_messages', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('support_ticket_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->nullable();
-            $table->text('message');
-            $table->boolean('is_from_client')->default(false);
-            $table->timestamps();
-        });
+    public function up(): void
+    {
+        // Só cria se a tabela NÃO existir
+        if (! Schema::hasTable('support_messages')) {
+            Schema::create('support_messages', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('support_ticket_id')->constrained()->onDelete('cascade');
+                $table->foreignId('user_id')->nullable();
+                $table->text('message');
+                $table->boolean('is_from_client')->default(false);
+                $table->timestamps();
+            });
+        }
     }
-}
 
     /**
      * Reverse the migrations.

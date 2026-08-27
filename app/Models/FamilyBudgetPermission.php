@@ -15,7 +15,6 @@ class FamilyBudgetPermission extends Model
         'user_id',
         'category_id',
 
-
         // Campos de Mesada e Limites
         'allowance_limit',
         'spending_limit',
@@ -39,7 +38,7 @@ class FamilyBudgetPermission extends Model
         'restrict_calendar',
         'restrict_reminders',
         'restrict_goals',
-        'restrict_wrapped'
+        'restrict_wrapped',
     ];
 
     protected $casts = [

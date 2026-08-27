@@ -10,18 +10,18 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::table('projects', function (Blueprint $table) {
-        // Criar a relação com a tabela clients
-        $table->foreignId('client_id')->nullable()->after('workspace_id')->constrained('clients')->onDelete('set null');
-    });
-}
+    {
+        Schema::table('projects', function (Blueprint $table) {
+            // Criar a relação com a tabela clients
+            $table->foreignId('client_id')->nullable()->after('workspace_id')->constrained('clients')->onDelete('set null');
+        });
+    }
 
-public function down(): void
-{
-    Schema::table('projects', function (Blueprint $table) {
-        $table->dropForeign(['client_id']);
-        $table->dropColumn('client_id');
-    });
-}
+    public function down(): void
+    {
+        Schema::table('projects', function (Blueprint $table) {
+            $table->dropForeign(['client_id']);
+            $table->dropColumn('client_id');
+        });
+    }
 };

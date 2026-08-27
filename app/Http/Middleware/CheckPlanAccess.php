@@ -13,7 +13,9 @@ class CheckPlanAccess
         $user = auth()->user();
 
         // Se não houver utilizador (apesar do middleware auth estar antes), bloqueia
-        if (!$user) return redirect()->route('login');
+        if (! $user) {
+            return redirect()->route('login');
+        }
 
         $userPlan = $user->plan ?? 'free'; // 'free', 'plus', 'pro'
 
@@ -30,7 +32,7 @@ class CheckPlanAccess
             $hasAccess = ($userPlan === 'pro') || $user->isDiamond();
         }
 
-        if (!$hasAccess) {
+        if (! $hasAccess) {
             // Envia o utilizador para a página de planos com um aviso
             return redirect()->route('hub.pricing')
                 ->with('toast', ['variant' => 'error', 'text' => 'O seu plano atual não permite aceder a esta funcionalidade.']);

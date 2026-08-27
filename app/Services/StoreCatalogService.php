@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 class StoreCatalogService
 {
     private const CACHE_KEY = 'store.catalog.products';
+
     private const CACHE_TTL = 3600;
 
     public function clearCache(): void

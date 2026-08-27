@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('projects', function (Blueprint $table) {
             // Verificamos se a coluna já não existe para evitar erros
-            if (!Schema::hasColumn('projects', 'profit')) {
+            if (! Schema::hasColumn('projects', 'profit')) {
                 // 🔥 Removido o ->after('margin') para garantir que funciona no MySQL
                 // Aumentado para 15,2 para suportar valores financeiros maiores
                 $table->decimal('profit', 15, 2)->nullable();

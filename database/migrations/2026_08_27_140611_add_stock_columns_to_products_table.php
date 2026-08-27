@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             // Adiciona as colunas no final da tabela para evitar erros de dependência
-            if (!Schema::hasColumn('products', 'stock')) {
+            if (! Schema::hasColumn('products', 'stock')) {
                 $table->integer('stock')->default(0);
             }
-            if (!Schema::hasColumn('products', 'min_stock')) {
+            if (! Schema::hasColumn('products', 'min_stock')) {
                 $table->integer('min_stock')->default(0);
             }
 
             // Aproveitando, se não tiver preço, vamos adicionar também para não dar erro no futuro
-            if (!Schema::hasColumn('products', 'price')) {
+            if (! Schema::hasColumn('products', 'price')) {
                 $table->decimal('price', 10, 2)->default(0);
             }
         });

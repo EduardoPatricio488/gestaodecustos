@@ -5,7 +5,8 @@ namespace App\Models;
 use App\Traits\BelongsToWorkspace; // Importante
 use Illuminate\Database\Eloquent\Model;
 
-class EmailLog extends Model {
+class EmailLog extends Model
+{
     use BelongsToWorkspace; // Ativa o filtro automático
 
     protected $fillable = [
@@ -13,6 +14,6 @@ class EmailLog extends Model {
         'workspace_id', // Adiciona esta linha
         'subject',
         'month_reference',
-        'sent_at'
+        'sent_at',
     ];
 }

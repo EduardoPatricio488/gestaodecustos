@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('employees', function (Blueprint $table) {
-    $table->boolean('active')->default(true);
-    $table->boolean('suspended')->default(false);
-    $table->timestamp('terminated_at')->nullable();
-});
+            $table->boolean('active')->default(true);
+            $table->boolean('suspended')->default(false);
+            $table->timestamp('terminated_at')->nullable();
+        });
 
     }
 
@@ -24,8 +24,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-       Schema::table('employees', function (Blueprint $table) {
-    $table->dropColumn(['active', 'suspended', 'terminated_at']);
-});
+        Schema::table('employees', function (Blueprint $table) {
+            $table->dropColumn(['active', 'suspended', 'terminated_at']);
+        });
     }
 };

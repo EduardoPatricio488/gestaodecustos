@@ -4,8 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         // 1. TABELA DE POSTS (Texto, Imagem, Vídeo, Financeiro)
         Schema::create('social_posts', function (Blueprint $table) {
             $table->id();
@@ -57,7 +59,8 @@ return new class extends Migration {
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('social_comments');
         Schema::dropIfExists('social_likes');
         Schema::dropIfExists('social_follows');

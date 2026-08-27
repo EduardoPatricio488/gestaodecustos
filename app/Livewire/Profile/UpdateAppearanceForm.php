@@ -2,13 +2,14 @@
 
 namespace App\Livewire\Profile;
 
-use Livewire\Component;
 use App\Services\CurrencyService;
 use Illuminate\Support\Facades\App;
+use Livewire\Component;
 
 class UpdateAppearanceForm extends Component
 {
     public $currency;
+
     public $locale;
 
     /**
@@ -63,7 +64,7 @@ class UpdateAppearanceForm extends Component
                 'en' => 'English (US)',
                 'es' => 'Español (ES)',
                 'fr' => 'Français (FR)',
-            ]
+            ],
         ]);
     }
 }

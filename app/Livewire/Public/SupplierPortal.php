@@ -3,44 +3,51 @@
 namespace App\Livewire\Public;
 
 use App\Models\Supplier;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Livewire\Attributes\Layout;
 
 class SupplierPortal extends Component
 {
     use WithFileUploads;
 
     public $tax_number = '';
+
     public $token = '';      // O Código (PIN)
+
     public $isLoggedIn = false;
+
     public $supplier = null;
 
     // Campos de submissão (para depois de entrar)
-    public $amount, $notes, $invoice_doc;
+    public $amount;
+
+    public $notes;
+
+    public $invoice_doc;
 
     #[Layout('layouts.guest')]
-   public function login()
-{
-    $this->validate([
-        'tax_number' => 'required|string',
-        'token'      => 'required|string|size:6',
-    ]);
+    public function login()
+    {
+        $this->validate([
+            'tax_number' => 'required|string',
+            'token' => 'required|string|size:6',
+        ]);
 
-    $cleanNifInput = preg_replace('/\s+/', '', $this->tax_number);
-    $cleanTokenInput = preg_replace('/\s+/', '', $this->token);
+        $cleanNifInput = preg_replace('/\s+/', '', $this->tax_number);
+        $cleanTokenInput = preg_replace('/\s+/', '', $this->token);
 
-    $supplier = Supplier::whereRaw("REPLACE(tax_number, ' ', '') = ?", [$cleanNifInput])
-                    ->where('portal_token', $cleanTokenInput)
-                    ->first();
+        $supplier = Supplier::whereRaw("REPLACE(tax_number, ' ', '') = ?", [$cleanNifInput])
+            ->where('portal_token', $cleanTokenInput)
+            ->first();
 
-    if ($supplier) {
-        // ✅ REDIRECIONA PARA A NOVA PÁGINA USANDO O TOKEN ÚNICO
-        return redirect()->route('supplier.dashboard', ['token' => $supplier->portal_token]);
+        if ($supplier) {
+            // ✅ REDIRECIONA PARA A NOVA PÁGINA USANDO O TOKEN ÚNICO
+            return redirect()->route('supplier.dashboard', ['token' => $supplier->portal_token]);
+        }
+
+        session()->flash('error', 'CREDENCIAIS INVÁLIDAS. VERIFICA O NIF E O CÓDIGO.');
     }
-
-    session()->flash('error', 'CREDENCIAIS INVÁLIDAS. VERIFICA O NIF E O CÓDIGO.');
-}
 
     public function submitInvoice()
     {

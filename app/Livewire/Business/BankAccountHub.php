@@ -2,43 +2,60 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
 use App\Models\BankAccount;
-use App\Models\Income;
 use App\Models\Expense;
+use App\Models\Income;
+use App\Models\Workspace;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class BankAccountHub extends Component
 {
     // CAMPOS PRINCIPAIS
     public $name;
+
     public $type = 'corrente';
+
     public $historyTransactions = [];
-public $selectedAccountName = '';
+
+    public $selectedAccountName = '';
+
     public $balance = 0;
+
     public $color = '#6366f1';
+
     public $editingId = null;
+
     public $search = '';
+
     public $isBusinessMode = false;
 
     // DADOS BANCÁRIOS
     public $bank_name;
+
     public $country;
+
     public $iban;
+
     public $swift;
+
     public $holder_name;
 
     // FINANCEIRO AVANÇADO
     public $credit_limit;
-    public $forecast_balance;
-    public $risk_score;
-    public $generatedAuditCode = '';
-public $companyTaxNumber = '';
 
+    public $forecast_balance;
+
+    public $risk_score;
+
+    public $generatedAuditCode = '';
+
+    public $companyTaxNumber = '';
 
     // TAGS E NOTAS
     public $tags_input;
+
     public $notes;
 
     protected $rules = [
@@ -57,31 +74,30 @@ public $companyTaxNumber = '';
         'notes' => 'nullable|string',
     ];
 
+    public function generateAuditCode()
+    {
+        $workspace = auth()->user()->currentWorkspace;
 
+        // 1. Verificamos se a empresa já tem um token de auditoria.
+        // Se não tiver (estiver NULL ou vazio), geramos um NOVO para sempre.
+        if (! $workspace->audit_token) {
+            do {
+                $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+                // Garante que este token não existe em mais nenhuma empresa na BD
+                $exists = Workspace::where('audit_token', $passcode)->exists();
+            } while ($exists);
 
-public function generateAuditCode()
-{
-    $workspace = auth()->user()->currentWorkspace;
+            $workspace->update(['audit_token' => $passcode]);
+        }
 
-    // 1. Verificamos se a empresa já tem um token de auditoria.
-    // Se não tiver (estiver NULL ou vazio), geramos um NOVO para sempre.
-    if (!$workspace->audit_token) {
-        do {
-            $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-            // Garante que este token não existe em mais nenhuma empresa na BD
-            $exists = \App\Models\Workspace::where('audit_token', $passcode)->exists();
-        } while ($exists);
+        // 2. Preenchemos as variáveis do modal com o código permanente da base de dados
+        $this->generatedAuditCode = $workspace->audit_token;
+        $this->companyTaxNumber = $workspace->tax_number;
 
-        $workspace->update(['audit_token' => $passcode]);
+        // 3. Abrimos o modal
+        $this->dispatch('modal-show', name: 'audit-code-modal');
     }
 
-    // 2. Preenchemos as variáveis do modal com o código permanente da base de dados
-    $this->generatedAuditCode = $workspace->audit_token;
-    $this->companyTaxNumber = $workspace->tax_number;
-
-    // 3. Abrimos o modal
-    $this->dispatch('modal-show', name: 'audit-code-modal');
-}
     public function mount()
     {
         $this->isBusinessMode = request()->routeIs('hub.business.*');
@@ -93,7 +109,7 @@ public function generateAuditCode()
 
         $tags = $this->tags_input
             ? collect(explode(',', $this->tags_input))
-                ->map(fn($t) => trim($t))
+                ->map(fn ($t) => trim($t))
                 ->filter()
                 ->values()
                 ->toArray()
@@ -131,35 +147,37 @@ public function generateAuditCode()
         $this->dispatch('modal-close', name: 'bank-modal');
         $this->dispatch('toast', text: 'Conta guardada com sucesso!');
     }
-public function openHistory($id)
-{
-    $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
-    $this->selectedAccountName = $account->name;
 
-    // Buscar as últimas 30 despesas desta conta
-    $expenses = $account->expenses()->with('category')->latest()->take(30)->get()->map(fn($e) => [
-        'date' => $e->spent_at,
-        'desc' => $e->description ?: $e->category->name,
-        'amount' => -$e->amount,
-        'type' => 'expense'
-    ]);
+    public function openHistory($id)
+    {
+        $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+        $this->selectedAccountName = $account->name;
 
-    // Buscar as últimas 30 receitas desta conta
-    $incomes = $account->incomes()->latest()->take(30)->get()->map(fn($i) => [
-        'date' => $i->received_at,
-        'desc' => $i->description,
-        'amount' => $i->amount,
-        'type' => 'income'
-    ]);
+        // Buscar as últimas 30 despesas desta conta
+        $expenses = $account->expenses()->with('category')->latest()->take(30)->get()->map(fn ($e) => [
+            'date' => $e->spent_at,
+            'desc' => $e->description ?: $e->category->name,
+            'amount' => -$e->amount,
+            'type' => 'expense',
+        ]);
 
-    // Juntar tudo, ordenar por data e transformar em array
-    $this->historyTransactions = $expenses->concat($incomes)
-        ->sortByDesc('date')
-        ->take(30)
-        ->toArray();
+        // Buscar as últimas 30 receitas desta conta
+        $incomes = $account->incomes()->latest()->take(30)->get()->map(fn ($i) => [
+            'date' => $i->received_at,
+            'desc' => $i->description,
+            'amount' => $i->amount,
+            'type' => 'income',
+        ]);
 
-    $this->dispatch('modal-show', name: 'account-history-modal');
-}
+        // Juntar tudo, ordenar por data e transformar em array
+        $this->historyTransactions = $expenses->concat($incomes)
+            ->sortByDesc('date')
+            ->take(30)
+            ->toArray();
+
+        $this->dispatch('modal-show', name: 'account-history-modal');
+    }
+
     public function edit($id)
     {
         $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
@@ -193,6 +211,7 @@ public function openHistory($id)
 
         if ($account->expenses()->exists() || $account->incomes()->exists()) {
             $this->dispatch('toast', text: 'Esta conta tem histórico e não pode ser apagada.', variant: 'error');
+
             return;
         }
 
@@ -206,7 +225,7 @@ public function openHistory($id)
             'name', 'type', 'balance', 'color', 'editingId',
             'bank_name', 'country', 'iban', 'swift', 'holder_name',
             'credit_limit', 'forecast_balance', 'risk_score',
-            'tags_input', 'notes'
+            'tags_input', 'notes',
         ]);
     }
 
@@ -216,19 +235,19 @@ public function openHistory($id)
 
         $accounts = $workspace->bankAccounts()
             ->where('is_business', $this->isBusinessMode)
-            ->where('name', 'like', '%' . $this->search . '%')
+            ->where('name', 'like', '%'.$this->search.'%')
             ->get();
 
         // KPIs BASE
         $totalLiquidez = $accounts
             ->where('type', '!=', 'credito')
-            ->sum(fn($a) => $a->current_balance);
+            ->sum(fn ($a) => $a->current_balance);
 
         $totalDividaCartao = $accounts
             ->where('type', 'credito')
-            ->sum(fn($a) => abs($a->current_balance));
+            ->sum(fn ($a) => abs($a->current_balance));
 
-        $forecastCash = $accounts->sum(fn($a) => $a->forecast_balance ?? $a->current_balance);
+        $forecastCash = $accounts->sum(fn ($a) => $a->forecast_balance ?? $a->current_balance);
 
         $globalRisk = round($accounts->avg('risk_score') ?? 0);
 
@@ -274,7 +293,7 @@ public function openHistory($id)
             'forecast7' => $forecast7,
             'forecast30' => $forecast30,
 
-            'modeTitle' => $this->isBusinessMode ? 'Contas da Empresa' : 'Contas Pessoais'
+            'modeTitle' => $this->isBusinessMode ? 'Contas da Empresa' : 'Contas Pessoais',
         ]);
     }
 }

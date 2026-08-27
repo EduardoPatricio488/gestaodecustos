@@ -2,23 +2,22 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\URL;
+use App\Listeners\StripeWebhookListener;
+use App\Listeners\UpdateLastLogin;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Auth\Events\Login;
-use App\Listeners\UpdateLastLogin;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Validation\Rules\Password;
-use Illuminate\Support\Carbon;
-
 // 🔥 NOVOS IMPORTS PARA O STRIPE
+use Illuminate\Validation\Rules\Password;
 use Laravel\Cashier\Events\WebhookReceived;
-use App\Listeners\StripeWebhookListener;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -47,12 +46,12 @@ class AppServiceProvider extends ServiceProvider
             StripeWebhookListener::class
         );
 
-        \Illuminate\Support\Facades\App::setLocale('pt');
-        \Illuminate\Support\Carbon::setLocale('pt');
+        App::setLocale('pt');
+        Carbon::setLocale('pt');
 
         // FORÇAR HTTPS SEMPRE QUE ESTIVER NO NGROK
         if (str_contains(request()->getHost(), 'ngrok-free.app') || str_contains(request()->getHost(), 'ngrok-free.dev')) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
+            URL::forceScheme('https');
         }
     }
 

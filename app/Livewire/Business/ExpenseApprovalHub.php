@@ -3,9 +3,6 @@
 namespace App\Livewire\Business;
 
 use App\Models\Expense;
-use App\Models\Project;
-use App\Models\Task;
-use App\Models\Category;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -46,7 +43,7 @@ class ExpenseApprovalHub extends Component
                 'total_approved_month' => (clone $query)->where('status', 'aprovado')
                     ->whereMonth('spent_at', now()->month)
                     ->sum('amount'),
-            ]
+            ],
         ]);
     }
 }

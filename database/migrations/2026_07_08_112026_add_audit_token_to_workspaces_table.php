@@ -9,12 +9,13 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
-    Schema::table('workspaces', function (Blueprint $table) {
-        // Código que o CEO gera para dar ao banco
-        $table->string('audit_token')->nullable()->unique();
-    });
-}
+    public function up(): void
+    {
+        Schema::table('workspaces', function (Blueprint $table) {
+            // Código que o CEO gera para dar ao banco
+            $table->string('audit_token')->nullable()->unique();
+        });
+    }
 
     /**
      * Reverse the migrations.

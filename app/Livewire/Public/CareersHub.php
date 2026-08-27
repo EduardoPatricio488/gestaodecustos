@@ -5,12 +5,17 @@ namespace App\Livewire\Public;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 class CareersHub extends Component
 {
-    public $email, $password, $name;
+    public $email;
+
+    public $password;
+
+    public $name;
+
     public $isRegistering = true;
 
     #[Layout('layouts.guest')]
@@ -42,6 +47,7 @@ class CareersHub extends Component
             }
 
             session()->flash('error', 'Credenciais inválidas.');
+
             return;
         }
 

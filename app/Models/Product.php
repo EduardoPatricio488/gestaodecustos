@@ -9,7 +9,10 @@ class Product extends Model
 {
     protected $fillable = ['workspace_id', 'name', 'sku', 'stock_quantity', 'min_stock_alert', 'unit_cost', 'unit_price'];
 
-    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 
     /**
      * LÓGICA DE INVENTÁRIO

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\AutoSavingsService;
 use App\Services\CurrencyService;
 use App\Traits\BelongsToWorkspace;
 use App\Traits\LogsActivity;
@@ -9,7 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Income extends Model {
+class Income extends Model
+{
     use BelongsToWorkspace, LogsActivity;
 
     protected $fillable = [
@@ -31,7 +33,7 @@ class Income extends Model {
     protected $casts = [
         'received_at' => 'date',
         'amount' => 'decimal:2',
-        'amount_converted' => 'decimal:2'
+        'amount_converted' => 'decimal:2',
     ];
 
     protected static function booted(): void
@@ -53,18 +55,23 @@ class Income extends Model {
         });
 
         static::created(function (Income $income): void {
-            app(\App\Services\AutoSavingsService::class)->applyForIncome($income);
+            app(AutoSavingsService::class)->applyForIncome($income);
         });
     }
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     // RELAÇÃO ADICIONADA: Onde entrou o dinheiro?
-    public function bankAccount(): BelongsTo {
+    public function bankAccount(): BelongsTo
+    {
         return $this->belongsTo(BankAccount::class);
     }
 
-    public function goalContributions(): HasMany {
+    public function goalContributions(): HasMany
+    {
         return $this->hasMany(GoalContribution::class);
     }
 }

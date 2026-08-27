@@ -19,7 +19,7 @@ class VerifyAccountMail extends Mailable
 
     public function build()
     {
-        return $this->subject($this->code . ' é o teu código de verificação - Finance Pro IA')
+        return $this->subject($this->code.' é o teu código de verificação - Finance Pro IA')
             ->html("
                 <div style='font-family: sans-serif; background-color: #f8fafc; padding: 40px; color: #1e293b;'>
                     <div style='max-width: 400px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;'>
@@ -43,9 +43,9 @@ class VerifyAccountMail extends Mailable
                     </div>
 
                     <div style='text-align: center; margin-top: 20px; font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;'>
-                        &copy; " . date('Y') . " Finance Pro IA — Encriptação de Ponta-a-Ponta
+                        &copy; ".date('Y').' Finance Pro IA — Encriptação de Ponta-a-Ponta
                     </div>
                 </div>
-            ");
+            ');
     }
 }

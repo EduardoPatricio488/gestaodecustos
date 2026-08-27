@@ -2,21 +2,33 @@
 
 namespace App\Livewire\Business;
 
-use App\Models\{Employee, User, Workspace};
-use App\Mail\HiredNotificationMail; // <--- IMPORTANTE: Importar o Mailable
+use App\Mail\HiredNotificationMail;
+use App\Models\Employee;
+use App\Models\User; // <--- IMPORTANTE: Importar o Mailable
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail; // <--- IMPORTANTE: Importar a Facade Mail
+
+ // <--- IMPORTANTE: Importar a Facade Mail
 
 #[Layout('components.layouts.app')]
 class RecruitmentHub extends Component
 {
     use WithFileUploads;
 
-    public $recActive, $recDesc, $recAnnounce, $recVacancies, $recExtraInfo;
+    public $recActive;
+
+    public $recDesc;
+
+    public $recAnnounce;
+
+    public $recVacancies;
+
+    public $recExtraInfo;
 
     public function mount()
     {
@@ -30,24 +42,22 @@ class RecruitmentHub extends Component
 
     public function toggleActive()
     {
-        $this->recActive = !$this->recActive;
+        $this->recActive = ! $this->recActive;
     }
 
     public function saveSettings()
     {
         $workspace = auth()->user()->currentWorkspace;
         $workspace->update([
-            'recruitment_active'      => $this->recActive,
+            'recruitment_active' => $this->recActive,
             'recruitment_description' => $this->recDesc,
             'recruitment_announcement' => $this->recAnnounce,
-            'recruitment_vacancies'   => (int) $this->recVacancies,
-            'recruitment_extra_info'  => $this->recExtraInfo,
+            'recruitment_vacancies' => (int) $this->recVacancies,
+            'recruitment_extra_info' => $this->recExtraInfo,
         ]);
         session()->flash('published', true);
         $this->dispatch('toast', variant: 'success', text: 'Montra pública atualizada!');
     }
-
-
 
     public function rejectCandidate($id)
     {
@@ -61,7 +71,9 @@ class RecruitmentHub extends Component
     public function acceptCandidate($id)
     {
         $app = DB::table('job_applications')->where('id', $id)->first();
-        if (!$app) return;
+        if (! $app) {
+            return;
+        }
 
         $user = User::find($app->user_id);
         $workspace = auth()->user()->currentWorkspace;
@@ -70,19 +82,19 @@ class RecruitmentHub extends Component
         try {
             Mail::to($user->email)->send(new HiredNotificationMail($user->name, $workspace->name));
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Erro ao enviar email: " . $e->getMessage());
+            Log::error('Erro ao enviar email: '.$e->getMessage());
         }
 
         // 2. CRIAR FICHA DE COLABORADOR
         Employee::create([
             'workspace_id' => $app->workspace_id,
-            'user_id'      => $app->user_id,
-            'name'         => $user->name,
-            'role'         => $app->role,
-            'salary'       => 0,
-            'pay_day'      => 25,
-            'active'       => true,
-            'cv_path'      => $app->cv_path // Copia o CV da candidatura para a ficha
+            'user_id' => $app->user_id,
+            'name' => $user->name,
+            'role' => $app->role,
+            'salary' => 0,
+            'pay_day' => 25,
+            'active' => true,
+            'cv_path' => $app->cv_path, // Copia o CV da candidatura para a ficha
         ]);
 
         // 3. ATUALIZAR STATUS DA CANDIDATURA
@@ -111,8 +123,8 @@ class RecruitmentHub extends Component
             ->get();
 
         return view('livewire.business.recruitment-hub', [
-            'workspace'    => $workspace,
-            'applications' => $applications
+            'workspace' => $workspace,
+            'applications' => $applications,
         ]);
     }
 }

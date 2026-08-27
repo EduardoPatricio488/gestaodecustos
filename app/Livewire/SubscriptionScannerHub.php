@@ -13,6 +13,7 @@ use Livewire\Component;
 class SubscriptionScannerHub extends Component
 {
     public int $lookbackMonths = 8;
+
     public float $amountTolerancePct = 15.0;
 
     private function normalizeMerchant(string $text): string
@@ -23,7 +24,7 @@ class SubscriptionScannerHub extends Component
         $clean = preg_replace('/\s+/', ' ', trim($clean));
 
         $stop = ['compra', 'debito', 'pagamento', 'cartao', 'visa', 'mastercard', 'mbway', 'transferencia'];
-        $parts = array_filter(explode(' ', $clean), fn($p) => ! in_array($p, $stop, true) && mb_strlen($p) > 2);
+        $parts = array_filter(explode(' ', $clean), fn ($p) => ! in_array($p, $stop, true) && mb_strlen($p) > 2);
 
         return implode(' ', array_slice($parts, 0, 4));
     }
@@ -57,12 +58,12 @@ class SubscriptionScannerHub extends Component
                 continue;
             }
 
-            $months = collect($items)->map(fn($e) => Carbon::parse($e->spent_at)->format('Y-m'))->unique();
+            $months = collect($items)->map(fn ($e) => Carbon::parse($e->spent_at)->format('Y-m'))->unique();
             if ($months->count() < 3) {
                 continue;
             }
 
-            $amounts = collect($items)->map(fn($e) => (float) $e->amount)->sort()->values();
+            $amounts = collect($items)->map(fn ($e) => (float) $e->amount)->sort()->values();
             $avg = (float) $amounts->avg();
             if ($avg <= 0) {
                 continue;
@@ -100,13 +101,14 @@ class SubscriptionScannerHub extends Component
                 continue;
             }
 
-            $dayValues = $sortedByDate->map(fn($e) => (int) Carbon::parse($e->spent_at)->day)->sort()->values();
+            $dayValues = $sortedByDate->map(fn ($e) => (int) Carbon::parse($e->spent_at)->day)->sort()->values();
             $day = (int) $dayValues[intdiv(max(0, $dayValues->count() - 1), 2)];
 
             $alreadyExists = $subs->contains(function ($sub) use ($merchant, $avg) {
                 $subName = $this->normalizeMerchant((string) $sub->name);
                 $nameMatch = str_contains($subName, $merchant) || str_contains($merchant, $subName);
                 $amountMatch = abs((float) $sub->amount - $avg) <= ($avg * 0.2);
+
                 return $nameMatch && $amountMatch;
             });
 
@@ -114,7 +116,7 @@ class SubscriptionScannerHub extends Component
                 continue;
             }
 
-            $signature = sha1($merchant . '|' . number_format($avg, 2, '.', '') . '|' . $day);
+            $signature = sha1($merchant.'|'.number_format($avg, 2, '.', '').'|'.$day);
 
             $suggestions[] = [
                 'signature' => $signature,
@@ -125,11 +127,11 @@ class SubscriptionScannerHub extends Component
                 'months' => $months->count(),
                 'confidence' => max(40, min(97, (int) round((1 - min($cv, 0.3)) * 100))),
                 'last_seen' => Carbon::parse($sortedByDate->last()->spent_at),
-                'category_id' => $sortedByDate->groupBy('category_id')->sortByDesc(fn($g) => $g->count())->keys()->first(),
+                'category_id' => $sortedByDate->groupBy('category_id')->sortByDesc(fn ($g) => $g->count())->keys()->first(),
             ];
         }
 
-        usort($suggestions, fn($a, $b) => $b['confidence'] <=> $a['confidence']);
+        usort($suggestions, fn ($a, $b) => $b['confidence'] <=> $a['confidence']);
 
         return $suggestions;
     }
@@ -142,6 +144,7 @@ class SubscriptionScannerHub extends Component
         $suggestion = collect($this->buildSuggestions())->firstWhere('signature', $signature);
         if (! $suggestion) {
             $this->dispatch('toast', variant: 'warning', text: 'Sugestão já não está disponível.');
+
             return;
         }
 

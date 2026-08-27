@@ -10,17 +10,17 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('incomes', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->string('description');
-        $table->decimal('amount', 10, 2);
-        $table->date('received_at');
-        $table->string('type')->default('Salário'); // Salário, Freelance, Investimentos, Outros
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('incomes', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('description');
+            $table->decimal('amount', 10, 2);
+            $table->date('received_at');
+            $table->string('type')->default('Salário'); // Salário, Freelance, Investimentos, Outros
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

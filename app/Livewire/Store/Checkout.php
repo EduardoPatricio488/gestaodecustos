@@ -3,13 +3,10 @@
 namespace App\Livewire\Store;
 
 use App\Livewire\Store\Concerns\InteractsWithStore;
-use App\Models\StoreProduct;
 use App\Services\StoreCartService;
-use App\Services\StoreCompareService;
 use App\Services\StoreCouponService;
 use App\Services\StorePurchaseService;
 use App\Services\StoreRecommendationService;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 

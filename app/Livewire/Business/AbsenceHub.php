@@ -2,11 +2,12 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\{Absence, Employee, User};
-use Livewire\WithPagination;
+use App\Models\Absence;
+use App\Models\Employee;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\{Auth, DB};
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
 class AbsenceHub extends Component
@@ -14,9 +15,13 @@ class AbsenceHub extends Component
     use WithPagination;
 
     public $employee_id = '';
+
     public $type = 'ferias';
+
     public $start_date;
+
     public $end_date;
+
     public $notes = '';
 
     /**
@@ -56,7 +61,7 @@ class AbsenceHub extends Component
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'notes' => $this->notes,
-            'status' => 'aprovado'
+            'status' => 'aprovado',
         ]);
 
         $this->reset(['employee_id', 'start_date', 'end_date', 'notes']);
@@ -85,7 +90,7 @@ class AbsenceHub extends Component
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'notes' => $this->notes,
-            'status' => 'pendente'
+            'status' => 'pendente',
         ]);
 
         $this->reset(['type', 'start_date', 'end_date', 'notes']);
@@ -103,12 +108,12 @@ class AbsenceHub extends Component
 
         $query = $workspace->absences()->with('employee');
 
-        if (!$isManager) {
+        if (! $isManager) {
             $employee = Employee::where('user_id', $user->id)->where('workspace_id', $workspace->id)->first();
             $query->where('employee_id', $employee?->id);
         }
 
-        $absentTodayCount = $workspace->employees()->get()->filter(fn($e) => $e->is_absent_today)->count();
+        $absentTodayCount = $workspace->employees()->get()->filter(fn ($e) => $e->is_absent_today)->count();
         $myEmp = Employee::where('user_id', $user->id)->where('workspace_id', $workspace->id)->first();
 
         return view('livewire.business.absence-hub', [

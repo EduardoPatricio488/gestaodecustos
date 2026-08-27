@@ -2,10 +2,9 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\Product;
-use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
 class InventoryHub extends Component
@@ -13,14 +12,20 @@ class InventoryHub extends Component
     use WithPagination;
 
     public $search = '';
+
     public $editingId = null;
 
     // Campos do formulário
     public $name;
+
     public $sku;
+
     public $stock_quantity = 0;
+
     public $min_stock_alert = 5;
+
     public $unit_cost = 0;
+
     public $unit_price = 0;
 
     protected $rules = [
@@ -83,25 +88,25 @@ class InventoryHub extends Component
             'min_stock_alert',
             'unit_cost',
             'unit_price',
-            'editingId'
+            'editingId',
         ]);
     }
 
     public function render()
     {
         $query = auth()->user()->currentWorkspace->products()
-            ->where('name', 'like', '%' . $this->search . '%');
+            ->where('name', 'like', '%'.$this->search.'%');
 
         // Ordenação inteligente: primeiro artigos em alerta, depois por nome
         $query->orderByRaw('stock_quantity <= min_stock_alert DESC')
-              ->orderBy('name', 'asc');
+            ->orderBy('name', 'asc');
 
         $products = $query->paginate(20);
 
         return view('livewire.business.inventory-hub', [
             'products' => $products,
-            'totalInventoryValue' => $products->sum(fn($p) => $p->stock_quantity * $p->unit_price),
-            'lowStockCount' => $products->filter(fn($p) => $p->stock_quantity <= $p->min_stock_alert)->count(),
+            'totalInventoryValue' => $products->sum(fn ($p) => $p->stock_quantity * $p->unit_price),
+            'lowStockCount' => $products->filter(fn ($p) => $p->stock_quantity <= $p->min_stock_alert)->count(),
         ]);
     }
 }

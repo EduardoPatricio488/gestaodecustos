@@ -2,20 +2,22 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Component;
 
 class AnalystOnboarding extends Component
 {
     public $step = 1;
+
     public $totalSteps = 4;
+
     public $isOpen = false;
 
     public function mount()
     {
         $user = auth()->user();
         // Abre automaticamente se for Analista e ainda não concluiu o onboarding
-        if ($user->isAnalyst() && !$user->onboarding_completed) {
+        if ($user->isAnalyst() && ! $user->onboarding_completed) {
             $this->isOpen = true;
         }
     }

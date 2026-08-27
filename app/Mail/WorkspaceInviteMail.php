@@ -11,7 +11,9 @@ class WorkspaceInviteMail extends Mailable
     use Queueable, SerializesModels;
 
     public $companyName;
+
     public $inviteCode;
+
     public $employeeName;
 
     public function __construct($companyName, $inviteCode, $employeeName)
@@ -23,7 +25,7 @@ class WorkspaceInviteMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Chave de Acesso à Empresa 🔑 - ' . $this->companyName)
+        return $this->subject('Chave de Acesso à Empresa 🔑 - '.$this->companyName)
             ->html("
                 <div style='font-family: sans-serif; background-color: #f4f4f5; padding: 40px; color: #18181b;'>
                     <div style='max-width: 500px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>

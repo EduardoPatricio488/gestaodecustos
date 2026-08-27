@@ -2,13 +2,15 @@
 
 namespace App\Livewire\Profile;
 
-use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class UpdateVisualIdentityForm extends Component
 {
     public $profile_emoji;
+
     public $profile_color;
+
     public $custom_emoji = '';
 
     public function mount()

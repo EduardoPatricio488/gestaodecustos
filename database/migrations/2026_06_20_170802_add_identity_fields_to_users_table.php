@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
 
             // Só adiciona se NÃO existir
-            if (!Schema::hasColumn('users', 'profile_color')) {
+            if (! Schema::hasColumn('users', 'profile_color')) {
                 // 🔥 Removido o ->after('profile_emoji') para evitar erro de coluna inexistente
                 $table->string('profile_color')->default('#6366f1');
             }

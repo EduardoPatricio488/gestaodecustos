@@ -3,14 +3,16 @@
 namespace App\Livewire;
 
 use App\Models\Workspace;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class ManageTeam extends Component
 {
     public $newWorkspaceName;
+
     public $type = 'personal';
+
     public $inputInviteCode; // Para quem quer entrar
 
     // Gerar um novo código para o workspace atual
@@ -18,7 +20,7 @@ class ManageTeam extends Component
     {
         $workspace = auth()->user()->currentWorkspace;
         $workspace->update([
-            'invite_code' => Workspace::generateUniqueCode()
+            'invite_code' => Workspace::generateUniqueCode(),
         ]);
 
         $this->dispatch('toast', text: 'Código gerado com sucesso!');
@@ -34,6 +36,7 @@ class ManageTeam extends Component
         // Verifica se já faz parte
         if ($workspace->users()->where('user_id', auth()->id())->exists()) {
             $this->dispatch('toast', variant: 'error', text: 'Já fazes parte deste espaço.');
+
             return;
         }
 
@@ -44,7 +47,8 @@ class ManageTeam extends Component
         auth()->user()->update(['current_workspace_id' => $workspace->id]);
 
         $this->inputInviteCode = '';
-        session()->flash('ok', 'Entraste no espaço: ' . $workspace->name);
+        session()->flash('ok', 'Entraste no espaço: '.$workspace->name);
+
         return redirect()->route('dashboard');
     }
 
@@ -56,7 +60,7 @@ class ManageTeam extends Component
             'name' => $this->newWorkspaceName,
             'type' => $this->type,
             'owner_id' => auth()->id(),
-            'invite_code' => Workspace::generateUniqueCode() // Já cria com código
+            'invite_code' => Workspace::generateUniqueCode(), // Já cria com código
         ]);
 
         auth()->user()->workspaces()->attach($ws->id, ['role' => 'admin']);
@@ -69,7 +73,7 @@ class ManageTeam extends Component
     {
         return view('livewire.manage-team', [
             'currentWorkspace' => auth()->user()->currentWorkspace,
-            'members' => auth()->user()->currentWorkspace->users
+            'members' => auth()->user()->currentWorkspace->users,
         ]);
     }
 }

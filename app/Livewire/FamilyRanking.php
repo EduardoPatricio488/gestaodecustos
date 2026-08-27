@@ -2,23 +2,23 @@
 
 namespace App\Livewire;
 
-use App\Models\Debt;
+use App\Models\ActivityLog;
 use App\Models\BudgetChallenge;
+use App\Models\Debt;
+use App\Models\Expense;
 use App\Models\FamilyBudgetPermission;
 use App\Models\Goal;
 use App\Models\GoalContribution;
-use App\Models\User;
-use App\Models\Expense;
 use App\Models\Income;
 use App\Models\RecurringIncome;
 use App\Models\Reminder;
 use App\Models\Subscription;
-use App\Models\ActivityLog;
+use App\Models\User;
 use App\Services\BudgetService;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class FamilyRanking extends Component
@@ -120,17 +120,18 @@ class FamilyRanking extends Component
         $memberStats = User::join('workspace_user', 'users.id', '=', 'workspace_user.user_id')
             ->where('workspace_user.workspace_id', $workspace->id)
             ->select('users.*')
-            ->withSum(['expenses' => function($q) use ($monthStart, $workspace) {
+            ->withSum(['expenses' => function ($q) use ($monthStart, $workspace) {
                 $q->where('spent_at', '>=', $monthStart)->where('workspace_id', $workspace->id);
             }], 'amount')
-            ->withSum(['incomes' => function($q) use ($monthStart, $workspace) {
+            ->withSum(['incomes' => function ($q) use ($monthStart, $workspace) {
                 $q->where('received_at', '>=', $monthStart)->where('workspace_id', $workspace->id);
             }], 'amount')
             ->get()
-            ->map(function($user) {
+            ->map(function ($user) {
                 $user->total_expenses = $user->expenses_sum_amount ?: 0;
                 $user->total_incomes = $user->incomes_sum_amount ?: 0;
                 $user->net_balance = $user->total_incomes - $user->total_expenses;
+
                 return $user;
             })->sortByDesc('net_balance');
 
@@ -138,7 +139,7 @@ class FamilyRanking extends Component
         $topRecorders = User::join('workspace_user', 'users.id', '=', 'workspace_user.user_id')
             ->where('workspace_user.workspace_id', $workspace->id)
             ->select('users.*')
-            ->withCount(['expenses' => function($q) use ($monthStart, $workspace) {
+            ->withCount(['expenses' => function ($q) use ($monthStart, $workspace) {
                 $q->where('spent_at', '>=', $monthStart)->where('workspace_id', $workspace->id);
             }])
             ->orderByDesc('expenses_count')
@@ -394,15 +395,15 @@ class FamilyRanking extends Component
             $monthlyPace = $last90DaysTotal > 0 ? $last90DaysTotal / 3 : 0.0;
             $predictedCompletionDate = null;
 
-           if ($progress >= 100) {
-    $predictedCompletionDate = now();
-} elseif ($remaining > 0 && $monthlyPace > 0.1) { // Só calcula se o ritmo for > 0.10€
-    $monthsNeeded = (int) ceil($remaining / $monthlyPace);
-    // Limite de segurança: se demorar mais de 100 anos (1200 meses), ignoramos o cálculo
-    $predictedCompletionDate = $monthsNeeded < 1200 ? now()->addMonths($monthsNeeded) : null;
-} else {
-    $predictedCompletionDate = null;
-}
+            if ($progress >= 100) {
+                $predictedCompletionDate = now();
+            } elseif ($remaining > 0 && $monthlyPace > 0.1) { // Só calcula se o ritmo for > 0.10€
+                $monthsNeeded = (int) ceil($remaining / $monthlyPace);
+                // Limite de segurança: se demorar mais de 100 anos (1200 meses), ignoramos o cálculo
+                $predictedCompletionDate = $monthsNeeded < 1200 ? now()->addMonths($monthsNeeded) : null;
+            } else {
+                $predictedCompletionDate = null;
+            }
 
             $isLateByForecast = $goal->deadline
                 && $predictedCompletionDate
@@ -537,35 +538,35 @@ class FamilyRanking extends Component
         $cursor = $now->copy()->startOfDay();
 
         $runningBalance = $groupIncomeCurrent - $groupExpenseCurrent;
-$riskDays = [];
-$cursor = $now->copy()->startOfDay();
+        $riskDays = [];
+        $cursor = $now->copy()->startOfDay();
 
-// Agrupamos os eventos por data uma única vez antes do loop (Otimização de Performance)
-$eventsByDate = $calendarEvents->groupBy(fn($e) => $e['date']->format('Y-m-d'));
+        // Agrupamos os eventos por data uma única vez antes do loop (Otimização de Performance)
+        $eventsByDate = $calendarEvents->groupBy(fn ($e) => $e['date']->format('Y-m-d'));
 
-while ($cursor->lte($monthEnd)) {
-    $dateKey = $cursor->format('Y-m-d');
-    $dayEvents = $eventsByDate->get($dateKey, collect());
+        while ($cursor->lte($monthEnd)) {
+            $dateKey = $cursor->format('Y-m-d');
+            $dayEvents = $eventsByDate->get($dateKey, collect());
 
-    $dayOutflow = $dayEvents
-        ->filter(fn ($e) => in_array($e['type'], ['subscription', 'debt']))
-        ->sum('amount');
+            $dayOutflow = $dayEvents
+                ->filter(fn ($e) => in_array($e['type'], ['subscription', 'debt']))
+                ->sum('amount');
 
-    $dayInflow = $dayEvents
-        ->filter(fn ($e) => in_array($e['type'], ['income', 'salary']))
-        ->sum('amount');
+            $dayInflow = $dayEvents
+                ->filter(fn ($e) => in_array($e['type'], ['income', 'salary']))
+                ->sum('amount');
 
-    $runningBalance += (float) $dayInflow - (float) $dayOutflow;
+            $runningBalance += (float) $dayInflow - (float) $dayOutflow;
 
-    if ($runningBalance < 0) {
-        $riskDays[] = [
-            'date' => $cursor->copy(),
-            'projected_balance' => round($runningBalance, 2),
-        ];
-    }
+            if ($runningBalance < 0) {
+                $riskDays[] = [
+                    'date' => $cursor->copy(),
+                    'projected_balance' => round($runningBalance, 2),
+                ];
+            }
 
-    $cursor->addDay();
-}
+            $cursor->addDay();
+        }
 
         $currentWeekStart = $now->copy()->startOfWeek();
         $weekExpenses = Expense::query()

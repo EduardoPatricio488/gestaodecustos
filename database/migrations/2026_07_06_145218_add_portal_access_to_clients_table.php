@@ -9,13 +9,13 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void
-{
-    Schema::table('clients', function (Blueprint $table) {
-        $table->string('portal_token')->unique()->nullable();
-        $table->string('email')->unique()->change(); // Garante que o email é único
-    });
-}
+    public function up(): void
+    {
+        Schema::table('clients', function (Blueprint $table) {
+            $table->string('portal_token')->unique()->nullable();
+            $table->string('email')->unique()->change(); // Garante que o email é único
+        });
+    }
 
     /**
      * Reverse the migrations.

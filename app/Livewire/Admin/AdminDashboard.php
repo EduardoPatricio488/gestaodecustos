@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Admin;
 
-use App\Models\User;
-use App\Models\Workspace;
 use App\Models\Expense;
 use App\Models\Income;
+use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class AdminDashboard extends Component
@@ -34,19 +34,21 @@ class AdminDashboard extends Component
         $aiMessagesToday = 0;
         try {
             $aiMessagesToday = DB::table('chat_messages')->whereDate('created_at', now())->count();
-        } catch (\Exception $e) { $aiMessagesToday = 0; }
+        } catch (\Exception $e) {
+            $aiMessagesToday = 0;
+        }
 
         // 4. TAXA DE ADOÇÃO REAL (Quem usa o quê?)
         $usageStats = [
             'Chatbot IA' => 0,
-            'Lembretes'  => 0,
-            'Objetivos'  => 0,
+            'Lembretes' => 0,
+            'Objetivos' => 0,
         ];
 
         try {
             $usageStats['Chatbot IA'] = round((DB::table('chat_messages')->distinct('user_id')->count() / $totalUsersCount) * 100);
-            $usageStats['Lembretes']  = round((DB::table('reminders')->distinct('user_id')->count() / $totalUsersCount) * 100);
-            $usageStats['Objetivos']  = round((DB::table('goals')->distinct('user_id')->count() / $totalUsersCount) * 100);
+            $usageStats['Lembretes'] = round((DB::table('reminders')->distinct('user_id')->count() / $totalUsersCount) * 100);
+            $usageStats['Objetivos'] = round((DB::table('goals')->distinct('user_id')->count() / $totalUsersCount) * 100);
         } catch (\Exception $e) {
             // Mantém em 0 se as tabelas não existirem ou estiverem vazias
         }
@@ -64,7 +66,9 @@ class AdminDashboard extends Component
                 ->latest('activity_logs.created_at')
                 ->limit(5)
                 ->get();
-        } catch (\Exception $e) { $securityLogs = collect(); }
+        } catch (\Exception $e) {
+            $securityLogs = collect();
+        }
 
         // 7. PERFORMANCE DE TAREFAS (CORRIGIDO: is_completed)
         $totalReminders = 0;

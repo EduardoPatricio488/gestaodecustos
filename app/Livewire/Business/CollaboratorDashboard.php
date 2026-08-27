@@ -2,17 +2,19 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\{Task, Project, User, Employee};
-use Livewire\Attributes\Layout;
+use App\Models\Employee;
+use App\Models\Task;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class CollaboratorDashboard extends Component
 {
     public $isClockedIn = false;
+
     public $isTerminated = false;
 
     public function mount()
@@ -31,47 +33,47 @@ class CollaboratorDashboard extends Component
      * Lógica Real de Registar Ponto (Entrada e Saída)
      */
     public function registerPunch()
-{
-    $user = Auth::user();
-    $today = now()->toDateString();
+    {
+        $user = Auth::user();
+        $today = now()->toDateString();
 
-    // 1. Procurar o ponto aberto
-    $log = DB::table('attendance_logs')
-        ->where('user_id', $user->id)
-        ->where('date', $today)
-        ->whereNull('clock_out')
-        ->first();
+        // 1. Procurar o ponto aberto
+        $log = DB::table('attendance_logs')
+            ->where('user_id', $user->id)
+            ->where('date', $today)
+            ->whereNull('clock_out')
+            ->first();
 
-    if (!$log) {
-        // --- ENTRADA ---
-        DB::table('attendance_logs')->insert([
-            'user_id' => $user->id,
-            'workspace_id' => $user->current_workspace_id,
-            'date' => $today,
-            'clock_in' => now()->toDateTimeString(), // Guarda a string completa
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        $this->isClockedIn = true;
-        $this->dispatch('toast', variant: 'success', heading: 'Entrada', message: 'Ponto de entrada registado.');
-    } else {
-        // --- SAÍDA ---
-        $now = now();
-        $clockIn = \Carbon\Carbon::parse($log->clock_in);
+        if (! $log) {
+            // --- ENTRADA ---
+            DB::table('attendance_logs')->insert([
+                'user_id' => $user->id,
+                'workspace_id' => $user->current_workspace_id,
+                'date' => $today,
+                'clock_in' => now()->toDateTimeString(), // Guarda a string completa
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $this->isClockedIn = true;
+            $this->dispatch('toast', variant: 'success', heading: 'Entrada', message: 'Ponto de entrada registado.');
+        } else {
+            // --- SAÍDA ---
+            $now = now();
+            $clockIn = Carbon::parse($log->clock_in);
 
-        // Calculamos a diferença e usamos abs() para garantir que nunca seja negativo
-        // Se a diferença for menor que 1 minuto, assume 1 para não ficar 0h 0m
-        $totalMinutes = abs($now->diffInMinutes($clockIn));
+            // Calculamos a diferença e usamos abs() para garantir que nunca seja negativo
+            // Se a diferença for menor que 1 minuto, assume 1 para não ficar 0h 0m
+            $totalMinutes = abs($now->diffInMinutes($clockIn));
 
-        DB::table('attendance_logs')->where('id', $log->id)->update([
-            'clock_out' => $now->toDateTimeString(),
-            'total_minutes' => $totalMinutes,
-            'updated_at' => $now,
-        ]);
-        $this->isClockedIn = false;
-        $this->dispatch('toast', variant: 'success', heading: 'Saída', message: 'Ponto de saída registado.');
+            DB::table('attendance_logs')->where('id', $log->id)->update([
+                'clock_out' => $now->toDateTimeString(),
+                'total_minutes' => $totalMinutes,
+                'updated_at' => $now,
+            ]);
+            $this->isClockedIn = false;
+            $this->dispatch('toast', variant: 'success', heading: 'Saída', message: 'Ponto de saída registado.');
+        }
     }
-}
 
     public function exitBusinessMode()
     {
@@ -81,6 +83,7 @@ class CollaboratorDashboard extends Component
             $user->update(['current_workspace_id' => $personalWs->id]);
         }
         session()->forget('viewing_as_collaborator_id');
+
         return redirect()->route('dashboard');
     }
 
@@ -91,6 +94,7 @@ class CollaboratorDashboard extends Component
             $user->workspaces()->detach($user->current_workspace_id);
         }
         $user->update(['current_workspace_id' => null]);
+
         return redirect()->route('hub.business.gateway');
     }
 
@@ -110,7 +114,7 @@ class CollaboratorDashboard extends Component
         $user = Auth::user();
         $workspace = $user->currentWorkspace;
 
-        if (!$workspace) {
+        if (! $workspace) {
             return redirect()->route('hub.business.gateway');
         }
 
@@ -118,7 +122,7 @@ class CollaboratorDashboard extends Component
             ->where('workspace_id', $workspace->id)
             ->first();
 
-        if ($employee && ($employee->terminated_at || !$employee->active)) {
+        if ($employee && ($employee->terminated_at || ! $employee->active)) {
             $this->isTerminated = true;
         }
 
@@ -147,11 +151,11 @@ class CollaboratorDashboard extends Component
         $ceo = $workspace->owner;
 
         return view('livewire.business.collaborator-dashboard', [
-            'workspace'  => $workspace,
-            'myTasks'    => $myTasks,
-            'stats'      => $stats,
+            'workspace' => $workspace,
+            'myTasks' => $myTasks,
+            'stats' => $stats,
             'myProjects' => $myProjects,
-            'ceo'        => $ceo,
+            'ceo' => $ceo,
         ]);
     }
 }

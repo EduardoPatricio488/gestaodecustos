@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('business_documents', function (Blueprint $table) {
             // Adiciona a coluna expires_at se ela não existir
-            if (!Schema::hasColumn('business_documents', 'expires_at')) {
+            if (! Schema::hasColumn('business_documents', 'expires_at')) {
                 $table->date('expires_at')->nullable()->after('workspace_id');
             }
         });

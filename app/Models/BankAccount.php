@@ -44,15 +44,15 @@ class BankAccount extends Model
     ];
 
     protected $casts = [
-        'tags'             => 'array',
-        'is_business'      => 'boolean',
+        'tags' => 'array',
+        'is_business' => 'boolean',
         'include_in_total' => 'boolean',
-        'balance'          => 'float',
-        'credit_limit'     => 'float',
+        'balance' => 'float',
+        'credit_limit' => 'float',
         'forecast_balance' => 'float',
-        'alert_below'      => 'float',
-        'risk_score'       => 'integer',
-        'opened_at'        => 'date',
+        'alert_below' => 'float',
+        'risk_score' => 'integer',
+        'opened_at' => 'date',
     ];
 
     /* ============================================================
@@ -108,7 +108,7 @@ class BankAccount extends Model
 
     public function getCreditUsedAttribute(): float
     {
-        if ($this->type !== 'credito' || !$this->credit_limit) {
+        if ($this->type !== 'credito' || ! $this->credit_limit) {
             return 0;
         }
 
@@ -117,7 +117,7 @@ class BankAccount extends Model
 
     public function getCreditUsagePercentAttribute(): float
     {
-        if ($this->type !== 'credito' || !$this->credit_limit) {
+        if ($this->type !== 'credito' || ! $this->credit_limit) {
             return 0;
         }
 

@@ -9,13 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
-    Schema::table('investments', function (Blueprint $table) {
-        if (!Schema::hasColumn('investments', 'workspace_id')) {
-            $table->foreignId('workspace_id')->nullable()->constrained()->onDelete('cascade');
-        }
-    });
-}
+    public function up(): void
+    {
+        Schema::table('investments', function (Blueprint $table) {
+            if (! Schema::hasColumn('investments', 'workspace_id')) {
+                $table->foreignId('workspace_id')->nullable()->constrained()->onDelete('cascade');
+            }
+        });
+    }
 
     /**
      * Reverse the migrations.

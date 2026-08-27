@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SiteSetting;
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\SiteSetting;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -33,7 +33,7 @@ class CheckMaintenanceMode
             $isEssentialRoute = $request->is('/', 'login', 'logout', 'admin/*', 'livewire/*');
 
             // Se não for admin e tentar aceder a qualquer outra página (Dashboard, Finanças, etc.)
-            if (!$isAdmin && !$isEssentialRoute) {
+            if (! $isAdmin && ! $isEssentialRoute) {
                 return response()->view('errors.maintenance', [], 503);
             }
         }

@@ -2,10 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\ActivityLog;
 use App\Models\StoreLicense;
 use App\Models\StorePurchase;
-use App\Models\User;
 use Illuminate\Support\Str;
 
 class StoreLicenseService

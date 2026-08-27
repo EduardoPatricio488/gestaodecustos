@@ -2,15 +2,21 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use Livewire\Attributes\On;
-use App\Models\{Client, Project, Invoice, Expense, Supplier, Product, Task, BusinessDocument, Income, Goal, Investment};
+use App\Models\Client;
+use App\Models\Expense;
+use App\Models\Goal;
+use App\Models\Invoice;
+use App\Models\Project;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 class GlobalSearch extends Component
 {
     public $search = '';
+
     public $isOpen = false;
+
     public $isBusinessMode = false;
 
     #[On('open-global-search')]
@@ -49,13 +55,13 @@ class GlobalSearch extends Component
 
                 // --- MODO EMPRESARIAL: DADOS ---
                 $results = $results->concat(Project::where('workspace_id', $workspaceId)->where('name', 'like', $term)->limit(3)->get()
-                    ->map(fn($i) => ['type' => 'Projetos', 'title' => $i->name, 'sub' => 'Dados Business', 'icon' => 'briefcase', 'url' => route('hub.business.projects')]));
+                    ->map(fn ($i) => ['type' => 'Projetos', 'title' => $i->name, 'sub' => 'Dados Business', 'icon' => 'briefcase', 'url' => route('hub.business.projects')]));
 
                 $results = $results->concat(Client::where('workspace_id', $workspaceId)->where('name', 'like', $term)->limit(3)->get()
-                    ->map(fn($i) => ['type' => 'Clientes', 'title' => $i->name, 'sub' => 'Dados Business', 'icon' => 'user-group', 'url' => route('hub.business.clients')]));
+                    ->map(fn ($i) => ['type' => 'Clientes', 'title' => $i->name, 'sub' => 'Dados Business', 'icon' => 'user-group', 'url' => route('hub.business.clients')]));
 
                 $results = $results->concat(Invoice::where('workspace_id', $workspaceId)->where('client_name', 'like', $term)->limit(3)->get()
-                    ->map(fn($i) => ['type' => 'Faturas', 'title' => $i->client_name, 'sub' => "#$i->invoice_number", 'icon' => 'document-text', 'url' => route('hub.business.invoices')]));
+                    ->map(fn ($i) => ['type' => 'Faturas', 'title' => $i->client_name, 'sub' => "#$i->invoice_number", 'icon' => 'document-text', 'url' => route('hub.business.invoices')]));
 
             } else {
                 // --- MODO PESSOAL: NAVEGAÇÃO ---
@@ -71,21 +77,21 @@ class GlobalSearch extends Component
 
                 // --- MODO PESSOAL: DADOS ---
                 $results = $results->concat(Expense::where('user_id', $user->id)->where('is_company', false)->where('description', 'like', $term)->limit(5)->get()
-                    ->map(fn($i) => ['type' => 'Despesas', 'title' => $i->description, 'sub' => number_format($i->amount, 2).'€', 'icon' => 'banknotes', 'url' => route('expenses')]));
+                    ->map(fn ($i) => ['type' => 'Despesas', 'title' => $i->description, 'sub' => number_format($i->amount, 2).'€', 'icon' => 'banknotes', 'url' => route('expenses')]));
 
                 $results = $results->concat(Goal::where('user_id', $user->id)->where('name', 'like', $term)->get()
-                    ->map(fn($i) => ['type' => 'Metas', 'title' => $i->name, 'sub' => 'Objetivo de Poupança', 'icon' => 'trophy', 'url' => route('hub.goals')]));
+                    ->map(fn ($i) => ['type' => 'Metas', 'title' => $i->name, 'sub' => 'Objetivo de Poupança', 'icon' => 'trophy', 'url' => route('hub.goals')]));
             }
 
             // Filtrar as páginas de navegação pelo termo
-            $matchedPages = $pages->filter(fn($p) => str_contains(strtolower($p['title']), strtolower($this->search)));
+            $matchedPages = $pages->filter(fn ($p) => str_contains(strtolower($p['title']), strtolower($this->search)));
 
             $results = $matchedPages->concat($results);
             $groupedResults = $results->groupBy('type');
         }
 
         return view('livewire.global-search', [
-            'groupedResults' => $groupedResults
+            'groupedResults' => $groupedResults,
         ]);
     }
 }

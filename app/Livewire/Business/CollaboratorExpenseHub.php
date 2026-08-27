@@ -2,14 +2,15 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
+use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Project;
 use App\Models\Task;
-use App\Models\Category;
+use Carbon\Carbon;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
 
 #[Layout('components.layouts.app')]
 class CollaboratorExpenseHub extends Component
@@ -17,8 +18,21 @@ class CollaboratorExpenseHub extends Component
     use WithFileUploads, WithPagination;
 
     public $editingId = null;
-    public $amount, $description, $project_id, $task_id, $spent_at, $category_id;
+
+    public $amount;
+
+    public $description;
+
+    public $project_id;
+
+    public $task_id;
+
+    public $spent_at;
+
+    public $category_id;
+
     public $receipt;
+
     public $existingReceiptPath;
 
     protected $rules = [
@@ -31,7 +45,10 @@ class CollaboratorExpenseHub extends Component
         'receipt' => 'nullable|image|max:2048',
     ];
 
-    public function mount() { $this->resetForm(); }
+    public function mount()
+    {
+        $this->resetForm();
+    }
 
     public function resetForm()
     {
@@ -56,7 +73,7 @@ class CollaboratorExpenseHub extends Component
         $this->editingId = $expense->id;
         $this->amount = $expense->amount;
         $this->description = $expense->description;
-        $this->spent_at = \Carbon\Carbon::parse($expense->spent_at)->format('Y-m-d');
+        $this->spent_at = Carbon::parse($expense->spent_at)->format('Y-m-d');
         $this->category_id = $expense->category_id;
         $this->project_id = $expense->project_id;
         $this->task_id = $expense->task_id;
@@ -65,7 +82,7 @@ class CollaboratorExpenseHub extends Component
         $this->dispatch('modal-show', name: 'expense-modal');
     }
 
-   public function save()
+    public function save()
     {
         $this->validate();
 
@@ -79,7 +96,7 @@ class CollaboratorExpenseHub extends Component
             'task_id' => $this->task_id ?: null,       // Grava ID da Tarefa
             'spent_at' => $this->spent_at,
             'is_company' => true,
-            'status' => 'pendente'
+            'status' => 'pendente',
         ];
 
         if ($this->receipt) {
@@ -102,7 +119,7 @@ class CollaboratorExpenseHub extends Component
         $this->dispatch('toast', text: 'Registo removido.', variant: 'warning');
     }
 
-     public function render()
+    public function render()
     {
         $workspace = auth()->user()->currentWorkspace;
 
@@ -114,12 +131,12 @@ class CollaboratorExpenseHub extends Component
         return view('livewire.business.collaborator-expense-hub', [
             'expenses' => $query->latest('spent_at')->paginate(10),
             'projects' => $workspace->projects, // Lista de projetos do workspace
-            'tasks' => \App\Models\Task::where('workspace_id', $workspace->id)->get(), // Todas as tarefas da empresa
-            'categories' => \App\Models\Category::where('workspace_id', $workspace->id)->get(),
+            'tasks' => Task::where('workspace_id', $workspace->id)->get(), // Todas as tarefas da empresa
+            'categories' => Category::where('workspace_id', $workspace->id)->get(),
             'stats' => [
                 'total_pending' => Expense::where('user_id', auth()->id())->whereRaw('LOWER(status) = ?', ['pendente'])->sum('amount'),
                 'total_approved' => Expense::where('user_id', auth()->id())->whereRaw('LOWER(status) = ?', ['aprovado'])->sum('amount'),
-            ]
+            ],
         ]);
     }
 }

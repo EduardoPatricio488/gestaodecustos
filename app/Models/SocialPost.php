@@ -17,7 +17,7 @@ class SocialPost extends Model
     protected function casts(): array
     {
         return [
-            'is_story'   => 'boolean',
+            'is_story' => 'boolean',
             'expires_at' => 'datetime',
         ];
     }
@@ -25,13 +25,13 @@ class SocialPost extends Model
     public static function publishFinancialEvent($userId, $title, $type, $id, $visibility = 'workspace')
     {
         return self::create([
-            'user_id'        => $userId,
-            'workspace_id'   => auth()->user()->current_workspace_id,
-            'type'           => 'financial',
-            'content'        => $title,
+            'user_id' => $userId,
+            'workspace_id' => auth()->user()->current_workspace_id,
+            'type' => 'financial',
+            'content' => $title,
             'financial_type' => $type,
-            'financial_id'   => $id,
-            'visibility'     => $visibility,
+            'financial_id' => $id,
+            'visibility' => $visibility,
         ]);
     }
 
@@ -55,7 +55,7 @@ class SocialPost extends Model
      */
     public function getHashtagsAttribute(): array
     {
-        if (!$this->content) {
+        if (! $this->content) {
             return [];
         }
 

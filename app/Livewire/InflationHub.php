@@ -13,12 +13,17 @@ use Livewire\Component;
 class InflationHub extends Component
 {
     public float $inflationRate = 2.5;
+
     public float $salaryGrowthRate = 1.5;
+
     public int $horizonYears = 10;
 
     public float $monthlySalary = 0;
+
     public float $monthlyExpenses = 0;
+
     public float $monthlySavings = 0;
+
     public float $cashReserve = 0;
 
     public function mount(): void

@@ -10,8 +10,11 @@ use Livewire\Component;
 class ExpenseForm extends Component
 {
     public string $amount = '';
+
     public string $description = '';
+
     public ?int $category_id = null;
+
     public string $spent_at = '';
 
     public ?int $expenseId = null;
@@ -32,21 +35,21 @@ class ExpenseForm extends Component
                 ->where('id', $id)
                 ->firstOrFail();
 
-            $this->expenseId   = $expense->id;
-            $this->amount      = (string) $expense->amount;
+            $this->expenseId = $expense->id;
+            $this->amount = (string) $expense->amount;
             $this->description = (string) ($expense->description ?? '');
             $this->category_id = $expense->category_id;
-            $this->spent_at    = $expense->spent_at->format('Y-m-d');
+            $this->spent_at = $expense->spent_at->format('Y-m-d');
         }
     }
 
     public function save(): void
     {
         $data = $this->validate([
-            'amount'      => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:255',
-            'category_id' => 'nullable|exists:categories,id,user_id,' . auth()->id(),
-            'spent_at'    => 'required|date',
+            'category_id' => 'nullable|exists:categories,id,user_id,'.auth()->id(),
+            'spent_at' => 'required|date',
         ]);
 
         if ($this->expenseId) {
@@ -77,7 +80,7 @@ class ExpenseForm extends Component
     {
         return view('livewire.expense-form', [
             'categories' => auth()->user()->categories()->orderBy('name')->get(),
-            'isEditing'  => (bool) $this->expenseId,
+            'isEditing' => (bool) $this->expenseId,
         ]);
     }
 }

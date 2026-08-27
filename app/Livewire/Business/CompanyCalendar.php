@@ -2,16 +2,20 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\{Absence, Expense, Income, Employee};
+use App\Models\Absence;
+use App\Models\Expense;
+use App\Models\Income;
 use Carbon\Carbon;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class CompanyCalendar extends Component
 {
     public $selectedMonth;
+
     public $selectedYear;
+
     public $days = [];
 
     public function mount()
@@ -69,9 +73,9 @@ class CompanyCalendar extends Component
                 if ($currentDay->between($abs->start_date, $abs->end_date)) {
                     $events[] = [
                         'type' => 'absence',
-                        'label' => 'Ausência: ' . explode(' ', $abs->employee->name)[0],
+                        'label' => 'Ausência: '.explode(' ', $abs->employee->name)[0],
                         'color' => $abs->type_color,
-                        'icon' => 'user-minus'
+                        'icon' => 'user-minus',
                     ];
                 }
             }
@@ -81,9 +85,9 @@ class CompanyCalendar extends Component
                 if ($exp->spent_at->format('Y-m-d') === $dateString) {
                     $events[] = [
                         'type' => 'expense',
-                        'label' => 'Saída: ' . number_format($exp->amount, 0) . '€',
+                        'label' => 'Saída: '.number_format($exp->amount, 0).'€',
                         'color' => 'red',
-                        'icon' => 'arrow-down-right'
+                        'icon' => 'arrow-down-right',
                     ];
                 }
             }
@@ -93,9 +97,9 @@ class CompanyCalendar extends Component
                 if ($inc->received_at->format('Y-m-d') === $dateString) {
                     $events[] = [
                         'type' => 'income',
-                        'label' => 'Entrada: ' . number_format($inc->amount, 0) . '€',
+                        'label' => 'Entrada: '.number_format($inc->amount, 0).'€',
                         'color' => 'emerald',
-                        'icon' => 'arrow-up-right'
+                        'icon' => 'arrow-up-right',
                     ];
                 }
             }
@@ -104,7 +108,7 @@ class CompanyCalendar extends Component
                 'date' => $currentDay->copy(),
                 'isCurrentMonth' => $currentDay->month == $this->selectedMonth,
                 'isToday' => $currentDay->isToday(),
-                'events' => $events
+                'events' => $events,
             ];
 
             $currentDay->addDay();
@@ -114,7 +118,7 @@ class CompanyCalendar extends Component
     public function render()
     {
         return view('livewire.business.company-calendar', [
-            'monthName' => Carbon::create($this->selectedYear, $this->selectedMonth, 1)->translatedFormat('F Y')
+            'monthName' => Carbon::create($this->selectedYear, $this->selectedMonth, 1)->translatedFormat('F Y'),
         ]);
     }
 }

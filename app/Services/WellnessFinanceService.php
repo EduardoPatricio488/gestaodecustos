@@ -55,7 +55,7 @@ class WellnessFinanceService
     private function generateVerdict(float $spent, float $km, int $activities): string
     {
         if ($activities === 0 && $spent > 50) {
-            return "Gastaste ".number_format($spent, 0, ',', '.')."€ em saúde este mês mas não registaste atividade. Vale a pena mover-te!";
+            return 'Gastaste '.number_format($spent, 0, ',', '.').'€ em saúde este mês mas não registaste atividade. Vale a pena mover-te!';
         }
         if ($km >= 50 && $spent > 0) {
             return "Correste/caminhaste {$km}km este mês — cada km 'custou' ".number_format($spent / $km, 2, ',', '.').'€ em saúde. Bom investimento!';

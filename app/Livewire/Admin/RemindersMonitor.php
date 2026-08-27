@@ -3,9 +3,9 @@
 namespace App\Livewire\Admin;
 
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
 
 #[Layout('components.layouts.app')]
 class RemindersMonitor extends Component
@@ -25,9 +25,9 @@ class RemindersMonitor extends Component
         $reminders = DB::table('reminders')
             ->join('users', 'reminders::user_id', '=', 'users.id')
             ->select('reminders.*', 'users.name as user_name')
-            ->when($this->search, function($q) {
-                $q->where('reminders.title', 'like', '%' . $this->search . '%')
-                  ->orWhere('users.name', 'like', '%' . $this->search . '%');
+            ->when($this->search, function ($q) {
+                $q->where('reminders.title', 'like', '%'.$this->search.'%')
+                    ->orWhere('users.name', 'like', '%'.$this->search.'%');
             })
             ->latest()
             ->paginate(15);
@@ -39,7 +39,7 @@ class RemindersMonitor extends Component
                 'completed' => $completedReminders,
                 'rate' => $completionRate,
                 'today' => DB::table('reminders')->whereDate('created_at', now())->count(),
-            ]
+            ],
         ]);
     }
 }

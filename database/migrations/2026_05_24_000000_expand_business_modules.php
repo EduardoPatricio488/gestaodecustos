@@ -46,8 +46,12 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('expenses', function (Blueprint $table) { $table->dropColumn('project_id'); });
-        Schema::table('invoices', function (Blueprint $table) { $table->dropColumn('project_id'); });
+        Schema::table('expenses', function (Blueprint $table) {
+            $table->dropColumn('project_id');
+        });
+        Schema::table('invoices', function (Blueprint $table) {
+            $table->dropColumn('project_id');
+        });
         Schema::dropIfExists('products');
         Schema::dropIfExists('projects');
     }

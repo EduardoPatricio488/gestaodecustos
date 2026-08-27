@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
+use App\Listeners\CreateDefaultCategories;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use App\Listeners\CreateDefaultCategories;
 
 class EventServiceProvider extends ServiceProvider
 {

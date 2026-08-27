@@ -14,7 +14,7 @@ class AppNotification extends Model
         'message',
         'type',
         'link',
-        'read_at'
+        'read_at',
     ];
 
     protected $casts = [
@@ -24,13 +24,21 @@ class AppNotification extends Model
     /**
      * RELAÇÕES
      */
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
-    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 
     /**
      * SCOPES (Facilitam a busca na base de dados)
      */
-    public function scopeUnread($query) {
+    public function scopeUnread($query)
+    {
         return $query->whereNull('read_at');
     }
 
@@ -41,22 +49,22 @@ class AppNotification extends Model
     // Define a cor baseada no tipo (danger, warning, success, info)
     public function getColorAttribute(): string
     {
-        return match($this->type) {
-            'danger'  => 'red',
+        return match ($this->type) {
+            'danger' => 'red',
             'warning' => 'orange',
             'success' => 'emerald',
-            default   => 'blue'
+            default => 'blue'
         };
     }
 
     // Define o ícone do Flux para cada tipo de alerta
     public function getIconAttribute(): string
     {
-        return match($this->type) {
-            'danger'  => 'exclamation-circle',
+        return match ($this->type) {
+            'danger' => 'exclamation-circle',
             'warning' => 'bell',
             'success' => 'check-circle',
-            default   => 'information-circle'
+            default => 'information-circle'
         };
     }
 

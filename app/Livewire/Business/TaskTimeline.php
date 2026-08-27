@@ -2,16 +2,15 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
 use App\Models\Task;
-use App\Models\Project;
 use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class TaskTimeline extends Component
 {
     public $search = '';
+
     public $activeProjectId = null;
 
     // Para o modal
@@ -23,8 +22,8 @@ class TaskTimeline extends Component
     public function openTask($taskId)
     {
         $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
-                    ->with(['project', 'assignee'])
-                    ->findOrFail($taskId);
+            ->with(['project', 'assignee'])
+            ->findOrFail($taskId);
 
         $this->activeTask = $task;
 
@@ -37,7 +36,7 @@ class TaskTimeline extends Component
     public function editTask($taskId)
     {
         $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
-                    ->findOrFail($taskId);
+            ->findOrFail($taskId);
 
         // Aqui podes abrir outro modal de edição se quiseres
         $this->activeTask = $task;
@@ -51,7 +50,7 @@ class TaskTimeline extends Component
     public function deleteTask($taskId)
     {
         $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
-                    ->findOrFail($taskId);
+            ->findOrFail($taskId);
 
         $task->delete();
 
@@ -64,7 +63,7 @@ class TaskTimeline extends Component
     public function updateTaskStatus($taskId, $newStatus)
     {
         $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
-                    ->findOrFail($taskId);
+            ->findOrFail($taskId);
 
         $updateData = ['status' => $newStatus];
 
@@ -86,7 +85,7 @@ class TaskTimeline extends Component
     {
         $workspace = auth()->user()->currentWorkspace;
 
-        if (!$workspace) {
+        if (! $workspace) {
             return <<<'HTML'
                 <div class="p-10 text-center italic text-zinc-500">
                     Nenhum workspace empresarial selecionado.
@@ -100,8 +99,8 @@ class TaskTimeline extends Component
         // Query principal
         $query = $workspace->tasks()
             ->with(['project', 'assignee'])
-            ->where('title', 'like', '%' . $this->search . '%')
-            ->when($this->activeProjectId, fn($q) => $q->where('project_id', $this->activeProjectId));
+            ->where('title', 'like', '%'.$this->search.'%')
+            ->when($this->activeProjectId, fn ($q) => $q->where('project_id', $this->activeProjectId));
 
         $allTasks = $query->orderBy('due_date', 'asc')->get();
 
@@ -110,7 +109,7 @@ class TaskTimeline extends Component
             'pendingTasks' => $allTasks->where('status', 'pendente'),
             'inProgressTasks' => $allTasks->where('status', 'em_curso'),
             'completedTasks' => $allTasks->where('status', 'concluida'),
-            'overdueCount' => $allTasks->filter(fn($t) => $t->isOverdue())->count(),
+            'overdueCount' => $allTasks->filter(fn ($t) => $t->isOverdue())->count(),
         ]);
     }
 }

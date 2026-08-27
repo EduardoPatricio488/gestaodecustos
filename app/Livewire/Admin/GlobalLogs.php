@@ -3,12 +3,10 @@
 namespace App\Livewire\Admin;
 
 use App\Models\ActivityLog;
-use App\Models\User;
+use Illuminate\Support\Facades\File;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\DB;
 
 #[Layout('components.layouts.app')]
 class GlobalLogs extends Component
@@ -16,7 +14,9 @@ class GlobalLogs extends Component
     use WithPagination;
 
     public $search = '';
+
     public $filterAction = '';
+
     public $filterType = '';
 
     // Para ver detalhes do log
@@ -24,7 +24,10 @@ class GlobalLogs extends Component
 
     protected $queryString = ['search', 'filterAction', 'filterType'];
 
-    public function updatingSearch() { $this->resetPage(); }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
 
     public function clearOldLogs()
     {
@@ -42,12 +45,12 @@ class GlobalLogs extends Component
     {
         $logs = ActivityLog::query()
             ->with(['user'])
-            ->when($this->search, function($q) {
+            ->when($this->search, function ($q) {
                 $q->where('description', 'like', "%{$this->search}%")
-                  ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$this->search}%"));
+                    ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$this->search}%"));
             })
-            ->when($this->filterAction, fn($q) => $q->where('action', $this->filterAction))
-            ->when($this->filterType, fn($q) => $q->where('type', $this->filterType))
+            ->when($this->filterAction, fn ($q) => $q->where('action', $this->filterAction))
+            ->when($this->filterType, fn ($q) => $q->where('type', $this->filterType))
             ->latest()
             ->paginate(20);
 
@@ -58,7 +61,7 @@ class GlobalLogs extends Component
                 'unique_users_24h' => ActivityLog::where('created_at', '>=', now()->subDay())->distinct('user_id')->count(),
                 'security_alerts' => ActivityLog::where('type', 'seguranca')->where('created_at', '>=', now()->subWeek())->count(),
                 'last_error' => $this->getLastLaravelError(),
-            ]
+            ],
         ]);
     }
 
@@ -68,16 +71,20 @@ class GlobalLogs extends Component
         if (File::exists($logPath)) {
             $content = tailCustom($logPath, 5); // Função hipotética ou ler as últimas linhas
             $lines = array_filter(explode("\n", $content));
+
             return count($lines) > 0 ? trim(substr(end($lines), 0, 150)) : 'Silêncio no servidor...';
         }
+
         return 'Ficheiro de logs não acessível.';
     }
 }
 
 // Helper simples para não carregar o ficheiro todo em memória
-function tailCustom($filepath, $lines = 10) {
+function tailCustom($filepath, $lines = 10)
+{
     $data = file_get_contents($filepath);
     $data = explode("\n", $data);
     $data = array_slice($data, -$lines);
+
     return implode("\n", $data);
 }

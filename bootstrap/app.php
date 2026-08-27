@@ -1,5 +1,11 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\CheckMaintenanceMode;
+use App\Http\Middleware\CheckPlanAccess;
+use App\Http\Middleware\CheckRegistrationStatus;
+use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\UpdateUserActivity;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,10 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 2. MIDDLEWARES DA CAMADA WEB
         $middleware->web(append: [
-            \App\Http\Middleware\SetLocale::class,
-            \App\Http\Middleware\CheckMaintenanceMode::class,
-            \App\Http\Middleware\CheckRegistrationStatus::class,
-            \App\Http\Middleware\UpdateUserActivity::class,
+            SetLocale::class,
+            CheckMaintenanceMode::class,
+            CheckRegistrationStatus::class,
+            UpdateUserActivity::class,
         ]);
 
         // 🔥 PERMITIR WEBHOOKS DO STRIPE (POST)
@@ -31,8 +37,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 3. ATALHOS DE MIDDLEWARE (ALIAS)
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'plan' => \App\Http\Middleware\CheckPlanAccess::class,
+            'admin' => AdminMiddleware::class,
+            'plan' => CheckPlanAccess::class,
         ]);
 
     })

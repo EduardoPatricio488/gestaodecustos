@@ -2,10 +2,10 @@
 
 namespace App\Listeners;
 
-use Laravel\Cashier\Events\WebhookReceived;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\Log;
+use Laravel\Cashier\Events\WebhookReceived;
 
 class StripeWebhookListener
 {
@@ -14,7 +14,7 @@ class StripeWebhookListener
         $payload = $event->payload;
 
         // Log para termos a certeza que o Stripe entrou no teu código
-        Log::info("🔔 STRIPE EVENTO: " . $payload['type']);
+        Log::info('🔔 STRIPE EVENTO: '.$payload['type']);
 
         if ($payload['type'] === 'checkout.session.completed') {
             $session = $payload['data']['object'];

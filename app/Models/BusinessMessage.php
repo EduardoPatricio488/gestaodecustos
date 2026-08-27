@@ -12,7 +12,7 @@ class BusinessMessage extends Model
         'user_id',
         'project_id',
         'content',
-        'read_at'
+        'read_at',
     ];
 
     protected $casts = [

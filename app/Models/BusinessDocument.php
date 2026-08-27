@@ -14,7 +14,7 @@ class BusinessDocument extends Model
         'category',
         'file_path',
         'expiry_date',
-        'notes'
+        'notes',
     ];
 
     protected $casts = [
@@ -36,26 +36,32 @@ class BusinessDocument extends Model
     // Verifica se o documento já expirou
     public function isExpired(): bool
     {
-        if (!$this->expiry_date) return false;
+        if (! $this->expiry_date) {
+            return false;
+        }
+
         return $this->expiry_date->isPast();
     }
 
     // Verifica se expira nos próximos 30 dias (Alerta preventivo)
     public function isExpiringSoon(): bool
     {
-        if (!$this->expiry_date) return false;
+        if (! $this->expiry_date) {
+            return false;
+        }
+
         return $this->expiry_date->isFuture() && $this->expiry_date->diffInDays(now()) <= 30;
     }
 
     // Obtém o ícone baseado na categoria
     public function getIcon()
     {
-        return match($this->category) {
-            'Legal'    => 'document-text',
-            'RH'       => 'users',
-            'Seguros'  => 'shield-check',
+        return match ($this->category) {
+            'Legal' => 'document-text',
+            'RH' => 'users',
+            'Seguros' => 'shield-check',
             'Impostos' => 'receipt-percent',
-            default    => 'document'
+            default => 'document'
         };
     }
 

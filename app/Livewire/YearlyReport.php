@@ -2,12 +2,9 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use App\Models\Expense;
-use App\Models\Income;
-use App\Models\Category;
-use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class YearlyReport extends Component

@@ -17,6 +17,7 @@ class FixMissingUsernames extends Command
 
         if ($users->isEmpty()) {
             $this->info('Todos os utilizadores já têm username. Nada a fazer.');
+
             return self::SUCCESS;
         }
 
@@ -28,6 +29,7 @@ class FixMissingUsernames extends Command
         }
 
         $this->info("Concluído. {$users->count()} utilizador(es) corrigido(s).");
+
         return self::SUCCESS;
     }
 }

@@ -2,9 +2,8 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\AppNotification;
-use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class NotificationCenter extends Component
 {
@@ -56,7 +55,7 @@ class NotificationCenter extends Component
 
         return view('livewire.notification-center', [
             'notifications' => $notifications,
-            'unreadCount' => $unreadCount
+            'unreadCount' => $unreadCount,
         ]);
     }
 }

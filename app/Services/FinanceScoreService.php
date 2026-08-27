@@ -8,9 +8,9 @@ use App\Models\Expense;
 use App\Models\FinanceScoreSnapshot;
 use App\Models\Goal;
 use App\Models\Income;
-use Carbon\Carbon;
 use App\Models\Investment;
 use App\Models\Workspace;
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
 class FinanceScoreService

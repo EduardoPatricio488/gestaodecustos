@@ -9,11 +9,12 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
-    Schema::table('recurring_incomes', function (Blueprint $table) {
-        $table->foreignId('workspace_id')->nullable()->constrained()->onDelete('cascade');
-    });
-}
+    public function up(): void
+    {
+        Schema::table('recurring_incomes', function (Blueprint $table) {
+            $table->foreignId('workspace_id')->nullable()->constrained()->onDelete('cascade');
+        });
+    }
 
     /**
      * Reverse the migrations.

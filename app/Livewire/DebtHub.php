@@ -3,20 +3,24 @@
 namespace App\Livewire;
 
 use App\Models\Debt;
-use Livewire\Component;
-use Livewire\Attributes\Layout;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class DebtHub extends Component
 {
     // Propriedades do Formulário - Inicializadas para evitar erros de tipo
     public string $type = 'owe';
+
     public string $person_name = '';
+
     public $amount = '';
+
     public string $description = '';
+
     public string $due_at = '';
+
     public ?int $editingId = null;
 
     public function openCreateModal()
@@ -30,9 +34,9 @@ class DebtHub extends Component
     {
         $this->validate([
             'person_name' => 'required|string|max:100',
-            'amount'      => 'required|numeric|min:0.01',
-            'type'        => 'required|in:owe,owed',
-            'due_at'      => 'nullable|date',
+            'amount' => 'required|numeric|min:0.01',
+            'type' => 'required|in:owe,owed',
+            'due_at' => 'nullable|date',
         ]);
 
         $workspaceId = auth()->user()->current_workspace_id;
@@ -40,18 +44,18 @@ class DebtHub extends Component
         Debt::updateOrCreate(
             ['id' => $this->editingId],
             [
-                'user_id'      => auth()->id(),
+                'user_id' => auth()->id(),
                 'workspace_id' => $workspaceId,
-                'type'         => $this->type,
-                'person_name'  => $this->person_name,
-                'amount'       => (float) $this->amount,
-                'description'  => $this->description,
-                'due_at'       => $this->due_at ?: null,
-                'is_paid'      => false,
+                'type' => $this->type,
+                'person_name' => $this->person_name,
+                'amount' => (float) $this->amount,
+                'description' => $this->description,
+                'due_at' => $this->due_at ?: null,
+                'is_paid' => false,
             ]
         );
 
-        if (!$this->editingId && method_exists(auth()->user(), 'addXp')) {
+        if (! $this->editingId && method_exists(auth()->user(), 'addXp')) {
             auth()->user()->addXp(30);
         }
 
@@ -64,12 +68,12 @@ class DebtHub extends Component
     {
         $debt = Debt::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
 
-        $this->editingId   = $debt->id;
-        $this->type        = $debt->type;
+        $this->editingId = $debt->id;
+        $this->type = $debt->type;
         $this->person_name = $debt->person_name;
-        $this->amount      = $debt->amount;
+        $this->amount = $debt->amount;
         $this->description = $debt->description ?? '';
-        $this->due_at      = $debt->due_at ? Carbon::parse($debt->due_at)->format('Y-m-d') : '';
+        $this->due_at = $debt->due_at ? Carbon::parse($debt->due_at)->format('Y-m-d') : '';
 
         $this->dispatch('open-debt-modal');
     }
@@ -77,7 +81,7 @@ class DebtHub extends Component
     public function togglePaid(int $id)
     {
         $debt = Debt::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
-        $debt->update(['is_paid' => !$debt->is_paid]);
+        $debt->update(['is_paid' => ! $debt->is_paid]);
         $this->dispatch('toast', text: $debt->is_paid ? 'Operação liquidada!' : 'Registo reaberto.');
     }
 
@@ -94,12 +98,13 @@ class DebtHub extends Component
     {
         if ($debt->due_at) {
             $due = Carbon::parse($debt->due_at);
-            $debt->isOverdue = $due->isPast() && !$due->isToday();
-            $debt->isUrgent  = $due->isBetween(now(), now()->addDays(7));
+            $debt->isOverdue = $due->isPast() && ! $due->isToday();
+            $debt->isUrgent = $due->isBetween(now(), now()->addDays(7));
         } else {
             $debt->isOverdue = false;
-            $debt->isUrgent  = false;
+            $debt->isUrgent = false;
         }
+
         return $debt;
     }
 
@@ -113,14 +118,14 @@ class DebtHub extends Component
             ->where('is_paid', false)
             ->orderBy('due_at', 'asc')
             ->get()
-            ->map(fn($d) => $this->decorateDebt($d));
+            ->map(fn ($d) => $this->decorateDebt($d));
 
         $theyOweMe = Debt::where('workspace_id', $wsId)
             ->where('type', 'owed')
             ->where('is_paid', false)
             ->orderBy('due_at', 'asc')
             ->get()
-            ->map(fn($d) => $this->decorateDebt($d));
+            ->map(fn ($d) => $this->decorateDebt($d));
 
         $history = Debt::where('workspace_id', $wsId)
             ->where('is_paid', true)
@@ -133,14 +138,14 @@ class DebtHub extends Component
         $totalTheyOweMe = $theyOweMe->sum('amount');
 
         return view('livewire.debt-hub', [
-            'iOwe'           => $iOwe,
-            'theyOweMe'      => $theyOweMe,
-            'history'        => $history,
-            'totalIOwe'      => $totalIOwe,
+            'iOwe' => $iOwe,
+            'theyOweMe' => $theyOweMe,
+            'history' => $history,
+            'totalIOwe' => $totalIOwe,
             'totalTheyOweMe' => $totalTheyOweMe,
-            'netBalance'     => $totalTheyOweMe - $totalIOwe,
-            'overdueCount'   => $iOwe->where('isOverdue', true)->count(),
-            'urgentCount'    => $iOwe->where('isUrgent', true)->count(),
+            'netBalance' => $totalTheyOweMe - $totalIOwe,
+            'overdueCount' => $iOwe->where('isOverdue', true)->count(),
+            'urgentCount' => $iOwe->where('isUrgent', true)->count(),
         ]);
     }
 }

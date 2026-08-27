@@ -20,9 +20,9 @@ class Employee extends Model
         'suspended',
         'terminated_at',
         'resignation_reason',
-         'cv_path',
+        'cv_path',
         'resignation_status',
-        'portal_token' // <--- ADICIONADO: Agora o sistema já consegue gravar o código!
+        'portal_token', // <--- ADICIONADO: Agora o sistema já consegue gravar o código!
     ];
 
     /**
@@ -83,7 +83,7 @@ class Employee extends Model
     public function getPhotoUrlAttribute()
     {
         return $this->photo_path
-            ? asset('storage/' . $this->photo_path)
+            ? asset('storage/'.$this->photo_path)
             : asset('images/default-employee.png');
     }
 
@@ -93,19 +93,19 @@ class Employee extends Model
     public function getCurrentStatusText(): string
     {
         if ($this->terminated_at) {
-            return "Vínculo Terminado";
+            return 'Vínculo Terminado';
         }
 
         if ($this->resignation_status === 'pending') {
-            return "Rescisão Pendente";
+            return 'Rescisão Pendente';
         }
 
         if ($this->suspended) {
-            return "Suspenso";
+            return 'Suspenso';
         }
 
-        if (!$this->active) {
-            return "Inativo";
+        if (! $this->active) {
+            return 'Inativo';
         }
 
         if ($this->is_absent_today) {
@@ -115,9 +115,9 @@ class Employee extends Model
                 ->whereDate('end_date', '>=', now())
                 ->first();
 
-            return "Ausente (" . ($currentAbsence->type ?? 'Férias/Baixa') . ")";
+            return 'Ausente ('.($currentAbsence->type ?? 'Férias/Baixa').')';
         }
 
-        return "Em funções";
+        return 'Em funções';
     }
 }

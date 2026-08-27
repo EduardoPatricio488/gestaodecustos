@@ -2,10 +2,10 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use App\Models\SupportTicket;
 use App\Models\SupportMessage;
+use App\Models\SupportTicket;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class SupportHub extends Component
@@ -15,11 +15,14 @@ class SupportHub extends Component
 
     // NOVO TICKET
     public $subject;
+
     public $message;
+
     public $priority = 'normal';
 
     // CHAT
     public $activeTicket;
+
     public $replyMessage;
 
     public function mount()
@@ -100,7 +103,6 @@ class SupportHub extends Component
         // Fecha o modal de novo ticket (Alpine ouve via x-on:ticket-created.window)
         $this->dispatch('close-ticket-modal');
 
-
         $this->dispatch('toast', text: 'Ticket criado com sucesso!');
     }
 
@@ -119,7 +121,7 @@ class SupportHub extends Component
             'myTickets' => $this->getContextQuery()
                 ->withCount('messages')
                 ->latest()
-                ->get()
+                ->get(),
         ]);
     }
 }

@@ -9,19 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
-    Schema::create('activity_logs', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('workspace_id')->constrained()->cascadeOnDelete();
-        $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-        $table->string('action'); // created, updated, deleted
-        $table->string('description'); // Mensagem legível
-        $table->string('model_type'); // Expense, Income, etc.
-        $table->unsignedBigInteger('model_id');
-        $table->json('changes')->nullable(); // Para guardar o valor antigo e o novo
-        $table->timestamps();
-    });
-}
+    public function up(): void
+    {
+        Schema::create('activity_logs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('workspace_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('action'); // created, updated, deleted
+            $table->string('description'); // Mensagem legível
+            $table->string('model_type'); // Expense, Income, etc.
+            $table->unsignedBigInteger('model_id');
+            $table->json('changes')->nullable(); // Para guardar o valor antigo e o novo
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

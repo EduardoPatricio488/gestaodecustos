@@ -2,15 +2,16 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class SubscriptionPlans extends Component
 {
     public $showSuccessModal = false;
+
     public $newPlanData = [];
 
     /**
@@ -30,6 +31,7 @@ class SubscriptionPlans extends Component
             }
 
             $this->showSuccessFor('free');
+
             return;
         }
 
@@ -37,13 +39,14 @@ class SubscriptionPlans extends Component
         // Isso é o que torna o software "vendável" e fácil de configurar.
         $priceId = match ($plan) {
             'plus' => env('STRIPE_PRICE_PLUS'), // Definir no .env
-            'pro'  => env('STRIPE_PRICE_BUSINESS'), // Definir no .env
+            'pro' => env('STRIPE_PRICE_BUSINESS'), // Definir no .env
             default => null,
         };
 
-        if (!$priceId) {
+        if (! $priceId) {
             Log::error("Tentativa de upgrade falhou: Preço para o plano [{$plan}] não configurado no .env");
             $this->dispatch('toast', variant: 'error', text: 'Este plano ainda não foi configurado pelo administrador.');
+
             return;
         }
 
@@ -61,7 +64,7 @@ class SubscriptionPlans extends Component
             return redirect($checkout->url);
 
         } catch (\Exception $e) {
-            Log::error("Erro no Stripe Checkout: " . $e->getMessage());
+            Log::error('Erro no Stripe Checkout: '.$e->getMessage());
             $this->dispatch('toast', variant: 'error', text: 'Erro ao conectar com o provedor de pagamentos.');
         }
     }

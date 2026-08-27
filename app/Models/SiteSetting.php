@@ -11,8 +11,9 @@ class SiteSetting extends Model
 
     public static function get(string $key, $default = null)
     {
-        return Cache::remember('setting_' . $key, 3600, function () use ($key, $default) {
+        return Cache::remember('setting_'.$key, 3600, function () use ($key, $default) {
             $setting = self::where('key', $key)->first();
+
             return $setting ? $setting->value : $default;
         });
     }
@@ -24,7 +25,7 @@ class SiteSetting extends Model
             ['value' => (string) $value]
         );
 
-        Cache::forget('setting_' . $key);
+        Cache::forget('setting_'.$key);
         if ($key === 'maintenance_mode') {
             Cache::forget('setting_maintenance_mode');
         }

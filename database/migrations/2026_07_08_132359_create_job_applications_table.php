@@ -9,19 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
-    Schema::create('job_applications', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade'); // O candidato
-        $table->foreignId('workspace_id')->constrained()->onDelete('cascade'); // A empresa
-        $table->string('role');
-        $table->string('phone');
-        $table->text('notes')->nullable();
-        $table->string('cv_path');
-        $table->string('status')->default('pending'); // pending, accepted, rejected
-        $table->timestamps();
-    });
-}
+    public function up(): void
+    {
+        Schema::create('job_applications', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // O candidato
+            $table->foreignId('workspace_id')->constrained()->onDelete('cascade'); // A empresa
+            $table->string('role');
+            $table->string('phone');
+            $table->text('notes')->nullable();
+            $table->string('cv_path');
+            $table->string('status')->default('pending'); // pending, accepted, rejected
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

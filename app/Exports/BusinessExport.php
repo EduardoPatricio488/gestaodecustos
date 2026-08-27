@@ -9,6 +9,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 class BusinessExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $user;
+
     protected $month;
 
     public function __construct($user, $month)

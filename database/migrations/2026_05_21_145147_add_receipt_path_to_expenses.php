@@ -9,11 +9,13 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
-    Schema::table('expenses', function (Blueprint $table) {
-        $table->string('receipt_path')->nullable()->after('metadata');
-    });
-}
+    public function up(): void
+    {
+        Schema::table('expenses', function (Blueprint $table) {
+            $table->string('receipt_path')->nullable()->after('metadata');
+        });
+    }
+
     /**
      * Reverse the migrations.
      */

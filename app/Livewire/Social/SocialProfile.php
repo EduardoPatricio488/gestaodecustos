@@ -2,11 +2,17 @@
 
 namespace App\Livewire\Social;
 
+use App\Models\SocialComment;
+use App\Models\SocialFollow;
+use App\Models\SocialLike;
+use App\Models\SocialNotification;
+use App\Models\SocialPost;
+use App\Models\SocialReport;
+use App\Models\User;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
-use App\Models\{User, SocialPost, SocialFollow, SocialLike, SocialNotification, SocialComment};
 use Livewire\WithFileUploads;
-use Livewire\Attributes\{Layout, Computed, On};
-use Illuminate\Support\Str;
 
 class SocialProfile extends Component
 {
@@ -16,20 +22,29 @@ class SocialProfile extends Component
 
     // --- ESTADO DE EDIÇÃO ---
     public $editName = '';
+
     public $editUsername = '';
+
     public $editBio = '';
+
     public $editAvatarFile = null;
+
     public $editDefaultVisibility = 'public';
+
     public $editIsPrivate = false;
 
     // --- ESTADO DE REPORTE ---
     public $reportModal = false;
+
     public $reportingPostId = null;
+
     public $reportReason = '';
 
     // --- ESTADO DE INTERAÇÃO ---
     public ?int $commentingPostId = null;
+
     public $commentContent = '';
+
     public int $perPage = 12;
 
     public function mount(string $username)
@@ -61,13 +76,15 @@ class SocialProfile extends Component
     #[Computed]
     public function commentingPost()
     {
-        if (!$this->commentingPostId) return null;
+        if (! $this->commentingPostId) {
+            return null;
+        }
 
         return SocialPost::with([
-                'user:id,name,username,avatar_path',
-                'comments.user:id,name,username,avatar_path',
-                'likes:id,post_id,user_id',
-            ])
+            'user:id,name,username,avatar_path',
+            'comments.user:id,name,username,avatar_path',
+            'likes:id,post_id,user_id',
+        ])
             ->withCount(['likes', 'comments'])
             ->find($this->commentingPostId);
     }
@@ -76,10 +93,16 @@ class SocialProfile extends Component
      * ESTATÍSTICAS
      */
     #[Computed]
-    public function followersCount(): int { return SocialFollow::where('following_id', $this->profileUser->id)->count(); }
+    public function followersCount(): int
+    {
+        return SocialFollow::where('following_id', $this->profileUser->id)->count();
+    }
 
     #[Computed]
-    public function followingCount(): int { return SocialFollow::where('follower_id', $this->profileUser->id)->count(); }
+    public function followingCount(): int
+    {
+        return SocialFollow::where('follower_id', $this->profileUser->id)->count();
+    }
 
     #[Computed]
     public function totalLikesReceived(): int
@@ -114,19 +137,19 @@ class SocialProfile extends Component
         $amFollowing = $this->isFollowing;
 
         $query = SocialPost::with([
-                'user:id,name,username,avatar_path',
-                'likes:id,post_id,user_id',
-            ])
+            'user:id,name,username,avatar_path',
+            'likes:id,post_id,user_id',
+        ])
             ->withCount(['likes', 'comments'])
             ->where('user_id', $this->profileUser->id)
             ->where('is_story', false);
 
-        if (!$isOwn) {
+        if (! $isOwn) {
             $query->where(function ($q) use ($amFollowing, $workspaceId) {
                 $q->where('visibility', 'public')
-                  ->orWhere(function ($q2) use ($workspaceId) {
-                      $q2->where('visibility', 'workspace')->where('workspace_id', $workspaceId);
-                  });
+                    ->orWhere(function ($q2) use ($workspaceId) {
+                        $q2->where('visibility', 'workspace')->where('workspace_id', $workspaceId);
+                    });
 
                 if ($amFollowing) {
                     $q->orWhere('visibility', 'followers');
@@ -140,11 +163,16 @@ class SocialProfile extends Component
     /**
      * AÇÕES DO PERFIL
      */
-    public function loadMore() { $this->perPage += 6; }
+    public function loadMore()
+    {
+        $this->perPage += 6;
+    }
 
     public function toggleFollow()
     {
-        if ($this->isOwnProfile) return;
+        if ($this->isOwnProfile) {
+            return;
+        }
         SocialFollow::toggle(auth()->id(), $this->profileUser->id);
     }
 
@@ -164,7 +192,7 @@ class SocialProfile extends Component
     {
         $postId ??= $this->commentingPostId;
 
-        if (!$postId) {
+        if (! $postId) {
             return;
         }
 
@@ -173,7 +201,7 @@ class SocialProfile extends Component
         SocialComment::create([
             'user_id' => auth()->id(),
             'post_id' => $postId,
-            'content' => $this->commentContent
+            'content' => $this->commentContent,
         ]);
 
         $post = SocialPost::find($postId);
@@ -185,72 +213,74 @@ class SocialProfile extends Component
     }
 
     public function submitReport()
-{
-    $this->validate(['reportReason' => 'required|min:10|max:500']);
+    {
+        $this->validate(['reportReason' => 'required|min:10|max:500']);
 
-    \App\Models\SocialReport::create([
-        'user_id' => auth()->id(),
-        'social_post_id' => $this->reportingPostId,
-        'reason' => $this->reportReason,
-        'status' => 'pending',
-    ]);
+        SocialReport::create([
+            'user_id' => auth()->id(),
+            'social_post_id' => $this->reportingPostId,
+            'reason' => $this->reportReason,
+            'status' => 'pending',
+        ]);
 
-    $this->reset(['reportModal', 'reportReason', 'reportingPostId']);
-    $this->dispatch('toast', text: 'Denúncia enviada para moderação. 🟢');
-}
-
-/**
- * GESTÃO DE PERFIL
- */
-public function saveProfile()
-{
-    if (!$this->isOwnProfile) return;
-
-    $user = auth()->user();
-    $this->validate([
-        'editName'      => 'required|string|max:60',
-        'editUsername'  => 'required|alpha_dash|max:30|unique:users,username,'.$user->id,
-        'editBio'       => 'nullable|string|max:160',
-        'editAvatarFile'=> 'nullable|image|max:5120',
-        'editDefaultVisibility' => 'required|in:public,followers,workspace,private',
-        'editIsPrivate' => 'boolean',
-    ]);
-
-    $data = [
-        'name'      => $this->editName,
-        'username'  => $this->editUsername,
-        'social_bio'=> $this->editBio,
-        'default_post_visibility' => $this->editDefaultVisibility,
-        'is_profile_private'      => $this->editIsPrivate,
-    ];
-
-    if ($this->editAvatarFile) {
-        $data['avatar_path'] = $this->editAvatarFile->store('social/avatars', 'public');
+        $this->reset(['reportModal', 'reportReason', 'reportingPostId']);
+        $this->dispatch('toast', text: 'Denúncia enviada para moderação. 🟢');
     }
 
-    $user->update($data);
-    $this->username = $this->editUsername;
-    $this->dispatch('close-edit-profile-modal');
-}
+    /**
+     * GESTÃO DE PERFIL
+     */
+    public function saveProfile()
+    {
+        if (! $this->isOwnProfile) {
+            return;
+        }
 
-public function startConversation(int $userId)
-{
-    $this->dispatch('open-chat-with', userId: $userId);
-}
+        $user = auth()->user();
+        $this->validate([
+            'editName' => 'required|string|max:60',
+            'editUsername' => 'required|alpha_dash|max:30|unique:users,username,'.$user->id,
+            'editBio' => 'nullable|string|max:160',
+            'editAvatarFile' => 'nullable|image|max:5120',
+            'editDefaultVisibility' => 'required|in:public,followers,workspace,private',
+            'editIsPrivate' => 'boolean',
+        ]);
 
-/**
- * PERFIL: Copiar link do perfil.
- */
-public function copyProfileLink(string $username)
-{
-    $url = route('social.profile', $username);
-    $this->dispatch('copy-to-clipboard', text: $url);
-    $this->dispatch('toast', text: 'Link do perfil copiado! 🔗');
-}
+        $data = [
+            'name' => $this->editName,
+            'username' => $this->editUsername,
+            'social_bio' => $this->editBio,
+            'default_post_visibility' => $this->editDefaultVisibility,
+            'is_profile_private' => $this->editIsPrivate,
+        ];
 
-#[Layout('components.layouts.app')]
-public function render()
-{
-    return view('livewire.social.social-profile');
-}
+        if ($this->editAvatarFile) {
+            $data['avatar_path'] = $this->editAvatarFile->store('social/avatars', 'public');
+        }
+
+        $user->update($data);
+        $this->username = $this->editUsername;
+        $this->dispatch('close-edit-profile-modal');
+    }
+
+    public function startConversation(int $userId)
+    {
+        $this->dispatch('open-chat-with', userId: $userId);
+    }
+
+    /**
+     * PERFIL: Copiar link do perfil.
+     */
+    public function copyProfileLink(string $username)
+    {
+        $url = route('social.profile', $username);
+        $this->dispatch('copy-to-clipboard', text: $url);
+        $this->dispatch('toast', text: 'Link do perfil copiado! 🔗');
+    }
+
+    #[Layout('components.layouts.app')]
+    public function render()
+    {
+        return view('livewire.social.social-profile');
+    }
 }

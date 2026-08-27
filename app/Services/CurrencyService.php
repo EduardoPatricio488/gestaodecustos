@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class CurrencyService
 {
@@ -12,11 +12,14 @@ class CurrencyService
      */
     public static function convert($amount, $from = 'USD', $to = 'EUR')
     {
-        if ($from === $to) return $amount;
+        if ($from === $to) {
+            return $amount;
+        }
 
         // Guardamos as taxas em cache por 24h para o site ser rápido e grátis
-        $rates = Cache::remember('currency_rates_' . $to, 86400, function () use ($to) {
+        $rates = Cache::remember('currency_rates_'.$to, 86400, function () use ($to) {
             $response = Http::get("https://open.er-api.com/v6/latest/{$to}");
+
             return $response->json()['rates'] ?? [];
         });
 

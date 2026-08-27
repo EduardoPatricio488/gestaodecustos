@@ -11,16 +11,23 @@ use Livewire\Component;
 class FamilyScenarioHub extends Component
 {
     public float $currentSalary = 0;
+
     public float $currentRent = 0;
+
     public float $otherExpenses = 0;
 
     public float $salaryChangePct = 0;
+
     public float $inflationRate = 3.0;
+
     public int $newChildren = 0;
+
     public float $costPerChild = 250;
 
     public float $loanAmount = 0;
+
     public float $loanAnnualRate = 6.5;
+
     public int $loanMonths = 60;
 
     public function mount(): void

@@ -2,11 +2,11 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
+use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\Invoice;
-use App\Models\Employee;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class TaxHub extends Component

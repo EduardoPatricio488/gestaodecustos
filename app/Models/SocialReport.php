@@ -9,11 +9,13 @@ class SocialReport extends Model
 {
     protected $fillable = ['user_id', 'social_post_id', 'reason', 'status'];
 
-    public function user(): BelongsTo {
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function social_post(): BelongsTo {
+    public function social_post(): BelongsTo
+    {
         return $this->belongsTo(SocialPost::class, 'social_post_id');
     }
 }

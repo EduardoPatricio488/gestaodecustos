@@ -26,10 +26,10 @@ class BankReserve extends Model
     ];
 
     protected $casts = [
-        'amount'        => 'float',
+        'amount' => 'float',
         'target_amount' => 'float',
-        'target_date'   => 'date',
-        'is_business'   => 'boolean',
+        'target_date' => 'date',
+        'is_business' => 'boolean',
     ];
 
     public function user(): BelongsTo
@@ -44,9 +44,10 @@ class BankReserve extends Model
 
     public function getProgressAttribute(): float
     {
-        if (!$this->target_amount || $this->target_amount <= 0) {
+        if (! $this->target_amount || $this->target_amount <= 0) {
             return 0;
         }
+
         return min(100, ($this->amount / $this->target_amount) * 100);
     }
 }

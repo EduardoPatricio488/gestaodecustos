@@ -2,11 +2,11 @@
 
 namespace App\Livewire\Business;
 
+use App\Models\Workspace;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\Storage;
-use App\Models\Workspace;
 
 #[Layout('components.layouts.app')]
 class BusinessSettings extends Component
@@ -17,13 +17,21 @@ class BusinessSettings extends Component
 
     // Campos do formulário
     public $name;
+
     public $legal_name;
+
     public $tax_number;
+
     public $industry;
+
     public $business_email;
+
     public $address;
+
     public $currency;
+
     public $initial_capital;
+
     public $logo;
 
     public function mount()
@@ -94,13 +102,14 @@ class BusinessSettings extends Component
     public function getLogoUrlAttribute()
     {
         return $this->workspace->logo_path
-            ? asset('storage/' . $this->workspace->logo_path)
+            ? asset('storage/'.$this->workspace->logo_path)
             : asset('images/default-logo.png');
     }
 
     /**
      * Renderização com métricas empresariais Diamante
-     */ public function leaveCompany()
+     */
+    public function leaveCompany()
     {
         $user = auth()->user();
 
@@ -119,26 +128,27 @@ class BusinessSettings extends Component
      * Apagar Empresa (Apenas para o Dono)
      */
     public function deleteCompany()
-{
-    if (!auth()->user()->isOwner()) {
-        abort(403);
+    {
+        if (! auth()->user()->isOwner()) {
+            abort(403);
+        }
+
+        $user = auth()->user();
+
+        // Limpar apenas a referência ao workspace; o plano do utilizador mantém-se intacto
+        $user->update([
+            'current_workspace_id' => null,
+        ]);
+
+        // Apagar a empresa
+        $this->workspace->employees()->delete();
+        $this->workspace->delete();
+
+        $this->dispatch('toast', variant: 'success', heading: 'Empresa Eliminada', message: 'O teu plano Business continua ativo.');
+
+        return redirect()->route('hub.business.gateway');
     }
 
-    $user = auth()->user();
-
-    // Limpar apenas a referência ao workspace; o plano do utilizador mantém-se intacto
-    $user->update([
-        'current_workspace_id' => null
-    ]);
-
-    // Apagar a empresa
-    $this->workspace->employees()->delete();
-    $this->workspace->delete();
-
-    $this->dispatch('toast', variant: 'success', heading: 'Empresa Eliminada', message: 'O teu plano Business continua ativo.');
-
-    return redirect()->route('hub.business.gateway');
-}
     public function render()
     {
         return view('livewire.business.business-settings', [

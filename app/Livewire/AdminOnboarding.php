@@ -2,20 +2,22 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Component;
 
 class AdminOnboarding extends Component
 {
     public $step = 1;
+
     public $totalSteps = 5;
+
     public $isOpen = false;
 
     public function mount()
     {
         $user = auth()->user();
         // Abre automaticamente apenas se for admin e ainda não tiver concluído
-        if ($user->isAdmin() && !$user->onboarding_completed) {
+        if ($user->isAdmin() && ! $user->onboarding_completed) {
             $this->isOpen = true;
         }
     }

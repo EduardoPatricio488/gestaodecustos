@@ -31,7 +31,8 @@ class DebtInstrumentCalculator
     {
         $yearsComplete = (int) $subscriptionDate->diffInYears(now());
         $maxKey = max(array_keys(self::LOYALTY_TABLE));
-        $key    = min($yearsComplete, $maxKey);
+        $key = min($yearsComplete, $maxKey);
+
         return self::LOYALTY_TABLE[$key];
     }
 
@@ -43,9 +44,9 @@ class DebtInstrumentCalculator
     public static function processCA(Investment $asset): float
     {
         $subscriptionDate = Carbon::parse($asset->operation_date);
-        $baseRate         = (float) ($asset->interest_rate ?? 0); // taxa base atual (%)
-        $capitalPerUnit   = (float) $asset->current_price;        // saldo atual por título (começa em 1€)
-        $quantity         = (float) $asset->quantity;             // número de títulos
+        $baseRate = (float) ($asset->interest_rate ?? 0); // taxa base atual (%)
+        $capitalPerUnit = (float) $asset->current_price;        // saldo atual por título (começa em 1€)
+        $quantity = (float) $asset->quantity;             // número de títulos
 
         // Última capitalização registada (ou data de subscrição se nenhuma ainda)
         $lastIncome = InvestmentIncome::where('investment_id', $asset->id)
@@ -63,29 +64,29 @@ class DebtInstrumentCalculator
         $cursor = $lastCapDate->copy()->addMonths(3);
 
         while ($cursor <= $today) {
-            $loyaltyBonus    = self::getLoyaltyBonus($subscriptionDate);
+            $loyaltyBonus = self::getLoyaltyBonus($subscriptionDate);
             $annualRateGross = $baseRate + $loyaltyBonus;          // % bruta anual
-            $quarterlyNet    = ($annualRateGross / 4 / 100) * (1 - self::TAX_RATE); // taxa trimestral líquida
+            $quarterlyNet = ($annualRateGross / 4 / 100) * (1 - self::TAX_RATE); // taxa trimestral líquida
 
             $grossPerUnit = $capitalPerUnit * ($annualRateGross / 4 / 100);
-            $taxPerUnit   = $grossPerUnit * self::TAX_RATE;
-            $netPerUnit   = $grossPerUnit - $taxPerUnit;
+            $taxPerUnit = $grossPerUnit * self::TAX_RATE;
+            $netPerUnit = $grossPerUnit - $taxPerUnit;
 
             $newCapitalPerUnit = $capitalPerUnit + $netPerUnit; // capitaliza (juro composto)
 
             InvestmentIncome::create([
-                'investment_id'  => $asset->id,
-                'user_id'        => $asset->user_id,
-                'workspace_id'   => $asset->workspace_id,
+                'investment_id' => $asset->id,
+                'user_id' => $asset->user_id,
+                'workspace_id' => $asset->workspace_id,
                 'reference_date' => $cursor->toDateString(),
-                'gross_amount'   => round($grossPerUnit * $quantity, 4),
-                'tax_amount'     => round($taxPerUnit   * $quantity, 4),
-                'net_amount'     => round($netPerUnit   * $quantity, 4),
-                'base_rate'      => $baseRate,
-                'loyalty_bonus'  => $loyaltyBonus,
-                'capital_before' => round($capitalPerUnit    * $quantity, 4),
-                'capital_after'  => round($newCapitalPerUnit * $quantity, 4),
-                'type'           => 'CA',
+                'gross_amount' => round($grossPerUnit * $quantity, 4),
+                'tax_amount' => round($taxPerUnit * $quantity, 4),
+                'net_amount' => round($netPerUnit * $quantity, 4),
+                'base_rate' => $baseRate,
+                'loyalty_bonus' => $loyaltyBonus,
+                'capital_before' => round($capitalPerUnit * $quantity, 4),
+                'capital_after' => round($newCapitalPerUnit * $quantity, 4),
+                'type' => 'CA',
             ]);
 
             $capitalPerUnit = $newCapitalPerUnit;
@@ -102,8 +103,8 @@ class DebtInstrumentCalculator
     public static function processCT(Investment $asset): float
     {
         $subscriptionDate = Carbon::parse($asset->operation_date);
-        $baseRate         = (float) ($asset->interest_rate ?? 0);
-        $quantity         = (float) $asset->quantity;
+        $baseRate = (float) ($asset->interest_rate ?? 0);
+        $quantity = (float) $asset->quantity;
 
         $lastIncome = InvestmentIncome::where('investment_id', $asset->id)
             ->where('type', 'CT')
@@ -114,30 +115,30 @@ class DebtInstrumentCalculator
             ? Carbon::parse($lastIncome->reference_date)
             : $subscriptionDate->copy();
 
-        $today  = now();
+        $today = now();
         $cursor = $lastCapDate->copy()->addYear();
 
         while ($cursor <= $today) {
-            $loyaltyBonus    = self::getLoyaltyBonus($subscriptionDate);
+            $loyaltyBonus = self::getLoyaltyBonus($subscriptionDate);
             $annualRateGross = $baseRate + $loyaltyBonus;
 
             $grossTotal = $quantity * ($annualRateGross / 100);
-            $taxTotal   = $grossTotal * self::TAX_RATE;
-            $netTotal   = $grossTotal - $taxTotal;
+            $taxTotal = $grossTotal * self::TAX_RATE;
+            $netTotal = $grossTotal - $taxTotal;
 
             InvestmentIncome::create([
-                'investment_id'  => $asset->id,
-                'user_id'        => $asset->user_id,
-                'workspace_id'   => $asset->workspace_id,
+                'investment_id' => $asset->id,
+                'user_id' => $asset->user_id,
+                'workspace_id' => $asset->workspace_id,
                 'reference_date' => $cursor->toDateString(),
-                'gross_amount'   => round($grossTotal, 4),
-                'tax_amount'     => round($taxTotal,   4),
-                'net_amount'     => round($netTotal,   4),
-                'base_rate'      => $baseRate,
-                'loyalty_bonus'  => $loyaltyBonus,
+                'gross_amount' => round($grossTotal, 4),
+                'tax_amount' => round($taxTotal, 4),
+                'net_amount' => round($netTotal, 4),
+                'base_rate' => $baseRate,
+                'loyalty_bonus' => $loyaltyBonus,
                 'capital_before' => $quantity, // CT: capital não muda
-                'capital_after'  => $quantity,
-                'type'           => 'CT',
+                'capital_after' => $quantity,
+                'type' => 'CT',
             ]);
 
             $cursor->addYear();
@@ -151,11 +152,13 @@ class DebtInstrumentCalculator
      */
     public static function process(Investment $asset): float
     {
-        if (!$asset->operation_date) return (float) $asset->current_price;
+        if (! $asset->operation_date) {
+            return (float) $asset->current_price;
+        }
 
-        return match($asset->product_type) {
-            'CA'    => self::processCA($asset),
-            'CT'    => self::processCT($asset),
+        return match ($asset->product_type) {
+            'CA' => self::processCA($asset),
+            'CT' => self::processCT($asset),
             default => (float) $asset->current_price,
         };
     }

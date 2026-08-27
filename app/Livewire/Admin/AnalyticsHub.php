@@ -4,9 +4,9 @@ namespace App\Livewire\Admin;
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
 
 #[Layout('components.layouts.app')]
 class AnalyticsHub extends Component
@@ -14,10 +14,12 @@ class AnalyticsHub extends Component
     use WithPagination;
 
     public $period = '30';
+
     public $searchUser = '';
 
     // Propriedades para o Modal de Dados Profundos
     public $detailedUser = null;
+
     public $userFullStats = [];
 
     /**
@@ -62,16 +64,18 @@ class AnalyticsHub extends Component
     {
         $totalUsers = User::count() ?: 1;
 
-        $getUsage = function($table) use ($totalUsers) {
+        $getUsage = function ($table) use ($totalUsers) {
             try {
                 return round((DB::table($table)->distinct('user_id')->count() / $totalUsers) * 100);
-            } catch (\Exception $e) { return 0; }
+            } catch (\Exception $e) {
+                return 0;
+            }
         };
 
         return [
-            'reminders'   => $getUsage('reminders'),
-            'chatbot'     => $getUsage('chat_messages'),
-            'goals'       => $getUsage('goals'),
+            'reminders' => $getUsage('reminders'),
+            'chatbot' => $getUsage('chat_messages'),
+            'goals' => $getUsage('goals'),
             'investments' => $getUsage('investments'),
         ];
     }
@@ -96,17 +100,28 @@ class AnalyticsHub extends Component
     {
         try {
             $sessions = DB::table('sessions')->select('user_agent')->get();
-            $mobile = 0; $desktop = 0; $total = $sessions->count();
-            if ($total === 0) return [['name' => 'Computador', 'value' => 100, 'icon' => 'computer-desktop']];
+            $mobile = 0;
+            $desktop = 0;
+            $total = $sessions->count();
+            if ($total === 0) {
+                return [['name' => 'Computador', 'value' => 100, 'icon' => 'computer-desktop']];
+            }
 
             foreach ($sessions as $s) {
-                if (preg_match('/mobile/i', $s->user_agent)) $mobile++; else $desktop++;
+                if (preg_match('/mobile/i', $s->user_agent)) {
+                    $mobile++;
+                } else {
+                    $desktop++;
+                }
             }
+
             return [
                 ['name' => 'Telemóvel', 'value' => round(($mobile / $total) * 100), 'icon' => 'device-phone-mobile'],
                 ['name' => 'Computador', 'value' => round(($desktop / $total) * 100), 'icon' => 'computer-desktop'],
             ];
-        } catch (\Exception $e) { return [['name' => 'Computador', 'value' => 100, 'icon' => 'computer-desktop']]; }
+        } catch (\Exception $e) {
+            return [['name' => 'Computador', 'value' => 100, 'icon' => 'computer-desktop']];
+        }
     }
 
     public function render()
@@ -116,9 +131,9 @@ class AnalyticsHub extends Component
             'onboarding' => $this->onboardingStats,
             'devices' => $this->getDeviceStatsProperty(),
             'individualStats' => User::query()
-                ->when($this->searchUser, function($q) {
-                    $q->where('name', 'like', '%' . $this->searchUser . '%')
-                      ->orWhere('email', 'like', '%' . $this->searchUser . '%');
+                ->when($this->searchUser, function ($q) {
+                    $q->where('name', 'like', '%'.$this->searchUser.'%')
+                        ->orWhere('email', 'like', '%'.$this->searchUser.'%');
                 })
                 ->addSelect([
                     'chatbot_count' => DB::table('chat_messages')->selectRaw('count(*)')->whereColumn('user_id', 'users.id'),

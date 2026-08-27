@@ -2,11 +2,11 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\Supplier;
 use App\Models\Expense;
-use Livewire\WithPagination;
+use App\Models\Supplier;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
 class SupplierHub extends Component
@@ -14,41 +14,58 @@ class SupplierHub extends Component
     use WithPagination;
 
     // Propriedades do Formulário
-    public $name, $legal_name, $tax_number, $email, $phone, $payment_terms, $address;
+    public $name;
+
+    public $legal_name;
+
+    public $tax_number;
+
+    public $email;
+
+    public $phone;
+
+    public $payment_terms;
+
+    public $address;
+
     public $editingId = null;
-   public $generatedPasscode = '';
-public $supplierTaxNumber = '';
-public $generatedPortalUrl = '';
+
+    public $generatedPasscode = '';
+
+    public $supplierTaxNumber = '';
+
+    public $generatedPortalUrl = '';
+
     public $search = '';
 
-// No topo da classe, garante que tens estas 3 variáveis públicas
+    // No topo da classe, garante que tens estas 3 variáveis públicas
 
+    public function generatePortalLink($id)
+    {
+        // 1. Procurar o fornecedor
+        $supplier = auth()->user()->suppliers()->findOrFail($id);
 
-public function generatePortalLink($id)
-{
-    // 1. Procurar o fornecedor
-    $supplier = auth()->user()->suppliers()->findOrFail($id);
+        // 2. Se o fornecedor ainda não tiver código, gerar um agora
+        if (! $supplier->portal_token) {
+            do {
+                $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+                $exists = Supplier::where('portal_token', $passcode)->exists();
+            } while ($exists);
 
-    // 2. Se o fornecedor ainda não tiver código, gerar um agora
-    if (!$supplier->portal_token) {
-        do {
-            $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-            $exists = \App\Models\Supplier::where('portal_token', $passcode)->exists();
-        } while ($exists);
+            $supplier->update(['portal_token' => $passcode]);
+            // Atualiza a instância local para ter o código novo
+            $supplier->refresh();
+        }
 
-        $supplier->update(['portal_token' => $passcode]);
-        // Atualiza a instância local para ter o código novo
-        $supplier->refresh();
+        // 3. ATRIBUIR OS VALORES ÀS VARIÁVEIS PÚBLICAS (Obrigatório para o Blade ver)
+        $this->generatedPasscode = $supplier->portal_token;
+        $this->supplierTaxNumber = $supplier->tax_number;
+        $this->generatedPortalUrl = route('supplier.portal');
+
+        // 4. Abrir o modal
+        $this->dispatch('modal-show', name: 'supplier-portal-modal');
     }
 
-    // 3. ATRIBUIR OS VALORES ÀS VARIÁVEIS PÚBLICAS (Obrigatório para o Blade ver)
-    $this->generatedPasscode = $supplier->portal_token;
-    $this->supplierTaxNumber = $supplier->tax_number;
-    $this->generatedPortalUrl = route('supplier.portal');
-
-    // 4. Abrir o modal
-    $this->dispatch('modal-show', name: 'supplier-portal-modal');
-}
     // Filtros de Visualização
     public $viewMode = 'grid'; // 'grid' ou 'list'
 
@@ -118,12 +135,13 @@ public function generatePortalLink($id)
 
         // Query principal de fornecedores
         $suppliers = Supplier::where('workspace_id', $workspaceId)
-            ->where('name', 'like', '%' . $this->search . '%')
+            ->where('name', 'like', '%'.$this->search.'%')
             ->get()
             ->map(function ($supplier) {
                 // Inteligência: Calcula quanto já gastámos com este fornecedor
                 $supplier->total_spent = Expense::where('supplier_id', $supplier->id)->sum('amount');
                 $supplier->bills_count = Expense::where('supplier_id', $supplier->id)->count();
+
                 return $supplier;
             })->sortByDesc('total_spent');
 

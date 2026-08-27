@@ -49,18 +49,24 @@ class Project extends Model
     {
         return $this->belongsTo(Workspace::class);
     }
-public function getProgressAttribute()
-{
-    $total = $this->tasks()->count();
-    if ($total === 0) return 0;
 
-    $completed = $this->tasks()->where('status', 'concluida')->count();
-    return round(($completed / $total) * 100);
-}
-public function client()
-{
-    return $this->belongsTo(Client::class);
-}
+    public function getProgressAttribute()
+    {
+        $total = $this->tasks()->count();
+        if ($total === 0) {
+            return 0;
+        }
+
+        $completed = $this->tasks()->where('status', 'concluida')->count();
+
+        return round(($completed / $total) * 100);
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
     public function members()
     {
         return $this->belongsToMany(User::class, 'project_user');

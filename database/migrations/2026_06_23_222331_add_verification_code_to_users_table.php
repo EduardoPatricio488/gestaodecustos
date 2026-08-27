@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // Só cria a tabela se NÃO existir
-        if (!Schema::hasTable('chat_messages')) {
+        if (! Schema::hasTable('chat_messages')) {
             Schema::create('chat_messages', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->constrained()->onDelete('cascade');

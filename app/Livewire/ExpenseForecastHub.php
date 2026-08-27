@@ -12,6 +12,7 @@ use Livewire\Component;
 class ExpenseForecastHub extends Component
 {
     public int $lookbackMonths = 6;
+
     public float $recencyWeight = 0.65;
 
     private function weightedAverage(array $values, float $recentWeight): float
@@ -77,11 +78,12 @@ class ExpenseForecastHub extends Component
             return 35.0;
         }
 
-        $variance = array_sum(array_map(fn($v) => pow($v - $mean, 2), $values)) / $n;
+        $variance = array_sum(array_map(fn ($v) => pow($v - $mean, 2), $values)) / $n;
         $stdDev = sqrt($variance);
         $cv = $stdDev / $mean; // coeficiente de variação
 
         $score = 100 - min(65, $cv * 100);
+
         return max(30, round($score, 1));
     }
 
@@ -108,7 +110,7 @@ class ExpenseForecastHub extends Component
             $series = $monthKeys->map(function ($mk) use ($expenses, $cat) {
                 return (float) $expenses
                     ->where('category_id', $cat->id)
-                    ->filter(fn($e) => Carbon::parse($e->spent_at)->format('Y-m') === $mk)
+                    ->filter(fn ($e) => Carbon::parse($e->spent_at)->format('Y-m') === $mk)
                     ->sum('amount');
             })->values()->all();
 

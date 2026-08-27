@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ChatConversation extends Model
 {
@@ -42,6 +42,7 @@ class ChatConversation extends Model
             ->get()
             ->filter(function ($conversation) use ($userId1, $userId2) {
                 $userIds = $conversation->users->pluck('id')->sort()->values();
+
                 return $userIds->all() === collect([$userId1, $userId2])->sort()->values()->all();
             })
             ->first();

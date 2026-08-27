@@ -17,7 +17,7 @@ class EmployeeSuspendedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Acesso Suspenso ⚠️ - ' . $this->companyName,
+            subject: 'Acesso Suspenso ⚠️ - '.$this->companyName,
         );
     }
 

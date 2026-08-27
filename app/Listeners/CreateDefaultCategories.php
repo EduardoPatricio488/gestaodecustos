@@ -1,10 +1,14 @@
 <?php
-namespace App\Listeners;
-use Illuminate\Auth\Events\Registered;
-use App\Models\Category;
 
-class CreateDefaultCategories {
-    public function handle(Registered $event): void {
+namespace App\Listeners;
+
+use App\Models\Category;
+use Illuminate\Auth\Events\Registered;
+
+class CreateDefaultCategories
+{
+    public function handle(Registered $event): void
+    {
         $defaults = [
             ['Casa', '#3b82f6'], ['Carro', '#ef4444'], ['Trabalho', '#8b5cf6'],
             ['Alimentação', '#f59e0b'], ['Saúde', '#10b981'], ['Lazer', '#ec4899'],

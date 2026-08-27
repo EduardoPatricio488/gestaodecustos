@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Traits\BelongsToWorkspace;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Category extends Model
@@ -57,7 +57,7 @@ class Category extends Model
         $i = 2;
 
         while (static::slugExistsInWorkspace($slug, $workspaceId, $exceptId)) {
-            $slug = $base . '-' . $i++;
+            $slug = $base.'-'.$i++;
         }
 
         return $slug;
@@ -105,7 +105,7 @@ class Category extends Model
 
     public function fields(): HasMany
     {
-        return $this->hasMany(\App\Models\CategoryField::class)->orderBy('order');
+        return $this->hasMany(CategoryField::class)->orderBy('order');
     }
 
     public function widgets(): HasMany

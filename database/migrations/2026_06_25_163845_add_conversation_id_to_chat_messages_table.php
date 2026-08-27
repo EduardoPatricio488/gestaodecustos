@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('chat_messages', function (Blueprint $table) {
 
-            if (!Schema::hasColumn('chat_messages', 'chat_conversation_id')) {
+            if (! Schema::hasColumn('chat_messages', 'chat_conversation_id')) {
                 $table->foreignId('chat_conversation_id')
                     ->nullable()
                     ->after('user_id')

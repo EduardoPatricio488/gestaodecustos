@@ -3,9 +3,9 @@
 namespace App\Livewire\Admin;
 
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
 
 #[Layout('components.layouts.app')]
 class AiMonitor extends Component
@@ -30,16 +30,16 @@ class AiMonitor extends Component
         $conversations = DB::table('chat_messages')
             ->join('users', 'chat_messages.user_id', '=', 'users.id')
             ->select('chat_messages.*', 'users.name as user_name', 'users.email as user_email')
-            ->when($this->search, function($q) {
-                $q->where('chat_messages.content', 'like', '%' . $this->search . '%')
-                  ->orWhere('users.name', 'like', '%' . $this->search . '%');
+            ->when($this->search, function ($q) {
+                $q->where('chat_messages.content', 'like', '%'.$this->search.'%')
+                    ->orWhere('users.name', 'like', '%'.$this->search.'%');
             })
             ->latest()
             ->paginate(15);
 
         return view('livewire.admin.ai-monitor', [
             'stats' => $stats,
-            'conversations' => $conversations
+            'conversations' => $conversations,
         ]);
     }
 }

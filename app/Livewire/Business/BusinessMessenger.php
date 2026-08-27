@@ -2,17 +2,17 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
 use App\Models\BusinessMessage;
-use App\Models\Project;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\On;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class BusinessMessenger extends Component
 {
     public $content = ''; // Conteúdo da nova mensagem
+
     public $activeProjectId = null; // NULL = Canal Geral, ID = Canal do Projeto
+
     public $search = '';
 
     /**
@@ -62,7 +62,7 @@ class BusinessMessenger extends Component
         $messages = $workspace->messages()
             ->with('user')
             ->where('project_id', $this->activeProjectId)
-            ->when($this->search, fn($q) => $q->where('content', 'like', '%' . $this->search . '%'))
+            ->when($this->search, fn ($q) => $q->where('content', 'like', '%'.$this->search.'%'))
             ->latest()
             ->take(50)
             ->get()
@@ -73,7 +73,7 @@ class BusinessMessenger extends Component
             'channels' => $channels,
             'activeChannelName' => $this->activeProjectId
                 ? $channels->find($this->activeProjectId)->name
-                : 'Mural Geral da Empresa'
+                : 'Mural Geral da Empresa',
         ]);
     }
 }

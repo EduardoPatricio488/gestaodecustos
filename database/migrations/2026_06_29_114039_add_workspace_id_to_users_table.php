@@ -10,12 +10,11 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up()
-{
-    Schema::table('users', function (Blueprint $table) {
-        $table->unsignedBigInteger('workspace_id')->nullable()->after('id');
-    });
-}
-
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->unsignedBigInteger('workspace_id')->nullable()->after('id');
+        });
+    }
 
     /**
      * Reverse the migrations.

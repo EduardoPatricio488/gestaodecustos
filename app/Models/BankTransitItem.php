@@ -27,10 +27,10 @@ class BankTransitItem extends Model
     ];
 
     protected $casts = [
-        'amount'         => 'float',
-        'expected_date'  => 'date',
+        'amount' => 'float',
+        'expected_date' => 'date',
         'confirmed_date' => 'date',
-        'is_business'    => 'boolean',
+        'is_business' => 'boolean',
     ];
 
     public function user(): BelongsTo

@@ -16,13 +16,19 @@ class StatementImportHub extends Component
     use WithFileUploads;
 
     public $statementFile;
+
     public ?BankStatementImport $lastImport = null;
+
     public array $preview = [];
+
     public bool $previewReady = false;
+
     public array $selectedSignatures = [];
 
     public string $ruleKeyword = '';
+
     public ?int $ruleCategoryId = null;
+
     public int $rulePriority = 100;
 
     public function generatePreview(): void

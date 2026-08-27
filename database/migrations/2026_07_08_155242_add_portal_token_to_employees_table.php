@@ -9,11 +9,12 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
-    Schema::table('employees', function (Blueprint $table) {
-        $table->string('portal_token')->nullable()->after('salary');
-    });
-}
+    public function up(): void
+    {
+        Schema::table('employees', function (Blueprint $table) {
+            $table->string('portal_token')->nullable()->after('salary');
+        });
+    }
 
     /**
      * Reverse the migrations.

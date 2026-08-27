@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use Livewire\WithFileUploads;
 use App\Models\Workspace;
 use Illuminate\Support\Str;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class BusinessOnboarding extends Component
 {
@@ -15,12 +15,16 @@ class BusinessOnboarding extends Component
 
     // Dados da Empresa
     public $name;
+
     public $industry;
+
     public $tax_number;
+
     public $photo;
 
     // Valores Iniciais
     public $initial_capital = 0;
+
     public $currency = 'EUR';
 
     protected $rules = [
@@ -31,7 +35,7 @@ class BusinessOnboarding extends Component
         ],
         3 => [
             'initial_capital' => 'required|numeric|min:0',
-        ]
+        ],
     ];
 
     public function nextStep()
@@ -66,7 +70,7 @@ class BusinessOnboarding extends Component
         // 2. Processar a Foto se existir
         if ($this->photo) {
             $path = $this->photo->store('workspaces/logos', 'public');
-            $workspace->update(['logo_path' => '/storage/' . $path]);
+            $workspace->update(['logo_path' => '/storage/'.$path]);
         }
 
         // 3. Associar o utilizador como Admin
@@ -83,4 +87,3 @@ class BusinessOnboarding extends Component
         return view('livewire.business.business-onboarding')->layout('components.layouts.app');
     }
 }
-

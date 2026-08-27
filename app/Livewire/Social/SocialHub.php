@@ -2,12 +2,23 @@
 
 namespace App\Livewire\Social;
 
-use Livewire\Component;
-use App\Models\{SocialPost, SocialFollow, SocialLike, SocialComment, SocialNotification, User, CommunityChallenge, CommunityChallengeParticipant, Goal};
-use Livewire\WithFileUploads;
-use Livewire\Attributes\{Layout, Computed, Url, On};
-use Illuminate\Support\Str;
+use App\Models\CommunityChallenge;
+use App\Models\CommunityChallengeParticipant;
+use App\Models\Goal;
+use App\Models\SocialComment;
+use App\Models\SocialFollow;
+use App\Models\SocialLike;
+use App\Models\SocialNotification;
+use App\Models\SocialPost;
+use App\Models\SocialReport;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class SocialHub extends Component
 {
@@ -15,22 +26,33 @@ class SocialHub extends Component
 
     // --- PUBLICADOR DE CONTEÚDO ---
     public $newPostContent = '';
+
     public $mediaFile;
+
     public $visibility = 'public'; // public, followers, workspace, private
 
     // --- INTERAÇÕES ---
     public $commentingPostId = null;
+
     public $commentContent = '';
 
     // --- EDIÇÃO DE PERFIL (Mantido exatamente como tinhas) ---
     public $editName = '';
+
     public $reportModal = false;
-public $reportingPostId = null;
-public $reportReason = '';
+
+    public $reportingPostId = null;
+
+    public $reportReason = '';
+
     public $editUsername = '';
+
     public $editBio = '';
+
     public $editAvatarFile = null;
+
     public $editDefaultVisibility = 'public';
+
     public $editIsPrivate = false;
 
     // --- FILTROS E PESQUISA (Refletidos no URL para navegação fluida) ---
@@ -58,10 +80,10 @@ public $reportReason = '';
         $followingIds = SocialFollow::where('follower_id', $userId)->pluck('following_id');
 
         $query = SocialPost::with([
-                'user:id,name,username,avatar_path',
-                'likes:id,post_id,user_id',
-                'comments.user:id,name,username,avatar_path',
-            ])
+            'user:id,name,username,avatar_path',
+            'likes:id,post_id,user_id',
+            'comments.user:id,name,username,avatar_path',
+        ])
             ->withCount(['likes', 'comments'])
             ->where('is_story', false) // Foco total em posts reais (stories removidos)
             ->where(function ($query) use ($userId, $workspaceId, $followingIds) {
@@ -88,7 +110,7 @@ public $reportReason = '';
         }
 
         if ($this->search !== '') {
-            $query->where('content', 'like', '%' . $this->search . '%');
+            $query->where('content', 'like', '%'.$this->search.'%');
         }
 
         // Retorna paginado para permitir carregamento infinito fluido
@@ -186,20 +208,20 @@ public $reportReason = '';
     {
         $user = auth()->user();
         $this->validate([
-            'editName'      => 'required|string|max:60',
-            'editUsername'  => 'required|alpha_dash|max:30|unique:users,username,'.$user->id,
-            'editBio'       => 'nullable|string|max:160',
-            'editAvatarFile'=> 'nullable|image|max:5120',
+            'editName' => 'required|string|max:60',
+            'editUsername' => 'required|alpha_dash|max:30|unique:users,username,'.$user->id,
+            'editBio' => 'nullable|string|max:160',
+            'editAvatarFile' => 'nullable|image|max:5120',
             'editDefaultVisibility' => 'required|in:public,followers,workspace,private',
             'editIsPrivate' => 'boolean',
         ]);
 
         $data = [
-            'name'      => $this->editName,
-            'username'  => $this->editUsername,
-            'social_bio'=> $this->editBio,
+            'name' => $this->editName,
+            'username' => $this->editUsername,
+            'social_bio' => $this->editBio,
             'default_post_visibility' => $this->editDefaultVisibility,
-            'is_profile_private'      => $this->editIsPrivate,
+            'is_profile_private' => $this->editIsPrivate,
         ];
 
         if ($this->editAvatarFile) {
@@ -218,7 +240,7 @@ public $reportReason = '';
     {
         $this->validate([
             'newPostContent' => 'required_without:mediaFile|max:1000',
-            'mediaFile'      => 'nullable|file|mimes:jpg,jpeg,png,webp,mp4,mov|max:30720', // Limite de 30MB
+            'mediaFile' => 'nullable|file|mimes:jpg,jpeg,png,webp,mp4,mov|max:30720', // Limite de 30MB
         ]);
 
         $path = null;
@@ -230,13 +252,13 @@ public $reportReason = '';
         }
 
         SocialPost::create([
-            'user_id'      => auth()->id(),
+            'user_id' => auth()->id(),
             'workspace_id' => auth()->user()->current_workspace_id,
-            'type'         => $type,
-            'content'      => $this->newPostContent,
-            'media_path'   => $path,
-            'visibility'   => $this->visibility,
-            'is_story'     => false,
+            'type' => $type,
+            'content' => $this->newPostContent,
+            'media_path' => $path,
+            'visibility' => $this->visibility,
+            'is_story' => false,
         ]);
 
         $this->reset(['newPostContent', 'mediaFile']);
@@ -332,38 +354,36 @@ public $reportReason = '';
      */
     public function copyPostLink($postId)
     {
-        $url = route('social.hub') . '?post=' . $postId;
+        $url = route('social.hub').'?post='.$postId;
         $this->dispatch('copy-to-clipboard', text: $url);
         $this->dispatch('toast', text: 'Link copiado para a área de transferência! 🔗');
     }
 
     public function openReportModal($postId)
-{
-    $this->reportingPostId = $postId;
-    $this->reportModal = true;
-}
+    {
+        $this->reportingPostId = $postId;
+        $this->reportModal = true;
+    }
 
-public function submitReport()
-{
-    $this->validate(['reportReason' => 'required|min:10|max:500']);
+    public function submitReport()
+    {
+        $this->validate(['reportReason' => 'required|min:10|max:500']);
 
-    // GRAVA A DENÚNCIA PARA O ADMIN VER
-    \App\Models\SocialReport::create([
-        'user_id' => auth()->id(),            // Quem denuncia
-        'social_post_id' => $this->reportingPostId, // O post denunciado
-        'reason' => $this->reportReason,      // O motivo escrito
-        'status' => 'pending',                // Estado inicial
-    ]);
+        // GRAVA A DENÚNCIA PARA O ADMIN VER
+        SocialReport::create([
+            'user_id' => auth()->id(),            // Quem denuncia
+            'social_post_id' => $this->reportingPostId, // O post denunciado
+            'reason' => $this->reportReason,      // O motivo escrito
+            'status' => 'pending',                // Estado inicial
+        ]);
 
-    $this->reset(['reportModal', 'reportReason', 'reportingPostId']);
-    $this->dispatch('toast', text: 'Denúncia enviada com sucesso. A nossa equipa irá analisar. 🛡️');
-}
+        $this->reset(['reportModal', 'reportReason', 'reportingPostId']);
+        $this->dispatch('toast', text: 'Denúncia enviada com sucesso. A nossa equipa irá analisar. 🛡️');
+    }
 
     /**
      * UI: Ativa/Desativa a caixa de comentário de um post específico.
      */
-
-
     public function setCommenting($postId)
     {
         $this->commentingPostId = ($this->commentingPostId === $postId) ? null : $postId;
@@ -385,24 +405,23 @@ public function submitReport()
     /**
      * RENDERIZAÇÃO: Liga o componente ao layout principal.
      */
-/**
- * PERFIL: Iniciar conversa com o utilizador do perfil.
- */
-public function startConversation(int $userId)
-{
-    $this->dispatch('open-chat-with', userId: $userId);
-}
+    /**
+     * PERFIL: Iniciar conversa com o utilizador do perfil.
+     */
+    public function startConversation(int $userId)
+    {
+        $this->dispatch('open-chat-with', userId: $userId);
+    }
 
-/**
- * PERFIL: Copiar link do perfil.
- */
-public function copyProfileLink(string $username)
-{
-    $url = route('social.profile', $username);
-    $this->dispatch('copy-to-clipboard', text: $url);
-    $this->dispatch('toast', text: 'Link do perfil copiado! 🔗');
-}
-
+    /**
+     * PERFIL: Copiar link do perfil.
+     */
+    public function copyProfileLink(string $username)
+    {
+        $url = route('social.profile', $username);
+        $this->dispatch('copy-to-clipboard', text: $url);
+        $this->dispatch('toast', text: 'Link do perfil copiado! 🔗');
+    }
 
     public function joinChallenge(int $challengeId): void
     {

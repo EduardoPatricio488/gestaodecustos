@@ -17,7 +17,7 @@ class EmployeeTerminatedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Cessação de Vínculo Contratual 🛑 - ' . $this->companyName,
+            subject: 'Cessação de Vínculo Contratual 🛑 - '.$this->companyName,
         );
     }
 

@@ -21,7 +21,7 @@ class Invoice extends Model
         'vat_amount_converted',
         'total_amount_converted',
         'status',
-        'due_date'
+        'due_date',
     ];
 
     protected $casts = [

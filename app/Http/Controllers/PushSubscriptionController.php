@@ -16,7 +16,7 @@ class PushSubscriptionController extends Controller
         $request->validate([
             'endpoint' => 'required',
             'keys.auth' => 'required',
-            'keys.p256dh' => 'required'
+            'keys.p256dh' => 'required',
         ]);
 
         $endpoint = $request->endpoint;
@@ -29,7 +29,7 @@ class PushSubscriptionController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Dispositivo registado com sucesso.'
+            'message' => 'Dispositivo registado com sucesso.',
         ]);
     }
 }

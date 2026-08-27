@@ -2,25 +2,31 @@
 
 namespace App\Livewire\Public;
 
-use App\Models\{Workspace, User};
+use App\Models\Workspace;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\DB;
 
 class CareersPortal extends Component
 {
     use WithFileUploads;
 
+    public $selectedCompanyId;
 
-    public $selectedCompanyId, $selectedCompanyName;
+    public $selectedCompanyName;
+
     public $viewingCompany = null; // ✅ Para o modal de detalhes
-    public $role_applied, $cv, $phone, $notes;
+
+    public $role_applied;
+
+    public $cv;
+
+    public $phone;
+
+    public $notes;
+
     public $hasApplied = false;
-
-
-
-
 
     // Estado para saber se estamos a rever ou a criar
 
@@ -29,13 +35,13 @@ class CareersPortal extends Component
     /**
      * Abre o modal e preenche os dados automaticamente
      */
-
-     public function openDetails($companyId)
+    public function openDetails($companyId)
     {
         $this->viewingCompany = Workspace::find($companyId);
         $this->dispatch('modal-show', name: 'company-details-modal');
     }
-     public function openApplication($companyId, $companyName)
+
+    public function openApplication($companyId, $companyName)
     {
         $this->selectedCompanyId = $companyId;
         $this->selectedCompanyName = $companyName;
@@ -52,12 +58,14 @@ class CareersPortal extends Component
             $this->notes = $existing->notes;
         } else {
             $this->hasApplied = false;
-            $this->role_applied = ''; $this->phone = ''; $this->notes = ''; $this->cv = null;
+            $this->role_applied = '';
+            $this->phone = '';
+            $this->notes = '';
+            $this->cv = null;
         }
 
         $this->dispatch('modal-show', name: 'apply-form-modal');
     }
-
 
     public function submitApplication()
     {
@@ -83,7 +91,7 @@ class CareersPortal extends Component
         $this->dispatch('toast', text: 'Candidatura submetida com sucesso!', variant: 'success');
     }
 
-     #[Layout('layouts.guest')]
+    #[Layout('layouts.guest')]
     public function render()
     {
         $userAppliedIds = DB::table('job_applications')
@@ -92,7 +100,7 @@ class CareersPortal extends Component
 
         return view('livewire.public.careers-portal', [
             'companies' => Workspace::whereIn('type', ['business', 'bussiness'])->get(),
-            'userAppliedIds' => $userAppliedIds
+            'userAppliedIds' => $userAppliedIds,
         ]);
     }
 }

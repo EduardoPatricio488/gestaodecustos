@@ -10,16 +10,16 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('email_logs', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->string('subject');
-        $table->string('month_reference'); // Ex: Maio 2026
-        $table->timestamp('sent_at');
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('email_logs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('subject');
+            $table->string('month_reference'); // Ex: Maio 2026
+            $table->timestamp('sent_at');
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

@@ -2,13 +2,18 @@
 
 namespace App\Livewire\Public;
 
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class ContactPage extends Component
 {
-    public $name, $email, $message;
+    public $name;
+
+    public $email;
+
+    public $message;
+
     public $sent = false;
 
     protected $rules = [

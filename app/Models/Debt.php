@@ -19,13 +19,13 @@ class Debt extends Model
         'amount',
         'description',
         'due_at',
-        'is_paid'
+        'is_paid',
     ];
 
     protected $casts = [
         'due_at' => 'date',
         'amount' => 'decimal:2',
-        'is_paid' => 'boolean'
+        'is_paid' => 'boolean',
     ];
 
     public function user(): BelongsTo

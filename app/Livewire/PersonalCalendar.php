@@ -2,15 +2,23 @@
 
 namespace App\Livewire;
 
-use App\Models\{Debt, Expense, FitnessActivity, Income, RecurringIncome, Reminder, Subscription};
+use App\Models\Debt;
+use App\Models\Expense;
+use App\Models\FitnessActivity;
+use App\Models\Income;
+use App\Models\RecurringIncome;
+use App\Models\Reminder;
+use App\Models\Subscription;
 use Illuminate\Support\Carbon;
-use Livewire\Attributes\{Computed, Layout};
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class PersonalCalendar extends Component
 {
     public $month;
+
     public $year;
 
     public function mount()

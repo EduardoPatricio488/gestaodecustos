@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Reminder extends Model {
+class Reminder extends Model
+{
     protected $fillable = [
         'user_id', 'workspace_id', 'title', 'remind_at',
-        'priority', 'frequency', 'is_completed', 'completed_at'
+        'priority', 'frequency', 'is_completed', 'completed_at',
     ];
 
     protected $casts = [
@@ -17,7 +18,8 @@ class Reminder extends Model {
         'completed_at' => 'datetime',
     ];
 
-    public function user(): BelongsTo {
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 }

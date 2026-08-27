@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Hub;
 
-use Livewire\Component;
 use App\Models\Reminder;
-use Livewire\WithPagination;
-use Livewire\Attributes\{Layout, Computed, Title, Url};
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
 #[Title('Terminal de Lembretes - Finance Connect')]
@@ -16,10 +19,15 @@ class RemindersHub extends Component
 
     // --- ESTADO DO FORMULÁRIO (CAMPOS DO MODELO) ---
     public $title = '';
+
     public $remind_at = '';
+
     public $priority = 'medium';
+
     public $frequency = 'once';
+
     public $category = 'finance';
+
     public $notes = '';
 
     // --- FILTROS & NAVEGAÇÃO (PROPRIEDADES EM FALTA QUE DAVAM ERRO) ---
@@ -34,6 +42,7 @@ class RemindersHub extends Component
 
     // --- UI CONTROLS ---
     public $openModal = false; // Sincronizado com x-data no Blade
+
     public $editingReminderId = null;
 
     /**
@@ -45,10 +54,10 @@ class RemindersHub extends Component
         $base = Reminder::where('workspace_id', Auth::user()->current_workspace_id);
 
         return [
-            'total_active'    => (clone $base)->where('is_completed', false)->count(),
-            'high_priority'   => (clone $base)->where('is_completed', false)->where('priority', 'high')->count(),
+            'total_active' => (clone $base)->where('is_completed', false)->count(),
+            'high_priority' => (clone $base)->where('is_completed', false)->where('priority', 'high')->count(),
             'completed_today' => (clone $base)->where('is_completed', true)->whereDate('completed_at', now())->count(),
-            'overdue'         => (clone $base)->where('is_completed', false)->where('remind_at', '<', now())->count(),
+            'overdue' => (clone $base)->where('is_completed', false)->where('remind_at', '<', now())->count(),
         ];
     }
 
@@ -59,8 +68,8 @@ class RemindersHub extends Component
     public function reminders()
     {
         $query = Reminder::where('workspace_id', Auth::user()->current_workspace_id)
-            ->when($this->search, fn($q) => $q->where('title', 'like', '%'.$this->search.'%'))
-            ->when($this->filterPriority !== 'all', fn($q) => $q->where('priority', $this->filterPriority));
+            ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
+            ->when($this->filterPriority !== 'all', fn ($q) => $q->where('priority', $this->filterPriority));
 
         // Lógica de Abas
         if ($this->activeTab === 'pending') {
@@ -80,21 +89,21 @@ class RemindersHub extends Component
     public function saveReminder()
     {
         $this->validate([
-            'title'     => 'required|min:3|max:100',
+            'title' => 'required|min:3|max:100',
             'remind_at' => 'required',
-            'priority'  => 'required|in:low,medium,high',
-            'category'  => 'required',
+            'priority' => 'required|in:low,medium,high',
+            'category' => 'required',
         ]);
 
         $data = [
-            'user_id'      => Auth::id(),
+            'user_id' => Auth::id(),
             'workspace_id' => Auth::user()->current_workspace_id,
-            'title'        => $this->title,
-            'remind_at'    => $this->remind_at,
-            'priority'     => $this->priority,
-            'frequency'    => $this->frequency,
-            'category'     => $this->category,
-            'notes'        => $this->notes,
+            'title' => $this->title,
+            'remind_at' => $this->remind_at,
+            'priority' => $this->priority,
+            'frequency' => $this->frequency,
+            'category' => $this->category,
+            'notes' => $this->notes,
         ];
 
         if ($this->editingReminderId) {
@@ -115,8 +124,8 @@ class RemindersHub extends Component
     {
         $reminder = Reminder::findOrFail($id);
         $reminder->update([
-            'is_completed' => !$reminder->is_completed,
-            'completed_at' => !$reminder->is_completed ? now() : null
+            'is_completed' => ! $reminder->is_completed,
+            'completed_at' => ! $reminder->is_completed ? now() : null,
         ]);
 
         $this->dispatch('toast', text: $reminder->is_completed ? 'Tarefa concluída! 🎯' : 'Reativado.');

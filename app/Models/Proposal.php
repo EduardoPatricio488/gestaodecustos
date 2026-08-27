@@ -16,7 +16,7 @@ class Proposal extends Model
         'amount',
         'status',
         'valid_until',
-        'notes'
+        'notes',
     ];
 
     protected $casts = [
@@ -53,20 +53,23 @@ class Proposal extends Model
     // Verifica se a proposta expirou (se a data passou e não foi ganha)
     public function isExpired(): bool
     {
-        if (!$this->valid_until) return false;
-        return $this->valid_until->isPast() && !in_array($this->status, ['aceite', 'convertida']);
+        if (! $this->valid_until) {
+            return false;
+        }
+
+        return $this->valid_until->isPast() && ! in_array($this->status, ['aceite', 'convertida']);
     }
 
     // Retorna a cor do badge baseada no estado atual
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
-            'rascunho'   => 'neutral',
-            'enviada'    => 'info',
-            'aceite'     => 'success',
-            'recusada'   => 'danger',
+        return match ($this->status) {
+            'rascunho' => 'neutral',
+            'enviada' => 'info',
+            'aceite' => 'success',
+            'recusada' => 'danger',
             'convertida' => 'emerald',
-            default      => 'neutral',
+            default => 'neutral',
         };
     }
 }

@@ -17,7 +17,7 @@ class EmployeeReactivatedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Acesso Restabelecido! ✅ - ' . $this->companyName,
+            subject: 'Acesso Restabelecido! ✅ - '.$this->companyName,
         );
     }
 

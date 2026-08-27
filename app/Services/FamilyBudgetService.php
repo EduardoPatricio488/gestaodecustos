@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Category;
 use App\Models\Expense;
 use App\Models\FamilyBudgetPermission;
 use App\Models\User;

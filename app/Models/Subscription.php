@@ -6,7 +6,8 @@ use App\Traits\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Subscription extends Model {
+class Subscription extends Model
+{
     use BelongsToWorkspace;
 
     protected $fillable = [
@@ -35,6 +36,13 @@ class Subscription extends Model {
         'notify_before_billing' => 'boolean',
     ];
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
-    public function category(): BelongsTo { return $this->belongsTo(Category::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
 }

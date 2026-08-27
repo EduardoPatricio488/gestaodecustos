@@ -9,13 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
-    Schema::table('workspaces', function (Blueprint $table) {
-        $table->boolean('recruitment_active')->default(true); // Abrir/Fechar vagas
-        $table->text('recruitment_description')->nullable(); // Texto do card
-        $table->string('recruitment_announcement')->nullable(); // Ex: "Procuramos Developers"
-    });
-}
+    public function up(): void
+    {
+        Schema::table('workspaces', function (Blueprint $table) {
+            $table->boolean('recruitment_active')->default(true); // Abrir/Fechar vagas
+            $table->text('recruitment_description')->nullable(); // Texto do card
+            $table->string('recruitment_announcement')->nullable(); // Ex: "Procuramos Developers"
+        });
+    }
 
     /**
      * Reverse the migrations.

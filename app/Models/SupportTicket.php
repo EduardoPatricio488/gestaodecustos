@@ -15,7 +15,7 @@ class SupportTicket extends Model
         'subject',
         'message',
         'status',
-        'priority'
+        'priority',
     ];
 
     public function user(): BelongsTo

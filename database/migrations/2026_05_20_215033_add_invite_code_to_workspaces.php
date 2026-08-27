@@ -9,11 +9,12 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
-    Schema::table('workspaces', function (Blueprint $table) {
-        $table->string('invite_code')->nullable()->unique()->after('type');
-    });
-}
+    public function up(): void
+    {
+        Schema::table('workspaces', function (Blueprint $table) {
+            $table->string('invite_code')->nullable()->unique()->after('type');
+        });
+    }
 
     /**
      * Reverse the migrations.

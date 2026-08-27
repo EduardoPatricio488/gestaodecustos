@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Exports\BusinessExport;
-use Maatwebsite\Excel\Facades\Excel;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 use App\Models\Expense;
 use App\Models\Income;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ExportController extends Controller
 {
@@ -60,7 +60,7 @@ class ExportController extends Controller
         // 4. Gerar PDF (Cria este ficheiro em resources/views/pdf/financial-report.blade.php)
         $pdf = Pdf::loadView('pdf.financial-report', $data);
 
-        return $pdf->download('Relatorio_Financeiro_' . now()->format('dmY_Hi') . '.pdf');
+        return $pdf->download('Relatorio_Financeiro_'.now()->format('dmY_Hi').'.pdf');
     }
 
     /**
@@ -71,6 +71,7 @@ class ExportController extends Controller
         $user = auth()->user();
         $expenses = $user->expenses()->with('category')->latest()->get();
         $pdf = Pdf::loadView('pdf.expenses', compact('expenses'));
+
         return $pdf->download('despesas_pessoais.pdf');
     }
 
@@ -83,7 +84,7 @@ class ExportController extends Controller
 
         return Excel::download(
             new BusinessExport($user, $monthNumber),
-            "Contabilidade_" . ucfirst($monthName) . "_" . date('Y') . ".xlsx"
+            'Contabilidade_'.ucfirst($monthName).'_'.date('Y').'.xlsx'
         );
     }
 }

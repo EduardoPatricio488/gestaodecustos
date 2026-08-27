@@ -2,18 +2,16 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use App\Models\Expense;
-use App\Models\Income;
-use App\Models\Subscription;
-use App\Models\RecurringIncome;
-use Livewire\Attributes\Layout;
 use Carbon\Carbon;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class FinancialCalendar extends Component
 {
-    public $month, $year;
+    public $month;
+
+    public $year;
 
     public function mount()
     {
@@ -61,7 +59,7 @@ class FinancialCalendar extends Component
 
             $daysInMonth[] = [
                 'date' => (clone $tempDate),
-                'is_current_month' => $tempDate->month === (int)$this->month,
+                'is_current_month' => $tempDate->month === (int) $this->month,
                 'expenses' => $expenses,
                 'incomes' => $incomes,
                 'subscriptions' => $subs,
@@ -75,7 +73,7 @@ class FinancialCalendar extends Component
 
         return view('livewire.financial-calendar', [
             'days' => $daysInMonth,
-            'monthName' => mb_convert_case($startDate->translatedFormat('F Y'), MB_CASE_TITLE)
+            'monthName' => mb_convert_case($startDate->translatedFormat('F Y'), MB_CASE_TITLE),
         ]);
     }
 }

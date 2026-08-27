@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Models\Category;
 use App\Models\Expense;
+use App\Models\Income;
 use App\Models\User;
-use Carbon\Carbon;
 
 class QuickCommandService
 {
@@ -58,7 +58,7 @@ class QuickCommandService
 
         return [
             'success' => true,
-            'message' => "Despesa de ".number_format($amount, 2, ',', '.')."€ registada em ".($category?->name ?? 'Geral').'.',
+            'message' => 'Despesa de '.number_format($amount, 2, ',', '.').'€ registada em '.($category?->name ?? 'Geral').'.',
             'action' => 'expense_created',
         ];
     }
@@ -97,7 +97,7 @@ class QuickCommandService
         $workspace = $user->currentWorkspace;
         $start = now()->startOfMonth();
         $spent = (float) Expense::where('workspace_id', $workspace->id)->where('spent_at', '>=', $start)->sum('amount');
-        $earned = (float) \App\Models\Income::where('workspace_id', $workspace->id)->where('received_at', '>=', $start)->sum('amount');
+        $earned = (float) Income::where('workspace_id', $workspace->id)->where('received_at', '>=', $start)->sum('amount');
         $net = $earned - $spent;
 
         return [

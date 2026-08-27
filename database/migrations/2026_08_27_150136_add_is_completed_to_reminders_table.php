@@ -9,13 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
-    Schema::table('reminders', function (Blueprint $table) {
-        if (!Schema::hasColumn('reminders', 'is_completed')) {
-            $table->boolean('is_completed')->default(false)->after('description');
-        }
-    });
-}
+    public function up(): void
+    {
+        Schema::table('reminders', function (Blueprint $table) {
+            if (! Schema::hasColumn('reminders', 'is_completed')) {
+                $table->boolean('is_completed')->default(false)->after('description');
+            }
+        });
+    }
 
     /**
      * Reverse the migrations.

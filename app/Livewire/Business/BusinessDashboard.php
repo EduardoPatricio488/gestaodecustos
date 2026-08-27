@@ -2,11 +2,12 @@
 
 namespace App\Livewire\Business;
 
-use Livewire\Component;
-use App\Models\{Expense, Invoice, Employee, Project, Product, BusinessDocument, Task, User};
-use Livewire\Attributes\Layout;
+use App\Models\Employee;
+use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class BusinessDashboard extends Component
@@ -39,7 +40,7 @@ class BusinessDashboard extends Component
                     'name' => $data['name'],
                     'password' => bcrypt('password'),
                     'email_verified_at' => now(),
-                    'current_workspace_id' => $workspace->id
+                    'current_workspace_id' => $workspace->id,
                 ]
             );
 
@@ -50,7 +51,7 @@ class BusinessDashboard extends Component
                 [
                     'name' => $data['name'],
                     'role' => $data['role'],
-                    'salary' => rand(1500, 3000)
+                    'salary' => rand(1500, 3000),
                 ]
             );
         }
@@ -66,8 +67,9 @@ class BusinessDashboard extends Component
         $user = Auth::user();
         $workspace = $user->workspaces()->where('workspaces.id', $workspaceId)->first();
 
-        if (!$workspace) {
+        if (! $workspace) {
             $this->dispatch('toast', variant: 'error', heading: 'Acesso Negado');
+
             return;
         }
 
@@ -84,12 +86,14 @@ class BusinessDashboard extends Component
     {
         $employee = Employee::find($id);
 
-        if (!$employee || !$employee->user_id) {
+        if (! $employee || ! $employee->user_id) {
             $this->dispatch('toast', variant: 'error', text: 'Utilizador não vinculado.');
+
             return;
         }
 
         session()->put('viewing_as_collaborator_id', $id);
+
         return redirect()->route('hub.business.dashboard');
     }
 
@@ -104,6 +108,7 @@ class BusinessDashboard extends Component
         if ($personalWs) {
             $user->update(['current_workspace_id' => $personalWs->id]);
             session()->forget('viewing_as_collaborator_id');
+
             return redirect()->route('dashboard');
         }
     }
@@ -111,6 +116,7 @@ class BusinessDashboard extends Component
     public function stopViewingAsCollaborator()
     {
         session()->forget('viewing_as_collaborator_id');
+
         return redirect()->route('hub.business.dashboard');
     }
 
@@ -119,14 +125,14 @@ class BusinessDashboard extends Component
         $user = Auth::user();
         $workspace = $user->currentWorkspace;
 
-        if (!$workspace) {
+        if (! $workspace) {
             return <<<'HTML'
                 <div class="p-20 text-center italic text-zinc-500 font-medium">Nenhum workspace empresarial detetado.</div>
             HTML;
         }
 
         $month = now()->month;
-        $year  = now()->year;
+        $year = now()->year;
 
         // --- CÁLCULOS FINANCEIROS (MÉTRICAS DO MÊS ATUAL) ---
         $revenue = (float) $workspace->invoices()
@@ -144,7 +150,7 @@ class BusinessDashboard extends Component
 
         $payroll = (float) $workspace->employees()->sum('salary');
         $totalCosts = $opEx + $payroll;
-        $netProfit  = $revenue - $totalCosts;
+        $netProfit = $revenue - $totalCosts;
 
         // SALDO TOTAL: Capital Inicial + Fluxo de Caixa acumulado
         $totalBalance = (float) ($workspace->initial_capital ?? 0) + $revenue - $totalCosts;
@@ -166,7 +172,7 @@ class BusinessDashboard extends Component
 
         // Alerta de Documentos Críticos (Expirados ou a expirar em 15 dias)
         $criticalDocsCount = $workspace->documents()
-            ->where(fn($q) => $q->where('expires_at', '<', now())->orWhere('expires_at', '<=', now()->addDays(15)))
+            ->where(fn ($q) => $q->where('expires_at', '<', now())->orWhere('expires_at', '<=', now()->addDays(15)))
             ->count();
 
         // Alerta de Tarefas em Atraso
@@ -179,23 +185,23 @@ class BusinessDashboard extends Component
         $businessWorkspaces = $user->workspaces()->where('type', '!=', 'personal')->get();
 
         return view('livewire.business.business-dashboard', [
-            'workspace'           => $workspace,
-            'businessWorkspaces'  => $businessWorkspaces,
-            'revenue'             => $revenue,
-            'totalCosts'          => $totalCosts,
-            'payroll'             => $payroll,
-            'netProfit'           => $netProfit,
-            'totalBalance'        => $totalBalance,
-            'runway'              => $workspace->getRunway(),
-            'margin'              => $revenue > 0 ? ($netProfit / $revenue) * 100 : 0,
-            'accountsReceivable'  => (float) $workspace->invoices()->where('status', 'pendente')->sum('total_amount'),
-            'activeProjects'      => $activeProjects,
-            'lowStockCount'       => $lowStockCount,
-            'criticalDocsCount'   => $criticalDocsCount,
-            'overdueTasksCount'   => $overdueTasksCount,
-            'teamCount'           => $workspace->employees()->count(),
-            'vatProvision'        => $vatProvision,
-            'ircProvision'        => $ircProvision,
+            'workspace' => $workspace,
+            'businessWorkspaces' => $businessWorkspaces,
+            'revenue' => $revenue,
+            'totalCosts' => $totalCosts,
+            'payroll' => $payroll,
+            'netProfit' => $netProfit,
+            'totalBalance' => $totalBalance,
+            'runway' => $workspace->getRunway(),
+            'margin' => $revenue > 0 ? ($netProfit / $revenue) * 100 : 0,
+            'accountsReceivable' => (float) $workspace->invoices()->where('status', 'pendente')->sum('total_amount'),
+            'activeProjects' => $activeProjects,
+            'lowStockCount' => $lowStockCount,
+            'criticalDocsCount' => $criticalDocsCount,
+            'overdueTasksCount' => $overdueTasksCount,
+            'teamCount' => $workspace->employees()->count(),
+            'vatProvision' => $vatProvision,
+            'ircProvision' => $ircProvision,
         ]);
     }
 }

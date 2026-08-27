@@ -12,11 +12,18 @@ class ExpenseSplitParticipant extends Model
     ];
 
     protected $casts = [
-        'amount'  => 'decimal:2',
-        'paid'    => 'boolean',
+        'amount' => 'decimal:2',
+        'paid' => 'boolean',
         'paid_at' => 'datetime',
     ];
 
-    public function split(): BelongsTo { return $this->belongsTo(ExpenseSplit::class, 'expense_split_id'); }
-    public function user(): BelongsTo  { return $this->belongsTo(User::class); }
+    public function split(): BelongsTo
+    {
+        return $this->belongsTo(ExpenseSplit::class, 'expense_split_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

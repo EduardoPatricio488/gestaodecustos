@@ -3,9 +3,9 @@
 namespace App\Livewire\Admin;
 
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
 
 #[Layout('components.layouts.app')]
 class ProductivityHub extends Component
@@ -47,10 +47,10 @@ class ProductivityHub extends Component
         // 5. TIMELINE DE CONQUISTAS (Ações de sucesso em tempo real)
         $recentAchievements = DB::table('activity_logs')
             ->join('users', 'activity_logs.user_id', '=', 'users.id')
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->where('activity_logs.action', 'like', '%concluiu%')
-                  ->orWhere('activity_logs.action', 'like', '%alcançou%')
-                  ->orWhere('activity_logs.action', 'like', '%bateu meta%');
+                    ->orWhere('activity_logs.action', 'like', '%alcançou%')
+                    ->orWhere('activity_logs.action', 'like', '%bateu meta%');
             })
             ->select('activity_logs.action', 'activity_logs.created_at', 'users.name as user_name')
             // CORREÇÃO AQUI: Especificamos activity_logs.created_at para evitar ambiguidade
@@ -68,7 +68,7 @@ class ProductivityHub extends Component
                 'avg_tasks' => $totalReminders > 0 ? round($totalReminders / (max(DB::table('users')->count(), 1)), 1) : 0,
             ],
             'topUsers' => $topUsers,
-            'recentAchievements' => $recentAchievements
+            'recentAchievements' => $recentAchievements,
         ]);
     }
 }

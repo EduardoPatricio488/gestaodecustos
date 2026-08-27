@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Traits\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BankTransfer extends Model
 {
@@ -27,7 +26,7 @@ class BankTransfer extends Model
     ];
 
     protected $casts = [
-        'amount'         => 'float',
+        'amount' => 'float',
         'transferred_at' => 'date',
     ];
 
