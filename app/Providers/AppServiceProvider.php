@@ -7,14 +7,18 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\Event; // <-- ADICIONAR
-use Illuminate\Auth\Events\Login;      // <-- ADICIONAR
+use Illuminate\Support\Facades\Event;
+use Illuminate\Auth\Events\Login;
 use App\Listeners\UpdateLastLogin;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Carbon;
+
+// 🔥 NOVOS IMPORTS PARA O STRIPE
+use Laravel\Cashier\Events\WebhookReceived;
+use App\Listeners\StripeWebhookListener;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,18 +34,27 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      */
     public function boot(): void
-{
-    $this->configureDefaults();
-    $this->registerViewNamespaces();
-Event::listen(Login::class, UpdateLastLogin::class);
-    \Illuminate\Support\Facades\App::setLocale('pt');
-    \Illuminate\Support\Carbon::setLocale('pt');
+    {
+        $this->configureDefaults();
+        $this->registerViewNamespaces();
 
-    // FORÇAR HTTPS SEMPRE QUE ESTIVER NO NGROK
-    if (str_contains(request()->getHost(), 'ngrok-free.app') || str_contains(request()->getHost(), 'ngrok-free.dev')) {
-        \Illuminate\Support\Facades\URL::forceScheme('https');
+        // Listeners de Sistema
+        Event::listen(Login::class, UpdateLastLogin::class);
+
+        // 🔥 NOVO: Listener para confirmar pagamentos do Stripe automaticamente
+        Event::listen(
+            WebhookReceived::class,
+            StripeWebhookListener::class
+        );
+
+        \Illuminate\Support\Facades\App::setLocale('pt');
+        \Illuminate\Support\Carbon::setLocale('pt');
+
+        // FORÇAR HTTPS SEMPRE QUE ESTIVER NO NGROK
+        if (str_contains(request()->getHost(), 'ngrok-free.app') || str_contains(request()->getHost(), 'ngrok-free.dev')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
     }
-}
 
     protected function registerViewNamespaces(): void
     {

@@ -23,13 +23,16 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\UpdateUserActivity::class,
         ]);
 
+        // 🔥 CORREÇÃO PARA O STRIPE FUNCIONAR:
         $middleware->validateCsrfTokens(except: [
             'api/whatsapp/webhook',
+            'stripe/*', // 🔥 Adicionado para permitir que o Stripe avise o site sobre pagamentos
         ]);
 
         // 3. ATALHOS DE MIDDLEWARE (ALIAS)
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'plan' => \App\Http\Middleware\CheckPlanAccess::class,
         ]);
 
     })

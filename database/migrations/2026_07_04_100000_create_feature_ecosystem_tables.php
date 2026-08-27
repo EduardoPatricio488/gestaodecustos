@@ -53,7 +53,9 @@ return new class extends Migration
             $table->unsignedTinyInteger('progress_pct')->default(0);
             $table->timestamp('joined_at');
             $table->timestamps();
-            $table->unique(['community_challenge_id', 'user_id']);
+
+            // 🔥 CORREÇÃO: Nome manual curto para evitar erro de limite de caracteres do MySQL
+            $table->unique(['community_challenge_id', 'user_id'], 'cc_participant_unique');
         });
 
         Schema::create('bank_statement_imports', function (Blueprint $table) {
@@ -104,7 +106,9 @@ return new class extends Migration
             $table->boolean('can_edit')->default(false);
             $table->decimal('allowance_limit', 12, 2)->nullable();
             $table->timestamps();
-            $table->unique(['workspace_id', 'user_id', 'category_id']);
+
+            // 🔥 CORREÇÃO: Nome manual curto para segurança no MySQL
+            $table->unique(['workspace_id', 'user_id', 'category_id'], 'fb_perm_ws_user_cat_unique');
         });
 
         Schema::create('price_history', function (Blueprint $table) {

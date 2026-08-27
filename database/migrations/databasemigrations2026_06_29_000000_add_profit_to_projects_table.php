@@ -9,14 +9,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('projects', function (Blueprint $table) {
-            $table->decimal('profit', 10, 2)->nullable()->after('margin');
+            // Verificamos se a coluna já não existe para evitar erros
+            if (!Schema::hasColumn('projects', 'profit')) {
+                // 🔥 Removido o ->after('margin') para garantir que funciona no MySQL
+                // Aumentado para 15,2 para suportar valores financeiros maiores
+                $table->decimal('profit', 15, 2)->nullable();
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('projects', function (Blueprint $table) {
-            $table->dropColumn('profit');
+            if (Schema::hasColumn('projects', 'profit')) {
+                $table->dropColumn('profit');
+            }
         });
     }
 };

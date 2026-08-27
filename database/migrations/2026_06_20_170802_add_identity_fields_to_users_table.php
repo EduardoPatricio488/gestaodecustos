@@ -12,7 +12,8 @@ return new class extends Migration
 
             // Só adiciona se NÃO existir
             if (!Schema::hasColumn('users', 'profile_color')) {
-                $table->string('profile_color')->default('#6366f1')->after('profile_emoji');
+                // 🔥 Removido o ->after('profile_emoji') para evitar erro de coluna inexistente
+                $table->string('profile_color')->default('#6366f1');
             }
         });
     }

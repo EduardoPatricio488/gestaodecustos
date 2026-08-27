@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
+use Laravel\Cashier\Billable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +25,7 @@ class User extends Authenticatable implements PasskeyUser, MustVerifyEmail
 
     // 3. ORGANIZADO: Traits usados apenas uma vez
     use HasFactory,
+    Billable,
         Notifiable,
         PasskeyAuthenticatable,
         TwoFactorAuthenticatable,

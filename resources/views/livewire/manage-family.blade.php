@@ -3,16 +3,10 @@
     $user = auth()->user();
     $workspace = $user->currentWorkspace;
 
-<<<<<<< HEAD
     // 1. Identificar o TEU cofre pessoal (Eduardo)
     $myPersonalWs = $user->workspaces()->where('type', 'personal')->where('owner_id', $user->id)->first();
     $myPersonalWsId = $myPersonalWs?->id;
     $personalMembers = $myPersonalWs ? $myPersonalWs->users : collect();
-=======
-        // 1. IDENTIFICAR O TEU COFRE PRIVADO
-        $myPersonalWs = $user->workspaces()->where('type', 'personal')->where('owner_id', $user->id)->first();
-        $personalMembers = $myPersonalWs ? $myPersonalWs->users : collect();
->>>>>>> 512abb8 (Update 2.0)
 
     // 2. Lógica de Estado: Estás no teu cofre ou no de outro?
     $isAtPrivate = $myPersonalWs && ($workspace->id === $myPersonalWs->id);
@@ -30,17 +24,12 @@
     // Definimos isAtShared para evitar erros no HTML
     $isAtShared = $sharedWs && ($workspace->id === $sharedWs->id);
 
-<<<<<<< HEAD
     $sharedMembers = $sharedWs ? $sharedWs->users()->withPivot('role')->get() : collect();
 
     // 4. Contexto para o Hero Card
     $contextType = $isAtPrivate ? 'private' : 'external';
     $ownerModel = \App\Models\User::find($workspace->owner_id);
 @endphp
-=======
-        $ownerModel = \App\Models\User::find($workspace->owner_id);
-    @endphp
->>>>>>> 512abb8 (Update 2.0)
 <div class="bg-red-500 text-white p-2">
    Eu sou Admin deste espaço? {{ $iAmAdmin ? 'SIM' : 'NÃO' }}
 </div>
@@ -98,11 +87,7 @@
                 </div>
             </div>
 
-<<<<<<< HEAD
             {{-- Só tenta mostrar o botão se NÃO estiver no pessoal E se o objeto do cofre existir --}}
-=======
-            {{-- Procura o @if perto da linha 92 --}}
->>>>>>> 512abb8 (Update 2.0)
 @if(!$isAtPrivate && $myPersonalWs)
     <a href="{{ route('workspace.switch.fast', $myPersonalWs->id) }}"
        class="group flex items-center gap-3 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all active:scale-95 no-underline">
@@ -110,7 +95,6 @@
         Voltar ao Meu Cofre
     </a>
 @endif
-<<<<<<< HEAD
         </div>
     </div>
 @php
@@ -173,15 +157,6 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
        {{-- COLUNA A: ESPAÇO PARTILHADO --}}
-=======
-        </div>
-    </div>
-
-    {{-- 3. GRID: PARTILHADO VS PRIVADO --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-
-        {{-- COLUNA A: ESPAÇO PARTILHADO --}}
->>>>>>> 512abb8 (Update 2.0)
         <div class="space-y-6">
             <div class="flex items-center justify-between px-4 text-left w-full">
                 <div class="flex items-center gap-4">
@@ -189,16 +164,11 @@
                         <flux:icon name="users" variant="outline" class="size-4" />
                     </div>
                     <h2 class="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-white leading-none">
-<<<<<<< HEAD
     Espaço Partilhado
 </h2>
 @if(!$isAtPrivate)
     <flux:badge variant="neutral" size="sm" class="text-[7px] font-black uppercase">Ativo Agora</flux:badge>
 @endif
-=======
-                        Espaço Partilhado
-                    </h2>
->>>>>>> 512abb8 (Update 2.0)
 
                     {{-- INFO COM ALPINE.JS --}}
                     <div x-data="{ open: false }" class="relative">
@@ -257,37 +227,25 @@
                         </div>
                     </div>
                 </div>
-<<<<<<< HEAD
                 {{-- BADGE: Só aparece se estiveres num cofre visitado --}}
                 @if($sharedWs)
                     <flux:badge variant="neutral" size="sm" class="text-[7px] font-black uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800">Visita Ativa</flux:badge>
                 @endif
-=======
-                @if($isAtShared) <flux:badge variant="neutral" size="sm" class="text-[7px] font-black uppercase">Ativo Agora</flux:badge> @endif
->>>>>>> 512abb8 (Update 2.0)
             </div>
 
             <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[3rem] p-8 shadow-sm min-h-[400px] flex flex-col items-center">
                 @if($sharedWs)
-<<<<<<< HEAD
                     <div class="flex flex-col items-center text-center space-y-4 w-full h-full">
                         {{-- Moldura da Foto (João) --}}
                         <div class="size-32 rounded-[2.5rem] overflow-hidden border-4 border-white dark:border-zinc-800 shadow-2xl bg-zinc-100 flex items-center justify-center">
                             @if($sharedWs->logo_path)
                                 <img src="{{ asset($sharedWs->logo_path) }}?t={{ time() }}" class="size-full object-cover">
-=======
-                    <div class="flex flex-col items-center text-center space-y-4 w-full">
-                        <div class="size-32 rounded-[2.5rem] overflow-hidden border-4 border-white dark:border-zinc-800 shadow-2xl bg-zinc-100 flex items-center justify-center">
-                            @if($sharedWs->logo_path)
-                                <img src="{{ $sharedWs->logo_url }}?t={{ time() }}" class="size-full object-cover">
->>>>>>> 512abb8 (Update 2.0)
                             @else
                                 <span class="text-3xl font-black text-brand-600 uppercase italic">{{ substr($sharedWs->name, 0, 2) }}</span>
                             @endif
                         </div>
 
                         <div>
-<<<<<<< HEAD
                             <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-1">Proprietário da conta</p>
                             <h3 class="text-xl font-black dark:text-white uppercase italic tracking-tighter">{{ $sharedWs->name }}</h3>
                         </div>
@@ -305,35 +263,11 @@
                                                 @if($sm->id === $sharedWs->owner_id) 👑 ADMINISTRADOR @else 👤 MEMBRO @endif
                                             </span>
                                         </div>
-=======
-                            <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-1">Proprietário</p>
-                            <h3 class="text-xl font-black dark:text-white uppercase italic tracking-tighter">{{ $sharedWs->name }}</h3>
-                        </div>
-
-                        <div class="w-full mt-6 pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                            <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-4">Pessoas Autorizadas</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-                                @foreach($sharedMembers as $sm)
-                                    <div class="flex items-center gap-3 p-3 bg-zinc-50/50 dark:bg-zinc-950/50 rounded-2xl border border-zinc-100 dark:border-zinc-800/50">
-                                        <flux:avatar initials="{{ substr($sm->name, 0, 2) }}" class="size-8 shadow-sm border border-white dark:border-zinc-800" />
-                                       {{-- Dentro do @foreach($sharedMembers as $sm) --}}
-<div class="flex flex-col text-left">
-    <span class="text-[10px] font-black dark:text-white uppercase truncate">{{ $sm->name }}</span>
-    <span class="text-[8px] font-bold text-brand-600 uppercase">
-        @if($sm->id === $sharedWs->owner_id)
-            👑 ADMINISTRADOR
-        @else
-            👤 MEMBRO DA FAMÍLIA
-        @endif
-    </span>
-</div>
->>>>>>> 512abb8 (Update 2.0)
                                     </div>
                                 @endforeach
                             </div>
                         </div>
 
-<<<<<<< HEAD
                         {{-- BOTÃO PARA SAIR DA VISTA (EDUARDO VOLTA AO SEU COFRE) --}}
                        @if(!$isAtPrivate && $myPersonalWs)
     <a href="{{ route('workspace.switch.fast', $myPersonalWs->id) }}"
@@ -350,171 +284,17 @@
                         <p class="text-xs font-black uppercase tracking-widest italic px-6 leading-relaxed">
                             Não estás a visitar nenhuma gestão externa de momento.
                         </p>
-=======
-                        @if(!$isAtShared)
-                            <div class="w-full mt-6">
-                                <flux:button href="{{ route('workspace.switch.fast', $sharedWs->id) }}" variant="primary" class="w-full rounded-2xl bg-zinc-950 dark:bg-zinc-800 font-black uppercase text-[10px] h-12 shadow-lg">
-                                    Entrar nesta Gestão
-                                </flux:button>
-                            </div>
-                        @endif
-                    </div>
-                @else
-                    <div class="text-center">
-                        <div class="size-20 mx-auto bg-zinc-50 dark:bg-zinc-800/50 rounded-full flex items-center justify-center mb-4">
-                            <flux:icon name="users" class="size-8 text-zinc-300" />
-                        </div>
-                        <p class="text-xs font-black uppercase text-zinc-400 tracking-widest italic">Sem grupos partilhados ativos</p>
->>>>>>> 512abb8 (Update 2.0)
                     </div>
                 @endif
             </div>
         </div>
 
         {{-- COLUNA B: O MEU COFRE PRIVADO --}}
-<<<<<<< HEAD
 <div class="space-y-6">
     <div class="flex items-center justify-between px-4 text-left w-full">
         <div class="flex items-center gap-4">
             <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-600">
                 <flux:icon name="lock-closed" variant="outline" class="size-4" />
-=======
-        <div class="space-y-6">
-            <div class="flex items-center justify-between px-4 text-left w-full">
-                <div class="flex items-center gap-4">
-                    <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-600">
-                        <flux:icon name="lock-closed" variant="outline" class="size-4" />
-                    </div>
-                   <h2 class="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-white leading-none">
-    O Meu Cofre Privado
-</h2>
-
-@if($isAtPrivate)
-    <flux:badge variant="success" size="sm" class="text-[7px] font-black uppercase">Ativo Agora</flux:badge>
-@endif
-
-                    {{-- INFO COM ALPINE.JS --}}
-                    <div x-data="{ open: false }" class="relative">
-                        <button @click="open = !open" type="button"
-                            class="flex items-center justify-center size-7 rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-500/40 ring-4 ring-emerald-500/20 hover:scale-110 hover:bg-emerald-500 transition-all group">
-                            <flux:icon name="information-circle" variant="solid" class="size-5" />
-                        </button>
-
-                        <div x-show="open" @click.away="open = false" x-transition x-cloak
-                             class="absolute left-0 mt-3 w-80 p-6 bg-zinc-950 text-white border border-zinc-800 shadow-2xl rounded-[2rem] z-50">
-
-                            <div class="space-y-5">
-                                <div class="flex items-center gap-2 border-b border-white/10 pb-3">
-                                    <span class="text-xs font-black uppercase tracking-widest text-emerald-400">🛡️ Bunker de Privacidade</span>
-                                </div>
-
-                                <div class="space-y-4">
-                                    <div class="flex items-start gap-3">
-                                        <span class="shrink-0 text-lg">🔒</span>
-                                        <p class="text-[11px] text-zinc-400 leading-relaxed">
-                                            <strong class="text-white">Acesso Blindado:</strong> Este é o teu espaço mais sagrado. <span class="text-emerald-400 font-black">Apenas tu</span> tens as chaves para visualizar estes dados.
-                                        </p>
-                                    </div>
-                                    <div class="flex items-start gap-3">
-                                        <span class="shrink-0 text-lg">👻</span>
-                                        <p class="text-[11px] text-zinc-400 leading-relaxed">
-                                            <strong class="text-white">Invisibilidade:</strong> Membros da tua família ou equipa <span class="text-emerald-400 font-black">nunca saberão</span> que este cofre existe ou o que registas nele.
-                                        </p>
-                                    </div>
-                                    <div class="flex items-start gap-3">
-                                        <span class="shrink-0 text-lg">🧱</span>
-                                        <p class="text-[11px] text-zinc-400 leading-relaxed">
-                                            <strong class="text-white">Sem Cruzamento:</strong> Os gastos aqui registados não afectam os saldos dos grupos partilhados. É uma <span class="text-emerald-400 font-black">contabilidade isolada</span>.
-                                        </p>
-                                    </div>
-                                    <div class="flex items-start gap-3">
-                                        <span class="shrink-0 text-lg">🎁</span>
-                                        <p class="text-[11px] text-zinc-400 leading-relaxed">
-                                            <strong class="text-white">Uso Recomendado:</strong> Ideal para gerir as tuas poupanças secretas, hobbies caros ou preparar surpresas e presentes.
-                                        </p>
-                                    </div>
-                                    <div class="flex items-start gap-3">
-                                        <span class="shrink-0 text-lg">💎</span>
-                                        <p class="text-[11px] text-zinc-400 leading-relaxed">
-                                            <strong class="text-white">Liberdade:</strong> Gere o teu dinheiro sem julgamentos e com autonomia total.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div class="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20">
-                                    <p class="text-[9px] text-emerald-400 font-bold uppercase text-center italic">
-                                        O que acontece no cofre, fica no cofre.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                @if($isAtPersonal) <flux:badge variant="success" size="sm" class="bg-emerald-500 text-white font-black border-none text-[8px] tracking-widest px-2 shadow-md shadow-emerald-500/20">
-    {{ strtoupper($member->pivot->role ?? 'Membro') }}
-</flux:badge> @endif
-            </div>
-
-            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[3rem] p-8 shadow-sm min-h-[400px] flex flex-col justify-center">
-                <div class="flex flex-col items-center">
-                    <div class="relative group">
-                        <div class="size-32 rounded-[2.5rem] overflow-hidden border-4 border-emerald-50 dark:border-zinc-800 shadow-xl bg-zinc-50 flex items-center justify-center">
-    @if($myPersonalWs && $myPersonalWs->logo_path)
-        {{-- Usamos asset() e logo_path para funcionar com o storage --}}
-        <img src="{{ asset($myPersonalWs->logo_path) }}?v={{ time() }}" class="size-full object-cover">
-    @else
-        <div class="text-2xl font-black text-emerald-600 uppercase italic">
-            {{ substr($user->name, 0, 1) }}{{ substr(explode(' ', $user->name)[1] ?? '', 0, 1) }}
-        </div>
-    @endif
-</div>
-                        <label class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-all cursor-pointer rounded-[2.5rem] backdrop-blur-[2px]">
-                            <input type="file" wire:model="personalPhoto" class="hidden" accept="image/*">
-                            <flux:icon name="camera" class="size-8 text-white" />
-                        </label>
-                    </div>
-                </div>
-
-                <div class="space-y-4 mt-6">
-                    <flux:label class="text-[9px] font-black uppercase text-zinc-400 tracking-widest ml-1">Nome da Minha Gestão</flux:label>
-                    <div class="flex gap-2">
-                        <flux:input wire:model="personalWorkspaceName" class="flex-1 h-12 !bg-zinc-50 dark:!bg-zinc-950 border-none rounded-xl font-bold shadow-inner" />
-                        <flux:button wire:click="updatePersonalName" variant="primary" class="rounded-xl bg-emerald-600 shadow-lg shadow-emerald-500/20">
-                            <flux:icon name="check" variant="micro" />
-                        </flux:button>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2">
-                        <button wire:click="$set('personalWorkspaceName', 'Cofre de {{ explode(' ', auth()->user()->name)[0] }}')" class="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-500 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">✨ Sugerir Individual</button>
-                        <button wire:click="$set('personalWorkspaceName', 'Gestão Familiar {{ collect(explode(' ', auth()->user()->name))->last() }}')" class="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-brand-600 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">✨ Sugerir Família</button>
-                    </div>
-                </div>
-
-                <div class="w-full mt-8 pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                    <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-4 text-center">Utilizadores Autorizados</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-                        @foreach($personalMembers as $pm)
-                            <div class="flex items-center gap-3 p-3 bg-emerald-50/50 dark:bg-zinc-950/50 rounded-2xl border border-emerald-100 dark:border-zinc-800/50">
-                                <flux:avatar initials="{{ substr($pm->name, 0, 2) }}" class="size-8 shadow-sm border border-white dark:border-zinc-800" />
-                                <div class="flex flex-col text-left">
-    <span class="text-[10px] font-black dark:text-white uppercase truncate">{{ $pm->name }}</span>
-    <span class="text-[8px] font-bold text-emerald-600 uppercase">
-        @if($pm->id === $myPersonalWs->owner_id)
-            🔒 ADIMISTRADOR
-        @else
-            👤 MEMBRO DA FAMILIA
-        @endif
-    </span>
-</div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="p-4 mt-6 bg-zinc-50 dark:bg-zinc-950 rounded-2xl border border-zinc-100 dark:border-zinc-800 text-center">
-                    <p class="text-[10px] text-zinc-500 italic leading-relaxed">Só tu tens as chaves de acesso a este espaço. Estes dados não são partilhados.</p>
-                </div>
->>>>>>> 512abb8 (Update 2.0)
             </div>
             <h2 class="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-white leading-none">
                 O Meu Cofre Privado
@@ -525,7 +305,6 @@
         @endif
     </div>
 
-<<<<<<< HEAD
     <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[3rem] p-8 shadow-sm min-h-[400px] flex flex-col justify-center">
 
         @if($myPersonalWs)
@@ -586,9 +365,6 @@
     </div>
 
 
-=======
-
->>>>>>> 512abb8 (Update 2.0)
 
     {{-- 5. SEPARADOR DE SECÇÃO --}}
     <div class="relative py-12">
@@ -1269,11 +1045,7 @@
                 <p class="text-[10px] font-bold text-emerald-100 uppercase tracking-widest opacity-80">Membro recebe</p>
                 <div class="flex items-baseline gap-1.5">
                     <span class="text-5xl font-black tracking-tighter">
-<<<<<<< HEAD
                         {{ number_format($userAllowance->allowance_limit, 2, ',', ' ') }}€
-=======
-                        {{ number_format((float) $userAllowance->allowance_limit, 2, ',', ' ') }}€
->>>>>>> 512abb8 (Update 2.0)
                     </span>
                     <span class="text-sm font-medium opacity-90 lowercase italic">
                         / por {{ match($userAllowance->allowance_frequency) { 'daily' => 'dia', 'weekly' => 'semana', 'yearly' => 'ano', default => 'mês' } }}
@@ -1326,11 +1098,7 @@
     <p class="leading-none text-left">
         @if($statsMembro && $statsMembro->spending_limit > 0)
             <span class="text-2xl font-black dark:text-white tracking-tighter">
-<<<<<<< HEAD
                 {{ number_format($statsMembro->spending_limit, 2, ',', ' ') }}€
-=======
-                {{ number_format((float) $statsMembro->spending_limit, 2, ',', ' ') }}€
->>>>>>> 512abb8 (Update 2.0)
             </span>
         @else
             <span class="text-[10px] font-black text-zinc-300 dark:text-zinc-700 tracking-widest uppercase italic">Ilimitado</span>

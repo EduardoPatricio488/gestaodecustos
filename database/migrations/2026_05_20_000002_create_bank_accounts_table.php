@@ -25,11 +25,11 @@ return new class extends Migration
 
         // 2. Ligar as Despesas e Receitas a uma Conta
         Schema::table('expenses', function (Blueprint $table) {
-            $table->foreignId('bank_account_id')->nullable()->after('category_id')->constrained()->onDelete('set null');
-        });
+    $table->foreignId('bank_account_id')->nullable()->constrained()->onDelete('set null');
+});
 
         Schema::table('incomes', function (Blueprint $table) {
-            $table->foreignId('bank_account_id')->nullable()->after('workspace_id')->constrained()->onDelete('set null');
+           $table->foreignId('bank_account_id')->nullable()->constrained()->onDelete('set null');
         });
     }
 

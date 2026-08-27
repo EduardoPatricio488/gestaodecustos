@@ -28,10 +28,6 @@ public $restrictIncomes = false;
 public $restrictDebts = false;
 public $restrictInvestments = false;
 public $restrictSubs = false;
-<<<<<<< HEAD
-=======
-public $restrictNetworth = false;
->>>>>>> 512abb8 (Update 2.0)
 public $restrictBank = false;
 public $restrictCalendar = false;
 public $restrictReminders = false;
@@ -356,7 +352,6 @@ public function createPersonalSpace()
 {
     $user = auth()->user();
 
-<<<<<<< HEAD
     // 1. Criar o Workspace
     $ws = \App\Models\Workspace::create([
         'name' => 'Cofre de ' . explode(' ', $user->name)[0],
@@ -414,29 +409,6 @@ public function createPersonalSpace()
     if (in_array($currentWs->type, ['business', 'company'])) {
         $membersQuery->wherePivot('role', 'admin');
     }
-=======
-    public function render()
-{
-    $user = auth()->user();
-    $currentWs = $user->currentWorkspace;
-    $startOfMonth = now()->startOfMonth();
-    $workspaceId = $currentWs->id;
-
-    // 1. Identificar espaços para o Widget e Navegação
-    $personalWs = $user->workspaces()->where('type', 'personal')->where('owner_id', $user->id)->first();
-    $sharedWorkspaces = $user->workspaces()
-        ->where('type', '!=', 'business')
-        ->where('workspaces.id', '!=', ($personalWs->id ?? 0))
-        ->get();
-
-    $isAtPrivate = $personalWs && $currentWs->id === $personalWs->id;
-
-    // 2. Membros e estatísticas
-    $membersQuery = $currentWs->users()->withPivot('role');
-    if (in_array($currentWs->type, ['business', 'company'])) {
-        $membersQuery->wherePivot('role', 'admin');
-    }
->>>>>>> 512abb8 (Update 2.0)
     $members = $membersQuery->get();
     $memberIds = $members->pluck('id');
 
@@ -466,10 +438,7 @@ public function createPersonalSpace()
     return view('livewire.manage-family', [
         'currentWs' => $currentWs,
         'members' => $members,
-<<<<<<< HEAD
 
-=======
->>>>>>> 512abb8 (Update 2.0)
         'isAtPrivate' => $isAtPrivate,
         'myPersonalWs' => $personalWs,
         'sharedWorkspaces' => $sharedWorkspaces,
