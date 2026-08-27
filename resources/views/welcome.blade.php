@@ -367,6 +367,12 @@
             </div>
             <p class="text-zinc-400 text-[10px] font-black uppercase tracking-[0.4em]">© {{ date('Y') }} {{ config('app.name') }} · High Fidelity Dashboard</p>
         </div>
+
+        <div class="mt-auto p-6 border-t border-zinc-100 dark:border-zinc-800 flex gap-4">
+    <a href="{{ route('legal.terms') }}" class="text-[9px] font-black uppercase text-zinc-400 hover:text-emerald-500 transition-colors">Termos</a>
+    <a href="{{ route('legal.privacy') }}" class="text-[9px] font-black uppercase text-zinc-400 hover:text-emerald-500 transition-colors">Privacidade</a>
+    <a href="{{ route('public.contact') }}" class="text-[9px] font-black uppercase text-zinc-400 hover:text-emerald-500 transition-colors">Suporte</a>
+</div>
     </main>
 
     @fluxScripts

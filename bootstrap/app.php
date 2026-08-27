@@ -23,10 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\UpdateUserActivity::class,
         ]);
 
-        // 🔥 CORREÇÃO PARA O STRIPE FUNCIONAR:
+        // 🔥 PERMITIR WEBHOOKS DO STRIPE (POST)
         $middleware->validateCsrfTokens(except: [
             'api/whatsapp/webhook',
-            'stripe/*', // 🔥 Adicionado para permitir que o Stripe avise o site sobre pagamentos
+            'stripe/*',
         ]);
 
         // 3. ATALHOS DE MIDDLEWARE (ALIAS)

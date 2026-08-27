@@ -75,6 +75,7 @@ public function sendEmailVerificationNotification()
         'last_login_at', // <-- ADICIONAR ESTE
     'last_ip',
         'username',
+
         'social_bio',
         'verification_code', // OK
         'email',

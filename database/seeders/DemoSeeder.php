@@ -3,108 +3,149 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\{User, Workspace, Expense, Project, Task, BankAccount, Category, Client};
+use App\Models\{User, Workspace, Expense, Income, Project, Task, BankAccount, Category, Client, BusinessDocument};
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. UTILIZADOR ADMIN
-        $user = User::updateOrCreate(
+        // 1. UTILIZADOR ADMINISTRADOR DA PLATAFORMA (O MESTRE)
+        // Este utilizador tem acesso à pasta /admin e gere todo o site
+        $master = User::updateOrCreate(
             ['email' => 'admin@financepro.com'],
             [
-                'name' => 'Eduardo Admin',
+                'name' => 'Administrador do Sistema',
                 'password' => Hash::make('password'),
-                'plan' => 'pro',
+                'role' => 'admin', // 🔥 Status de Administrador Global
+                'is_admin' => true,
                 'email_verified_at' => now(),
-                'username' => 'eduardoadmin_' . Str::random(4)
-            ]
-        );
-
-        // 2. WORKSPACE EMPRESARIAL
-        $ws = Workspace::updateOrCreate(
-            ['owner_id' => $user->id, 'type' => 'business'],
-            [
-                'name' => 'Finance Pro Systems Lda',
-                'invite_code' => 'START2024',
+                'username' => 'admin_master',
                 'plan' => 'pro'
             ]
         );
 
-        // Garantir que o utilizador está ligado ao workspace
-        if (!$user->workspaces()->where('workspaces.id', $ws->id)->exists()) {
-            $user->workspaces()->attach($ws->id, ['role' => 'admin']);
-        }
-        $user->update(['current_workspace_id' => $ws->id]);
+        // 2. UTILIZADOR CEO (EDUARDO - PROPRIETÁRIO DE NEGÓCIO)
+        $eduardo = User::updateOrCreate(
+            ['email' => 'eduardo@financepro.com'],
+            [
+                'name' => 'Eduardo CEO',
+                'password' => Hash::make('password'),
+                'role' => 'user',
+                'is_admin' => false,
+                'plan' => 'pro',
+                'email_verified_at' => now(),
+                'username' => 'eduardo_ceo',
+                'xp' => 2500,
+                'level' => 12
+            ]
+        );
 
-        // 3. CATEGORIAS BASE
-        $categories = [
-            ['name' => 'Marketing', 'icon' => 'megaphone', 'color' => '#3b82f6'],
-            ['name' => 'Tecnologia', 'icon' => 'cpu-chip', 'color' => '#10b981'],
-            ['name' => 'Logística', 'icon' => 'truck', 'color' => '#f59e0b'],
+        // 3. UTILIZADOR MEMBRO (PARA TESTES DE EQUIPA)
+        $joao = User::updateOrCreate(
+            ['email' => 'joao@financepro.com'],
+            [
+                'name' => 'João Membro',
+                'password' => Hash::make('password'),
+                'role' => 'user',
+                'email_verified_at' => now(),
+                'username' => 'joao_member'
+            ]
+        );
+
+        // 4. CONFIGURAÇÃO DE WORKSPACES
+        // Workspace Pessoal do Eduardo
+        $personalWs = Workspace::updateOrCreate(
+            ['owner_id' => $eduardo->id, 'type' => 'personal'],
+            ['name' => 'Cofre do Eduardo', 'plan' => 'pro']
+        );
+        $eduardo->workspaces()->syncWithoutDetaching([$personalWs->id => ['role' => 'admin']]);
+
+        // Workspace Business (A Empresa que o comprador vai ver)
+        $businessWs = Workspace::updateOrCreate(
+            ['owner_id' => $eduardo->id, 'type' => 'business'],
+            [
+                'name' => 'Tech Solutions SaaS',
+                'invite_code' => 'BUSINESS2024',
+                'plan' => 'pro',
+                'initial_capital' => 10000.00
+            ]
+        );
+        $eduardo->workspaces()->syncWithoutDetaching([$businessWs->id => ['role' => 'admin']]);
+        $joao->workspaces()->syncWithoutDetaching([$businessWs->id => ['role' => 'member']]);
+
+        // Definir contexto inicial para o Eduardo
+        $eduardo->update(['current_workspace_id' => $businessWs->id]);
+
+        // 5. CATEGORIAS DE DEMONSTRAÇÃO
+        $catData = [
+            ['n' => 'Alimentação', 'i' => 'shopping-cart', 'c' => '#ef4444', 't' => 'personal', 'ws' => $personalWs->id],
+            ['n' => 'Servidores', 'i' => 'cpu-chip', 'c' => '#10b981', 't' => 'business', 'ws' => $businessWs->id],
+            ['n' => 'Marketing', 'i' => 'megaphone', 'c' => '#f59e0b', 't' => 'business', 'ws' => $businessWs->id],
         ];
 
-        foreach ($categories as $cat) {
+        foreach ($catData as $cat) {
             Category::updateOrCreate(
-                ['workspace_id' => $ws->id, 'name' => $cat['name']],
-                [
-                    'user_id' => $user->id,
-                    'icon' => $cat['icon'],
-                    'color' => $cat['color'],
-                    'slug' => Str::slug($cat['name'])
-                ]
+                ['workspace_id' => $cat['ws'], 'name' => $cat['n']],
+                ['user_id' => $eduardo->id, 'icon' => $cat['i'], 'color' => $cat['c'], 'slug' => Str::slug($cat['n'])]
             );
         }
 
-        $firstCat = Category::where('workspace_id', $ws->id)->first();
+        // 6. POPULAR DADOS FINANCEIROS (ULTIMOS 3 MESES)
+        for ($m = 0; $m < 3; $m++) {
+            $date = Carbon::now()->subMonths($m);
 
-        // 4. CONTA BANCÁRIA
-        BankAccount::updateOrCreate(
-            ['workspace_id' => $ws->id, 'name' => 'Conta Business Millennium'],
-            [
-                'user_id' => $user->id,
-                'bank_name' => 'Millennium BCP',
-                'balance' => 25400.00,
-                'type' => 'checking',
-                'is_business' => true
-            ]
-        );
+            Income::create([
+                'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
+                'description' => 'Venda de Licença SaaS - ' . $date->format('F'),
+                'amount' => rand(4000, 7000), 'received_at' => $date, 'type' => 'business'
+            ]);
 
-        // 5. CLIENTE E PROJETO
-        $client = Client::updateOrCreate(
-            ['workspace_id' => $ws->id, 'email' => 'geral@cliente.com'],
-            ['user_id' => $user->id, 'name' => 'Cliente Internacional SA']
-        );
-
-        $project = Project::updateOrCreate(
-            ['workspace_id' => $ws->id, 'name' => 'Implementação ERP 2.0'],
-            [
-                'budget' => 15000,
-                'revenue' => 22000,
-                'status' => 'em_curso',
-                'client_id' => $client->id
-            ]
-        );
-
-        // 6. GASTOS REAIS (Limpa os antigos para não duplicar valores nos gráficos)
-        Expense::where('project_id', $project->id)->delete();
-
-        for ($i = 1; $i <= 12; $i++) {
             Expense::create([
-                'workspace_id' => $ws->id,
-                'user_id' => $user->id,
-                'project_id' => $project->id,
-                'description' => 'Serviços Mensais de Consultoria #' . $i,
-                'amount' => rand(800, 1200),
-                'spent_at' => now()->subMonths($i),
-                'category_id' => $firstCat->id,
-                'is_company' => true,
-                'status' => 'aprovado'
+                'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
+                'description' => 'Cloud Hosting AWS', 'amount' => rand(300, 600), 'spent_at' => $date,
+                'category_id' => Category::where('name', 'Servidores')->first()->id ?? null,
+                'is_company' => true, 'status' => 'aprovado'
             ]);
         }
 
-        $this->command->info('MySQL Populado! Login: admin@financepro.com / password');
+        // 7. OPERAÇÕES EMPRESARIAIS
+        $client = Client::create([
+            'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
+            'name' => 'Google Portugal', 'email' => 'ads-contact@google.pt'
+        ]);
+
+        $project = Project::create([
+            'workspace_id' => $businessWs->id, 'client_id' => $client->id,
+            'name' => 'Expansão Cloud 2024', 'budget' => 15000, 'status' => 'em_curso'
+        ]);
+
+        Task::create([
+            'workspace_id' => $businessWs->id, 'project_id' => $project->id, 'user_id' => $eduardo->id,
+            'title' => 'Ligar Webhooks Stripe', 'status' => 'pendente'
+        ]);
+
+        BusinessDocument::create([
+            'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
+            'title' => 'Contrato de Termos de Uso', 'type' => 'legal', 'file_path' => 'documents/demo.pdf'
+        ]);
+
+        BankAccount::create([
+            'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
+            'bank_name' => 'Banco Empresa', 'name' => 'Conta Corrente Principal',
+            'balance' => 15750.00, 'is_business' => true
+        ]);
+
+        $this->command->info('--------------------------------------------');
+        $this->command->info('✅ FINANCE PRO: BASE DE DADOS PRONTA!');
+        $this->command->info('--------------------------------------------');
+        $this->command->info('1. ACESSO ADMIN MASTER (Site Admin):');
+        $this->command->info('   Email: admin@financepro.com / Password: password');
+        $this->command->info('--------------------------------------------');
+        $this->command->info('2. ACESSO CEO (Para ver o ERP/Dashboard):');
+        $this->command->info('   Email: eduardo@financepro.com / Password: password');
+        $this->command->info('--------------------------------------------');
     }
 }
