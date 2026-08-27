@@ -20,7 +20,6 @@ use App\Livewire\Admin\RemindersMonitor;
 use App\Livewire\Admin\SiteSettings;
 use App\Livewire\Admin\StoreHub;
 use App\Livewire\Admin\SubscriptionHub as AdminSubscriptionHub;
-use App\Livewire\Admin\SupportManager;
 use App\Livewire\Admin\UserManagement;
 use App\Livewire\AiInsights;
 use App\Livewire\AnomalyHub;
@@ -33,7 +32,6 @@ use App\Livewire\Business\BusinessAiHub;
 use App\Livewire\Business\BusinessDashboard;
 use App\Livewire\Business\BusinessGateway;
 use App\Livewire\Business\BusinessMessenger;
-// Procure os imports do Admin e adicione esta linha separada:
 use App\Livewire\Business\BusinessOnboarding;
 use App\Livewire\Business\BusinessPnlHub;
 use App\Livewire\Business\BusinessSettings;
@@ -113,17 +111,15 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 // ══════════════════════════════════════════════════════════════════
-// 1. ÁREAS EXTERNAS E PÚBLICAS
+// 1. ÁREAS EXTERNAS E PÚBLICAS (Acessíveis por Visitantes)
 // ══════════════════════════════════════════════════════════════════
 
-// Páginas Institucionais e Legais
+Route::view('/', 'welcome')->name('home');
 Route::view('/termos', 'pages.legal.terms')->name('legal.terms');
 Route::view('/privacidade', 'pages.legal.privacy')->name('legal.privacy');
 Route::get('/contacto', ContactPage::class)->name('public.contact');
 
-Route::view('/', 'welcome')->name('home');
-
-// Sincronização Offline
+// Sincronização Offline (Protegido por auth básico)
 Route::post('/api/offline/sync', function (Request $request) {
     $expenses = $request->input('expenses');
     $user = auth()->user();
@@ -137,11 +133,10 @@ Route::post('/api/offline/sync', function (Request $request) {
             'category_id' => 11,
         ]);
     }
-
     return response()->json(['status' => 'success']);
 })->middleware(['auth']);
 
-// Portais Públicos (Fornecedores e Bancos)
+// Portais Públicos de Negócio
 Route::prefix('portal')->group(function () {
     Route::get('/fornecedor', SupplierPortal::class)->name('supplier.portal');
     Route::get('/banco', BankPortal::class)->name('bank.portal');
@@ -153,9 +148,10 @@ Route::prefix('portal')->group(function () {
 
 Route::get('/carreiras', CareersHub::class)->name('careers.apply');
 
-// Webhooks
+// Webhooks de Integração
 Route::get('/api/whatsapp/webhook', [WhatsappWebhookController::class, 'verify']);
 Route::post('/api/whatsapp/webhook', [WhatsappWebhookController::class, 'handle']);
+
 
 // ══════════════════════════════════════════════════════════════════
 // 2. SISTEMA DE VERIFICAÇÃO E LOGOUT
@@ -166,7 +162,6 @@ Route::middleware('auth')->group(function () {
         if (Auth::user()->hasVerifiedEmail()) {
             return redirect()->route('dashboard');
         }
-
         return view('auth.verify-email');
     })->name('verificar.conta');
 
@@ -176,25 +171,23 @@ Route::middleware('auth')->group(function () {
         if ($request->code == $user->verification_code) {
             $user->markEmailAsVerified();
             $user->update(['verification_code' => null]);
-
             return redirect()->route('dashboard')->with('ok', 'Conta ativada!');
         }
-
         return back()->withErrors(['code' => 'Código incorreto.']);
     })->name('verification.verify-code');
 
     Route::post('/logout', function () {
         Auth::logout();
-
         return redirect('/');
     })->name('logout');
 });
+
 // ══════════════════════════════════════════════════════════════════
 // 3. GRUPO PROTEGIDO (ÁREA LOGADA - ACESSO BÁSICO / FREE)
 // ══════════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // --- PAINÉIS E SISTEMA ---
+    // --- DASHBOARDS E SISTEMA ---
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/atividades', ActivityFeed::class)->name('activity-log');
     Route::get('/planos', SubscriptionPlans::class)->name('hub.pricing');
@@ -210,8 +203,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/wrapped', WrappedReport::class)->name('hub.wrapped');
     Route::get('/banco', BancoHub::class)->name('hub.banco');
     Route::get('/calendario', PersonalCalendar::class)->name('hub.calendar');
-
-    // 🔥 ADICIONADO AQUI PARA FIXAR O ERRO
     Route::get('/lembretes', RemindersHub::class)->name('hub.reminders');
 
     // Despesas Pessoais
@@ -221,6 +212,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/expenses/{expense}/edit', ManageExpense::class)->name('expenses.edit');
 
     // Categorias e Hubs Dinâmicos
+    Route::get('/categorias', Categories::class)->name('categories');
     Route::get('/categories/{category}/campos', CategoryFields::class)->name('categories.fields');
     Route::get('/hub/{slug}', CategoryHub::class)->where('slug', '[a-z0-9\-]+')->name('hub.category');
 
@@ -228,13 +220,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/familia/gestao', ManageFamily::class)->name('hub.family.manage');
     Route::get('/importar-extrato', StatementImportHub::class)->name('hub.import');
 
-    // Troca de Espaço
+    // Troca de Workspace / Espaço
     Route::get('/trocar-espaco/{id}', function ($id) {
         $user = auth()->user();
         $ws = $user->workspaces()->findOrFail($id);
         $user->update(['current_workspace_id' => $ws->id]);
 
-        return $ws->type === 'personal' ? redirect()->route('dashboard') : redirect()->route('hub.business.dashboard');
+        return $ws->type === 'personal'
+            ? redirect()->route('dashboard')
+            : redirect()->route('hub.business.dashboard');
     })->name('workspace.switch');
 
     // Sair do Modo Empresa
@@ -244,11 +238,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         if ($personal) {
             $user->update(['current_workspace_id' => $personal->id]);
         }
-
         return redirect()->route('dashboard');
     })->name('hub.business.exit');
 
-    // --- MARKETPLACE & SOCIAL (BASE) ---
+    // --- MARKETPLACE (LOJA) ---
     Route::get('/loja', HubStore::class)->name('hub.store');
     Route::get('/loja/carrinho', ShoppingCart::class)->name('store.cart');
     Route::get('/loja/checkout', Checkout::class)->name('store.checkout');
@@ -256,14 +249,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/loja/favoritos', WishlistHub::class)->name('store.wishlist');
     Route::get('/loja/comparar', ProductCompare::class)->name('store.compare');
 
+    // --- SOCIAL (FINANCE CONNECT) ---
     Route::get('/social', SocialHub::class)->name('social.hub');
     Route::get('/social/u/{username}', SocialProfile::class)->name('social.profile');
 });
 
+
 // ══════════════════════════════════════════════════════════════════
 // 4. MÓDULO PREMIUM (REQUER PLANO PLUS OU SUPERIOR)
 // ══════════════════════════════════════════════════════════════════
-Route::middleware(['plan:premium'])->group(function () {
+Route::middleware(['auth', 'verified', 'plan:premium'])->group(function () {
 
     // --- INTELIGÊNCIA ARTIFICIAL ---
     Route::get('/ai', AiInsights::class)->name('ai');
@@ -281,18 +276,15 @@ Route::middleware(['plan:premium'])->group(function () {
     Route::get('/previsao-despesas', ExpenseForecastHub::class)->name('hub.expense-forecast');
     Route::get('/familia/simulacao', FamilyScenarioHub::class)->name('hub.family.scenario');
 
-    // --- GESTÃO DE ASSINATURAS PRO ---
+    // --- GESTÃO PRO ---
     Route::get('/assinaturas', SubscriptionHub::class)->name('hub.subscriptions');
     Route::get('/assinaturas/scanner', SubscriptionScannerHub::class)->name('hub.subscriptions.scanner');
-
-    // --- UTILITÁRIOS PREMIUM ---
     Route::get('/dividir', SplitHub::class)->name('hub.split');
-    Route::get('/categories', Categories::class)->name('categories'); // Gerir categorias
     Route::get('/investimentos', InvestmentsHub::class)->name('hub.investments');
     Route::get('/patrimonio', NetWorthHub::class)->name('hub.networth');
     Route::get('/relatorios', YearlyReport::class)->name('hub.reports');
 
-    // Integração Fitness API
+    // Integrações Fitness API
     Route::get('/fitness/strava/connect', [StravaController::class, 'connect'])->name('strava.connect');
     Route::get('/fitness/strava/callback', [StravaController::class, 'callback'])->name('strava.callback');
     Route::get('/fitness/strava/disconnect', [StravaController::class, 'disconnect'])->name('strava.disconnect');
@@ -301,7 +293,7 @@ Route::middleware(['plan:premium'])->group(function () {
 // ══════════════════════════════════════════════════════════════════
 // 5. MÓDULO EMPRESARIAL (REQUER PLANO BUSINESS / DIAMOND)
 // ══════════════════════════════════════════════════════════════════
-Route::middleware(['plan:business'])->group(function () {
+Route::middleware(['auth', 'verified', 'plan:business'])->group(function () {
 
     Route::get('/empresa/acesso', BusinessGateway::class)->name('hub.business.gateway');
     Route::get('/empresa/onboarding', BusinessOnboarding::class)->name('hub.business.onboarding');
@@ -311,16 +303,12 @@ Route::middleware(['plan:business'])->group(function () {
         // --- DASHBOARD DINÂMICO (CEO vs COLABORADOR) ---
         Route::get('/dashboard', function () {
             $user = auth()->user();
-            // 1. Verificamos se há uma sessão de "Vista de Colaborador" ativa
             if (session()->has('viewing_as_collaborator_id')) {
                 return app()->make(CollaboratorDashboard::class)();
             }
-            // 2. Se for um colaborador REAL (não é dono nem admin do sistema)
-            if (! ($user->isOwner() || $user->isAdminRole())) {
+            if (!($user->isOwner() || $user->isAdminRole())) {
                 return app()->make(CollaboratorDashboard::class)();
             }
-
-            // 3. Caso contrário, é o CEO na sua vista normal
             return app()->make(BusinessDashboard::class)();
         })->name('hub.business.dashboard');
 
@@ -360,128 +348,95 @@ Route::middleware(['plan:business'])->group(function () {
         Route::get('/perfil', BusinessSettings::class)->name('hub.business.settings');
     });
 
-    // Troca Rápida de Contexto (Apenas para Business)
+    // Troca Rápida de Contexto
     Route::get('/trocar-contexto/{id}', function ($id) {
         $user = auth()->user();
         $ws = $user->workspaces()->findOrFail($id);
         $user->update(['current_workspace_id' => $ws->id]);
-
         return in_array($ws->type, ['business', 'company'])
             ? redirect()->route('hub.business.dashboard')
             : redirect()->route('dashboard');
     })->name('workspace.switch.fast');
 });
 
-// --- ROTAS DE SAÍDA DE MODO (SESSÃO) ---
+// --- ROTAS DE SESSÃO ESPECIAL ---
 Route::get('/empresa/sair-modo-colaborador', function () {
-    if (! session()->has('impersonator_id')) {
-        return redirect()->route('dashboard');
-    }
+    if (!session()->has('impersonator_id')) return redirect()->route('dashboard');
     $ceo = User::find(session()->pull('impersonator_id'));
-    if ($ceo) {
-        Auth::login($ceo);
-    }
-
+    if ($ceo) Auth::login($ceo);
     return redirect()->route('hub.business.dashboard');
 })->name('hub.business.leave-impersonation');
 
 Route::get('/empresa/sair-vista-colaborador', function () {
     session()->forget('viewing_as_collaborator_id');
-
     return redirect()->route('hub.business.dashboard');
 })->name('hub.business.stop-viewing-collaborator');
 
 // ══════════════════════════════════════════════════════════════════
-// 6. ÁREA DE ADMINISTRAÇÃO (APENAS EQUIPA INTERNA / SUPER-ADMINS)
+// 6. ÁREA DE ADMINISTRAÇÃO (APENAS EQUIPA INTERNA)
 // ══════════════════════════════════════════════════════════════════
-Route::middleware(['admin'])->prefix('admin')->group(function () {
-
-    // Dashboards de Monitorização
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', AdminDashboard::class)->name('admin.dashboard');
     Route::get('/estatisticas', AnalyticsHub::class)->name('admin.stats');
     Route::get('/ai-monitor', AiMonitor::class)->name('admin.ai');
     Route::get('/produtividade', ProductivityHub::class)->name('admin.productivity');
     Route::get('/lembretes', RemindersMonitor::class)->name('admin.reminders');
-
-    // Gestão de Ecossistema
     Route::get('/utilizadores', UserManagement::class)->name('admin.users');
     Route::get('/faturacao', AdminSubscriptionHub::class)->name('admin.billing');
     Route::get('/suporte-global', SupportManager::class)->name('admin.support');
     Route::get('/comunicacao', CommunicationManager::class)->name('admin.communication');
     Route::get('/gamificacao', GamificationHub::class)->name('admin.gamification');
     Route::get('/loja', StoreHub::class)->name('admin.store');
-
-    // Segurança e Configuração
     Route::get('/logs', GlobalLogs::class)->name('admin.logs');
     Route::get('/configuracoes', SiteSettings::class)->name('admin.settings');
 
     // Personificação
     Route::get('/impersonate/{user}', function (User $user) {
-        if (! auth()->user()->isAdminRole()) {
-            abort(403);
-        }
+        if (!auth()->user()->isAdminRole()) abort(403);
         session()->put('impersonator_id', auth()->id());
         Auth::login($user);
-
         return redirect()->route('dashboard');
     })->name('admin.impersonate');
 });
 
-// Parar Personificação (Voltar ao Admin)
 Route::get('/stop-impersonating', function () {
-    if (! session()->has('impersonator_id')) {
-        return redirect('/');
-    }
-    $adminId = session()->pull('impersonator_id');
-    $admin = User::find($adminId);
+    if (!session()->has('impersonator_id')) return redirect('/');
+    $admin = User::find(session()->pull('impersonator_id'));
     if ($admin) {
         Auth::login($admin);
-
         return $admin->isAdminRole() ? redirect()->route('admin.users') : redirect()->route('dashboard');
     }
-
     return redirect()->route('dashboard');
 })->name('admin.stop-impersonating');
 
 // ══════════════════════════════════════════════════════════════════
-// 7. EXPORTAÇÕES E APIS DE INTEGRAÇÃO
+// 7. EXPORTAÇÕES E APIS EXTERNAS
 // ══════════════════════════════════════════════════════════════════
+Route::middleware(['auth'])->group(function() {
+    Route::get('/export/dashboard-pdf', [ExportController::class, 'dashboardPdf'])->name('export.dashboard.pdf');
+    Route::get('/export/expenses', [ExportController::class, 'expensesPdf'])->name('export.expenses');
+    Route::get('/export/empresa', [ExportController::class, 'businessExport'])->name('export.business');
+    Route::get('/loja/download/{purchase}/request', [StoreDownloadController::class, 'requestToken'])->name('store.download.request');
+    Route::get('/loja/download/{purchase}', [StoreDownloadController::class, 'download'])->name('store.download');
 
-// Exportação de Documentos
-Route::get('/export/dashboard-pdf', [ExportController::class, 'dashboardPdf'])->name('export.dashboard.pdf');
-Route::get('/export/expenses', [ExportController::class, 'expensesPdf'])->name('export.expenses');
-Route::get('/export/empresa', [ExportController::class, 'businessExport'])->name('export.business');
-
-// Downloads da Loja
-Route::get('/loja/download/{purchase}/request', [StoreDownloadController::class, 'requestToken'])->name('store.download.request');
-Route::get('/loja/download/{purchase}', [StoreDownloadController::class, 'download'])->name('store.download');
-
-// Integrações de Saúde / Smartwatch / Offline
-Route::post('/api/smartwatch-info', [SmartwatchController::class, 'info']);
-Route::post('/api/mifitness/import', [MiFitnessImportController::class, 'import'])->name('mifitness.import');
-Route::post('/api/offline/expenses/sync', [OfflineExpenseController::class, 'sync'])->name('api.offline.sync');
-Route::post('/push-subscriptions', [PushSubscriptionController::class, 'update']);
-
-// 🔥 ESTE FECHA O GRUPO AUTH+VERIFIED (Antiga Linha 353)
+    Route::post('/api/smartwatch-info', [SmartwatchController::class, 'info']);
+    Route::post('/api/mifitness/import', [MiFitnessImportController::class, 'import'])->name('mifitness.import');
+    Route::post('/api/offline/expenses/sync', [OfflineExpenseController::class, 'sync'])->name('api.offline.sync');
+    Route::post('/push-subscriptions', [PushSubscriptionController::class, 'update']);
+});
 
 // ══════════════════════════════════════════════════════════════════
-// 8. SERVIÇOS DE E-MAIL E CONFIGURAÇÕES FINAIS (FORA DO AUTH)
+// 8. SERVIÇOS DE E-MAIL E CONFIGURAÇÕES FINAIS
 // ══════════════════════════════════════════════════════════════════
-
-// Reenvio de Código de Verificação
 Route::post('/email/verification-notification', function (Request $request) {
     $user = $request->user();
     $newCode = rand(100000, 999999);
     $user->update(['verification_code' => $newCode]);
     try {
         Mail::to($user->email)->send(new VerifyAccountMail($newCode));
-        Log::info("Reenvio de e-mail disparado para {$user->email}");
-
         return back()->with('status', 'verification-link-sent');
     } catch (Exception $e) {
-        Log::error('Erro no reenvio de e-mail: '.$e->getMessage());
-
-        return back()->withErrors(['code' => 'Erro ao conectar ao servidor de e-mail.']);
+        return back()->withErrors(['code' => 'Erro de conexão ao servidor de e-mail.']);
     }
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
