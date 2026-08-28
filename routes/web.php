@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Api\OfflineExpenseController;
 use App\Http\Controllers\Api\WhatsappWebhookController;
 use App\Http\Controllers\ExportController;
@@ -104,7 +105,6 @@ use App\Livewire\WrappedReport;
 use App\Livewire\YearlyReport;
 use App\Mail\VerifyAccountMail;
 use App\Models\Expense;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -142,7 +142,7 @@ Route::prefix('portal')->group(function () {
     Route::get('/fornecedor', SupplierPortal::class)->name('supplier.portal');
     Route::get('/banco', BankPortal::class)->name('bank.portal');
     Route::get('/fornecedor/dashboard/{token}', SupplierDashboard::class)->name('supplier.dashboard');
-    Route::get('/banco/dashboard/{token}', BankDashboard::class)->name('bank.dashboard');
+    Route::get('/banco/dashboard', BankDashboard::class)->name('bank.dashboard');
     Route::get('/login', ClientLogin::class)->name('client.login');
     Route::get('/{token}', ClientPortal::class)->name('client.portal');
 });
@@ -165,6 +165,14 @@ Route::middleware('auth')->group(function () {
 
         return view('auth.verify-email');
     })->name('verificar.conta');
+
+    Route::get('/verify-email', function () {
+        if (Auth::user()->hasVerifiedEmail()) {
+            return redirect()->route('dashboard');
+        }
+
+        return view('auth.verify-email');
+    })->name('verification.notice');
 
     Route::post('/verificar-codigo', function (Request $request) {
         $request->validate(['code' => 'required|size:6']);
@@ -366,19 +374,11 @@ Route::middleware(['auth', 'verified', 'plan:business'])->group(function () {
 });
 
 // --- ROTAS DE SESSÃO ESPECIAL ---
-Route::get('/empresa/sair-modo-colaborador', function () {
-    if (! session()->has('impersonator_id')) {
-        return redirect()->route('dashboard');
-    }
-    $ceo = User::find(session()->pull('impersonator_id'));
-    if ($ceo) {
-        Auth::login($ceo);
-    }
+Route::delete('/empresa/sair-modo-colaborador', [ImpersonationController::class, 'stop'])
+    ->middleware('auth')
+    ->name('hub.business.leave-impersonation');
 
-    return redirect()->route('hub.business.dashboard');
-})->name('hub.business.leave-impersonation');
-
-Route::get('/empresa/sair-vista-colaborador', function () {
+Route::post('/empresa/sair-vista-colaborador', function () {
     session()->forget('viewing_as_collaborator_id');
 
     return redirect()->route('hub.business.dashboard');
@@ -408,32 +408,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/logs', GlobalLogs::class)->name('admin.logs');
     Route::get('/configuracoes', SiteSettings::class)->name('admin.settings');
 
-    // Personificação (CEO entra na conta do Colaborador)
-    Route::get('/impersonate/{user}', function (User $user) {
-        if (! auth()->user()->isAdminRole()) {
-            abort(403);
-        }
-        session()->put('impersonator_id', auth()->id());
-        Auth::login($user);
-
-        return redirect()->route('dashboard');
-    })->name('admin.impersonate');
+    // Personificação (Administrador entra na conta de um utilizador)
+    Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])->name('admin.impersonate');
 });
 
 // Sair da Personificação
-Route::get('/stop-impersonating', function () {
-    if (! session()->has('impersonator_id')) {
-        return redirect('/');
-    }
-    $admin = User::find(session()->pull('impersonator_id'));
-    if ($admin) {
-        Auth::login($admin);
-
-        return $admin->isAdminRole() ? redirect()->route('admin.users') : redirect()->route('dashboard');
-    }
-
-    return redirect()->route('dashboard');
-})->name('admin.stop-impersonating');
+Route::delete('/stop-impersonating', [ImpersonationController::class, 'stop'])
+    ->middleware('auth')
+    ->name('admin.stop-impersonating');
 // ══════════════════════════════════════════════════════════════════
 // 7. EXPORTAÇÕES E APIS EXTERNAS
 // ══════════════════════════════════════════════════════════════════

@@ -326,13 +326,16 @@
                 <div class="p-8 bg-white dark:bg-zinc-900 border-t dark:border-zinc-800 shrink-0">
                     <div class="flex flex-col md:flex-row gap-4">
                         {{-- Botão de Impersonate (Assumir conta) --}}
-                        <flux:button
-                            href="{{ route('admin.impersonate', $detailedUser->id) }}"
+                        <form method="POST" action="{{ route('admin.impersonate', $detailedUser->id) }}">
+                            @csrf
+                            <flux:button
+                            type="submit"
                             variant="primary"
                             class="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-brand-500/20"
-                        >
+                            >
                             Assumir Controlo Total da Conta
-                        </flux:button>
+                            </flux:button>
+                        </form>
 
                         {{-- Botão Fechar --}}
                         <flux:modal.close>

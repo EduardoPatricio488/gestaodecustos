@@ -6,7 +6,7 @@
         {{-- BADGE DE CONTA DINÂMICO --}}
         <div class="flex justify-center mb-8">
             <div x-data="{ open: false }" class="relative">
-                @php $isCollab = session()->has('impersonator_id'); @endphp
+                @php $isCollab = session()->has('admin_impersonation'); @endphp
 
                 <button @click="open = !open" @click.outside="open = false" type="button"
                     class="relative group cursor-pointer active:scale-95 transition-all outline-none">

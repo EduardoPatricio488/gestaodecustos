@@ -260,10 +260,14 @@
                     {{ $this->greeting }}, <span style="color: {{ auth()->user()->profile_color }}">{{ $firstName }}</span>
                 </h1>
 
-                @if(session()->has('impersonator_id'))
-                    <a href="{{ route('admin.stop-impersonating') }}" class="flex items-center gap-2 px-3 py-1 bg-amber-500 text-white rounded-full animate-pulse text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/30">
+                @if(session()->has('admin_impersonation'))
+                    <form method="POST" action="{{ route('admin.stop-impersonating') }}">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="flex items-center gap-2 px-3 py-1 bg-amber-500 text-white rounded-full animate-pulse text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/30">
                         Suporte Ativo · Sair
-                    </a>
+                        </button>
+                    </form>
                 @endif
             </div>
 

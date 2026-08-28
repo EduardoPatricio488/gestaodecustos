@@ -31,4 +31,9 @@ class Supplier extends Model
     {
         return $this->hasMany(Expense::class);
     }
+
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
 }

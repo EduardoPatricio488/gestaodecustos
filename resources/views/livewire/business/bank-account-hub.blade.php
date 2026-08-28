@@ -794,6 +794,15 @@
                     <flux:icon x-show="copiedPortal" name="check" class="size-4" />
                     <span x-text="copiedPortal ? 'Link Copiado!' : 'Partilhar Acesso'"></span>
                 </button>
+
+                <button
+                    type="button"
+                    wire:click="revokeAuditCode"
+                    wire:confirm="Revogar este acesso bancário?"
+                    class="flex-1 h-14 text-red-500 rounded-2xl font-black uppercase text-[10px] hover:bg-red-50 transition-all"
+                >
+                    Revogar
+                </button>
             </div>
         </div>
     </flux:modal>

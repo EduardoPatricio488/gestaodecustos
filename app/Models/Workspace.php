@@ -22,6 +22,9 @@ class Workspace extends Model
         'currency',
         'initial_capital',
         'audit_token',
+        'audit_token_expires_at',
+        'audit_token_revoked_at',
+        'audit_token_purpose',
         'recruitment_extra_info',
         'business_email',
         'plan',
@@ -33,6 +36,11 @@ class Workspace extends Model
         'recruitment_vacancies',
         'recruitment_extra_info',
         'fiscal_year_start',
+    ];
+
+    protected $casts = [
+        'audit_token_expires_at' => 'datetime',
+        'audit_token_revoked_at' => 'datetime',
     ];
 
     /**

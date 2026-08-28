@@ -92,7 +92,7 @@ class Dashboard extends Component
         });
 
         // 2. Redirecionamento de Segurança para Admin Real
-        if (in_array($user->role, ['admin', 'moderator', 'analyst']) && $user->email_verified_at && ! session()->has('impersonator_id')) {
+        if (in_array($user->role, ['admin', 'moderator', 'analyst']) && $user->email_verified_at && ! session()->has('admin_impersonation')) {
             return redirect()->route('admin.dashboard');
         }
 

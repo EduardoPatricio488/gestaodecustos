@@ -6,7 +6,7 @@
         {{-- BADGE DINÂMICO (CEO A VER VS COLABORADOR REAL) --}}
         <div class="flex justify-center mb-10">
             <div class="relative group cursor-default">
-                @php $isImpersonating = session()->has('impersonator_id'); @endphp
+                @php $isImpersonating = session()->has('admin_impersonation'); @endphp
 
                 <!-- Glow dinâmico: Vermelho (CEO) vs Esmeralda (Colaborador) -->
                 <div class="absolute -inset-1 bg-gradient-to-r {{ $isImpersonating ? 'from-red-500/30 to-orange-500/30' : 'from-emerald-500/30 to-teal-500/30' }} rounded-full blur opacity-25 group-hover:opacity-60 transition duration-1000"></div>
@@ -19,7 +19,7 @@
 
                     <p class="text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-2">
     @if(session()->has('viewing_as_collaborator_id'))
-        @php $target = \App\Models\Employee::find(session('viewing_as_collaborator_id')); @endphp
+        @php $target = auth()->user()->currentWorkspace?->employees()->find(session('viewing_as_collaborator_id')); @endphp
         <span class="text-zinc-400 dark:text-zinc-500 italic">A visualizar a conta de:</span>
         <span class="text-red-600 dark:text-red-400 font-black">{{ $target->name ?? 'Colaborador' }}</span>
         <span class="text-zinc-300 dark:text-zinc-700">|</span>

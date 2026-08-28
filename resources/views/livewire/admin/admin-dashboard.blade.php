@@ -150,7 +150,10 @@
                                     </flux:badge>
                                 </td>
                                 <td class="px-8 py-5 text-right">
-                                    <flux:button href="{{ route('admin.impersonate', $u->id) }}" size="xs" variant="ghost" icon="user-circle" class="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <form method="POST" action="{{ route('admin.impersonate', $u->id) }}">
+                                        @csrf
+                                        <flux:button type="submit" size="xs" variant="ghost" icon="user-circle" class="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </form>
                                 </td>
                             </tr>
                         @endforeach

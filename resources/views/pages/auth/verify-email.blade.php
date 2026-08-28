@@ -71,8 +71,6 @@
             </form>
         </div>
     </div>
-</x-guest-layout>
-
 <style>
     /* Garante que o input de código foca corretamente */
     input::placeholder {
@@ -89,3 +87,4 @@
         animation: fadeIn 0.5s ease-out forwards;
     }
 </style>
+</x-guest-layout>

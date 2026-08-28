@@ -1123,6 +1123,13 @@
                     </flux:button>
                 </flux:modal.close>
 
+                <button type="button"
+                        wire:click="revokeEmployeeAccessCode({{ $tokenEmployeeId }})"
+                        wire:confirm="Revogar esta chave de acesso?"
+                        class="w-full h-10 text-red-500 font-black uppercase text-[9px] tracking-widest hover:bg-red-50 rounded-xl transition-all">
+                    Revogar chave
+                </button>
+
                 <p class="text-[8px] font-black text-zinc-400 uppercase tracking-widest opacity-50 italic">
                     Segurança Financeira Finance Pro • Chave Privada
                 </p>

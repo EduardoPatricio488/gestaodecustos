@@ -122,7 +122,10 @@
                                         <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal" />
                                         <flux:menu class="min-w-[200px]">
                                             <flux:menu.item icon="eye" wire:click="showUserDetails({{ $user->id }})">Perfil Detalhado</flux:menu.item>
-                                            <flux:menu.item icon="user-circle" href="{{ route('admin.impersonate', $user->id) }}">Suporte (Entrar)</flux:menu.item>
+                                            <form method="POST" action="{{ route('admin.impersonate', $user->id) }}">
+                                                @csrf
+                                                <button type="submit" class="w-full flex items-center gap-2 px-3 py-2 text-sm text-left">Suporte (Entrar)</button>
+                                            </form>
                                             <flux:menu.separator />
                                             <flux:menu.item icon="key" wire:click="openRoleModal({{ $user->id }})">Alterar Permissões</flux:menu.item>
                                             <flux:menu.item icon="arrow-left" wire:click="forceLogout({{ $user->id }})">Expulsar das Sessões</flux:menu.item>
@@ -283,9 +286,12 @@
 
                 {{-- 6. RODAPÉ DE ACESSO --}}
                 <div class="p-8 border-t dark:border-zinc-800 bg-white dark:bg-zinc-900">
-                    <flux:button class="w-full h-16 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-brand-500/20" variant="primary" href="{{ route('admin.impersonate', $selectedUser->id) }}">
-                        <flux:icon name="user-circle" class="mr-2" /> Assumir Identidade da Conta
-                    </flux:button>
+                    <form method="POST" action="{{ route('admin.impersonate', $selectedUser->id) }}">
+                        @csrf
+                        <flux:button type="submit" class="w-full h-16 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-brand-500/20" variant="primary">
+                            <flux:icon name="user-circle" class="mr-2" /> Assumir Identidade da Conta
+                        </flux:button>
+                    </form>
                     <p class="text-center text-[9px] text-zinc-400 uppercase font-black mt-4 tracking-tighter italic">Todas as ações feitas neste painel são registadas nos logs de auditoria.</p>
                 </div>
             </div>

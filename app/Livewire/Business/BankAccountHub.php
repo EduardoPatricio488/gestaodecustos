@@ -5,7 +5,8 @@ namespace App\Livewire\Business;
 use App\Models\BankAccount;
 use App\Models\Expense;
 use App\Models\Income;
-use App\Models\Workspace;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -77,25 +78,29 @@ class BankAccountHub extends Component
     public function generateAuditCode()
     {
         $workspace = auth()->user()->currentWorkspace;
+        $plainToken = Str::random(64);
 
-        // 1. Verificamos se a empresa já tem um token de auditoria.
-        // Se não tiver (estiver NULL ou vazio), geramos um NOVO para sempre.
-        if (! $workspace->audit_token) {
-            do {
-                $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-                // Garante que este token não existe em mais nenhuma empresa na BD
-                $exists = Workspace::where('audit_token', $passcode)->exists();
-            } while ($exists);
+        $workspace->update([
+            'audit_token' => Hash::make($plainToken),
+            'audit_token_expires_at' => now()->addDays(30),
+            'audit_token_revoked_at' => null,
+            'audit_token_purpose' => 'bank_audit',
+        ]);
 
-            $workspace->update(['audit_token' => $passcode]);
-        }
-
-        // 2. Preenchemos as variáveis do modal com o código permanente da base de dados
-        $this->generatedAuditCode = $workspace->audit_token;
+        $this->generatedAuditCode = $plainToken;
         $this->companyTaxNumber = $workspace->tax_number;
 
         // 3. Abrimos o modal
         $this->dispatch('modal-show', name: 'audit-code-modal');
+    }
+
+    public function revokeAuditCode(): void
+    {
+        $workspace = auth()->user()->currentWorkspace;
+        $workspace->update(['audit_token_revoked_at' => now()]);
+        $this->generatedAuditCode = '';
+        $this->dispatch('modal-close', name: 'audit-code-modal');
+        $this->dispatch('toast', text: 'Acesso bancário revogado.');
     }
 
     public function mount()

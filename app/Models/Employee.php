@@ -22,7 +22,10 @@ class Employee extends Model
         'resignation_reason',
         'cv_path',
         'resignation_status',
-        'portal_token', // <--- ADICIONADO: Agora o sistema já consegue gravar o código!
+        'portal_token',
+        'invite_expires_at',
+        'invite_used_at',
+        'invite_revoked_at',
     ];
 
     /**
@@ -33,6 +36,9 @@ class Employee extends Model
         'active' => 'boolean',
         'suspended' => 'boolean',
         'salary' => 'decimal:2',
+        'invite_expires_at' => 'datetime',
+        'invite_used_at' => 'datetime',
+        'invite_revoked_at' => 'datetime',
     ];
 
     /**

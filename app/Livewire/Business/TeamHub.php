@@ -13,6 +13,7 @@ use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -523,11 +524,20 @@ class TeamHub extends Component
     {
         $emp = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
 
-        // Gera um código único (ex: EMP-A1B2C3)
-        $token = 'EMP-'.strtoupper(Str::random(6));
+        if ($emp->user_id) {
+            $this->dispatch('toast', variant: 'error', heading: 'Convite indisponível', message: 'Este colaborador já tem uma conta associada.');
+
+            return;
+        }
+
+        $token = Str::random(64);
 
         $emp->update([
-            'portal_token' => $token,
+            'user_id' => null,
+            'portal_token' => Hash::make($token),
+            'invite_expires_at' => now()->addDays(7),
+            'invite_used_at' => null,
+            'invite_revoked_at' => null,
         ]);
 
         $this->generatedToken = $token;
@@ -536,6 +546,21 @@ class TeamHub extends Component
 
         $this->dispatch('modal-show', name: 'employee-token-modal');
         $this->dispatch('toast', variant: 'success', heading: 'Chave Gerada', message: 'O acesso ao portal foi configurado.');
+    }
+
+    public function revokeEmployeeAccessCode($id): void
+    {
+        $employee = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+        $employee->update([
+            'portal_token' => null,
+            'invite_revoked_at' => now(),
+        ]);
+
+        if ($this->tokenEmployeeId === $employee->id) {
+            $this->generatedToken = '';
+        }
+
+        $this->dispatch('toast', variant: 'success', heading: 'Convite revogado', message: 'A chave deixou de funcionar.');
     }
 
     public function render()

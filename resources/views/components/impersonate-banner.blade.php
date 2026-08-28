@@ -1,5 +1,5 @@
 {{-- INDICADOR DE MODO VISUALIZAÇÃO CENTRADO (SUBSTITUIR A BARRA AMBER) --}}
-@if(session()->has('impersonator_id'))
+@if(session()->has('admin_impersonation'))
     <div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[999] w-auto animate-in fade-in slide-in-from-bottom-10 duration-700">
         <div class="relative group">
             <!-- Aura de brilho atrás do botão -->
@@ -21,11 +21,15 @@
                     </div>
 
                     {{-- Botão de Sair --}}
-                    <a href="{{ route('admin.stop-impersonating') }}"
+                    <form method="POST" action="{{ route('admin.stop-impersonating') }}">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
                        class="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-all no-underline flex items-center gap-2 group/btn">
                         <span>Voltar ao Admin</span>
                         <flux:icon name="arrow-right-start-on-rectangle" variant="micro" class="size-3 group-hover/btn:translate-x-1 transition-transform" />
-                    </a>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

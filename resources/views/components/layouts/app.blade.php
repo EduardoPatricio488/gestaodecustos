@@ -1611,12 +1611,13 @@ $hasStoreAccess = $isProUser || $isPlusUser;
     @endpersist
 
     {{-- 2. MODO VISUALIZAÇÃO CENTRADO EM BAIXO --}}
-    @if(session()->has('impersonator_id') || session()->has('viewing_as_collaborator_id'))
+    @if(session()->has('admin_impersonation') || session()->has('viewing_as_collaborator_id'))
         @php
-            $exitViewUrl = session()->has('viewing_as_collaborator_id')
+            $isViewingCollaborator = session()->has('viewing_as_collaborator_id');
+            $exitViewUrl = $isViewingCollaborator
                 ? route('hub.business.stop-viewing-collaborator')
-                : route('hub.business.leave-impersonation');
-            $viewLabel = session()->has('viewing_as_collaborator_id')
+                : route('admin.stop-impersonating');
+            $viewLabel = $isViewingCollaborator
                 ? 'Vista de Colaborador'
                 : 'Modo Colaborador';
         @endphp
@@ -1625,7 +1626,10 @@ $hasStoreAccess = $isProUser || $isPlusUser;
                 <!-- Aura de brilho atrás do botão -->
                 <div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
 
-                <a href="{{ $exitViewUrl }}"
+                <form method="POST" action="{{ $exitViewUrl }}">
+                    @csrf
+                    @if(! $isViewingCollaborator) @method('DELETE') @endif
+                    <button type="submit"
                    class="relative flex items-center gap-4 px-6 py-3 bg-zinc-900 dark:bg-zinc-800 border border-white/10 rounded-full shadow-2xl no-underline transition-all hover:scale-105 active:scale-95 group">
 
                     <div class="flex items-center gap-3">
@@ -1642,7 +1646,8 @@ $hasStoreAccess = $isProUser || $isPlusUser;
                             Voltar para CEO
                         </span>
                     </div>
-                </a>
+                    </button>
+                </form>
             </div>
         </div>
     @endif

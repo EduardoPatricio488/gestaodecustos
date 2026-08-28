@@ -70,11 +70,11 @@ class ClientPortal extends Component
     {
         $this->validate(['replyMessage' => 'required|min:2']);
 
-        $ticket = SupportTicket::findOrFail($this->activeTicketId);
+        $ticket = $this->ticketForClient($this->activeTicketId);
 
         // Enviar a resposta usando o user_id que o ticket já tem
         SupportMessage::create([
-            'support_ticket_id' => $this->activeTicketId,
+            'support_ticket_id' => $ticket->id,
             'user_id' => $ticket->user_id,
             'message' => $this->replyMessage,
             'is_admin_reply' => false,
@@ -86,8 +86,13 @@ class ClientPortal extends Component
 
     public function setActiveTicket($id)
     {
-        $this->activeTicketId = $id;
+        $this->activeTicketId = $this->ticketForClient($id)->id;
         $this->dispatch('modal-show', name: 'view-ticket-modal');
+    }
+
+    private function ticketForClient($id): SupportTicket
+    {
+        return $this->client->supportTickets()->findOrFail($id);
     }
 
     #[Layout('layouts.guest')]
@@ -101,7 +106,9 @@ class ClientPortal extends Component
             'proposals' => Proposal::where('client_id', $this->client->id)->where('status', 'pendente')->get(),
             'recentActivity' => Task::whereIn('project_id', $projectIds)->where('status', 'concluida')->whereNotNull('completed_at')->latest('completed_at')->limit(5)->get(),
             'tickets' => SupportTicket::where('client_id', $this->client->id)->with('messages')->latest()->get(),
-            'activeMessages' => $this->activeTicketId ? SupportMessage::where('support_ticket_id', $this->activeTicketId)->oldest()->get() : collect(),
+            'activeMessages' => $this->activeTicketId
+                ? $this->ticketForClient($this->activeTicketId)->messages()->oldest()->get()
+                : collect(),
             'workspace' => $this->client->workspace,
         ]);
     }

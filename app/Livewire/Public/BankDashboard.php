@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Public;
 
-use App\Models\BankAccount;
 use App\Models\Workspace;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -12,16 +11,36 @@ class BankDashboard extends Component
     public $workspace;
 
     #[Layout('layouts.guest')]
-    public function mount($token)
+    public function mount()
     {
-        // Valida se o token de auditoria existe
-        $this->workspace = Workspace::where('audit_token', $token)->firstOrFail();
+        $this->workspace = $this->authenticatedWorkspace();
+    }
+
+    private function authenticatedWorkspace(): Workspace
+    {
+        $workspaceId = session('bank_portal_workspace_id');
+        abort_unless($workspaceId, 403);
+
+        $workspace = Workspace::whereKey($workspaceId)
+            ->where('audit_token_purpose', 'bank_audit')
+            ->whereNull('audit_token_revoked_at')
+            ->where(function ($query) {
+                $query->whereNull('audit_token_expires_at')
+                    ->orWhere('audit_token_expires_at', '>', now());
+            })
+            ->first();
+
+        abort_unless($workspace, 403);
+
+        return $workspace;
     }
 
     public function render()
     {
+        $this->workspace = $this->authenticatedWorkspace();
+
         // 1. Cálculos de Liquidez Real
-        $accounts = BankAccount::where('workspace_id', $this->workspace->id)->get();
+        $accounts = $this->workspace->bankAccounts()->get();
         $totalLiquidez = $accounts->where('type', '!=', 'credito')->sum('current_balance');
         $totalPassivo = $accounts->where('type', 'credito')->sum(fn ($a) => abs($a->current_balance));
 

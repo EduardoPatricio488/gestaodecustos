@@ -40,7 +40,7 @@
             {{-- CÓDIGO DE AUDITORIA (PIN) --}}
             <div class="space-y-2">
                 <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Código de Auditoria (Token)</label>
-                <input wire:model="token" type="text" maxlength="6" placeholder="000000"
+                <input wire:model="token" type="text" maxlength="128" autocomplete="one-time-code" placeholder="Token de acesso"
                        class="w-full h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-center font-mono font-black text-xl tracking-[0.6em] text-zinc-900 dark:text-white focus:ring-2 focus:ring-zinc-500 outline-none transition-all" />
             </div>
 

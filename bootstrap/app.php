@@ -4,6 +4,7 @@ use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\CheckPlanAccess;
 use App\Http\Middleware\CheckRegistrationStatus;
+use App\Http\Middleware\EnsureImpersonationIsValid;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\UpdateUserActivity;
 use Illuminate\Foundation\Application;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
             CheckMaintenanceMode::class,
             CheckRegistrationStatus::class,
             UpdateUserActivity::class,
+            EnsureImpersonationIsValid::class,
         ]);
 
         // 🔥 PERMITIR WEBHOOKS DO STRIPE (POST)

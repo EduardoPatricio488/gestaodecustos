@@ -12,6 +12,7 @@ class SupportTicket extends Model
         'user_id',
         'workspace_id',
         'client_id',
+        'supplier_id',
         'subject',
         'message',
         'status',

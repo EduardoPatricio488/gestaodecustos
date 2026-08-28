@@ -74,10 +74,10 @@ class SupplierDashboard extends Component
     public function sendReply()
     {
         $this->validate(['replyMessage' => 'required|min:2']);
-        $ticket = SupportTicket::findOrFail($this->activeTicketId);
+        $ticket = $this->ticketForSupplier($this->activeTicketId);
 
         SupportMessage::create([
-            'support_ticket_id' => $this->activeTicketId,
+            'support_ticket_id' => $ticket->id,
             'user_id' => $ticket->user_id,
             'message' => $this->replyMessage,
             'is_admin_reply' => false,
@@ -89,8 +89,13 @@ class SupplierDashboard extends Component
 
     public function setActiveTicket($id)
     {
-        $this->activeTicketId = $id;
+        $this->activeTicketId = $this->ticketForSupplier($id)->id;
         $this->dispatch('modal-show', name: 'view-ticket-modal');
+    }
+
+    private function ticketForSupplier($id): SupportTicket
+    {
+        return $this->supplier->supportTickets()->findOrFail($id);
     }
 
     public function submitInvoice()
@@ -116,8 +121,10 @@ class SupplierDashboard extends Component
 
         return view('livewire.public.supplier-dashboard', [
             'history' => $history,
-            'tickets' => SupportTicket::where('supplier_id', $this->supplier->id)->latest()->get(),
-            'activeMessages' => $this->activeTicketId ? SupportMessage::where('support_ticket_id', $this->activeTicketId)->oldest()->get() : collect(),
+            'tickets' => $this->supplier->supportTickets()->latest()->get(),
+            'activeMessages' => $this->activeTicketId
+                ? $this->ticketForSupplier($this->activeTicketId)->messages()->oldest()->get()
+                : collect(),
             'workspace' => $this->supplier->workspace,
         ]);
     }

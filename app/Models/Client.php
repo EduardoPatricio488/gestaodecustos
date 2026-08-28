@@ -47,6 +47,11 @@ class Client extends Model
         return $this->hasMany(Proposal::class);
     }
 
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
+
     /**
      * INTELIGÊNCIA COMERCIAL
      */

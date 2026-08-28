@@ -84,7 +84,10 @@ class BusinessDashboard extends Component
      */
     public function switchToEmployee($id)
     {
-        $employee = Employee::find($id);
+        $user = Auth::user();
+        abort_unless($user->isOwner() || $user->isAdminRole(), 403);
+
+        $employee = Employee::where('workspace_id', $user->current_workspace_id)->find($id);
 
         if (! $employee || ! $employee->user_id) {
             $this->dispatch('toast', variant: 'error', text: 'Utilizador não vinculado.');
