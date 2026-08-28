@@ -158,9 +158,11 @@
                                 class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-zinc-100 text-left">
                                 <flux:avatar src="{{ $user->avatarUrl() }}" class="size-9 rounded-xl border border-black/5 shrink-0" />
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-black text-zinc-900 truncate">{{ $user->name }}</p>
-                                    <p class="text-[9px] text-zinc-400 font-bold">@{{ $user->username }}</p>
-                                </div>
+    <p class="text-sm font-black text-zinc-900 uppercase tracking-tight truncate">{{ $user->name }}</p>
+    <p class="text-[9px] text-zinc-400 font-bold tracking-widest">
+        <span class="text-emerald-500">@</span>{{ $user->username }}
+    </p>
+</div>
                                 <flux:icon name="chat-bubble-left" class="size-4 text-emerald-500 shrink-0" />
                             </button>
                         @empty

@@ -281,7 +281,7 @@
                     <div class="grid grid-cols-2 gap-2">
                         <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 p-3">
                             <p class="text-[8px] font-black uppercase tracking-widest text-zinc-400">Ritmo 90 dias</p>
-                            <p class="text-sm font-black dark:text-white tabular-nums">{{ number_format($goal->monthlyPace, 0, ',', ' ') }} â‚¬/mes</p>
+                            <p class="text-sm font-black dark:text-white tabular-nums">{{ number_format($goal->monthlyPace, 0, ',', ' ') }} €/mes</p>
                         </div>
                         <div class="rounded-2xl {{ $goal->isLateByForecast ? 'bg-red-50 dark:bg-red-950/30' : 'bg-emerald-50 dark:bg-emerald-950/30' }} p-3">
                             <p class="text-[8px] font-black uppercase tracking-widest {{ $goal->isLateByForecast ? 'text-red-500' : 'text-emerald-600' }}">Previsao</p>
@@ -298,7 +298,7 @@
                                 @foreach($goal->contributors->take(4) as $contributor)
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black text-zinc-600 dark:text-zinc-300">
                                         {{ \Illuminate\Support\Str::limit($contributor['name'], 14) }}
-                                        <strong class="text-emerald-600">{{ number_format($contributor['amount'], 0, ',', ' ') }}â‚¬</strong>
+                                        <strong class="text-emerald-600">{{ number_format($contributor['amount'], 0, ',', ' ') }} €</strong>
                                     </span>
                                 @endforeach
                             </div>
@@ -310,7 +310,7 @@
                             @foreach($goal->recentContributions as $contribution)
                                 <div class="flex items-center justify-between text-[9px] text-zinc-500">
                                     <span class="font-bold">{{ $contribution->user?->name ?? 'Membro' }} · {{ $contribution->contributed_at?->format('d/m') }}</span>
-                                    <span class="font-black text-emerald-600">{{ number_format($contribution->amount, 2, ',', '.') }}â‚¬</span>
+                                    <span class="font-black text-emerald-600">{{ number_format($contribution->amount, 2, ',', '.') }}€</span>
                                 </div>
                             @endforeach
                         </div>
@@ -350,35 +350,57 @@
             </div>
 
             <form wire:submit.prevent="saveAutoSavingsRule" class="space-y-4">
-                <flux:select wire:model="autoGoalId" label="Meta de destino">
-                    <option value="">Escolher meta</option>
-                    @foreach($goals as $goal)
-                        <option value="{{ $goal->id }}">{{ $goal->name }}</option>
-                    @endforeach
-                </flux:select>
+    {{-- Meta de destino --}}
+    <div class="space-y-1.5">
+        <flux:label class="text-white text-[10px] font-black uppercase tracking-widest ml-1">Meta de destino</flux:label>
+        <flux:select wire:model="autoGoalId">
+            <option value="">Escolher meta</option>
+            @foreach($goals as $goal)
+                <option value="{{ $goal->id }}">{{ $goal->name }}</option>
+            @endforeach
+        </flux:select>
+    </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <flux:select wire:model.live="autoProfile" label="Perfil">
-                        @foreach($autoProfiles as $key => $profile)
-                            <option value="{{ $key }}">{{ $profile['label'] }}</option>
-                        @endforeach
-                    </flux:select>
-                    <flux:input wire:model="autoPercent" type="number" min="1" max="80" step="1" label="% da renda" />
-                </div>
+    <div class="grid grid-cols-2 gap-3">
+        {{-- Perfil --}}
+        <div class="space-y-1.5">
+            <flux:label class="text-white text-[10px] font-black uppercase tracking-widest ml-1">Perfil</flux:label>
+            <flux:select wire:model.live="autoProfile">
+                @foreach($autoProfiles as $key => $profile)
+                    <option value="{{ $key }}">{{ $profile['label'] }}</option>
+                @endforeach
+            </flux:select>
+        </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <flux:input wire:model="autoMinIncomeAmount" type="number" step="0.01" label="Renda minima" placeholder="Opcional" />
-                    <flux:select wire:model="autoAppliesTo" label="Aplicar em">
-                        <option value="all">Todas</option>
-                        <option value="recurring">Recorrentes</option>
-                        <option value="one_off">Pontuais</option>
-                    </flux:select>
-                </div>
+        {{-- % da renda --}}
+        <div class="space-y-1.5">
+            <flux:label class="text-white text-[10px] font-black uppercase tracking-widest ml-1">% da renda</flux:label>
+            <flux:input wire:model="autoPercent" type="number" min="1" max="80" step="1" />
+        </div>
+    </div>
 
-                <flux:button type="submit" variant="primary" icon="check" class="w-full rounded-2xl font-black uppercase tracking-widest !bg-emerald-600 hover:!bg-emerald-500">
-                    Guardar regra
-                </flux:button>
-            </form>
+    <div class="grid grid-cols-2 gap-3">
+        {{-- Renda minima --}}
+        <div class="space-y-1.5">
+            <flux:label class="text-white text-[10px] font-black uppercase tracking-widest ml-1">Renda minima</flux:label>
+            <flux:input wire:model="autoMinIncomeAmount" type="number" step="0.01" placeholder="Opcional" />
+        </div>
+
+        {{-- Aplicar em --}}
+        <div class="space-y-1.5">
+            <flux:label class="text-white text-[10px] font-black uppercase tracking-widest ml-1">Aplicar em</flux:label>
+            <flux:select wire:model="autoAppliesTo">
+                <option value="all">Todas</option>
+                <option value="recurring">Recorrentes</option>
+                <option value="one_off">Pontuais</option>
+            </flux:select>
+        </div>
+    </div>
+
+    <flux:button type="submit" variant="primary" icon="check" class="w-full rounded-2xl font-black uppercase tracking-widest !bg-emerald-600 hover:!bg-emerald-500 mt-2">
+        Guardar regra
+    </flux:button>
+</form>
         </div>
 
         <div class="xl:col-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-7 border border-zinc-200 dark:border-zinc-800 shadow-sm">
@@ -514,23 +536,58 @@
                     </div>
 
                     {{-- VALOR ALVO + VALOR ATUAL --}}
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <flux:label class="text-[9px] font-black uppercase tracking-[0.25em] mb-2 ml-1 text-zinc-200">
-                                Valor Alvo (€)
-                            </flux:label>
-                            <flux:input wire:model="target_amount" type="number" step="0.01"
-                                class="rounded-2xl bg-white/10 border-white/10 text-white font-black placeholder-zinc-400" />
-                        </div>
+                    <div class="grid grid-cols-2 gap-4" x-data="{
+    {{-- Função para formatar com espaços: 1000000 -> 1 000 000 --}}
+    formatWithSpaces(value) {
+        if (!value) return '';
+        {{-- Remove tudo o que não é número e adiciona o espaço de 3 em 3 --}}
+        return value.toString().replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    },
+    {{-- Remove os espaços antes de enviar para a base de dados --}}
+    cleanValue(value) {
+        return value.replace(/\s/g, '');
+    }
+}">
+    {{-- VALOR ALVO --}}
+    <div>
+        <flux:label class="text-[9px] font-black uppercase tracking-[0.25em] mb-2 ml-1 text-zinc-200">
+            Valor Alvo (€)
+        </flux:label>
+        <flux:input
+            type="text"
+            inputmode="numeric"
+            placeholder="Ex: 10 000"
+            {{-- Formata ao carregar (edição) --}}
+            x-init="$el.value = formatWithSpaces($wire.target_amount)"
+            {{-- Formata enquanto o utilizador digita --}}
+            x-on:input="
+                let val = $event.target.value;
+                $el.value = formatWithSpaces(val);
+                $wire.set('target_amount', cleanValue($el.value));
+            "
+            class="rounded-2xl bg-white/10 border-white/10 text-white font-black placeholder-zinc-400"
+        />
+    </div>
 
-                        <div>
-                            <flux:label class="text-[9px] font-black uppercase tracking-[0.25em] mb-2 ml-1 text-zinc-200">
-                                Valor Atual (€)
-                            </flux:label>
-                            <flux:input wire:model="current_amount" type="number" step="0.01"
-                                class="rounded-2xl bg-white/10 border-white/10 text-white font-black placeholder-zinc-400" />
-                        </div>
-                    </div>
+    {{-- VALOR ATUAL --}}
+    <div>
+        <flux:label class="text-[9px] font-black uppercase tracking-[0.25em] mb-2 ml-1 text-zinc-200">
+            Valor Atual (€)
+        </flux:label>
+        <flux:input
+            type="text"
+            inputmode="numeric"
+            placeholder="Ex: 5 000"
+            x-init="$el.value = formatWithSpaces($wire.current_amount)"
+            x-on:input="
+                let val = $event.target.value;
+                $el.value = formatWithSpaces(val);
+                $wire.set('current_amount', cleanValue($el.value));
+            "
+            class="rounded-2xl bg-white/10 border-white/10 text-white font-black placeholder-zinc-400"
+        />
+    </div>
+</div>
 
                     {{-- PRAZO --}}
                     <div>

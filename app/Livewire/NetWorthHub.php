@@ -67,7 +67,7 @@ class NetWorthHub extends Component
         // Rendimentos de investimentos (últimos 12 meses)
         $investmentIncomes = InvestmentIncome::where('workspace_id', $workspaceId)
             ->where('reference_date', '>=', now()->subMonths(12))
-            ->selectRaw('strftime("%Y-%m", reference_date) as month, SUM(net_amount) as total')
+            ->selectRaw("DATE_FORMAT(reference_date, '%Y-%m') as month, SUM(net_amount) as total")
             ->groupBy('month')
             ->orderBy('month')
             ->get();
@@ -88,7 +88,7 @@ class NetWorthHub extends Component
         // Rendimentos mensais (últimos 12 meses)
         $monthlyIncomes = Income::where('workspace_id', $workspaceId)
             ->where('received_at', '>=', now()->subMonths(12))
-            ->selectRaw('strftime("%Y-%m", received_at) as month, SUM(amount) as total')
+            ->selectRaw("DATE_FORMAT(received_at, '%Y-%m') as month, SUM(amount) as total")
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total', 'month');
@@ -96,7 +96,7 @@ class NetWorthHub extends Component
         // Despesas mensais (últimos 12 meses)
         $monthlyExpenses = Expense::where('workspace_id', $workspaceId)
             ->where('spent_at', '>=', now()->subMonths(12))
-            ->selectRaw('strftime("%Y-%m", spent_at) as month, SUM(amount) as total')
+            ->selectRaw("DATE_FORMAT(spent_at, '%Y-%m') as month, SUM(amount) as total")
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total', 'month');
@@ -107,7 +107,7 @@ class NetWorthHub extends Component
             $m = now()->subMonths($i)->format('Y-m');
             $last12Months->put($m, [
                 'month' => $m,
-                'label' => now()->subMonths($i)->format('M'),
+                'label' => now()->subMonths($i)->translatedFormat('M'),
                 'income' => (float) ($monthlyIncomes[$m] ?? 0),
                 'expense' => (float) ($monthlyExpenses[$m] ?? 0),
                 'net' => (float) ($monthlyIncomes[$m] ?? 0) - (float) ($monthlyExpenses[$m] ?? 0),

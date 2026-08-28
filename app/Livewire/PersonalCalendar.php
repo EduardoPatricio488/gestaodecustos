@@ -212,12 +212,34 @@ class PersonalCalendar extends Component
         $firstDay = $currentDate->dayOfWeek;
         $padding = ($firstDay === 0) ? 6 : $firstDay - 1;
 
+        // --- CÁLCULO DOS INSIGHTS ---
+        $allEvents = $this->dayEvents->flatten(1);
+
+        // 1. Pico de Atividade (Dia com mais registos de qualquer tipo)
+        $peakDate = $this->dayEvents->map(fn ($events) => $events->count())->sortDesc()->keys()->first();
+        $peakActivityDay = $peakDate ? Carbon::parse($peakDate)->day : 'N/A';
+
+        // 2. Consistência Fitness (Dias treinados vs Dias no mês)
+        $workoutDays = $allEvents->where('type', 'fitness')->pluck('date')->unique()->count();
+        $workoutPercentage = round(($workoutDays / $daysInMonth) * 100);
+
+        // 3. Eficiência de Lembretes (Concluídos vs Totais)
+        $reminderList = $allEvents->where('type', 'reminder');
+        $totalReminders = $reminderList->count();
+        $completedReminders = $reminderList->where('done', true)->count();
+        $reminderEfficiency = $totalReminders > 0 ? round(($completedReminders / $totalReminders) * 100) : 100;
+
         return view('livewire.personal-calendar', [
             'totalDays' => $daysInMonth,
             'paddingDays' => $padding,
             'currentMonthName' => $currentDate->translatedFormat('F'),
             'monthSummary' => $this->monthSummary,
             'riskDays' => $this->cashRiskDays,
+            // Novas variáveis enviadas para a View
+            'peakActivityDay' => $peakActivityDay,
+            'workoutCount' => $workoutDays,
+            'workoutPercentage' => $workoutPercentage,
+            'reminderEfficiency' => $reminderEfficiency,
         ]);
     }
 }

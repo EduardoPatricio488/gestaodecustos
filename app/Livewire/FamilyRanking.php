@@ -192,14 +192,14 @@ class FamilyRanking extends Component
         $incomeRows = Income::query()
             ->where('workspace_id', $workspace->id)
             ->where('received_at', '>=', $historyStart)
-            ->selectRaw('user_id, strftime("%Y-%m", received_at) as ym, SUM(COALESCE(amount_converted, amount)) as total')
+            ->selectRaw("user_id, DATE_FORMAT(received_at, '%Y-%m') as ym, SUM(COALESCE(amount_converted, amount)) as total")
             ->groupBy('user_id', 'ym')
             ->get();
 
         $expenseRows = Expense::query()
             ->where('workspace_id', $workspace->id)
             ->where('spent_at', '>=', $historyStart)
-            ->selectRaw('user_id, strftime("%Y-%m", spent_at) as ym, SUM(COALESCE(amount_converted, amount)) as total')
+            ->selectRaw("user_id, DATE_FORMAT(spent_at, '%Y-%m') as ym, SUM(COALESCE(amount_converted, amount)) as total")
             ->groupBy('user_id', 'ym')
             ->get();
 

@@ -35,68 +35,113 @@
         @endif
 
         {{-- PASSO 2: DADOS --}}
-        @if($step == 2)
-            <div class="space-y-8 animate-in slide-in-from-right duration-300">
-                <h2 class="text-3xl font-black uppercase italic dark:text-white">Identidade Corporativa</h2>
+       {{-- PASSO 2: DADOS --}}
+@if($step == 2)
+    <div class="space-y-8 animate-in slide-in-from-right duration-300">
+        <h2 class="text-3xl font-black uppercase italic dark:text-white">Identidade Corporativa</h2>
 
-                <div class="flex flex-col items-center gap-4">
-                    <label class="relative group cursor-pointer">
-                        <div class="size-32 rounded-[2.5rem] border-4 border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-all group-hover:border-brand-500/50">
-                            @if($photo)
-                                <img src="{{ $photo->temporaryUrl() }}" class="size-full object-cover">
-                            @else
-                                <flux:icon name="camera" class="size-8 text-zinc-300 group-hover:text-brand-500 transition-colors" />
-                            @endif
-                        </div>
-                        <input type="file" wire:model="photo" class="hidden">
-                    </label>
-                    <span class="text-[10px] font-black uppercase text-zinc-400">Logótipo da Empresa</span>
+        {{-- Foto de Perfil (Mantido igual) --}}
+        <div class="flex flex-col items-center gap-4">
+            <label class="relative group cursor-pointer">
+                <div class="size-32 rounded-[2.5rem] border-4 border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-all group-hover:border-brand-500/50">
+                    @if($photo)
+                        <img src="{{ $photo->temporaryUrl() }}" class="size-full object-cover">
+                    @else
+                        <flux:icon name="camera" class="size-8 text-zinc-300 group-hover:text-brand-500 transition-colors" />
+                    @endif
                 </div>
+                <input type="file" wire:model="photo" class="hidden">
+            </label>
+            <span class="text-[10px] font-black uppercase text-zinc-400">Logótipo da Empresa</span>
+        </div>
 
-                <div class="grid gap-6">
-                    <flux:input wire:model="name" label="Nome Comercial" placeholder="Ex: Finance Pro Lda" />
-                    <flux:select wire:model="industry" label="Área de Atuação">
-                        <option value="">Selecione...</option>
-                        <option value="Tecnologia">Tecnologia & Software</option>
-                        <option value="Serviços">Prestação de Serviços</option>
-                        <option value="Retalho">Comércio / Loja</option>
-                        <option value="Construção">Construção & Imobiliário</option>
-                    </flux:select>
-                    <flux:input wire:model="tax_number" label="NIF / Tax ID" placeholder="Opcional" />
-                </div>
+        <div class="grid gap-6">
+            <flux:input wire:model="name" label="Nome Comercial" placeholder="Ex: Finance Pro Lda" />
 
-                <div class="flex gap-4">
-                    <flux:button wire:click="prevStep" variant="ghost" class="flex-1 h-14 rounded-2xl">Voltar</flux:button>
-                    <flux:button wire:click="nextStep" variant="primary" class="flex-[2] h-14 rounded-2xl font-black uppercase">Próximo Passo</flux:button>
+            {{-- SELECT COM .LIVE PARA ATUALIZAÇÃO IMEDIATA --}}
+            <flux:select wire:model.live="industry" label="Área de Atuação">
+                <option value="">Selecione o setor...</option>
+                <option value="Tecnologia">Tecnologia, SaaS & Software</option>
+                <option value="Consultoria">Consultoria & Auditoria</option>
+                <option value="Marketing">Marketing & Publicidade</option>
+                <option value="Retalho">Comércio & E-commerce</option>
+                <option value="Construção">Construção & Imobiliário</option>
+                <option value="Saúde">Saúde & Bem-estar</option>
+                <option value="Logística">Transportes & Logística</option>
+                <option value="Outro">Outro setor...</option> {{-- 🔥 Opção Outro --}}
+            </flux:select>
+
+            {{-- CAMPO EXTRA: SÓ APARECE SE ESCOLHER "OUTRO" --}}
+            @if($industry === 'Outro')
+                <div class="animate-in slide-in-from-top-2 duration-300">
+                    <flux:input
+                        wire:model="customIndustry"
+                        label="Especifique a sua Área"
+                        placeholder="Ex: Aviação, Moda, Cinema..."
+                        class="bg-brand-500/5 border-brand-500/20"
+                    />
                 </div>
-            </div>
-        @endif
+            @endif
+
+            <flux:input wire:model="tax_number" label="NIF / Tax ID" placeholder="Opcional" />
+        </div>
+
+        <div class="flex gap-4">
+            <flux:button wire:click="prevStep" variant="ghost" class="flex-1 h-14 rounded-2xl">Voltar</flux:button>
+            <flux:button wire:click="nextStep" variant="primary" class="flex-[2] h-14 rounded-2xl font-black uppercase shadow-lg">Próximo Passo</flux:button>
+        </div>
+    </div>
+@endif
 
         {{-- PASSO 3: CAPITAL --}}
-        @if($step == 3)
-            <div class="space-y-8 animate-in slide-in-from-right duration-300 text-center">
-                <h2 class="text-3xl font-black uppercase italic dark:text-white">Estado Bancário Atual</h2>
-                <p class="text-zinc-500">Qual é o capital disponível nas contas da empresa neste momento?</p>
+@if($step == 3)
+    <div class="space-y-8 animate-in slide-in-from-right duration-300 text-center"
+         x-data="{
+            {{-- Função para formatar: 10000 -> 10 000 --}}
+            formatValue(val) {
+                if (!val) return '';
+                return val.toString().replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            },
+            {{-- Função para limpar: 10 000 -> 10000 --}}
+            cleanValue(val) {
+                return val.replace(/\s/g, '');
+            }
+         }">
+        <h2 class="text-3xl font-black uppercase italic dark:text-white">Estado Bancário Atual</h2>
+        <p class="text-zinc-500 font-medium">Qual é o capital disponível nas contas da empresa neste momento?</p>
 
-                <div class="relative max-w-xs mx-auto my-10">
-                    <span class="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-brand-600">€</span>
-                    <input type="number" wire:model="initial_capital"
-                        class="w-full bg-zinc-50 dark:bg-zinc-950 border-none rounded-[2rem] h-24 text-center text-5xl font-black focus:ring-4 focus:ring-brand-500/20 dark:text-white shadow-inner">
-                </div>
+        <div class="relative max-w-xs mx-auto my-10">
+            <span class="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-brand-600">€</span>
 
-                <div class="p-6 bg-amber-50 dark:bg-amber-900/10 rounded-3xl border border-amber-100 dark:border-amber-800/50 text-left">
-                    <p class="text-xs text-amber-700 dark:text-amber-400 font-bold leading-relaxed italic">
-                        * Este valor servirá de base para o cálculo da sua "Runway" (previsão de quanto tempo a empresa sobrevive com os custos atuais).
-                    </p>
-                </div>
+            {{-- INPUT COM MÁSCARA --}}
+            <input
+                type="text"
+                inputmode="numeric"
+                x-ref="moneyInput"
+                x-init="$el.value = formatValue($wire.initial_capital)"
+                x-on:input="
+                    let val = $event.target.value;
+                    $el.value = formatValue(val);
+                    $wire.set('initial_capital', cleanValue($el.value));
+                "
+                placeholder="0"
+                class="w-full bg-zinc-50 dark:bg-zinc-950 border-none rounded-[2rem] h-24 text-center text-5xl font-black focus:ring-4 focus:ring-brand-500/20 dark:text-white shadow-inner outline-none"
+            >
+        </div>
 
-                <div class="flex gap-4">
-                    <flux:button wire:click="prevStep" variant="ghost" class="flex-1 h-14 rounded-2xl">Voltar</flux:button>
-                    <flux:button wire:click="createCompany" variant="primary" class="flex-[2] h-14 rounded-2xl font-black uppercase bg-emerald-600 hover:bg-emerald-700 border-none shadow-xl shadow-emerald-500/20">
-                        Ativar Empresa 🚀
-                    </flux:button>
-                </div>
-            </div>
-        @endif
+        <div class="p-6 bg-amber-50 dark:bg-amber-900/10 rounded-3xl border border-amber-100 dark:border-amber-800/50 text-left">
+            <p class="text-xs text-amber-700 dark:text-amber-400 font-bold leading-relaxed italic">
+                * Este valor servirá de base para o cálculo da sua "Runway" (previsão de quanto tempo a empresa sobrevive com os custos atuais).
+            </p>
+        </div>
+
+        <div class="flex gap-4">
+            <flux:button wire:click="prevStep" variant="ghost" class="flex-1 h-14 rounded-2xl">Voltar</flux:button>
+            <flux:button wire:click="createCompany" variant="primary" class="flex-[2] h-14 rounded-2xl font-black uppercase bg-emerald-600 hover:bg-emerald-700 border-none shadow-xl shadow-emerald-500/20">
+                Ativar Empresa 🚀
+            </flux:button>
+        </div>
+    </div>
+@endif
     </div>
 </div>

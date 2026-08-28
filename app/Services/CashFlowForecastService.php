@@ -15,7 +15,7 @@ class CashFlowForecastService
         $start = now()->startOfDay();
         $end = now()->addDays($days)->endOfDay();
 
-        $currentBalance = (float) $workspace->bankAccounts()->sum('current_balance');
+        $currentBalance = (float) $workspace->bankAccounts()->sum('balance');
         if ($currentBalance === 0.0) {
             $currentBalance = $workspace->getLiquidezAtual();
         }

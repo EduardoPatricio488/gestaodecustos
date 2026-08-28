@@ -451,7 +451,7 @@
                 <thead class="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800">
                     <tr class="text-[9px] uppercase text-zinc-400 dark:text-zinc-500 font-black tracking-[0.2em]">
                         <th class="p-6 w-28">Data</th>
-                        <th class="p-6">Tipo</th>
+                        <th class="p-6">Subcategoria</th>
                         <th class="p-6">Detalhes Específicos</th>
                         <th class="p-6">Observações</th>
                         <th class="p-6 text-right px-8 w-32">Montante</th>
@@ -1056,57 +1056,75 @@
 
                     {{-- Classificação --}}
                     <label class="block space-y-2">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Subcategoria</span>
-                        <select wire:model="subcategory" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-bold shadow-inner outline-none ring-0 transition focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-900 dark:text-white">
-                            <option value="">Selecionar tipo...</option>
-                            @foreach($subcategories as $sub)
-                                <option value="{{ $sub }}">{{ ucfirst(strtolower($sub)) }}</option>
+    <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Subcategoria</span>
+    <select wire:model.live="subcategory" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-bold shadow-inner outline-none ring-0 transition focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-900 dark:text-white">
+        <option value="">Selecionar...</option>
+        @foreach($subcategories as $sub)
+            <option value="{{ $sub }}">{{ $sub }}</option>
+        @endforeach
+    </select>
+</label>
+
+{{-- 2. CAMPO EXTRA (Aparece apenas se selecionar 'Outro') --}}
+<div x-show="$wire.subcategory === 'Outro'" x-cloak x-transition class="mt-4 animate-in slide-in-from-top-2">
+    <label class="block space-y-2">
+        <span class="text-[10px] font-black uppercase tracking-widest text-brand-600 italic">Especificar Subcategoria</span>
+        <input wire:model="customSubcategory" type="text" placeholder="Ex: Mercado de Rua, Suplementos..."
+               class="w-full h-12 rounded-xl border-2 border-brand-500/20 bg-brand-500/5 px-4 text-sm font-bold outline-none focus:border-brand-500 transition-all dark:text-white">
+    </label>
+</div>
+
+                    {{-- Detalhes Específicos (Dinâmicos por Categoria) --}}
+<div class="rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-5 space-y-5">
+
+    {{-- Cabeçalho Dinâmico da Secção --}}
+    <div class="flex items-center gap-3 border-b border-zinc-200/50 dark:border-zinc-800 pb-3">
+        <flux:icon name="{{ $categoryFields[$slug]['icon'] ?? 'adjustments-horizontal' }}" class="size-4" style="color: var(--cat-color);" />
+        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+            @if($slug === 'carro')
+                Detalhes Específicos do Veículo
+            @else
+                Detalhes Específicos do Gasto
+            @endif
+        </span>
+    </div>
+
+    {{-- Renderização dos Campos Adicionais (KM, Próx. Inspeção, Local, etc) --}}
+    @if(isset($categoryFields[$slug]))
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            @foreach($categoryFields[$slug]['fields'] as $field)
+                @if($field['type'] === 'select')
+                    <label class="block space-y-2">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">{{ $field['label'] }}</span>
+                        <select wire:model="meta.{{ $field['name'] }}" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white">
+                            <option value="">Escolher...</option>
+                            @foreach($field['options'] as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
                             @endforeach
                         </select>
                     </label>
+                @elseif($field['type'] === 'checkbox')
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 cursor-pointer">
+                        <span class="text-xs font-bold text-zinc-500">{{ $field['label'] }}</span>
+                        <input type="checkbox" wire:model="meta.{{ $field['name'] }}" class="rounded border-zinc-300 text-brand-600 focus:ring-brand-600">
+                    </label>
+                @else
+                    <label class="block space-y-2">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">{{ $field['label'] }}</span>
+                        <input wire:model="meta.{{ $field['name'] }}" type="{{ $field['type'] }}" placeholder="{{ $field['placeholder'] ?? '' }}"
+                            class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white">
+                    </label>
+                @endif
+            @endforeach
+        </div>
+    @endif
 
-                    {{-- Campos Inteligentes (Mesmo Estilo) --}}
-                    <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-5 space-y-5">
-                        <div class="flex items-center gap-3 border-b border-zinc-200/50 dark:border-zinc-800 pb-3">
-                            <flux:icon name="{{ $categoryFields[$slug]['icon'] ?? 'tag' }}" class="size-4" style="color: var(--cat-color);" />
-                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Informações Adicionais</span>
-                        </div>
-
-                        @if(isset($categoryFields[$slug]))
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                @foreach($categoryFields[$slug]['fields'] as $field)
-                                    @if($field['type'] === 'select')
-                                        <label class="block space-y-2">
-                                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">{{ $field['label'] }}</span>
-                                            <select wire:model="meta.{{ $field['name'] }}" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white">
-                                                <option value="">Escolher...</option>
-                                                @foreach($field['options'] as $option)
-                                                    <option value="{{ $option }}">{{ $option }}</option>
-                                                @endforeach
-                                            </select>
-                                        </label>
-                                    @elseif($field['type'] === 'checkbox')
-                                        <label class="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 cursor-pointer">
-                                            <span class="text-xs font-bold text-zinc-500">{{ $field['label'] }}</span>
-                                            <input type="checkbox" wire:model="meta.{{ $field['name'] }}" class="rounded border-zinc-300 text-brand-600 focus:ring-brand-600">
-                                        </label>
-                                    @else
-                                        <label class="block space-y-2">
-                                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">{{ $field['label'] }}</span>
-                                            <input wire:model="meta.{{ $field['name'] }}" type="{{ $field['type'] }}" placeholder="{{ $field['placeholder'] ?? '' }}"
-                                                class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white">
-                                        </label>
-                                    @endif
-                                @endforeach
-                            </div>
-                        @endif
-
-                        {{-- Descrição --}}
-                        <label class="block space-y-2 pt-2">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Notas / Observações</span>
-                            <textarea wire:model="description" rows="2" class="w-full resize-none rounded-2xl border-0 bg-white px-4 py-3 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white"></textarea>
-                        </label>
-                    </div>
+    {{-- Notas gerais mantidas no fim para contexto extra --}}
+    <label class="block space-y-2 pt-2">
+        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Notas / Observações</span>
+        <textarea wire:model="description" rows="2" class="w-full resize-none rounded-2xl border-0 bg-white px-4 py-3 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white"></textarea>
+    </label>
+</div>
                 </div>
 
                 {{-- FOOTER (Igual às Assinaturas) --}}

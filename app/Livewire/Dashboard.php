@@ -10,6 +10,7 @@ use App\Models\Income;
 use App\Models\Investment;
 use App\Models\Reminder;
 use App\Models\SocialNotification;
+use App\Models\Subscription;
 use App\Models\Workspace;
 use App\Services\FinanceScoreService;
 use App\Services\NotificationService;
@@ -65,6 +66,12 @@ class Dashboard extends Component
 
     public $exportExpenses = true;
 
+    public $showSubSuggestion = false;
+
+    public $suggestedName = '';
+
+    public $suggestedPrice = 0;
+
     public $exportIncomes = true;
 
     public $includeReceipts = false;
@@ -90,7 +97,17 @@ class Dashboard extends Component
 
             return true;
         });
+        // 🔥 NOVO: Detetar retorno do Stripe
+        if (request()->query('checkout') === 'success') {
+            // Forçamos o refresh do user para garantir que o plano já está atualizado via Webhook
+            $user->refresh();
 
+            if ($user->plan !== 'free') {
+                $this->suggestedName = ($user->plan === 'pro') ? 'Finance Pro Business' : 'Finance Pro Premium';
+                $this->suggestedPrice = ($user->plan === 'pro') ? 10.00 : 5.00;
+                $this->showSubSuggestion = true;
+            }
+        }
         // 2. Redirecionamento de Segurança para Admin Real
         if (in_array($user->role, ['admin', 'moderator', 'analyst']) && $user->email_verified_at && ! session()->has('admin_impersonation')) {
             return redirect()->route('admin.dashboard');
@@ -265,6 +282,39 @@ class Dashboard extends Component
         }
         // Blur estava ON → pedir password para desativar
         $this->showPrivacyModal = true;
+    }
+
+    public function confirmSubscriptionImport()
+    {
+        $user = auth()->user();
+        $workspaceId = $user->current_workspace_id;
+
+        // 1. Procurar a categoria 'Tecnologia' ou 'Software' no workspace atual
+        $category = Category::where('workspace_id', $workspaceId)
+            ->where(function ($q) {
+                $q->where('name', 'like', '%Tecnologia%')
+                    ->orWhere('name', 'like', '%Software%')
+                    ->orWhere('slug', 'tecnologia');
+            })->first();
+
+        // 2. Se não encontrar, usa a primeira categoria disponível como fallback
+        $categoryId = $category ? $category->id : Category::where('workspace_id', $workspaceId)->first()?->id;
+
+        // 3. Criar a subscrição com o ID da categoria
+        Subscription::create([
+            'workspace_id' => $workspaceId,
+            'user_id' => $user->id,
+            'category_id' => $categoryId, // 🔥 FIX: Agora enviamos o ID obrigatório
+            'name' => $this->suggestedName,
+            'amount' => $this->suggestedPrice,
+            'cycle' => 'monthly',
+            'billing_day' => now()->day,
+            'is_active' => true,
+            'payment_method' => 'Stripe / Cartão',
+        ]);
+
+        $this->showSubSuggestion = false;
+        $this->dispatch('toast', text: 'Assinatura adicionada com sucesso! 💳');
     }
 
     #[Computed]

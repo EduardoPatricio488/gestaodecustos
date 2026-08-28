@@ -32,6 +32,8 @@ class CategoryHub extends Component
 
     public $amount;
 
+    public $customSubcategory;
+
     public $description;
 
     public $spent_at;
@@ -111,7 +113,29 @@ class CategoryHub extends Component
         $configs = [
             'carro' => ['db' => 'Carro',       'title' => 'Carro',        'icon' => 'truck',         'subs' => ['Gasolina', 'Manutenção', 'Seguro', 'Portagens', 'Estacionamento', 'Lavagem', 'Multa', 'Inspeção']],
             'casa' => ['db' => 'Casa',         'title' => 'Casa',         'icon' => 'home',          'subs' => ['Renda', 'Luz/Água', 'Internet', 'Gás', 'Condomínio', 'Obras', 'Mobiliário', 'Limpeza']],
-            'alimentacao' => ['db' => 'Alimentação',  'title' => 'Alimentação',  'icon' => 'shopping-cart', 'subs' => ['Supermercado', 'Restaurante', 'Café', 'Takeaway', 'Delivery', 'Padaria', 'Mercado']],
+            'alimentacao' => [
+                'db' => 'Alimentação',
+                'title' => 'Alimentação',
+                'icon' => 'shopping-cart',
+                'subs' => [
+                    'Supermercado / Hiper',
+                    'Restaurante / Almoço',
+                    'Jantares Sociais / Grupo',
+                    'Café & Snacks',
+                    'Padaria & Padaria',
+                    'Takeaway (Uber/Glovo)',
+                    'Fast Food',
+                    'Mercado & Frescos',
+                    'Talho & Peixaria',
+                    'Bares & Saídas à Noite',
+                    'Suplementos & Nutrição',
+                    'Cantina / Refeitório',
+                    'Máquinas de Vending',
+                    'Pequeno-almoço Fora',
+                    'Guloseimas & Doces',
+                    'Outro',
+                ],
+            ],
             'saude' => ['db' => 'Saúde',        'title' => 'Saúde',        'icon' => 'heart',         'subs' => ['Consulta', 'Farmácia', 'Exame', 'Dentista', 'Óptica', 'Ginásio', 'Seguro Saúde']],
             'tecnologia' => ['db' => 'Tecnologia',   'title' => 'Tecnologia',   'icon' => 'cpu-chip',      'subs' => ['Software', 'Hardware', 'Subscrição', 'Domínio', 'Hosting', 'Acessório', 'Reparação']],
             'educacao' => ['db' => 'Educação',     'title' => 'Educação',     'icon' => 'academic-cap',  'subs' => ['Propinas', 'Livros', 'Curso', 'Certificação', 'Material', 'Formação']],
@@ -122,9 +146,17 @@ class CategoryHub extends Component
             'outras' => ['db' => 'Outras',         'title' => 'Outras',         'icon' => 'ellipsis-horizontal', 'subs' => ['Geral', 'Outros']],
         ];
 
-        // Se for uma das categorias base, carrega a config manual
-        if (isset($configs[$this->slug])) {
-            $c = $configs[$this->slug];
+        // Se for uma das categorias base, carrega a config manual (Lógica que aceita variações como -2, -3)
+        $configKey = null;
+        foreach (array_keys($configs) as $key) {
+            if (str_starts_with($this->slug, $key)) {
+                $configKey = $key;
+                break;
+            }
+        }
+
+        if ($configKey) {
+            $c = $configs[$configKey];
             $this->dbName = $c['db'];
             $this->title = $c['title'];
             $this->icon = $c['icon'];
@@ -334,9 +366,12 @@ PROMPT;
         $this->editingId = $expense->id;
         $this->amount = $expense->amount;
         $this->spent_at = $expense->spent_at->format('Y-m-d');
-        $this->subcategory = $expense->subcategory;
+        $this->subcategory = trim($expense->subcategory);
         $this->description = $expense->description;
-
+        if (! in_array($this->subcategory, $this->subcategories)) {
+            $this->customSubcategory = $this->subcategory;
+            $this->subcategory = 'Outro';
+        }
         // Carregar os metadados (campos personalizados)
         $metaRaw = $expense->metadata;
         $this->meta = is_array($metaRaw) ? $metaRaw : (json_decode($metaRaw, true) ?? []);
@@ -378,7 +413,7 @@ PROMPT;
         $data = [
             'user_id' => auth()->id(),
             'category_id' => $category->id,
-            'subcategory' => $this->subcategory,
+            'subcategory' => ($this->subcategory === 'Outro') ? $this->customSubcategory : $this->subcategory,
             'amount' => $this->amount,
             'currency' => $this->currency,
             'description' => $this->description,
@@ -388,9 +423,9 @@ PROMPT;
         ];
 
         if ($this->editingId) {
-            Expense::find($this->editingId)->update($data);
-            $msg = 'Registo atualizado!';
-            $expense = Expense::find($this->editingId);
+            $expense = Expense::findOrFail($this->editingId);
+            $expense->update($data);
+            $msg = 'Registo atualizado! ✅';
         } else {
             $expense = Expense::create($data);
             $msg = 'Gasto guardado com sucesso!';

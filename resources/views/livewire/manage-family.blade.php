@@ -287,7 +287,7 @@
             </div>
         </div>
 
-        {{-- COLUNA B: O MEU COFRE PRIVADO --}}
+  {{-- COLUNA B: O MEU COFRE PRIVADO --}}
 <div class="space-y-6">
     <div class="flex items-center justify-between px-4 text-left w-full">
         <div class="flex items-center gap-4">
@@ -309,6 +309,7 @@
             {{-- SE O COFRE JÁ EXISTE: MOSTRA A GESTÃO --}}
             <div class="flex flex-col items-center">
                 <div class="relative group">
+                    {{-- Moldura da Foto --}}
                     <div class="size-32 rounded-[2.5rem] overflow-hidden border-4 border-emerald-50 dark:border-zinc-800 shadow-xl bg-zinc-50 flex items-center justify-center">
                         @if($myPersonalWs->logo_path)
                             <img src="{{ asset($myPersonalWs->logo_path) }}?v={{ time() }}" class="size-full object-cover">
@@ -318,10 +319,24 @@
                             </div>
                         @endif
                     </div>
+
+                    {{-- Botão: Alterar (Câmara) --}}
                     <label class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-all cursor-pointer rounded-[2.5rem] backdrop-blur-[2px]">
                         <input type="file" wire:model="personalPhoto" class="hidden" accept="image/*">
                         <flux:icon name="camera" class="size-8 text-white" />
                     </label>
+
+                    {{-- ⭐ NOVO BOTÃO: REMOVER FOTO (Só aparece se existir logo_path) --}}
+                    @if($myPersonalWs->logo_path)
+                        <button
+                            wire:click="removePersonalPhoto"
+                            wire:confirm="Queres remover a imagem do teu cofre privado?"
+                            class="absolute -top-2 -right-2 size-8 bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg flex items-center justify-center transition-transform hover:scale-110 z-20"
+                            title="Remover foto"
+                        >
+                            <flux:icon name="trash" variant="micro" class="size-4" />
+                        </button>
+                    @endif
                 </div>
             </div>
 
@@ -335,11 +350,11 @@
                 </div>
             </div>
 
-            <div class="p-4 mt-6 bg-zinc-50 dark:bg-zinc-950 rounded-2xl border border-zinc-100 dark:border-zinc-800 text-center text-left">
+            <div class="p-4 mt-6 bg-zinc-50 dark:bg-zinc-950 rounded-2xl border border-zinc-100 dark:border-zinc-800 text-center">
                 <p class="text-[10px] text-zinc-500 italic leading-relaxed">Só tu tens as chaves de acesso a este espaço. Estes dados não são partilhados.</p>
             </div>
         @else
-            {{-- SE O COFRE NÃO EXISTE: MOSTRA O BOTÃO DE CRIAÇÃO --}}
+            {{-- SE O COFRE NÃO EXISTE: MOSTRA O BOTÃO DE CRIAÇÃO (Igual ao anterior) --}}
             <div class="text-center space-y-6 animate-in fade-in zoom-in duration-700">
                 <div class="size-20 mx-auto bg-emerald-500/10 text-emerald-600 rounded-[2rem] flex items-center justify-center shadow-inner">
                     <flux:icon name="shield-check" variant="solid" class="size-10" />

@@ -50,20 +50,20 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
             <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Entradas previstas</p>
-            <p class="text-2xl font-black text-emerald-600 italic tabular-nums">{{ number_format($monthSummary['income'], 0, ',', '.') }}â‚¬</p>
+            <p class="text-2xl font-black text-emerald-600 italic tabular-nums">{{ number_format($monthSummary['income'], 0, ',', '.') }}€</p>
         </div>
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
             <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Saidas previstas</p>
-            <p class="text-2xl font-black text-red-500 italic tabular-nums">{{ number_format($monthSummary['outflow'], 0, ',', '.') }}â‚¬</p>
+            <p class="text-2xl font-black text-red-500 italic tabular-nums">{{ number_format($monthSummary['outflow'], 0, ',', '.') }}€</p>
         </div>
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
             <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Vencimentos fixos</p>
-            <p class="text-2xl font-black text-amber-500 italic tabular-nums">{{ number_format($monthSummary['fixed_outflow'], 0, ',', '.') }}â‚¬</p>
+            <p class="text-2xl font-black text-amber-500 italic tabular-nums">{{ number_format($monthSummary['fixed_outflow'], 0, ',', '.') }}€</p>
         </div>
         <div class="bg-zinc-950 text-white border border-zinc-800 rounded-3xl p-5 shadow-xl">
             <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2">Dias de risco</p>
             <p class="text-2xl font-black {{ $monthSummary['risk_days'] > 0 ? 'text-red-400' : 'text-emerald-400' }} italic tabular-nums">{{ $monthSummary['risk_days'] }}</p>
-            <p class="text-[9px] text-zinc-500 mt-1">saldo final {{ number_format($monthSummary['projected_balance'], 0, ',', '.') }}â‚¬</p>
+            <p class="text-[9px] text-zinc-500 mt-1">saldo final {{ number_format($monthSummary['projected_balance'], 0, ',', '.') }}€</p>
         </div>
     </div>
 
@@ -185,45 +185,45 @@
 
     {{-- ── 4. INSIGHTS DO MÊS (ADD-ON INTERESSANTE) ── --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <h4 class="text-[10px] font-black uppercase text-zinc-400 tracking-widest mb-4">Pico de Atividade</h4>
-            <div class="flex items-center gap-4">
-                <div class="p-3 bg-red-500/10 rounded-2xl text-red-500">
-                    <flux:icon name="fire" class="size-6" />
-                </div>
-                <div>
-                    <p class="text-xl font-black dark:text-white leading-none">Dia 15</p>
-                    <p class="text-[10px] font-bold text-zinc-400 uppercase mt-1">Maior volume de registos</p>
-                </div>
+    <div class="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <h4 class="text-[10px] font-black uppercase text-zinc-400 tracking-widest mb-4">Pico de Atividade</h4>
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-red-500/10 rounded-2xl text-red-500">
+                <flux:icon name="fire" class="size-6" />
             </div>
-        </div>
-
-        <div class="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <h4 class="text-[10px] font-black uppercase text-zinc-400 tracking-widest mb-4">Consistência Fitness</h4>
-            <div class="flex items-center gap-4">
-                <div class="p-3 bg-orange-500/10 rounded-2xl text-orange-500">
-                    <flux:icon name="bolt" class="size-6" />
-                </div>
-                <div>
-                    <p class="text-xl font-black dark:text-white leading-none">12 Treinos</p>
-                    <p class="text-[10px] font-bold text-zinc-400 uppercase mt-1">42% do mês ativo</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <h4 class="text-[10px] font-black uppercase text-zinc-400 tracking-widest mb-4">Eficiência de Lembretes</h4>
-            <div class="flex items-center gap-4">
-                <div class="p-3 bg-indigo-500/10 rounded-2xl text-indigo-500">
-                    <flux:icon name="check-circle" class="size-6" />
-                </div>
-                <div>
-                    <p class="text-xl font-black dark:text-white leading-none">94%</p>
-                    <p class="text-[10px] font-bold text-zinc-400 uppercase mt-1">Taxa de conclusão pontual</p>
-                </div>
+            <div>
+                <p class="text-xl font-black dark:text-white leading-none">Dia {{ $peakActivityDay }}</p>
+                <p class="text-[10px] font-bold text-zinc-400 uppercase mt-1">Maior volume de registos</p>
             </div>
         </div>
     </div>
+
+    <div class="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <h4 class="text-[10px] font-black uppercase text-zinc-400 tracking-widest mb-4">Consistência Fitness</h4>
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-orange-500/10 rounded-2xl text-orange-500">
+                <flux:icon name="bolt" class="size-6" />
+            </div>
+            <div>
+                <p class="text-xl font-black dark:text-white leading-none">{{ $workoutCount }} Treinos</p>
+                <p class="text-[10px] font-bold text-zinc-400 uppercase mt-1">{{ $workoutPercentage }}% do mês ativo</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <h4 class="text-[10px] font-black uppercase text-zinc-400 tracking-widest mb-4">Eficiência de Lembretes</h4>
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-indigo-500/10 rounded-2xl text-indigo-500">
+                <flux:icon name="check-circle" class="size-6" />
+            </div>
+            <div>
+                <p class="text-xl font-black dark:text-white leading-none">{{ $reminderEfficiency }}%</p>
+                <p class="text-[10px] font-bold text-zinc-400 uppercase mt-1">Taxa de conclusão pontual</p>
+            </div>
+        </div>
+    </div>
+</div>
 {{-- ── MODAL: COMANDO RÁPIDO DE REGISTO (CENTRADO) ── --}}
     <div
         x-show="quickAddModal"

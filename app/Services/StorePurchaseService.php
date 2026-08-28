@@ -139,10 +139,12 @@ class StorePurchaseService
         }
 
         ActivityLog::create([
+            'workspace_id' => auth()->user()->current_workspace_id,
             'user_id' => $userId,
             'action' => $action,
             'description' => $description,
             'model_type' => 'store',
+            'model_id' => $metadata['product_id'] ?? 0, // 🔥 FIX: Agora enviamos o ID do produto
             'metadata' => $metadata,
         ]);
     }

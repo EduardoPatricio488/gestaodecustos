@@ -1406,5 +1406,65 @@
     </div>
 </div>
 @endif
+{{-- ══════════════════════════════════════════════════════════════ --}}
+    {{-- MODAL: SUGESTÃO INTELIGENTE PÓS-PAGAMENTO                      --}}
+    {{-- ══════════════════════════════════════════════════════════════ --}}
+    <div x-data="{ open: @entangle('showSubSuggestion') }"
+         x-show="open"
+         x-cloak
+         class="fixed inset-0 z-[300] flex items-center justify-center p-4">
 
+        {{-- Backdrop com Blur --}}
+        <div class="absolute inset-0 bg-zinc-950/80 backdrop-blur-xl" @click="open = false"></div>
+
+        {{-- Painel --}}
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-300 transform"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-8"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-[3rem] p-10 shadow-[0_35px_100px_-15px_rgba(16,185,129,0.3)] border border-emerald-500/20 text-center">
+
+            {{-- Ícone Animado --}}
+            <div class="relative size-24 mx-auto mb-8">
+                <div class="absolute inset-0 bg-emerald-500/20 blur-2xl rounded-full animate-pulse"></div>
+                <div class="relative size-full bg-emerald-500 text-white rounded-[2rem] flex items-center justify-center shadow-2xl">
+                    <flux:icon name="check-badge" variant="solid" class="size-12" />
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-3xl font-black dark:text-white uppercase italic tracking-tighter leading-none">Upgrade Ativo!</h2>
+                <p class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Pagamento Processado</p>
+            </div>
+
+            <p class="mt-6 text-sm text-zinc-500 font-medium leading-relaxed">
+                Eduardo, queres registar o custo mensal do teu plano <span class="text-emerald-600 font-black">{{ $suggestedName }}</span> nas tuas assinaturas?
+            </p>
+
+            {{-- Card de Resumo do Gasto --}}
+            <div class="mt-8 p-6 bg-zinc-50 dark:bg-zinc-950 rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
+                <div class="flex justify-between items-center">
+                    <div class="text-left">
+                        <p class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Valor Mensal</p>
+                        <p class="text-2xl font-black dark:text-white italic">{{ number_format($suggestedPrice, 2) }}€</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Categoria</p>
+                        <p class="text-xs font-bold text-brand-600 uppercase italic">Serviços SaaS</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Acções --}}
+            <div class="mt-10 space-y-3">
+                <flux:button wire:click="confirmSubscriptionImport" variant="primary" class="w-full h-16 bg-emerald-600 hover:bg-emerald-500 border-none font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-500/20 rounded-2xl">
+                    Sim, adicionar agora ✅
+                </flux:button>
+
+                <button @click="open = false" class="w-full py-2 text-[10px] font-black text-zinc-400 hover:text-zinc-600 uppercase tracking-widest transition-colors">
+                    Não, registo mais tarde
+                </button>
+            </div>
+        </div>
+    </div>
 </div>

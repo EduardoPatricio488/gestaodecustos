@@ -199,14 +199,19 @@ class Workspace extends Model
 
     public function getLiquidezAtual(): float
     {
+        // Se o utilizador já registou contas bancárias, somamos o saldo real delas
         if ($this->bankAccounts()->exists()) {
-            return (float) $this->bankAccounts->sum('current_balance');
+            // 🔥 FIX: Mudado de 'current_balance' para 'balance' (nome real na tua BD MySQL)
+            return (float) $this->bankAccounts()->sum('balance');
         }
-        $revenue = $this->invoices()->where('status', 'paga')->sum('total_amount');
-        $spent = $this->expenses()->where('is_company', true)->sum('amount');
-        $payroll = $this->employees()->sum('salary');
 
-        return (float) ($this->initial_capital + $revenue - $spent - $payroll);
+        // Caso contrário, fazemos o cálculo teórico baseado na operação
+        $revenue = (float) $this->invoices()->where('status', 'paga')->sum('total_amount');
+        $spent = (float) $this->expenses()->where('is_company', true)->sum('amount');
+        $payroll = (float) $this->employees()->sum('salary');
+
+        // Capital Inicial + Faturas Pagas - Despesas - Salários
+        return (float) (($this->initial_capital ?? 0) + $revenue - $spent - $payroll);
     }
 
     public function money($amount)

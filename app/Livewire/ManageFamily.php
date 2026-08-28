@@ -130,6 +130,20 @@ class ManageFamily extends Component
         ]);
     }
 
+    public function removePersonalPhoto()
+    {
+        $user = auth()->user();
+        $pw = $user->workspaces()->where('type', 'personal')->where('owner_id', $user->id)->first();
+
+        if ($pw && $pw->logo_path) {
+            // Opcional: podes apagar o ficheiro físico aqui se quiseres
+            // \Storage::disk('public')->delete(str_replace('storage/', '', $pw->logo_path));
+
+            $pw->update(['logo_path' => null]);
+            $this->dispatch('toast', text: 'Foto do cofre removida! 🗑️');
+        }
+    }
+
     public function updatePrivileges()
     {
         if (! $this->permUserId) {

@@ -11,7 +11,6 @@ use App\Models\SocialPost;
 use App\Models\Subscription;
 use App\Services\FinanceScoreService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -87,23 +86,23 @@ class WrappedReport extends Component
         $saved = max(0, $earned - $spent);
         $savingsRate = $earned > 0 ? ($saved / $earned) * 100 : 0;
 
-        // Investimentos
+        // Investimentos (Ajustado para os teus campos MySQL: average_price e current_price)
         $investments = Investment::where('workspace_id', $workspaceId)->get();
-        $totalInvested = (float) $investments->sum('amount');
-        $currentPortfolioValue = (float) $investments->sum('current_value');
+        $totalInvested = (float) $investments->sum('average_price');
+        $currentPortfolioValue = (float) $investments->sum('current_price');
         $portfolioGain = $currentPortfolioValue - $totalInvested;
 
-        // Subscrições
+        // Subscrições (Corrigido: 'amount' em vez de 'price')
         $activeSubsCount = Subscription::where('workspace_id', $workspaceId)->count();
-        $subsMonthlyCost = (float) Subscription::where('workspace_id', $workspaceId)->sum('price');
+        $subsMonthlyCost = (float) Subscription::where('workspace_id', $workspaceId)->sum('amount');
 
-        // Padrão Mensal (Corrigido para Coleção)
+        // Padrão Mensal (Corrigido para MySQL usando MONTH())
         $monthlyPattern = collect();
         if ($this->view === 'year') {
             $monthlyPattern = Expense::where('workspace_id', $workspaceId)
                 ->where('is_company', false)
                 ->whereYear('spent_at', $this->year)
-                ->selectRaw('strftime("%m", spent_at) as month, SUM(amount) as total')
+                ->selectRaw('MONTH(spent_at) as month, SUM(amount) as total')
                 ->groupBy('month')
                 ->orderBy('total', 'desc')
                 ->get();
@@ -159,7 +158,7 @@ class WrappedReport extends Component
             'xp' => $user->xp ?? 0,
             'availableYears' => $years,
             'goalsCompleted' => Goal::where('workspace_id', $user->current_workspace_id)
-                ->where('current_amount', '>=', DB::raw('target_amount'))
+                ->whereColumn('current_amount', '>=', 'target_amount')
                 ->whereYear('updated_at', $this->year)
                 ->count(),
         ]));

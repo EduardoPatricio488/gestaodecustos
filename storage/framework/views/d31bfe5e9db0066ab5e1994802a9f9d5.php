@@ -303,10 +303,14 @@
                     <?php echo e($this->greeting); ?>, <span style="color: <?php echo e(auth()->user()->profile_color); ?>"><?php echo e($firstName); ?></span>
                 </h1>
 
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(session()->has('impersonator_id')): ?>
-                    <a href="<?php echo e(route('admin.stop-impersonating')); ?>" class="flex items-center gap-2 px-3 py-1 bg-amber-500 text-white rounded-full animate-pulse text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/30">
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(session()->has('admin_impersonation')): ?>
+                    <form method="POST" action="<?php echo e(route('admin.stop-impersonating')); ?>">
+                        <?php echo csrf_field(); ?>
+                        <?php echo method_field('DELETE'); ?>
+                        <button type="submit" class="flex items-center gap-2 px-3 py-1 bg-amber-500 text-white rounded-full animate-pulse text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/30">
                         Suporte Ativo · Sair
-                    </a>
+                        </button>
+                    </form>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
 
@@ -2775,5 +2779,106 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 </div>
 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
+    
+    
+    <div x-data="{ open: <?php if ((object) ('showSubSuggestion') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('showSubSuggestion'->value()); ?>')<?php echo e('showSubSuggestion'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('showSubSuggestion'); ?>')<?php endif; ?> }"
+         x-show="open"
+         x-cloak
+         class="fixed inset-0 z-[300] flex items-center justify-center p-4">
+
+        
+        <div class="absolute inset-0 bg-zinc-950/80 backdrop-blur-xl" @click="open = false"></div>
+
+        
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-300 transform"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-8"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-[3rem] p-10 shadow-[0_35px_100px_-15px_rgba(16,185,129,0.3)] border border-emerald-500/20 text-center">
+
+            
+            <div class="relative size-24 mx-auto mb-8">
+                <div class="absolute inset-0 bg-emerald-500/20 blur-2xl rounded-full animate-pulse"></div>
+                <div class="relative size-full bg-emerald-500 text-white rounded-[2rem] flex items-center justify-center shadow-2xl">
+                    <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'check-badge','variant' => 'solid','class' => 'size-12']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'check-badge','variant' => 'solid','class' => 'size-12']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-3xl font-black dark:text-white uppercase italic tracking-tighter leading-none">Upgrade Ativo!</h2>
+                <p class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Pagamento Processado</p>
+            </div>
+
+            <p class="mt-6 text-sm text-zinc-500 font-medium leading-relaxed">
+                Eduardo, queres registar o custo mensal do teu plano <span class="text-emerald-600 font-black"><?php echo e($suggestedName); ?></span> nas tuas assinaturas?
+            </p>
+
+            
+            <div class="mt-8 p-6 bg-zinc-50 dark:bg-zinc-950 rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
+                <div class="flex justify-between items-center">
+                    <div class="text-left">
+                        <p class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Valor Mensal</p>
+                        <p class="text-2xl font-black dark:text-white italic"><?php echo e(number_format($suggestedPrice, 2)); ?>€</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Categoria</p>
+                        <p class="text-xs font-bold text-brand-600 uppercase italic">Serviços SaaS</p>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="mt-10 space-y-3">
+                <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'confirmSubscriptionImport','variant' => 'primary','class' => 'w-full h-16 bg-emerald-600 hover:bg-emerald-500 border-none font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-500/20 rounded-2xl']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['wire:click' => 'confirmSubscriptionImport','variant' => 'primary','class' => 'w-full h-16 bg-emerald-600 hover:bg-emerald-500 border-none font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-500/20 rounded-2xl']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                    Sim, adicionar agora ✅
+                 <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+
+                <button @click="open = false" class="w-full py-2 text-[10px] font-black text-zinc-400 hover:text-zinc-600 uppercase tracking-widest transition-colors">
+                    Não, registo mais tarde
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 <?php /**PATH C:\Projetos\gestao-de-custos\resources\views/livewire/dashboard.blade.php ENDPATH**/ ?>
