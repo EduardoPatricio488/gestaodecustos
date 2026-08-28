@@ -81,7 +81,7 @@
 
 @php
     $user = auth()->user();
-    $currentWs = $user ? $user->currentWorkspace : null;
+    $currentWs = $user ? ($user->currentWorkspace ?? $user->workspaces()->first()) : null;
 
     // 1. Procurar o cofre pessoal onde o Eduardo é o DONO real
     $myPersonalWs = $user ? $user->workspaces()
@@ -367,12 +367,16 @@
 
             {{-- CONTA ATIVA --}}
             <div class="p-6 bg-zinc-100 rounded-[2.5rem] border border-zinc-200 flex items-center gap-5">
-                <div class="size-16 bg-white rounded-2xl border-4 border-white shadow-xl overflow-hidden shrink-0">
-                    <img src="{{ asset($currentWs->logo_path ?? 'icon-192x192.png') }}" class="size-full object-cover">
+                <div class="size-16 bg-white rounded-2xl border-4 border-white shadow-xl overflow-hidden shrink-0 flex items-center justify-center text-zinc-400">
+                    @if($currentWs && $currentWs->logo_path)
+                        <img src="{{ asset($currentWs->logo_path) }}" class="size-full object-cover">
+                    @else
+                        <flux:icon name="building-office" class="size-7" />
+                    @endif
                 </div>
                 <div class="text-left truncate">
                     <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em]">Cofre Ativo</p>
-                    <p class="text-lg font-black text-zinc-900 uppercase italic truncate leading-none mt-1">{{ $currentWs->name }}</p>
+                    <p class="text-lg font-black text-zinc-900 uppercase italic truncate leading-none mt-1">{{ $currentWs?->name ?? 'Sem cofre ativo' }}</p>
                 </div>
             </div>
 
@@ -452,7 +456,7 @@
 
 
  {{-- Se estiver na conta de outros, mete uma linha amarela no topo de tudo --}}
-    @if($isViewingOthers && $currentWs->type !== 'business')
+    @if($isViewingOthers && $currentWs && $currentWs->type !== 'business')
         <div class="fixed top-0 left-0 right-0 h-1 bg-amber-500 z-[100]"></div>
     @endif
 
@@ -1441,14 +1445,14 @@ $hasStoreAccess = $isProUser || $isPlusUser;
  <div class="flex items-center justify-center gap-4 w-full"> {{-- Adicionei gap-4 e items-center --}}
 
     {{-- AVISO: MODO DE OBSERVAÇÃO --}}
-    @if($isViewingOthers)
+    @if($isViewingOthers && $currentWs)
         <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl animate-in slide-in-from-top-2">
             <div class="relative flex items-center justify-center">
                 <div class="size-1.5 rounded-full bg-amber-500 animate-ping absolute"></div>
                 <flux:icon name="eye" variant="micro" class="size-3.5 text-amber-600 relative" />
             </div>
             <span class="text-[9px] font-black uppercase text-amber-600 tracking-widest whitespace-nowrap">
-                A visualizar: <span class="text-amber-800 dark:text-amber-400 italic">{{ $currentWs->name }}</span>
+                A visualizar: <span class="text-amber-800 dark:text-amber-400 italic">{{ $currentWs->name ?? 'Cofre' }}</span>
             </span>
             <a href="{{ route('workspace.switch.fast', $myPersonalWsId) }}" class="ml-1 p-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors" title="Voltar à minha conta">
                 <flux:icon name="arrow-uturn-left" variant="micro" class="size-3" />
@@ -1775,7 +1779,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
     {{-- ═══════════════════════════════════════════════════════════════ --}}
     {{-- BARRA FLUTUANTE DE CONTEXTO EXTERNO (FIXA EM BAIXO)            --}}
     {{-- ═══════════════════════════════════════════════════════════════ --}}
-    @if($isViewingOthers)
+    @if($isViewingOthers && $currentWs)
     <div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[999] w-auto animate-in fade-in slide-in-from-bottom-10 duration-700">
         <div class="relative group">
             <div class="absolute -inset-1 bg-gradient-to-r from-amber-600 to-orange-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
@@ -1783,7 +1787,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
             <div class="relative flex items-center gap-6 px-8 py-4 bg-white dark:bg-zinc-900 border border-amber-500/30 rounded-full shadow-2xl backdrop-blur-md">
                 <div class="flex flex-col text-left leading-tight pr-6 border-r border-zinc-100 dark:border-zinc-800">
                     <span class="text-[8px] font-black uppercase text-amber-600 tracking-[0.2em]">Modo de Consulta Ativo</span>
-                    <span class="text-sm font-black dark:text-white uppercase italic">{{ $currentWs->name }}</span>
+                    <span class="text-sm font-black dark:text-white uppercase italic">{{ $currentWs->name ?? 'Cofre' }}</span>
                 </div>
 
                 {{-- O BOTÃO PARA VOLTAR --}}

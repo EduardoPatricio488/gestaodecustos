@@ -31,7 +31,7 @@
     class="fc-wrap w-full max-w-7xl mx-auto pb-24 px-3 md:px-5"
 >
 
-<?php if (! $__env->hasRenderedOnce('4ba8d82f-927c-4980-8321-2adfcdfe8674')): $__env->markAsRenderedOnce('4ba8d82f-927c-4980-8321-2adfcdfe8674'); ?>
+<?php if (! $__env->hasRenderedOnce('b8d7ed90-1e20-4397-bc83-bb3e8437fed4')): $__env->markAsRenderedOnce('b8d7ed90-1e20-4397-bc83-bb3e8437fed4'); ?>
 <style>
 [x-cloak]{display:none!important}
 
