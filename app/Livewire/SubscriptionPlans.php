@@ -54,6 +54,10 @@ class SubscriptionPlans extends Component
                     'success_url' => route('dashboard', ['checkout' => 'success']),
                     'cancel_url' => route('hub.pricing', ['checkout' => 'cancel']),
                     'client_reference_id' => $user->id,
+                    // 🔥 ESTA LINHA FALTAVA: É o que diz ao Webhook o que ativar
+                    'metadata' => [
+                        'plan_slug' => $planModel->slug,
+                    ],
                 ]);
 
             return redirect($checkout->url);

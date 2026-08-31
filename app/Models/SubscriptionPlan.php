@@ -17,7 +17,7 @@ class SubscriptionPlan extends Model
         'priority_support' => 'Suporte VIP',
     ];
 
-    protected $fillable = ['name', 'slug', 'price', 'description', 'features', 'stripe_price_id', 'is_active'];
+    protected $fillable = ['name', 'slug', 'price', 'color', 'description', 'features', 'stripe_price_id', 'is_active'];
 
     protected $casts = [
         'features' => 'array',

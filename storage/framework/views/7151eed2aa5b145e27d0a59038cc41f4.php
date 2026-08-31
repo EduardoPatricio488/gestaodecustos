@@ -127,12 +127,26 @@
     $isDiamond = $user ? $user->isBusinessPlan() : false;
     $isAnyPremium = $user ? $user->isPaidPlan() : false;
 
-    if ($userPlan === 'business') {
-        $planEmoji = '💎'; $planText = 'Plano Business'; $planColor = 'text-indigo-600';
-    } elseif ($userPlan === 'pro') {
-        $planEmoji = '⭐'; $planText = 'Plano Pro'; $planColor = 'text-amber-500';
+   // 4. PLANOS E PERMISSÕES (Lógica Dinâmica para ler da BD)
+    $userPlan = $user ? $user->currentPlanSlug() : 'free';
+
+    // Procuramos o registo do plano na tabela que criámos
+    $planRecord = ($userPlan !== 'free')
+        ? \App\Models\SubscriptionPlan::where('slug', $userPlan)->first()
+        : null;
+
+    if ($planRecord) {
+        // Se o plano existe na BD (Ex: Toto, Pro, Business)
+        $planText = 'Plano ' . $planRecord->name;
+        $planEmoji = $planRecord->hasFeature('business_mode') ? '💎' : '⭐';
+        $planColorHex = $planRecord->color ?? '#10b981';
+        $planColor = ""; // Limpamos a classe Tailwind para usar a cor real
     } else {
-        $planEmoji = '👤'; $planText = 'Plano Free'; $planColor = 'text-zinc-400';
+        // Se for Free ou o plano não for encontrado
+        $planEmoji = '👤';
+        $planText = 'Plano Free';
+        $planColor = 'text-zinc-400';
+        $planColorHex = "";
     }
 
     $workspaceId = $currentWs?->id ?? 0;
@@ -4472,7 +4486,7 @@ unset($__split);
                 
                 <div x-data="{ open: false }" class="relative flex-shrink-0">
                     <button @click="open = !open" type="button" class="flex items-center gap-2 sm:gap-3 px-1 sm:px-2 py-1.5 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all">
-                        <?php if (isset($component)) { $__componentOriginal4dcb6e757bd07b9aa3bf7ee84cfc8690 = $component; } ?>
+    <?php if (isset($component)) { $__componentOriginal4dcb6e757bd07b9aa3bf7ee84cfc8690 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal4dcb6e757bd07b9aa3bf7ee84cfc8690 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::avatar.index','data' => ['initials' => auth()->user()->initials(),'class' => 'size-9 sm:size-10 shadow-sm']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::avatar'); ?>
@@ -4494,16 +4508,18 @@ unset($__split);
 <?php $component = $__componentOriginal4dcb6e757bd07b9aa3bf7ee84cfc8690; ?>
 <?php unset($__componentOriginal4dcb6e757bd07b9aa3bf7ee84cfc8690); ?>
 <?php endif; ?>
-                        <div class="hidden md:block text-left">
-                            <p class="text-sm font-bold text-zinc-800 dark:text-white leading-none">
-                                <?php echo e(auth()->user()->name); ?> <span class="ml-1"><?php echo e($planEmoji); ?></span>
-                            </p>
-                            <p class="text-[10px] font-black uppercase <?php echo e($planColor); ?> mt-1">
-                                <?php echo e($planText); ?>
+    <div class="hidden md:block text-left">
+        <p class="text-sm font-bold text-zinc-800 dark:text-white leading-none">
+            <?php echo e(auth()->user()->name); ?> <span class="ml-1"><?php echo e($planEmoji); ?></span>
+        </p>
+        
+        <p class="text-[10px] font-black uppercase <?php echo e($planColor); ?> mt-1"
+           style="<?php echo e(!empty($planColorHex) ? 'color: ' . $planColorHex . ';' : ''); ?>">
+            <?php echo e($planText); ?>
 
-                            </p>
-                        </div>
-                        <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+        </p>
+    </div>
+    <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'chevron-down','class' => 'size-4 text-zinc-400']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::icon'); ?>
@@ -4525,7 +4541,7 @@ unset($__split);
 <?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
 <?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
 <?php endif; ?>
-                    </button>
+</button>
 
                     <div x-show="open" x-cloak @click.outside="open = false" x-transition
                         class="absolute right-0 mt-2 w-60 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden">

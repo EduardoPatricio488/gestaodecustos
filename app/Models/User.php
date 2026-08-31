@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Laravel\Cashier\Billable;
 use Laravel\Fortify\Contracts\PasskeyUser;
@@ -137,54 +138,47 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         ];
     }
 
-    /** ── SISTEMA DE PLANOS: free | pro | business | extras ── **/
-    public static function normalizePlan(?string $plan): string
-    {
-        $plan = strtolower(trim((string) $plan));
-
-        if ($plan === '' || $plan === 'free' || $plan === 'null') {
-            return 'free';
-        }
-
-        return match ($plan) {
-            'plus', 'premium', 'star' => 'pro',
-            'diamond', 'diamante', 'company' => 'business',
-            default => $plan,
-        };
-    }
-
-    public static function planLabel(?string $plan): string
-    {
-        $slug = self::normalizePlan($plan);
-
-        return match ($slug) {
-            'free' => 'Free',
-            'pro' => 'Pro',
-            'business' => 'Business',
-            default => SubscriptionPlan::where('slug', $slug)->value('name') ?? Str::headline($slug),
-        };
-    }
-
+    /** ── SISTEMA DE PLANOS DINÂMICO (Compatível com qualquer plano) ── **/
     public function currentPlanSlug(): string
     {
-        return self::normalizePlan($this->plan ?: $this->currentWorkspace?->plan);
+        $plan = strtolower(trim((string) ($this->plan ?: $this->currentWorkspace?->plan)));
+
+        return ($plan === '' || $plan === 'null') ? 'free' : $plan;
+    }
+
+    /**
+     * O segredo da venda: Verifica se o plano atual tem uma permissão específica na BD
+     */
+    public function hasFeature(string $feature): bool
+    {
+        // Admins do sistema saltam a verificação
+        if ($this->isAdminRole()) {
+            return true;
+        }
+
+        $slug = $this->currentPlanSlug();
+        if ($slug === 'free') {
+            return false;
+        }
+
+        // Procura as definições do plano na tabela que criámos
+        return Cache::remember("plan_features_{$slug}", 3600, function () use ($slug, $feature) {
+            $planDefinition = SubscriptionPlan::where('slug', $slug)->first();
+
+            return $planDefinition ? $planDefinition->hasFeature($feature) : false;
+        });
     }
 
     public function isPro(): bool
     {
-        return $this->currentPlanSlug() === 'pro';
+        // Um plano é considerado "Pro" se der acesso à IA
+        return $this->hasFeature('ia_access');
     }
 
     public function isBusinessPlan(): bool
     {
-        $slug = $this->currentPlanSlug();
-        if ($slug === 'business') {
-            return true;
-        }
-
-        $catalog = SubscriptionPlan::where('slug', $slug)->first();
-
-        return $catalog?->hasFeature('business_mode') ?? false;
+        // Um plano é considerado "Business" se der acesso ao Modo Empresa
+        return $this->hasFeature('business_mode');
     }
 
     public function isPaidPlan(): bool

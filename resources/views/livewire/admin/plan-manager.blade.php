@@ -11,25 +11,36 @@
     {{-- LISTA DE PLANOS --}}
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         @forelse($plans as $plan)
-            @php
-                $isBusiness = str_contains(strtolower($plan->slug.$plan->name), 'business') || $plan->price >= 10;
-                $isEditing = $editingId === $plan->id && $showForm;
-            @endphp
+    @php
+        $isBusiness = str_contains(strtolower($plan->slug.$plan->name), 'business') || $plan->price >= 10;
+        $isEditing = $editingId === $plan->id && $showForm;
+        // 🔥 Definição da cor: usa a da BD ou os padrões de fallback
+        $brandColor = $plan->color ?? ($isBusiness ? '#8b5cf6' : '#10b981');
+    @endphp
 
-            <div class="p-7 bg-white dark:bg-zinc-900 border {{ $isEditing ? 'border-brand-500 ring-4 ring-brand-500/10' : 'border-zinc-200 dark:border-zinc-800' }} rounded-[2.5rem] shadow-sm flex flex-col justify-between relative overflow-hidden">
+    {{-- O card agora usa a cor na borda e tem um efeito de brilho (glow) no fundo --}}
+    <div class="p-7 bg-white dark:bg-zinc-900 border-2 rounded-[2.5rem] shadow-sm flex flex-col justify-between relative overflow-hidden transition-all hover:shadow-xl"
+         style="border-color: {{ $isEditing ? '#3b82f6' : $brandColor }}33; {{ $isEditing ? 'ring: 4px solid #3b82f61a;' : '' }}">
+
+        {{-- Brilho de fundo com a cor do plano --}}
+        <div class="absolute -right-10 -top-10 size-40 blur-[80px] rounded-full opacity-10 pointer-events-none"
+             style="background-color: {{ $brandColor }};"></div>
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <div class="flex items-center gap-2 flex-wrap">
                             <h4 class="text-xl font-black dark:text-white uppercase italic tracking-tight">{{ $plan->name }}</h4>
-                            @if($plan->is_active)
-                                <span class="text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md {{ $isBusiness ? 'bg-violet-500/10 text-violet-600 border border-violet-500/20' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' }}">Na loja</span>
-                            @else
+                           @if($plan->is_active)
+    <span class="text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md text-white shadow-sm"
+          style="background-color: {{ $brandColor }}; border: 1px solid {{ $brandColor }};">
+        Ativo
+    </span>
+@else
                                 <span class="text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border border-zinc-200 dark:border-zinc-700">Oculto</span>
                             @endif
                         </div>
-                        <p class="text-2xl font-black {{ $isBusiness ? 'text-violet-600' : 'text-emerald-600' }} italic mt-1">
-                            {{ number_format($plan->price, 2, ',', ' ') }}€ <small class="text-xs text-zinc-400 font-bold uppercase not-italic">/ mês</small>
-                        </p>
+                        <p class="text-2xl font-black italic mt-1" style="color: {{ $brandColor }};">
+    {{ number_format($plan->price, 2, ',', ' ') }}€ <small class="text-xs text-zinc-400 font-bold uppercase not-italic">/ mês</small>
+</p>
                         <p class="text-[10px] font-mono text-zinc-400 mt-1">slug: {{ $plan->slug }} · {{ $plan->subscribers_count }} utilizadores</p>
                     </div>
                 </div>
@@ -52,9 +63,11 @@
                 </div>
 
                 <div class="mt-5 grid grid-cols-2 gap-2">
-                    <button wire:click="edit({{ $plan->id }})" class="h-11 rounded-2xl bg-zinc-950 text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand-600 transition-colors">
-                        Editar
-                    </button>
+                    <button wire:click="edit({{ $plan->id }})"
+        class="h-11 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110 shadow-lg"
+        style="background-color: {{ $brandColor }};">
+    Editar
+</button>
                     <button wire:click="viewDossier({{ $plan->id }})" class="h-11 rounded-2xl border border-zinc-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:border-brand-500 hover:text-brand-600">
                         Dossiê
                     </button>
@@ -149,64 +162,115 @@
         </div>
     @endif
 
-    {{-- DOSSIÊ --}}
+    {{-- 3. MODAL: DOSSIÊ DE INTELIGÊNCIA COMERCIAL (CENTRADO) --}}
     @if($viewingPlan)
         <div class="fixed inset-0 z-[300] flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-zinc-950/60 backdrop-blur-md" wire:click="closeDossier"></div>
 
-            <div class="relative w-full max-w-3xl bg-white dark:bg-zinc-900 rounded-[3rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col overflow-hidden text-left">
+<div class="relative w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-[3rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col animate-in zoom-in-95 duration-300 overflow-hidden text-left h-auto max-h-[90vh]">
+                {{-- Header Premium --}}
                 <div class="p-8 border-b dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-950/20">
-                    <div>
-                        <h3 class="text-2xl font-black dark:text-white uppercase italic tracking-tighter">{{ $viewingPlan->name }}</h3>
-                        <p class="text-[10px] font-black uppercase text-brand-600 tracking-[0.3em] mt-2">{{ $subscribers->count() }} utilizadores · {{ number_format($viewingPlan->price, 2) }}€ / mês</p>
+                    <div class="flex items-center gap-6">
+                        <div class="size-20 rounded-[1.8rem] bg-zinc-950 flex items-center justify-center text-4xl shadow-2xl border border-white/10 shrink-0" style="border-color: {{ $viewingPlan->color }}44;">
+                            {{ $viewingPlan->price >= 10 ? '💎' : '⭐' }}
+                        </div>
+                        <div>
+                            <h3 class="text-3xl font-black dark:text-white uppercase italic tracking-tighter leading-none">{{ $viewingPlan->name }}</h3>
+                            <div class="flex items-center gap-3 mt-2">
+                                <span class="text-[10px] font-black uppercase text-white px-2 py-0.5 rounded bg-zinc-800" style="background-color: {{ $viewingPlan->color }};">ID: {{ $viewingPlan->slug }}</span>
+                                <span class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Auditado em {{ now()->format('d/m/Y H:i') }}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button wire:click="edit({{ $viewingPlan->id }})" class="px-4 h-10 rounded-xl bg-zinc-950 text-white text-[10px] font-black uppercase">Editar</button>
-                        <button wire:click="closeDossier" class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400"><flux:icon name="x-mark" class="size-6" /></button>
-                    </div>
+                    <button wire:click="closeDossier" class="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-zinc-400"><flux:icon name="x-mark" class="size-6" /></button>
                 </div>
 
-                <div class="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="p-5 bg-zinc-50 dark:bg-zinc-950/50 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                            <p class="text-[8px] font-black text-zinc-500 uppercase tracking-widest">MRR deste plano</p>
-                            <p class="text-xl font-black dark:text-white italic">{{ number_format($extraStats['total_revenue'], 2) }}€</p>
+<div class="p-10 space-y-10 overflow-y-auto custom-scrollbar text-left">
+                    {{-- GRELHA 1: KPIs FINANCEIROS --}}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="p-6 bg-emerald-500/5 rounded-3xl border border-emerald-500/10">
+                            <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Receita Mensal Atual</p>
+                            <p class="text-3xl font-black text-emerald-600 italic tracking-tighter">{{ number_format($detailedStats['monthly_revenue'], 2) }}€</p>
                         </div>
-                        <div class="p-5 bg-zinc-50 dark:bg-zinc-950/50 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                            <p class="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Projeção anual</p>
-                            <p class="text-xl font-black dark:text-white italic">{{ number_format($extraStats['yearly_projection'], 0, ',', ' ') }}€</p>
+                        <div class="p-6 bg-blue-500/5 rounded-3xl border border-blue-500/10">
+                            <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">Projeção de LTV (12m)</p>
+                            <p class="text-3xl font-black text-blue-600 italic tracking-tighter">{{ number_format($detailedStats['lifetime_value'], 0, ',', ' ') }}€</p>
                         </div>
-                        <div class="p-5 bg-zinc-50 dark:bg-zinc-950/50 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                            <p class="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Novos (30d)</p>
-                            <p class="text-xl font-black dark:text-white italic">+{{ $extraStats['new_users_30d'] }}</p>
-                        </div>
-                        <div class="p-5 bg-zinc-50 dark:bg-zinc-950/50 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                            <p class="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Atividade (mês)</p>
-                            <p class="text-xl font-black dark:text-white italic">{{ $extraStats['activity_volume'] }}</p>
+                        <div class="p-6 bg-purple-500/5 rounded-3xl border border-purple-500/10">
+                            <p class="text-[9px] font-black text-purple-600 uppercase tracking-widest mb-1">Quota de Mercado Interno</p>
+                            <p class="text-3xl font-black text-purple-600 italic tracking-tighter">{{ $detailedStats['market_share'] }}%</p>
                         </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between border-b dark:border-zinc-800 pb-3">
-                            <h4 class="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">Utilizadores neste plano</h4>
-                            <span class="text-[10px] font-black text-zinc-400 uppercase">{{ $subscribers->count() }}</span>
+                    {{-- GRELHA 2: MÉTRICAS DE ENGAJAMENTO --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {{-- Atividade --}}
+                        <div class="p-8 bg-zinc-50 dark:bg-zinc-950/50 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800">
+                            <h4 class="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] mb-6">Uso do Ecossistema</h4>
+                            <div class="flex items-end justify-between">
+                                <div class="space-y-1">
+                                    <p class="text-4xl font-black dark:text-white tracking-tighter">{{ $detailedStats['total_ops'] }}</p>
+                                    <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Operações Processadas</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xl font-black text-brand-600 italic">{{ $detailedStats['activity_score'] }}</p>
+                                    <p class="text-[8px] font-black text-zinc-400 uppercase">Ações p/ utilizador</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                        {{-- Retenção --}}
+                        <div class="p-8 bg-zinc-50 dark:bg-zinc-950/50 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800">
+                            <h4 class="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] mb-6">Fidelização Média</h4>
+                            <div class="flex items-end justify-between">
+                                <div class="space-y-1">
+                                    <p class="text-4xl font-black dark:text-white tracking-tighter">{{ round($detailedStats['avg_retention']) }}</p>
+                                    <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Dias de Permanência</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xl font-black text-emerald-500 italic">+{{ $detailedStats['growth_rate'] }}%</p>
+                                    <p class="text-[8px] font-black text-zinc-400 uppercase">Crescimento Mensal</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- LISTA DE MEMBROS DETALHADA --}}
+                    <div class="space-y-5">
+                        <div class="flex items-center justify-between border-b dark:border-zinc-800 pb-4 px-2">
+                            <h4 class="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500 border-l-4 border-brand-500 pl-4">Utilizadores Vinculados</h4>
+                            <span class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{{ $subscribers->count() }} Membros</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             @forelse($subscribers as $sub)
-                                <div class="p-4 bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-2xl flex items-center gap-4">
-                                    <div class="size-11 rounded-xl bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center font-black text-brand-600">
-                                        {{ substr($sub->name, 0, 1) }}
+                                <div class="p-5 bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-3xl flex items-center justify-between group hover:border-brand-500/30 transition-all shadow-sm">
+                                    <div class="flex items-center gap-4">
+                                        <flux:avatar initials="{{ substr($sub->name, 0, 2) }}" class="size-10 rounded-2xl shadow-inner" />
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-black dark:text-white uppercase truncate leading-none">{{ $sub->name }}</p>
+                                            <p class="text-[9px] text-zinc-400 font-bold mt-1.5 uppercase tracking-tighter italic">Nível {{ $sub->level ?? 1 }} · {{ $sub->xp ?? 0 }} XP</p>
+                                        </div>
                                     </div>
-                                    <div class="min-w-0">
-                                        <p class="text-xs font-black dark:text-white uppercase truncate">{{ $sub->name }}</p>
-                                        <p class="text-[9px] text-zinc-400 font-bold truncate">{{ $sub->email }}</p>
+                                    <div class="size-8 rounded-xl bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <flux:icon name="arrow-right" variant="micro" class="size-3 text-zinc-400" />
                                     </div>
                                 </div>
                             @empty
-                                <div class="col-span-full py-10 text-center text-xs text-zinc-400 italic">Ainda não há utilizadores neste plano.</div>
-                            @endforelse
+    <div class="col-span-full py-12 text-center bg-zinc-50/50 dark:bg-zinc-950/30 rounded-[2rem] border-2 border-dashed border-zinc-100 dark:border-zinc-800">
+        <flux:icon name="users" class="size-8 mx-auto mb-3 text-zinc-300 opacity-50" />
+        <p class="text-[10px] font-black uppercase text-zinc-400 tracking-widest italic">Aguardando primeira venda para auditoria</p>
+    </div>
+@endforelse
                         </div>
                     </div>
+                </div>
+
+                {{-- Footer Tecnocrático --}}
+                <div class="p-8 border-t dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 flex gap-4">
+                    <button wire:click="closeDossier" class="flex-1 h-14 bg-zinc-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] shadow-xl hover:bg-black transition-all">
+                        Fechar Relatório de Auditoria
+                    </button>
                 </div>
             </div>
         </div>

@@ -131,12 +131,26 @@
     $isDiamond = $user ? $user->isBusinessPlan() : false;
     $isAnyPremium = $user ? $user->isPaidPlan() : false;
 
-    if ($userPlan === 'business') {
-        $planEmoji = '💎'; $planText = 'Plano Business'; $planColor = 'text-indigo-600';
-    } elseif ($userPlan === 'pro') {
-        $planEmoji = '⭐'; $planText = 'Plano Pro'; $planColor = 'text-amber-500';
+   // 4. PLANOS E PERMISSÕES (Lógica Dinâmica para ler da BD)
+    $userPlan = $user ? $user->currentPlanSlug() : 'free';
+
+    // Procuramos o registo do plano na tabela que criámos
+    $planRecord = ($userPlan !== 'free')
+        ? \App\Models\SubscriptionPlan::where('slug', $userPlan)->first()
+        : null;
+
+    if ($planRecord) {
+        // Se o plano existe na BD (Ex: Toto, Pro, Business)
+        $planText = 'Plano ' . $planRecord->name;
+        $planEmoji = $planRecord->hasFeature('business_mode') ? '💎' : '⭐';
+        $planColorHex = $planRecord->color ?? '#10b981';
+        $planColor = ""; // Limpamos a classe Tailwind para usar a cor real
     } else {
-        $planEmoji = '👤'; $planText = 'Plano Free'; $planColor = 'text-zinc-400';
+        // Se for Free ou o plano não for encontrado
+        $planEmoji = '👤';
+        $planText = 'Plano Free';
+        $planColor = 'text-zinc-400';
+        $planColorHex = "";
     }
 
     $workspaceId = $currentWs?->id ?? 0;
@@ -1516,17 +1530,19 @@ $hasStoreAccess = $hasLockInAccess;
                 {{-- Menu de Utilizador --}}
                 <div x-data="{ open: false }" class="relative flex-shrink-0">
                     <button @click="open = !open" type="button" class="flex items-center gap-2 sm:gap-3 px-1 sm:px-2 py-1.5 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all">
-                        <flux:avatar :initials="auth()->user()->initials()" class="size-9 sm:size-10 shadow-sm" />
-                        <div class="hidden md:block text-left">
-                            <p class="text-sm font-bold text-zinc-800 dark:text-white leading-none">
-                                {{ auth()->user()->name }} <span class="ml-1">{{ $planEmoji }}</span>
-                            </p>
-                            <p class="text-[10px] font-black uppercase {{ $planColor }} mt-1">
-                                {{ $planText }}
-                            </p>
-                        </div>
-                        <flux:icon name="chevron-down" class="size-4 text-zinc-400" />
-                    </button>
+    <flux:avatar :initials="auth()->user()->initials()" class="size-9 sm:size-10 shadow-sm" />
+    <div class="hidden md:block text-left">
+        <p class="text-sm font-bold text-zinc-800 dark:text-white leading-none">
+            {{ auth()->user()->name }} <span class="ml-1">{{ $planEmoji }}</span>
+        </p>
+        {{-- Texto do Plano com Cor Dinâmica da Base de Dados --}}
+        <p class="text-[10px] font-black uppercase {{ $planColor }} mt-1"
+           style="{{ !empty($planColorHex) ? 'color: ' . $planColorHex . ';' : '' }}">
+            {{ $planText }}
+        </p>
+    </div>
+    <flux:icon name="chevron-down" class="size-4 text-zinc-400" />
+</button>
 
                     <div x-show="open" x-cloak @click.outside="open = false" x-transition
                         class="absolute right-0 mt-2 w-60 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden">

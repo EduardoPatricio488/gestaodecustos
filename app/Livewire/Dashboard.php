@@ -11,6 +11,7 @@ use App\Models\Investment;
 use App\Models\Reminder;
 use App\Models\SocialNotification;
 use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use App\Models\Workspace;
 use App\Services\FinanceScoreService;
 use App\Services\NotificationService;
@@ -90,6 +91,18 @@ class Dashboard extends Component
     public function mount()
     {
         $user = Auth::user();
+        if (request()->query('checkout') === 'success') {
+            $user->refresh(); // Garante que o plano já está atualizado
+
+            // Procuramos o plano real na base de dados pelo slug do utilizador
+            $planRecord = SubscriptionPlan::where('slug', $user->plan)->first();
+
+            if ($planRecord && $user->plan !== 'free') {
+                $this->suggestedName = 'Finance Pro '.$planRecord->name;
+                $this->suggestedPrice = $planRecord->price;
+                $this->showSubSuggestion = true;
+            }
+        }
         $this->privacyMode = session('privacy_mode', false);
         // 1. Verificação de Notificações Automáticas
         Cache::remember("dashboard:notifications-checked:{$user->id}:".now()->toDateString(), now()->endOfDay(), function () use ($user) {
@@ -98,16 +111,7 @@ class Dashboard extends Component
             return true;
         });
         // 🔥 NOVO: Detetar retorno do Stripe
-        if (request()->query('checkout') === 'success') {
-            // Forçamos o refresh do user para garantir que o plano já está atualizado via Webhook
-            $user->refresh();
 
-            if ($user->plan !== 'free') {
-                $this->suggestedName = ($user->currentPlanSlug() === 'business') ? 'Finance Pro Business' : 'Finance Pro';
-                $this->suggestedPrice = ($user->currentPlanSlug() === 'business') ? 10.00 : 5.00;
-                $this->showSubSuggestion = true;
-            }
-        }
         // 2. Redirecionamento de Segurança para Admin Real
         if (in_array($user->role, ['admin', 'moderator', 'analyst']) && $user->email_verified_at && ! session()->has('admin_impersonation')) {
             return redirect()->route('admin.dashboard');
@@ -289,22 +293,28 @@ class Dashboard extends Component
         $user = auth()->user();
         $workspaceId = $user->current_workspace_id;
 
-        // 1. Procurar a categoria 'Tecnologia' ou 'Software' no workspace atual
+        // 1. Tentar encontrar uma categoria de tecnologia ou criar uma nova
         $category = Category::where('workspace_id', $workspaceId)
             ->where(function ($q) {
-                $q->where('name', 'like', '%Tecnologia%')
-                    ->orWhere('name', 'like', '%Software%')
-                    ->orWhere('slug', 'tecnologia');
+                $q->where('name', 'like', '%Tecnologia%')->orWhere('slug', 'tecnologia');
             })->first();
 
-        // 2. Se não encontrar, usa a primeira categoria disponível como fallback
-        $categoryId = $category ? $category->id : Category::where('workspace_id', $workspaceId)->first()?->id;
+        if (! $category) {
+            $category = Category::create([
+                'workspace_id' => $workspaceId,
+                'user_id' => $user->id,
+                'name' => 'Serviços SaaS',
+                'slug' => 'servicos-saas',
+                'icon' => 'cpu-chip',
+                'color' => '#6366f1',
+            ]);
+        }
 
-        // 3. Criar a subscrição com o ID da categoria
+        // 2. Criar o registo na tabela de assinaturas
         Subscription::create([
             'workspace_id' => $workspaceId,
             'user_id' => $user->id,
-            'category_id' => $categoryId, // 🔥 FIX: Agora enviamos o ID obrigatório
+            'category_id' => $category->id,
             'name' => $this->suggestedName,
             'amount' => $this->suggestedPrice,
             'cycle' => 'monthly',
@@ -314,7 +324,7 @@ class Dashboard extends Component
         ]);
 
         $this->showSubSuggestion = false;
-        $this->dispatch('toast', text: 'Assinatura adicionada com sucesso! 💳');
+        $this->dispatch('toast', text: 'Assinatura registada com sucesso! 💳');
     }
 
     #[Computed]

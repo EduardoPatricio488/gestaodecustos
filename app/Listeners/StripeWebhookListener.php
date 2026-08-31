@@ -3,7 +3,6 @@
 namespace App\Listeners;
 
 use App\Models\User;
-use App\Models\Workspace;
 use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Events\WebhookReceived;
 
@@ -13,33 +12,30 @@ class StripeWebhookListener
     {
         $payload = $event->payload;
 
-        // Log para termos a certeza que o Stripe entrou no teu código
-        Log::info('🔔 STRIPE EVENTO: '.$payload['type']);
-
+        // 1. Verificamos se o evento é de checkout concluído
         if ($payload['type'] === 'checkout.session.completed') {
+
             $session = $payload['data']['object'];
-
             $userId = $session['client_reference_id'] ?? null;
-            $amount = $session['amount_total'] ?? 0;
 
-            if ($userId) {
+            // 2. Vamos buscar o plano que enviámos no metadata do passo anterior
+            $planSlug = $session['metadata']['plan_slug'] ?? null;
+
+            if ($userId && $planSlug) {
                 $user = User::find($userId);
+
                 if ($user) {
-                    $plan = ($amount >= 1000) ? 'business' : 'pro';
+                    // 3. Atualizar o plano na BD (Utilizador e Workspace)
+                    $user->update(['plan' => $planSlug]);
 
-                    // Forçar atualização na base de dados
-                    $user->plan = $plan;
-                    $user->save();
-
-                    // Atualizar o Workspace
-                    $workspace = Workspace::where('owner_id', $user->id)->first();
-                    if ($workspace) {
-                        $workspace->plan = $plan;
-                        $workspace->save();
+                    if ($user->currentWorkspace) {
+                        $user->currentWorkspace->update(['plan' => $planSlug]);
                     }
 
-                    Log::info("✅ SUCESSO: Plano {$plan} ativado para o utilizador {$user->email}");
+                    Log::info("✅ ATIVAÇÃO DINÂMICA: Plano '{$planSlug}' ativo para o User ID {$userId}");
                 }
+            } else {
+                Log::warning("⚠️ Webhook incompleto: User ({$userId}) ou Plan ({$planSlug}) ausentes.");
             }
         }
     }

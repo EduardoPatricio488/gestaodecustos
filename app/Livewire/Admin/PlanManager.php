@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\Expense;
 use App\Models\Income;
 use App\Models\SubscriptionPlan;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -173,43 +174,53 @@ class PlanManager extends Component
         $viewingPlan = null;
         $subscribers = collect();
         $stats = [
-            'total_revenue' => 0,
-            'yearly_projection' => 0,
-            'new_users_30d' => 0,
-            'avg_level' => 0,
-            'activity_volume' => 0,
+            'monthly_revenue' => 0,
+            'lifetime_value' => 0,
+            'activity_score' => 0,
+            'growth_rate' => 0,
+            'avg_retention' => 0,
+            'market_share' => 0,
         ];
 
         if ($this->viewingPlanId) {
             $viewingPlan = SubscriptionPlan::find($this->viewingPlanId);
             if ($viewingPlan) {
+                // 1. Procurar Utilizadores
                 $subscribers = User::where('plan', $viewingPlan->slug)->get();
                 $userIds = $subscribers->pluck('id');
+                $totalUsersSystem = User::count();
 
+                // 2. Cálculos Financeiros
                 $monthlyRevenue = $subscribers->count() * $viewingPlan->price;
 
+                // 3. Volume de Operações (Soma de tudo o que os users deste plano já fizeram)
+                $opsCount = 0;
+                if ($userIds->isNotEmpty()) {
+                    $opsCount = Expense::whereIn('user_id', $userIds)->count() +
+                               Income::whereIn('user_id', $userIds)->count() +
+                               Task::whereIn('user_id', $userIds)->count();
+                }
+
+                // 4. Estatísticas de Crescimento
+                $newThisMonth = $subscribers->where('created_at', '>=', now()->startOfMonth())->count();
+
                 $stats = [
-                    'total_revenue' => $monthlyRevenue,
-                    'yearly_projection' => $monthlyRevenue * 12,
-                    'new_users_30d' => $subscribers->where('created_at', '>=', now()->subDays(30))->count(),
-                    'avg_level' => round($subscribers->avg('level') ?? 1, 1),
-                    'activity_volume' => ($userIds->isEmpty() ? 0 : Expense::whereIn('user_id', $userIds)->whereMonth('spent_at', now()->month)->count())
-                        + ($userIds->isEmpty() ? 0 : Income::whereIn('user_id', $userIds)->whereMonth('received_at', now()->month)->count()),
+                    'monthly_revenue' => $monthlyRevenue,
+                    'lifetime_value' => $monthlyRevenue * 12, // Projeção anual simplificada
+                    'activity_score' => $subscribers->count() > 0 ? round($opsCount / $subscribers->count()) : 0,
+                    'growth_rate' => $subscribers->count() > 0 ? round(($newThisMonth / $subscribers->count()) * 100, 1) : 0,
+                    'avg_retention' => $subscribers->avg(fn ($u) => $u->created_at->diffInDays(now())),
+                    'market_share' => $totalUsersSystem > 0 ? round(($subscribers->count() / $totalUsersSystem) * 100, 1) : 0,
+                    'total_ops' => $opsCount,
                 ];
             }
         }
 
-        $plans = SubscriptionPlan::orderBy('price')->get()->map(function (SubscriptionPlan $plan) {
-            $plan->subscribers_count = $plan->subscriberCount();
-
-            return $plan;
-        });
-
         return view('livewire.admin.plan-manager', [
-            'plans' => $plans,
+            'plans' => SubscriptionPlan::orderBy('price', 'asc')->get(),
             'viewingPlan' => $viewingPlan,
             'subscribers' => $subscribers,
-            'extraStats' => $stats,
+            'detailedStats' => $stats,
         ]);
     }
 }
