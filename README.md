@@ -399,8 +399,8 @@ A aplicação foi concebida para funcionar em modelo SaaS por subscrição, com 
 | Plano | Objetivo |
 | --- | --- |
 | Free | acesso básico |
-| Plus | recursos extra e gestão mais completa |
-| Pro | gestão avançada, business e IA |
+| Pro | recursos extra e gestão mais completa |
+| Business | gestão avançada, empresa e IA |
 
 A estrutura de preços e limites pode ser ajustada conforme a estratégia comercial do proprietário.
 

@@ -33,13 +33,13 @@ class BusinessPlanActivatedMail extends Mailable
                             <div style='display: inline-block; padding: 15px; background-color: #7c3aed; border-radius: 20px;'>
                                 <span style='font-size: 30px;'>💎</span>
                             </div>
-                            <h1 style='margin: 20px 0 10px; color: #1e1b4b; font-size: 26px; font-weight: 800; text-transform: uppercase;'>Acesso Premium Ativo</h1>
+                            <h1 style='margin: 20px 0 10px; color: #1e1b4b; font-size: 26px; font-weight: 800; text-transform: uppercase;'>Acesso Business Ativo</h1>
                             <p style='margin: 0; font-size: 11px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 2px;'>{$appName} Business</p>
                         </div>
 
                         <div style='line-height: 1.6; color: #4b5563; font-size: 15px;'>
                             <p>Olá <strong>{$this->userName}</strong>,</p>
-                            <p>Temos o prazer de informar que a administração da <strong>{$this->companyName}</strong> ativou as funcionalidades <strong>Business/Pro</strong> na tua conta.</p>
+                            <p>Temos o prazer de informar que a administração da <strong>{$this->companyName}</strong> ativou o plano <strong>Business</strong> na tua conta.</p>
 
                             <div style='margin-top: 30px; padding: 25px; background-color: #fdfbff; border-radius: 20px; border: 1px solid #ede9fe;'>
                                 <p style='margin: 0 0 15px; font-weight: bold; color: #6d28d9;'>O que tens agora disponível:</p>

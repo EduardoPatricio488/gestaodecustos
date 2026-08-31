@@ -743,8 +743,7 @@
 
 <?php
     $user = auth()->user();
-    // Utilizadores "Star" (Premium) ou "Diamond" (Business) têm acesso
-    $hasProAccess = $user->isStar() || $user->isDiamond();
+    $hasProAccess = $user->isPaidPlan();
 ?>
 
 
@@ -782,7 +781,7 @@
         
         <a href="<?php echo e(route('hub.pricing')); ?>" wire:navigate
             class="group flex items-center gap-3 px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-200 dark:border-zinc-700 opacity-60 hover:opacity-100 transition-all"
-            title="Requer Plano Premium ou superior">
+            title="Requer Plano Pro ou Business">
             <span class="flex items-center gap-1.5">
                 IA PRO
                 <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
@@ -867,7 +866,7 @@
         
         <a href="<?php echo e(route('hub.pricing')); ?>" wire:navigate
             class="group flex items-center gap-3 px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-widest border border-zinc-200 dark:border-zinc-700 opacity-60 hover:opacity-100 transition-all"
-            title="Requer Plano Premium ou superior">
+            title="Requer Plano Pro ou Business">
             <span class="flex items-center gap-1.5">
                 Relatório
                 <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
@@ -933,7 +932,7 @@
 
 <?php
     // Define se o utilizador é Business de forma segura
-    $isBusiness = ($user->plan ?? '') === 'pro' || (method_exists($user, 'isDiamond') && $user->isDiamond());
+    $isBusiness = $user->isBusinessPlan();
 ?>
 
 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isBusiness && $userWorkspaces->count() >= 1): ?>
@@ -2401,10 +2400,6 @@ Fechar <?php echo $__env->renderComponent(); ?>
 
 
 <?php
-        $isPremium = in_array($currentWs->plan ?? 'free', ['plus', 'premium', 'pro', 'company']);
-        $report = $this->dailyReport;
-    ?>
-<?php
         $report = $this->dailyReport;
         $isPremium = $report['is_premium'] ?? false;
     ?>
@@ -2422,7 +2417,7 @@ Fechar <?php echo $__env->renderComponent(); ?>
                     <span class="text-4xl text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">⭐</span>
                 </div>
                 <h3 class="text-2xl font-black uppercase italic tracking-tighter text-white">Protocolo Restrito</h3>
-                <p class="text-zinc-500 text-xs font-bold uppercase tracking-[0.3em] mt-2">Requer Ativação Premium</p>
+                <p class="text-zinc-500 text-xs font-bold uppercase tracking-[0.3em] mt-2">Requer Plano Pro</p>
 
                 <a href="<?php echo e(route('hub.pricing')); ?>" wire:navigate
                    class="mt-10 flex items-center justify-center bg-white text-zinc-950 px-12 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-zinc-200 transition-all hover:scale-105 active:scale-95">

@@ -137,22 +137,74 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         ];
     }
 
-    /** ── SISTEMA DE PLANOS ── **/
+    /** ── SISTEMA DE PLANOS: free | pro | business | extras ── **/
+    public static function normalizePlan(?string $plan): string
+    {
+        $plan = strtolower(trim((string) $plan));
+
+        if ($plan === '' || $plan === 'free' || $plan === 'null') {
+            return 'free';
+        }
+
+        return match ($plan) {
+            'plus', 'premium', 'star' => 'pro',
+            'diamond', 'diamante', 'company' => 'business',
+            default => $plan,
+        };
+    }
+
+    public static function planLabel(?string $plan): string
+    {
+        $slug = self::normalizePlan($plan);
+
+        return match ($slug) {
+            'free' => 'Free',
+            'pro' => 'Pro',
+            'business' => 'Business',
+            default => SubscriptionPlan::where('slug', $slug)->value('name') ?? Str::headline($slug),
+        };
+    }
+
+    public function currentPlanSlug(): string
+    {
+        return self::normalizePlan($this->plan ?: $this->currentWorkspace?->plan);
+    }
+
+    public function isPro(): bool
+    {
+        return $this->currentPlanSlug() === 'pro';
+    }
+
+    public function isBusinessPlan(): bool
+    {
+        $slug = $this->currentPlanSlug();
+        if ($slug === 'business') {
+            return true;
+        }
+
+        $catalog = SubscriptionPlan::where('slug', $slug)->first();
+
+        return $catalog?->hasFeature('business_mode') ?? false;
+    }
+
+    public function isPaidPlan(): bool
+    {
+        return $this->currentPlanSlug() !== 'free';
+    }
+
     public function isAnyPremium(): bool
     {
-        return $this->isStar() || $this->isDiamond();
+        return $this->isPaidPlan();
     }
 
     public function isStar(): bool
     {
-        // Verifica no user ou no workspace atual
-        return ($this->plan === 'plus') || ($this->currentWorkspace->plan ?? 'free') === 'plus';
+        return $this->isPro();
     }
 
     public function isDiamond(): bool
     {
-        // Verifica no user ou no workspace atual
-        return in_array($this->plan, ['pro', 'company']) || in_array($this->currentWorkspace->plan ?? 'free', ['pro', 'company']);
+        return $this->isBusinessPlan();
     }
 
     public function isOnline()

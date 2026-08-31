@@ -50,7 +50,7 @@ class BusinessSettings extends Component
     }
 
     /**
-     * Guardar dados do perfil empresarial (Versão Diamante)
+     * Guardar dados do perfil empresarial
      */
     public function save()
     {
@@ -107,7 +107,7 @@ class BusinessSettings extends Component
     }
 
     /**
-     * Renderização com métricas empresariais Diamante
+     * Renderização com métricas empresariais
      */
     public function leaveCompany()
     {

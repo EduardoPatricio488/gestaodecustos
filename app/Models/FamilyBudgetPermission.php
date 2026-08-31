@@ -21,7 +21,7 @@ class FamilyBudgetPermission extends Model
         'allowance_frequency',
         'can_view_all',
         'can_edit',
-        // Restrições de Módulos Premium
+        // Restrições de Módulos Pro
         'restrict_business',
         'restrict_store',
         'restrict_fitness',

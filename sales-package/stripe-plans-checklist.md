@@ -12,7 +12,7 @@ Garantir que a parte de billing e planos está funcional e pronta para venda.
 - [ ] webhook secret definido
 - [ ] planos configurados em Stripe
 - [ ] preços configurados no .env
-- [ ] upgrade de Free para Plus testado
+- [ ] upgrade de Free para Pro testado
 - [ ] upgrade de Free para Pro testado
 - [ ] downgrade testado
 - [ ] cancelamento testado
@@ -27,8 +27,8 @@ Garantir que a parte de billing e planos está funcional e pronta para venda.
 STRIPE_KEY=
 STRIPE_SECRET=
 STRIPE_WEBHOOK_SECRET=
-STRIPE_PRICE_PLUS=
 STRIPE_PRICE_PRO=
+STRIPE_PRICE_BUSINESS=
 CASHIER_CURRENCY=eur
 ```
 

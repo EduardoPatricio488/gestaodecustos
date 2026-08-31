@@ -16,6 +16,7 @@ use App\Livewire\Admin\AnalyticsHub;
 use App\Livewire\Admin\CommunicationManager;
 use App\Livewire\Admin\GamificationHub;
 use App\Livewire\Admin\GlobalLogs;
+use App\Livewire\Admin\PlanManager;
 use App\Livewire\Admin\ProductivityHub;
 use App\Livewire\Admin\RemindersMonitor;
 use App\Livewire\Admin\SiteSettings;
@@ -391,6 +392,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     // Dashboards e Monitorização
     Route::get('/dashboard', AdminDashboard::class)->name('admin.dashboard');
+    Route::get('/planos-config', PlanManager::class)->name('admin.plans');
     Route::get('/estatisticas', AnalyticsHub::class)->name('admin.stats');
     Route::get('/ai-monitor', AiMonitor::class)->name('admin.ai');
     Route::get('/produtividade', ProductivityHub::class)->name('admin.productivity');

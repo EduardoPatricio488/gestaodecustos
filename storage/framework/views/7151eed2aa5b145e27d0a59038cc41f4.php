@@ -123,16 +123,16 @@
     $isManager = ($user && ($user->isAdminRole() || $user->isOwner())) && !$isViewingAsCollab;
 
     // 4. PLANOS E PERMISSÕES
-    $userPlan = $currentWs?->plan ?? 'free';
-    $isDiamond = $user ? $user->isDiamond() : false;
-    $isAnyPremium = $user ? $user->isAnyPremium() : false;
+    $userPlan = $user ? $user->currentPlanSlug() : 'free';
+    $isDiamond = $user ? $user->isBusinessPlan() : false;
+    $isAnyPremium = $user ? $user->isPaidPlan() : false;
 
-    if ($isDiamond) {
-        $planEmoji = '💎'; $planText = 'Plano Diamante'; $planColor = 'text-indigo-600';
-    } elseif ($user && $user->isStar()) {
-        $planEmoji = '⭐'; $planText = 'Plano Premium'; $planColor = 'text-amber-500';
+    if ($userPlan === 'business') {
+        $planEmoji = '💎'; $planText = 'Plano Business'; $planColor = 'text-indigo-600';
+    } elseif ($userPlan === 'pro') {
+        $planEmoji = '⭐'; $planText = 'Plano Pro'; $planColor = 'text-amber-500';
     } else {
-        $planEmoji = '👤'; $planText = 'Plano Básico'; $planColor = 'text-zinc-400';
+        $planEmoji = '👤'; $planText = 'Plano Free'; $planColor = 'text-zinc-400';
     }
 
     $workspaceId = $currentWs?->id ?? 0;
@@ -1382,6 +1382,30 @@ unset($__split);
 
                             Faturação & Pagamentos
                          <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+                         
+        <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'ticket','href' => route('admin.plans'),'current' => request()->routeIs('admin.plans'),'wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::sidebar.item'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['icon' => 'ticket','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('admin.plans')),'current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('admin.plans')),'wire:navigate' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+            Configurar Planos
+         <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
 <?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
@@ -2801,12 +2825,12 @@ unset($__split);
 
 <?php
     // Definição segura das variáveis de plano para evitar erros de variável indefinida
-    $isProUser = ($user->plan ?? '') === 'pro' || (method_exists($user, 'isDiamond') && $user->isDiamond());
-    $isPlusUser = ($user->plan ?? '') === 'plus' || (method_exists($user, 'isPlus') && $user->isPlus());
-    $hasLockInAccess = $isProUser || $isPlusUser;
+    $isProUser = $user?->isPro() ?? false;
+    $isBusinessUser = $user?->isBusinessPlan() ?? false;
+    $hasLockInAccess = $user?->isPaidPlan() ?? false;
 
-$hasInventoryAccess = $isProUser || $isPlusUser;
-$hasStoreAccess = $isProUser || $isPlusUser;
+$hasInventoryAccess = $hasLockInAccess;
+$hasStoreAccess = $hasLockInAccess;
 ?>
 
 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($hasLockInAccess): ?>
@@ -2828,8 +2852,8 @@ $hasStoreAccess = $isProUser || $isPlusUser;
                 Lock In
             </span>
             
-            <span class="text-[6px] px-1 py-0.5 rounded font-black uppercase leading-none <?php echo e($isProUser ? 'bg-violet-500 text-white' : 'bg-emerald-500 text-white'); ?>">
-                <?php echo e($isProUser ? 'Business' : 'Premium'); ?>
+            <span class="text-[6px] px-1 py-0.5 rounded font-black uppercase leading-none <?php echo e($isBusinessUser ? 'bg-violet-500 text-white' : 'bg-emerald-500 text-white'); ?>">
+                <?php echo e($isBusinessUser ? 'Business' : 'Pro'); ?>
 
             </span>
         </div>
@@ -2904,11 +2928,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 
 
 <?php
-    // Verifica acesso ao Inventário (Disponível em Plus e Business/Diamond)
-    $hasInventoryAccess = ($user->plan ?? '') === 'plus' ||
-                         ($user->plan ?? '') === 'pro' ||
-                         (method_exists($user, 'isPlus') && $user->isPlus()) ||
-                         (method_exists($user, 'isDiamond') && $user->isDiamond());
+    $hasInventoryAccess = $user?->isPaidPlan() ?? false;
 ?>
 
 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($hasInventoryAccess): ?>
@@ -2978,7 +2998,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
             </div>
 
             <span class="text-[7px] font-black px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-200/50 uppercase tracking-tighter">
-                Plus
+                Pro
             </span>
         </div>
      <?php echo $__env->renderComponent(); ?>
@@ -3458,7 +3478,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 <?php unset($__componentOriginal31257750338e37e989bcfa8eb3c88bb1); ?>
 <?php endif; ?>
 
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($user->isStar() || $user->isDiamond()): ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($user->isPaidPlan()): ?>
     
     <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
@@ -3488,14 +3508,14 @@ $hasStoreAccess = $isProUser || $isPlusUser;
     
     <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'sparkles','href' => route('hub.pricing'),'class' => 'text-zinc-400 opacity-60 group','wire:navigate.hover' => true,'title' => 'Requer Plano Premium']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'sparkles','href' => route('hub.pricing'),'class' => 'text-zinc-400 opacity-60 group','wire:navigate.hover' => true,'title' => 'Requer Plano Pro']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar.item'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['icon' => 'sparkles','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.pricing')),'class' => 'text-zinc-400 opacity-60 group','wire:navigate.hover' => true,'title' => 'Requer Plano Premium']); ?>
+<?php $component->withAttributes(['icon' => 'sparkles','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.pricing')),'class' => 'text-zinc-400 opacity-60 group','wire:navigate.hover' => true,'title' => 'Requer Plano Pro']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
         <span class="flex items-center justify-between w-full">
@@ -3736,9 +3756,8 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 
                <?php
     // Detecção simplificada e segura dos planos
-    $isProUser = ($user->plan ?? '') === 'pro' || (method_exists($user, 'isDiamond') && $user->isDiamond());
-    $isPlusUser = ($user->plan ?? '') === 'plus' || (method_exists($user, 'isPlus') && $user->isPlus());
-    $hasLockInAccess = $isProUser || $isPlusUser;
+    $isProUser = $user?->isPro() ?? false;
+    $hasLockInAccess = $user?->isPaidPlan() ?? false;
 ?>
 
 
@@ -4278,11 +4297,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 
     
     <?php
-    // Verifica se o utilizador tem acesso (Plus ou Pro)
-    $hasStoreAccess = ($user->plan ?? '') === 'plus' ||
-                      ($user->plan ?? '') === 'pro' ||
-                      (method_exists($user, 'isPlus') && $user->isPlus()) ||
-                      (method_exists($user, 'isDiamond') && $user->isDiamond());
+    $hasStoreAccess = $user?->isPaidPlan() ?? false;
 ?>
 
 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($hasStoreAccess): ?>
@@ -4319,7 +4334,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
     <a href="<?php echo e(route('hub.pricing')); ?>"
        wire:navigate
        class="relative p-2.5 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 shadow-sm border border-zinc-200/60 dark:border-zinc-800/60 text-zinc-400 opacity-80 hover:opacity-100 hover:border-amber-500/50 transition-all group"
-       title="Loja Digital (Disponível em Planos Premium)">
+       title="Loja Digital (Disponível nos planos Pro e Business)">
 
         
         <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
@@ -4523,13 +4538,13 @@ unset($__split);
                                 🏆 Ranking
                             </a>
 
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($user->isDiamond() || $user->isStar()): ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($user->isPaidPlan()): ?>
                                 <a href="<?php echo e(route('hub.pricing')); ?>" wire:navigate
                                    class="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 transition-colors border-b border-zinc-50 dark:border-zinc-800/50">
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($user->isDiamond()): ?>
-                                        <span class="text-indigo-500">💎</span> O meu plano Diamante
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($user->isBusinessPlan()): ?>
+                                        <span class="text-indigo-500">💎</span> O meu plano Business
                                     <?php else: ?>
-                                        <span class="text-amber-500">⭐</span> O meu plano Premium
+                                        <span class="text-amber-500">⭐</span> O meu plano Pro
                                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 </a>
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -4544,7 +4559,7 @@ unset($__split);
 
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!$isAnyPremium && !auth()->user()->isAdmin()): ?>
                                 <a href="<?php echo e(route('hub.pricing')); ?>" wire:navigate class="flex items-center gap-2 px-4 py-2 text-sm text-brand-600 font-black hover:bg-brand-50 dark:hover:bg-brand-500/10">
-                                    <span class="animate-pulse">💎</span> OBTER PREMIUM
+                                    <span class="animate-pulse">⭐</span> OBTER PRO
                                 </a>
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 

@@ -20,7 +20,7 @@
                         </h1>
                         <flux:badge variant="neutral"
                             class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1 text-zinc-500">
-                            Versão Diamante
+                            Versão Business
                         </flux:badge>
                     </div>
 
@@ -403,7 +403,7 @@
     {{-- FOOTER --}}
     <footer class="pt-20 pb-6 text-center border-t border-zinc-100 dark:border-zinc-800 mt-20 opacity-60">
         <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">
-            © {{ date('Y') }} {{ $workspace->name }} · Perfil Empresarial Versão Diamante
+            © {{ date('Y') }} {{ $workspace->name }} · Perfil Empresarial Business
         </p>
     </footer>
 </div>

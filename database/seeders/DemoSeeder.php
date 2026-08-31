@@ -44,7 +44,7 @@ class DemoSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'role' => 'user',
                 'is_admin' => false,
-                'plan' => 'pro',
+                'plan' => 'business',
                 'email_verified_at' => now(),
                 'username' => 'eduardo_ceo',
                 'xp' => 2500,
@@ -78,7 +78,7 @@ class DemoSeeder extends Seeder
             [
                 'name' => 'Tech Solutions SaaS',
                 'invite_code' => 'BUSINESS2024',
-                'plan' => 'pro',
+                'plan' => 'business',
                 'initial_capital' => 10000.00,
             ]
         );

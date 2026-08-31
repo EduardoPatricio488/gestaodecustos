@@ -246,7 +246,7 @@ class TeamHub extends Component
         $workspace = auth()->user()->currentWorkspace;
 
         // 1. Upgrade na Base de Dados
-        $user->update(['plan' => 'pro']);
+        $user->update(['plan' => 'business']);
 
         // 2. Envio do Email Real
         try {

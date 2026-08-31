@@ -52,7 +52,7 @@ class StoreRecommendationService
         $user = Auth::user();
 
         $profile = match (true) {
-            $user && $user->isAnyPremium() => 'utilizador PRO com necessidades avançadas',
+            $user && $user->isPaidPlan() => 'utilizador Pro com necessidades avançadas',
             $user && $user->workspaces()->exists() => 'gestor empresarial',
             default => 'utilizador que quer organizar finanças pessoais',
         };

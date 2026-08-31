@@ -1,19 +1,14 @@
 <?php
 
 return [
-    'plus' => [
-        'name' => 'Premium',
+    'pro' => [
+        'name' => 'Pro',
         'amount' => 5.00,
         'interval' => 'month',
     ],
-    'pro' => [
+    'business' => [
         'name' => 'Business',
         'amount' => 10.00,
-        'interval' => 'month',
-    ],
-    'company' => [
-        'name' => 'Company',
-        'amount' => 49.90,
         'interval' => 'month',
     ],
 ];

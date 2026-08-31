@@ -431,7 +431,7 @@
 
                     {{-- 2. MÓDULOS PREMIUM (FORMATO SELECT) --}}
                     <div class="space-y-2">
-                        <flux:label>💎 Módulos Premium</flux:label>
+                        <flux:label>💎 Módulos Pro</flux:label>
                         <div class="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden shadow-sm">
                             <button @click="openPremium = !openPremium" type="button" class="flex items-center justify-between w-full h-10 px-3 bg-white dark:bg-zinc-800 text-sm outline-none">
                                 <span class="text-zinc-500 dark:text-zinc-400" x-text="openPremium ? '— Fechar Opções —' : '— Configurar Módulos —'"></span>
@@ -733,7 +733,7 @@
     // 5. Organização de Listas Visuais (Sistema)
     $blockedModules = [];
     if ($globalPerms) {
-        // Módulos Premium
+        // Módulos Pro
         if ($globalPerms->restrict_business)   $blockedModules[] = ['💼', 'Área Empresa'];
         if ($globalPerms->restrict_store)      $blockedModules[] = ['🛒', 'Loja/Stock'];
         if ($globalPerms->restrict_fitness)    $blockedModules[] = ['🏋️', 'Zona Fitness'];
@@ -882,7 +882,7 @@
                 <flux:icon name="sparkles" variant="solid" class="size-5" />
             </div>
             <div class="flex flex-col">
-                <h3 class="text-sm font-black uppercase tracking-[0.25em] dark:text-white leading-none">Módulos Premium</h3>
+                <h3 class="text-sm font-black uppercase tracking-[0.25em] dark:text-white leading-none">Módulos Pro</h3>
                 <span class="text-[9px] font-bold text-zinc-400 uppercase mt-1 tracking-widest italic">Acesso a áreas exclusivas</span>
             </div>
             <div class="flex-1 h-px bg-gradient-to-r from-purple-500/50 to-transparent"></div>

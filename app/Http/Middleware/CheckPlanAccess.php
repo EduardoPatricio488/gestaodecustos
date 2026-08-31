@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SubscriptionPlan;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,19 +18,23 @@ class CheckPlanAccess
             return redirect()->route('login');
         }
 
-        $userPlan = $user->plan ?? 'free'; // 'free', 'plus', 'pro'
-
+        $userPlan = $user->currentPlanSlug();
+        $catalog = null;
+        try {
+            $catalog = SubscriptionPlan::where('slug', $userPlan)->where('is_active', true)->first();
+        } catch (\Throwable $e) {
+            $catalog = null;
+        }
         $hasAccess = false;
 
-        // Lógica de Hierarquia:
-        // Se a rota pedir 'premium': Utilizadores 'plus' e 'pro' entram.
-        if ($planRequired === 'premium') {
-            $hasAccess = in_array($userPlan, ['plus', 'pro']) || $user->isStar() || $user->isDiamond();
+        if (in_array($planRequired, ['premium', 'pro'], true)) {
+            $hasAccess = $user->isPaidPlan()
+                || ($catalog && ($catalog->price > 0 || $catalog->hasFeature('ia_access')));
         }
 
-        // Se a rota pedir 'business': Apenas utilizadores 'pro' (ou Diamond) entram.
         if ($planRequired === 'business') {
-            $hasAccess = ($userPlan === 'pro') || $user->isDiamond();
+            $hasAccess = $user->isBusinessPlan()
+                || ($catalog && $catalog->hasFeature('business_mode'));
         }
 
         if (! $hasAccess) {

@@ -25,7 +25,7 @@ class StripeWebhookListener
             if ($userId) {
                 $user = User::find($userId);
                 if ($user) {
-                    $plan = ($amount >= 1000) ? 'pro' : 'plus';
+                    $plan = ($amount >= 1000) ? 'business' : 'pro';
 
                     // Forçar atualização na base de dados
                     $user->plan = $plan;

@@ -106,7 +106,7 @@
 
             @forelse($messages as $msg)
                 <div class="flex gap-4 {{ $msg->isFromAuthUser() ? 'flex-row-reverse' : '' }} group animate-fade-in">
-                    {{-- Avatar Premium --}}
+                    {{-- Avatar --}}
                     <div class="flex-shrink-0 mt-1">
                         <div class="size-10 rounded-2xl flex items-center justify-center font-black text-xs shadow-md border-2
                             {{ $msg->isFromAuthUser()

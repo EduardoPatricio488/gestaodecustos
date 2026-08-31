@@ -74,7 +74,7 @@ class BusinessOnboarding extends Component
             'currency' => $this->currency ?? 'EUR',
             'initial_capital' => (float) ($this->initial_capital ?? 0),
             'invite_code' => strtoupper(Str::random(8)),
-            'plan' => 'pro',
+            'plan' => 'business',
         ]);
 
         // 3. Processar a Foto se existir

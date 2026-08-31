@@ -127,16 +127,16 @@
     $isManager = ($user && ($user->isAdminRole() || $user->isOwner())) && !$isViewingAsCollab;
 
     // 4. PLANOS E PERMISSÕES
-    $userPlan = $currentWs?->plan ?? 'free';
-    $isDiamond = $user ? $user->isDiamond() : false;
-    $isAnyPremium = $user ? $user->isAnyPremium() : false;
+    $userPlan = $user ? $user->currentPlanSlug() : 'free';
+    $isDiamond = $user ? $user->isBusinessPlan() : false;
+    $isAnyPremium = $user ? $user->isPaidPlan() : false;
 
-    if ($isDiamond) {
-        $planEmoji = '💎'; $planText = 'Plano Diamante'; $planColor = 'text-indigo-600';
-    } elseif ($user && $user->isStar()) {
-        $planEmoji = '⭐'; $planText = 'Plano Premium'; $planColor = 'text-amber-500';
+    if ($userPlan === 'business') {
+        $planEmoji = '💎'; $planText = 'Plano Business'; $planColor = 'text-indigo-600';
+    } elseif ($userPlan === 'pro') {
+        $planEmoji = '⭐'; $planText = 'Plano Pro'; $planColor = 'text-amber-500';
     } else {
-        $planEmoji = '👤'; $planText = 'Plano Básico'; $planColor = 'text-zinc-400';
+        $planEmoji = '👤'; $planText = 'Plano Free'; $planColor = 'text-zinc-400';
     }
 
     $workspaceId = $currentWs?->id ?? 0;
@@ -724,6 +724,10 @@
                         <flux:sidebar.item icon="credit-card" :href="route('admin.billing')" :current="request()->routeIs('admin.billing')" wire:navigate>
                             Faturação & Pagamentos
                         </flux:sidebar.item>
+                         {{-- 🔥 ADICIONA ESTA OPÇÃO AQUI --}}
+        <flux:sidebar.item icon="ticket" :href="route('admin.plans')" :current="request()->routeIs('admin.plans')" wire:navigate>
+            Configurar Planos
+        </flux:sidebar.item>
                         <flux:sidebar.item icon="shield-check" :href="route('admin.logs')" :current="request()->routeIs('admin.logs')" wire:navigate>
                             Segurança & Logs
                         </flux:sidebar.item>
@@ -1032,12 +1036,12 @@
 {{-- COPIA DESDE AQUI --}}
 @php
     // Definição segura das variáveis de plano para evitar erros de variável indefinida
-    $isProUser = ($user->plan ?? '') === 'pro' || (method_exists($user, 'isDiamond') && $user->isDiamond());
-    $isPlusUser = ($user->plan ?? '') === 'plus' || (method_exists($user, 'isPlus') && $user->isPlus());
-    $hasLockInAccess = $isProUser || $isPlusUser;
+    $isProUser = $user?->isPro() ?? false;
+    $isBusinessUser = $user?->isBusinessPlan() ?? false;
+    $hasLockInAccess = $user?->isPaidPlan() ?? false;
 
-$hasInventoryAccess = $isProUser || $isPlusUser;
-$hasStoreAccess = $isProUser || $isPlusUser;
+$hasInventoryAccess = $hasLockInAccess;
+$hasStoreAccess = $hasLockInAccess;
 @endphp
 
 @if($hasLockInAccess)
@@ -1055,8 +1059,8 @@ $hasStoreAccess = $isProUser || $isPlusUser;
                 Lock In
             </span>
             {{-- Etiqueta do Plano --}}
-            <span class="text-[6px] px-1 py-0.5 rounded font-black uppercase leading-none {{ $isProUser ? 'bg-violet-500 text-white' : 'bg-emerald-500 text-white' }}">
-                {{ $isProUser ? 'Business' : 'Premium' }}
+            <span class="text-[6px] px-1 py-0.5 rounded font-black uppercase leading-none {{ $isBusinessUser ? 'bg-violet-500 text-white' : 'bg-emerald-500 text-white' }}">
+                {{ $isBusinessUser ? 'Business' : 'Pro' }}
             </span>
         </div>
 
@@ -1085,11 +1089,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 
 
 @php
-    // Verifica acesso ao Inventário (Disponível em Plus e Business/Diamond)
-    $hasInventoryAccess = ($user->plan ?? '') === 'plus' ||
-                         ($user->plan ?? '') === 'pro' ||
-                         (method_exists($user, 'isPlus') && $user->isPlus()) ||
-                         (method_exists($user, 'isDiamond') && $user->isDiamond());
+    $hasInventoryAccess = $user?->isPaidPlan() ?? false;
 @endphp
 
 @if($hasInventoryAccess)
@@ -1117,7 +1117,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
             </div>
 
             <span class="text-[7px] font-black px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-200/50 uppercase tracking-tighter">
-                Plus
+                Pro
             </span>
         </div>
     </flux:sidebar.item>
@@ -1222,8 +1222,8 @@ $hasStoreAccess = $isProUser || $isPlusUser;
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 
-            @if($user->isStar() || $user->isDiamond())
-    {{-- Acesso Liberado: Plano Premium ou superior --}}
+            @if($user->isPaidPlan())
+    {{-- Acesso Liberado: Plano Pro ou Business --}}
     <flux:sidebar.item
         icon="sparkles"
         :href="route('ai')"
@@ -1241,7 +1241,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
         :href="route('hub.pricing')"
         class="text-zinc-400 opacity-60 group"
         wire:navigate.hover
-        title="Requer Plano Premium">
+        title="Requer Plano Pro">
         <span class="flex items-center justify-between w-full">
             CFO Inteligente
             <span class="flex items-center gap-1 ml-auto">
@@ -1297,9 +1297,8 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 
                @php
     // Detecção simplificada e segura dos planos
-    $isProUser = ($user->plan ?? '') === 'pro' || (method_exists($user, 'isDiamond') && $user->isDiamond());
-    $isPlusUser = ($user->plan ?? '') === 'plus' || (method_exists($user, 'isPlus') && $user->isPlus());
-    $hasLockInAccess = $isProUser || $isPlusUser;
+    $isProUser = $user?->isPro() ?? false;
+    $hasLockInAccess = $user?->isPaidPlan() ?? false;
 @endphp
 
 
@@ -1472,15 +1471,11 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 
     {{-- Loja --}}
     @php
-    // Verifica se o utilizador tem acesso (Plus ou Pro)
-    $hasStoreAccess = ($user->plan ?? '') === 'plus' ||
-                      ($user->plan ?? '') === 'pro' ||
-                      (method_exists($user, 'isPlus') && $user->isPlus()) ||
-                      (method_exists($user, 'isDiamond') && $user->isDiamond());
+    $hasStoreAccess = $user?->isPaidPlan() ?? false;
 @endphp
 
 @if($hasStoreAccess)
-    {{-- LOJA DISPONÍVEL (UTILIZADOR PREMIUM/BUSINESS) --}}
+    {{-- LOJA DISPONÍVEL (PRO / BUSINESS) --}}
     <a href="{{ route('hub.store') }}"
        wire:navigate
        class="relative p-2.5 rounded-xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-brand-600 hover:border-brand-500/30 transition-all group"
@@ -1492,7 +1487,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
     <a href="{{ route('hub.pricing') }}"
        wire:navigate
        class="relative p-2.5 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 shadow-sm border border-zinc-200/60 dark:border-zinc-800/60 text-zinc-400 opacity-80 hover:opacity-100 hover:border-amber-500/50 transition-all group"
-       title="Loja Digital (Disponível em Planos Premium)">
+       title="Loja Digital (Disponível nos planos Pro e Business)">
 
         {{-- Ícone da Loja em tons de cinza --}}
         <flux:icon name="shopping-bag" class="size-5 grayscale" />
@@ -1544,13 +1539,13 @@ $hasStoreAccess = $isProUser || $isPlusUser;
                                 🏆 Ranking
                             </a>
 
-                            @if($user->isDiamond() || $user->isStar())
+                            @if($user->isPaidPlan())
                                 <a href="{{ route('hub.pricing') }}" wire:navigate
                                    class="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 transition-colors border-b border-zinc-50 dark:border-zinc-800/50">
-                                    @if($user->isDiamond())
-                                        <span class="text-indigo-500">💎</span> O meu plano Diamante
+                                    @if($user->isBusinessPlan())
+                                        <span class="text-indigo-500">💎</span> O meu plano Business
                                     @else
-                                        <span class="text-amber-500">⭐</span> O meu plano Premium
+                                        <span class="text-amber-500">⭐</span> O meu plano Pro
                                     @endif
                                 </a>
                             @endif
@@ -1565,7 +1560,7 @@ $hasStoreAccess = $isProUser || $isPlusUser;
 
                             @if(!$isAnyPremium && !auth()->user()->isAdmin())
                                 <a href="{{ route('hub.pricing') }}" wire:navigate class="flex items-center gap-2 px-4 py-2 text-sm text-brand-600 font-black hover:bg-brand-50 dark:hover:bg-brand-500/10">
-                                    <span class="animate-pulse">💎</span> OBTER PREMIUM
+                                    <span class="animate-pulse">⭐</span> OBTER PRO
                                 </a>
                             @endif
 

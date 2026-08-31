@@ -425,7 +425,7 @@
                 </div>
                 <div class="min-w-0 text-left">
                     <h4 class="font-black dark:text-white uppercase text-base tracking-tight leading-none truncate mb-1">{{ $emp->name }}</h4>
-                      @if($emp->user?->plan === 'pro' || $emp->user?->isDiamond())
+                      @if($emp->user?->isBusinessPlan())
         <span title="Membro Business" class="text-indigo-500 text-xs">💎</span>
     @endif
                     <p class="text-[10px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-[0.15em]">{{ $emp->role }}</p>
@@ -470,7 +470,7 @@
 <button
     @click="open = false"
     wire:click="activateBusinessPlan({{ $emp->id }})"
-    wire:confirm="Desejas oferecer acesso Premium/Business a este utilizador?"
+    wire:confirm="Desejas oferecer o plano Business a este utilizador?"
     class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all text-left"
 >
     <flux:icon name="sparkles" variant="solid" class="size-4 shrink-0 text-indigo-500" />

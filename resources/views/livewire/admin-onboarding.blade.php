@@ -55,7 +55,7 @@
                                     <div class="flex items-center justify-between border-b border-white/5 pb-3">
                                         <div class="flex items-center gap-3">
                                             <div class="size-8 bg-zinc-800 rounded-lg flex items-center justify-center text-xs font-bold text-zinc-400">JD</div>
-                                            <span class="text-xs font-bold text-white italic">João Duarte (Premium)</span>
+                                            <span class="text-xs font-bold text-white italic">João Duarte (Pro)</span>
                                         </div>
                                         <button class="px-3 py-1.5 bg-brand-600 text-white text-[9px] font-black rounded-lg uppercase shadow-lg pointer-events-none">Entrar na Conta</button>
                                     </div>

@@ -366,8 +366,7 @@
 
 @php
     $user = auth()->user();
-    // Utilizadores "Star" (Premium) ou "Diamond" (Business) têm acesso
-    $hasProAccess = $user->isStar() || $user->isDiamond();
+    $hasProAccess = $user->isPaidPlan();
 @endphp
 
 {{-- TERMINAL DE ACÇÕES ESTRATÉGICAS --}}
@@ -384,7 +383,7 @@
         {{-- BLOQUEADO: REDIRECIONA PARA HUB.PRICING --}}
         <a href="{{ route('hub.pricing') }}" wire:navigate
             class="group flex items-center gap-3 px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-200 dark:border-zinc-700 opacity-60 hover:opacity-100 transition-all"
-            title="Requer Plano Premium ou superior">
+            title="Requer Plano Pro ou Business">
             <span class="flex items-center gap-1.5">
                 IA PRO
                 <flux:icon name="lock-closed" variant="micro" class="size-3 text-zinc-400" />
@@ -407,7 +406,7 @@
         {{-- BLOQUEADO: REDIRECIONA PARA HUB.PRICING --}}
         <a href="{{ route('hub.pricing') }}" wire:navigate
             class="group flex items-center gap-3 px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-widest border border-zinc-200 dark:border-zinc-700 opacity-60 hover:opacity-100 transition-all"
-            title="Requer Plano Premium ou superior">
+            title="Requer Plano Pro ou Business">
             <span class="flex items-center gap-1.5">
                 Relatório
                 <flux:icon name="lock-closed" variant="micro" class="size-3 text-zinc-400" />
@@ -452,7 +451,7 @@
 {{-- 4. SELETOR DE ESPAÇO (WORKSPACE SWITCHER) - APENAS PARA PLANO BUSINESS --}}
 @php
     // Define se o utilizador é Business de forma segura
-    $isBusiness = ($user->plan ?? '') === 'pro' || (method_exists($user, 'isDiamond') && $user->isDiamond());
+    $isBusiness = $user->isBusinessPlan();
 @endphp
 
 @if($isBusiness && $userWorkspaces->count() >= 1)
@@ -720,7 +719,7 @@
             <flux:icon name="arrow-trending-down" class="absolute -right-2 -bottom-2 size-12 text-zinc-100 dark:text-zinc-800/50 group-hover:rotate-12 transition-transform" />
         </div>
 
-        {{-- Card: Património Investido (Destaque Premium) --}}
+        {{-- Card: Património Investido --}}
         <div class="relative overflow-hidden bg-zinc-950 dark:bg-brand-600 p-5 rounded-[2rem] shadow-xl shadow-brand-500/10 group">
             <div class="relative z-10">
                 <p class="text-[10px] font-black text-brand-400 dark:text-brand-100 uppercase tracking-widest mb-1">Portefólio Ativo</p>
@@ -1120,10 +1119,6 @@
 
 
 @php
-        $isPremium = in_array($currentWs->plan ?? 'free', ['plus', 'premium', 'pro', 'company']);
-        $report = $this->dailyReport;
-    @endphp
-@php
         $report = $this->dailyReport;
         $isPremium = $report['is_premium'] ?? false;
     @endphp
@@ -1141,7 +1136,7 @@
                     <span class="text-4xl text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">⭐</span>
                 </div>
                 <h3 class="text-2xl font-black uppercase italic tracking-tighter text-white">Protocolo Restrito</h3>
-                <p class="text-zinc-500 text-xs font-bold uppercase tracking-[0.3em] mt-2">Requer Ativação Premium</p>
+                <p class="text-zinc-500 text-xs font-bold uppercase tracking-[0.3em] mt-2">Requer Plano Pro</p>
 
                 <a href="{{ route('hub.pricing') }}" wire:navigate
                    class="mt-10 flex items-center justify-center bg-white text-zinc-950 px-12 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-zinc-200 transition-all hover:scale-105 active:scale-95">

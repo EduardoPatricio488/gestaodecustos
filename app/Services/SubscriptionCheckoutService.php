@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Payment;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 
 class SubscriptionCheckoutService
@@ -19,7 +20,8 @@ class SubscriptionCheckoutService
             return;
         }
 
-        $amount = config("plans.{$plan}.amount", 0);
+        $amount = SubscriptionPlan::where('slug', $plan)->value('price')
+            ?? config("plans.{$plan}.amount", 0);
 
         if ($amount <= 0) {
             return;

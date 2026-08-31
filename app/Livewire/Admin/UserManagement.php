@@ -63,7 +63,7 @@ class UserManagement extends Component
             ->value('plan') ?? 'free';
 
         $this->userStats = [
-            'plan' => $plan, // Novo dado: premium, business ou free
+            'plan' => $plan,
             'expenses_count' => DB::table('expenses')->where('user_id', $userId)->count(),
             'expenses_sum' => DB::table('expenses')->where('user_id', $userId)->sum('amount'),
             'incomes_sum' => DB::table('incomes')->where('user_id', $userId)->sum('amount'),

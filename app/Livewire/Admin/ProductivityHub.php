@@ -14,37 +14,33 @@ class ProductivityHub extends Component
 
     public $search = '';
 
-    /**
-     * Renderiza o Centro de Produtividade com métricas reais e timeline de eventos.
-     */
     public function render()
     {
-        // 1. MÉTRICAS DE TAREFAS (Lembretes)
+        // 1. MÉTRICAS DE TAREFAS (Corrigido para is_completed)
         $totalReminders = DB::table('reminders')->count();
-        $completedReminders = DB::table('reminders')->where('completed', true)->count();
+        $completedReminders = DB::table('reminders')->where('is_completed', true)->count();
         $taskRate = $totalReminders > 0 ? round(($completedReminders / $totalReminders) * 100) : 0;
 
-        // 2. MÉTRICAS DE OBJETIVOS (Metas alcançadas)
+        // 2. MÉTRICAS DE OBJETIVOS (Corrigido para whereColumn)
         $totalGoals = DB::table('goals')->count();
-        $reachedGoals = DB::table('goals')->whereRaw('current_amount >= target_amount')->count();
+        $reachedGoals = DB::table('goals')->whereColumn('current_amount', '>=', 'target_amount')->count();
         $goalRate = $totalGoals > 0 ? round(($reachedGoals / $totalGoals) * 100) : 0;
 
-        // 3. FLUXO DE ATIVIDADE HOJE (Soma de interações nas últimas 24h)
+        // 3. FLUXO DE ATIVIDADE HOJE
         $activityToday = DB::table('expenses')->whereDate('created_at', now())->count() +
                          DB::table('incomes')->whereDate('created_at', now())->count() +
-                         DB::table('reminders')->whereDate('created_at', now())->count() +
-                         DB::table('chat_messages')->whereDate('created_at', now())->count();
+                         DB::table('reminders')->whereDate('created_at', now())->count();
 
-        // 4. RANKING DE UTILIZADORES MAIS ATIVOS (Power Users)
+        // 4. RANKING DE UTILIZADORES (Compatível com MySQL Strict Mode)
         $topUsers = DB::table('activity_logs')
             ->join('users', 'activity_logs.user_id', '=', 'users.id')
-            ->select('users.id', 'users.name', DB::raw('count(activity_logs.id) as actions_count'))
+            ->select('users.id', 'users.name', DB::raw('COUNT(activity_logs.id) as actions_count'))
             ->groupBy('users.id', 'users.name')
             ->orderBy('actions_count', 'desc')
             ->limit(10)
             ->get();
 
-        // 5. TIMELINE DE CONQUISTAS (Ações de sucesso em tempo real)
+        // 5. TIMELINE DE CONQUISTAS
         $recentAchievements = DB::table('activity_logs')
             ->join('users', 'activity_logs.user_id', '=', 'users.id')
             ->where(function ($q) {
@@ -53,7 +49,6 @@ class ProductivityHub extends Component
                     ->orWhere('activity_logs.action', 'like', '%bateu meta%');
             })
             ->select('activity_logs.action', 'activity_logs.created_at', 'users.name as user_name')
-            // CORREÇÃO AQUI: Especificamos activity_logs.created_at para evitar ambiguidade
             ->orderBy('activity_logs.created_at', 'desc')
             ->limit(6)
             ->get();

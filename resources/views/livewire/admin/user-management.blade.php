@@ -104,15 +104,15 @@
 {{-- COLUNA: PLANO --}}
 <td class="px-6 py-5 text-center">
     @php
-        $plan = strtolower($user->current_plan ?? 'free');
+        $plan = \App\Models\User::normalizePlan($user->current_plan ?? 'free');
         $planColor = match($plan) {
-            'premium' => 'emerald',
+            'pro' => 'emerald',
             'business' => 'violet',
             default => 'zinc'
         };
     @endphp
     <flux:badge size="sm" color="{{ $planColor }}" class="uppercase font-black text-[9px] px-3">
-        {{ $plan === 'free' ? 'Normal' : $plan }}
+        {{ \App\Models\User::planLabel($plan) }}
     </flux:badge>
 </td>
                             {{-- AÇÕES --}}
@@ -172,15 +172,15 @@
                                 <p class="text-brand-500 font-bold mt-1 text-lg">@<span>{{ $selectedUser->username ?? 'utilizador' }}</span></p>
                                 <p class="text-zinc-500 mt-1 font-medium">{{ $selectedUser->email }}</p>
 @php
-    $uPlan = strtolower($userStats['plan'] ?? 'free');
+    $uPlan = \App\Models\User::normalizePlan($userStats['plan'] ?? 'free');
     $uColor = match($uPlan) {
-        'premium' => 'emerald',
+        'pro' => 'emerald',
         'business' => 'violet',
         default => 'zinc'
     };
 @endphp
 <flux:badge size="sm" color="{{ $uColor }}" class="uppercase font-black text-[9px] tracking-widest">
-    Plano: {{ $uPlan === 'free' ? 'NORMAL' : strtoupper($uPlan) }}
+    Plano: {{ strtoupper(\App\Models\User::planLabel($uPlan)) }}
 </flux:badge>
                                 <div class="flex flex-wrap gap-2 mt-4">
                                     <flux:badge size="sm" color="zinc" class="uppercase font-black text-[9px] tracking-widest">{{ $selectedUser->role }}</flux:badge>

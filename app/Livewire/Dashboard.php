@@ -103,8 +103,8 @@ class Dashboard extends Component
             $user->refresh();
 
             if ($user->plan !== 'free') {
-                $this->suggestedName = ($user->plan === 'pro') ? 'Finance Pro Business' : 'Finance Pro Premium';
-                $this->suggestedPrice = ($user->plan === 'pro') ? 10.00 : 5.00;
+                $this->suggestedName = ($user->currentPlanSlug() === 'business') ? 'Finance Pro Business' : 'Finance Pro';
+                $this->suggestedPrice = ($user->currentPlanSlug() === 'business') ? 10.00 : 5.00;
                 $this->showSubSuggestion = true;
             }
         }
@@ -609,7 +609,7 @@ class Dashboard extends Component
         $user = auth()->user();
         $currentWs = $user->currentWorkspace;
 
-        // Identifica se é Premium (Estrela ou Diamante)
+        // Identifica se tem plano Pro ou Business
         $isPremium = $user->isAnyPremium();
 
         $today = now()->startOfDay();

@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Models\SubscriptionPlan;
+use App\Services\SubscriptionCheckoutService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
@@ -14,93 +16,70 @@ class SubscriptionPlans extends Component
 
     public $newPlanData = [];
 
-    /**
-     * Inicia o processo de Upgrade via Stripe Checkout
-     * Configuramos as chaves no .env para facilitar a vida ao comprador.
-     */
     public function upgrade($plan)
     {
         $user = Auth::user();
 
-        // 1. Tratamento de Downgrade para plano grátis
         if ($plan === 'free') {
-            $user->update(['plan' => 'free']);
-
-            if ($user->currentWorkspace) {
-                $user->currentWorkspace->update(['plan' => 'free']);
-            }
-
-            $this->showSuccessFor('free');
+            app(SubscriptionCheckoutService::class)->upgradePlan($user, 'free');
+            $this->showSuccessFor(null);
 
             return;
         }
 
-        // 2. Mapeamento dinâmico via Variáveis de Ambiente (.env)
-        // Isso é o que torna o software "vendável" e fácil de configurar.
-        $priceId = match ($plan) {
-            'plus' => env('STRIPE_PRICE_PLUS'), // Definir no .env
-            'pro' => env('STRIPE_PRICE_BUSINESS'), // Definir no .env
-            default => null,
+        $planModel = SubscriptionPlan::where('slug', $plan)->where('is_active', true)->first();
+
+        if (! $planModel) {
+            $this->dispatch('toast', variant: 'error', text: 'Este plano já não está disponível.');
+
+            return;
+        }
+
+        $priceId = $planModel->resolvedStripePriceId() ?: match ($plan) {
+            'pro' => env('STRIPE_PRICE_PRO'),
+            'business' => env('STRIPE_PRICE_BUSINESS'),
+            default => env('STRIPE_PRICE_'.strtoupper(str_replace('-', '_', $plan))),
         };
 
         if (! $priceId) {
-            Log::error("Tentativa de upgrade falhou: Preço para o plano [{$plan}] não configurado no .env");
-            $this->dispatch('toast', variant: 'error', text: 'Este plano ainda não foi configurado pelo administrador.');
+            app(SubscriptionCheckoutService::class)->upgradePlan($user, $planModel->slug);
+            $this->showSuccessFor($planModel);
 
             return;
         }
 
         try {
-            // 3. Gerar a sessão de Checkout do Stripe
-            // Usamos o client_reference_id para o Webhook saber quem pagou.
-            $checkout = $user->newSubscription($plan, $priceId)
+            $checkout = $user->newSubscription($planModel->slug, $priceId)
                 ->checkout([
                     'success_url' => route('dashboard', ['checkout' => 'success']),
                     'cancel_url' => route('hub.pricing', ['checkout' => 'cancel']),
                     'client_reference_id' => $user->id,
                 ]);
 
-            // Redirecionamento seguro para o Stripe
             return redirect($checkout->url);
-
         } catch (\Exception $e) {
             Log::error('Erro no Stripe Checkout: '.$e->getMessage());
-            $this->dispatch('toast', variant: 'error', text: 'Erro ao conectar com o provedor de pagamentos.');
+            $this->dispatch('toast', variant: 'error', text: 'Não foi possível contactar o Stripe. Ativação local de demonstração.');
+            app(SubscriptionCheckoutService::class)->upgradePlan($user, $planModel->slug);
+            $this->showSuccessFor($planModel);
         }
     }
 
-    /**
-     * Prepara os dados para o modal de sucesso (após upgrade ou downgrade grátis)
-     */
-    private function showSuccessFor(string $plan): void
+    private function showSuccessFor(?SubscriptionPlan $plan): void
     {
         $this->newPlanData = [
-            'name' => match ($plan) {
-                'pro', 'company' => 'Business',
-                'plus' => 'Premium',
-                default => 'Gratuito',
-            },
-            'color' => match ($plan) {
-                'pro', 'company' => 'violet',
-                'plus' => 'emerald',
-                default => 'zinc',
-            },
-            'icon' => match ($plan) {
-                'pro', 'company' => '🏢',
-                'plus' => '⭐',
-                default => '🌱',
-            },
-            'raw' => $plan,
+            'name' => $plan?->name ?? 'Free',
+            'color' => ($plan && $plan->price >= 10) ? 'violet' : ($plan ? 'emerald' : 'zinc'),
+            'icon' => ($plan && $plan->hasFeature('business_mode')) ? '🏢' : ($plan ? '⭐' : '🌱'),
+            'raw' => $plan?->slug ?? 'free',
+            'business' => $plan?->hasFeature('business_mode') ?? false,
         ];
         $this->showSuccessModal = true;
     }
 
-    /**
-     * Finaliza o processo e redireciona o utilizador
-     */
     public function finish()
     {
-        if (in_array($this->newPlanData['raw'] ?? '', ['pro', 'company'])) {
+        if (! empty($this->newPlanData['business'])) {
             return redirect()->route('hub.business.gateway');
         }
 
@@ -109,8 +88,12 @@ class SubscriptionPlans extends Component
 
     public function render()
     {
+        $active = SubscriptionPlan::where('is_active', true)->orderBy('price')->get();
+
         return view('livewire.subscription-plans', [
             'currentPlan' => auth()->user()->plan ?? auth()->user()->currentWorkspace->plan ?? 'free',
+            'corePlans' => $active->filter(fn (SubscriptionPlan $plan) => $plan->isCore())->values(),
+            'extraPlans' => $active->reject(fn (SubscriptionPlan $plan) => $plan->isCore())->values(),
         ]);
     }
 }
