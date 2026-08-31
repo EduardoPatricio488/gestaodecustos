@@ -234,6 +234,33 @@ class Workspace extends Model
         return number_format($amount, 2, ',', ' ').' '.$symbol;
     }
 
+    protected static function booted()
+    {
+        static::created(function ($workspace) {
+            $defaults = [
+                ['name' => 'Alimentação',   'icon' => 'shopping-cart', 'color' => '#ef4444'],
+                ['name' => 'Carro',         'icon' => 'truck',         'color' => '#f59e0b'],
+                ['name' => 'Casa',          'icon' => 'home',          'color' => '#3b82f6'],
+                ['name' => 'Educação',      'icon' => 'academic-cap',  'color' => '#6366f1'],
+                ['name' => 'Empréstimos',   'icon' => 'banknotes',     'color' => '#10b981'],
+                ['name' => 'Entretenimento', 'icon' => 'film',          'color' => '#a855f7'],
+                ['name' => 'Saúde',         'icon' => 'heart',         'color' => '#f43f5e'],
+                ['name' => 'Seguros',       'icon' => 'shield-check',  'color' => '#0ea5e9'],
+                ['name' => 'Tecnologia',    'icon' => 'cpu-chip',      'color' => '#06b6d4'],
+                ['name' => 'Transporte',    'icon' => 'bolt',          'color' => '#64748b'],
+            ];
+
+            foreach ($defaults as $index => $data) {
+                $workspace->categories()->create($data + [
+                    'slug' => str($data['name'])->slug(),
+                    'is_fixed' => true,
+                    'order' => $index,
+                    'user_id' => $workspace->owner_id,
+                ]);
+            }
+        });
+    }
+
     public function getRunway(): string
     {
         $burnRate = $this->getBurnRate();

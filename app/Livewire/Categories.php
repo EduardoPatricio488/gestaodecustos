@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\Category;
+use App\Models\Expense;
+use App\Models\Subscription;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -187,8 +189,35 @@ class Categories extends Component
 
     public function delete(int $id): mixed
     {
-        Category::where('user_id', auth()->id())->where('id', $id)->where('is_fixed', false)->delete();
+        // 1. Procurar a categoria garantindo que pertence ao utilizador e não é fixa
+        $category = Category::where('user_id', auth()->id())
+            ->where('id', $id)
+            ->where('is_fixed', false)
+            ->first();
+
+        if (! $category) {
+            return null;
+        }
+
+        // 2. Verificar se existem Subscrições ou Gastos associados
+        $hasSubscriptions = Subscription::where('category_id', $id)->exists();
+        $hasExpenses = Expense::where('category_id', $id)->exists();
+
+        if ($hasSubscriptions || $hasExpenses) {
+            // Dispara um aviso para o utilizador (Toast)
+            $this->dispatch('toast',
+                text: 'Não podes apagar esta categoria porque existem gastos ou subscrições associadas a ela.',
+                variant: 'error'
+            );
+
+            return null;
+        }
+
+        // 3. Se estiver limpa, apaga
+        $category->delete();
         $this->clearSidebarCache();
+
+        $this->dispatch('toast', text: 'Categoria eliminada com sucesso.');
 
         return $this->redirect(route('categories'), navigate: true);
     }
@@ -214,14 +243,14 @@ class Categories extends Component
 
         foreach ($items as $item) {
             Category::where('id', $item['value'])
-                ->where('workspace_id', $wsId) // <--- Segurança de conta/workspace
+                ->where('workspace_id', $wsId)
                 ->update(['order' => $item['order']]);
         }
 
-        // Limpa a cache global para sincronizar Sidebar
+        // Limpa a cache para forçar a Sidebar a ler a nova ordem imediatamente
         Cache::flush();
 
-        // Redireciona com navigate: true para forçar a sidebar a redesenhar
+        // O navigate: true faz a página (e a sidebar) recarregar suavemente
         return $this->redirect(route('categories'), navigate: true);
     }
 

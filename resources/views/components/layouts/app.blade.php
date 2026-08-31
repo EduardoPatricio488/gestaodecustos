@@ -1322,67 +1322,87 @@ $hasStoreAccess = $hasLockInAccess;
                 </flux:sidebar.item>
 
                 {{-- Categorias --}}
-                <flux:sidebar.group heading="Categorias" class="grid mt-4">
-                    @if($isAnyPremium)
-                    <flux:sidebar.item
-                        :href="route('categories')"
-                        wire:navigate.hover
-                        class="group mt-1 rounded-xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-green-500/10 hover:from-emerald-500/20 hover:to-green-500/20 transition-all duration-300 shadow-sm hover:shadow-emerald-500/20"
-                    >
-                        <div class="flex items-center gap-2">
-                            <flux:icon name="adjustments-horizontal" class="size-4 text-emerald-500 transition-transform duration-300 group-hover:rotate-12" />
-                            <span class="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400">
-                                Gerir Categorias
-                            </span>
-                        </div>
-                    </flux:sidebar.item>
-                    @else
-                    <flux:sidebar.item
-                        :href="route('hub.pricing')"
-                        wire:navigate.hover
-                        class="group mt-1 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50 opacity-60"
-                    >
-                        <div class="flex items-center gap-2">
-                            <flux:icon name="adjustments-horizontal" class="size-4 text-zinc-400" />
-                            <span class="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 flex items-center gap-1">
-                                Gerir Categorias ⭐
-                                <flux:icon name="lock-closed" variant="micro" class="size-3 text-zinc-400" />
-                            </span>
-                        </div>
-                    </flux:sidebar.item>
-                    @endif
 
-                   @php
-    $catCounts = is_array($catCounts ?? null) ? $catCounts : [];
 
-    \App\Models\Category::backfillMissingSlugs($workspaceId ?: null);
 
-    $sidebarCategories = \App\Models\Category::where('workspace_id', $workspaceId)
-        ->whereNotNull('slug')
-        ->where('slug', '!=', '')
-        ->orderBy('order', 'asc')
-        ->orderBy('name', 'asc')
-        ->get(['id', 'name', 'slug', 'icon', 'color', 'is_fixed'])
-        ->unique('name');
-@endphp
 
-                    @foreach($sidebarCategories as $sidebarCat)
-                        @php
-                            $catSlug  = $sidebarCat->slug;
-                            $catIcon  = $sidebarCat->icon ?? 'tag';
-                            $lowerName = mb_strtolower($sidebarCat->name, 'UTF-8');
-                            $catCount = $catCounts[$lowerName] ?? ($catCounts[$catSlug] ?? 0);
-                            $catHref  = route('hub.category', $catSlug);
-                        @endphp
 
-                        <flux:sidebar.item :icon="$catIcon" :href="$catHref" wire:navigate.hover>
-                            {{ $sidebarCat->name }}
-                            @if($catCount > 0)
-                                <span class="ml-auto text-[10px] font-black text-zinc-400 italic">#{{ $catCount }}</span>
-                            @endif
-                        </flux:sidebar.item>
-                    @endforeach
-                </flux:sidebar.group>
+
+
+
+
+    {{-- ── SECÇÃO DE CATEGORIAS (DINÂMICA & SINCRONIZADA) ── --}}
+<flux:sidebar.group heading="Categorias" class="grid mt-4">
+
+    @if($isAnyPremium)
+        <flux:sidebar.item
+            :href="route('categories')"
+            wire:navigate.hover
+            class="group mb-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all shadow-sm"
+        >
+            <div class="flex items-center gap-2">
+                <flux:icon name="adjustments-horizontal" class="size-4 text-emerald-500 transition-transform group-hover:rotate-12" />
+                <span class="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400">
+                    Gerir Categorias
+                </span>
+            </div>
+        </flux:sidebar.item>
+    @endif
+
+    @php
+        // SINCRONIZAÇÃO TOTAL: Puxa todas as categorias do workspace atual
+        // Ordena pela coluna 'order' (definida pelo drag-and-drop)
+        $sidebarCategories = \App\Models\Category::where('workspace_id', $workspaceId)
+            ->whereNotNull('slug')
+            ->where('slug', '!=', '')
+            ->orderBy('order', 'asc')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        $catCounts = is_array($catCounts ?? null) ? $catCounts : [];
+    @endphp
+
+    @foreach($sidebarCategories as $sidebarCat)
+        @php
+            $lowerName = mb_strtolower(trim($sidebarCat->name), 'UTF-8');
+            $catCount = $catCounts[$lowerName] ?? 0;
+        @endphp
+
+        <flux:sidebar.item
+            :icon="$sidebarCat->icon ?? 'tag'"
+            :href="route('hub.category', $sidebarCat->slug)"
+            wire:navigate.hover
+            @class([
+                'font-bold text-zinc-900 dark:text-white' => $sidebarCat->is_fixed,
+                'opacity-90' => !$sidebarCat->is_fixed
+            ])
+        >
+            {{ $sidebarCat->name }}
+
+            @if($catCount > 0)
+                <span class="ml-auto text-[10px] font-black text-brand-600 bg-brand-500/10 px-1.5 py-0.5 rounded-md italic">
+                    #{{ $catCount }}
+                </span>
+            @endif
+        </flux:sidebar.item>
+    @endforeach
+</flux:sidebar.group>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 @if($user->is_admin)
                     <flux:separator class="my-4 mx-2" />
