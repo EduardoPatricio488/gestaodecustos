@@ -42,6 +42,12 @@ class SubscriptionPlans extends Component
         };
 
         if (! $priceId) {
+            if (app()->environment('production')) {
+                $this->dispatch('toast', variant: 'error', text: 'Este plano ainda não está disponível para pagamento.');
+
+                return;
+            }
+
             app(SubscriptionCheckoutService::class)->upgradePlan($user, $planModel->slug);
             $this->showSuccessFor($planModel);
 
@@ -63,6 +69,13 @@ class SubscriptionPlans extends Component
             return redirect($checkout->url);
         } catch (\Exception $e) {
             Log::error('Erro no Stripe Checkout: '.$e->getMessage());
+
+            if (app()->environment('production')) {
+                $this->dispatch('toast', variant: 'error', text: 'Não foi possível contactar o Stripe. Tenta novamente mais tarde.');
+
+                return;
+            }
+
             $this->dispatch('toast', variant: 'error', text: 'Não foi possível contactar o Stripe. Ativação local de demonstração.');
             app(SubscriptionCheckoutService::class)->upgradePlan($user, $planModel->slug);
             $this->showSuccessFor($planModel);
