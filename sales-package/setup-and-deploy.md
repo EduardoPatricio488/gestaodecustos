@@ -65,7 +65,7 @@ MAIL_FROM_NAME="Finance Pro"
 - PHP-FPM
 - MySQL ou PostgreSQL
 - Certificado SSL
-- Supervisor para queue worker
+- Cron para o Laravel Scheduler (a app não usa filas/jobs, não precisa de queue worker/Supervisor)
 
 ### Comandos básicos
 
@@ -75,7 +75,12 @@ php artisan route:cache
 php artisan view:cache
 php artisan migrate --force
 php artisan storage:link
-php artisan queue:work --daemon
+```
+
+Adicionar ao crontab do servidor (necessário para relatórios diários/mensais e notificações):
+
+```cron
+* * * * * cd /caminho/do/projeto && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 ## 5. Checklist de produção
@@ -84,15 +89,14 @@ php artisan queue:work --daemon
 - SSL ativo
 - secrets configurados
 - Stripe webhook configurado
-- fila de jobs ativa
 - logs e backups ativos
 - armazenamento público configurado
-- cron para jobs periódicos
+- cron do Scheduler ativo (`schedule:run` a cada minuto)
 - cache ativado
 
 ## 6. Observações de risco
 
-O sistema usa Stripe, AI APIs e filas. Antes de vender, é importante testar:
+O sistema usa Stripe e AI APIs (sem filas — tudo síncrono). Antes de vender, é importante testar:
 
 - login e cadastro
 - criação de workspace

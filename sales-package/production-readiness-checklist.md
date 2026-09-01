@@ -45,9 +45,9 @@
 
 ## Operations
 
-- [ ] fila configurada
-- [ ] queue worker ativo
-- [ ] jobs reproduzíveis e monitorizados
+- [ ] cron do Laravel Scheduler ativo (`* * * * * php artisan schedule:run`) — necessário para
+      relatórios diários/mensais e notificações (`routes/console.php`); a app não usa filas/jobs
+      (`ShouldQueue`), por isso `queue:work`/supervisor não é necessário
 - [ ] logs de produção configurados
 - [ ] monitorização e alertas
 
