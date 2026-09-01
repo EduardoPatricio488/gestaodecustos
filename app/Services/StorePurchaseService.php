@@ -14,6 +14,7 @@ use App\Models\StoreReview;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class StorePurchaseService
@@ -209,7 +210,7 @@ class StorePurchaseService
                 Mail::to($user->email)->send(new StorePurchaseReceiptMail($user, $purchases, $stripeSessionId));
             } catch (\Exception $e) {
                 // Falha de envio de email não pode reverter/derrubar a compra já confirmada
-                \Illuminate\Support\Facades\Log::error("Falha ao enviar recibo da loja para utilizador {$user->id}: ".$e->getMessage());
+                Log::error("Falha ao enviar recibo da loja para utilizador {$user->id}: ".$e->getMessage());
             }
         }
     }
