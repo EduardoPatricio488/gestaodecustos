@@ -4,40 +4,41 @@
 
 Permitir que um comprador veja o produto em funcionamento sem precisar configurar o sistema do zero.
 
-## Credenciais sugeridas
+## Credenciais reais (geradas por `php artisan db:seed --class=DemoSeeder`)
 
-Usar uma conta de demonstração isolada, com dados fictícios.
+### Admin da Plataforma (acesso a /admin)
 
-### Admin Demo
+- Email: admin@financepro.com
+- Password: password
+- Role: admin (acesso total ao painel de administração)
 
-- Email: demo@financepro.app
-- Password: Demo123!
-- Role: admin
+### CEO / Dono de Negócio (workspace pessoal + empresarial)
 
-### Cliente Demo
+- Email: eduardo@financepro.com
+- Password: password
+- Plano: business
 
-- Email: cliente@financepro.app
-- Password: Demo123!
-- Role: user
+### Membro de Equipa (para testar convites/permissões)
+
+- Email: joao@financepro.com
+- Password: password
 
 ## Dados de exemplo para apresentar
 
-- 2 workspaces: pessoal e empresa
-- 10 categorias principais
-- 20 despesas de exemplo
-- 5 receitas
-- 4 subscriptions ativas
-- 1 dashboard com orçamento e tendência mensal
-- 2 usuários no workspace empresarial
+- Workspace pessoal ("Cofre do Eduardo") e workspace empresarial ("Tech Solutions SaaS")
+- 3 categorias (Alimentação, Servidores, Marketing)
+- 3 meses de receitas e despesas do workspace empresarial
+- 1 cliente, 1 projeto, 1 tarefa e 1 documento de negócio
+- 1 conta bancária empresarial com saldo de exemplo
+- João como membro convidado do workspace empresarial
 
 ## Como preparar a demo
 
-1. Criar usuário demo
-2. Associar workspace pessoal e workspace empresarial
-3. Gerar categorias padrão
-4. Inserir dados de exemplo
-5. Verificar que dashboard e relatórios carregam corretamente
-6. Confirmar que Stripe e planos aparecem corretamente
+1. `php artisan migrate:fresh` (ambiente de demo/staging, nunca em produção com dados reais)
+2. `php artisan db:seed --class=DemoSeeder`
+3. Confirmar no terminal as credenciais impressas pelo seeder
+4. Fazer login com `eduardo@financepro.com` e verificar dashboard, categorias e workspace empresarial
+5. Confirmar que Stripe (planos/checkout) aparece corretamente com as chaves de teste
 
 ## Dica comercial
 

@@ -106,46 +106,46 @@ class DemoSeeder extends Seeder
         for ($m = 0; $m < 3; $m++) {
             $date = Carbon::now()->subMonths($m);
 
-            Income::create([
-                'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
-                'description' => 'Venda de Licença SaaS - '.$date->format('F'),
-                'amount' => rand(4000, 7000), 'received_at' => $date, 'type' => 'business',
-            ]);
+            Income::updateOrCreate(
+                ['workspace_id' => $businessWs->id, 'description' => 'Venda de Licença SaaS - '.$date->format('F')],
+                ['user_id' => $eduardo->id, 'amount' => rand(4000, 7000), 'received_at' => $date, 'type' => 'business']
+            );
 
-            Expense::create([
-                'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
-                'description' => 'Cloud Hosting AWS', 'amount' => rand(300, 600), 'spent_at' => $date,
-                'category_id' => Category::where('name', 'Servidores')->first()->id ?? null,
-                'is_company' => true, 'status' => 'aprovado',
-            ]);
+            Expense::updateOrCreate(
+                ['workspace_id' => $businessWs->id, 'description' => 'Cloud Hosting AWS - '.$date->format('F')],
+                [
+                    'user_id' => $eduardo->id, 'amount' => rand(300, 600), 'spent_at' => $date,
+                    'category_id' => Category::where('name', 'Servidores')->first()->id ?? null,
+                    'is_company' => true, 'status' => 'aprovado',
+                ]
+            );
         }
 
         // 7. OPERAÇÕES EMPRESARIAIS
-        $client = Client::create([
-            'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
-            'name' => 'Google Portugal', 'email' => 'ads-contact@google.pt',
-        ]);
+        $client = Client::updateOrCreate(
+            ['email' => 'ads-contact@google.pt'],
+            ['workspace_id' => $businessWs->id, 'user_id' => $eduardo->id, 'name' => 'Google Portugal']
+        );
 
-        $project = Project::create([
-            'workspace_id' => $businessWs->id, 'client_id' => $client->id,
-            'name' => 'Expansão Cloud 2024', 'budget' => 15000, 'status' => 'em_curso',
-        ]);
+        $project = Project::updateOrCreate(
+            ['workspace_id' => $businessWs->id, 'client_id' => $client->id, 'name' => 'Expansão Cloud 2024'],
+            ['budget' => 15000, 'status' => 'em_curso']
+        );
 
-        Task::create([
-            'workspace_id' => $businessWs->id, 'project_id' => $project->id, 'user_id' => $eduardo->id,
-            'title' => 'Ligar Webhooks Stripe', 'status' => 'pendente',
-        ]);
+        Task::updateOrCreate(
+            ['workspace_id' => $businessWs->id, 'project_id' => $project->id, 'title' => 'Ligar Webhooks Stripe'],
+            ['user_id' => $eduardo->id, 'status' => 'pendente']
+        );
 
-        BusinessDocument::create([
-            'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
-            'title' => 'Contrato de Termos de Uso', 'type' => 'legal', 'file_path' => 'documents/demo.pdf',
-        ]);
+        BusinessDocument::updateOrCreate(
+            ['workspace_id' => $businessWs->id, 'title' => 'Contrato de Termos de Uso'],
+            ['user_id' => $eduardo->id, 'type' => 'legal', 'file_path' => 'documents/demo.pdf']
+        );
 
-        BankAccount::create([
-            'workspace_id' => $businessWs->id, 'user_id' => $eduardo->id,
-            'bank_name' => 'Banco Empresa', 'name' => 'Conta Corrente Principal',
-            'balance' => 15750.00, 'is_business' => true,
-        ]);
+        BankAccount::updateOrCreate(
+            ['workspace_id' => $businessWs->id, 'name' => 'Conta Corrente Principal'],
+            ['user_id' => $eduardo->id, 'bank_name' => 'Banco Empresa', 'balance' => 15750.00, 'is_business' => true]
+        );
 
         $this->command->info('--------------------------------------------');
         $this->command->info('✅ FINANCE PRO: BASE DE DADOS PRONTA!');
