@@ -266,6 +266,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- SOCIAL (FINANCE CONNECT) ---
     Route::get('/social', SocialHub::class)->name('social.hub');
     Route::get('/social/u/{username}', SocialProfile::class)->name('social.profile');
+
+    // --- FUNCIONALIDADES DE ANÁLISE FINANCEIRA DA VERSÃO FREE ---
+    Route::get('/reforma', RetirementSimulator::class)->name('hub.retirement');
+    Route::get('/inflacao', InflationHub::class)->name('hub.inflation');
+    Route::get('/anomalias', AnomalyHub::class)->name('hub.anomalies');
+    Route::get('/previsao-despesas', ExpenseForecastHub::class)->name('hub.expense-forecast');
+    Route::get('/assinaturas', SubscriptionHub::class)->name('hub.subscriptions');
+    Route::get('/assinaturas/scanner', SubscriptionScannerHub::class)->name('hub.subscriptions.scanner');
+    Route::get('/dividir', SplitHub::class)->name('hub.split');
+    Route::get('/investimentos', InvestmentsHub::class)->name('hub.investments');
+    Route::get('/patrimonio', NetWorthHub::class)->name('hub.networth');
 });
 
 // ══════════════════════════════════════════════════════════════════
@@ -283,18 +294,9 @@ Route::middleware(['auth', 'verified', 'plan:premium'])->group(function () {
     Route::get('/inventario', UserInventory::class)->name('hub.inventory');
 
     // --- SIMULADORES E ANÁLISES ---
-    Route::get('/reforma', RetirementSimulator::class)->name('hub.retirement');
-    Route::get('/inflacao', InflationHub::class)->name('hub.inflation');
-    Route::get('/anomalias', AnomalyHub::class)->name('hub.anomalies');
-    Route::get('/previsao-despesas', ExpenseForecastHub::class)->name('hub.expense-forecast');
     Route::get('/familia/simulacao', FamilyScenarioHub::class)->name('hub.family.scenario');
 
     // --- GESTÃO PRO ---
-    Route::get('/assinaturas', SubscriptionHub::class)->name('hub.subscriptions');
-    Route::get('/assinaturas/scanner', SubscriptionScannerHub::class)->name('hub.subscriptions.scanner');
-    Route::get('/dividir', SplitHub::class)->name('hub.split');
-    Route::get('/investimentos', InvestmentsHub::class)->name('hub.investments');
-    Route::get('/patrimonio', NetWorthHub::class)->name('hub.networth');
     Route::get('/relatorios', YearlyReport::class)->name('hub.reports');
 
     // Integrações Fitness API

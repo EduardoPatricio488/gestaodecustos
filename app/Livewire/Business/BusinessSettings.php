@@ -38,6 +38,10 @@ class BusinessSettings extends Component
     {
         $this->workspace = auth()->user()->currentWorkspace;
 
+        if (! $this->workspace) {
+            return redirect()->route('hub.business.gateway');
+        }
+
         // Preencher campos
         $this->name = $this->workspace->name;
         $this->legal_name = $this->workspace->legal_name;
@@ -79,7 +83,10 @@ class BusinessSettings extends Component
 
             // Apagar logo antigo
             if ($this->workspace->logo_path) {
-                Storage::disk('public')->delete($this->workspace->logo_path);
+                $oldLogo = preg_replace('#^/?storage/#', '', $this->workspace->logo_path);
+                if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
+                    Storage::disk('public')->delete($oldLogo);
+                }
             }
 
             // Guardar novo logo
@@ -101,9 +108,7 @@ class BusinessSettings extends Component
      */
     public function getLogoUrlAttribute()
     {
-        return $this->workspace->logo_path
-            ? asset('storage/'.$this->workspace->logo_path)
-            : asset('images/default-logo.png');
+        return $this->workspace->logo_url ?: asset('images/default-logo.png');
     }
 
     /**

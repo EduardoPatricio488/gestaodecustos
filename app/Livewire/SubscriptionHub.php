@@ -210,11 +210,11 @@ class SubscriptionHub extends Component
         ];
 
         // 2. Garantir que estas categorias existem no banco de dados para este Workspace
-        // Nota: Usamos is_fixed = 1 ou um marcador para não as misturarmos totalmente na sidebar se preferires
+        // Escondidas da sidebar: servem só para classificar assinaturas, não para navegação
         foreach ($subCatNames as $name) {
             Category::firstOrCreate(
                 ['name' => $name, 'workspace_id' => $wsId],
-                ['user_id' => $user->id, 'icon' => 'credit-card', 'color' => '#6366f1']
+                ['user_id' => $user->id, 'icon' => 'credit-card', 'color' => '#6366f1', 'hidden_from_sidebar' => true]
             );
         }
 

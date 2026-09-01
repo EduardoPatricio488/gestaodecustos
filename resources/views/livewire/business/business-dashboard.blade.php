@@ -74,7 +74,7 @@
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
             <div class="flex items-center gap-6 text-left">
                 <div class="relative group">
- <img src="{{ asset($workspace->logo_path) }}?t={{ time() }}" class="size-24 rounded-[2.5rem] shadow-2xl border-4 border-white dark:border-zinc-800 object-cover bg-white">                    <div class="absolute -bottom-1 -right-1 size-7 bg-emerald-500 border-4 border-zinc-50 dark:border-zinc-950 rounded-full shadow-lg"></div>
+ <img src="{{ $workspace->logo_url }}?t={{ time() }}" class="size-24 rounded-[2.5rem] shadow-2xl border-4 border-white dark:border-zinc-800 object-cover bg-white">                    <div class="absolute -bottom-1 -right-1 size-7 bg-emerald-500 border-4 border-zinc-50 dark:border-zinc-950 rounded-full shadow-lg"></div>
                 </div>
 
                 <div>

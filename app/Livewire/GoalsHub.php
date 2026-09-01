@@ -280,7 +280,9 @@ class GoalsHub extends Component
             if ($perc >= 100) {
                 $predictedCompletionDate = now();
             } elseif ($gap > 0 && $monthlyPace > 0) {
-                $predictedCompletionDate = now()->copy()->addMonths((int) ceil($gap / $monthlyPace));
+                $monthsNeeded = (int) ceil($gap / $monthlyPace);
+                // Evita travar o Carbon com valores absurdos quando o ritmo mensal é ínfimo face ao gap
+                $predictedCompletionDate = $monthsNeeded < 1200 ? now()->copy()->addMonths($monthsNeeded) : null;
             }
 
             $goal->perc = $perc;

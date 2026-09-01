@@ -177,6 +177,10 @@
                     'tasks'      => \App\Models\Task::where('workspace_id', $workspaceId)->where('status', '!=', 'concluido')->count(),
                     'absences'   => \App\Models\Absence::where('workspace_id', $workspaceId)->where('status', 'pendente')->count(),
                     'support'    => \App\Models\SupportTicket::where('status', 'open')->where('workspace_id', $workspaceId)->count(),
+                    'expense_approvals' => \App\Models\ExpenseApproval::where('workspace_id', $workspaceId)->where('status', 'pendente')->count(),
+                    'at_invoices' => \App\Models\AtInvoice::where('workspace_id', $workspaceId)->count(),
+                    'vault'      => \App\Models\BusinessDocument::where('workspace_id', $workspaceId)->count(),
+                    'messenger'  => \App\Models\BusinessMessage::where('workspace_id', $workspaceId)->count(),
                 ];
             }
 
@@ -191,6 +195,10 @@
                 'members'       => $currentWs?->users()->count() ?? 0,
                 'ranking'       => $currentWs?->users()->count() ?? 0,
                 'support'       => \App\Models\SupportTicket::where('status', 'open')->count(),
+                'splits'        => \App\Models\ExpenseSplit::where('workspace_id', $workspaceId)->count(),
+                'bank_accounts' => \App\Models\BankAccount::where('workspace_id', $workspaceId)->count(),
+                'fitness'       => \App\Models\FitnessActivity::where('workspace_id', $workspaceId)->count(),
+                'imports'       => \App\Models\BankStatementImport::where('workspace_id', $workspaceId)->count(),
             ];
         }
     );
@@ -421,7 +429,7 @@
             <div class="p-6 bg-zinc-100 rounded-[2.5rem] border border-zinc-200 flex items-center gap-5">
                 <div class="size-16 bg-white rounded-2xl border-4 border-white shadow-xl overflow-hidden shrink-0 flex items-center justify-center text-zinc-400">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($currentWs && $currentWs->logo_path): ?>
-                        <img src="<?php echo e(asset($currentWs->logo_path)); ?>" class="size-full object-cover">
+                        <img src="<?php echo e($currentWs->logo_url); ?>" class="size-full object-cover">
                     <?php else: ?>
                         <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
@@ -916,7 +924,7 @@ unset($__split);
         
         <div class="shrink-0 size-9 rounded-xl overflow-hidden bg-emerald-600 flex items-center justify-center text-white shadow-lg">
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($currentWs && $currentWs->logo_path): ?>
-                <img src="<?php echo e(asset($currentWs->logo_path)); ?>?t=<?php echo e(time()); ?>" class="size-full object-cover">
+                <img src="<?php echo e($currentWs->logo_url); ?>?t=<?php echo e(time()); ?>" class="size-full object-cover">
             <?php else: ?>
                 <span class="text-lg font-black italic">
                     <?php echo e(substr($currentWs->name ?? 'F', 0, 1)); ?>
@@ -1871,7 +1879,8 @@ unset($__split);
 <?php $component->withAttributes(['icon' => 'clipboard-document-check','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.business.expense-approvals')),'wire:navigate.hover' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                Aprovações
+                Aprovações <?php echo $badge($counts['expense_approvals']); ?>
+
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -1894,7 +1903,8 @@ unset($__split);
 <?php $component->withAttributes(['icon' => 'document-text','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.business.at-invoices')),'wire:navigate.hover' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                e-Fatura AT
+                e-Fatura AT <?php echo $badge($counts['at_invoices']); ?>
+
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -2036,7 +2046,8 @@ unset($__split);
 <?php $component->withAttributes(['icon' => 'chat-bubble-left-right','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.business.messenger')),'wire:navigate.hover' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                Messenger Equipa
+                Messenger Equipa <?php echo $badge($counts['messenger']); ?>
+
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -2059,7 +2070,8 @@ unset($__split);
 <?php $component->withAttributes(['icon' => 'folder-open','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.business.vault')),'wire:navigate.hover' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                Arquivo Digital
+                Arquivo Digital <?php echo $badge($counts['vault']); ?>
+
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -2367,7 +2379,8 @@ unset($__split);
 <?php $component->withAttributes(['icon' => 'briefcase','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.business.projects')),'wire:navigate.hover' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                Os Meus Projetos
+                Os Meus Projetos <?php echo $badge($counts['projects']); ?>
+
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -2391,7 +2404,8 @@ unset($__split);
 <?php $component->withAttributes(['icon' => 'banknotes','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.business.my-expenses')),'wire:navigate.hover' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-        Notas de Gastos
+        Notas de Gastos <?php echo $badge($counts['expense_approvals']); ?>
+
      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -2460,7 +2474,8 @@ unset($__split);
 <?php $component->withAttributes(['icon' => 'chat-bubble-left-right','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.business.messenger')),'wire:navigate.hover' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                Messenger Equipa
+                Messenger Equipa <?php echo $badge($counts['messenger']); ?>
+
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -2530,7 +2545,8 @@ unset($__split);
 <?php $component->withAttributes(['icon' => 'clock','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.business.absences')),'wire:navigate.hover' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                As minhas férias / Faltas
+                As minhas férias / Faltas <?php echo $badge($counts['absences']); ?>
+
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -3189,7 +3205,8 @@ $hasStoreAccess = $hasLockInAccess;
 <?php $component->withAttributes(['icon' => 'arrow-up-tray','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.import')),'current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('hub.import')),'wire:navigate.hover' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                        Importar Extrato
+                        Importar Extrato <?php echo $badge($counts['imports']); ?>
+
                      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -3260,7 +3277,8 @@ $hasStoreAccess = $hasLockInAccess;
 <?php $component->withAttributes(['icon' => 'users','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.split')),'wire:navigate.hover' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                        Dividir Despesas
+                        Dividir Despesas <?php echo $badge($counts['splits']); ?>
+
                      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -3469,7 +3487,8 @@ $hasStoreAccess = $hasLockInAccess;
 <?php $component->withAttributes(['icon' => 'building-library','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.banco')),'current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('hub.banco')),'wire:navigate.hover' => true,'class' => 'font-black text-emerald-700 dark:text-emerald-400']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                        Banco
+                        Banco <?php echo $badge($counts['bank_accounts']); ?>
+
                         <span class="ml-auto text-[8px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded uppercase">Novo</span>
                      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -3755,7 +3774,8 @@ $hasStoreAccess = $hasLockInAccess;
 <?php $component->withAttributes(['icon' => 'bolt','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.fitness')),'current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('hub.fitness')),'wire:navigate.hover' => true,'class' => 'text-orange-500 dark:text-orange-400 font-black']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                    Zona de Treino
+                    Zona de Treino <?php echo $badge($counts['fitness']); ?>
+
                     <span class="ml-auto text-[8px] font-black bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400 px-1.5 py-0.5 rounded uppercase">Novo</span>
                  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -3875,6 +3895,81 @@ $hasStoreAccess = $hasLockInAccess;
 <?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
 <?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
 <?php endif; ?>
+    <?php else: ?>
+        <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['href' => route('hub.pricing'),'wire:navigate' => true,'class' => 'group mb-2 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-zinc-900/50 opacity-70 hover:opacity-100 hover:border-amber-500/50 transition-all shadow-sm','title' => 'Disponível nos planos Pro e Business']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::sidebar.item'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('hub.pricing')),'wire:navigate' => true,'class' => 'group mb-2 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-zinc-900/50 opacity-70 hover:opacity-100 hover:border-amber-500/50 transition-all shadow-sm','title' => 'Disponível nos planos Pro e Business']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+            <div class="flex items-center gap-2 w-full">
+                <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'adjustments-horizontal','class' => 'size-4 text-zinc-400 grayscale']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'adjustments-horizontal','class' => 'size-4 text-zinc-400 grayscale']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+                <span class="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500">
+                    Gerir Categorias
+                </span>
+                <span class="ml-auto flex items-center gap-1">
+                    <span class="text-[7px] font-black px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-200/50 uppercase tracking-tighter">Pro</span>
+                    <?php if (isset($component)) { $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::icon.index','data' => ['name' => 'lock-closed','variant' => 'micro','class' => 'size-3 text-amber-600/80']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'lock-closed','variant' => 'micro','class' => 'size-3 text-amber-600/80']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $attributes = $__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__attributesOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2)): ?>
+<?php $component = $__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2; ?>
+<?php unset($__componentOriginalc7d5f44bf2a2d803ed0b55f72f1f82e2); ?>
+<?php endif; ?>
+                </span>
+            </div>
+         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
     <?php
@@ -3883,6 +3978,7 @@ $hasStoreAccess = $hasLockInAccess;
         $sidebarCategories = \App\Models\Category::where('workspace_id', $workspaceId)
             ->whereNotNull('slug')
             ->where('slug', '!=', '')
+            ->where('hidden_from_sidebar', false)
             ->orderBy('order', 'asc')
             ->orderBy('name', 'asc')
             ->get();
@@ -4507,11 +4603,11 @@ unset($__split);
                     <div x-show="open" x-cloak @click.outside="open = false" x-transition
                         class="absolute right-0 mt-2 w-60 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden">
                         <div class="py-1">
-                            <a href="<?php echo e(route('profile.edit')); ?>" wire:navigate.hover class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
+                            <a href="<?php echo e(route('profile.edit')); ?>" wire:navigate class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
                                 👤 O meu perfil
                             </a>
 
-                            <a href="<?php echo e(route('hub.ranking')); ?>" wire:navigate.hover class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
+                            <a href="<?php echo e(route('hub.ranking')); ?>" wire:navigate class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
                                 🏆 Ranking
                             </a>
 
@@ -4535,7 +4631,7 @@ unset($__split);
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!$isAnyPremium && !auth()->user()->isAdmin()): ?>
-                                <a href="<?php echo e(route('hub.pricing')); ?>" wire:navigate class="flex items-center gap-2 px-4 py-2 text-sm text-brand-600 font-black hover:bg-brand-50 dark:hover:bg-brand-500/10">
+                                <a href="<?php echo e(route('hub.pricing')); ?>" class="flex items-center gap-2 px-4 py-2 text-sm text-brand-600 font-black hover:bg-brand-50 dark:hover:bg-brand-500/10">
                                     <span class="animate-pulse">⭐</span> OBTER PRO
                                 </a>
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -4695,36 +4791,6 @@ unset($__split);
 <?php $component = $__componentOriginal9e52f305f7cdd22fd6be350cf248d973; ?>
 <?php unset($__componentOriginal9e52f305f7cdd22fd6be350cf248d973); ?>
 <?php endif; ?>
-    </div>
-
-    
-    <?php app("livewire")->forceAssetInjection(); ?><div x-persist="<?php echo e('finance-bot'); ?>">
-        <?php
-$__split = function ($name, $params = []) {
-    return [$name, $params];
-};
-[$__name, $__params] = $__split('finance-bot', []);
-
-$__keyOuter = $__key ?? null;
-
-$__key = null;
-$__componentSlots = [];
-
-$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3395991273-8', $__key);
-
-$__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
-
-echo $__html;
-
-unset($__html);
-unset($__key);
-$__key = $__keyOuter;
-unset($__keyOuter);
-unset($__name);
-unset($__params);
-unset($__componentSlots);
-unset($__split);
-?>
     </div>
 
     

@@ -1,0 +1,1 @@
+    <div class="p-20 text-center italic text-zinc-500 font-medium">Nenhum workspace empresarial detetado.</div>

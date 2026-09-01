@@ -99,7 +99,7 @@
                     @endif
                 </div>
 
-                <div class="pb-1">
+                <div class="pb-1 mt-16 md:mt-20 self-end">
                     <h2 class="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight leading-tight">{{ $this->profileUser->name }}</h2>
                     <div class="flex items-center gap-2 mt-1 flex-wrap">
                         <span class="text-[10px] font-bold text-emerald-600">&#64;{{ $this->profileUser->username }}</span>

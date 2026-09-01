@@ -80,7 +80,7 @@ class BusinessOnboarding extends Component
         // 3. Processar a Foto se existir
         if ($this->photo) {
             $path = $this->photo->store('workspaces/logos', 'public');
-            $workspace->update(['logo_path' => 'storage/'.$path]);
+            $workspace->update(['logo_path' => $path]);
         }
 
         // 4. Associar o utilizador como Admin e atualizar contexto

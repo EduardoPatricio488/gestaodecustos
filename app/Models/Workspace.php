@@ -69,9 +69,13 @@ class Workspace extends Model
 
     public function getLogoUrlAttribute(): string
     {
-        return $this->logo_path
-            ? Storage::url($this->logo_path)
-            : 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=10b981&background=ecfdf5&bold=true';
+        if (! $this->logo_path) {
+            return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=10b981&background=ecfdf5&bold=true';
+        }
+
+        $storedPath = preg_replace('#^/?storage/#', '', $this->logo_path);
+
+        return Storage::url($storedPath);
     }
 
     /**

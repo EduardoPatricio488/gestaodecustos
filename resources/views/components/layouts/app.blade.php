@@ -181,6 +181,10 @@
                     'tasks'      => \App\Models\Task::where('workspace_id', $workspaceId)->where('status', '!=', 'concluido')->count(),
                     'absences'   => \App\Models\Absence::where('workspace_id', $workspaceId)->where('status', 'pendente')->count(),
                     'support'    => \App\Models\SupportTicket::where('status', 'open')->where('workspace_id', $workspaceId)->count(),
+                    'expense_approvals' => \App\Models\ExpenseApproval::where('workspace_id', $workspaceId)->where('status', 'pendente')->count(),
+                    'at_invoices' => \App\Models\AtInvoice::where('workspace_id', $workspaceId)->count(),
+                    'vault'      => \App\Models\BusinessDocument::where('workspace_id', $workspaceId)->count(),
+                    'messenger'  => \App\Models\BusinessMessage::where('workspace_id', $workspaceId)->count(),
                 ];
             }
 
@@ -195,6 +199,10 @@
                 'members'       => $currentWs?->users()->count() ?? 0,
                 'ranking'       => $currentWs?->users()->count() ?? 0,
                 'support'       => \App\Models\SupportTicket::where('status', 'open')->count(),
+                'splits'        => \App\Models\ExpenseSplit::where('workspace_id', $workspaceId)->count(),
+                'bank_accounts' => \App\Models\BankAccount::where('workspace_id', $workspaceId)->count(),
+                'fitness'       => \App\Models\FitnessActivity::where('workspace_id', $workspaceId)->count(),
+                'imports'       => \App\Models\BankStatementImport::where('workspace_id', $workspaceId)->count(),
             ];
         }
     );
@@ -383,7 +391,7 @@
             <div class="p-6 bg-zinc-100 rounded-[2.5rem] border border-zinc-200 flex items-center gap-5">
                 <div class="size-16 bg-white rounded-2xl border-4 border-white shadow-xl overflow-hidden shrink-0 flex items-center justify-center text-zinc-400">
                     @if($currentWs && $currentWs->logo_path)
-                        <img src="{{ asset($currentWs->logo_path) }}" class="size-full object-cover">
+                        <img src="{{ $currentWs->logo_url }}" class="size-full object-cover">
                     @else
                         <flux:icon name="building-office" class="size-7" />
                     @endif
@@ -610,7 +618,7 @@
         {{-- Foto ou Inicial --}}
         <div class="shrink-0 size-9 rounded-xl overflow-hidden bg-emerald-600 flex items-center justify-center text-white shadow-lg">
             @if($currentWs && $currentWs->logo_path)
-                <img src="{{ asset($currentWs->logo_path) }}?t={{ time() }}" class="size-full object-cover">
+                <img src="{{ $currentWs->logo_url }}?t={{ time() }}" class="size-full object-cover">
             @else
                 <span class="text-lg font-black italic">
                     {{ substr($currentWs->name ?? 'F', 0, 1) }}
@@ -841,10 +849,10 @@
     Análise de Custos
 </flux:sidebar.item>
             <flux:sidebar.item icon="clipboard-document-check" :href="route('hub.business.expense-approvals')" wire:navigate.hover>
-                Aprovações
+                Aprovações {!! $badge($counts['expense_approvals']) !!}
             </flux:sidebar.item>
             <flux:sidebar.item icon="document-text" :href="route('hub.business.at-invoices')" wire:navigate.hover>
-                e-Fatura AT
+                e-Fatura AT {!! $badge($counts['at_invoices']) !!}
             </flux:sidebar.item>
             <flux:sidebar.item icon="archive-box" :href="route('hub.business.inventory')" wire:navigate.hover>
                 Stock / Inventário {!! $badge($counts['inventory']) !!}
@@ -862,10 +870,10 @@
                 Timeline Operações
             </flux:sidebar.item>
             <flux:sidebar.item icon="chat-bubble-left-right" :href="route('hub.business.messenger')" wire:navigate.hover>
-                Messenger Equipa
+                Messenger Equipa {!! $badge($counts['messenger']) !!}
             </flux:sidebar.item>
             <flux:sidebar.item icon="folder-open" :href="route('hub.business.vault')" wire:navigate.hover>
-                Arquivo Digital
+                Arquivo Digital {!! $badge($counts['vault']) !!}
             </flux:sidebar.item>
             <flux:sidebar.item icon="sparkles" :href="route('hub.business.ai')" wire:navigate.hover class="text-brand-600 dark:text-brand-400 font-bold">
                 IA Estrategista
@@ -915,11 +923,11 @@
                 As Minhas Tarefas {!! $badge($counts['tasks']) !!}
             </flux:sidebar.item>
             <flux:sidebar.item icon="briefcase" :href="route('hub.business.projects')" wire:navigate.hover>
-                Os Meus Projetos
+                Os Meus Projetos {!! $badge($counts['projects']) !!}
             </flux:sidebar.item>
               {{-- NOVO ITEM: GASTOS OPERACIONAIS --}}
     <flux:sidebar.item icon="banknotes" :href="route('hub.business.my-expenses')" wire:navigate.hover>
-        Notas de Gastos
+        Notas de Gastos {!! $badge($counts['expense_approvals']) !!}
     </flux:sidebar.item>
             <flux:sidebar.item icon="calendar-days" :href="route('hub.business.calendar')" wire:navigate.hover>
                 Calendário
@@ -928,7 +936,7 @@
 
         <flux:sidebar.group heading="Comunicação" class="mt-4">
             <flux:sidebar.item icon="chat-bubble-left-right" :href="route('hub.business.messenger')" wire:navigate.hover>
-                Messenger Equipa
+                Messenger Equipa {!! $badge($counts['messenger']) !!}
             </flux:sidebar.item>
         </flux:sidebar.group>
 
@@ -938,7 +946,7 @@
             </flux:sidebar.item>
 
             <flux:sidebar.item icon="clock" :href="route('hub.business.absences')" wire:navigate.hover>
-                As minhas férias / Faltas
+                As minhas férias / Faltas {!! $badge($counts['absences']) !!}
             </flux:sidebar.item>
             <flux:sidebar.item icon="chat-bubble-left-right" :href="route('hub.business.support')" wire:navigate.hover>
                 Suporte Interno
@@ -1189,7 +1197,7 @@ $hasStoreAccess = $hasLockInAccess;
     </flux:sidebar.item>
 @endif
                     <flux:sidebar.item icon="arrow-up-tray" :href="route('hub.import')" :current="request()->routeIs('hub.import')" wire:navigate.hover>
-                        Importar Extrato
+                        Importar Extrato {!! $badge($counts['imports']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="arrow-trending-up" :href="route('hub.incomes')" wire:navigate.hover>
                         Receitas {!! $badge($counts['incomes']) !!}
@@ -1198,7 +1206,7 @@ $hasStoreAccess = $hasLockInAccess;
                         Dívidas {!! $badge($counts['debts']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="users" :href="route('hub.split')" wire:navigate.hover>
-                        Dividir Despesas
+                        Dividir Despesas {!! $badge($counts['splits']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="exclamation-triangle" :href="route('hub.anomalies')" wire:navigate.hover>
                         Anomalias IA
@@ -1231,7 +1239,7 @@ $hasStoreAccess = $hasLockInAccess;
                         wire:navigate.hover
                         class="font-black text-emerald-700 dark:text-emerald-400"
                     >
-                        Banco
+                        Banco {!! $badge($counts['bank_accounts']) !!}
                         <span class="ml-auto text-[8px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded uppercase">Novo</span>
                     </flux:sidebar.item>
                 </flux:sidebar.group>
@@ -1305,7 +1313,7 @@ $hasStoreAccess = $hasLockInAccess;
                     wire:navigate.hover
                     class="text-orange-500 dark:text-orange-400 font-black"
                 >
-                    Zona de Treino
+                    Zona de Treino {!! $badge($counts['fitness']) !!}
                     <span class="ml-auto text-[8px] font-black bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400 px-1.5 py-0.5 rounded uppercase">Novo</span>
                 </flux:sidebar.item>
 
@@ -1347,6 +1355,24 @@ $hasStoreAccess = $hasLockInAccess;
                 </span>
             </div>
         </flux:sidebar.item>
+    @else
+        <flux:sidebar.item
+            :href="route('hub.pricing')"
+            wire:navigate
+            class="group mb-2 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-zinc-900/50 opacity-70 hover:opacity-100 hover:border-amber-500/50 transition-all shadow-sm"
+            title="Disponível nos planos Pro e Business"
+        >
+            <div class="flex items-center gap-2 w-full">
+                <flux:icon name="adjustments-horizontal" class="size-4 text-zinc-400 grayscale" />
+                <span class="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500">
+                    Gerir Categorias
+                </span>
+                <span class="ml-auto flex items-center gap-1">
+                    <span class="text-[7px] font-black px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-200/50 uppercase tracking-tighter">Pro</span>
+                    <flux:icon name="lock-closed" variant="micro" class="size-3 text-amber-600/80" />
+                </span>
+            </div>
+        </flux:sidebar.item>
     @endif
 
     @php
@@ -1355,6 +1381,7 @@ $hasStoreAccess = $hasLockInAccess;
         $sidebarCategories = \App\Models\Category::where('workspace_id', $workspaceId)
             ->whereNotNull('slug')
             ->where('slug', '!=', '')
+            ->where('hidden_from_sidebar', false)
             ->orderBy('order', 'asc')
             ->orderBy('name', 'asc')
             ->get();
@@ -1567,11 +1594,11 @@ $hasStoreAccess = $hasLockInAccess;
                     <div x-show="open" x-cloak @click.outside="open = false" x-transition
                         class="absolute right-0 mt-2 w-60 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden">
                         <div class="py-1">
-                            <a href="{{ route('profile.edit') }}" wire:navigate.hover class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
+                            <a href="{{ route('profile.edit') }}" wire:navigate class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
                                 👤 O meu perfil
                             </a>
 
-                            <a href="{{ route('hub.ranking') }}" wire:navigate.hover class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
+                            <a href="{{ route('hub.ranking') }}" wire:navigate class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
                                 🏆 Ranking
                             </a>
 
@@ -1595,7 +1622,7 @@ $hasStoreAccess = $hasLockInAccess;
                             @endif
 
                             @if(!$isAnyPremium && !auth()->user()->isAdmin())
-                                <a href="{{ route('hub.pricing') }}" wire:navigate class="flex items-center gap-2 px-4 py-2 text-sm text-brand-600 font-black hover:bg-brand-50 dark:hover:bg-brand-500/10">
+                                <a href="{{ route('hub.pricing') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-brand-600 font-black hover:bg-brand-50 dark:hover:bg-brand-500/10">
                                     <span class="animate-pulse">⭐</span> OBTER PRO
                                 </a>
                             @endif
@@ -1634,11 +1661,6 @@ $hasStoreAccess = $hasLockInAccess;
 
     @persist('toast')
         <flux:toast.group><flux:toast /></flux:toast.group>
-    @endpersist
-
-    {{-- 2. MODO VISUALIZAÇÃO / VOLTAR CEO (Canto Inferior Esquerdo) --}}
-    @persist('finance-bot')
-        <livewire:finance-bot />
     @endpersist
 
     {{-- 2. MODO VISUALIZAÇÃO CENTRADO EM BAIXO --}}

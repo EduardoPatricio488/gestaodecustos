@@ -1,0 +1,1 @@
+    <div class="p-20 text-center italic text-zinc-500 font-medium">Nenhum workspace empresarial detetado.</div><?php /**PATH C:\Projetos\gestao-de-custos\storage\framework\views/111976260378b401d9ffa731b729f258.blade.php ENDPATH**/ ?>

@@ -170,8 +170,22 @@ class SplitHub extends Component
 
     public function render()
     {
-        $ws = auth()->user()->currentWorkspace;
-        $uid = auth()->id();
+        $user = auth()->user();
+        $ws = $user?->currentWorkspace;
+        $uid = $user?->id;
+
+        if (! $ws || ! $uid) {
+            return view('livewire.split-hub', [
+                'allSplits' => collect(),
+                'iOwe' => collect(),
+                'theyOwe' => collect(),
+                'settled' => collect(),
+                'totalIOwe' => 0,
+                'totalTheyOwe' => 0,
+                'members' => collect(),
+                'categories' => collect(),
+            ]);
+        }
 
         $allSplits = ExpenseSplit::with(['participants.user', 'creator', 'category'])
             ->where('workspace_id', $ws->id)

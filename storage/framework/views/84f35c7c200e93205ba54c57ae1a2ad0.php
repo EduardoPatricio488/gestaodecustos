@@ -211,7 +211,7 @@
         </div>
     </div>
 
-    <?php if (! $__env->hasRenderedOnce('6f314836-c0d3-48f1-8203-5678bc395f6b')): $__env->markAsRenderedOnce('6f314836-c0d3-48f1-8203-5678bc395f6b'); ?>
+    <?php if (! $__env->hasRenderedOnce('2ffe2cdd-40d2-4b25-ba94-ab832be59c58')): $__env->markAsRenderedOnce('2ffe2cdd-40d2-4b25-ba94-ab832be59c58'); ?>
         <style>
             @keyframes ticker {
                 from { transform: translateX(0); }

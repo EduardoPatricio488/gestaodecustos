@@ -565,7 +565,7 @@ class FamilyRanking extends Component
                 ];
             }
 
-            $cursor->addDay();
+            $cursor = $cursor->addDay();
         }
 
         $currentWeekStart = $now->copy()->startOfWeek();

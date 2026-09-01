@@ -22,10 +22,12 @@ class Category extends Model
         'icon',
         'budget_limit',
         'is_fixed',
+        'hidden_from_sidebar',
     ];
 
     protected $casts = [
         'is_fixed' => 'boolean',
+        'hidden_from_sidebar' => 'boolean',
     ];
 
     protected static function booted(): void

@@ -237,7 +237,7 @@
                         {{-- Moldura da Foto (João) --}}
                         <div class="size-32 rounded-[2.5rem] overflow-hidden border-4 border-white dark:border-zinc-800 shadow-2xl bg-zinc-100 flex items-center justify-center">
                             @if($sharedWs->logo_path)
-                                <img src="{{ asset($sharedWs->logo_path) }}?t={{ time() }}" class="size-full object-cover">
+                                <img src="{{ $sharedWs->logo_url }}?t={{ time() }}" class="size-full object-cover">
                             @else
                                 <span class="text-3xl font-black text-brand-600 uppercase italic">{{ substr($sharedWs->name, 0, 2) }}</span>
                             @endif
@@ -312,7 +312,7 @@
                     {{-- Moldura da Foto --}}
                     <div class="size-32 rounded-[2.5rem] overflow-hidden border-4 border-emerald-50 dark:border-zinc-800 shadow-xl bg-zinc-50 flex items-center justify-center">
                         @if($myPersonalWs->logo_path)
-                            <img src="{{ asset($myPersonalWs->logo_path) }}?v={{ time() }}" class="size-full object-cover">
+                            <img src="{{ $myPersonalWs->logo_url }}?v={{ time() }}" class="size-full object-cover">
                         @else
                             <div class="text-2xl font-black text-emerald-600 uppercase italic">
                                 {{ substr($user->name, 0, 1) }}{{ substr(explode(' ', $user->name)[1] ?? '', 0, 1) }}

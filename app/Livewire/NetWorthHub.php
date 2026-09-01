@@ -28,6 +28,15 @@ class NetWorthHub extends Component
         $this->aiLoading = false;
     }
 
+    private function monthGroupingExpression(string $column): string
+    {
+        if (config('database.default') === 'sqlite') {
+            return "strftime('%Y-%m', {$column})";
+        }
+
+        return "DATE_FORMAT({$column}, '%Y-%m')";
+    }
+
     public function render()
     {
         $user = auth()->user();
@@ -67,7 +76,7 @@ class NetWorthHub extends Component
         // Rendimentos de investimentos (últimos 12 meses)
         $investmentIncomes = InvestmentIncome::where('workspace_id', $workspaceId)
             ->where('reference_date', '>=', now()->subMonths(12))
-            ->selectRaw("DATE_FORMAT(reference_date, '%Y-%m') as month, SUM(net_amount) as total")
+            ->selectRaw($this->monthGroupingExpression('reference_date').' as month, SUM(net_amount) as total')
             ->groupBy('month')
             ->orderBy('month')
             ->get();
@@ -88,7 +97,7 @@ class NetWorthHub extends Component
         // Rendimentos mensais (últimos 12 meses)
         $monthlyIncomes = Income::where('workspace_id', $workspaceId)
             ->where('received_at', '>=', now()->subMonths(12))
-            ->selectRaw("DATE_FORMAT(received_at, '%Y-%m') as month, SUM(amount) as total")
+            ->selectRaw($this->monthGroupingExpression('received_at').' as month, SUM(amount) as total')
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total', 'month');
@@ -96,7 +105,7 @@ class NetWorthHub extends Component
         // Despesas mensais (últimos 12 meses)
         $monthlyExpenses = Expense::where('workspace_id', $workspaceId)
             ->where('spent_at', '>=', now()->subMonths(12))
-            ->selectRaw("DATE_FORMAT(spent_at, '%Y-%m') as month, SUM(amount) as total")
+            ->selectRaw($this->monthGroupingExpression('spent_at').' as month, SUM(amount) as total')
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total', 'month');

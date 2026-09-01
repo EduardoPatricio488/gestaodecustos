@@ -114,7 +114,7 @@ class ManageFamily extends Component
 
         // Guardamos o caminho completo para o browser ler
         $workspace->update([
-            'logo_path' => 'storage/'.$path,
+            'logo_path' => $path,
         ]);
 
         $this->photo = null;
@@ -251,9 +251,9 @@ class ManageFamily extends Component
         if ($pw) {
             $path = $this->personalPhoto->store('workspaces/logos', 'public');
 
-            // Uniformizado: Guardar com "storage/" no início
+            // Guardar apenas o caminho relativo na storage real
             $pw->update([
-                'logo_path' => 'storage/'.$path,
+                'logo_path' => $path,
             ]);
 
             $this->personalPhoto = null;
