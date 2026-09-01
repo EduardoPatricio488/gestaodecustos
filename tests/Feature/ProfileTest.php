@@ -24,18 +24,18 @@ test('profile information can be updated', function () {
 
     $component = Volt::test('profile.update-profile-information-form')
         ->set('name', 'Test User')
-        ->set('email', 'test@example.com')
         ->call('updateProfileInformation');
 
     $component
         ->assertHasNoErrors()
         ->assertNoRedirect();
 
+    $originalEmail = $user->email;
     $user->refresh();
 
+    // O email é bloqueado por design (não editável neste formulário)
     $this->assertSame('Test User', $user->name);
-    $this->assertSame('test@example.com', $user->email);
-    $this->assertNull($user->email_verified_at);
+    $this->assertSame($originalEmail, $user->email);
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {

@@ -6,7 +6,13 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*.php
+/storage/logs/*.log
+/storage/debug_*.txt
 /vendor
+stripe.exe
 .env
 .env.backup
 .env.production
