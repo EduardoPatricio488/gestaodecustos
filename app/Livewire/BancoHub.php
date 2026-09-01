@@ -332,7 +332,9 @@ class BancoHub extends Component
     public function save(): void
     {
         $this->validate();
-        $wsId = auth()->user()->current_workspace_id;
+        $user = auth()->user();
+        $wsId = $user->current_workspace_id;
+        $isCreating = ! $this->editingId;
 
         match ($this->modalType) {
             'account' => $this->saveAccount($wsId),
@@ -344,7 +346,12 @@ class BancoHub extends Component
         };
 
         $this->showModal = false;
-        $this->dispatch('toast', text: 'Guardado com sucesso!');
+        $message = 'Registo bancário guardado com sucesso!';
+        if ($isCreating) {
+            $user->awardXp(15, 'registo bancário criado');
+            $message .= ' '.$user->xpToastText(15, 'registo bancário criado');
+        }
+        $this->dispatch('toast', variant: 'success', text: $message);
         $this->resetForm();
     }
 

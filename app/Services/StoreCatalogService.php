@@ -43,7 +43,11 @@ class StoreCatalogService
         $sortBy = $filters['sortBy'] ?? 'popular';
         $onlyFeatured = (bool) ($filters['onlyFeatured'] ?? false);
 
-        if ($tab === 'all') {
+        if ($tab === 'business') {
+            $query->where('requires_business_plan', true);
+        } elseif ($tab === 'personal') {
+            $query->where('requires_business_plan', false)->where('type', '!=', 'plan');
+        } elseif ($tab === 'all') {
             $query->where('type', '!=', 'plan');
         } else {
             $query->where('type', $tab);

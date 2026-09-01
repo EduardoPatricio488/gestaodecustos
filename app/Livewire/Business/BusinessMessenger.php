@@ -33,9 +33,12 @@ class BusinessMessenger extends Component
 
         $this->content = ''; // Limpa o campo
 
+        $user = auth()->user();
+
         // Gamificação: Bónus por comunicação ativa (opcional)
-        if (method_exists(auth()->user(), 'addXp')) {
-            auth()->user()->addXp(10);
+        if (method_exists($user, 'awardXp')) {
+            $user->awardXp(10, 'mensagem enviada');
+            $this->dispatch('toast', variant: 'success', text: $user->xpToastText(10, 'mensagem enviada'));
         }
 
         // Faz o scroll automático no JS (disparado via evento)

@@ -94,20 +94,28 @@
                     id="remember"
                     name="remember"
                     type="checkbox"
-                    class="size-4 rounded-md border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-brand-600 focus:ring-brand-500/30 focus:ring-2 cursor-pointer"
+                    class="size-4 rounded-md border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-brand-600 focus:ring-brand-500/30 focus:ring-2 cursor-pointer transition-all"
                 />
-                <label for="remember" class="text-xs text-zinc-500 dark:text-zinc-400 cursor-pointer select-none">
+                <label for="remember" class="text-xs text-zinc-500 dark:text-zinc-400 cursor-pointer select-none hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">
                     Manter sessão iniciada
                 </label>
+            </div>
+
+            {{-- INFORMAÇÃO DE SEGURANÇA --}}
+            <div class="flex items-center gap-2.5 p-2.5 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-100 dark:border-blue-900/50">
+                <flux:icon name="information-circle" class="size-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                <p class="text-[11px] text-blue-700 dark:text-blue-300">Usa uma senha forte e nunca a partilhes com ninguém. A tua conta está protegida.</p>
             </div>
 
             {{-- BOTÃO --}}
             <div class="pt-1">
                 <button
                     type="submit"
-                    class="group relative w-full h-11 flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 transition-all duration-200 hover:-translate-y-px active:translate-y-0 active:shadow-md"
+                    wire:loading.attr="disabled"
+                    class="group relative w-full h-11 flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 disabled:bg-brand-400 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 disabled:shadow-brand-500/10 transition-all duration-200 hover:-translate-y-px active:translate-y-0 active:shadow-md"
                 >
-                    <flux:icon name="arrow-right-end-on-rectangle" class="size-4 opacity-80" />
+                    <flux:icon name="arrow-right-end-on-rectangle" class="size-4 opacity-80" wire:loading.remove />
+                    <flux:icon name="spinner" class="size-4 opacity-80 animate-spin" wire:loading />
                     <span>Entrar na conta</span>
                 </button>
             </div>

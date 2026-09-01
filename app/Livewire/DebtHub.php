@@ -55,11 +55,15 @@ class DebtHub extends Component
             ]
         );
 
-        if (! $this->editingId && method_exists(auth()->user(), 'addXp')) {
-            auth()->user()->addXp(30);
+        $user = auth()->user();
+
+        if (! $this->editingId && method_exists($user, 'awardXp')) {
+            $user->awardXp(30, 'protocolo validado');
+            $this->dispatch('toast', variant: 'success', text: $user->xpToastText(30, 'protocolo validado'));
+        } else {
+            $this->dispatch('toast', text: 'Registo atualizado!');
         }
 
-        $this->dispatch('toast', text: $this->editingId ? 'Registo atualizado!' : 'Protocolo validado!');
         $this->dispatch('close-debt-modal');
         $this->reset(['person_name', 'amount', 'description', 'due_at', 'editingId']);
     }

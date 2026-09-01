@@ -7,6 +7,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\MiFitnessImportController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\SmartwatchController;
+use App\Http\Controllers\StoreCheckoutStripeController;
 use App\Http\Controllers\StoreDownloadController;
 use App\Http\Controllers\StravaController;
 use App\Livewire\ActivityFeed;
@@ -259,6 +260,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/loja', HubStore::class)->name('hub.store');
     Route::get('/loja/carrinho', ShoppingCart::class)->name('store.cart');
     Route::get('/loja/checkout', Checkout::class)->name('store.checkout');
+    Route::get('/loja/checkout/stripe/sucesso/{pending}', [StoreCheckoutStripeController::class, 'success'])->name('store.checkout.stripe.success');
+    Route::get('/loja/checkout/stripe/cancelado/{pending}', [StoreCheckoutStripeController::class, 'cancel'])->name('store.checkout.stripe.cancel');
     Route::get('/loja/produto/{product}', ProductShow::class)->name('store.product.show');
     Route::get('/loja/favoritos', WishlistHub::class)->name('store.wishlist');
     Route::get('/loja/comparar', ProductCompare::class)->name('store.compare');

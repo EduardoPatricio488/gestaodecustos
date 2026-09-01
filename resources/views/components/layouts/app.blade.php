@@ -975,8 +975,8 @@
 {{-- Lógica de Acesso à Área Empresarial (COM ESTADO BLOQUEADO PARA PLANO BÁSICO) --}}
 @if(!$isBusinessMode)
     <div class="px-4 mt-6 mb-4">
-        @if($user->isDiamond())
-            {{-- UTILIZADOR DIAMANTE/BUSINESS: MOSTRA MENU NORMAL --}}
+        @if($user && $user->isBusinessPlan())
+            {{-- UTILIZADOR COM PLANO BUSINESS: MOSTRA MENU NORMAL --}}
             <div x-data="{ openBusiness: false }" class="w-full text-center">
                 {{-- BOTÃO PRINCIPAL --}}
                 <button
@@ -1047,7 +1047,7 @@
                 <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 italic leading-none">
                     Área Empresarial
                 </span>
-                <span class="text-[8px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500 px-1.5 py-0.5 rounded-md font-bold ml-1 uppercase">Pro</span>
+                <span class="text-[8px] bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-500 px-1.5 py-0.5 rounded-md font-bold ml-1 uppercase">Business</span>
             </a>
         @endif
     </div>
@@ -1384,7 +1384,9 @@ $hasStoreAccess = $hasLockInAccess;
             ->where('hidden_from_sidebar', false)
             ->orderBy('order', 'asc')
             ->orderBy('name', 'asc')
-            ->get();
+            ->get()
+            ->unique(fn (\App\Models\Category $category) => mb_strtolower(trim($category->name), 'UTF-8'))
+            ->values();
 
         $catCounts = is_array($catCounts ?? null) ? $catCounts : [];
     @endphp
@@ -1663,6 +1665,16 @@ $hasStoreAccess = $hasLockInAccess;
         <flux:toast.group><flux:toast /></flux:toast.group>
     @endpersist
 
+    @if(session('toast'))
+        <script>
+            window.addEventListener('load', () => {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: { text: @js(is_array(session('toast')) ? (session('toast')['text'] ?? '') : session('toast')) }
+                }));
+            });
+        </script>
+    @endif
+
     {{-- 2. MODO VISUALIZAÇÃO CENTRADO EM BAIXO --}}
     @if(session()->has('admin_impersonation') || session()->has('viewing_as_collaborator_id'))
         @php
@@ -1896,6 +1908,28 @@ $hasStoreAccess = $hasLockInAccess;
     // Tenta sincronizar mal a página carrega e deteta internet
     window.addEventListener('online', syncOfflineData);
     if (navigator.onLine) syncOfflineData();
+
+    window.addEventListener('toast', (event) => {
+        const detail = event.detail || {};
+        const text = detail.text || detail.message || 'Ação concluída com sucesso.';
+        const toast = document.createElement('div');
+        const hasXp = /xp/i.test(text);
+
+        toast.className = 'app-action-toast' + (hasXp ? ' app-action-toast--xp' : '');
+        toast.setAttribute('role', 'status');
+        toast.innerHTML = `
+            <div class="app-action-toast__icon">${hasXp ? '🏆' : '✓'}</div>
+            <div>
+                <p class="app-action-toast__title">${hasXp ? 'Recompensa desbloqueada' : 'Concluído'}</p>
+                <p class="app-action-toast__text"></p>
+            </div>
+        `;
+        toast.querySelector('.app-action-toast__text').textContent = text;
+
+        document.body.appendChild(toast);
+        window.setTimeout(() => toast.classList.add('app-action-toast--leaving'), 4200);
+        window.setTimeout(() => toast.remove(), 4600);
+    });
 </script>
 </body>
 </html>

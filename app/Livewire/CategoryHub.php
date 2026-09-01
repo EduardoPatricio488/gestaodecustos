@@ -422,13 +422,16 @@ PROMPT;
             'metadata' => ! empty($this->meta) ? $this->meta : null,
         ];
 
+        $user = auth()->user();
+
         if ($this->editingId) {
             $expense = Expense::findOrFail($this->editingId);
             $expense->update($data);
             $msg = 'Registo atualizado! ✅';
         } else {
             $expense = Expense::create($data);
-            $msg = 'Gasto guardado com sucesso!';
+            $user->awardXp(20, 'despesa registada');
+            $msg = 'Nova despesa adicionada! '.$user->xpToastText(20, 'despesa registada');
         }
 
         $this->trackPriceHistory($expense, $category);
@@ -438,7 +441,7 @@ PROMPT;
         $this->spent_at = now()->format('Y-m-d');
 
         $this->dispatch('modal-close-add-expense');
-        $this->dispatch('toast', text: $msg);
+        $this->dispatch('toast', variant: 'success', text: $msg);
     }
 
     // ─────────────────────────────────────────────────────────────────

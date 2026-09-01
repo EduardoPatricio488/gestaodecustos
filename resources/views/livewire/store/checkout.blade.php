@@ -60,6 +60,13 @@
             <h2 class="text-2xl font-black uppercase italic mb-6">Pagamento</h2>
 
             <div class="space-y-4 mb-6">
+                <label @class(['block p-4 border-2 rounded-2xl cursor-pointer', 'border-brand-500 bg-brand-50' => $paymentMethod === 'stripe'])>
+                    <input type="radio" wire:model.live="paymentMethod" value="stripe" class="sr-only" />
+                    <span class="flex items-center gap-3">
+                        <flux:icon name="credit-card" class="size-5 text-brand-600" />
+                        <span class="font-bold">Cartão de Crédito / Débito (Stripe)</span>
+                    </span>
+                </label>
                 <label @class(['block p-4 border-2 rounded-2xl cursor-pointer', 'border-brand-500 bg-brand-50' => $paymentMethod === 'simulated'])>
                     <input type="radio" wire:model.live="paymentMethod" value="simulated" class="sr-only" />
                     <span class="font-bold">Saldo em Conta / MB WAY (Simulação)</span>
@@ -136,7 +143,7 @@
             <div class="flex flex-col sm:flex-row gap-3">
                 <button wire:click="prevStep" class="flex-1 h-12 border rounded-2xl font-black uppercase text-[10px]">← Voltar</button>
                 <flux:button wire:click="confirmPurchase" variant="primary" class="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] shadow-xl">
-                    Confirmar e Ativar
+                    {{ $paymentMethod === 'stripe' ? 'Pagar com Cartão →' : 'Confirmar e Ativar' }}
                 </flux:button>
             </div>
         @endif

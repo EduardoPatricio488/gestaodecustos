@@ -111,7 +111,9 @@ class RemindersHub extends Component
             $this->dispatch('toast', text: 'Lembrete atualizado! ⚡');
         } else {
             Reminder::create($data);
-            $this->dispatch('toast', text: 'Agendado com sucesso! 🟢');
+            $user = Auth::user();
+            $user->awardXp(8, 'lembrete criado');
+            $this->dispatch('toast', variant: 'success', text: 'Lembrete agendado com sucesso! '.$user->xpToastText(8, 'lembrete criado'));
         }
 
         $this->closeModal();
@@ -128,7 +130,15 @@ class RemindersHub extends Component
             'completed_at' => ! $reminder->is_completed ? now() : null,
         ]);
 
-        $this->dispatch('toast', text: $reminder->is_completed ? 'Tarefa concluída! 🎯' : 'Reativado.');
+        if ($reminder->is_completed) {
+            $user = Auth::user();
+            $user->awardXp(10, 'lembrete concluído');
+            $this->dispatch('toast', variant: 'success', text: 'Tarefa concluída! 🎯 '.$user->xpToastText(10, 'lembrete concluído'));
+
+            return;
+        }
+
+        $this->dispatch('toast', text: 'Lembrete reativado.');
     }
 
     public function deleteReminder($id)

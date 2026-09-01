@@ -99,6 +99,8 @@ class SplitHub extends Component
             'selectedUsers' => 'required|array|min:1',
         ]);
 
+        $isCreating = ! $this->editingId;
+
         // Distribute amounts
         $amounts = [];
         if ($this->splitType === 'equal') {
@@ -141,7 +143,13 @@ class SplitHub extends Component
         }
 
         $this->closeModal();
-        $this->dispatch('toast', variant: 'success', text: 'Divisão guardada!');
+        $message = 'Divisão guardada!';
+        if ($isCreating) {
+            $user = auth()->user();
+            $user->awardXp(18, 'divisão criada');
+            $message .= ' '.$user->xpToastText(18, 'divisão criada');
+        }
+        $this->dispatch('toast', variant: 'success', text: $message);
     }
 
     public function togglePaid(int $participantId): void

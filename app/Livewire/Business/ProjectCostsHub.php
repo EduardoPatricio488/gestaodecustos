@@ -20,6 +20,8 @@ class ProjectCostsHub extends Component
 
     public $filterStatus = '';
 
+    public $historySearch = '';
+
     public function approve($id)
     {
         Expense::findOrFail($id)->update(['status' => 'aprovado']);
@@ -61,15 +63,30 @@ class ProjectCostsHub extends Component
             ->whereIn('status', ['aprovado', 'rejeitado']) // Apenas o que já foi decidido
             ->with(['user', 'project', 'task', 'category'])
             ->when($this->search, fn ($q) => $q->where('description', 'like', "%{$this->search}%"))
+            ->when($this->historySearch, fn ($q) => $q->where('description', 'like', "%{$this->historySearch}%"))
             ->when($this->filterProject, fn ($q) => $q->where('project_id', $this->filterProject))
             ->when($this->filterStatus, fn ($q) => $q->where('status', $this->filterStatus));
+
+        // 4. CÁLCULO DE MÉTRICAS GLOBAIS
+        $allExpenses = Expense::where('workspace_id', $workspace->id)
+            ->where('is_company', true)
+            ->get();
+
+        $totalApproved = $allExpenses->where('status', 'aprovado')->sum('amount');
+        $totalRejected = $allExpenses->where('status', 'rejeitado')->sum('amount');
+        $totalPending = $allExpenses->where('status', 'pendente')->sum('amount');
+        $approvalRate = $allExpenses->count() > 0 ? round(($allExpenses->where('status', 'aprovado')->count() / $allExpenses->count()) * 100) : 0;
 
         return view('livewire.business.project-costs-hub', [
             'projects' => $projects,
             'pendingExpenses' => $pendingExpenses,
             'history' => $historyQuery->latest('spent_at')->paginate(10),
             'totalOperationalCost' => $projects->sum('total_costs'),
-            'allUsers' => $workspace->users, // Para o filtro
+            'allUsers' => $workspace->users,
+            'totalApproved' => $totalApproved,
+            'totalRejected' => $totalRejected,
+            'totalPending' => $totalPending,
+            'approvalRate' => $approvalRate,
         ]);
     }
 }

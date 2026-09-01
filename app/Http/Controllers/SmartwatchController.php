@@ -44,7 +44,8 @@ Estrutura:
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => config('app.name'),
             ])->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => 'openrouter/owl-alpha', // MESMO MODELO DO TEU AIINSIGHTS
+                'model' => 'google/gemini-2.5-flash',
+                'max_tokens' => 2000,
                 'messages' => [
                     ['role' => 'user', 'content' => $prompt],
                 ],

@@ -685,7 +685,9 @@ class InvestmentsHub extends Component
         } else {
             $data['current_price'] = (float) $this->average_price;
             Investment::create($data);
-            $msg = 'Novo capital registado com sucesso!';
+            $user = Auth::user();
+            $user->awardXp(25, 'investimento registado');
+            $msg = 'Novo capital registado com sucesso! '.$user->xpToastText(25, 'investimento registado');
         }
 
         $this->reset([

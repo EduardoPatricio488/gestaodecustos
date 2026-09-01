@@ -2633,7 +2633,7 @@ unset($__split);
 
 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!$isBusinessMode): ?>
     <div class="px-4 mt-6 mb-4">
-        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($user->isDiamond()): ?>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($user && $user->isBusinessPlan()): ?>
             
             <div x-data="{ openBusiness: false }" class="w-full text-center">
                 
@@ -2844,7 +2844,7 @@ unset($__split);
                 <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 italic leading-none">
                     Área Empresarial
                 </span>
-                <span class="text-[8px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500 px-1.5 py-0.5 rounded-md font-bold ml-1 uppercase">Pro</span>
+                <span class="text-[8px] bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-500 px-1.5 py-0.5 rounded-md font-bold ml-1 uppercase">Business</span>
             </a>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
     </div>
@@ -3981,7 +3981,9 @@ $hasStoreAccess = $hasLockInAccess;
             ->where('hidden_from_sidebar', false)
             ->orderBy('order', 'asc')
             ->orderBy('name', 'asc')
-            ->get();
+            ->get()
+            ->unique(fn (\App\Models\Category $category) => mb_strtolower(trim($category->name), 'UTF-8'))
+            ->values();
 
         $catCounts = is_array($catCounts ?? null) ? $catCounts : [];
     ?>
@@ -4793,6 +4795,16 @@ unset($__split);
 <?php endif; ?>
     </div>
 
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(session('toast')): ?>
+        <script>
+            window.addEventListener('load', () => {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: { text: <?php echo \Illuminate\Support\Js::from(is_array(session('toast')) ? (session('toast')['text'] ?? '') : session('toast'))->toHtml() ?> }
+                }));
+            });
+        </script>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
     
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(session()->has('admin_impersonation') || session()->has('viewing_as_collaborator_id')): ?>
         <?php
@@ -5273,6 +5285,28 @@ Desbloquear 🟢 <?php echo $__env->renderComponent(); ?>
     // Tenta sincronizar mal a página carrega e deteta internet
     window.addEventListener('online', syncOfflineData);
     if (navigator.onLine) syncOfflineData();
+
+    window.addEventListener('toast', (event) => {
+        const detail = event.detail || {};
+        const text = detail.text || detail.message || 'Ação concluída com sucesso.';
+        const toast = document.createElement('div');
+        const hasXp = /xp/i.test(text);
+
+        toast.className = 'app-action-toast' + (hasXp ? ' app-action-toast--xp' : '');
+        toast.setAttribute('role', 'status');
+        toast.innerHTML = `
+            <div class="app-action-toast__icon">${hasXp ? '🏆' : '✓'}</div>
+            <div>
+                <p class="app-action-toast__title">${hasXp ? 'Recompensa desbloqueada' : 'Concluído'}</p>
+                <p class="app-action-toast__text"></p>
+            </div>
+        `;
+        toast.querySelector('.app-action-toast__text').textContent = text;
+
+        document.body.appendChild(toast);
+        window.setTimeout(() => toast.classList.add('app-action-toast--leaving'), 4200);
+        window.setTimeout(() => toast.remove(), 4600);
+    });
 </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Services\DailyReportService;
 use App\Services\MonthlyReportService;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Schedule;
@@ -20,6 +21,16 @@ Schedule::call(function () {
         $service->sendMonthlyReport($user, $lastMonth);
     }
 })->dailyAt('08:00');
+
+Schedule::call(function () {
+    $service = app(DailyReportService::class);
+    $reportDate = now()->subDay();
+
+    User::query()
+        ->whereNotNull('email_verified_at')
+        ->where('daily_report_enabled', true)
+        ->each(fn (User $user) => $service->sendDailyReport($user, $reportDate));
+})->dailyAt('00:00');
 
 Schedule::call(function () {
     User::query()

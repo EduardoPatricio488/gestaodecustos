@@ -171,7 +171,16 @@
         </div>
 
         {{-- TABS --}}
-        @php $storeTabs = app(\App\Services\StoreTabsService::class)->visible(); @endphp
+        @php
+            $storeTabs = [
+                ['key' => 'all', 'label' => 'Todos'],
+                ['key' => 'personal', 'label' => 'Pessoais'],
+                ['key' => 'business', 'label' => 'Empresariais'],
+                ...collect(app(\App\Services\StoreTabsService::class)->visible())
+                    ->reject(fn (array $tab) => $tab['key'] === 'all')
+                    ->all(),
+            ];
+        @endphp
         <div class="flex overflow-x-auto gap-1 p-1 bg-zinc-100 rounded-2xl">
             @foreach($storeTabs as $tab)
                 <button wire:click="setTab('{{ $tab['key'] }}')"
@@ -218,6 +227,11 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @foreach($products as $product)
                 <div class="group relative bg-zinc-50 border border-zinc-200 rounded-[2.5rem] overflow-hidden flex flex-col hover:border-brand-500 hover:shadow-xl transition-all" wire:key="product-{{ $product->id }}">
+                    @if(in_array($product->id, $ownedProductIds))
+                        <div class="absolute top-4 left-4 z-10">
+                            <span class="px-3 py-1 bg-emerald-600 text-white text-[9px] font-black uppercase rounded-full">Já tens</span>
+                        </div>
+                    @endif
                     @if($product->badge)
                         <div class="absolute m-6 z-10">
                             <span class="px-3 py-1 bg-brand-600 text-white text-[9px] font-black uppercase rounded-full">{{ $product->badge }}</span>
@@ -242,6 +256,11 @@
 
                     <div class="p-6 flex flex-col flex-1">
                         <span class="text-[9px] font-black text-brand-600 uppercase tracking-widest">{{ $product->category_label }}</span>
+                        @if($product->requires_business_plan)
+                            <span class="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-amber-800">
+                                <flux:icon name="building-office-2" class="size-3" /> Plano Business
+                            </span>
+                        @endif
                         <h3 class="text-lg font-black uppercase leading-tight mt-1">{{ $product->title }}</h3>
                         <p class="text-xs text-zinc-600 mt-2 line-clamp-2">{{ $product->description }}</p>
 
@@ -258,9 +277,13 @@
                                 <a href="{{ route('store.product.show', $product) }}" wire:navigate
                                    class="text-center px-3 py-2 bg-white border border-zinc-200 rounded-xl text-[9px] font-black uppercase">Ver</a>
                                 <button wire:click="addToCart({{ $product->id }})"
-                                        class="px-3 py-2 bg-zinc-200 rounded-xl text-[9px] font-black uppercase">+ Carrinho</button>
+                                        class="px-3 py-2 {{ $product->requires_business_plan && ! $hasBusinessPlan ? 'bg-zinc-400 hover:bg-zinc-500' : 'bg-zinc-200 hover:bg-zinc-300' }} rounded-xl text-[9px] font-black uppercase {{ $product->requires_business_plan && ! $hasBusinessPlan ? 'text-white' : '' }}">
+                                    {{ $product->requires_business_plan && ! $hasBusinessPlan ? 'Business' : (in_array($product->id, $ownedProductIds) ? 'Comprar de novo' : '+ Carrinho') }}
+                                </button>
                                 <button wire:click="buyNow({{ $product->id }})"
-                                        class="px-3 py-2 bg-brand-600 text-white rounded-xl text-[9px] font-black uppercase">Comprar</button>
+                                        class="px-3 py-2 {{ $product->requires_business_plan && ! $hasBusinessPlan ? 'bg-zinc-500 hover:bg-zinc-600' : 'bg-brand-600 hover:bg-brand-700' }} text-white rounded-xl text-[9px] font-black uppercase">
+                                    {{ $product->requires_business_plan && ! $hasBusinessPlan ? 'Requer Business' : 'Comprar' }}
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -8,29 +8,32 @@ use Livewire\Volt\Component;
 new #[Layout('layouts.guest')] class extends Component
 {
     public LoginForm $form;
+    public bool $isSubmitting = false;
 
     /**
      * Handle an incoming authentication request.
      */
-   public function login(): void
-{
-    $this->validate();
+    public function login(): void
+    {
+        $this->isSubmitting = true;
 
-    $this->form->authenticate();
+        try {
+            $this->validate();
+            $this->form->authenticate();
+            Session::regenerate();
 
-    Session::regenerate();
+            // LÓGICA DE REDIRECIONAMENTO INTELIGENTE
+            $user = auth()->user();
 
-    // LÓGICA DE REDIRECIONAMENTO INTELIGENTE
-    $user = auth()->user();
-
-    if ($user->isAdminRole() || $user->is_admin) {
-        // Se for Admin, vai direto para a Consola de Comando
-        $this->redirect(route('admin.dashboard', absolute: false), navigate: true);
-    } else {
-        // Se for user normal, vai para o dashboard pessoal
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+            if ($user->isAdminRole() || $user->is_admin) {
+                $this->redirect(route('admin.dashboard', absolute: false), navigate: true);
+            } else {
+                $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+            }
+        } finally {
+            $this->isSubmitting = false;
+        }
     }
-}
 }; ?>
 
 <div class="space-y-7">
@@ -76,7 +79,7 @@ new #[Layout('layouts.guest')] class extends Component
             <label for="email" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Email</label>
             <div class="relative">
                 <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
-                    <flux:icon name="envelope" class="size-4 text-zinc-400" />
+                    <flux:icon name="envelope" class="size-4 transition-colors" :class="$isSubmitting ? 'text-zinc-300 dark:text-zinc-700' : 'text-zinc-400'" />
                 </div>
                 <input
                     wire:model="form.email"
@@ -86,7 +89,9 @@ new #[Layout('layouts.guest')] class extends Component
                     autofocus
                     autocomplete="username"
                     placeholder="teu@email.com"
-                    class="w-full h-11 pl-10 pr-4 bg-zinc-50 dark:bg-zinc-900 border @error('form.email') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 dark:focus:border-brand-600 transition-all"
+                    :disabled="$isSubmitting"
+                    aria-label="Endereço de email"
+                    class="w-full h-11 pl-10 pr-4 bg-zinc-50 dark:bg-zinc-900 border @error('form.email') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 dark:focus:border-brand-600 transition-all"
                 />
             </div>
             <x-input-error :messages="$errors->get('form.email')" class="text-[11px]" />
@@ -97,14 +102,14 @@ new #[Layout('layouts.guest')] class extends Component
             <div class="flex items-center justify-between">
                 <label for="password" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Password</label>
                 @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" wire:navigate class="text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-500 transition-colors">
+                    <a href="{{ route('password.request') }}" wire:navigate class="text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" :class="$isSubmitting ? 'pointer-events-none opacity-50' : ''">
                         Esqueceste-te?
                     </a>
                 @endif
             </div>
             <div class="relative">
                 <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
-                    <flux:icon name="lock-closed" class="size-4 text-zinc-400" />
+                    <flux:icon name="lock-closed" class="size-4 transition-colors" :class="$isSubmitting ? 'text-zinc-300 dark:text-zinc-700' : 'text-zinc-400'" />
                 </div>
                 <input
                     wire:model="form.password"
@@ -113,9 +118,11 @@ new #[Layout('layouts.guest')] class extends Component
                     required
                     autocomplete="current-password"
                     placeholder="••••••••"
-                    class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border @error('form.password') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 dark:focus:border-brand-600 transition-all"
+                    :disabled="$isSubmitting"
+                    aria-label="Password"
+                    class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border @error('form.password') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 dark:focus:border-brand-600 transition-all"
                 />
-                <button type="button" @click="show = !show" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors focus:outline-none">
+                <button type="button" @click="show = !show" :disabled="$isSubmitting" aria-label="Mostrar/ocultar password" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none">
                     <flux:icon x-show="!show" name="eye" class="size-4" />
                     <flux:icon x-show="show" name="eye-slash" class="size-4" x-cloak />
                 </button>
@@ -129,24 +136,27 @@ new #[Layout('layouts.guest')] class extends Component
                 wire:model="form.remember"
                 id="remember"
                 type="checkbox"
-                class="size-4 rounded-md border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-brand-600 focus:ring-brand-500/30 focus:ring-2 cursor-pointer"
+                :disabled="$isSubmitting"
+                class="size-4 rounded-md border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-brand-600 disabled:opacity-60 disabled:cursor-not-allowed focus:ring-brand-500/30 focus:ring-2 cursor-pointer transition-opacity"
             />
-            <label for="remember" class="text-xs text-zinc-500 dark:text-zinc-400 cursor-pointer select-none">
+            <label for="remember" class="text-xs text-zinc-500 dark:text-zinc-400 cursor-pointer select-none" :class="$isSubmitting ? 'opacity-60' : ''">
                 Manter sessão iniciada
             </label>
         </div>
 
         {{-- OCULTAR VALORES --}}
         <div
-            class="flex items-center gap-2.5"
+            class="flex items-center gap-2.5 transition-opacity"
             x-data="{ blurNumbers: localStorage.getItem('privacyMode') === 'true' }"
             x-init="$watch('blurNumbers', v => localStorage.setItem('privacyMode', v))"
+            :class="$isSubmitting ? 'opacity-60 pointer-events-none' : ''"
         >
             <input
                 id="blur-numbers"
                 type="checkbox"
                 x-model="blurNumbers"
-                class="size-4 rounded-md border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-brand-600 focus:ring-brand-500/30 focus:ring-2 cursor-pointer"
+                :disabled="$isSubmitting"
+                class="size-4 rounded-md border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-brand-600 disabled:opacity-60 disabled:cursor-not-allowed focus:ring-brand-500/30 focus:ring-2 cursor-pointer transition-opacity"
             />
             <label for="blur-numbers" class="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 cursor-pointer select-none">
                 <flux:icon name="eye-slash" class="size-3.5 opacity-60" />
@@ -158,10 +168,18 @@ new #[Layout('layouts.guest')] class extends Component
         <div class="pt-1">
             <button
                 type="submit"
-                class="w-full h-11 flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 transition-all duration-200 hover:-translate-y-px active:translate-y-0"
+                :disabled="$isSubmitting"
+                class="w-full h-11 flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 disabled:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-75 text-white text-sm font-bold rounded-xl shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 disabled:shadow-none transition-all duration-200 hover:-translate-y-px active:translate-y-0 disabled:translate-y-0"
+                aria-busy="$isSubmitting"
             >
-                <flux:icon name="arrow-right-end-on-rectangle" class="size-4 opacity-80" />
-                <span>Entrar na conta</span>
+                <div wire:loading wire:target="login" class="hidden" >
+                    <flux:icon name="arrow-path" class="size-4 opacity-80 animate-spin" />
+                </div>
+                <div wire:loading.remove wire:target="login">
+                    <flux:icon name="arrow-right-end-on-rectangle" class="size-4 opacity-80" />
+                </div>
+                <span wire:loading.remove wire:target="login">Entrar na conta</span>
+                <span wire:loading wire:target="login">Autenticando...</span>
             </button>
         </div>
     </form>

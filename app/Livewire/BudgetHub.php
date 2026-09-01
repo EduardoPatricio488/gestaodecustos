@@ -80,7 +80,9 @@ class BudgetHub extends Component
 
         $this->reset(['challengeTitle', 'challengeCategoryId', 'challengeTarget']);
         $this->challengeDays = 30;
-        $this->dispatch('toast', variant: 'success', text: 'Desafio criado! Boa sorte!');
+        $user = auth()->user();
+        $user->awardXp(20, 'desafio orçamental criado');
+        $this->dispatch('toast', variant: 'success', text: 'Desafio criado! Boa sorte! '.$user->xpToastText(20, 'desafio orçamental criado'));
     }
 
     public function checkChallenges(): void

@@ -135,6 +135,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'xp' => 'integer',
             'level' => 'integer',
             'onboarding_completed' => 'boolean',
+            'daily_report_enabled' => 'boolean',
+            'daily_report_sections' => 'array',
         ];
     }
 
@@ -171,14 +173,16 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 
     public function isPro(): bool
     {
-        // Um plano é considerado "Pro" se der acesso à IA
-        return $this->hasFeature('ia_access');
+        $slug = strtolower((string) $this->currentPlanSlug());
+
+        return $slug === 'pro' || $this->hasFeature('ia_access');
     }
 
     public function isBusinessPlan(): bool
     {
-        // Um plano é considerado "Business" se der acesso ao Modo Empresa
-        return $this->hasFeature('business_mode');
+        $slug = strtolower((string) $this->currentPlanSlug());
+
+        return $slug === 'business' || $this->hasFeature('business_mode');
     }
 
     public function isPaidPlan(): bool

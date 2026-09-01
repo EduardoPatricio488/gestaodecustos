@@ -90,6 +90,10 @@ class HubStore extends Component
             'cartCount' => count($cartItems),
 
             'wishlistIds' => app(StoreWishlistService::class)->ids(),
+            'ownedProductIds' => Auth::check()
+                ? StorePurchase::where('user_id', Auth::id())->where('payment_status', 'completed')->pluck('product_id')->all()
+                : [],
+            'hasBusinessPlan' => Auth::user()?->isBusinessPlan() ?? false,
             'compareCount' => app(StoreCompareService::class)->count(),
             'inventoryCount' => Auth::check()
                 ? StorePurchase::where('user_id', Auth::id())->where('payment_status', 'completed')->count()

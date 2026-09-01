@@ -452,7 +452,7 @@
                     <tr class="text-[9px] uppercase text-zinc-400 dark:text-zinc-500 font-black tracking-[0.2em]">
                         <th class="p-6 w-28">Data</th>
                         <th class="p-6">Subcategoria</th>
-                        <th class="p-6">Detalhes Específicos</th>
+                        <th class="p-6">Local / Estabelecimento</th>
                         <th class="p-6">Observações</th>
                         <th class="p-6 text-right px-8 w-32">Montante</th>
                     </tr>
@@ -1088,6 +1088,12 @@
             @endif
         </span>
     </div>
+
+    <label class="block space-y-2">
+        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Local / Estabelecimento</span>
+        <input wire:model="meta.local" type="text" placeholder="Ex: loja, fornecedor, oficina ou serviço..."
+            class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white">
+    </label>
 
     {{-- Renderização dos Campos Adicionais (KM, Próx. Inspeção, Local, etc) --}}
     @if(isset($categoryFields[$slug]))

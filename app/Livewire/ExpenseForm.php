@@ -52,6 +52,8 @@ class ExpenseForm extends Component
             'spent_at' => 'required|date',
         ]);
 
+        $user = auth()->user();
+
         if ($this->expenseId) {
             Expense::where('user_id', auth()->id())
                 ->where('id', $this->expenseId)
@@ -65,7 +67,9 @@ class ExpenseForm extends Component
                 'user_id' => auth()->id(),
             ]);
 
-            session()->flash('ok', 'Despesa criada com sucesso.');
+            $user->awardXp(20, 'despesa registada');
+            session()->flash('ok', 'Nova despesa adicionada! '.$user->xpToastText(20, 'despesa registada'));
+            session()->flash('xp_award', $user->xpToastText(20, 'despesa registada'));
         }
 
         $this->redirect(route('expenses'), navigate: true);

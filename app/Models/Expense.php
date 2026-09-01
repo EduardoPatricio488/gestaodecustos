@@ -13,7 +13,7 @@ class Expense extends Model
     use BelongsToWorkspace, LogsActivity;
 
     protected $fillable = [
-        'user_id', 'category_id', 'workspace_id', 'bank_account_id',
+        'user_id', 'category_id', 'workspace_id', 'bank_account_id', 'subcategory', 'metadata',
         'amount', 'description', 'status', 'spent_at', 'receipt_path',
         'is_company', 'project_id', 'task_id', 'currency', 'amount_converted', // Adicionados aqui
     ];

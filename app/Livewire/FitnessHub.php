@@ -272,6 +272,7 @@ class FitnessHub extends Component
                 'Authorization' => 'Bearer '.env('OPENROUTER_API_KEY'),
             ])->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => 'google/gemini-2.0-flash-lite-001', // ou o modelo que preferires
+                'max_tokens' => 1000,
                 'messages' => [['role' => 'user', 'content' => $prompt]],
             ]);
 
@@ -416,7 +417,8 @@ class FitnessHub extends Component
         Cache::forget("fitness:stats:{$ws->id}:{$user->id}");
         $this->showActivityModal = false;
         $this->resetActivityForm();
-        $this->dispatch('toast', text: '🏃 Atividade gravada com todos os detalhes!');
+        $user->awardXp(12, 'atividade fitness registada');
+        $this->dispatch('toast', variant: 'success', text: 'Atividade gravada com todos os detalhes! '.$user->xpToastText(12, 'atividade fitness registada'));
     }
 
     public function deleteActivity(int $id)
@@ -453,6 +455,7 @@ class FitnessHub extends Component
             'deadline' => $this->goalDeadline ?: null,
         ];
 
+        $isCreating = ! $this->editingGoalId;
         if ($this->editingGoalId) {
             FitnessGoal::where('user_id', Auth::id())->findOrFail($this->editingGoalId)->update($data);
         } else {
@@ -461,7 +464,12 @@ class FitnessHub extends Component
 
         $this->showGoalModal = false;
         $this->resetGoalForm();
-        $this->dispatch('toast', text: '🎯 Meta fitness guardada!');
+        $message = 'Meta fitness guardada!';
+        if ($isCreating) {
+            $user->awardXp(15, 'meta fitness criada');
+            $message .= ' '.$user->xpToastText(15, 'meta fitness criada');
+        }
+        $this->dispatch('toast', variant: 'success', text: $message);
     }
 
     public function deleteGoal(int $id)
@@ -491,7 +499,9 @@ class FitnessHub extends Component
 
         $this->showDeviceModal = false;
         $this->deviceName = '';
-        $this->dispatch('toast', text: '⌚ Dispositivo associado com sucesso!');
+        $user = Auth::user();
+        $user->awardXp(8, 'dispositivo associado');
+        $this->dispatch('toast', variant: 'success', text: 'Dispositivo associado com sucesso! '.$user->xpToastText(8, 'dispositivo associado'));
     }
 
     public function disconnectDevice(int $id): void

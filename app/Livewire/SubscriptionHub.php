@@ -160,7 +160,9 @@ class SubscriptionHub extends Component
             $msg = 'Assinatura atualizada!';
         } else {
             Subscription::create($subscriptionData);
-            $msg = 'Assinatura ativada!';
+            $user = auth()->user();
+            $user->awardXp(20, 'assinatura registada');
+            $msg = 'Assinatura ativada! '.$user->xpToastText(20, 'assinatura registada');
         }
 
         $this->reset(['name', 'amount', 'category_id', 'billing_day', 'payment_method', 'started_at', 'renewal_date', 'notes', 'notify_days_before', 'editingId']);

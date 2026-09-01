@@ -12,114 +12,208 @@
         </div>
     </div>
 
+    {{-- KPI CARDS --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {{-- Total Aprovado --}}
+        <div class="bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-900/30 rounded-[2rem] shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Total Aprovado</span>
+                <div class="p-2 bg-emerald-100 dark:bg-emerald-900/20 rounded-lg">
+                    <flux:icon name="check-circle" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+            </div>
+            <h3 class="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter">{{ number_format($totalApproved, 2, ',', ' ') }}€</h3>
+            <p class="text-[9px] text-zinc-500 font-bold mt-2">Despesas processadas</p>
+        </div>
+
+        {{-- Total Pendente --}}
+        <div class="bg-white dark:bg-zinc-900 border border-amber-200 dark:border-amber-900/30 rounded-[2rem] shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Aguardando</span>
+                <div class="p-2 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
+                    <flux:icon name="exclamation-triangle" class="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+            </div>
+            <h3 class="text-3xl font-black text-amber-600 dark:text-amber-400 tracking-tighter">{{ number_format($totalPending, 2, ',', ' ') }}€</h3>
+            <p class="text-[9px] text-zinc-500 font-bold mt-2">{{ $pendingExpenses->count() }} Despesas</p>
+        </div>
+
+        {{-- Total Rejeitado --}}
+        <div class="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-900/30 rounded-[2rem] shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-[9px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest">Rejeitado</span>
+                <div class="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                    <flux:icon name="x-circle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+                </div>
+            </div>
+            <h3 class="text-3xl font-black text-red-600 dark:text-red-400 tracking-tighter">{{ number_format($totalRejected, 2, ',', ' ') }}€</h3>
+            <p class="text-[9px] text-zinc-500 font-bold mt-2">Não processadas</p>
+        </div>
+
+        {{-- Taxa de Aprovação --}}
+        <div class="bg-white dark:bg-zinc-900 border border-brand-200 dark:border-brand-900/30 rounded-[2rem] shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-[9px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest">Taxa</span>
+                <div class="p-2 bg-brand-100 dark:bg-brand-900/20 rounded-lg">
+                    <flux:icon name="chart-bar" class="w-5 h-5 text-brand-600 dark:text-brand-400" />
+                </div>
+            </div>
+            <h3 class="text-3xl font-black text-brand-600 dark:text-brand-400 tracking-tighter">{{ $approvalRate }}%</h3>
+            <p class="text-[9px] text-zinc-500 font-bold mt-2">De aprovação</p>
+        </div>
+    </div>
+
     {{-- 1. GRID DE PROJETOS (RENTABILIDADE) --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        @foreach($projects as $project)
-            <div class="glass-card p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm flex flex-col justify-between">
+        @forelse($projects as $project)
+            <div class="glass-card p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-800/50 transition-all flex flex-col justify-between group">
                 <div class="mb-6">
                     <div class="flex justify-between items-start mb-4">
-                        <span class="px-2 py-1 rounded bg-brand-500/10 text-brand-600 text-[8px] font-black uppercase tracking-widest">Projeto Ativo</span>
-                        <p class="text-[10px] font-bold text-zinc-400">Budget: {{ number_format($project->budget, 2) }}€</p>
+                        <span class="px-3 py-1 rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[8px] font-black uppercase tracking-widest">📊 Ativo</span>
+                        <p class="text-[9px] font-bold text-zinc-500 dark:text-zinc-400">Orçamento: {{ number_format($project->budget, 2) }}€</p>
                     </div>
-                    <h3 class="text-xl font-black dark:text-white uppercase tracking-tight">{{ $project->name }}</h3>
+                    <h3 class="text-xl font-black dark:text-white uppercase tracking-tight group-hover:text-brand-600 transition-colors">{{ $project->name }}</h3>
                 </div>
 
-                <div class="space-y-4">
-                    <div class="flex justify-between items-end">
-                        <span class="text-[9px] font-black text-zinc-400 uppercase">Consumo do Orçamento</span>
-                        <span class="text-sm font-black dark:text-white">{{ number_format($project->total_costs, 2) }}€</span>
-                    </div>
+                <div class="space-y-5">
+                    <div>
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Consumo do Orçamento</span>
+                            <span class="text-sm font-black dark:text-white">{{ number_format($project->total_costs, 2) }}€</span>
+                        </div>
 
-                    {{-- BARRA DE PROGRESSO (Custo vs Budget) --}}
-                    @php $percent = $project->budget > 0 ? ($project->total_costs / $project->budget) * 100 : 0; @endphp
-                    <div class="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                        <div class="h-full {{ $percent > 90 ? 'bg-red-500' : 'bg-emerald-500' }} transition-all duration-1000" style="width: {{ min($percent, 100) }}%"></div>
+                        {{-- BARRA DE PROGRESSO (Custo vs Budget) --}}
+                        @php
+                            $percent = $project->budget > 0 ? ($project->total_costs / $project->budget) * 100 : 0;
+                            $barColor = $percent > 90 ? 'bg-red-500' : ($percent > 70 ? 'bg-amber-500' : 'bg-emerald-500');
+                        @endphp
+                        <div class="h-2.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-700">
+                            <div class="h-full {{ $barColor }} transition-all duration-1000 shadow-[0_0_8px_rgba(59,130,246,0.3)]" style="width: {{ min($percent, 100) }}%"></div>
+                        </div>
+                        <span class="text-[8px] text-zinc-500 font-bold mt-2 block">{{ number_format($percent, 0) }}% utilizado</span>
                     </div>
 
                     @if($project->pending_costs > 0)
-                        <p class="text-[9px] font-bold text-amber-500 uppercase">⚠ {{ number_format($project->pending_costs, 2) }}€ em aprovação</p>
+                        <div class="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/50 rounded-lg">
+                            <p class="text-[8px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest">⚠ Aguardando Aprovação</p>
+                            <p class="text-sm font-black text-amber-600 dark:text-amber-400">{{ number_format($project->pending_costs, 2) }}€</p>
+                        </div>
                     @endif
                 </div>
             </div>
-        @endforeach
+        @empty
+            <div class="col-span-full py-16 text-center px-4">
+                <div class="flex justify-center mb-4">
+                    <div class="p-4 bg-zinc-100 dark:bg-zinc-800 rounded-full">
+                        <flux:icon name="briefcase" class="w-12 h-12 text-zinc-400 dark:text-zinc-600" />
+                    </div>
+                </div>
+                <p class="text-lg font-black dark:text-white uppercase tracking-tight mb-2">Nenhum Projeto</p>
+                <p class="text-sm text-zinc-500 mb-6">Crie um projeto para começar a monitorizar custos</p>
+                <a href="{{ route('hub.business.projects') }}" wire:navigate class="inline-flex items-center gap-2 px-6 py-2 bg-brand-600 text-white text-xs font-black uppercase rounded-lg hover:bg-brand-700 transition-colors">
+                    <flux:icon name="plus" class="w-4 h-4" />
+                    Novo Projeto
+                </a>
+            </div>
+        @endforelse
     </div>
 
     {{-- 2. TABELA DE APROVAÇÕES PENDENTES --}}
     <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden">
-        <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
-            <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Despesas a Aguardar Revisão</h2>
-            <span class="bg-amber-500 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase">{{ $pendingExpenses->count() }} Pendentes</span>
+        <div class="px-8 py-6 border-b border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <h2 class="text-lg font-black uppercase tracking-tight text-zinc-700 dark:text-white">Despesas a Aguardar Revisão</h2>
+            <span class="bg-amber-500 text-white text-[10px] font-black px-4 py-2 rounded-full uppercase w-fit">{{ $pendingExpenses->count() }} Pendentes</span>
         </div>
 
-        <flux:table>
-            <flux:table.columns>
-                <flux:table.column class="pl-8 text-center uppercase text-[9px] font-black text-zinc-400 w-32">Status</flux:table.column>
-                <flux:table.column class="uppercase text-[9px] font-black text-zinc-400 w-40">Colaborador</flux:table.column>
-                <flux:table.column class="uppercase text-[9px] font-black text-zinc-400">Descritivo</flux:table.column>
-                <flux:table.column class="uppercase text-[9px] font-black text-zinc-400">Vínculo</flux:table.column>
-                <flux:table.column class="text-right uppercase text-[9px] font-black text-zinc-400 w-32">Valor</flux:table.column>
-                <flux:table.column class="pr-8 text-center uppercase text-[9px] font-black text-zinc-400 w-40">Decisão</flux:table.column>
-            </flux:table.columns>
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
+                    <tr>
+                        <th class="w-1/6 px-6 py-4 text-center uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Status</th>
+                        <th class="w-1/5 px-6 py-4 uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Colaborador</th>
+                        <th class="w-1/4 px-6 py-4 uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Descritivo</th>
+                        <th class="w-1/6 px-6 py-4 uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Vínculo</th>
+                        <th class="w-1/12 px-6 py-4 text-right uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Valor</th>
+                        <th class="w-1/6 px-6 py-4 text-center uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Decisão</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+                    @foreach($pendingExpenses as $exp)
+                        <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                            <td class="w-1/6 px-6 py-4 text-center">
+                                <span class="inline-block px-3 py-1 rounded-lg text-[8px] font-black uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 dark:border-amber-500/30 whitespace-nowrap">Pendente</span>
+                            </td>
 
-            <flux:table.rows>
-                @foreach($pendingExpenses as $exp)
-                    <flux:table.row>
-                        <flux:table.cell class="text-center">
-                            <span class="px-2 py-1 rounded text-[8px] font-black uppercase bg-amber-500/10 text-amber-600 border border-amber-500/20">Pendente</span>
-                        </flux:table.cell>
+                            <td class="w-1/5 px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <flux:avatar initials="{{ $exp->user->initials() }}" class="size-8 flex-shrink-0" />
+                                    <span class="text-xs font-bold dark:text-white truncate">{{ $exp->user->name }}</span>
+                                </div>
+                            </td>
 
-                        <flux:table.cell>
-                            <div class="flex items-center gap-3">
-                                <flux:avatar initials="{{ $exp->user->initials() }}" class="size-8" />
-                                <span class="text-xs font-bold dark:text-white">{{ $exp->user->name }}</span>
-                            </div>
-                        </flux:table.cell>
+                            <td class="w-1/4 px-6 py-4">
+                                <span class="text-xs font-black dark:text-white uppercase truncate block">{{ $exp->description }}</span>
+                            </td>
 
-                        <flux:table.cell>
-                            <span class="text-sm font-black dark:text-white uppercase">{{ $exp->description }}</span>
-                        </flux:table.cell>
+                            <td class="w-1/6 px-6 py-4">
+                                <div class="flex flex-col gap-1">
+                                    @if($exp->project) <span class="text-[8px] font-black text-brand-600 dark:text-brand-400 uppercase truncate">{{ $exp->project->name }}</span> @endif
+                                    @if($exp->task) <span class="text-[8px] font-bold text-zinc-500 dark:text-zinc-400 uppercase truncate">{{ $exp->task->title }}</span> @endif
+                                </div>
+                            </td>
 
-                        <flux:table.cell>
-                            <div class="flex flex-col gap-1">
-                                @if($exp->project) <span class="text-[9px] font-black text-brand-600 uppercase">PRJ: {{ $exp->project->name }}</span> @endif
-                                @if($exp->task) <span class="text-[9px] font-bold text-zinc-400 uppercase">TRF: {{ $exp->task->title }}</span> @endif
-                            </div>
-                        </flux:table.cell>
+                            <td class="w-1/12 px-6 py-4 text-right">
+                                <span class="text-sm font-black dark:text-white whitespace-nowrap">{{ number_format($exp->amount, 2, ',', ' ') }}€</span>
+                            </td>
 
-                        <flux:table.cell class="text-right">
-                            <span class="text-lg font-black dark:text-white">{{ number_format($exp->amount, 2) }}€</span>
-                        </flux:table.cell>
-
-                        <flux:table.cell class="pr-8">
-                            <div class="flex justify-center gap-2">
-                                <flux:button wire:click="approve({{ $exp->id }})" variant="primary" size="sm" class="!bg-emerald-600 rounded-lg text-[9px] font-black uppercase">Aprovar</flux:button>
-                                <flux:button wire:click="reject({{ $exp->id }})" variant="ghost" size="sm" class="text-red-500 rounded-lg text-[9px] font-black uppercase">Rejeitar</flux:button>
-                            </div>
-                        </flux:table.cell>
-                    </flux:table.row>
-                @endforeach
-            </flux:table.rows>
-        </flux:table>
+                            <td class="w-1/6 px-6 py-4">
+                                <div class="flex justify-center gap-2">
+                                    <flux:button wire:click="approve({{ $exp->id }})" variant="primary" size="sm" class="!bg-emerald-600 dark:!bg-emerald-700 rounded-lg text-[8px] font-black uppercase whitespace-nowrap">Aprovar</flux:button>
+                                    <flux:button wire:click="reject({{ $exp->id }})" variant="ghost" size="sm" class="text-red-500 dark:text-red-400 rounded-lg text-[8px] font-black uppercase whitespace-nowrap">Rejeitar</flux:button>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
 
         @if($pendingExpenses->isEmpty())
-            <div class="py-20 text-center text-zinc-400 uppercase text-[10px] font-black tracking-widest italic">
-                Tudo em dia! Nenhuma despesa pendente de aprovação.
+            <div class="py-20 px-6 text-center">
+                <div class="flex justify-center mb-4">
+                    <div class="p-4 bg-emerald-100 dark:bg-emerald-900/20 rounded-full">
+                        <flux:icon name="check-circle" class="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                </div>
+                <p class="text-lg font-black dark:text-white uppercase tracking-tight mb-2">Tudo Em Dia!</p>
+                <p class="text-sm text-zinc-500 italic mb-6">Nenhuma despesa pendente de aprovação. Excelente trabalho!</p>
+                <a href="{{ route('expenses.create') }}" wire:navigate class="inline-flex items-center gap-2 px-6 py-2 bg-brand-600 text-white text-xs font-black uppercase rounded-lg hover:bg-brand-700 transition-colors">
+                    <flux:icon name="plus" class="w-4 h-4" />
+                    Nova Despesa
+                </a>
             </div>
         @endif
     </div>
-      {{-- 3. HISTÓRICO DE CUSTOS (AUDITORIA) --}}
-    <div class="space-y-6">
-        <div class="flex items-center justify-between px-4">
-            <h2 class="text-xl font-black dark:text-white uppercase italic tracking-tighter">Histórico de Custos</h2>
+    {{-- 3. HISTÓRICO DE CUSTOS (AUDITORIA) --}}
+    <div class="space-y-4">
+        <div class="px-4">
+            <h2 class="text-lg font-black dark:text-white uppercase tracking-tight mb-6">Histórico de Custos</h2>
 
             {{-- BARRA DE FILTROS --}}
-            <div class="flex gap-3">
-                <flux:select wire:model.live="filterProject" class="w-48 text-[10px] font-bold uppercase">
+            <div class="flex flex-col sm:flex-row gap-3 w-full">
+                <flux:input
+                    wire:model.live.debounce.300ms="historySearch"
+                    icon="magnifying-glass"
+                    placeholder="Pesquisar por descrição..."
+                    class="flex-1 !rounded-xl border-zinc-200 dark:border-zinc-700 shadow-sm bg-white dark:bg-zinc-800 text-[10px]"
+                />
+
+                <flux:select wire:model.live="filterProject" class="sm:w-48 text-[10px] font-bold uppercase rounded-xl">
                     <option value="">Todos os Projetos</option>
                     @foreach($projects as $p) <option value="{{ $p->id }}">{{ $p->name }}</option> @endforeach
                 </flux:select>
 
-                <flux:select wire:model.live="filterStatus" class="w-40 text-[10px] font-bold uppercase">
+                <flux:select wire:model.live="filterStatus" class="sm:w-40 text-[10px] font-bold uppercase rounded-xl">
                     <option value="">Estado (Todos)</option>
                     <option value="aprovado">Aprovado</option>
                     <option value="rejeitado">Rejeitado</option>
@@ -128,64 +222,82 @@
         </div>
 
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden">
-            <flux:table>
-                <flux:table.columns>
-                    <flux:table.column class="pl-8 text-center uppercase text-[9px] font-black text-zinc-400 w-32">Status</flux:table.column>
-                    <flux:table.column class="uppercase text-[9px] font-black text-zinc-400 w-24">Data</flux:table.column>
-                    <flux:table.column class="uppercase text-[9px] font-black text-zinc-400">Gasto / Categoria</flux:table.column>
-                    <flux:table.column class="uppercase text-[9px] font-black text-zinc-400">Unidade Operacional</flux:table.column>
-                    <flux:table.column class="uppercase text-[9px] font-black text-zinc-400">Responsável</flux:table.column>
-                    <flux:table.column class="text-right uppercase text-[9px] font-black text-zinc-400 w-32">Valor</flux:table.column>
-                </flux:table.columns>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead class="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
+                        <tr>
+                            <th class="w-1/12 px-6 py-4 text-center uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Status</th>
+                            <th class="w-1/12 px-6 py-4 uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Data</th>
+                            <th class="w-1/4 px-6 py-4 uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Gasto / Categoria</th>
+                            <th class="w-1/5 px-6 py-4 uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Unidade Operacional</th>
+                            <th class="w-1/6 px-6 py-4 uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Responsável</th>
+                            <th class="w-1/8 px-6 py-4 text-right uppercase text-[9px] font-black text-zinc-500 dark:text-zinc-400">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+                        @forelse($history as $exp)
+                            <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                                <td class="w-1/12 px-6 py-4 text-center">
+                                    @if($exp->status === 'aprovado')
+                                        <span class="inline-block px-3 py-1 rounded-lg text-[8px] font-black uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 dark:border-emerald-500/30 whitespace-nowrap">✓ Aprovado</span>
+                                    @else
+                                        <span class="inline-block px-3 py-1 rounded-lg text-[8px] font-black uppercase bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 dark:border-red-500/30 whitespace-nowrap">✕ Rejeitado</span>
+                                    @endif
+                                </td>
 
-                <flux:table.rows>
-                    @foreach($history as $exp)
-                        <flux:table.row class="opacity-80 hover:opacity-100 transition-opacity">
-                            <flux:table.cell class="text-center">
-                                @if($exp->status === 'aprovado')
-                                    <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">Aprovado</span>
-                                @else
-                                    <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-red-500/10 text-red-600 border border-red-500/20">Rejeitado</span>
-                                @endif
-                            </flux:table.cell>
+                                <td class="w-1/12 px-6 py-4 text-xs font-bold text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+                                    {{ $exp->spent_at->format('d/m/Y') }}
+                                </td>
 
-                            <flux:table.cell class="text-xs font-bold text-zinc-500">
-                                {{ $exp->spent_at->format('d/m/Y') }}
-                            </flux:table.cell>
+                                <td class="w-1/4 px-6 py-4">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-xs font-black dark:text-white uppercase truncate">{{ $exp->description }}</span>
+                                        <span class="text-[8px] font-bold text-zinc-500 dark:text-zinc-400 uppercase italic truncate">{{ $exp->category?->name }}</span>
+                                    </div>
+                                </td>
 
-                            <flux:table.cell>
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-black dark:text-white uppercase tracking-tight">{{ $exp->description }}</span>
-                                    <span class="text-[9px] font-bold text-zinc-400 uppercase italic">{{ $exp->category?->name }}</span>
-                                </div>
-                            </flux:table.cell>
+                                <td class="w-1/5 px-6 py-4">
+                                    <div class="flex flex-col gap-1">
+                                        @if($exp->project) <span class="text-[8px] font-black text-brand-600 dark:text-brand-400 uppercase truncate">{{ $exp->project->name }}</span> @endif
+                                        @if($exp->task) <span class="text-[8px] font-bold text-zinc-500 dark:text-zinc-400 uppercase truncate">{{ $exp->task->title }}</span> @endif
+                                    </div>
+                                </td>
 
-                            <flux:table.cell>
-                                <div class="flex flex-col gap-1">
-                                    @if($exp->project) <span class="text-[9px] font-black text-brand-600 uppercase">📁 {{ $exp->project->name }}</span> @endif
-                                    @if($exp->task) <span class="text-[9px] font-bold text-zinc-500 uppercase italic">↳ {{ $exp->task->title }}</span> @endif
-                                </div>
-                            </flux:table.cell>
+                                <td class="w-1/6 px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="size-6 rounded-full bg-brand-600 flex items-center justify-center text-[8px] font-black text-white flex-shrink-0">{{ $exp->user->initials() }}</div>
+                                        <span class="text-[9px] font-bold text-zinc-600 dark:text-zinc-400 truncate">{{ explode(' ', $exp->user->name)[0] }}</span>
+                                    </div>
+                                </td>
 
-                            <flux:table.cell>
-                                <div class="flex items-center gap-2">
-                                    <div class="size-5 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[8px] font-black">{{ $exp->user->initials() }}</div>
-                                    <span class="text-[10px] font-bold text-zinc-600 dark:text-zinc-400">{{ explode(' ', $exp->user->name)[0] }}</span>
-                                </div>
-                            </flux:table.cell>
+                                <td class="w-1/8 px-6 py-4 text-right">
+                                    <span class="text-sm font-black dark:text-white tabular-nums whitespace-nowrap">{{ number_format($exp->amount, 2, ',', ' ') }}€</span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-6 py-16 text-center">
+                                    <div class="flex flex-col items-center gap-4">
+                                        <div class="p-4 bg-zinc-100 dark:bg-zinc-800 rounded-full">
+                                            <flux:icon name="inbox" class="w-10 h-10 text-zinc-400 dark:text-zinc-600" />
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-black dark:text-white uppercase tracking-tight">Sem Resultados</p>
+                                            <p class="text-xs text-zinc-500 mt-1">Nenhuma despesa corresponde aos seus filtros</p>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
-                            <flux:table.cell class="text-right">
-                                <span class="text-lg font-black dark:text-white tabular-nums">{{ number_format($exp->amount, 2, ',', ' ') }}€</span>
-                            </flux:table.cell>
-                        </flux:table.row>
-                    @endforeach
-                </flux:table.rows>
-            </flux:table>
-
-            <div class="p-6 bg-zinc-50/50 dark:bg-zinc-950/50">
+            @if($history->count() > 0)
+            <div class="px-6 py-4 bg-zinc-50/50 dark:bg-zinc-950/50 border-t border-zinc-100 dark:border-zinc-800 overflow-x-auto">
                 {{ $history->links() }}
             </div>
+            @endif
         </div>
     </div>
 </div>
-

@@ -42,6 +42,7 @@ class StoreSeeder extends Seeder
             [
                 'title' => 'IA Empresarial PRO',
                 'type' => 'ia',
+                'requires_business_plan' => true,
                 'price' => 59.00,
                 'image' => '🏢',
                 'badge' => 'Business',
@@ -175,6 +176,7 @@ class StoreSeeder extends Seeder
             [
                 'title' => 'Guia: Otimização Fiscal',
                 'type' => 'guide',
+                'requires_business_plan' => true,
                 'price' => 15.00,
                 'image' => '📜',
                 'sales_count' => 75,
@@ -197,6 +199,7 @@ class StoreSeeder extends Seeder
             [
                 'title' => 'Pack Gestão Business Pro',
                 'type' => 'pack',
+                'requires_business_plan' => true,
                 'price' => 29.00,
                 'image' => '💼',
                 'badge' => 'Popular',
@@ -256,6 +259,7 @@ class StoreSeeder extends Seeder
                 'title' => 'Pack Empreendedor',
                 'slug' => 'pack-empreendedor',
                 'type' => 'pack',
+                'requires_business_plan' => true,
                 'price' => 34.90,
                 'image' => '🚀',
                 'badge' => 'Pack',
@@ -265,6 +269,51 @@ class StoreSeeder extends Seeder
                 'features' => ['💼 Templates faturação', '📊 P&L empresarial', '📝 Propostas comerciais', '🎓 Mini-curso PDF'],
                 'related_products' => [2, 6],
             ],
+            [
+                'title' => 'Planeador de Objetivos Pessoais',
+                'slug' => 'planeador-objetivos-pessoais',
+                'type' => 'widget',
+                'price' => 12.90,
+                'image' => '🎯',
+                'badge' => 'Novo',
+                'sales_count' => 54,
+                'description' => 'Widget para acompanhar metas de poupança, viagens e compras importantes.',
+                'features' => ['🎯 Metas por objetivo', '📅 Progresso mensal', '🔔 Lembretes de contribuição'],
+            ],
+            [
+                'title' => 'Desafio Poupança 52 Semanas',
+                'slug' => 'desafio-poupanca-52-semanas',
+                'type' => 'guide',
+                'price' => 8.90,
+                'image' => '🐷',
+                'sales_count' => 67,
+                'description' => 'Plano semanal prático para criar uma rotina de poupança ao longo de um ano.',
+                'features' => ['📆 Calendário de 52 semanas', '📄 Guia PDF', '📊 Tabela de acompanhamento'],
+            ],
+            [
+                'title' => 'Dashboard Fluxo de Caixa Empresarial',
+                'slug' => 'dashboard-fluxo-caixa-empresarial',
+                'type' => 'widget',
+                'requires_business_plan' => true,
+                'price' => 44.90,
+                'image' => '💹',
+                'badge' => 'Business',
+                'is_featured' => true,
+                'sales_count' => 89,
+                'description' => 'Visão diária de entradas, saídas e projeções de tesouraria da empresa.',
+                'features' => ['💹 Fluxo de caixa diário', '📈 Projeção a 90 dias', '🏢 Visão por centro de custo'],
+            ],
+            [
+                'title' => 'Automação de Faturas e Cobranças',
+                'slug' => 'automacao-faturas-cobrancas',
+                'type' => 'automation',
+                'requires_business_plan' => true,
+                'price' => 39.90,
+                'image' => '🧾',
+                'sales_count' => 76,
+                'description' => 'Cria rotinas para cobrança, lembretes de pagamento e acompanhamento de faturas.',
+                'features' => ['🧾 Lembretes automáticos', '📥 Estado de cobrança', '📊 Relatório de recebimentos'],
+            ],
         ];
 
         $created = [];
@@ -273,7 +322,7 @@ class StoreSeeder extends Seeder
             $slug = $product['slug'] ?? Str::slug($product['title']);
             $created[$product['title']] = StoreProduct::updateOrCreate(
                 ['slug' => $slug],
-                array_merge($product, ['slug' => $slug])
+                array_merge($product, ['name' => $product['title'], 'slug' => $slug])
             );
         }
 

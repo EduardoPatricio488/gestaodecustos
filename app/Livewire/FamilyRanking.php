@@ -63,7 +63,7 @@ class FamilyRanking extends Component
                 'avg' => 0.0,
             ];
 
-        BudgetChallenge::firstOrCreate(
+        $challenge = BudgetChallenge::firstOrCreate(
             [
                 'workspace_id' => $workspace->id,
                 'user_id' => auth()->id(),
@@ -78,7 +78,13 @@ class FamilyRanking extends Component
             ]
         );
 
-        $this->dispatch('toast', variant: 'success', text: 'Desafio da semana economica criado!');
+        $message = 'Desafio da semana economica já estava ativo.';
+        if ($challenge->wasRecentlyCreated) {
+            $user = auth()->user();
+            $user->awardXp(18, 'desafio semanal criado');
+            $message = 'Desafio da semana economica criado! '.$user->xpToastText(18, 'desafio semanal criado');
+        }
+        $this->dispatch('toast', variant: 'success', text: $message);
     }
 
     private function amountValue($model): float

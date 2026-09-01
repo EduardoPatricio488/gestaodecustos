@@ -9,9 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class StoreProduct extends Model
 {
     protected $fillable = [
-        'title', 'slug', 'type', 'description', 'long_content', 'price', 'image', 'badge', 'features',
+        'name', 'title', 'slug', 'type', 'description', 'long_content', 'price', 'image', 'badge', 'features',
         'video_url', 'screenshots', 'roadmap', 'faq', 'learning_outcomes', 'course_modules', 'related_products',
-        'sales_count', 'rating_avg', 'rating_count', 'is_featured', 'download_path', 'points_reward',
+        'sales_count', 'rating_avg', 'rating_count', 'is_featured', 'requires_business_plan', 'download_path', 'points_reward',
     ];
 
     protected $casts = [
@@ -25,6 +25,7 @@ class StoreProduct extends Model
         'related_products' => 'array',
         'rating_avg' => 'decimal:2',
         'is_featured' => 'boolean',
+        'requires_business_plan' => 'boolean',
     ];
 
     public function purchases(): HasMany

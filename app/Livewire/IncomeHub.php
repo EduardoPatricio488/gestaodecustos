@@ -83,9 +83,11 @@ class IncomeHub extends Component
             'notes' => 'nullable|string|max:500',
         ]);
 
+        $user = auth()->user();
+
         Income::create([
             'user_id' => auth()->id(),
-            'workspace_id' => auth()->user()->current_workspace_id,
+            'workspace_id' => $user->current_workspace_id,
             'description' => $this->description,
             'amount' => $this->amount,
             'currency' => strtoupper($this->currency),
@@ -97,14 +99,16 @@ class IncomeHub extends Component
             'notes' => $this->notes ?: null,
         ]);
 
+        $user->awardXp(25, 'receita registada');
+
         $this->reset(['description', 'amount', 'tax_estimate', 'notes']);
-        $this->currency = strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR'));
+        $this->currency = strtoupper((string) ($user->currentWorkspace?->currency ?? 'EUR'));
         $this->received_at = now()->format('Y-m-d');
         $this->source = 'emprego';
         $this->frequency = 'pontual';
         $this->showExtraModal = false;
         $this->dispatch('modal-close-receita-extra');
-        $this->dispatch('toast', text: 'Receita extra registada!');
+        $this->dispatch('toast', variant: 'success', text: $user->xpToastText(25, 'receita registada'));
     }
 
     // Método para abrir o modal
@@ -183,9 +187,11 @@ class IncomeHub extends Component
             'recFrequency' => 'required|in:semanal,mensal,anual',
         ]);
 
+        $user = auth()->user();
+
         RecurringIncome::create([
             'user_id' => auth()->id(),
-            'workspace_id' => auth()->user()->current_workspace_id,
+            'workspace_id' => $user->current_workspace_id,
             'description' => $this->recDescription,
             'amount' => $this->recAmount,
             'day_of_month' => $this->recDay,
@@ -196,11 +202,13 @@ class IncomeHub extends Component
             'notes' => $this->recNotes ?: null,
         ]);
 
+        $user->awardXp(30, 'rendimento fixo configurado');
+
         $this->reset(['recWorkspaceId', 'recDescription', 'recAmount', 'recDay', 'recTaxEstimate', 'recNotes']);
         $this->recSource = 'emprego';
         $this->recFrequency = 'mensal';
         $this->dispatch('modal-close-salario');
-        $this->dispatch('toast', text: 'Rendimento fixo configurado!');
+        $this->dispatch('toast', variant: 'success', text: $user->xpToastText(30, 'rendimento fixo configurado'));
     }
 
     public function openExtraModal()

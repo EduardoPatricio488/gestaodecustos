@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Mail\StorePurchaseReceiptMail;
 use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Expense;
+use App\Models\StoreCheckoutSession;
 use App\Models\StoreCoupon;
 use App\Models\StoreProduct;
 use App\Models\StorePurchase;
@@ -12,6 +14,7 @@ use App\Models\StoreReview;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class StorePurchaseService
 {
@@ -27,10 +30,11 @@ class StorePurchaseService
         ?StoreCoupon $coupon = null,
         float $discount = 0,
         ?int $userId = null,
+        ?string $stripeSessionId = null,
     ): StorePurchase {
         $userId = $userId ?? Auth::id();
 
-        return DB::transaction(function () use ($product, $amountPaid, $paymentMethod, $coupon, $discount, $userId) {
+        return DB::transaction(function () use ($product, $amountPaid, $paymentMethod, $coupon, $discount, $userId, $stripeSessionId) {
             $purchase = StorePurchase::create([
                 'user_id' => $userId,
                 'product_id' => $product->id,
@@ -39,6 +43,7 @@ class StorePurchaseService
                 'payment_method' => $paymentMethod,
                 'coupon_code' => $coupon?->code,
                 'discount_amount' => $discount,
+                'stripe_session_id' => $stripeSessionId,
             ]);
 
             $this->licenses->issue($purchase);
@@ -147,5 +152,60 @@ class StorePurchaseService
             'model_id' => $metadata['product_id'] ?? 0, // 🔥 FIX: Agora enviamos o ID do produto
             'metadata' => $metadata,
         ]);
+    }
+
+    /**
+     * Completa uma compra da loja paga via Stripe Checkout, criando as StorePurchase(s)
+     * a partir da sessão pendente e enviando o recibo por e-mail. Idempotente: se a
+     * sessão já estiver marcada como concluída, não faz nada.
+     */
+    public function completeStoreCheckout(StoreCheckoutSession $pending, string $stripeSessionId): void
+    {
+        $purchases = DB::transaction(function () use ($pending, $stripeSessionId) {
+            $locked = StoreCheckoutSession::where('id', $pending->id)->lockForUpdate()->first();
+
+            if (! $locked || $locked->status === 'completed') {
+                return collect();
+            }
+
+            $coupon = $locked->coupon_code ? StoreCoupon::where('code', $locked->coupon_code)->first() : null;
+            $purchases = collect();
+
+            foreach ($locked->items as $index => $item) {
+                $product = StoreProduct::find($item['product_id']);
+
+                if (! $product) {
+                    continue;
+                }
+
+                $purchases->push($this->completePurchase(
+                    $product,
+                    (float) $item['amount_paid'],
+                    'stripe',
+                    $index === 0 ? $coupon : null,
+                    0,
+                    $locked->user_id,
+                    $stripeSessionId,
+                ));
+
+                if ($locked->add_expense_to_education) {
+                    $this->recordEducationExpense($product, (float) $item['amount_paid'], $locked->user_id);
+                }
+            }
+
+            $locked->update(['status' => 'completed', 'stripe_session_id' => $stripeSessionId]);
+
+            return $purchases;
+        });
+
+        if ($purchases->isEmpty()) {
+            return;
+        }
+
+        $user = User::find($pending->user_id);
+
+        if ($user) {
+            Mail::to($user->email)->send(new StorePurchaseReceiptMail($user, $purchases, $stripeSessionId));
+        }
     }
 }

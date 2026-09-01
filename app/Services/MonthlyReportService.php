@@ -4,12 +4,12 @@ namespace App\Services;
 
 use App\Mail\MonthlyReportMail;
 use App\Models\User;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Mail;
 
 class MonthlyReportService
 {
-    public function buildMonthlyData(User $user, Carbon $period): array
+    public function buildMonthlyData(User $user, CarbonInterface $period): array
     {
         $workspaceId = $user->current_workspace_id;
         $month = (int) $period->month;
@@ -62,7 +62,7 @@ class MonthlyReportService
         ];
     }
 
-    public function sendMonthlyReport(User $user, Carbon $period): void
+    public function sendMonthlyReport(User $user, CarbonInterface $period): void
     {
         $data = $this->buildMonthlyData($user, $period);
         Mail::to($user->email)->send(new MonthlyReportMail($user, $data));

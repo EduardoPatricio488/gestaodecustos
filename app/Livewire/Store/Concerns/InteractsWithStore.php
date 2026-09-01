@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Store\Concerns;
 
+use App\Models\StoreProduct;
 use App\Services\StoreCartService;
 use App\Services\StoreCompareService;
 use App\Services\StoreWishlistService;
+use Illuminate\Support\Facades\Auth;
 
 trait InteractsWithStore
 {
@@ -12,8 +14,7 @@ trait InteractsWithStore
     {
         $cart = app(StoreCartService::class);
 
-        if ($cart->isOwned($productId)) {
-            $this->dispatch('toast', text: 'Já tens este produto no inventário.');
+        if (! $this->canPurchase($productId)) {
 
             return;
         }
@@ -28,8 +29,7 @@ trait InteractsWithStore
     {
         $cart = app(StoreCartService::class);
 
-        if ($cart->isOwned($productId)) {
-            $this->dispatch('toast', text: 'Já tens este produto no inventário.');
+        if (! $this->canPurchase($productId)) {
 
             return;
         }
@@ -40,6 +40,19 @@ trait InteractsWithStore
         $this->dispatch('cart-item-added');
 
         return redirect()->route('store.checkout');
+    }
+
+    private function canPurchase(int $productId): bool
+    {
+        $product = StoreProduct::findOrFail($productId);
+
+        if ($product->requires_business_plan && ! (Auth::user()?->isBusinessPlan() ?? false)) {
+            $this->dispatch('toast', text: 'Este produto requer o plano Business.');
+
+            return false;
+        }
+
+        return true;
     }
 
     public function toggleWishlist(int $productId): void

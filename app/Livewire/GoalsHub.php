@@ -68,6 +68,8 @@ class GoalsHub extends Component
             ]
         );
 
+        $user = auth()->user();
+
         if ($isCreating && $initialAmount > 0) {
             GoalContribution::create([
                 'workspace_id' => $workspaceId,
@@ -80,11 +82,15 @@ class GoalsHub extends Component
             ]);
         }
 
+        if ($isCreating) {
+            $user->awardXp(15, 'meta criada');
+        }
+
         // FECHAR MODAL
         $this->dispatch('modal-close-goal');
 
         // TOAST
-        $this->dispatch('toast', text: 'Meta guardada com sucesso!');
+        $this->dispatch('toast', variant: 'success', text: $user->xpToastText($isCreating ? 15 : 0, $isCreating ? 'meta criada' : 'meta atualizada'));
 
         // RESET
         $this->reset(['name', 'target_amount', 'current_amount', 'deadline', 'editingGoalId']);
@@ -151,6 +157,8 @@ class GoalsHub extends Component
         $goal = Goal::where('workspace_id', auth()->user()->current_workspace_id)
             ->findOrFail($this->depositGoalId);
 
+        $user = auth()->user();
+
         DB::transaction(function () use ($goal) {
             $amount = (float) $this->depositAmount;
 
@@ -167,11 +175,13 @@ class GoalsHub extends Component
             $goal->increment('current_amount', $amount);
         });
 
+        $user->awardXp(10, 'depósito na meta');
+
         // FECHAR MODAL
         $this->dispatch('modal-close-deposit');
 
         // TOAST
-        $this->dispatch('toast', text: 'Depósito registado com sucesso!');
+        $this->dispatch('toast', variant: 'success', text: $user->xpToastText(10, 'depósito na meta'));
 
         // RESET
         $this->reset(['depositGoalId', 'depositAmount']);
@@ -201,6 +211,8 @@ class GoalsHub extends Component
         $workspaceId = auth()->user()->current_workspace_id;
         $goal = Goal::where('workspace_id', $workspaceId)->findOrFail($this->autoGoalId);
 
+        $user = auth()->user();
+
         AutoSavingsRule::updateOrCreate(
             [
                 'workspace_id' => $workspaceId,
@@ -216,12 +228,14 @@ class GoalsHub extends Component
             ]
         );
 
+        $user->awardXp(12, 'regra de poupança');
+
         $this->autoProfile = 'equilibrado';
         $this->autoPercent = 20;
         $this->autoMinIncomeAmount = '';
         $this->autoAppliesTo = 'all';
 
-        $this->dispatch('toast', variant: 'success', text: 'Regra de autopoupanca guardada!');
+        $this->dispatch('toast', variant: 'success', text: $user->xpToastText(12, 'regra de poupança'));
     }
 
     public function toggleAutoSavingsRule(int $id): void

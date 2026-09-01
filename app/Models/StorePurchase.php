@@ -10,7 +10,7 @@ class StorePurchase extends Model
 {
     protected $fillable = [
         'user_id', 'product_id', 'amount_paid', 'payment_status',
-        'coupon_code', 'discount_amount', 'payment_method',
+        'coupon_code', 'discount_amount', 'payment_method', 'stripe_session_id',
     ];
 
     protected $casts = [
