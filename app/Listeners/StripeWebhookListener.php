@@ -142,13 +142,20 @@ class StripeWebhookListener
 
         cache()->put($referenceKey, true, now()->addDay());
 
-        Mail::to($user->email)->send(new PlanReceiptMail(
-            $user,
-            $planSlug,
-            $amount,
-            $reference,
-            $receiptUrl,
-        ));
+        try {
+            Mail::to($user->email)->send(new PlanReceiptMail(
+                $user,
+                $planSlug,
+                $amount,
+                $reference,
+                $receiptUrl,
+            ));
+        } catch (\Exception $e) {
+            // Falha de envio de email não pode derrubar o webhook (Stripe repetiria indefinidamente)
+            Log::error("Falha ao enviar recibo do plano para utilizador {$user->id}: ".$e->getMessage());
+
+            return;
+        }
 
         EmailLog::create([
             'user_id' => $user->id,
