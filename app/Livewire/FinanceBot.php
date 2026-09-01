@@ -9,9 +9,11 @@ use App\Models\Income;
 use App\Models\Investment;
 use App\Models\Reminder;
 use App\Models\Subscription;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class FinanceBot extends Component
@@ -51,66 +53,6 @@ class FinanceBot extends Component
         $this->dispatch('message-sent');
     }
 
-    /* ============================================================
-     *  ENDPOINTS INTERNOS — ACESSO A DADOS DO UTILIZADOR
-     * ============================================================ */
-
-    public function getUserProfile()
-    {
-        return Auth::user();
-    }
-
-    public function getFamilyMembers()
-    {
-        return Auth::user()
-            ->familyMembers()
-            ->get();
-    }
-
-    public function getFitnessData()
-    {
-        return FitnessRecord::where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->get();
-    }
-
-    public function getHealthRecords()
-    {
-        return HealthRecord::where('user_id', Auth::id())
-            ->orderBy('date', 'desc')
-            ->get();
-    }
-
-    /* ============================================================
-     *  MÉTODOS PRIVADOS — RESUMOS E CONSULTAS RÁPIDAS
-     * ============================================================ */
-
-    private function getFitnessSummary()
-    {
-        return FitnessRecord::where('user_id', Auth::id())
-            ->latest()
-            ->first();
-    }
-
-    private function getHealthSummary()
-    {
-        return HealthRecord::where('user_id', Auth::id())
-            ->latest()
-            ->first();
-    }
-
-    private function getUserProfileData()
-    {
-        return Auth::user();
-    }
-
-    private function getFamilyData()
-    {
-        return Auth::user()
-            ->familyMembers()
-            ->get();
-    }
-
     public function sendMessage()
     {
 
@@ -136,260 +78,20 @@ class FinanceBot extends Component
         $this->isTyping = true;
         $this->dispatch('message-sent');
 
-        // NLP PRINCIPAL
-        if ($this->flow === null) {
-
-            $intent = $this->detectIntent($text);
-
-            // LISTAR LEMBRETES
-            if ($intent === 'list_reminders') {
-
-                $reminders = Reminder::where('workspace_id', Auth::user()->current_workspace_id)
-                    ->orderBy('remind_at')
-                    ->get();
-
-                if ($reminders->isEmpty()) {
-                    $this->messages[] = $this->botMessage('Não tens lembretes ativos.');
-                } else {
-                    $list = $reminders->map(fn ($r) => "• {$r->title} — {$r->remind_at->format('d/m H:i')}"
-                    )->implode("\n");
-
-                    $this->messages[] = $this->botMessage("Aqui estão os teus lembretes:\n\n$list");
-                }
-
-                $this->isTyping = false;
-                $this->dispatch('message-sent');
-
-                return;
-            }
-
-            // EXTRAÇÃO DE VALOR
-            $amount = null;
-            if (preg_match('/(\d+[.,]?\d*)/', $text, $m)) {
-                $amount = (float) str_replace(',', '.', $m[1]);
-            }
-
-            // CATEGORIA
-            $category = $this->detectCategoryByName($text);
-
-            // DESCRIÇÃO
-            $desc = trim(
-                str_replace([$m[1] ?? '', $category['name'] ?? ''], '', $text)
-            );
-
-            // DESPESA direta
-            if ($intent === 'expense' && $amount && $category['id']) {
-
-                Expense::create([
-                    'user_id' => Auth::id(),
-                    'workspace_id' => Auth::user()->current_workspace_id,
-                    'description' => ucfirst($desc),
-                    'amount' => $amount,
-                    'category_id' => $category['id'],
-                    'spent_at' => now(),
-                ]);
-
-                $this->messages[] = $this->botMessage(
-                    "Registei **{$amount}€** em **{$desc}** na categoria **{$category['name']}**. 💸"
-                );
-
-                $this->isTyping = false;
-                $this->dispatch('message-sent');
-
-                return;
-            }
-
-            // RENDIMENTO DIRETO
-            if ($intent === 'income' && $amount) {
-
-                Income::create([
-                    'user_id' => Auth::id(),
-                    'workspace_id' => Auth::user()->current_workspace_id,
-                    'description' => $desc ?: 'Rendimento',
-                    'amount' => $amount,
-                    'received_at' => now(),
-                ]);
-
-                $this->messages[] = $this->botMessage(
-                    "Registei rendimento de **{$amount}€** como **".($desc ?: 'Rendimento').'**.'
-                );
-
-                $this->isTyping = false;
-                $this->dispatch('message-sent');
-
-                return;
-            }
-
-            // INVESTIMENTO DIRETO
-            if ($intent === 'investment' && $amount) {
-
-                Investment::create([
-                    'user_id' => Auth::id(),
-                    'workspace_id' => Auth::user()->current_workspace_id,
-                    'name' => $desc ?: 'Investimento',
-                    'type' => str_contains(mb_strtolower($text), 'bitcoin') ? 'Cripto' : 'Outro',
-                    'product_type' => 'Ativo',           // Obrigatório
-                    'quantity' => 1,                 // Obrigatório
-                    'average_price' => $amount,           // Obrigatório
-                    'current_price' => $amount,           // O erro atual era aqui
-                    'operation_date' => now(),             // Usa este em vez de invested_at
-                ]);
-
-                $this->messages[] = $this->botMessage(
-                    "Registei investimento de **{$amount}€** em **".($desc ?: 'Investimento').'**. 📈'
-                );
-
-                $this->isTyping = false;
-                $this->dispatch('message-sent');
-
-                return;
-            }
-
-            // SUBSCRIÇÃO DIRETA
-            if ($intent === 'subscription' && $amount) {
-
-                $cycle = str_contains($lower, 'anual') ? 'yearly' : 'monthly';
-
-                Subscription::create([
-                    'user_id' => Auth::id(),
-                    'workspace_id' => Auth::user()->current_workspace_id,
-                    'name' => $desc ?: 'Subscrição',
-                    'amount' => $amount,
-                    'cycle' => $cycle,
-                    'next_charge_at' => now()->addMonth(),
-                    'active' => true,
-                ]);
-
-                $this->messages[] = $this->botMessage(
-                    "Registei subscrição de **{$amount}€ / {$cycle}** como **".($desc ?: 'Subscrição').'**. 📅'
-                );
-
-                $this->isTyping = false;
-                $this->dispatch('message-sent');
-
-                return;
-            }
-
-            // LEMBRETE DIRETO
-            if ($intent === 'reminder') {
-
-                $date = $this->parseNaturalDate($text);
-
-                preg_match('/(\d{1,2})h/', $text, $h);
-                $hour = $h[1] ?? 9;
-
-                $finalDate = $date->setTime($hour, 0);
-
-                Reminder::create([
-                    'user_id' => Auth::id(),
-                    'workspace_id' => Auth::user()->current_workspace_id,
-                    'title' => $text,
-                    'remind_at' => $finalDate,
-                ]);
-
-                $this->messages[] = $this->botMessage(
-                    'Lembrete criado para **'.$finalDate->format('d/m H:i').'**. ⏰'
-                );
-
-                $this->isTyping = false;
-                $this->dispatch('message-sent');
-
-                return;
-            }
-
-            // FLUXOS GUIADOS
-            if ($this->flow === null) {
-                if (str_contains($lower, 'gastei') || str_contains($lower, 'despesa')) {
-                    $this->handleAction('flow:add_expense');
-                    $this->isTyping = false;
-
-                    return;
-                }
-
-                if (str_contains($lower, 'recebi') || str_contains($lower, 'rendimento')) {
-                    $this->handleAction('flow:add_income');
-                    $this->isTyping = false;
-
-                    return;
-                }
-
-                if (str_contains($lower, 'invest')) {
-                    $this->handleAction('flow:add_invest');
-                    $this->isTyping = false;
-
-                    return;
-                }
-
-                if (str_contains($lower, 'subscri') || str_contains($lower, 'mensalidade')) {
-                    $this->handleAction('flow:add_sub');
-                    $this->isTyping = false;
-
-                    return;
-                }
-
-                if (str_contains($lower, 'meta') || str_contains($lower, 'objetivo')) {
-                    $this->handleAction('flow:add_goal');
-                    $this->isTyping = false;
-
-                    return;
-                }
-            }
-        }
-        $isQuestion = str_contains($lower, '?') ||
-                      str_contains($lower, 'achas') ||
-                      str_contains($lower, 'posso') ||
-                      str_contains($lower, 'devo') ||
-                      str_contains($lower, 'como');
-
-        // 2. Só entra nos FLUXOS GUIADOS se NÃO for uma pergunta
-        if ($this->flow === null && ! $isQuestion) {
-
-            if (str_contains($lower, 'gastei') || str_contains($lower, 'despesa')) {
-                $this->handleAction('flow:add_expense');
-                $this->isTyping = false;
-
-                return;
-            }
-
-            if (str_contains($lower, 'recebi') || str_contains($lower, 'rendimento')) {
-                $this->handleAction('flow:add_income');
-                $this->isTyping = false;
-
-                return;
-            }
-
-            // Agora o "invest" só dispara se não houver "?" ou "achas"
-            if (str_contains($lower, 'invest')) {
-                $this->handleAction('flow:add_invest');
-                $this->isTyping = false;
-
-                return;
-            }
-
-            if (str_contains($lower, 'subscri') || str_contains($lower, 'mensalidade')) {
-                $this->handleAction('flow:add_sub');
-                $this->isTyping = false;
-
-                return;
-            }
-
-            if (str_contains($lower, 'meta') || str_contains($lower, 'objetivo')) {
-                $this->handleAction('flow:add_goal');
-                $this->isTyping = false;
-
-                return;
-            }
-        }
-        // FLUXO ATIVO
-        if ($this->flow) {
+        // Fluxo guiado por botões (menus) em curso continua a ser processado passo a passo.
+        if ($this->flow !== null) {
             $this->processFlow($text);
 
             return;
         }
 
-        // FALLBACK → IA
-        $this->askAi($text);
+        // Todo o resto (perguntas, pedidos de registo, consultas) passa pelo
+        // agente de IA, que tem acesso total às ferramentas de leitura/escrita.
+        $this->runAgent();
+
         $this->isTyping = false;
+        $this->saveMessages();
+        $this->dispatch('message-sent');
     }
 
     private function processFlow($text)
@@ -659,7 +361,12 @@ class FinanceBot extends Component
 
     private function recallHabit($key)
     {
-        return Auth::user()->settings[$key] ?? null;
+        return session()->get("financebot_habit_{$key}");
+    }
+
+    private function rememberHabit($key, $value): void
+    {
+        session()->put("financebot_habit_{$key}", $value);
     }
 
     private function parseNaturalDate($text)
@@ -719,196 +426,656 @@ class FinanceBot extends Component
             ->sum('amount');
 
         $categories = Category::where('workspace_id', $ws->id)
-            ->pluck('name', 'id')
-            ->toArray();
-
-        $goals = Goal::where('workspace_id', $ws->id)
-            ->get()
-            ->map(fn ($g) => "{$g->name} ({$g->current_amount}/{$g->target_amount})")
-            ->implode(', ');
-
-        $subs = Subscription::where('workspace_id', $ws->id)
-            ->get()
-            ->map(fn ($s) => "{$s->name} ({$s->amount}€/{$s->cycle})")
-            ->implode(', ');
-
-        $investments = Investment::where('workspace_id', $ws->id)
-            ->get()
-            ->map(fn ($i) => "{$i->asset} ({$i->amount}€)")
-            ->implode(', ');
-
-        // 🔥 NOVO: lembretes
-        $reminders = Reminder::where('workspace_id', $ws->id)
-            ->orderBy('remind_at')
-            ->get()
-            ->map(fn ($r) => "{$r->title} ({$r->remind_at->format('d/m H:i')})")
+            ->pluck('name')
             ->implode(', ');
 
         return "
-TU ÉS O FINANCE PILOT.
-REGRAS:
-- Respostas curtas (máx. 2 frases).
-- Fala sempre em português informal.
-- Nunca dês links para /admin nem digas que tens acesso ao backend.
+TU ÉS O FINANCE PILOT, o assistente financeiro pessoal do utilizador dentro da app.
 
-UTILIZADOR:
-- Nome: {$user->name}
+QUEM ÉS:
+- Nome do utilizador: {$user->name}.
+- Tens acesso total, através de ferramentas (tools), aos dados financeiros deste utilizador:
+  despesas, rendimentos, investimentos, subscrições, metas, lembretes e categorias.
+- Podes CONSULTAR e também CRIAR, ATUALIZAR e APAGAR registos diretamente, usando as tools
+  disponíveis. Nunca inventes dados — usa sempre uma tool para confirmar factos ou executar ações.
 
-DADOS FINANCEIROS:
-- Saldo Mensal: Entradas ".number_format($earned, 2).'€ | Saídas '.number_format($spent, 2).'€.
-- Categorias: '.json_encode($categories).'.
-- Metas: '.($goals ?: 'Nenhuma').'.
-- Subscrições: '.($subs ?: 'Nenhuma').'.
-- Investimentos: '.($investments ?: 'Nenhum').'.
-- Lembretes: '.($reminders ?: 'Nenhum').'.
+SNAPSHOT RÁPIDO DESTE MÊS (usa tools se precisares de mais detalhe ou de outro período):
+- Entradas: ".number_format($earned, 2).'€ | Saídas: '.number_format($spent, 2).'€.
+- Categorias existentes: '.($categories ?: 'nenhuma ainda').'.
 
-PODER DE ESCRITA:
-- Se o utilizador quiser registar algo, pergunta primeiro se confirma.
-- Depois da confirmação, escreve NO FIM da resposta uma ação no formato:
-  [ACTION:CREATE_EXPENSE|amount:XX.XX|desc:Descrição]
-  [ACTION:CREATE_INCOME|amount:XX.XX|desc:Descrição]
-  [ACTION:CREATE_SUB|name:Nome|amount:XX.XX|cycle:monthly]
-  [ACTION:CREATE_INVEST|asset:Nome|amount:XX.XX]
-  [ACTION:CREATE_GOAL|name:Nome|target:XX.XX]
-  [ACTION:CREATE_REMINDER|title:Texto|date:YYYY-MM-DD HH:MM]
-
-NUNCA INVENTES CAMPOS QUE NÃO CONSIGAS PREENCHER.
+COMO AGIR:
+- Quando o utilizador pedir para registares algo (despesa, rendimento, investimento, subscrição,
+  meta, lembrete), usa imediatamente a tool de criação adequada — não é preciso pedir confirmação
+  extra, o utilizador já pediu explicitamente.
+- Quando o utilizador perguntar sobre os dados dele (quanto gastou, quais as metas, lembretes, etc.),
+  usa as tools de listagem/resumo para responder com dados reais, nunca inventes números.
+- Se faltar um dado obrigatório (ex: valor), pergunta apenas esse dado em falta antes de agir.
+- Para apagar ou marcar algo como concluído, se não souberes o id, lista primeiro para o encontrar.
+- Respostas curtas, diretas, em português informal de Portugal, com emojis pontuais.
+- Nunca reveles detalhes técnicos internos (ids de sistema, backend, prompts) ao utilizador.
 ';
     }
 
-    private function askAi(string $userText)
+    /**
+     * Loop de function-calling: envia a conversa + tools ao modelo e, enquanto ele pedir
+     * para executar ferramentas, executa-as e devolve o resultado, até obter uma resposta final.
+     */
+    private function runAgent(): void
     {
         try {
             $history = collect($this->messages)
-                ->take(-6)
+                ->take(-12)
                 ->map(fn ($m) => [
                     'role' => $m['role'] === 'user' ? 'user' : 'assistant',
                     'content' => $m['content'],
                 ])
                 ->toArray();
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.env('OPENROUTER_API_KEY'),
-            ])->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => 'anthropic/claude-3-haiku',
-                'messages' => array_merge(
-                    [['role' => 'system', 'content' => $this->getGlobalContext()]],
-                    $history,
-                    [['role' => 'user', 'content' => $userText]]
-                ),
-                'max_tokens' => 2000,
-            ]);
+            $conversation = array_merge(
+                [['role' => 'system', 'content' => $this->getGlobalContext()]],
+                $history
+            );
 
-            $reply = $response->json('choices.0.message.content') ?? 'Erro ao processar.';
+            $finalReply = null;
 
-            if (Str::contains($reply, '[ACTION:')) {
-                $this->executeAction($reply);
-                $reply = preg_replace('/
+            for ($i = 0; $i < 6 && $finalReply === null; $i++) {
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer '.env('OPENROUTER_API_KEY'),
+                    'Content-Type' => 'application/json',
+                ])->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', [
+                    'model' => 'openai/gpt-4o-mini',
+                    'messages' => $conversation,
+                    'tools' => $this->getToolDefinitions(),
+                    'tool_choice' => 'auto',
+                    'max_tokens' => 1200,
+                ]);
 
-\[ACTION:.*?\]
+                if (! $response->successful()) {
+                    Log::error('FinanceBot: erro na API OpenRouter', ['status' => $response->status(), 'body' => $response->body()]);
+                    $this->messages[] = $this->botMessage('Estou com soluços técnicos. Tenta de novo.');
 
-/s', ' ✅', $reply);
+                    return;
+                }
+
+                $message = $response->json('choices.0.message');
+
+                if (! $message) {
+                    $this->messages[] = $this->botMessage('Não consegui processar essa mensagem. Tenta reformular.');
+
+                    return;
+                }
+
+                $toolCalls = $message['tool_calls'] ?? null;
+
+                if (empty($toolCalls)) {
+                    $finalReply = trim((string) ($message['content'] ?? '')) ?: 'Feito! ✅';
+                    break;
+                }
+
+                $conversation[] = $message;
+
+                foreach ($toolCalls as $call) {
+                    $name = $call['function']['name'] ?? '';
+                    $args = json_decode($call['function']['arguments'] ?? '{}', true) ?: [];
+
+                    $result = $this->executeTool($name, $args);
+
+                    $conversation[] = [
+                        'role' => 'tool',
+                        'tool_call_id' => $call['id'] ?? '',
+                        'content' => json_encode($result, JSON_UNESCAPED_UNICODE),
+                    ];
+                }
             }
 
-            $this->messages[] = $this->botMessage($reply);
-        } catch (\Exception $e) {
+            $this->messages[] = $this->botMessage($finalReply ?? 'Não consegui concluir o pedido, tenta reformular.');
+        } catch (\Throwable $e) {
+            Log::error('FinanceBot: exceção no agente', ['message' => $e->getMessage()]);
             $this->messages[] = $this->botMessage('Estou com soluços técnicos. Tenta de novo.');
         }
-
-        $this->isTyping = false;
-        $this->dispatch('message-sent');
     }
 
-    private function executeAction(string $text): void
+    /**
+     * Definições (JSON Schema) das ferramentas que o modelo pode invocar.
+     */
+    private function getToolDefinitions(): array
     {
+        $tool = fn (string $name, string $description, array $properties = [], array $required = []) => [
+            'type' => 'function',
+            'function' => [
+                'name' => $name,
+                'description' => $description,
+                'parameters' => [
+                    'type' => 'object',
+                    // PHP arrays vazios são serializados como `[]`, mas o schema exige um objeto `{}`.
+                    'properties' => empty($properties) ? new \stdClass : $properties,
+                    'required' => $required,
+                ],
+            ],
+        ];
 
-        if (! preg_match('/
+        return [
+            $tool('create_expense', 'Regista uma nova despesa do utilizador.', [
+                'amount' => ['type' => 'number', 'description' => 'Valor da despesa em euros.'],
+                'description' => ['type' => 'string', 'description' => 'Descrição curta da despesa.'],
+                'category_name' => ['type' => 'string', 'description' => 'Nome da categoria. Se não existir, é criada.'],
+                'date' => ['type' => 'string', 'description' => "Data (YYYY-MM-DD) ou termo natural como 'hoje', 'ontem'. Vazio = hoje."],
+            ], ['amount', 'description']),
 
-\[ACTION:(.*?)\]
+            $tool('create_income', 'Regista um novo rendimento/entrada de dinheiro do utilizador.', [
+                'amount' => ['type' => 'number', 'description' => 'Valor do rendimento em euros.'],
+                'description' => ['type' => 'string', 'description' => 'Descrição (ex: Salário, Freelance).'],
+                'date' => ['type' => 'string', 'description' => 'Data (YYYY-MM-DD) ou termo natural. Vazio = hoje.'],
+            ], ['amount', 'description']),
 
-/s', $text, $matches)) {
-            return;
-        }
+            $tool('create_investment', 'Regista um novo investimento do utilizador.', [
+                'name' => ['type' => 'string', 'description' => 'Nome do ativo (ex: S&P500, Bitcoin).'],
+                'amount' => ['type' => 'number', 'description' => 'Valor investido em euros.'],
+                'type' => ['type' => 'string', 'description' => "Tipo do ativo (ex: 'Ações', 'Cripto', 'Outro')."],
+                'date' => ['type' => 'string', 'description' => 'Data (YYYY-MM-DD) ou termo natural. Vazio = hoje.'],
+            ], ['name', 'amount']),
 
-        $payload = $matches[1];
-        $parts = explode('|', $payload);
+            $tool('create_subscription', 'Regista uma nova subscrição/mensalidade recorrente.', [
+                'name' => ['type' => 'string', 'description' => 'Nome da subscrição (ex: Netflix).'],
+                'amount' => ['type' => 'number', 'description' => 'Valor cobrado por ciclo, em euros.'],
+                'cycle' => ['type' => 'string', 'description' => "'monthly' ou 'yearly'. Default: monthly."],
+                'category_name' => ['type' => 'string', 'description' => 'Categoria (opcional, default Subscrições).'],
+            ], ['name', 'amount']),
 
-        if (count($parts) < 2) {
-            return;
-        }
+            $tool('create_goal', 'Cria uma nova meta de poupança.', [
+                'name' => ['type' => 'string', 'description' => 'Nome da meta (ex: Fundo de emergência).'],
+                'target_amount' => ['type' => 'number', 'description' => 'Valor objetivo em euros.'],
+                'current_amount' => ['type' => 'number', 'description' => 'Valor já poupado, se algum. Default 0.'],
+                'deadline' => ['type' => 'string', 'description' => 'Data limite (YYYY-MM-DD), opcional.'],
+            ], ['name', 'target_amount']),
 
-        $type = $parts[0];
-        $params = collect(array_slice($parts, 1))
-            ->mapWithKeys(function ($pair) {
-                $split = explode(':', $pair, 2);
-                if (count($split) !== 2) {
-                    return [];
-                }
-                [$key, $value] = $split;
+            $tool('update_goal_progress', 'Adiciona (ou subtrai, com valor negativo) montante ao progresso de uma meta existente.', [
+                'goal_name' => ['type' => 'string', 'description' => 'Nome (ou parte do nome) da meta a atualizar.'],
+                'amount' => ['type' => 'number', 'description' => 'Valor a adicionar ao progresso atual (pode ser negativo).'],
+            ], ['goal_name', 'amount']),
 
-                return [trim($key) => trim($value)];
-            });
+            $tool('create_reminder', 'Cria um lembrete para o utilizador.', [
+                'title' => ['type' => 'string', 'description' => 'Texto do lembrete.'],
+                'date' => ['type' => 'string', 'description' => "Data/hora (YYYY-MM-DD HH:MM) ou termo natural como 'amanhã às 9h'."],
+                'priority' => ['type' => 'string', 'description' => "'low', 'medium' ou 'high'. Default medium."],
+            ], ['title']),
 
-        $wsId = Auth::user()->current_workspace_id;
+            $tool('complete_reminder', 'Marca um lembrete existente como concluído.', [
+                'reminder_id' => ['type' => 'integer', 'description' => 'Id do lembrete (obtido via list_reminders).'],
+            ], ['reminder_id']),
+
+            $tool('delete_reminder', 'Apaga definitivamente um lembrete existente.', [
+                'reminder_id' => ['type' => 'integer', 'description' => 'Id do lembrete (obtido via list_reminders).'],
+            ], ['reminder_id']),
+
+            $tool('delete_expense', 'Apaga definitivamente uma despesa existente.', [
+                'expense_id' => ['type' => 'integer', 'description' => 'Id da despesa (obtido via list_expenses).'],
+            ], ['expense_id']),
+
+            $tool('list_expenses', 'Lista despesas recentes do utilizador, com total.', [
+                'days' => ['type' => 'integer', 'description' => 'Quantos dias atrás considerar. Default 30.'],
+                'category_name' => ['type' => 'string', 'description' => 'Filtrar por categoria (opcional).'],
+            ]),
+
+            $tool('list_incomes', 'Lista rendimentos recentes do utilizador, com total.', [
+                'days' => ['type' => 'integer', 'description' => 'Quantos dias atrás considerar. Default 30.'],
+            ]),
+
+            $tool('list_investments', 'Lista todos os investimentos/carteira do utilizador.'),
+
+            $tool('list_subscriptions', 'Lista todas as subscrições ativas do utilizador.'),
+
+            $tool('list_goals', 'Lista todas as metas de poupança do utilizador, com progresso.'),
+
+            $tool('list_reminders', 'Lista lembretes do utilizador (por defeito só os pendentes).', [
+                'include_completed' => ['type' => 'boolean', 'description' => 'Incluir lembretes já concluídos. Default false.'],
+            ]),
+
+            $tool('list_categories', 'Lista as categorias de despesas existentes do utilizador.'),
+
+            $tool('get_financial_summary', 'Devolve um resumo financeiro (entradas, saídas, poupança, por categoria) de um período.', [
+                'days' => ['type' => 'integer', 'description' => 'Quantos dias atrás considerar. Default 30.'],
+            ]),
+        ];
+    }
+
+    /**
+     * Executa uma tool pedida pelo modelo, sempre restrita ao utilizador/workspace autenticado.
+     */
+    private function executeTool(string $name, array $args): array
+    {
         $userId = Auth::id();
+        $wsId = Auth::user()->current_workspace_id;
 
-        match ($type) {
-            'CREATE_REMINDER' => Reminder::create([
+        try {
+            return match ($name) {
+                'create_expense' => $this->toolCreateExpense($args, $userId, $wsId),
+                'create_income' => $this->toolCreateIncome($args, $userId, $wsId),
+                'create_investment' => $this->toolCreateInvestment($args, $userId, $wsId),
+                'create_subscription' => $this->toolCreateSubscription($args, $userId, $wsId),
+                'create_goal' => $this->toolCreateGoal($args, $userId, $wsId),
+                'update_goal_progress' => $this->toolUpdateGoalProgress($args, $wsId),
+                'create_reminder' => $this->toolCreateReminder($args, $userId, $wsId),
+                'complete_reminder' => $this->toolCompleteReminder($args, $wsId),
+                'delete_reminder' => $this->toolDeleteReminder($args, $wsId),
+                'delete_expense' => $this->toolDeleteExpense($args, $wsId),
+                'list_expenses' => $this->toolListExpenses($args, $wsId),
+                'list_incomes' => $this->toolListIncomes($args, $wsId),
+                'list_investments' => $this->toolListInvestments($wsId),
+                'list_subscriptions' => $this->toolListSubscriptions($wsId),
+                'list_goals' => $this->toolListGoals($wsId),
+                'list_reminders' => $this->toolListReminders($args, $wsId),
+                'list_categories' => $this->toolListCategories($wsId),
+                'get_financial_summary' => $this->toolGetFinancialSummary($args, $wsId),
+                default => ['error' => "Ferramenta desconhecida: {$name}"],
+            };
+        } catch (\Throwable $e) {
+            Log::error('FinanceBot: erro a executar tool', ['tool' => $name, 'args' => $args, 'message' => $e->getMessage()]);
+
+            return ['error' => 'Falha ao executar a ação: '.$e->getMessage()];
+        }
+    }
+
+    private function resolveCategory(?string $name, int $wsId, int $userId): ?Category
+    {
+        $name = trim((string) $name);
+        if ($name === '') {
+            return null;
+        }
+
+        return Category::where('workspace_id', $wsId)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->first()
+            ?? Category::create([
                 'user_id' => $userId,
                 'workspace_id' => $wsId,
-                'title' => $params->get('title'),
-                'remind_at' => $params->get('date'),
-            ]),
+                'name' => ucfirst($name),
+            ]);
+    }
 
-            'CREATE_EXPENSE' => Expense::create([
-                'user_id' => $userId,
-                'workspace_id' => $wsId,
-                'description' => $params->get('desc'),
-                'amount' => (float) $params->get('amount', 0),
-                'spent_at' => now(),
-            ]),
+    private function resolveDate(?string $text): CarbonInterface
+    {
+        $text = trim((string) $text);
+        if ($text === '') {
+            return now();
+        }
 
-            'CREATE_INCOME' => Income::create([
-                'user_id' => $userId,
-                'workspace_id' => $wsId,
-                'description' => $params->get('desc'),
-                'amount' => (float) $params->get('amount', 0),
-                'received_at' => now(),
-            ]),
+        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $text)) {
+            try {
+                return Carbon::parse($text);
+            } catch (\Throwable $e) {
+                // cai para o parser de linguagem natural abaixo
+            }
+        }
 
-            'CREATE_SUB' => Subscription::create([
-                'user_id' => $userId,
-                'workspace_id' => $wsId,
-                'name' => $params->get('name'),
-                'amount' => (float) $params->get('amount', 0),
-                'cycle' => $params->get('cycle', 'monthly'),
-                'next_charge_at' => now()->addMonth(),
-                'active' => true,
-            ]),
+        return $this->parseNaturalDate($text);
+    }
 
-            'CREATE_INVEST' => Investment::create([
-                'user_id' => $userId,
-                'workspace_id' => $wsId,
-                'name' => $params->get('asset') ?: 'Investimento',
-                'type' => 'Outro',
-                'product_type' => 'Ativo',
-                'quantity' => 1,
-                'average_price' => (float) $params->get('amount', 0),
-                'current_price' => (float) $params->get('amount', 0),
-                'operation_date' => now(),
-            ]),
+    private function toolCreateExpense(array $args, int $userId, int $wsId): array
+    {
+        $amount = (float) ($args['amount'] ?? 0);
+        if ($amount <= 0) {
+            return ['error' => 'Valor inválido.'];
+        }
 
-            'CREATE_GOAL' => Goal::create([
-                'user_id' => $userId,
-                'workspace_id' => $wsId,
-                'name' => $params->get('name'),
-                'target_amount' => (float) $params->get('target', 0),
-                'current_amount' => 0,
-                'status' => 'active',
-            ]),
+        $category = $this->resolveCategory($args['category_name'] ?? null, $wsId, $userId);
 
-            default => null,
-        };
+        $expense = Expense::create([
+            'user_id' => $userId,
+            'workspace_id' => $wsId,
+            'category_id' => $category?->id,
+            'description' => $args['description'] ?? 'Despesa',
+            'amount' => $amount,
+            'spent_at' => $this->resolveDate($args['date'] ?? null),
+        ]);
+
+        return [
+            'success' => true,
+            'id' => $expense->id,
+            'message' => "Despesa de {$amount}€ ({$expense->description}) registada.",
+        ];
+    }
+
+    private function toolCreateIncome(array $args, int $userId, int $wsId): array
+    {
+        $amount = (float) ($args['amount'] ?? 0);
+        if ($amount <= 0) {
+            return ['error' => 'Valor inválido.'];
+        }
+
+        $income = Income::create([
+            'user_id' => $userId,
+            'workspace_id' => $wsId,
+            'description' => $args['description'] ?? 'Rendimento',
+            'amount' => $amount,
+            'received_at' => $this->resolveDate($args['date'] ?? null),
+        ]);
+
+        return [
+            'success' => true,
+            'id' => $income->id,
+            'message' => "Rendimento de {$amount}€ ({$income->description}) registado.",
+        ];
+    }
+
+    private function toolCreateInvestment(array $args, int $userId, int $wsId): array
+    {
+        $amount = (float) ($args['amount'] ?? 0);
+        if ($amount <= 0) {
+            return ['error' => 'Valor inválido.'];
+        }
+
+        $investment = Investment::create([
+            'user_id' => $userId,
+            'workspace_id' => $wsId,
+            'name' => $args['name'] ?? 'Investimento',
+            'type' => $args['type'] ?? 'Outro',
+            'product_type' => 'Ativo',
+            'quantity' => 1,
+            'average_price' => $amount,
+            'current_price' => $amount,
+            'operation_date' => $this->resolveDate($args['date'] ?? null),
+        ]);
+
+        return [
+            'success' => true,
+            'id' => $investment->id,
+            'message' => "Investimento de {$amount}€ em {$investment->name} registado.",
+        ];
+    }
+
+    private function toolCreateSubscription(array $args, int $userId, int $wsId): array
+    {
+        $amount = (float) ($args['amount'] ?? 0);
+        if ($amount <= 0) {
+            return ['error' => 'Valor inválido.'];
+        }
+
+        $category = $this->resolveCategory($args['category_name'] ?? 'Subscrições', $wsId, $userId);
+        $cycle = ($args['cycle'] ?? 'monthly') === 'yearly' ? 'yearly' : 'monthly';
+
+        $subscription = Subscription::create([
+            'user_id' => $userId,
+            'workspace_id' => $wsId,
+            'category_id' => $category->id,
+            'name' => $args['name'] ?? 'Subscrição',
+            'amount' => $amount,
+            'billing_day' => min(28, max(1, (int) now()->day)),
+            'cycle' => $cycle,
+            'is_active' => true,
+            'status' => 'active',
+            'started_at' => now(),
+        ]);
+
+        return [
+            'success' => true,
+            'id' => $subscription->id,
+            'message' => "Subscrição {$subscription->name} de {$amount}€/{$cycle} criada.",
+        ];
+    }
+
+    private function toolCreateGoal(array $args, int $userId, int $wsId): array
+    {
+        $target = (float) ($args['target_amount'] ?? 0);
+        if ($target <= 0) {
+            return ['error' => 'Valor objetivo inválido.'];
+        }
+
+        $deadline = ! empty($args['deadline']) ? $this->resolveDate($args['deadline']) : null;
+
+        $goal = Goal::create([
+            'user_id' => $userId,
+            'workspace_id' => $wsId,
+            'name' => $args['name'] ?? 'Meta',
+            'target_amount' => $target,
+            'current_amount' => (float) ($args['current_amount'] ?? 0),
+            'deadline' => $deadline,
+        ]);
+
+        return [
+            'success' => true,
+            'id' => $goal->id,
+            'message' => "Meta {$goal->name} ({$target}€) criada.",
+        ];
+    }
+
+    private function toolUpdateGoalProgress(array $args, int $wsId): array
+    {
+        $goal = Goal::where('workspace_id', $wsId)
+            ->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower((string) ($args['goal_name'] ?? '')).'%'])
+            ->first();
+
+        if (! $goal) {
+            return ['error' => 'Meta não encontrada.'];
+        }
+
+        $goal->current_amount = max(0, (float) $goal->current_amount + (float) ($args['amount'] ?? 0));
+        $goal->save();
+
+        return [
+            'success' => true,
+            'id' => $goal->id,
+            'message' => "Meta {$goal->name} atualizada: {$goal->current_amount}€ / {$goal->target_amount}€.",
+        ];
+    }
+
+    private function toolCreateReminder(array $args, int $userId, int $wsId): array
+    {
+        if (empty($args['title'])) {
+            return ['error' => 'É necessário um título para o lembrete.'];
+        }
+
+        $date = $this->resolveDate($args['date'] ?? null);
+        $priority = in_array($args['priority'] ?? null, ['low', 'medium', 'high'], true) ? $args['priority'] : 'medium';
+
+        $reminder = Reminder::create([
+            'user_id' => $userId,
+            'workspace_id' => $wsId,
+            'title' => $args['title'],
+            'remind_at' => $date,
+            'priority' => $priority,
+        ]);
+
+        return [
+            'success' => true,
+            'id' => $reminder->id,
+            'message' => "Lembrete '{$reminder->title}' criado para {$date->format('d/m H:i')}.",
+        ];
+    }
+
+    private function toolCompleteReminder(array $args, int $wsId): array
+    {
+        $reminder = Reminder::where('workspace_id', $wsId)->find($args['reminder_id'] ?? null);
+        if (! $reminder) {
+            return ['error' => 'Lembrete não encontrado.'];
+        }
+
+        $reminder->update(['is_completed' => true, 'completed_at' => now()]);
+
+        return ['success' => true, 'message' => "Lembrete '{$reminder->title}' marcado como concluído."];
+    }
+
+    private function toolDeleteReminder(array $args, int $wsId): array
+    {
+        $reminder = Reminder::where('workspace_id', $wsId)->find($args['reminder_id'] ?? null);
+        if (! $reminder) {
+            return ['error' => 'Lembrete não encontrado.'];
+        }
+
+        $title = $reminder->title;
+        $reminder->delete();
+
+        return ['success' => true, 'message' => "Lembrete '{$title}' apagado."];
+    }
+
+    private function toolDeleteExpense(array $args, int $wsId): array
+    {
+        $expense = Expense::where('workspace_id', $wsId)->find($args['expense_id'] ?? null);
+        if (! $expense) {
+            return ['error' => 'Despesa não encontrada.'];
+        }
+
+        $desc = $expense->description;
+        $expense->delete();
+
+        return ['success' => true, 'message' => "Despesa '{$desc}' apagada."];
+    }
+
+    private function toolListExpenses(array $args, int $wsId): array
+    {
+        $days = (int) ($args['days'] ?? 30);
+
+        $query = Expense::where('workspace_id', $wsId)
+            ->where('spent_at', '>=', now()->subDays($days))
+            ->with('category');
+
+        if (! empty($args['category_name'])) {
+            $needle = mb_strtolower($args['category_name']);
+            $query->whereHas('category', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ["%{$needle}%"]));
+        }
+
+        $expenses = $query->orderByDesc('spent_at')->limit(30)->get();
+
+        return [
+            'count' => $expenses->count(),
+            'total' => (float) $expenses->sum('amount'),
+            'items' => $expenses->map(fn ($e) => [
+                'id' => $e->id,
+                'description' => $e->description,
+                'amount' => (float) $e->amount,
+                'category' => $e->category?->name,
+                'date' => $e->spent_at?->format('Y-m-d'),
+            ])->values()->toArray(),
+        ];
+    }
+
+    private function toolListIncomes(array $args, int $wsId): array
+    {
+        $days = (int) ($args['days'] ?? 30);
+
+        $incomes = Income::where('workspace_id', $wsId)
+            ->where('received_at', '>=', now()->subDays($days))
+            ->orderByDesc('received_at')
+            ->limit(30)
+            ->get();
+
+        return [
+            'count' => $incomes->count(),
+            'total' => (float) $incomes->sum('amount'),
+            'items' => $incomes->map(fn ($i) => [
+                'id' => $i->id,
+                'description' => $i->description,
+                'amount' => (float) $i->amount,
+                'date' => $i->received_at?->format('Y-m-d'),
+            ])->values()->toArray(),
+        ];
+    }
+
+    private function toolListInvestments(int $wsId): array
+    {
+        $investments = Investment::where('workspace_id', $wsId)->get();
+
+        return [
+            'count' => $investments->count(),
+            'total_value' => (float) $investments->sum(fn ($i) => $i->quantity * $i->current_price),
+            'items' => $investments->map(fn ($i) => [
+                'id' => $i->id,
+                'name' => $i->name,
+                'type' => $i->type,
+                'quantity' => (float) $i->quantity,
+                'average_price' => (float) $i->average_price,
+                'current_price' => (float) $i->current_price,
+                'current_value' => (float) ($i->quantity * $i->current_price),
+            ])->values()->toArray(),
+        ];
+    }
+
+    private function toolListSubscriptions(int $wsId): array
+    {
+        $subs = Subscription::where('workspace_id', $wsId)->get();
+
+        return [
+            'count' => $subs->count(),
+            'monthly_total' => (float) $subs->sum(fn ($s) => $s->cycle === 'yearly' ? $s->amount / 12 : $s->amount),
+            'items' => $subs->map(fn ($s) => [
+                'id' => $s->id,
+                'name' => $s->name,
+                'amount' => (float) $s->amount,
+                'cycle' => $s->cycle,
+                'active' => (bool) $s->is_active,
+            ])->values()->toArray(),
+        ];
+    }
+
+    private function toolListGoals(int $wsId): array
+    {
+        $goals = Goal::where('workspace_id', $wsId)->get();
+
+        return [
+            'count' => $goals->count(),
+            'items' => $goals->map(fn ($g) => [
+                'id' => $g->id,
+                'name' => $g->name,
+                'current_amount' => (float) $g->current_amount,
+                'target_amount' => (float) $g->target_amount,
+                'progress_pct' => $g->target_amount > 0 ? round(($g->current_amount / $g->target_amount) * 100, 1) : 0,
+                'deadline' => $g->deadline?->format('Y-m-d'),
+            ])->values()->toArray(),
+        ];
+    }
+
+    private function toolListReminders(array $args, int $wsId): array
+    {
+        $query = Reminder::where('workspace_id', $wsId);
+
+        if (empty($args['include_completed'])) {
+            $query->where('is_completed', false);
+        }
+
+        $reminders = $query->orderBy('remind_at')->limit(30)->get();
+
+        return [
+            'count' => $reminders->count(),
+            'items' => $reminders->map(fn ($r) => [
+                'id' => $r->id,
+                'title' => $r->title,
+                'remind_at' => $r->remind_at?->format('Y-m-d H:i'),
+                'priority' => $r->priority,
+                'completed' => (bool) $r->is_completed,
+            ])->values()->toArray(),
+        ];
+    }
+
+    private function toolListCategories(int $wsId): array
+    {
+        $categories = Category::where('workspace_id', $wsId)->orderBy('name')->pluck('name');
+
+        return ['count' => $categories->count(), 'items' => $categories->values()->toArray()];
+    }
+
+    private function toolGetFinancialSummary(array $args, int $wsId): array
+    {
+        $days = (int) ($args['days'] ?? 30);
+        $since = now()->subDays($days);
+
+        $earned = (float) Income::where('workspace_id', $wsId)->where('received_at', '>=', $since)->sum('amount');
+        $spent = (float) Expense::where('workspace_id', $wsId)->where('spent_at', '>=', $since)->sum('amount');
+
+        $byCategory = Expense::where('workspace_id', $wsId)
+            ->where('spent_at', '>=', $since)
+            ->join('categories', 'expenses.category_id', '=', 'categories.id')
+            ->selectRaw('categories.name as category, SUM(expenses.amount) as total')
+            ->groupBy('categories.name')
+            ->orderByDesc('total')
+            ->pluck('total', 'category');
+
+        return [
+            'period_days' => $days,
+            'earned' => $earned,
+            'spent' => $spent,
+            'savings' => $earned - $spent,
+            'by_category' => $byCategory->toArray(),
+        ];
     }
 
     private function userMessage($content): array
@@ -956,6 +1123,7 @@ NUNCA INVENTES CAMPOS QUE NÃO CONSIGAS PREENCHER.
             // -----------------------------------------
             'flow:set_cat_food' => fn () => $this->flowData['category'] = 'Alimentação',
             'flow:set_cat_transport' => fn () => $this->flowData['category'] = 'Transporte',
+
             'flow:set_cat_fun' => fn () => $this->flowData['category'] = 'Lazer',
             'flow:set_cat_none' => fn () => $this->flowData['category'] = null,
 
@@ -1253,141 +1421,6 @@ NUNCA INVENTES CAMPOS QUE NÃO CONSIGAS PREENCHER.
     {
         $this->flow = null;
         $this->flowData = [];
-    }
-
-    private function detectCategoryByName($text)
-    {
-        $lower = mb_strtolower($text);
-
-        // Normalizar acentos
-        $normalize = fn ($s) => str_replace(
-            ['á', 'à', 'ã', 'â', 'é', 'ê', 'í', 'ó', 'ô', 'õ', 'ú', 'ç'],
-            ['a', 'a', 'a', 'a', 'e', 'e', 'i', 'o', 'o', 'o', 'u', 'c'],
-            mb_strtolower($s)
-        );
-
-        $lowerNorm = $normalize($lower);
-
-        // Buscar categorias reais da BD
-        $categories = Category::where('workspace_id', Auth::user()->current_workspace_id)->get();
-
-        // SINÓNIMOS POR CATEGORIA
-        $synonyms = [
-            'saude' => ['saude', 'saúde', 'medico', 'médico', 'consulta', 'hospital', 'dentista', 'clinica', 'clínica'],
-            'alimentacao' => ['comida', 'supermercado', 'restaurante', 'cafe', 'lanche', 'mercearia'],
-            'transporte' => ['uber', 'taxi', 'combustivel', 'gasolina', 'metro', 'autocarro', 'parque', 'estacionamento'],
-            'lazer' => ['cinema', 'jogo', 'netflix', 'spotify', 'teatro', 'bar'],
-            'fitness' => ['ginasio', 'ginásio', 'gym', 'treino', 'personal', 'corrida', 'exercicio'],
-        ];
-
-        foreach ($categories as $cat) {
-
-            $catNorm = $normalize($cat->name);
-
-            // MATCH DIRETO
-            if (str_contains($lowerNorm, $catNorm)) {
-                return ['id' => $cat->id, 'name' => $cat->name];
-            }
-
-            // MATCH POR SINÓNIMOS
-            if (isset($synonyms[$catNorm])) {
-                foreach ($synonyms[$catNorm] as $word) {
-                    if (str_contains($lowerNorm, $normalize($word))) {
-                        return ['id' => $cat->id, 'name' => $cat->name];
-                    }
-                }
-            }
-        }
-
-        return ['id' => null, 'name' => null];
-    }
-
-    private function detectIntent(string $text): ?string
-    {
-        $lower = mb_strtolower($text);
-
-        // --- BLOCO DE SEGURANÇA: DETETAR PERGUNTAS/TEORIA ---
-        // Se houver um ponto de interrogação ou palavras de dúvida, não registamos nada.
-        $isQuestion = str_contains($lower, '?') ||
-                      str_contains($lower, 'posso') ||
-                      str_contains($lower, 'devo') ||
-                      str_contains($lower, 'achas') ||
-                      str_contains($lower, 'como') ||
-                      str_contains($lower, 'quanto');
-
-        if ($isQuestion) {
-            return null; // Força o Bot a ir para a IA (askAi) em vez de criar registos
-        }
-
-        // --- DETEÇÃO DE LEMBRETES ---
-        if (
-            str_contains($lower, 'lembrete') ||
-            str_contains($lower, 'lembrar') ||
-            str_contains($lower, 'recorda') ||
-            str_contains($lower, 'avisa')
-        ) {
-            // Se for para listar/ver lembretes
-            if (str_contains($lower, 'tenho') || str_contains($lower, 'ver') || str_contains($lower, 'quais')) {
-                return 'list_reminders';
-            }
-
-            return 'reminder';
-        }
-
-        // --- DETEÇÃO DE DESPESA ---
-        if (
-            str_contains($lower, 'gastei') ||
-            str_contains($lower, 'paguei') ||
-            str_contains($lower, 'despesa') ||
-            str_contains($lower, 'custou')
-        ) {
-            return 'expense';
-        }
-
-        // --- DETEÇÃO DE RENDIMENTO ---
-        if (
-            str_contains($lower, 'recebi') ||
-            str_contains($lower, 'ganhei') ||
-            str_contains($lower, 'rendimento') ||
-            str_contains($lower, 'salário') ||
-            str_contains($lower, 'salario')
-        ) {
-            return 'income';
-        }
-
-        // --- DETEÇÃO DE SUBSCRIÇÃO ---
-        if (
-            str_contains($lower, 'subscri') ||
-            str_contains($lower, 'mensalidade') ||
-            str_contains($lower, 'pagamento mensal') ||
-            str_contains($lower, 'renovação')
-        ) {
-            return 'subscription';
-        }
-
-        // --- DETEÇÃO DE INVESTIMENTO ---
-        // Note: 'investi' agora é validado para não confundir com 'investir' em perguntas
-        if (
-            str_contains($lower, 'investi ') || // Espaço no fim ajuda a focar na ação
-            str_contains($lower, 'investimento') ||
-            str_contains($lower, 'ações') ||
-            str_contains($lower, 'acções') ||
-            str_contains($lower, 'etf') ||
-            str_contains($lower, 'bolsa')
-        ) {
-            return 'investment';
-        }
-
-        // --- DETEÇÃO DE META ---
-        if (
-            str_contains($lower, 'meta') ||
-            str_contains($lower, 'objetivo') ||
-            str_contains($lower, 'objectivo')
-        ) {
-            return 'goal';
-        }
-
-        return null;
     }
 
     private function firstName(): string
