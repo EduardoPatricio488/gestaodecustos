@@ -13,7 +13,7 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">
                             Stock & Inventário
                         </h1>
                         <flux:badge
@@ -74,7 +74,7 @@
                 <p class="text-[12px] font-black text-zinc-400 uppercase tracking-[0.25em] mb-1">
                     Valor Estimado de Venda
                 </p>
-                <h3 class="text-4xl font-black text-white tracking-tighter">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter">
                     <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
                         {{ number_format($totalInventoryValue, 2, ',', ' ') }} €
                     </span>
@@ -96,7 +96,7 @@
             <p class="text-[12px] font-black text-zinc-400 uppercase tracking-[0.25em] mb-1">
                 Reposição Necessária
             </p>
-            <h3 class="text-4xl font-black {{ $lowStockCount > 0 ? 'text-red-500' : 'text-zinc-900 dark:text-white' }} tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black {{ $lowStockCount > 0 ? 'text-red-500' : 'text-zinc-900 dark:text-white' }} tracking-tighter">
                 <span :class="privacyMode ? 'blur-sm select-none' : ''" class="transition-all duration-500 inline-block">
                     {{ $lowStockCount }}
                 </span>
@@ -116,7 +116,7 @@
             <p class="text-[12px] font-black text-zinc-400 uppercase tracking-[0.25em] mb-1">
                 Margem Média Bruta
             </p>
-            <h3 class="text-4xl font-black {{ $marginColor }} tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black {{ $marginColor }} tracking-tighter">
                 <span :class="privacyMode ? 'blur-sm select-none' : ''" class="transition-all duration-500 inline-block">
                     {{ round($margin) }}%
                 </span>

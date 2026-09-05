@@ -14,7 +14,7 @@
                         <span class="px-3 py-1 bg-zinc-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg">Acesso Auditado</span>
                         <h2 class="text-sm font-black text-zinc-400 uppercase tracking-widest">Protocolo de Transparência Financeira</h2>
                     </div>
-                    <h1 class="text-4xl font-black dark:text-white tracking-tighter italic leading-none">Dossiê de Solvência: {{ $workspace->name }}</h1>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter italic leading-none">Dossiê de Solvência: {{ $workspace->name }}</h1>
                 </div>
             </div>
 

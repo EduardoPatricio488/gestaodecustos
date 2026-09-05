@@ -9,7 +9,7 @@
             </div>
             <div>
                 <div class="flex items-center gap-3 flex-wrap">
-                    <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Previsão de Despesas</h1>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Previsão de Despesas</h1>
                     <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1">Forecast IA</flux:badge>
                 </div>
                 <p class="text-sm text-zinc-500 font-medium italic mt-2">Estimativa do próximo mês por categoria com intervalo de confiança</p>
@@ -36,13 +36,13 @@
 
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 rounded-[2.5rem] shadow-sm">
             <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-2">Último Mês Fechado</p>
-            <h3 class="text-4xl font-black dark:text-white tracking-tighter italic">{{ number_format($totalLast, 2, ',', '.') }}€</h3>
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter italic">{{ number_format($totalLast, 2, ',', '.') }}€</h3>
             <p class="text-[10px] text-zinc-400 mt-2 uppercase font-bold">referência mensal</p>
         </div>
 
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 rounded-[2.5rem] shadow-sm">
             <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-2">Variação Prevista</p>
-            <h3 class="text-4xl font-black tracking-tighter italic {{ $deltaTotalPct >= 0 ? 'text-red-500' : 'text-emerald-500' }}">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter italic {{ $deltaTotalPct >= 0 ? 'text-red-500' : 'text-emerald-500' }}">
                 {{ $deltaTotalPct >= 0 ? '+' : '' }}{{ number_format($deltaTotalPct, 1, ',', '.') }}%
             </h3>
             <p class="text-[10px] text-zinc-400 mt-2 uppercase font-bold">vs último mês</p>

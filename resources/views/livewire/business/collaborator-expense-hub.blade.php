@@ -6,7 +6,7 @@
                 <flux:icon name="banknotes" class="w-10 h-10" />
             </div>
             <div>
-                <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Notas de Gastos</h1>
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Notas de Gastos</h1>
                 <p class="text-sm text-zinc-500 font-medium italic mt-2">Gestão de despesas e reembolsos operacionais</p>
             </div>
         </div>
@@ -28,7 +28,7 @@
         <div class="glass-card bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-between">
             <div>
                 <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Aguardam Aprovação</p>
-                <h3 class="text-4xl font-black text-amber-500 tracking-tighter">{{ number_format($stats['total_pending'], 2) }}€</h3>
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-amber-500 tracking-tighter">{{ number_format($stats['total_pending'], 2) }}€</h3>
             </div>
             <flux:icon name="clock" class="size-12 text-zinc-100 dark:text-zinc-800" />
         </div>
@@ -36,7 +36,7 @@
         <div class="glass-card bg-emerald-600 p-8 rounded-[2.5rem] shadow-xl shadow-emerald-500/10 flex items-center justify-between">
             <div>
                 <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest mb-1">Aprovado p/ Reembolso</p>
-                <h3 class="text-4xl font-black text-white tracking-tighter">{{ number_format($stats['total_approved'], 2) }}€</h3>
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter">{{ number_format($stats['total_approved'], 2) }}€</h3>
             </div>
             <flux:icon name="check-circle" class="size-12 text-white/20" />
         </div>

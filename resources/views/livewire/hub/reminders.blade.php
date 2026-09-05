@@ -92,7 +92,7 @@
             </p>
 
             {{-- Valor --}}
-            <h3 class="text-4xl font-black mt-2 tracking-tighter text-{{ $color }}-400 drop-shadow-sm">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black mt-2 tracking-tighter text-{{ $color }}-400 drop-shadow-sm">
                 {{ $value }}
             </h3>
 

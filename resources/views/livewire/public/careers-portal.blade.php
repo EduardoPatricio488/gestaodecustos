@@ -5,7 +5,7 @@
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 rounded-[3rem] shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-6 text-left w-full">
             <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full -mr-32 -mt-32"></div>
             <div class="text-left relative z-10">
-                <h1 class="text-4xl font-black dark:text-white uppercase italic tracking-tighter leading-none text-left">Oportunidades no Grupo</h1>
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase italic tracking-tighter leading-none text-left">Oportunidades no Grupo</h1>
                 <p class="text-sm text-zinc-500 mt-2 font-medium italic text-left">
                     Olá, <span class="text-emerald-600 font-black">{{ auth()->user()->name }}</span>. Gere aqui as tuas candidaturas.
                 </p>
@@ -104,7 +104,7 @@
                             @else {{ substr($viewingCompany->name, 0, 1) }} @endif
                         </div>
                         <div>
-                            <h2 class="text-4xl font-black dark:text-white uppercase italic tracking-tighter leading-none">{{ $viewingCompany->name }}</h2>
+                            <h2 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase italic tracking-tighter leading-none">{{ $viewingCompany->name }}</h2>
                             <div class="flex items-center gap-4 mt-4">
                                 <span class="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
                                     <flux:icon name="building-office" variant="micro" class="size-3" /> {{ $viewingCompany->industry ?? 'Empresa do Grupo' }}

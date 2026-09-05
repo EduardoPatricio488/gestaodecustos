@@ -249,7 +249,7 @@
         <!-- SECTION: HOW IT WORKS -->
         <div class="mt-32 text-center space-y-4">
             <h2 class="text-xs font-black uppercase tracking-[0.3em] text-brand-600">Fluxo Simples</h2>
-            <p class="text-4xl font-black dark:text-white tracking-tighter uppercase">Como funciona o {{ config('app.name') }}?</p>
+            <p class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter uppercase">Como funciona o {{ config('app.name') }}?</p>
 
             <div class="mt-16 grid gap-8 sm:grid-cols-3">
                 <div class="space-y-4">
@@ -274,7 +274,7 @@
         <div class="mt-32">
              <div class="text-center mb-16">
                 <h2 class="text-xs font-black uppercase tracking-[0.3em] text-brand-600">Além das Finanças</h2>
-                <p class="text-4xl font-black dark:text-white tracking-tighter uppercase italic">O Ecossistema Finance Connect</p>
+                <p class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter uppercase italic">O Ecossistema Finance Connect</p>
             </div>
 
             <div class="grid gap-8 md:grid-cols-2">

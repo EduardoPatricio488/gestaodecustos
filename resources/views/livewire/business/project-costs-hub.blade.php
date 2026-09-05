@@ -6,7 +6,7 @@
                 <flux:icon name="presentation-chart-line" class="w-10 h-10" />
             </div>
             <div>
-                <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Análise de Custos</h1>
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Análise de Custos</h1>
                 <p class="text-sm text-zinc-500 font-medium italic mt-2">Monitorização de rentabilidade por projeto e tarefa</p>
             </div>
         </div>

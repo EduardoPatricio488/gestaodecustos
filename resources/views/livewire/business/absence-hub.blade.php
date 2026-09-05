@@ -10,7 +10,7 @@
                     <flux:icon name="calendar-days" class="w-10 h-10 text-brand-600" />
                 </div>
                 <div class="text-left">
-                    <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
                         {{ $isManager ? 'Gestão de Ausências' : 'Minhas Férias' }}
                     </h1>
                     <p class="text-sm text-zinc-500 font-medium italic mt-2">
@@ -33,29 +33,29 @@
             {{-- VISTA CEO --}}
             <div class="glass-card p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem]">
                 <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Ausentes Hoje</p>
-                <h3 class="text-4xl font-black {{ $absentTodayCount > 0 ? 'text-orange-500' : 'dark:text-white' }}">{{ $absentTodayCount }}</h3>
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black {{ $absentTodayCount > 0 ? 'text-orange-500' : 'dark:text-white' }}">{{ $absentTodayCount }}</h3>
             </div>
             <div class="bg-zinc-950 p-8 rounded-[2.5rem] border border-zinc-800">
                 <p class="text-[10px] font-black text-brand-400 uppercase tracking-widest mb-1">Pedidos Pendentes</p>
-                <h3 class="text-4xl font-black text-white italic leading-none">{{ $pendingApprovals }}</h3>
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white italic leading-none">{{ $pendingApprovals }}</h3>
             </div>
             <div class="glass-card p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem]">
                 <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Dias Alocados (Mês)</p>
-                <h3 class="text-4xl font-black dark:text-white">{{ $totalDaysMonth }}</h3>
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white">{{ $totalDaysMonth }}</h3>
             </div>
         @else
             {{-- VISTA COLABORADOR --}}
             <div class="glass-card p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem]">
                 <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1 leading-none">Dias Gozados em {{ now()->year }}</p>
-                <h3 class="text-4xl font-black text-emerald-600">{{ $usedDays }} <span class="text-xs uppercase text-zinc-400 font-bold">Dias</span></h3>
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-600">{{ $usedDays }} <span class="text-xs uppercase text-zinc-400 font-bold">Dias</span></h3>
             </div>
             <div class="bg-zinc-950 p-8 rounded-[2.5rem] border border-zinc-800">
                 <p class="text-[10px] font-black text-brand-400 uppercase tracking-widest mb-1 leading-none">Em Aprovação</p>
-                <h3 class="text-4xl font-black text-white italic leading-none">{{ $pendingCount }}</h3>
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white italic leading-none">{{ $pendingCount }}</h3>
             </div>
             <div class="glass-card p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem]">
                 <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1 leading-none">Períodos Validados</p>
-                <h3 class="text-4xl font-black dark:text-white leading-none">{{ $approvedCount }}</h3>
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white leading-none">{{ $approvedCount }}</h3>
             </div>
         @endif
     </div>

@@ -9,14 +9,14 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="stat-card bg-white dark:bg-zinc-900 p-8 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
             <p class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Total Criado</p>
-            <p class="text-4xl font-black text-zinc-900 dark:text-white mt-2">{{ number_format($stats['total']) }}</p>
+            <p class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white mt-2">{{ number_format($stats['total']) }}</p>
             <p class="text-[10px] text-emerald-500 font-bold mt-2">+{{ $stats['today'] }} hoje</p>
         </div>
 
         <div class="stat-card bg-zinc-900 text-white p-8 rounded-[2rem] border border-zinc-800 shadow-xl relative overflow-hidden">
             <div class="relative z-10">
                 <p class="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Taxa de Conclusão</p>
-                <p class="text-4xl font-black text-brand-400 mt-2">{{ $stats['rate'] }}%</p>
+                <p class="text-2xl sm:text-3xl md:text-4xl font-black text-brand-400 mt-2">{{ $stats['rate'] }}%</p>
                 <div class="w-full bg-zinc-800 h-1.5 rounded-full mt-4">
                     <div class="bg-brand-500 h-1.5 rounded-full" style="width: {{ $stats['rate'] }}%"></div>
                 </div>
@@ -26,7 +26,7 @@
 
         <div class="stat-card bg-white dark:bg-zinc-900 p-8 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
             <p class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Lembretes Concluídos</p>
-            <p class="text-4xl font-black text-emerald-600 mt-2">{{ number_format($stats['completed']) }}</p>
+            <p class="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-600 mt-2">{{ number_format($stats['completed']) }}</p>
             <p class="text-[10px] text-zinc-400 font-bold mt-2 uppercase italic">Tarefas finalizadas</p>
         </div>
     </div>

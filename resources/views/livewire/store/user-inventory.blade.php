@@ -1,7 +1,7 @@
 <div class="space-y-10 pb-20 text-left">
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-            <h1 class="text-4xl font-black uppercase italic tracking-tighter leading-none">O Meu Inventário</h1>
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-black uppercase italic tracking-tighter leading-none">O Meu Inventário</h1>
             <p class="text-sm text-zinc-500 mt-2">{{ $totalItems }} recursos • {{ number_format($totalSpent, 2, ',', '.') }} € investidos</p>
         </div>
         <flux:button href="{{ route('hub.store') }}" wire:navigate icon="plus" variant="primary" class="rounded-2xl uppercase font-black text-[10px] tracking-widest">

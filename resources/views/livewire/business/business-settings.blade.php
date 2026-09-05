@@ -15,7 +15,7 @@
 
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">
                             Perfil do Negócio
                         </h1>
                         <flux:badge variant="neutral"

@@ -16,7 +16,7 @@
 
             <div>
                 <div class="flex items-center gap-3 flex-wrap">
-                    <h1 class="text-3xl sm:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                    <h1 class="text-3xl sm:text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
                         Gestão de Receitas
                     </h1>
 

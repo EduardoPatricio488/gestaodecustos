@@ -20,7 +20,7 @@
 
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
                             {{ $modeTitle }}
                         </h1>
                         <flux:badge variant="neutral"
@@ -156,7 +156,7 @@
                     Saldo Projetado
                 </p>
 
-                <h3 class="text-4xl font-black dark:text-white tracking-tighter italic leading-none">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter italic leading-none">
                     {{ number_format($forecastCash, 2, ',', ' ') }} €
                 </h3>
             </div>

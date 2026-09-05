@@ -13,7 +13,7 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">Fornecedores & Parceiros</h1>
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">Fornecedores & Parceiros</h1>
                         <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1 text-zinc-500">Supply Chain</flux:badge>
                     </div>
                     <p class="text-sm text-zinc-500 font-medium italic mt-2 text-zinc-400">Gestão estratégica de entidades, contratos e volume de transações</p>
@@ -45,7 +45,7 @@
                 </div>
             </div>
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Entidades Registadas</p>
-            <h3 class="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
                 <span :class="privacyMode ? 'blur-sm select-none' : ''" class="transition-all duration-500 inline-block">
                     {{ $totalActiveSuppliers }}
                 </span>
@@ -81,7 +81,7 @@
                 </div>
             </div>
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Média de Gasto por Entidade</p>
-            <h3 class="text-4xl font-black text-emerald-600 tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-600 tracking-tighter">
                 <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
                     {{ number_format($totalActiveSuppliers > 0 ? ($suppliers->sum('total_spent') / $totalActiveSuppliers) : 0, 2, ',', ' ') }} €
                 </span>

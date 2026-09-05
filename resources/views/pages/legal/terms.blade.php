@@ -2,7 +2,7 @@
 <div class="max-w-4xl mx-auto py-20 px-6">
     <div class="space-y-4 mb-12">
         <flux:badge variant="neutral" class="uppercase font-black text-[9px] tracking-widest">Legal</flux:badge>
-        <h1 class="text-4xl font-black dark:text-white uppercase italic tracking-tighter">Termos de Serviço</h1>
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase italic tracking-tighter">Termos de Serviço</h1>
         <p class="text-zinc-500 italic">Última atualização: {{ date('d/m/Y') }}</p>
     </div>
 

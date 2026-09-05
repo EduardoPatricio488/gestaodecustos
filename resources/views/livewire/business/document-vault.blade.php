@@ -15,7 +15,7 @@
 
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">
                             Arquivo Digital
                         </h1>
                         <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1 text-zinc-500">
@@ -52,7 +52,7 @@
                     <span class="text-[9px] font-black text-white/50 border border-white/10 px-2 py-1 rounded-lg uppercase tracking-widest italic">Inventário Digital</span>
                 </div>
                 <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1">Total de Itens em Custódia</p>
-                <h3 class="text-4xl font-black text-white tracking-tighter">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter">
                     {{ $totalDocs }} <span class="text-xs text-zinc-500 uppercase font-bold ml-2 tracking-widest italic">Arquivos</span>
                 </h3>
             </div>
@@ -62,14 +62,14 @@
         <div class="glass-card relative bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm group hover:border-orange-500/30 transition-all">
             <flux:icon name="clock" variant="outline" class="size-6 text-orange-600 mb-4" />
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Validade Próxima (30 dias)</p>
-            <h3 class="text-4xl font-black text-orange-500 tracking-tighter">{{ $expiringSoonCount }}</h3>
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-orange-500 tracking-tighter">{{ $expiringSoonCount }}</h3>
         </div>
 
         {{-- Expirados --}}
         <div class="glass-card relative bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm group hover:border-red-500/30 transition-all">
             <flux:icon name="exclamation-circle" variant="outline" class="size-6 text-red-600 mb-4" />
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Documentos Fora de Prazo</p>
-            <h3 class="text-4xl font-black text-red-600 tracking-tighter">{{ $expiredCount }}</h3>
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-red-600 tracking-tighter">{{ $expiredCount }}</h3>
         </div>
     </div>
 

@@ -13,7 +13,7 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">
                             Impostos & Obrigações
                         </h1>
                         <flux:badge variant="neutral" class="bg-amber-500/10 text-amber-600 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1">
@@ -172,7 +172,7 @@
                 </div>
 
                 <div>
-                    <p class="text-4xl font-black text-amber-600 tracking-tighter italic leading-none">
+                    <p class="text-2xl sm:text-3xl md:text-4xl font-black text-amber-600 tracking-tighter italic leading-none">
                         <span
                             :class="privacyMode ? 'blur-md select-none' : ''"
                             class="transition-all duration-500 inline-block"
@@ -209,7 +209,7 @@
                 </div>
 
                 <div>
-                    <p class="text-4xl font-black dark:text-white tracking-tighter italic leading-none">
+                    <p class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter italic leading-none">
                         <span
                             :class="privacyMode ? 'blur-md select-none' : ''"
                             class="transition-all duration-500 inline-block"

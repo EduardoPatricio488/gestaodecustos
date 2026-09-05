@@ -7,7 +7,7 @@
                 <flux:icon name="clipboard-document-check" class="w-10 h-10" />
             </div>
             <div>
-                <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
                     Aprovação de Despesas
                 </h1>
                 <p class="text-sm text-zinc-500 font-medium italic mt-2">
@@ -26,7 +26,7 @@
                 <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
                     Total Pendente de Revisão
                 </p>
-                <h3 class="text-4xl font-black text-amber-500 tracking-tighter">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-amber-500 tracking-tighter">
                     {{ number_format($stats['total_pending'], 2, ',', ' ') }}€
                 </h3>
             </div>
@@ -39,7 +39,7 @@
                 <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">
                     Aprovado este Mês
                 </p>
-                <h3 class="text-4xl font-black text-emerald-500 tracking-tighter">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-500 tracking-tighter">
                     {{ number_format($stats['total_approved_month'], 2, ',', ' ') }}€
                 </h3>
             </div>

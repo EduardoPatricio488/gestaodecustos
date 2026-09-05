@@ -16,7 +16,7 @@
                 <div class="inline-flex p-4 bg-emerald-500/10 rounded-[2rem] mb-6 shadow-inner">
                     <flux:icon name="shield-check" class="size-10 text-emerald-600" />
                 </div>
-                <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
                     Verificar Conta
                 </h1>
                 <p class="text-zinc-500 font-medium mt-4 text-sm leading-relaxed px-8">
@@ -42,7 +42,7 @@
                             placeholder="000000"
                             autofocus
                             class="w-full h-20 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-[1.5rem]
-                                   text-center text-4xl font-black tracking-[0.5em] text-emerald-600 outline-none
+                                   text-center text-2xl sm:text-3xl md:text-4xl font-black tracking-[0.5em] text-emerald-600 outline-none
                                    focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
                         >
 

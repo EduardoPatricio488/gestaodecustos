@@ -51,7 +51,7 @@
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Utilizadores</p>
             <div class="p-2 bg-zinc-50 dark:bg-zinc-800 rounded-xl"><flux:icon name="users" class="size-4 text-zinc-500" /></div>
         </div>
-        <p class="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter italic">{{ number_format($totalUsers) }}</p>
+        <p class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter italic">{{ number_format($totalUsers) }}</p>
         <div class="mt-3 flex items-center gap-2 text-[10px] font-black uppercase">
             <span class="text-emerald-500">{{ $activeUsersToday }} ativos hoje</span>
             <span class="text-zinc-300">|</span>
@@ -63,7 +63,7 @@
     <div class="stat-card bg-zinc-900 dark:bg-black p-6 rounded-[2rem] shadow-2xl border border-white/5 relative overflow-hidden group">
         <div class="absolute -right-6 -top-6 size-32 bg-brand-500/10 blur-3xl rounded-full"></div>
         <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-2">Volume Global</p>
-        <p class="text-4xl font-black text-white tracking-tighter italic">{{ number_format($totalCashflow, 0, ',', ' ') }}€</p>
+        <p class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter italic">{{ number_format($totalCashflow, 0, ',', ' ') }}€</p>
         <p class="mt-3 text-[9px] text-zinc-500 font-bold uppercase tracking-widest italic">Soma de todos os lançamentos</p>
     </div>
 
@@ -73,7 +73,7 @@
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Diálogos IA</p>
             <div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl"><flux:icon name="cpu-chip" class="size-4 text-blue-500" /></div>
         </div>
-        <p class="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter italic">{{ number_format($aiMessagesToday) }}</p>
+        <p class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter italic">{{ number_format($aiMessagesToday) }}</p>
         <p class="mt-3 text-[10px] font-black text-blue-500 uppercase tracking-widest">{{ $aiErrorRate }}% taxa de latência</p>
     </div>
 
@@ -83,14 +83,14 @@
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Retenção</p>
             <flux:icon name="arrow-up-right" class="size-4 text-zinc-300 group-hover:text-brand-500" />
         </div>
-        <p class="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter italic">{{ $onboardingRate }}%</p>
+        <p class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter italic">{{ $onboardingRate }}%</p>
         <p class="mt-3 text-[10px] text-brand-500 font-black uppercase italic group-hover:translate-x-1 transition-transform">Ver analítica detalhada →</p>
     </a>
 
     {{-- Workspace Status --}}
     <div class="stat-card bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
         <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2">Workspaces</p>
-        <p class="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter italic">{{ $totalWorkspaces }}</p>
+        <p class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter italic">{{ $totalWorkspaces }}</p>
         <div class="mt-3 flex items-center gap-2">
             <span class="relative flex h-2 w-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>

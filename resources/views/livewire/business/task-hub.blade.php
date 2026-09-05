@@ -14,7 +14,7 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
                             Gestão de Tarefas
                         </h1>
                         <flux:badge variant="neutral"
@@ -52,7 +52,7 @@
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">
                 Missões em Aberto
             </p>
-            <h3 class="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
                 <span :class="privacyMode ? 'blur-sm select-none' : ''"
                     class="transition-all duration-500 inline-block">
                     {{ $pendingCount }}
@@ -68,7 +68,7 @@
                 Fora de Prazo
             </p>
             <h3
-                class="text-4xl font-black {{ $overdueCount > 0 ? 'text-red-500' : 'text-zinc-900 dark:text-white' }} tracking-tighter">
+                class="text-2xl sm:text-3xl md:text-4xl font-black {{ $overdueCount > 0 ? 'text-red-500' : 'text-zinc-900 dark:text-white' }} tracking-tighter">
                 <span :class="privacyMode ? 'blur-sm select-none' : ''"
                     class="transition-all duration-500 inline-block">
                     {{ $overdueCount }}
@@ -90,7 +90,7 @@
                             class="text-[10px] font-black text-brand-400 uppercase tracking-[0.2em] mb-1">
                             Taxa de Execução Global
                         </p>
-                        <h3 class="text-4xl font-black text-white tracking-tighter italic">
+                        <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter italic">
                             {{ round($completionRate) }}%
                         </h3>
                     </div>

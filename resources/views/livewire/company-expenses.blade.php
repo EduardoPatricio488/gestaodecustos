@@ -1,35 +1,43 @@
 <div class="space-y-10 pb-20">
     {{-- 1. HEADER CORPORATIVO (ESTILO SaaS PREMIUM) --}}
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
-        <div class="flex items-center gap-6">
-            <div class="relative group">
-                <div class="absolute inset-0 bg-brand-500/20 blur-2xl rounded-full group-hover:bg-brand-500/40 transition-all duration-700"></div>
-                <div class="relative p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl">
-                    <flux:icon name="building-office-2" class="w-10 h-10 text-brand-600" />
-                </div>
-            </div>
-            <div>
-                <div class="flex items-center gap-3">
-                    <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">Custos de Empresa</h1>
-                    <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1">Operações & OpEx</flux:badge>
-                </div>
-                <p class="text-sm text-zinc-500 font-medium italic mt-2">Gestão de faturação de fornecedores e otimização fiscal</p>
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
+    <div class="flex items-center gap-4 sm:gap-6">
+        {{-- ÍCONE AJUSTADO --}}
+        <div class="relative group shrink-0">
+            <div class="absolute inset-0 bg-brand-500/20 blur-2xl rounded-full group-hover:bg-brand-500/40 transition-all duration-700"></div>
+            <div class="relative p-4 sm:p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl sm:rounded-[2rem] shadow-2xl">
+                <flux:icon name="building-office-2" class="w-8 h-8 sm:w-10 sm:h-10 text-brand-600" />
             </div>
         </div>
 
-        <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-[1.8rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
-            {{-- BOTÃO NOVA DESPESA --}}
-            <flux:modal.trigger name="add-company-expense-modal">
-                <flux:button variant="primary" icon="plus" wire:click="resetForm" x-on:click="$dispatch('modal-show', { name: 'add-company-expense-modal' })" class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20">
-    Nova Despesa
-</flux:button>
-            </flux:modal.trigger>
-
-            <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
-            <flux:button href="{{ route('hub.business.dashboard') }}" variant="ghost" icon="arrow-left" wire:navigate title="Voltar" class="rounded-xl" />
+        {{-- TEXTO RESPONSIVO --}}
+        <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <h1 class="text-2xl sm:text-3xl md:text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-tight text-zinc-900">
+                    Custos de Empresa
+                </h1>
+                <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[8px] sm:text-[9px] font-black uppercase tracking-widest border-none px-2 sm:px-3 py-1 shrink-0">
+                    Operações & OpEx
+                </flux:badge>
+            </div>
+            <p class="text-xs sm:text-sm text-zinc-500 font-medium italic mt-1 sm:mt-2 truncate sm:whitespace-normal">
+                Gestão de faturação de fornecedores e otimização fiscal
+            </p>
         </div>
     </div>
 
+    {{-- BOTÕES --}}
+    <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2 sm:p-2.5 rounded-2xl sm:rounded-[1.8rem] border border-zinc-200 dark:border-zinc-800 shadow-sm self-start md:self-auto">
+        <flux:modal.trigger name="add-company-expense-modal">
+            <flux:button variant="primary" icon="plus" wire:click="resetForm" x-on:click="$dispatch('modal-show', { name: 'add-company-expense-modal' })" class="rounded-xl sm:rounded-2xl px-4 sm:px-6 font-black uppercase tracking-widest text-[10px] sm:text-sm shadow-lg shadow-brand-500/20 h-10 sm:h-12">
+                Nova Despesa
+            </flux:button>
+        </flux:modal.trigger>
+
+        <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
+        <flux:button href="{{ route('hub.business.dashboard') }}" variant="ghost" icon="arrow-left" wire:navigate title="Voltar" class="rounded-xl shrink-0" />
+    </div>
+</div>
     {{-- 2. KPI CARDS (VISUAL ANALYTICS COM PRIVACIDADE) --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
@@ -42,7 +50,7 @@
                 <span class="text-[9px] font-black text-red-500 bg-red-50 dark:bg-red-500/10 px-2 py-1 rounded-lg uppercase tracking-widest italic">Saída Real</span>
             </div>
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Gasto Bruto (Mês)</p>
-            <h3 class="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
                 <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
                     {{ number_format($totalMonth, 2, ',', ' ') }} €
                 </span>
@@ -59,7 +67,7 @@
                 <span class="text-[9px] font-black text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg uppercase tracking-widest italic">Recuperável</span>
             </div>
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">IVA Dedutível</p>
-            <h3 class="text-4xl font-black text-emerald-600 tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-600 tracking-tighter">
                 <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
                     {{ number_format($totalVat, 2, ',', ' ') }} €
                 </span>
@@ -74,7 +82,7 @@
                 </div>
             </div>
             <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1">Audit Fiscal</p>
-            <h3 class="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
                 <span :class="privacyMode ? 'blur-sm select-none' : ''" class="transition-all duration-500 inline-block">
                     {{ $expenses->total() }}
                 </span>

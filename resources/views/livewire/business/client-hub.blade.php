@@ -13,7 +13,7 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">Gestão de Clientes</h1>
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none text-zinc-900 dark:text-white">Gestão de Clientes</h1>
                         <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1 text-zinc-500">CRM Intelligence</flux:badge>
                     </div>
                     <p class="text-sm text-zinc-500 font-medium italic mt-2 text-zinc-400">Controlo de histórico comercial, retenção e saúde de portfólio</p>
@@ -45,7 +45,7 @@
                 </div>
             </div>
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Base de Dados</p>
-            <h3 class="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
                 <span :class="privacyMode ? 'blur-sm select-none' : ''" class="transition-all duration-500 inline-block">
                     {{ $totalClients }}
                 </span>
@@ -64,7 +64,7 @@
                     <span class="text-[9px] font-black text-white/50 border border-white/10 px-2 py-1 rounded-lg uppercase tracking-widest">Pipeline</span>
                 </div>
                 <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1">Leads em Negociação</p>
-                <h3 class="text-4xl font-black text-white tracking-tighter italic">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter italic">
                     <span :class="privacyMode ? 'blur-sm select-none' : ''" class="transition-all duration-500 inline-block">
                         {{ $activeLeads }}
                     </span>
@@ -80,7 +80,7 @@
                 </div>
             </div>
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Volume de Negócios (Total)</p>
-            <h3 class="text-4xl font-black text-emerald-600 tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-600 tracking-tighter">
                 <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
                     {{ number_format($clients->sum('total_revenue'), 2, ',', ' ') }} €
                 </span>

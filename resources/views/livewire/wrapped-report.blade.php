@@ -89,7 +89,7 @@
                 <p class="text-[10px] font-black uppercase tracking-widest text-orange-100 mb-8">O Grande Impacto</p>
                 @if($biggestExpense)
                     <div class="space-y-4">
-                        <p class="text-4xl font-black italic leading-tight uppercase">{{ $biggestExpense->description }}</p>
+                        <p class="text-2xl sm:text-3xl md:text-4xl font-black italic leading-tight uppercase">{{ $biggestExpense->description }}</p>
                         <p class="text-7xl font-black tabular-nums">{{ number_format($biggestExpense->amount, 0) }}€</p>
                     </div>
                 @else

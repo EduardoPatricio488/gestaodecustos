@@ -13,7 +13,7 @@
     @endif
 @endisset
             </div>
-            <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic">CFO Inteligente</h1>
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic">CFO Inteligente</h1>
             <p class="text-zinc-500 font-medium text-sm max-w-md">O teu consultor financeiro processou os teus ativos e hábitos.</p>
         </div>
 

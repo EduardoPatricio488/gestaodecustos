@@ -128,7 +128,7 @@
                 </div>
                 <div>
                     <div class="relative inline-block">
-                        <h1 class="text-2xl sm:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">{{ $title }}</h1>
+                        <h1 class="text-2xl sm:text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">{{ $title }}</h1>
                         <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[8px] sm:text-[9px] font-black uppercase tracking-widest border-none px-2 py-0.5">Hub Inteligente</flux:badge>
                     </div>
                     <p class="text-xs sm:text-sm text-zinc-500 font-medium italic mt-1 sm:mt-2">{{ $hubTheme['label'] }} · <span class="text-brand-600 font-bold uppercase tracking-tighter">{{ $currentWs->name }}</span></p>
@@ -175,7 +175,7 @@
                                class="w-32 sm:w-44 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl px-3 sm:px-4 py-1 {{ $hubTheme['color'] }} font-black text-2xl sm:text-4xl outline-none shadow-inner">
                     @else
                         <button @if($isOwner) wire:click="$set('editingBudget', true)" @endif class="group/btn flex items-center gap-2 sm:gap-3 outline-none">
-                            <span class="text-2xl sm:text-4xl font-black {{ $budgetLimit > 0 ? 'text-zinc-500' : 'text-zinc-700 animate-pulse' }} tracking-tighter italic uppercase">
+                            <span class="text-2xl sm:text-2xl sm:text-3xl md:text-4xl font-black {{ $budgetLimit > 0 ? 'text-zinc-500' : 'text-zinc-700 animate-pulse' }} tracking-tighter italic uppercase">
                                 {{ $budgetLimit > 0 ? number_format($budgetLimit,0).'€' : 'Definir' }}
                             </span>
                             @if($isOwner)<flux:icon name="pencil" class="size-3 sm:size-4 text-zinc-600 group-hover/btn:{{ $hubTheme['color'] }} transition-colors" />@endif

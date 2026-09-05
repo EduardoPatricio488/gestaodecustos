@@ -6,7 +6,7 @@
                 <flux:badge variant="neutral" class="bg-zinc-200 border-zinc-300 text-zinc-700 font-black uppercase tracking-widest text-[9px] mb-4">
                     Finance Hub PRO Store
                 </flux:badge>
-                <h1 class="text-4xl font-black text-zinc-900 uppercase italic tracking-tighter leading-none">
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 uppercase italic tracking-tighter leading-none">
                     Extensões PRO & IA Financeira
                 </h1>
                 <p class="text-zinc-600 font-medium mt-4 max-w-xl">

@@ -6,7 +6,7 @@
                 <flux:icon name="shopping-bag" class="size-10 text-white" />
             </div>
             <div>
-                <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Gestão da Loja</h1>
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Gestão da Loja</h1>
                 <p class="text-sm text-zinc-500 font-medium italic mt-2">Produtos, vendas, tendências e personalização do marketplace</p>
             </div>
         </div>
@@ -41,22 +41,22 @@
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
             <div class="p-6 bg-zinc-950 text-white rounded-[2rem] border border-zinc-800">
                 <p class="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-2">Receita Total</p>
-                <p class="text-4xl font-black italic">{{ number_format($stats['total_revenue'], 2, ',', ' ') }} €</p>
+                <p class="text-2xl sm:text-3xl md:text-4xl font-black italic">{{ number_format($stats['total_revenue'], 2, ',', ' ') }} €</p>
                 <p class="text-[9px] text-zinc-500 mt-2 uppercase">{{ $stats['total_purchases'] }} transações</p>
             </div>
             <div class="p-6 bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800">
                 <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Este Mês</p>
-                <p class="text-4xl font-black italic dark:text-white">{{ number_format($stats['revenue_month'], 2, ',', ' ') }} €</p>
+                <p class="text-2xl sm:text-3xl md:text-4xl font-black italic dark:text-white">{{ number_format($stats['revenue_month'], 2, ',', ' ') }} €</p>
                 <p class="text-[9px] text-zinc-500 mt-2 uppercase">{{ $stats['purchases_month'] }} compras</p>
             </div>
             <div class="p-6 bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800">
                 <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Hoje</p>
-                <p class="text-4xl font-black italic dark:text-white">{{ $stats['purchases_today'] }}</p>
+                <p class="text-2xl sm:text-3xl md:text-4xl font-black italic dark:text-white">{{ $stats['purchases_today'] }}</p>
                 <p class="text-[9px] text-zinc-500 mt-2 uppercase">{{ number_format($stats['revenue_today'], 2, ',', ' ') }} €</p>
             </div>
             <div class="p-6 bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800">
                 <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Compradores Únicos</p>
-                <p class="text-4xl font-black italic dark:text-white">{{ $stats['unique_buyers'] }}</p>
+                <p class="text-2xl sm:text-3xl md:text-4xl font-black italic dark:text-white">{{ $stats['unique_buyers'] }}</p>
                 <p class="text-[9px] text-zinc-500 mt-2 uppercase">Ticket médio {{ number_format($stats['avg_order'], 2, ',', ' ') }} €</p>
             </div>
         </div>

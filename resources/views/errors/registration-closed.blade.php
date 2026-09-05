@@ -38,7 +38,7 @@
 
         <!-- Texto Principal -->
         <div class="space-y-4">
-            <h1 class="text-4xl font-black text-white tracking-tighter uppercase italic italic">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic italic">
                 Registos <span class="text-brand-500">Suspensos</span>
             </h1>
             <p class="text-zinc-400 text-lg font-medium leading-relaxed">

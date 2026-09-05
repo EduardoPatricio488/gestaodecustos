@@ -74,7 +74,7 @@
             </div>
             <div>
                 <div class="flex items-center gap-3 flex-wrap">
-                    <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Simulador de Reforma</h1>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Simulador de Reforma</h1>
                     <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1">Planeamento Futuro</flux:badge>
                 </div>
                 <p class="text-sm text-zinc-500 font-medium italic mt-2">Projeta o teu capital e rendimento mensal na reforma</p>

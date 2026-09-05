@@ -38,7 +38,7 @@
                 </div>
                 <div>
                     <div class="relative inline-block">
-                        <h1 class="text-2xl sm:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                        <h1 class="text-2xl sm:text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
                             {{ $expense ? 'Editar Registo' : 'Novo Registo' }}
                         </h1>
                         <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[8px] sm:text-[9px] font-black uppercase tracking-widest border-none px-2 py-0.5">Terminal Gestão</flux:badge>

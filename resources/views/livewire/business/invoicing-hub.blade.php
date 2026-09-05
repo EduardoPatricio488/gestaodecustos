@@ -12,7 +12,7 @@
 
             <div>
                 <div class="flex items-center gap-3">
-                    <h1 class="text-4xl font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white">
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white">
                         Faturação & Vendas
                     </h1>
                     <flux:badge variant="success" class="bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1">
@@ -67,7 +67,7 @@
             </div>
 
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Total Recebido (Pagas)</p>
-            <h3 class="text-4xl font-black text-emerald-600 tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-600 tracking-tighter">
                 {{ number_format($totalBilled, 2, ',', ' ') }} {{ $workspaceCurrency }}
             </h3>
         </div>
@@ -84,7 +84,7 @@
             </div>
 
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Contas a Receber</p>
-            <h3 class="text-4xl font-black text-amber-600 tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-amber-600 tracking-tighter">
                 {{ number_format($totalPending, 2, ',', ' ') }} {{ $workspaceCurrency }}
             </h3>
         </div>
@@ -95,7 +95,7 @@
 
             <div class="relative z-10">
                 <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1">IVA Total Acumulado</p>
-                <h3 class="text-4xl font-black text-white tracking-tighter italic">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter italic">
                     {{ number_format($vatToPay, 2, ',', ' ') }} {{ $workspaceCurrency }}
                 </h3>
                 <p class="mt-4 text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Reserva Fiscal Obrigatória</p>

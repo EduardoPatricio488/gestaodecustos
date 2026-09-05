@@ -13,7 +13,7 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
                             Propostas & Orçamentos
                         </h1>
                         <flux:badge
@@ -67,7 +67,7 @@
                 <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1">
                     Pipeline em Negociação
                 </p>
-                <h3 class="text-4xl font-black text-white tracking-tighter">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter">
                     <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
                         {{ number_format($totalValue, 2, ',', ' ') }} €
                     </span>
@@ -86,7 +86,7 @@
                 Eficiência de Conversão
             </p>
             <div class="flex items-baseline gap-2">
-                <h3 class="text-4xl font-black text-emerald-600 tracking-tighter">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-600 tracking-tighter">
                     {{ round($conversionRate) }}%
                 </h3>
                 <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest italic">
@@ -117,7 +117,7 @@
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">
                 Aguardar Resposta
             </p>
-            <h3 class="text-4xl font-black dark:text-white tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter">
                 <span :class="privacyMode ? 'blur-sm select-none' : ''" class="transition-all duration-500 inline-block">
                     {{ $proposals->where('status', 'enviada')->count() }}
                 </span>

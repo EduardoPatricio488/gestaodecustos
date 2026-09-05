@@ -7,7 +7,7 @@
                 <flux:icon name="chart-bar-square" class="w-8 h-8 sm:w-10 sm:h-10 text-indigo-600" />
             </div>
             <div class="min-w-0">
-                <h1 class="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter leading-none text-zinc-900 dark:text-white">
+                <h1 class="text-3xl sm:text-2xl sm:text-3xl md:text-4xl font-black uppercase italic tracking-tighter leading-none text-zinc-900 dark:text-white">
                     Investimentos
                 </h1>
                 @if($lastUpdated)

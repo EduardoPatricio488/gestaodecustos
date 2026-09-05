@@ -256,7 +256,7 @@
 
         <div class="text-left">
             <div class="flex items-center gap-3">
-                <h1 class="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase italic leading-none">
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase italic leading-none">
                     {{ $this->greeting }}, <span style="color: {{ auth()->user()->profile_color }}">{{ $firstName }}</span>
                 </h1>
 
@@ -370,62 +370,56 @@
 @endphp
 
 {{-- TERMINAL DE ACÇÕES ESTRATÉGICAS --}}
-<div class="flex items-center gap-2 bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl">
+<div class="flex items-center justify-center sm:justify-start gap-1.5 bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-x-auto no-scrollbar">
 
     {{-- BOTÃO IA PRO --}}
     @if($hasProAccess)
         <a href="{{ route('ai') }}" wire:navigate
-            class="group flex items-center gap-2 px-4 h-10 rounded-xl bg-zinc-950 text-brand-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-800 hover:bg-brand-600 hover:text-white transition-all shadow-lg shadow-brand-500/10 active:scale-95">
-            <flux:icon name="sparkles" class="size-4 animate-pulse group-hover:rotate-12 transition-transform" />
-            <span>IA <span class="hidden sm:inline">PRO</span></span>
+            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-950 text-brand-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-800 hover:bg-brand-600 hover:text-white transition-all shadow-lg active:scale-95 shrink-0">
+            <flux:icon name="sparkles" class="size-4 group-hover:rotate-12 transition-transform shrink-0" />
+            <span class="hidden sm:inline">IA PRO</span>
         </a>
     @else
-        {{-- BLOQUEADO: REDIRECIONA PARA HUB.PRICING --}}
         <a href="{{ route('hub.pricing') }}" wire:navigate
-            class="group flex items-center gap-3 px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-200 dark:border-zinc-700 opacity-60 hover:opacity-100 transition-all"
-            title="Requer Plano Pro ou Business">
-            <span class="flex items-center gap-1.5">
-                IA PRO
-                <flux:icon name="lock-closed" variant="micro" class="size-3 text-zinc-400" />
-            </span>
+            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-200 dark:border-zinc-700 opacity-60 shrink-0">
+            <flux:icon name="lock-closed" variant="micro" class="size-3" />
+            <span class="hidden sm:inline">IA PRO</span>
         </a>
     @endif
 
-    <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
+    <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0"></div>
 
     {{-- BOTÃO RELATÓRIO PDF --}}
     @if($hasProAccess)
         <flux:modal.trigger name="export-pdf-modal">
             <button type="button"
-                class="group flex items-center gap-2 px-4 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-black uppercase text-[10px] tracking-widest border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-95">
-                <flux:icon name="document-arrow-down" class="size-4 group-hover:-translate-y-0.5 transition-transform" />
-                <span>Relatório</span>
+                class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-black uppercase text-[10px] tracking-widest border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
+                <flux:icon name="document-arrow-down" class="size-4 group-hover:-translate-y-0.5 transition-transform shrink-0" />
+                <span class="hidden sm:inline">Relatório</span>
             </button>
         </flux:modal.trigger>
     @else
-        {{-- BLOQUEADO: REDIRECIONA PARA HUB.PRICING --}}
         <a href="{{ route('hub.pricing') }}" wire:navigate
-            class="group flex items-center gap-3 px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-widest border border-zinc-200 dark:border-zinc-700 opacity-60 hover:opacity-100 transition-all"
-            title="Requer Plano Pro ou Business">
-            <span class="flex items-center gap-1.5">
-                Relatório
-                <flux:icon name="lock-closed" variant="micro" class="size-3 text-zinc-400" />
-            </span>
+            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-widest border border-zinc-200 dark:border-zinc-700 opacity-60 shrink-0">
+            <flux:icon name="lock-closed" variant="micro" class="size-3" />
+            <span class="hidden sm:inline">Relatório</span>
         </a>
     @endif
 
-    <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
+    <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0"></div>
 
-    {{-- GRUPO DE NAVEGAÇÃO (SEMPRE LIVRE) --}}
-    <div class="flex gap-1.5">
+    {{-- GRUPO DE NAVEGAÇÃO (DESPESAS E RECEITAS) --}}
+    <div class="flex gap-1.5 shrink-0">
         <a href="{{ route('expenses') }}" wire:navigate
-            class="flex items-center px-5 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-black uppercase text-[10px] tracking-widest border border-rose-100 dark:border-rose-900/50 hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95">
-            Despesas
+            class="flex items-center justify-center gap-2 px-3 sm:px-5 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-black uppercase text-[10px] tracking-widest border border-rose-100 dark:border-rose-900/50 hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
+            <flux:icon name="minus-circle" variant="micro" class="size-4 shrink-0" />
+            <span class="hidden sm:inline">Despesas</span>
         </a>
 
         <a href="{{ route('hub.incomes') }}" wire:navigate
-            class="flex items-center px-5 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 font-black uppercase text-[10px] tracking-widest border border-emerald-100 dark:border-emerald-900/50 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95">
-            Receitas
+            class="flex items-center justify-center gap-2 px-3 sm:px-5 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 font-black uppercase text-[10px] tracking-widest border border-emerald-100 dark:border-emerald-900/50 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
+            <flux:icon name="plus-circle" variant="micro" class="size-4 shrink-0" />
+            <span class="hidden sm:inline">Receitas</span>
         </a>
     </div>
 </div>
@@ -447,45 +441,40 @@
 
 
 
-
-{{-- 4. SELETOR DE ESPAÇO (WORKSPACE SWITCHER) - APENAS PARA PLANO BUSINESS --}}
+{{-- 4. SELETOR DE ESPAÇO (WORKSPACE SWITCHER) --}}
 @php
-    // Define se o utilizador é Business de forma segura
-    $isBusiness = $user->isBusinessPlan();
+    // Definimos a variável aqui para evitar o erro de 'Undefined variable'
+    $isBusiness = auth()->user()->isBusinessPlan();
 @endphp
 
 @if($isBusiness && $userWorkspaces->count() >= 1)
-    <div class="flex items-center gap-4 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl w-fit border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500">
+    <div class="flex items-center gap-2 sm:gap-4 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl w-fit border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
 
-        <div class="px-3 py-1 text-[9px] font-black uppercase text-zinc-500 tracking-widest border-r border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
-            <flux:icon name="building-office-2" variant="micro" class="size-3 text-violet-500" />
-            Espaços
+        {{-- Label: Escondemos o texto "Espaços" no mobile para não ficar vertical --}}
+        <div class="px-2 sm:px-3 py-1 text-[9px] font-black uppercase text-zinc-500 tracking-widest border-r border-zinc-200 dark:border-zinc-800 flex items-center gap-2 shrink-0">
+            <flux:icon name="building-office-2" variant="micro" class="size-3 text-violet-500 shrink-0" />
+            <span class="hidden sm:inline">Espaços</span>
         </div>
 
-        <div class="flex gap-1.5 overflow-x-auto no-scrollbar items-center">
+        <div class="flex gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar items-center">
             @foreach($userWorkspaces as $ws)
                 @php $isActive = ($ws->id == $currentWs->id); @endphp
                 <button
                     wire:click="switchWorkspace({{ $ws->id }})"
                     wire:loading.class="opacity-50 cursor-wait"
                     wire:target="switchWorkspace({{ $ws->id }})"
-                    class="group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 cursor-pointer select-none
+                    class="group flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all duration-200 shrink-0
                     {{ $isActive
-                        ? 'bg-white dark:bg-zinc-800 shadow-md text-brand-600 font-black scale-[1.02]'
-                        : 'text-zinc-500 hover:bg-white dark:hover:bg-zinc-800 hover:text-zinc-800 dark:hover:text-white hover:shadow-md hover:scale-[1.02] active:scale-95' }}"
+                        ? 'bg-white dark:bg-zinc-800 shadow-md text-brand-600 font-black'
+                        : 'text-zinc-500 hover:bg-white dark:hover:bg-zinc-800' }}"
                 >
-                    <div class="size-1.5 rounded-full transition-all duration-200
-                        {{ $isActive
-                            ? 'bg-brand-500 shadow-[0_0_8px_#3b82f6]'
-                            : 'bg-zinc-300 group-hover:bg-brand-400 group-hover:shadow-[0_0_6px_#3b82f6]' }}">
+                    <div class="size-1.5 rounded-full shrink-0
+                        {{ $isActive ? 'bg-brand-500 shadow-[0_0_8px_#3b82f6]' : 'bg-zinc-300' }}">
                     </div>
-                    <span class="text-xs uppercase tracking-tighter">{{ $ws->name }}</span>
 
-                    @if($ws->type !== 'personal')
-                        <flux:icon name="arrow-right-circle" variant="micro"
-                            class="size-3 transition-all duration-200
-                            {{ $isActive ? 'opacity-60' : 'opacity-0 group-hover:opacity-70 group-hover:translate-x-0.5' }}" />
-                    @endif
+                    {{-- No telemóvel mostra apenas a 1ª Letra, no PC mostra o nome todo --}}
+                    <span class="hidden sm:inline text-xs uppercase tracking-tighter">{{ $ws->name }}</span>
+                    <span class="sm:hidden text-[10px] font-black uppercase">{{ substr($ws->name, 0, 1) }}</span>
                 </button>
             @endforeach
         </div>
@@ -493,12 +482,11 @@
         {{-- Botão Adicionar (+) --}}
         <a href="{{ route('hub.business.gateway', ['new' => 1]) }}"
            wire:navigate
-           class="flex items-center justify-center size-8 rounded-xl bg-zinc-200/60 dark:bg-zinc-800 text-zinc-400 hover:text-brand-500 hover:bg-white dark:hover:bg-zinc-700 transition-all shadow-sm group">
-            <flux:icon name="plus" class="size-4 group-hover:scale-110 transition-transform" />
+           class="flex items-center justify-center size-8 rounded-xl bg-zinc-200/60 dark:bg-zinc-800 text-zinc-400 hover:text-brand-500 transition-all shrink-0">
+            <flux:icon name="plus" class="size-4" />
         </a>
     </div>
 @endif
-
 
 
 
@@ -619,7 +607,7 @@
                         stroke-dashoffset="{{ 364.4 - (364.4 * $overallScore) / 100 }}"
                         stroke-linecap="round" />
                 </svg>
-                <span class="text-4xl font-black dark:text-white tracking-tighter">{{ $overallScore }}%</span>
+                <span class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter">{{ $overallScore }}%</span>
             </div>
 
             <h4 class="text-xs font-black uppercase text-zinc-500 tracking-widest">Saúde Financeira</h4>

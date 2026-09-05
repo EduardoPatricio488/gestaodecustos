@@ -33,7 +33,7 @@
                         @if($step == 1)
                             <div class="space-y-6 animate-fade-in">
                                 <span class="px-3 py-1 bg-brand-500/10 text-brand-400 text-[8px] font-black rounded-full uppercase tracking-[0.2em]">Sessão Iniciada</span>
-                                <h3 class="text-4xl font-black text-white leading-none italic uppercase tracking-tighter">Bem-vindo ao Núcleo de Comando</h3>
+                                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-none italic uppercase tracking-tighter">Bem-vindo ao Núcleo de Comando</h3>
                                 <p class="text-zinc-400 text-sm leading-relaxed">Estás no controlo total do <strong>Finance Pro</strong>. Este dashboard permite monitorizar o ecossistema, auditar transações e gerir o ciclo de vida de cada utilizador e empresa na plataforma.</p>
                                 <div class="grid grid-cols-2 gap-4 pt-4">
                                     <div class="p-4 bg-white/5 rounded-2xl border border-white/5">

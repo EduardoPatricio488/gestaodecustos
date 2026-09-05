@@ -12,7 +12,7 @@
                     </div>
                 </div>
                 <div class="text-left">
-                    <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none text-zinc-900">Recrutamento</h1>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none text-zinc-900">Recrutamento</h1>
                     <p class="text-sm text-zinc-500 font-medium italic mt-2">Gere a tua presença no mercado de talento</p>
                 </div>
             </div>
@@ -112,7 +112,7 @@
                             </span>
                         </div>
 
-                        <h2 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">{{ $workspace->name }}</h2>
+                        <h2 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">{{ $workspace->name }}</h2>
 
                         {{-- DESCRIÇÃO CURTA --}}
                         <div class="relative border-t border-zinc-100 dark:border-zinc-800 pt-10 group">

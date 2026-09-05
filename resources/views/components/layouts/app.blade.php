@@ -374,7 +374,7 @@
             <div class="bg-white border border-zinc-200 p-6 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="text-left">
                     <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 italic">Soma de tickets rápida</p>
-                    <p class="text-4xl font-black text-zinc-900 italic tracking-tighter" x-text="calcTotal.toFixed(2) + ' €'"></p>
+                    <p class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 italic tracking-tighter" x-text="calcTotal.toFixed(2) + ' €'"></p>
                 </div>
                 <div class="flex items-center gap-3 w-full md:w-auto">
                     <input type="number" x-model="calcInput" placeholder="Soma..." class="flex-1 md:w-28 h-14 bg-zinc-100 border-none rounded-2xl text-center text-zinc-900 font-black">
@@ -1502,13 +1502,13 @@ $hasStoreAccess = $hasLockInAccess;
 
 
 
- {{-- Centro: Barra de Pesquisa --}}
-  {{-- Centro: Barra de Pesquisa + Aviso de Contexto --}}
- <div class="flex items-center justify-center gap-4 w-full"> {{-- Adicionei gap-4 e items-center --}}
+{{-- Centro: Barra de Pesquisa + Aviso de Contexto --}}
+{{-- Centro: Barra de Pesquisa + Aviso de Contexto --}}
+<div class="flex items-center justify-center flex-1 mx-1 sm:mx-8"> {{-- mx-1 remove o vácuo no telemóvel --}}
 
-    {{-- AVISO: MODO DE OBSERVAÇÃO --}}
+    {{-- AVISO: MODO DE OBSERVAÇÃO (Oculto no mobile para ganhar espaço) --}}
     @if($isViewingOthers && $currentWs)
-        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl animate-in slide-in-from-top-2">
+        <div class="hidden xl:flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl shrink-0 mr-4">
             <div class="relative flex items-center justify-center">
                 <div class="size-1.5 rounded-full bg-amber-500 animate-ping absolute"></div>
                 <flux:icon name="eye" variant="micro" class="size-3.5 text-amber-600 relative" />
@@ -1516,18 +1516,23 @@ $hasStoreAccess = $hasLockInAccess;
             <span class="text-[9px] font-black uppercase text-amber-600 tracking-widest whitespace-nowrap">
                 A visualizar: <span class="text-amber-800 dark:text-amber-400 italic">{{ $currentWs->name ?? 'Cofre' }}</span>
             </span>
-            <a href="{{ route('workspace.switch.fast', $myPersonalWsId) }}" class="ml-1 p-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors" title="Voltar à minha conta">
+            <a href="{{ route('workspace.switch.fast', $myPersonalWsId) }}" class="ml-1 p-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors">
                 <flux:icon name="arrow-uturn-left" variant="micro" class="size-3" />
             </a>
         </div>
     @endif
-                <button x-on:click="$dispatch('open-global-search')" class="flex items-center gap-3 px-4 py-2 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all group w-full shadow-sm">
-                    <flux:icon name="magnifying-glass" class="size-4 group-hover:text-brand-500 transition-colors" />
-                    <span class="text-sm font-medium text-left flex-1">Procurar tudo... (Ctrl K)</span>
-                </button>
-            </div>
 
+    {{-- BOTÃO DE PESQUISA: Super colado aos lados no mobile, Gigante no PC --}}
+    <button x-on:click="$dispatch('open-global-search')"
+        class="flex items-center justify-center sm:justify-start gap-3 p-2.5 sm:px-6 sm:py-2.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all group shadow-sm w-auto sm:w-full sm:max-w-5xl">
 
+        <flux:icon name="magnifying-glass" class="size-5 sm:size-4 group-hover:text-brand-500 transition-colors shrink-0" />
+
+        <span class="hidden sm:inline-block text-sm font-medium text-left">
+            Procurar tudo no Finance Pro... <span class="opacity-40 ml-2 font-normal">(Control + K)</span>
+        </span>
+    </button>
+</div>
 
 {{-- Lado Direito: Ações e Perfil --}}
 <div class="flex items-center gap-2 sm:gap-3 justify-end">

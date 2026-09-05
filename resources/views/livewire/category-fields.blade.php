@@ -8,7 +8,7 @@
                 <flux:icon name="chevron-right" class="size-2" />
                 <span class="text-zinc-500 italic">{{ $category->name }}</span>
             </div>
-            <h1 class="text-4xl font-black dark:text-white uppercase italic tracking-tighter leading-none">Arquitetura do Hub</h1>
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase italic tracking-tighter leading-none">Arquitetura do Hub</h1>
             <p class="text-xs text-zinc-500 font-medium uppercase tracking-widest mt-2">Personaliza os atributos de registo para este módulo</p>
         </div>
         <flux:button :href="route('categories')" variant="ghost" icon="arrow-left" wire:navigate class="rounded-xl font-bold uppercase text-[10px]">Voltar ao Painel</flux:button>

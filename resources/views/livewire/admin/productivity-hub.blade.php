@@ -9,7 +9,7 @@
             <div class="flex justify-between items-start mb-6 relative z-10">
                 <div>
                     <p class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Taxa de Tarefas</p>
-                    <p class="text-4xl font-black mt-1 text-blue-600">{{ $stats['task_rate'] }}%</p>
+                    <p class="text-2xl sm:text-3xl md:text-4xl font-black mt-1 text-blue-600">{{ $stats['task_rate'] }}%</p>
                 </div>
                 <div class="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-2xl">
                     <flux:icon name="check-circle" class="size-6" />
@@ -26,7 +26,7 @@
             <div class="flex justify-between items-start mb-6">
                 <div>
                     <p class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Sucesso em Metas</p>
-                    <p class="text-4xl font-black mt-1 text-emerald-600">{{ $stats['goal_rate'] }}%</p>
+                    <p class="text-2xl sm:text-3xl md:text-4xl font-black mt-1 text-emerald-600">{{ $stats['goal_rate'] }}%</p>
                 </div>
                 <div class="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-2xl">
                     <flux:icon name="trophy" class="size-6" />

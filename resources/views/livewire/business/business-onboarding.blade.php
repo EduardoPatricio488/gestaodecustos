@@ -16,7 +16,7 @@
                 </div>
 
                 <div class="space-y-4">
-                    <h1 class="text-4xl font-black uppercase italic italic tracking-tighter dark:text-white">O Seu Novo Centro de Comando</h1>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black uppercase italic italic tracking-tighter dark:text-white">O Seu Novo Centro de Comando</h1>
                     <p class="text-zinc-500 text-lg leading-relaxed">
                         A área empresarial foi desenhada para separar as suas finanças pessoais dos seus negócios. Aqui terá acesso a:
                     </p>

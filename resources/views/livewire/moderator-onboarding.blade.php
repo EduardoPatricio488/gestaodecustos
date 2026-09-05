@@ -33,7 +33,7 @@
                         @if($step == 1)
                             <div class="space-y-6 animate-fade-in">
                                 <span class="px-3 py-1 bg-amber-500/10 text-amber-500 text-[8px] font-black rounded-full uppercase tracking-[0.2em]">Sessão de Supervisão</span>
-                                <h3 class="text-4xl font-black text-white leading-none italic uppercase tracking-tighter">Guardião da Comunidade</h3>
+                                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-none italic uppercase tracking-tighter">Guardião da Comunidade</h3>
                                 <p class="text-zinc-400 text-sm leading-relaxed">Bem-vindo à tua consola. O teu papel é garantir que o ecossistema <strong>Finance Pro</strong> permanece seguro, saudável e funcional para todos os utilizadores.</p>
                                 <div class="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 italic text-xs text-amber-200">
                                     "Manter a ordem é o primeiro passo para o crescimento global."

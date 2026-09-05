@@ -211,7 +211,7 @@
                         {{-- Nome e Tags --}}
                         <div class="text-center md:text-left flex-1">
                             <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
-                                <h2 class="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">{{ $detailedUser->name }}</h2>
+                                <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter leading-none">{{ $detailedUser->name }}</h2>
                                 <flux:badge size="sm" class="{{ $detailedUser->is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400' }} border-none font-black uppercase text-[9px] tracking-widest">
                                     {{ $detailedUser->is_active ? 'Conta Ativa' : 'Banida' }}
                                 </flux:badge>

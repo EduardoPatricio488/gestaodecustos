@@ -18,7 +18,7 @@
                         <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase tracking-widest rounded-md border border-emerald-500/20">Parceiro Oficial</span>
                         <h2 class="text-xs font-black text-zinc-400 uppercase tracking-widest">{{ $workspace->name }}</h2>
                     </div>
-                    <h1 class="text-4xl font-black dark:text-white tracking-tighter italic leading-none">Área Exclusiva: {{ $client->name }}</h1>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter italic leading-none">Área Exclusiva: {{ $client->name }}</h1>
                 </div>
             </div>
 

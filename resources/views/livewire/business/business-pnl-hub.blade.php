@@ -9,7 +9,7 @@
                 </div>
             </div>
             <div>
-                <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Resultados (P&L)</h1>
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Resultados (P&L)</h1>
                 <p class="text-sm text-zinc-500 font-medium italic mt-2 text-zinc-400">Análise estrutural de performance, margens e rentabilidade líquida</p>
             </div>
         </div>
@@ -31,7 +31,7 @@
         {{-- Faturação Total --}}
         <div class="glass-card relative overflow-hidden bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm group hover:border-emerald-500/30 transition-all">
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Faturação Total (Bruta)</p>
-            <h3 class="text-4xl font-black text-emerald-600 tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-600 tracking-tighter">
                 <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
                     {{ number_format($yearlyRevenue, 2, ',', ' ') }} €
                 </span>
@@ -54,7 +54,7 @@
                     <span class="text-[9px] font-black text-white/50 border border-white/10 px-2 py-1 rounded-lg uppercase tracking-widest italic">Profit & Loss</span>
                 </div>
                 <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1">Lucro Líquido Real</p>
-                <h3 class="text-4xl font-black text-white tracking-tighter italic">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter italic">
                     <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
                         {{ number_format($yearlyProfit, 2, ',', ' ') }} €
                     </span>
@@ -66,7 +66,7 @@
         <div class="glass-card relative overflow-hidden bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:border-brand-500/30">
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Margem Média Líquida</p>
             <div class="flex items-baseline gap-2">
-                <h3 class="text-4xl font-black dark:text-white tracking-tighter">{{ round($avgMargin, 1) }}%</h3>
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter">{{ round($avgMargin, 1) }}%</h3>
                 <span class="text-[9px] font-bold {{ $avgMargin > 20 ? 'text-emerald-500' : 'text-amber-500' }} uppercase italic">Eficiência Operacional</span>
             </div>
             <div class="mt-4 h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">

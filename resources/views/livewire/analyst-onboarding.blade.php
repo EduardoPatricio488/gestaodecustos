@@ -33,7 +33,7 @@
                         @if($step == 1)
                             <div class="space-y-6 animate-fade-in">
                                 <span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 text-[8px] font-black rounded-full uppercase tracking-[0.2em]">Sessão de Inteligência</span>
-                                <h3 class="text-4xl font-black text-white leading-none italic uppercase tracking-tighter">Observatório de Dados</h3>
+                                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-none italic uppercase tracking-tighter">Observatório de Dados</h3>
                                 <p class="text-zinc-400 text-sm leading-relaxed">Bem-vindo, Analista. O teu papel é converter dados brutos em decisões estratégicas. Tens acesso privilegiado a todas as estatísticas de crescimento do <strong>Finance Pro</strong>.</p>
                                 <div class="p-4 bg-cyan-500/5 rounded-2xl border border-cyan-500/10 italic text-xs text-cyan-200">
                                     "O que não se mede, não se gere."

@@ -14,7 +14,7 @@
                 </div>
                 <div class="text-left">
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Equipa</h1>
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Equipa</h1>
                         <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1 text-zinc-500">Capital Humano</flux:badge>
                     </div>
                     <p class="text-sm text-zinc-500 font-medium italic mt-2">Gestão de competências e estrutura organizacional</p>
@@ -117,7 +117,7 @@
         <div class="relative overflow-hidden bg-zinc-950 p-8 rounded-[2.5rem] shadow-2xl border border-zinc-800 group">
             <div class="relative z-10">
                 <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1">Payroll Mensal Estimado</p>
-                <h3 class="text-4xl font-black text-white tracking-tighter italic">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter italic">
                     <span x-bind:class="privacyMode ? 'blur-md select-none' : ''" class="inline-block transition-all duration-300">
                         {{ number_format($totalPayroll, 2, ',', ' ') }} €
                     </span>
@@ -128,7 +128,7 @@
         {{-- Contagem Equipa --}}
         <div class="glass-card bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Efetivos em Funções</p>
-            <h3 class="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter">
                 <span x-bind:class="privacyMode ? 'blur-sm select-none' : ''" class="inline-block transition-all duration-300">
                     {{ $employeeCount }}
                 </span>
@@ -164,7 +164,7 @@
             <div class="relative z-10">
                 <flux:icon name="calendar" class="size-10 mb-4 opacity-80" />
                 <p class="text-[10px] font-black uppercase tracking-widest opacity-80">Próximo Pagamento</p>
-                <h3 class="text-4xl font-black italic tracking-tighter mt-2">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black italic tracking-tighter mt-2">
                     <span :class="privacyMode ? 'blur-sm select-none' : ''">
                         {{ $daysUntilNext }} dias
                     </span>
@@ -181,7 +181,7 @@
             <div class="relative z-10">
                 <flux:icon name="banknotes" class="size-10 mb-4 text-brand-400" />
                 <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Liquidez Necessária</p>
-                <h3 class="text-4xl font-black italic tracking-tighter mt-2">
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black italic tracking-tighter mt-2">
                     <span :class="privacyMode ? 'blur-md select-none' : ''">
                         {{ number_format($liquidity, 2, ',', ' ') }} €
                     </span>
@@ -196,7 +196,7 @@
         <div class="glass-card bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
             <flux:icon name="chart-bar" class="size-10 mb-4 text-brand-600" />
             <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Custo Médio</p>
-            <h3 class="text-4xl font-black tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter">
                 <span :class="privacyMode ? 'blur-sm select-none' : ''">
                     {{ number_format($avgCost, 2, ',', ' ') }} €
                 </span>
@@ -245,7 +245,7 @@
         <div class="glass-card bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
             <flux:icon name="arrow-path" class="size-10 mb-4 text-orange-500" />
             <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Rotatividade (Trimestral)</p>
-            <h3 class="text-4xl font-black tracking-tighter text-orange-500">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter text-orange-500">
                 {{ $turnover }}
             </h3>
             <p class="text-[9px] font-bold text-zinc-400 uppercase mt-2 italic">Média do setor: 3.1%</p>

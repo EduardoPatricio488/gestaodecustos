@@ -23,7 +23,7 @@
                 </div>
                 <div>
                     <div class="flex flex-wrap items-center gap-3">
-                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Assinaturas</h1>
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Assinaturas</h1>
                         <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1">Custos Fixos</flux:badge>
                     </div>
                     <p class="text-sm text-zinc-500 font-medium italic mt-2">
@@ -77,7 +77,7 @@
 
         <div class="glass-card p-7 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-sm">
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-1">Por pagar este mes</p>
-            <h3 class="text-4xl font-black text-orange-500 tracking-tighter italic">{{ number_format($upcoming, 2, ',', ' ') }} EUR</h3>
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-orange-500 tracking-tighter italic">{{ number_format($upcoming, 2, ',', ' ') }} EUR</h3>
             <p class="mt-5 text-[10px] font-black text-zinc-500 uppercase tracking-widest">Media por assinatura</p>
             <p class="text-xl font-black dark:text-white">{{ number_format($averageMonthly, 2, ',', ' ') }} EUR</p>
         </div>

@@ -15,7 +15,7 @@
                         <span class="px-2 py-0.5 bg-brand-500/10 text-brand-600 text-[9px] font-black uppercase tracking-widest rounded-md border border-brand-500/20">Fornecedor Verificado</span>
                         <h2 class="text-xs font-black text-zinc-400 uppercase tracking-widest">{{ $workspace->name }}</h2>
                     </div>
-                    <h1 class="text-4xl font-black dark:text-white tracking-tighter italic leading-none">Painel de Parceiro: {{ $supplier->name }}</h1>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter italic leading-none">Painel de Parceiro: {{ $supplier->name }}</h1>
                 </div>
             </div>
 

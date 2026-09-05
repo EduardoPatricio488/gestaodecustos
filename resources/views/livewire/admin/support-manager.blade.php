@@ -14,7 +14,7 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Gestor de Suporte</h1>
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Gestor de Suporte</h1>
                         <flux:badge variant="neutral" class="bg-brand-500/10 text-brand-400 text-[9px] font-black uppercase tracking-widest border-none px-3 py-1">Admin Console</flux:badge>
                     </div>
                     <p class="text-sm text-zinc-500 font-medium italic mt-2">Monitorização de incidências e <span class="text-red-600 font-bold uppercase">Moderação Social</span></p>

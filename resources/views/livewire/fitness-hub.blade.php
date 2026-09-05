@@ -83,7 +83,7 @@
             <div class="bg-zinc-950 p-6 rounded-[2rem] shadow-xl border border-zinc-800 relative overflow-hidden">
                 <div class="absolute -right-4 -top-4 size-20 bg-orange-500/10 blur-2xl rounded-full"></div>
                 <p class="text-[9px] font-black uppercase tracking-[0.3em] text-orange-400 mb-2">Sessões este Mês</p>
-                <h3 class="text-4xl font-black text-white tracking-tighter">{{ $stats['total_activities'] }}</h3>
+                <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter">{{ $stats['total_activities'] }}</h3>
                 <p class="text-[10px] text-zinc-500 font-bold mt-1 uppercase">treinos registados</p>
             </div>
 
@@ -1058,7 +1058,7 @@
                         {{ $selectedActivity->activity_date->translatedFormat('d M Y') }}
                     </span>
                 </div>
-                <h2 class="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Resumo de Performance</h2>
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter leading-none">Resumo de Performance</h2>
             </div>
         </div>
 

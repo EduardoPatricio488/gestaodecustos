@@ -44,7 +44,7 @@
                 </div>
 
                 <div>
-                    <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
                         {{ $workspace->name }}
                     </h1>
                     <div class="flex items-center gap-3 mt-3">
@@ -93,7 +93,7 @@
         {{-- Pendentes --}}
         <div class="glass-card bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">A Minha Carga</p>
-            <h3 class="text-4xl font-black text-zinc-800 dark:text-white tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-800 dark:text-white tracking-tighter">
                 {{ $stats['pending'] }} <span class="text-xs font-medium text-zinc-400 uppercase tracking-widest">Tarefas Ativas</span>
             </h3>
             <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -104,7 +104,7 @@
         {{-- Eficiência --}}
         <div class="glass-card bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Impacto Diário</p>
-            <h3 class="text-4xl font-black text-emerald-500 tracking-tighter">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-500 tracking-tighter">
                 +{{ $stats['completed_today'] }} <span class="text-xs font-medium text-emerald-500/60 uppercase tracking-widest">Hoje</span>
             </h3>
             <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -115,7 +115,7 @@
         {{-- Alertas --}}
         <div class="glass-card bg-zinc-950 p-8 rounded-[2.5rem] border border-zinc-800 shadow-2xl relative overflow-hidden group">
             <p class="text-[10px] font-black text-red-400 uppercase tracking-[0.2em] mb-1">Atenção Crítica</p>
-            <h3 class="text-4xl font-black {{ $stats['overdue'] > 0 ? 'text-red-500 shadow-red-500/20' : 'text-white' }} tracking-tighter italic">
+            <h3 class="text-2xl sm:text-3xl md:text-4xl font-black {{ $stats['overdue'] > 0 ? 'text-red-500 shadow-red-500/20' : 'text-white' }} tracking-tighter italic">
                 {{ $stats['overdue'] }} <span class="text-xs font-medium uppercase tracking-widest">Atrasadas</span>
             </h3>
             <flux:icon name="exclamation-triangle" class="absolute -right-4 -bottom-4 size-20 text-white/5" />

@@ -14,7 +14,7 @@
                     @endif
                 </div>
                 <div>
-                    <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">{{ $employee->name }}</h1>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">{{ $employee->name }}</h1>
                     <div class="flex items-center gap-3 mt-3">
                         <span class="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
                             {{ $employee->role }}

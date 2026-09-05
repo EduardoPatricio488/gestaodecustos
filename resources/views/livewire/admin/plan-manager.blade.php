@@ -209,7 +209,7 @@
                             <h4 class="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] mb-6">Uso do Ecossistema</h4>
                             <div class="flex items-end justify-between">
                                 <div class="space-y-1">
-                                    <p class="text-4xl font-black dark:text-white tracking-tighter">{{ $detailedStats['total_ops'] }}</p>
+                                    <p class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter">{{ $detailedStats['total_ops'] }}</p>
                                     <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Operações Processadas</p>
                                 </div>
                                 <div class="text-right">
@@ -224,7 +224,7 @@
                             <h4 class="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] mb-6">Fidelização Média</h4>
                             <div class="flex items-end justify-between">
                                 <div class="space-y-1">
-                                    <p class="text-4xl font-black dark:text-white tracking-tighter">{{ round($detailedStats['avg_retention']) }}</p>
+                                    <p class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter">{{ round($detailedStats['avg_retention']) }}</p>
                                     <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Dias de Permanência</p>
                                 </div>
                                 <div class="text-right">

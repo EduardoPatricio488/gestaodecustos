@@ -14,7 +14,7 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-4xl font-black uppercase tracking-tighter italic leading-none dark:text-white text-zinc-900">
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tighter italic leading-none dark:text-white text-zinc-900">
                             Timeline de Fluxo
                         </h1>
                         <flux:badge variant="neutral" class="bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest text-zinc-500">

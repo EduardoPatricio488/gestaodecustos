@@ -18,7 +18,7 @@
             </div>
 
             <div>
-                <h1 class="text-3xl sm:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+                <h1 class="text-3xl sm:text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
                     Terminal <span class="text-zinc-400 dark:text-zinc-600">Cronológico</span>
                 </h1>
                 <p class="text-sm text-zinc-500 font-medium italic mt-2">Sincronização global de fluxos financeiros e atividades</p>

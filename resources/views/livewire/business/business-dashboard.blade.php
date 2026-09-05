@@ -85,7 +85,7 @@
                             <div x-data="{ open: false }" class="relative">
                                 <button @click="open = !open" @click.outside="open = false" type="button"
                                     class="flex items-center gap-2 group outline-none">
-                                    <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none group-hover:text-brand-500 transition-colors">
+                                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none group-hover:text-brand-500 transition-colors">
                                         {{ $workspace->name }}
                                     </h1>
                                     <flux:icon name="chevron-down" class="size-5 text-zinc-400 transition-transform duration-200 mt-1" x-bind:class="open ? 'rotate-180' : ''" />
@@ -136,7 +136,7 @@
                                 </div>
                             </div>
                         @else
-                            <h1 class="text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">{{ $workspace->name }}</h1>
+                            <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">{{ $workspace->name }}</h1>
                         @endif
 
                         <flux:badge variant="neutral" size="sm" class="font-black text-[9px] tracking-[0.2em] border-none bg-zinc-100 dark:bg-zinc-800 text-zinc-500 uppercase">Empresa Ativa</flux:badge>
@@ -490,7 +490,7 @@
                     </h3>
                 </div>
 
-                <p class="text-4xl font-black text-emerald-600 tracking-tighter italic">
+                <p class="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-600 tracking-tighter italic">
                     <span :class="privacyMode ? 'blur-md select-none' : ''"
                         class="transition-all duration-500 inline-block">
                         {{ number_format($accountsReceivable, 2, ',', ' ') }} €
