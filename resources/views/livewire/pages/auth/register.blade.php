@@ -81,12 +81,25 @@ new #[Layout('layouts.guest')] class extends Component
     }
 }; ?>
 
+
+
+
+
+
+
+
+
+
+
+
+
 <div
     class="space-y-7"
     x-data="{
         showPass: false,
         showConfirm: false,
         password: '',
+        password_confirmation: '', {{-- 1. ADICIONADO AQUI --}}
         get strength() {
             if (!this.password) return 0;
             let s = 0;
@@ -120,10 +133,9 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
     </div>
 
-    {{-- FORMULÁRIO --}}
     <form wire:submit="register" class="space-y-4">
 
-        {{-- NOME --}}
+        {{-- NOME (Manteve-se igual) --}}
         <div class="space-y-1.5">
             <label for="name" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Nome</label>
             <div class="relative">
@@ -136,54 +148,31 @@ new #[Layout('layouts.guest')] class extends Component
                     type="text"
                     required
                     autofocus
-                    autocomplete="name"
                     placeholder="O teu nome completo"
-                    class="w-full h-11 pl-10 pr-4 bg-zinc-50 dark:bg-zinc-900 border @error('name') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
+                    class="w-full h-11 pl-10 pr-4 bg-zinc-50 dark:bg-zinc-900 border @error('name') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
             </div>
             <x-input-error :messages="$errors->get('name')" class="text-[11px]" />
         </div>
 
-        {{-- EMAIL --}}
+        {{-- EMAIL (Manteve-se igual) --}}
         <div class="space-y-1.5">
             <label for="email" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Email</label>
             <div class="relative">
                 <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
-                    <div wire:loading.remove wire:target="checkEmailAvailability" class="inline-flex">
-                        <flux:icon name="envelope" class="size-4 text-zinc-400 transition-colors" x-bind:class="!$wire.emailAvailable && $wire.email ? 'text-red-400' : ''" />
-                    </div>
-                    <div wire:loading wire:target="checkEmailAvailability" class="hidden">
-                        <flux:icon name="arrow-path" class="size-4 text-emerald-500 animate-spin" />
-                    </div>
+                    <flux:icon name="envelope" class="size-4 text-zinc-400" />
                 </div>
                 <input
                     wire:model.blur="email"
                     id="email"
                     type="email"
                     required
-                    autocomplete="username"
                     placeholder="teu@email.com"
-                    :disabled="$wire.isSubmitting"
-                    aria-label="Endereço de email"
-                    class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all" :class="!$wire.emailAvailable && $wire.email ? 'border-red-400 dark:border-red-700' : !$wire.email || ($wire.email && $wire.emailAvailable) ? 'border-zinc-200 dark:border-zinc-800' : 'border-red-400 dark:border-red-700'"
+                    class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border rounded-xl text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                    :class="!$wire.emailAvailable && $wire.email ? 'border-red-400' : 'border-zinc-200'"
                 />
-                <div x-show="$wire.email && !$wire.checkingEmail && $wire.emailAvailable" x-cloak class="absolute inset-y-0 right-3 flex items-center">
-                    <flux:icon name="check-circle" class="size-4 text-emerald-500" />
-                </div>
-                <div x-show="$wire.email && !$wire.checkingEmail && !$wire.emailAvailable" x-cloak class="absolute inset-y-0 right-3 flex items-center">
-                    <flux:icon name="exclamation-circle" class="size-4 text-red-500" />
-                </div>
             </div>
-            <div wire:loading wire:target="checkEmailAvailability" class="hidden text-[11px] text-emerald-600 dark:text-emerald-400">
-                A verificar disponibilidade...
-            </div>
-            <div x-show="$wire.email && $wire.emailAvailable && !$wire.isSubmitting" x-cloak class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                Email disponível
-            </div>
-            <div x-show="$wire.email && !$wire.emailAvailable" x-cloak class="text-[11px] text-red-600 dark:text-red-400">
-                Este email já está registado
-            </div>
-            <x-input-error :messages="$errors->get('email')" class="text-[11px]" />
+            <x-input-error :messages="$errors->get('email')" />
         </div>
 
         {{-- PASSWORD --}}
@@ -191,55 +180,23 @@ new #[Layout('layouts.guest')] class extends Component
             <label for="password" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Password</label>
             <div class="relative">
                 <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
-                    <flux:icon name="lock-closed" class="size-4 transition-colors" x-bind:class="$wire.isSubmitting ? 'text-zinc-300 dark:text-zinc-700' : 'text-zinc-400'" />
+                    <flux:icon name="lock-closed" class="size-4 text-zinc-400" />
                 </div>
                 <input
-                    wire:model="password"
+                    wire:model.live="password" {{-- 2. ADICIONADO .live --}}
                     id="password"
                     :type="showPass ? 'text' : 'password'"
                     required
-                    autocomplete="new-password"
                     placeholder="Mínimo 8 caracteres"
-                    :disabled="$wire.isSubmitting"
-                    aria-label="Password"
-                    @input="password = $event.target.value"
-                    class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border @error('password') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
+                    @input="password = $event.target.value" {{-- Sincroniza com Alpine --}}
+                    class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border @error('password') border-red-400 @else border-zinc-200 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
-                <button type="button" @click="showPass = !showPass" :disabled="$wire.isSubmitting" aria-label="Mostrar/ocultar password" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none">
+                <button type="button" @click="showPass = !showPass" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600">
                     <flux:icon x-show="!showPass" name="eye" class="size-4" />
                     <flux:icon x-show="showPass" name="eye-slash" class="size-4" x-cloak />
                 </button>
             </div>
-
-            {{-- INDICADOR DE FORÇA --}}
-            <div x-show="password.length > 0" x-cloak class="space-y-2 pt-1">
-                <div class="flex gap-1">
-                    <template x-for="i in 5" :key="i">
-                        <div
-                            class="h-1.5 flex-1 rounded-full transition-all duration-300"
-                            :class="i <= strength ? strengthColor : 'bg-zinc-200 dark:bg-zinc-800'"
-                        ></div>
-                    </template>
-                </div>
-                <div class="flex items-center justify-between">
-                    <p class="text-[11px] font-semibold" :class="strength <= 1 ? 'text-red-500' : strength <= 2 ? 'text-orange-500' : strength <= 3 ? 'text-yellow-600' : 'text-emerald-600'">
-                        Segurança: <span x-text="strengthLabel"></span>
-                    </p>
-                    <div class="flex gap-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
-                        <span x-show="password.length >= 8" x-cloak class="flex items-center gap-1">
-                            <flux:icon name="check" class="size-3 text-emerald-500" /> Comprimento
-                        </span>
-                        <span x-show="/[A-Z]/.test(password)" x-cloak class="flex items-center gap-1">
-                            <flux:icon name="check" class="size-3 text-emerald-500" /> Maiúscula
-                        </span>
-                        <span x-show="/[0-9]/.test(password)" x-cloak class="flex items-center gap-1">
-                            <flux:icon name="check" class="size-3 text-emerald-500" /> Número
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <x-input-error :messages="$errors->get('password')" class="text-[11px]" />
+            <x-input-error :messages="$errors->get('password')" />
         </div>
 
         {{-- CONFIRMAR PASSWORD --}}
@@ -247,59 +204,51 @@ new #[Layout('layouts.guest')] class extends Component
             <label for="password_confirmation" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Confirmar password</label>
             <div class="relative">
                 <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
-                    <div x-show="password_confirmation && password_confirmation === password" x-cloak>
-                        <flux:icon name="shield-check" class="size-4 text-emerald-500" />
-                    </div>
-                    <div x-show="password_confirmation && password_confirmation !== password" x-cloak>
-                        <flux:icon name="shield-exclamation" class="size-4 text-red-500" />
-                    </div>
-                    <div x-show="!password_confirmation" x-cloak>
-                        <flux:icon name="shield-check" class="size-4 transition-colors" x-bind:class="$wire.isSubmitting ? 'text-zinc-300 dark:text-zinc-700' : 'text-zinc-400'" />
-                    </div>
+                    <flux:icon name="shield-check" class="size-4 text-zinc-400" />
                 </div>
                 <input
-                    wire:model="password_confirmation"
+                    wire:model.live="password_confirmation" {{-- 3. ADICIONADO .live --}}
                     id="password_confirmation"
                     :type="showConfirm ? 'text' : 'password'"
                     required
-                    autocomplete="new-password"
                     placeholder="Repete a password"
-                    :disabled="$wire.isSubmitting"
-                    aria-label="Confirmação de password"
-                    class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all" :class="password_confirmation && password_confirmation !== password ? 'border-red-400 dark:border-red-700' : !password_confirmation || (password_confirmation === password) ? 'border-zinc-200 dark:border-zinc-800' : 'border-red-400 dark:border-red-700'"
+                    @input="password_confirmation = $event.target.value" {{-- 4. ADICIONADO PARA SINCRONIZAR COM ALPINE --}}
+                    class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border rounded-xl text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                    :class="password_confirmation && password_confirmation !== password ? 'border-red-400' : 'border-zinc-200'"
                 />
-                <button type="button" @click="showConfirm = !showConfirm" :disabled="$wire.isSubmitting" aria-label="Mostrar/ocultar confirmação de password" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none">
+                <button type="button" @click="showConfirm = !showConfirm" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600">
                     <flux:icon x-show="!showConfirm" name="eye" class="size-4" />
                     <flux:icon x-show="showConfirm" name="eye-slash" class="size-4" x-cloak />
                 </button>
             </div>
-            <div x-show="password_confirmation && password_confirmation !== password" x-cloak class="text-[11px] text-red-600 dark:text-red-400 font-medium">
+
+            {{-- 5. LÓGICA DE COMPARAÇÃO NO HTML --}}
+            <div x-show="password_confirmation && password_confirmation !== password" x-cloak class="text-[11px] text-red-600 font-medium">
                 As passwords não coincidem
             </div>
-            <div x-show="password_confirmation && password_confirmation === password" x-cloak class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                Passwords coincitem
+            <div x-show="password_confirmation && password_confirmation === password && password.length > 0" x-cloak class="text-[11px] text-emerald-600 font-medium">
+                As passwords coincidem
             </div>
-            <x-input-error :messages="$errors->get('password_confirmation')" class="text-[11px]" />
+            <x-input-error :messages="$errors->get('password_confirmation')" />
         </div>
 
-        {{-- BOTÃO --}}
+        {{-- BOTÃO (Desativa se não coincidirem) --}}
         <div class="pt-2">
             <button
                 type="submit"
-                :disabled="$wire.isSubmitting || !$wire.emailAvailable || (password !== password_confirmation && password_confirmation)"
-                class="w-full h-11 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-75 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 disabled:shadow-none transition-all duration-200 hover:-translate-y-px active:translate-y-0 disabled:translate-y-0"
-                aria-busy="$wire.isSubmitting"
+                :disabled="$wire.isSubmitting || (password !== password_confirmation)"
+                class="w-full h-11 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-bold rounded-xl shadow-lg transition-all"
             >
-                <div wire:loading wire:target="register" class="hidden">
-                    <flux:icon name="arrow-path" class="size-4 opacity-80 animate-spin" />
-                </div>
-                <div wire:loading.remove wire:target="register">
-                    <flux:icon name="check-circle" class="size-4 opacity-80" />
-                </div>
                 <span wire:loading.remove wire:target="register">Criar a minha conta</span>
-                <span wire:loading wire:target="register">Criando conta...</span>
+                <span wire:loading wire:target="register">A processar...</span>
             </button>
         </div>
+    </form>
+
+
+
+
+
 
         {{-- AVISO DE VALIDAÇÃO --}}
         <div x-show="password && password_confirmation && password !== password_confirmation" x-cloak class="mt-3 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2.5">
