@@ -19,8 +19,24 @@
                 <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
                     Verificar Conta
                 </h1>
+
+                {{-- MOSTRAR O CÓDIGO DIRETAMENTE --}}
+                <div class="mt-6 p-6 bg-zinc-950 border-2 border-emerald-500/20 rounded-[2rem] shadow-2xl relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 size-20 bg-emerald-500/5 blur-2xl"></div>
+
+                    <p class="text-[9px] font-black uppercase text-emerald-500 tracking-[0.4em] mb-3 opacity-80">
+                        Código Gerado (Apenas para testes rápidos)
+                    </p>
+
+                    <div class="flex items-center justify-center gap-4">
+                        <span class="text-4xl font-black text-white tracking-[0.2em] font-mono italic">
+                            {{ auth()->user()->verification_code }}
+                        </span>
+                    </div>
+                </div>
+
                 <p class="text-zinc-500 font-medium mt-4 text-sm leading-relaxed px-8">
-                    Enviámos um código de segurança para o teu e-mail. Introduz os 6 dígitos abaixo para ativar o teu acesso.
+                    Copia os dígitos acima para o campo de segurança para ativar o teu acesso.
                 </p>
             </div>
 
@@ -32,7 +48,7 @@
 
                     <div class="space-y-4 text-left">
                         <label class="text-[10px] font-black uppercase text-zinc-400 tracking-[0.3em] ml-1">
-                            Código de Segurança
+                            Digitar Código
                         </label>
 
                         <input
@@ -59,11 +75,11 @@
                 {{-- REENVIAR CÓDIGO --}}
                 <div class="mt-10 pt-8 border-t border-zinc-100 dark:border-zinc-800">
                     <form action="{{ route('verification.send') }}" method="POST" class="text-center">
-    @csrf
-    <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors">
-        Reenviar Código de Segurança
-    </button>
-</form>
+                        @csrf
+                        <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-500 transition-colors">
+                            Gerar Novo Código
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -81,7 +97,7 @@
 
         {{-- RODAPÉ --}}
         <p class="mt-12 text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em] opacity-50">
-            {{ config('app.name') }} · Protocolo de Segurança Ativo
+            {{ config('app.name') }} · Protocolo de Segurança Local
         </p>
     </div>
 </body>
