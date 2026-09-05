@@ -1154,7 +1154,7 @@ $hasStoreAccess = $hasLockInAccess;
 
                 {{-- Finance Connect --}}
                 @php
-                    $unreadSocial = \App\Models\Socialnotification::where('user_id', $user->id)->whereNull('read_at')->count();
+                    $unreadSocial = \App\Models\SocialNotification::where('user_id', $user->id)->whereNull('read_at')->count();
                 @endphp
                 <flux:sidebar.item
                     icon="globe-alt"
