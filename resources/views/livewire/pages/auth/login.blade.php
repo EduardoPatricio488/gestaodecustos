@@ -179,7 +179,7 @@ new #[Layout('layouts.guest')] class extends Component
                     <flux:icon name="arrow-right-end-on-rectangle" class="size-4 opacity-80" />
                 </div>
                 <span wire:loading.remove wire:target="login">Entrar na conta</span>
-                <span wire:loading wire:target="login">Autenticando...</span>
+                <span wire:loading wire:target="login">A carregar...</span>
             </button>
         </div>
     </form>
