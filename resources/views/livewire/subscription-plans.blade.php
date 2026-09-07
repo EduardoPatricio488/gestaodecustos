@@ -17,7 +17,13 @@
                 <li class="flex items-center gap-3 text-sm font-medium"><flux:icon name="check-circle" variant="solid" class="text-emerald-500 w-5 h-5" /> Gestão Pessoal Simples</li>
                 <li class="flex items-center gap-3 text-sm font-medium text-zinc-400"><flux:icon name="lock-closed" class="w-5 h-5 opacity-40" /> Sem Área Empresa</li>
             </ul>
-            <flux:button wire:click="upgrade('free')" variant="ghost" class="w-full font-bold" :disabled="in_array($currentPlan, ['free', null, ''], true)">
+            <flux:button
+                wire:click="upgrade('free')"
+                wire:confirm="Tens a certeza que queres mudar para o plano Free? Vais perder o acesso às funcionalidades do teu plano atual."
+                variant="ghost"
+                class="w-full font-bold"
+                :disabled="in_array($currentPlan, ['free', null, ''], true)"
+            >
                 {{ in_array($currentPlan, ['free', null, ''], true) ? 'Plano Atual' : 'Mudar para Grátis' }}
             </flux:button>
         </div>

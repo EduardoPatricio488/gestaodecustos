@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Laravel\Cashier\Billable;
@@ -138,6 +139,26 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'daily_report_enabled' => 'boolean',
             'daily_report_sections' => 'array',
         ];
+    }
+
+    public const MOOD_EMOJIS = ['😀', '😎', '🤓', '🧑‍💻', '🤑', '🚀', '💎', '📈', '🧘‍♂️', '🦁', '🔥', '✨', '⚡', '🏆', '🎮', '🎧', '🍕', '🌍', '❤️', '👑'];
+
+    /**
+     * Emoji a mostrar: o escolhido pelo utilizador ou, enquanto não escolher, um aleatório fixo para a sessão.
+     */
+    public function getDisplayEmojiAttribute(): string
+    {
+        if (! empty($this->attributes['profile_emoji'])) {
+            return $this->attributes['profile_emoji'];
+        }
+
+        $key = 'random_profile_emoji_'.$this->id;
+
+        if (! session()->has($key)) {
+            session()->put($key, Arr::random(self::MOOD_EMOJIS));
+        }
+
+        return session($key);
     }
 
     /** ── SISTEMA DE PLANOS DINÂMICO (Compatível com qualquer plano) ── **/

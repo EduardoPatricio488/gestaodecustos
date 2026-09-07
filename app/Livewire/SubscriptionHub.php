@@ -3,7 +3,9 @@
 namespace App\Livewire;
 
 use App\Models\Category;
+use App\Models\Payment;
 use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -268,20 +270,69 @@ class SubscriptionHub extends Component
         };
 
         $activeSubs = $allSubs->where('status', 'active');
-        $totalMonthly = $activeSubs->sum('monthly_equivalent');
+
+        // Plano da própria plataforma: sempre derivado do estado atual (nunca duplica nem fica desatualizado),
+        // mas conta para os totais porque é uma despesa fixa real.
+        $planSlug = $user->currentPlanSlug();
+        $platformPlan = $planSlug !== 'free'
+            ? SubscriptionPlan::where('slug', $planSlug)->first()
+            : null;
+
+        $platformEntry = null;
+
+        if ($platformPlan) {
+            // Ordem de preferência para descobrir o dia de ativação real: subscrição Stripe (Cashier),
+            // depois o primeiro pagamento registado deste plano, e só por fim o dia de hoje (fallback).
+            $cashierSub = $user->subscription($planSlug);
+            $firstPayment = Payment::where('user_id', $user->id)
+                ->where('plan_type', $planSlug)
+                ->oldest('paid_at')
+                ->first();
+
+            $billingDay = $cashierSub?->created_at?->day
+                ?? $firstPayment?->paid_at?->day
+                ?? now()->day;
+
+            $today = Carbon::now()->startOfDay();
+            $nextBilling = $today->copy()->day(min($billingDay, $today->daysInMonth));
+            if ($nextBilling->lte($today)) {
+                $nextBilling = $nextBilling->addMonthNoOverflow();
+            }
+
+            $platformEntry = (object) [
+                'name' => 'Finance Pro '.$platformPlan->name,
+                'billing_day' => $billingDay,
+                'next_billing_date' => $nextBilling,
+                'days_until_billing' => (int) $today->diffInDays($nextBilling, false),
+                'monthly_equivalent' => (float) $platformPlan->price,
+            ];
+        }
+
+        $totalMonthly = $activeSubs->sum('monthly_equivalent') + ($platformEntry->monthly_equivalent ?? 0);
         $alreadyPaid = $activeSubs->where('billing_day', '<', now()->day)->sum('monthly_equivalent');
+        if ($platformEntry && $platformEntry->billing_day <= now()->day) {
+            $alreadyPaid += $platformEntry->monthly_equivalent;
+        }
+
+        $activeCount = $activeSubs->count() + ($platformEntry ? 1 : 0);
+        $nextSub = $activeSubs->values()
+            ->push($platformEntry)
+            ->filter()
+            ->sortBy('days_until_billing')
+            ->first();
 
         return view('livewire.subscription-hub', [
             'subscriptions' => $subs->values(),
             'totalMonthly' => $totalMonthly,
             'totalAnnual' => $totalMonthly * 12,
             'upcoming' => max($totalMonthly - $alreadyPaid, 0),
-            'nextSub' => $activeSubs->sortBy('days_until_billing')->first(),
-            'activeCount' => $activeSubs->count(),
+            'nextSub' => $nextSub,
+            'activeCount' => $activeCount,
             'pausedCount' => $allSubs->where('status', 'paused')->count(),
             'cancelledCount' => $allSubs->where('status', 'cancelled')->count(),
-            'averageMonthly' => $activeSubs->count() ? $totalMonthly / $activeSubs->count() : 0,
+            'averageMonthly' => $activeCount ? $totalMonthly / $activeCount : 0,
             'categories' => $subscriptionCategories, // Passamos a nova lista para o Blade
+            'platformPlan' => $platformPlan,
         ]);
     }
 

@@ -251,7 +251,7 @@
         {{-- Avatar Dinâmico --}}
         <div class="size-16 rounded-[1.5rem] flex items-center justify-center text-4xl shadow-2xl shrink-0 transition-all duration-500"
              style="background-color: {{ auth()->user()->profile_color }}15; border: 2px solid {{ auth()->user()->profile_color }}30;">
-            {{ auth()->user()->profile_emoji }}
+            {{ auth()->user()->display_emoji }}
         </div>
 
         <div class="text-left">
@@ -300,7 +300,7 @@
     </div>
 
     {{-- MODAL DETALHADO --}}
-    <flux:modal name="weather-details" position="center" class="md:w-[450px] !p-0 overflow-hidden" wire:ignore.self>
+    <flux:modal name="weather-details" position="center" scroll="body" class="md:w-[450px] !p-0 overflow-hidden" wire:ignore.self>
         <div class="relative bg-zinc-950 text-white p-10 space-y-8 text-left">
             <div class="absolute inset-0 bg-gradient-to-br from-brand-600/20 to-transparent pointer-events-none"></div>
 
@@ -309,7 +309,6 @@
                     <h2 class="text-3xl font-black italic tracking-tighter uppercase leading-none" x-text="data.city"></h2>
                     <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mt-2">Condições Atmosféricas</p>
                 </div>
-                <flux:modal.close><flux:button variant="ghost" icon="x-mark" class="text-white/40 hover:text-white" /></flux:modal.close>
             </div>
 
             <div class="relative z-10 flex items-center justify-center gap-6 py-4">
@@ -1415,16 +1414,13 @@
             <h2 class="text-3xl font-black dark:text-white uppercase italic tracking-tighter leading-none">Pagamento Confirmado!</h2>
 
             <p class="mt-6 text-sm text-zinc-500 font-medium leading-relaxed">
-                Olá {{ explode(' ', auth()->user()->name)[0] }}, queres registar a mensalidade do teu <span class="text-emerald-600 font-black">{{ $suggestedName }}</span> de <span class="text-emerald-600 font-black">{{ number_format($suggestedPrice, 2) }}€</span> nas tuas assinaturas mensais?
+                Olá {{ explode(' ', auth()->user()->name)[0] }}, o teu plano <span class="text-emerald-600 font-black">{{ $suggestedName }}</span> ({{ number_format($suggestedPrice, 2) }}€/mês) já está ativo. Podes acompanhá-lo na área "Assinaturas".
             </p>
 
             <div class="mt-10 space-y-3">
-                <flux:button wire:click="confirmSubscriptionImport" variant="primary" class="w-full h-16 bg-emerald-600 hover:bg-emerald-500 border-none font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-500/20 rounded-2xl">
-                    Sim, adicionar agora ✅
+                <flux:button wire:click="dismissSubSuggestion" variant="primary" class="w-full h-16 bg-emerald-600 hover:bg-emerald-500 border-none font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-500/20 rounded-2xl">
+                    Perfeito, obrigado ✅
                 </flux:button>
-                <button @click="open = false" class="w-full py-2 text-[10px] font-black text-zinc-400 hover:text-zinc-600 uppercase tracking-widest transition-colors">
-                    Não, registo mais tarde
-                </button>
             </div>
         </div>
     </div>

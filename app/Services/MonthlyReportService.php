@@ -46,7 +46,7 @@ class MonthlyReportService
             ->whereMonth('expenses.spent_at', $month)
             ->whereYear('expenses.spent_at', $year)
             ->leftJoin('categories', 'expenses.category_id', '=', 'categories.id')
-            ->selectRaw('COALESCE(categories.name, "Sem categoria") as name, SUM(expenses.amount) as total')
+            ->selectRaw("COALESCE(categories.name, 'Sem categoria') as name, SUM(expenses.amount) as total")
             ->groupBy('name')
             ->orderByDesc('total')
             ->get();

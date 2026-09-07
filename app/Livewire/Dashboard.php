@@ -10,12 +10,12 @@ use App\Models\Income;
 use App\Models\Investment;
 use App\Models\Reminder;
 use App\Models\SocialNotification;
-use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 use App\Models\Workspace;
 use App\Services\FinanceScoreService;
 use App\Services\NotificationService;
 use App\Services\StoreEntitlementService;
+use App\Services\SubscriptionCheckoutService;
 use App\Services\WellnessFinanceService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -94,6 +95,23 @@ class Dashboard extends Component
         if (request()->query('checkout') === 'success') {
             $user->refresh(); // Garante que o plano já está atualizado
 
+            // Rede de segurança: se o webhook do Stripe ainda não chegou, confirma
+            // diretamente com o Stripe através do session_id devolvido no redirect.
+            $sessionId = (string) request()->query('session_id', '');
+
+            if ($sessionId !== '') {
+                try {
+                    $stripeSession = $user->stripe()->checkout->sessions->retrieve($sessionId);
+
+                    if (($stripeSession->payment_status ?? null) === 'paid') {
+                        app(SubscriptionCheckoutService::class)->activateFromStripeSession($stripeSession);
+                        $user->refresh();
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Falha ao confirmar sessão de checkout do Stripe: '.$e->getMessage());
+                }
+            }
+
             // Procuramos o plano real na base de dados pelo slug do utilizador
             $planRecord = SubscriptionPlan::where('slug', $user->plan)->first();
 
@@ -103,6 +121,7 @@ class Dashboard extends Component
                 $this->showSubSuggestion = true;
             }
         }
+
         $this->privacyMode = session('privacy_mode', false);
         // 1. Verificação de Notificações Automáticas
         Cache::remember("dashboard:notifications-checked:{$user->id}:".now()->toDateString(), now()->endOfDay(), function () use ($user) {
@@ -288,43 +307,9 @@ class Dashboard extends Component
         $this->showPrivacyModal = true;
     }
 
-    public function confirmSubscriptionImport()
+    public function dismissSubSuggestion()
     {
-        $user = auth()->user();
-        $workspaceId = $user->current_workspace_id;
-
-        // 1. Tentar encontrar uma categoria de tecnologia ou criar uma nova
-        $category = Category::where('workspace_id', $workspaceId)
-            ->where(function ($q) {
-                $q->where('name', 'like', '%Tecnologia%')->orWhere('slug', 'tecnologia');
-            })->first();
-
-        if (! $category) {
-            $category = Category::create([
-                'workspace_id' => $workspaceId,
-                'user_id' => $user->id,
-                'name' => 'Serviços SaaS',
-                'slug' => 'servicos-saas',
-                'icon' => 'cpu-chip',
-                'color' => '#6366f1',
-            ]);
-        }
-
-        // 2. Criar o registo na tabela de assinaturas
-        Subscription::create([
-            'workspace_id' => $workspaceId,
-            'user_id' => $user->id,
-            'category_id' => $category->id,
-            'name' => $this->suggestedName,
-            'amount' => $this->suggestedPrice,
-            'cycle' => 'monthly',
-            'billing_day' => now()->day,
-            'is_active' => true,
-            'payment_method' => 'Stripe / Cartão',
-        ]);
-
         $this->showSubSuggestion = false;
-        $this->dispatch('toast', text: 'Assinatura registada com sucesso! 💳');
     }
 
     #[Computed]

@@ -7,6 +7,7 @@ use App\Models\EmailLog;
 use App\Models\StoreCheckoutSession;
 use App\Models\User;
 use App\Services\StorePurchaseService;
+use App\Services\SubscriptionCheckoutService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Cashier\Events\WebhookReceived;
@@ -53,11 +54,7 @@ class StripeWebhookListener
             return;
         }
 
-        $user->update(['plan' => $planSlug]);
-
-        if ($user->currentWorkspace) {
-            $user->currentWorkspace->update(['plan' => $planSlug]);
-        }
+        app(SubscriptionCheckoutService::class)->activateFromStripeSession($session);
 
         $amount = $this->parseAmountFromCents((int) ($session['amount_total'] ?? 0));
         $reference = (string) ($session['id'] ?? 'checkout-session');

@@ -28,7 +28,7 @@ class DailyReportService
             ->where('expenses.workspace_id', $workspaceId)
             ->whereDate('expenses.spent_at', $reportDate)
             ->leftJoin('categories', 'expenses.category_id', '=', 'categories.id')
-            ->selectRaw('COALESCE(categories.name, "Sem categoria") as name, SUM(expenses.amount) as total')
+            ->selectRaw("COALESCE(categories.name, 'Sem categoria') as name, SUM(expenses.amount) as total")
             ->groupBy('name')
             ->orderByDesc('total')
             ->get();

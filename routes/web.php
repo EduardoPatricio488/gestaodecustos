@@ -106,7 +106,6 @@ use App\Livewire\SupportHub;
 use App\Livewire\WrappedReport;
 use App\Livewire\YearlyReport;
 use App\Mail\VerifyAccountMail;
-use App\Models\Expense;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -120,24 +119,6 @@ Route::view('/', 'welcome')->name('home');
 Route::view('/termos', 'pages.legal.terms')->name('legal.terms');
 Route::view('/privacidade', 'pages.legal.privacy')->name('legal.privacy');
 Route::get('/contacto', ContactPage::class)->name('public.contact');
-
-// Sincronização Offline (Protegido por auth básico)
-Route::post('/api/offline/sync', function (Request $request) {
-    $expenses = $request->input('expenses');
-    $user = auth()->user();
-    foreach ($expenses as $item) {
-        Expense::create([
-            'user_id' => $user->id,
-            'workspace_id' => $user->current_workspace_id,
-            'amount' => $item['amount'],
-            'description' => '[OFFLINE] '.$item['description'],
-            'spent_at' => $item['date'],
-            'category_id' => 11,
-        ]);
-    }
-
-    return response()->json(['status' => 'success']);
-})->middleware(['auth']);
 
 // Portais Públicos de Negócio
 Route::prefix('portal')->group(function () {

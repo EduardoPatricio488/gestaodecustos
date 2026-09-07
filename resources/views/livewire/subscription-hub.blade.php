@@ -95,6 +95,30 @@
         </div>
     </div>
 
+    {{-- PLANO DA PLATAFORMA (área própria, sempre sincronizada com o plano ativo) --}}
+    @if($platformPlan)
+        <div class="glass-card p-7 bg-gradient-to-br from-brand-600 to-brand-700 text-white rounded-[2rem] shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-white/10 rounded-2xl">
+                    <flux:icon name="sparkles" class="size-6" />
+                </div>
+                <div>
+                    <p class="text-[9px] font-black uppercase tracking-[0.3em] text-white/70">O teu plano Finance Pro</p>
+                    <h3 class="text-xl font-black uppercase italic tracking-tighter">Finance Pro {{ $platformPlan->name }}</h3>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="text-right">
+                    <p class="text-2xl font-black italic tracking-tighter">{{ number_format($platformPlan->price, 2, ',', ' ') }} EUR</p>
+                    <p class="text-[9px] font-black uppercase tracking-widest text-white/70">por mês</p>
+                </div>
+                <flux:button :href="route('hub.pricing')" wire:navigate variant="ghost" class="rounded-2xl font-black uppercase tracking-widest text-[10px] bg-white/10 hover:bg-white/20 border-none text-white">
+                    Gerir Plano
+                </flux:button>
+            </div>
+        </div>
+    @endif
+
     {{-- FILTROS + LISTA --}}
     <div class="space-y-6">
         <div class="glass-card bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-4 sm:p-5">

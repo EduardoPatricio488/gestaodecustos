@@ -57,7 +57,7 @@ class SubscriptionPlans extends Component
         try {
             $checkout = $user->newSubscription($planModel->slug, $priceId)
                 ->checkout([
-                    'success_url' => route('dashboard', ['checkout' => 'success']),
+                    'success_url' => route('dashboard', ['checkout' => 'success']).'&session_id={CHECKOUT_SESSION_ID}',
                     'cancel_url' => route('hub.pricing', ['checkout' => 'cancel']),
                     'client_reference_id' => $user->id,
                     // 🔥 ESTA LINHA FALTAVA: É o que diz ao Webhook o que ativar

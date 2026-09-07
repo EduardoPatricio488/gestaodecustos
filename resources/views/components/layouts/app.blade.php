@@ -32,15 +32,18 @@
     <title>{{ config('app.name') }}</title>
 
     <script>
-        if (
-            localStorage.theme === 'dark' ||
-            (!('theme' in localStorage) &&
-            window.matchMedia('(prefers-color-scheme: dark)').matches)
-        ) {
-            document.documentElement.classList.add('dark')
-        } else {
-            document.documentElement.classList.remove('dark')
-        }
+        (function () {
+            function applyTheme() {
+                var isDark = localStorage.theme === 'dark' ||
+                    (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.classList.toggle('dark', isDark);
+            }
+            applyTheme();
+            // Reage a mudanças do tema do sistema operativo quando está em modo "Automático"
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+                if (!('theme' in localStorage)) applyTheme();
+            });
+        })();
     </script>
 
     @include('partials.head')
@@ -82,6 +85,9 @@
 @php
     $user = auth()->user();
     $currentWs = $user ? ($user->currentWorkspace ?? $user->workspaces()->first()) : null;
+    $offlineCategories = $currentWs
+        ? \App\Models\Category::where('workspace_id', $currentWs->id)->orderBy('name')->get(['name', 'slug'])
+        : collect();
 
     // 1. Procurar o cofre pessoal onde o Eduardo é o DONO real
     $myPersonalWs = $user ? $user->workspaces()
@@ -189,7 +195,8 @@
             }
 
             return [
-                'incomes'       => \App\Models\Income::where('workspace_id', $workspaceId)->count(),
+                'incomes'       => \App\Models\Income::where('workspace_id', $workspaceId)->count()
+                    + \App\Models\RecurringIncome::where('workspace_id', $workspaceId)->count(),
                 'investments'   => \App\Models\Investment::where('workspace_id', $workspaceId)->count(),
                 'subscriptions' => \App\Models\Subscription::where('workspace_id', $workspaceId)->count(),
                 'activity'      => \App\Models\ActivityLog::where('workspace_id', $workspaceId)->count(),
@@ -247,7 +254,7 @@
         privacyMode: localStorage.getItem('privacyMode') === 'true',
         mobileSidebarOpen: false,
         isOnline: navigator.onLine, {{-- Adicionamos aqui --}}
-        offlineQueueCount: JSON.parse(localStorage.getItem('offline_vault') || '[]').length
+        offlineQueue: JSON.parse(localStorage.getItem('offline_vault') || '[]')
     }"
     x-init="
         $watch('privacyMode', v => localStorage.setItem('privacyMode', v));
@@ -291,7 +298,7 @@
         statusNotice: '',
         amount: '',
         desc: '',
-        cat: 'Geral',
+        cat: '{{ $offlineCategories->first()->slug ?? '' }}',
         calcTotal: 0,
         calcInput: '',
 
@@ -299,7 +306,7 @@
             if(!this.amount) return;
 
             const newItem = {
-                id: Date.now(),
+                id: (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()),
                 amount: this.amount,
                 description: this.desc || 'Sem descrição',
                 category: this.cat,
@@ -331,7 +338,7 @@
             </div>
             <div class="text-left">
                 <h2 class="text-sm font-black uppercase tracking-widest italic leading-none">Bunker Offline</h2>
-                <p class="text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] mt-1.5">Eduardo Patricio · <span class="text-emerald-600">Modo Local</span></p>
+                <p class="text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] mt-1.5">{{ $user?->name ?? 'Convidado' }} · <span class="text-emerald-600">Modo Local</span></p>
             </div>
         </div>
 
@@ -378,11 +385,11 @@
                         <div>
                             <label class="text-[9px] font-black uppercase text-zinc-400 ml-4 tracking-[0.2em]">Categoria</label>
                             <select x-model="cat" class="w-full h-14 bg-zinc-50 border border-zinc-200 rounded-2xl px-4 font-black uppercase text-[10px] tracking-widest text-zinc-600 outline-none transition-all">
-                                <option value="Geral">📂 Geral</option>
-                                <option value="Alimentação">🛒 Alimentação</option>
-                                <option value="Transporte">⛽ Transporte</option>
-                                <option value="Lazer">🍿 Lazer</option>
-                                <option value="Saúde">💊 Saúde</option>
+                                @forelse($offlineCategories as $offlineCategory)
+                                    <option value="{{ $offlineCategory->slug }}">{{ $offlineCategory->name }}</option>
+                                @empty
+                                    <option value="">Geral</option>
+                                @endforelse
                             </select>
                         </div>
                     </div>
@@ -1913,17 +1920,30 @@ $hasStoreAccess = $hasLockInAccess;
 
         if (queue.length > 0) {
             try {
-                const response = await fetch('/api/offline/sync', {
+                const response = await fetch('/api/offline/expenses/sync', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
-                    body: JSON.stringify({ expenses: queue })
+                    body: JSON.stringify({
+                        expenses: queue.map((item) => ({
+                            client_id: String(item.id),
+                            title: item.description || 'Despesa Offline',
+                            description: item.description || null,
+                            amount: item.amount,
+                            category_slug: item.category || null,
+                            spent_at: item.date,
+                        })),
+                    })
                 });
 
                 if (response.ok) {
                     localStorage.removeItem('offline_vault');
+
+                    // Esvazia também a lista reativa do widget "Bunker Offline"
+                    const bodyData = window.Alpine?.$data(document.body);
+                    if (bodyData) bodyData.offlineQueue = [];
 
                     window.dispatchEvent(new CustomEvent('toast', {
                         detail: { text: 'Gastos offline sincronizados! ✅' }

@@ -8,6 +8,38 @@ use App\Models\User;
 
 class SubscriptionCheckoutService
 {
+    /**
+     * Ativa o plano a partir de uma sessão de Checkout do Stripe (usado pelo webhook e, como
+     * rede de segurança, quando o utilizador regressa ao site antes do webhook chegar).
+     *
+     * @param  array|\ArrayAccess  $session
+     */
+    public function activateFromStripeSession($session): ?string
+    {
+        $userId = $session['client_reference_id'] ?? null;
+        $planSlug = $session['metadata']['plan_slug'] ?? null;
+
+        if (! $userId || ! $planSlug) {
+            return null;
+        }
+
+        $user = User::find($userId);
+
+        if (! $user) {
+            return null;
+        }
+
+        if ($user->plan !== $planSlug) {
+            $user->update(['plan' => $planSlug]);
+
+            if ($user->currentWorkspace) {
+                $user->currentWorkspace->update(['plan' => $planSlug]);
+            }
+        }
+
+        return $planSlug;
+    }
+
     public function upgradePlan(User $user, string $plan): void
     {
         $user->update(['plan' => $plan]);
