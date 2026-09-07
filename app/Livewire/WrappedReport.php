@@ -39,6 +39,15 @@ class WrappedReport extends Component
         $this->year = $year;
     }
 
+    private function monthNumberExpression(string $column): string
+    {
+        return match (config('database.default')) {
+            'sqlite' => "CAST(strftime('%m', {$column}) as integer)",
+            'pgsql' => "EXTRACT(MONTH FROM {$column})",
+            default => "MONTH({$column})",
+        };
+    }
+
     public function shareToSocial(): void
     {
         $user = auth()->user();
@@ -96,13 +105,13 @@ class WrappedReport extends Component
         $activeSubsCount = Subscription::where('workspace_id', $workspaceId)->count();
         $subsMonthlyCost = (float) Subscription::where('workspace_id', $workspaceId)->sum('amount');
 
-        // Padrão Mensal (Corrigido para MySQL usando MONTH())
+        // Padrão Mensal (agnóstico ao driver: MySQL, Postgres ou SQLite)
         $monthlyPattern = collect();
         if ($this->view === 'year') {
             $monthlyPattern = Expense::where('workspace_id', $workspaceId)
                 ->where('is_company', false)
                 ->whereYear('spent_at', $this->year)
-                ->selectRaw('MONTH(spent_at) as month, SUM(amount) as total')
+                ->selectRaw($this->monthNumberExpression('spent_at').' as month, SUM(amount) as total')
                 ->groupBy('month')
                 ->orderBy('total', 'desc')
                 ->get();
