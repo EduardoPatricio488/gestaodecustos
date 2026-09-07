@@ -87,15 +87,15 @@ class OnboardingWizard extends Component
     // RENDIMENTOS IMOBILIÁRIOS
     // =========================================================
 
+    public $rentalGross = 0;      // Isto é o Rendimento
+
+    public $rentalExpenses = 0;   // Isto são as Despesas
+
+    public $rentalWithholding = 0; // Isto é o IRS
+
     public string $propertyType = 'arrendamento';
 
     public string $propertyDescription = '';
-
-    public $rentalGross = 0;
-
-    public $rentalExpenses = 0;
-
-    public $rentalWithholding = 0;
 
     // =========================================================
     // REFORMA / PENSÃO
@@ -354,21 +354,12 @@ class OnboardingWizard extends Component
                 // =================================================
 
             case 'imobiliario':
+                $gross = (float) ($this->rentalGross ?: 0);
+                $expenses = (float) ($this->rentalExpenses ?: 0);
+                $withholding = (float) ($this->rentalWithholding ?: 0);
 
-                $gross = (float) $this->rentalGross;
-                $expenses = (float) $this->rentalExpenses;
-                $withholding = (float) $this->rentalWithholding;
-
-                $this->salaryAmount = round(
-                    max(
-                        0,
-                        $gross
-                        - $expenses
-                        - $withholding
-                    ),
-                    2
-                );
-
+                // O salaryAmount guarda apenas o RESULTADO, nunca o input
+                $this->salaryAmount = round(max(0, $gross - $expenses - $withholding), 2);
                 break;
 
                 // =================================================

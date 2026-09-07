@@ -699,101 +699,52 @@
                 >
             </div>
 
+{{-- 🏠 RENDIMENTOS IMOBILIÁRIOS --}}
+@elseif($salarySource === 'imobiliario')
 
-        {{-- ═══════════════════════════════════ --}}
-        {{-- 🏠 IMOBILIÁRIO                       --}}
-        {{-- ═══════════════════════════════════ --}}
-        @elseif($salarySource === 'imobiliario')
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {{-- IDENTIFICAÇÃO --}}
+        <div class="relative sm:col-span-2">
+            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-zinc-400 z-10">Identificação</label>
+            <input type="text" wire:model="propertyDescription" placeholder="Ex: Apartamento Lisboa" class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white outline-none" autocomplete="off">
+        </div>
+    </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {{-- RENDIMENTO (CAIXA 1) --}}
+        <div class="relative group">
+            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-emerald-600 z-10">Rendimento (€)</label>
+            <input
+                type="number"
+                step="0.01"
+                wire:model.live="rentalGross"
+                placeholder="0,00"
+                class="w-full h-14 bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-emerald-500 rounded-2xl py-4 px-5 text-xl font-black text-emerald-600 outline-none"
+                autocomplete="off"
+            >
+        </div>
 
-                <div class="relative">
-                    <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-emerald-600 z-10">
-                        Tipo de rendimento
-                    </label>
+        {{-- DESPESAS (CAIXA 2) --}}
+        <div class="relative group">
+            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-zinc-400 z-10">Despesas (€)</label>
+            <input
+                type="number"
+                step="0.01"
+                wire:model.live="rentalExpenses" {{-- GARANTE QUE É ESTE MODELO --}}
+                placeholder="0,00"
+                class="w-full h-14 bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-indigo-500 rounded-2xl py-4 px-5 text-xl font-black text-zinc-500 outline-none"
+                autocomplete="off"
+            >
+        </div>
+    </div>
 
-                    <select wire:model="propertyType"
-                        class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white">
-                        <option value="arrendamento">🏠 Arrendamento</option>
-                        <option value="alojamento_local">🏨 Alojamento Local</option>
-                        <option value="exploracao">🏢 Exploração de Imóvel</option>
-                        <option value="garagem">🚗 Garagem / Estacionamento</option>
-                        <option value="terreno">🌳 Terreno</option>
-                        <option value="outro">Outro</option>
-                    </select>
-                </div>
-
-                <div class="relative">
-                    <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-zinc-400 z-10">
-                        Identificação
-                    </label>
-
-                    <input
-                        type="text"
-                        wire:model="propertyDescription"
-                        placeholder="Ex: Apartamento Lisboa"
-                        class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white"
-                    >
-                </div>
-
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                <div class="relative">
-                    <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-emerald-600 z-10">
-                        Rendimento (€)
-                    </label>
-
-                    <input
-                        type="number"
-                        step="0.01"
-                        wire:model="propertyRent"
-                        placeholder="0,00"
-                        class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-emerald-500/30 rounded-2xl py-4 px-5 text-xl font-black text-emerald-600"
-                    >
-                </div>
-
-                <div class="relative">
-                    <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-zinc-400 z-10">
-                        Despesas (€)
-                    </label>
-
-                    <input
-                        type="number"
-                        step="0.01"
-                        wire:model="propertyExpenses"
-                        placeholder="0,00"
-                        class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl py-4 px-5 text-xl font-black text-zinc-500"
-                    >
-                </div>
-
-            </div>
-
-            <div class="relative">
-                <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-zinc-400 z-10">
-                    Periodicidade
-                </label>
-
-                <select wire:model="propertyFrequency"
-                    class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white">
-                    <option value="mensal">Mensal</option>
-                    <option value="trimestral">Trimestral</option>
-                    <option value="anual">Anual</option>
-                </select>
-            </div>
-
-            <div class="p-5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30 rounded-2xl">
-
-                <p class="text-xs font-black text-amber-700 dark:text-amber-300 uppercase tracking-wider">
-                    🏠 Rendimento estimado
-                </p>
-
-                <p class="text-2xl font-black text-amber-700 dark:text-amber-300 mt-1">
-                    {{ number_format(max(0, (float)$propertyRent - (float)$propertyExpenses), 2, ',', ' ') }} €
-                </p>
-
-            </div>
+    {{-- QUADRO DE RESULTADO (APENAS LEITURA) --}}
+    <div class="p-5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30 rounded-2xl">
+        <p class="text-xs font-black text-amber-700 dark:text-amber-300 uppercase tracking-wider">🏠 Rendimento Líquido Estimado</p>
+        <p class="text-3xl font-black text-amber-700 dark:text-amber-300 mt-1 tabular-nums">
+            {{ number_format($this->salaryAmount, 2, ',', ' ') }} €
+        </p>
+    </div>
 
 
         {{-- ═══════════════════════════════════ --}}
