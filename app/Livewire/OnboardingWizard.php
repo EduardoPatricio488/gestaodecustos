@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\Category;
 use App\Models\RecurringIncome;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class OnboardingWizard extends Component
@@ -139,7 +139,16 @@ class OnboardingWizard extends Component
 
     public function mount()
     {
-        $this->show = ! auth()->user()->onboarding_completed;
+        $user = auth()->user();
+        $this->show = ! $user->onboarding_completed;
+
+        // Carregar o nome atual do workspace para o input
+        if ($user->currentWorkspace) {
+            $this->workspaceName = $user->currentWorkspace->name;
+        } else {
+            // Fallback caso a relação falhe
+            $this->workspaceName = $user->workspaces()->first()?->name ?? '';
+        }
     }
 
     // =========================================================
@@ -354,11 +363,11 @@ class OnboardingWizard extends Component
                 // =================================================
 
             case 'imobiliario':
+                // Forçamos a conversão para float para evitar erros de string
                 $gross = (float) ($this->rentalGross ?: 0);
                 $expenses = (float) ($this->rentalExpenses ?: 0);
                 $withholding = (float) ($this->rentalWithholding ?: 0);
 
-                // O salaryAmount guarda apenas o RESULTADO, nunca o input
                 $this->salaryAmount = round(max(0, $gross - $expenses - $withholding), 2);
                 break;
 
@@ -603,12 +612,24 @@ class OnboardingWizard extends Component
     public function saveStep3()
     {
         if ($this->workspaceName) {
+            $user = auth()->user();
 
-            auth()->user()
-                ->currentWorkspace
-                ?->update([
+            // Procurar o workspace ativo
+            $workspace = $user->currentWorkspace ?? $user->workspaces()->first();
+
+            if ($workspace) {
+                $workspace->update([
                     'name' => $this->workspaceName,
                 ]);
+
+                // IMPORTANTE: Se o utilizador não tiver um ID de workspace definido no perfil, definimos agora
+                if (! $user->current_workspace_id) {
+                    $user->update(['current_workspace_id' => $workspace->id]);
+                }
+
+                // LIMPAR A CACHE: Isto força a Sidebar e o Header a lerem o nome novo imediatamente
+                Cache::flush();
+            }
         }
 
         $this->step++;
@@ -620,19 +641,8 @@ class OnboardingWizard extends Component
 
     public function saveStep4()
     {
-        if ($this->categoryName) {
-
-            Category::create([
-                'user_id' => auth()->id(),
-
-                'workspace_id' => auth()->user()->current_workspace_id,
-
-                'name' => $this->categoryName,
-
-                'color' => $this->categoryColor,
-            ]);
-        }
-
+        // Não precisamos de criar nada aqui, pois as categorias fixas
+        // já são tratadas pelo sistema no momento da criação do Workspace.
         $this->step++;
     }
 

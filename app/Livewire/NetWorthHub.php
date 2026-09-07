@@ -34,7 +34,8 @@ class NetWorthHub extends Component
             return "strftime('%Y-%m', {$column})";
         }
 
-        return "DATE_FORMAT({$column}, '%Y-%m')";
+        return "TO_CHAR($column, 'YYYY-MM')";
+
     }
 
     public function render()

@@ -265,6 +265,11 @@ class Workspace extends Model
         });
     }
 
+    public function recurringIncomes(): HasMany
+    {
+        return $this->hasMany(RecurringIncome::class);
+    }
+
     public function getRunway(): string
     {
         $burnRate = $this->getBurnRate();

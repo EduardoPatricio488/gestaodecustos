@@ -258,6 +258,31 @@
     :class="{ 'privacy-mode': privacyMode }"
 >
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 {{-- ═══════════════════════════════════════════════════════════════ --}}
 {{-- 1. ECRÃ TOTAL OFFLINE (BUNKER LIGHT PRO)                        --}}
 {{-- ═══════════════════════════════════════════════════════════════ --}}
@@ -1102,7 +1127,7 @@ $hasStoreAccess = $hasLockInAccess;
             </div>
 
             <span class="text-[7px] font-black px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 border border-amber-200/50 uppercase tracking-tighter">
-                Upgrade
+                PRO
             </span>
         </div>
     </flux:sidebar.item>
@@ -1630,7 +1655,7 @@ $hasStoreAccess = $hasLockInAccess;
 
                             @if(!$isAnyPremium && !auth()->user()->isAdmin())
                                 <a href="{{ route('hub.pricing') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-brand-600 font-black hover:bg-brand-50 dark:hover:bg-brand-500/10">
-                                    <span class="animate-pulse">⭐</span> OBTER PRO
+                                    <span class="animate-pulse">⭐</span> OBTER PLANO PRO
                                 </a>
                             @endif
 

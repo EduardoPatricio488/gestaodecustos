@@ -1,0 +1,23 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('recurring_incomes', function (Blueprint $table) {
+            // Adiciona a coluna metadata como tipo JSON (ou TEXT no caso de MariaDB antigo/SQLite)
+            $table->json('metadata')->nullable()->after('notes');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('recurring_incomes', function (Blueprint $table) {
+            $table->dropColumn('metadata');
+        });
+    }
+};

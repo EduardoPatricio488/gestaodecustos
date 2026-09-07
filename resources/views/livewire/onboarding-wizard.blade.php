@@ -702,50 +702,48 @@
 {{-- 🏠 RENDIMENTOS IMOBILIÁRIOS --}}
 @elseif($salarySource === 'imobiliario')
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" wire:key="step-imobiliario-container">
         {{-- IDENTIFICAÇÃO --}}
-        <div class="relative sm:col-span-2">
+        <div class="relative sm:col-span-2" wire:key="field-prop-desc">
             <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-zinc-400 z-10">Identificação</label>
-            <input type="text" wire:model="propertyDescription" placeholder="Ex: Apartamento Lisboa" class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white outline-none" autocomplete="off">
+            <input type="text"
+                wire:model="propertyDescription"
+                placeholder="Ex: Apartamento Lisboa"
+                class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white outline-none">
         </div>
-    </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {{-- RENDIMENTO (CAIXA 1) --}}
-        <div class="relative group">
+        <div class="relative group" wire:key="field-rental-gross">
             <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-emerald-600 z-10">Rendimento (€)</label>
             <input
                 type="number"
                 step="0.01"
                 wire:model.live="rentalGross"
                 placeholder="0,00"
-                class="w-full h-14 bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-emerald-500 rounded-2xl py-4 px-5 text-xl font-black text-emerald-600 outline-none"
-                autocomplete="off"
+                class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-emerald-500/30 rounded-2xl py-4 px-5 text-xl font-black text-emerald-600 outline-none"
             >
         </div>
 
         {{-- DESPESAS (CAIXA 2) --}}
-        <div class="relative group">
+        <div class="relative group" wire:key="field-rental-expenses">
             <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-zinc-400 z-10">Despesas (€)</label>
             <input
                 type="number"
                 step="0.01"
-                wire:model.live="rentalExpenses" {{-- GARANTE QUE É ESTE MODELO --}}
+                wire:model.live="rentalExpenses"
                 placeholder="0,00"
-                class="w-full h-14 bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-indigo-500 rounded-2xl py-4 px-5 text-xl font-black text-zinc-500 outline-none"
-                autocomplete="off"
+                class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl py-4 px-5 text-xl font-black text-zinc-500 outline-none"
             >
         </div>
     </div>
 
-    {{-- QUADRO DE RESULTADO (APENAS LEITURA) --}}
-    <div class="p-5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30 rounded-2xl">
-        <p class="text-xs font-black text-amber-700 dark:text-amber-300 uppercase tracking-wider">🏠 Rendimento Líquido Estimado</p>
-        <p class="text-3xl font-black text-amber-700 dark:text-amber-300 mt-1 tabular-nums">
-            {{ number_format($this->salaryAmount, 2, ',', ' ') }} €
+    {{-- QUADRO DE RESULTADO --}}
+    <div class="p-5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30 rounded-2xl" wire:key="rental-result-box">
+        <p class="text-xs font-black text-amber-700 dark:text-amber-300 uppercase tracking-wider">🏠 Rendimento estimado</p>
+        <p class="text-2xl font-black text-amber-700 dark:text-amber-300 mt-1 tabular-nums">
+            {{ number_format((float)$this->salaryAmount, 2, ',', ' ') }} €
         </p>
     </div>
-
 
         {{-- ═══════════════════════════════════ --}}
         {{-- 👴 REFORMA                           --}}
@@ -1045,10 +1043,10 @@
                 <div class="space-y-5">
                     <div class="relative">
                         <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-indigo-600 z-10">Nome do Workspace</label>
-                        <input type="text" wire:model="workspaceName"
-                            placeholder="Ex: Família Silva, As Minhas Finanças, Startup XYZ..."
-                            class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-indigo-500 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white outline-none transition-all">
-                    </div>
+                        <input type="text"
+    wire:model.blur="workspaceName" {{-- .blur garante que o valor é enviado ao sair do campo --}}
+    placeholder="Ex: Família Silva..."
+    class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-indigo-500 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white outline-none transition-all"> </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <button type="button" wire:click="$set('workspaceName', 'As Minhas Finanças')"
@@ -1100,87 +1098,152 @@
             </div>
             @endif
 
-            {{-- ─────────────────────────────────── --}}
-            {{-- PASSO 4: CATEGORIA                  --}}
-            {{-- ─────────────────────────────────── --}}
-            @if($step === 4)
-            <div class="p-10 space-y-8">
-                <div class="flex items-center gap-4">
-                    <div class="size-14 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0">
-                        <flux:icon name="tag" class="size-7 text-white" />
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-black italic tracking-tighter dark:text-white">Primeira categoria de despesa</h2>
-                        <p class="text-sm text-zinc-500 mt-0.5">Cria uma categoria para organizar os teus gastos. Podes adicionar mais depois.</p>
-                    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+{{-- ─────────────────────────────────── --}}
+{{-- PASSO 4: EXPLORAÇÃO DE HUBS         --}}
+{{-- ─────────────────────────────────── --}}
+@if($step === 4)
+<div class="p-10 space-y-8"
+     wire:key="step-4-exploration"
+     x-data="{
+        active: 'Alimentação',
+        hubs: {
+            'Alimentação': { desc: 'Gestão de supermercado, restaurantes e refeições diárias.', ex: 'Regista o talão do Continente ou o jantar de ontem com amigos.', color: 'text-red-500', bg: 'bg-red-500/10' },
+            'Carro': { desc: 'Controlo total sobre o teu veículo: combustível, manutenção e impostos.', ex: 'Adiciona o último abastecimento de 60€ ou a revisão anual.', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+            'Casa': { desc: 'Custos fixos e variáveis da tua habitação e utilidades.', ex: 'Regista a fatura da luz, a renda ou aquele novo candeeiro.', color: 'text-blue-500', bg: 'bg-blue-500/10' },
+            'Educação': { desc: 'Investimento em conhecimento, cursos e materiais escolares.', ex: 'Mensalidade da faculdade ou aquele curso online de IA.', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+            'Empréstimos': { desc: 'Gestão de créditos e amortizações de dívidas ativas.', ex: 'A prestação mensal do teu crédito habitação ou pessoal.', color: 'text-rose-500', bg: 'bg-rose-500/10' },
+            'Lazer': { desc: 'Momentos de descontração, hobbies e entretenimento.', ex: 'Bilhetes para o cinema ou aquela saída no fim de semana.', color: 'text-purple-500', bg: 'bg-purple-500/10' },
+            'Saúde': { desc: 'Cuidados médicos, farmácia, exames e bem-estar.', ex: 'Consulta de rotina no dentista ou a fatura da farmácia.', color: 'text-pink-500', bg: 'bg-pink-500/10' },
+            'Seguros': { desc: 'Proteção para o que mais importa na tua vida e bens.', ex: 'Prémio anual do seguro automóvel ou seguro de vida.', color: 'text-sky-500', bg: 'bg-sky-500/10' },
+            'Tecnologia': { desc: 'Equipamentos, gadgets e subscrições de software.', ex: 'Compra de um novo smartphone ou a licença do Office.', color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+            'Transporte': { desc: 'Mobilidade urbana, transportes públicos e viagens curtas.', ex: 'O carregamento do passe mensal ou uma viagem de Uber.', color: 'text-zinc-500', bg: 'bg-zinc-500/10' }
+        }
+     }">
+
+    <div class="flex items-center gap-4">
+        <div class="size-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
+            <flux:icon name="magnifying-glass-plus" class="size-7 text-white" />
+        </div>
+        <div>
+            <h2 class="text-2xl font-black italic tracking-tighter dark:text-white">Explora os teus Hubs</h2>
+            <p class="text-sm text-zinc-500 mt-0.5">Clica nos ícones para entender como cada Hub organiza a tua vida.</p>
+        </div>
+    </div>
+
+    {{-- GRELHA DE SELEÇÃO --}}
+    <div class="grid grid-cols-5 gap-3">
+        @php
+            $fixedHubs = [
+                ['n' => 'Alimentação', 'i' => 'shopping-cart'],
+                ['n' => 'Carro',       'i' => 'truck'],
+                ['n' => 'Casa',        'i' => 'home'],
+                ['n' => 'Educação',    'i' => 'academic-cap'],
+                ['n' => 'Empréstimos', 'i' => 'banknotes'],
+                ['n' => 'Lazer',       'i' => 'ticket'],
+                ['n' => 'Saúde',       'i' => 'heart'],
+                ['n' => 'Seguros',     'i' => 'shield-check'],
+                ['n' => 'Tecnologia',  'i' => 'cpu-chip'],
+                ['n' => 'Transporte',  'i' => 'bolt'],
+            ];
+        @endphp
+
+        @foreach($fixedHubs as $hub)
+            <button type="button"
+                @click="active = '{{ $hub['n'] }}'"
+                :class="active === '{{ $hub['n'] }}' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-105 shadow-md' : 'border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 opacity-60 hover:opacity-100'"
+                class="flex flex-col items-center justify-center p-3 border-2 rounded-2xl transition-all duration-300 group">
+                <flux:icon name="{{ $hub['i'] }}"
+                    class="size-6 mb-2 transition-colors"
+                    ::class="active === '{{ $hub['n'] }}' ? hubs['{{ $hub['n'] }}'].color : 'text-zinc-400 group-hover:text-zinc-600'" />
+                <span class="text-[8px] font-black uppercase tracking-tighter text-zinc-500 dark:text-zinc-400 text-center leading-none">{{ $hub['n'] }}</span>
+            </button>
+        @endforeach
+    </div>
+
+    {{-- PAINEL DE DETALHES DINÂMICO --}}
+    <div class="relative overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-8 shadow-inner animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div class="flex flex-col sm:flex-row items-start gap-6">
+            <div class="size-16 rounded-2xl flex items-center justify-center shrink-0 transition-colors duration-500"
+                 :class="hubs[active].bg">
+                <template x-if="active === 'Alimentação'"><flux:icon name="shopping-cart" class="size-8 text-red-500" /></template>
+                <template x-if="active === 'Carro'"><flux:icon name="truck" class="size-8 text-amber-500" /></template>
+                <template x-if="active === 'Casa'"><flux:icon name="home" class="size-8 text-blue-500" /></template>
+                <template x-if="active === 'Educação'"><flux:icon name="academic-cap" class="size-8 text-emerald-500" /></template>
+                <template x-if="active === 'Empréstimos'"><flux:icon name="banknotes" class="size-8 text-rose-500" /></template>
+                <template x-if="active === 'Lazer'"><flux:icon name="ticket" class="size-8 text-purple-500" /></template>
+                <template x-if="active === 'Saúde'"><flux:icon name="heart" class="size-8 text-pink-500" /></template>
+                <template x-if="active === 'Seguros'"><flux:icon name="shield-check" class="size-8 text-sky-500" /></template>
+                <template x-if="active === 'Tecnologia'"><flux:icon name="cpu-chip" class="size-8 text-indigo-500" /></template>
+                <template x-if="active === 'Transporte'"><flux:icon name="bolt" class="size-8 text-zinc-500" /></template>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-xl font-black uppercase italic tracking-tighter dark:text-white" x-text="active"></h3>
+                    <p class="text-sm text-zinc-600 dark:text-zinc-400 font-medium leading-relaxed" x-text="hubs[active].desc"></p>
                 </div>
 
-                <div class="space-y-5">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        @foreach([
-                            ['name' => 'Alimentação', 'color' => '#f97316', 'emoji' => '🛒'],
-                            ['name' => 'Transporte', 'color' => '#3b82f6', 'emoji' => '🚗'],
-                            ['name' => 'Saúde', 'color' => '#ef4444', 'emoji' => '❤️'],
-                            ['name' => 'Lazer', 'color' => '#8b5cf6', 'emoji' => '🎉'],
-                            ['name' => 'Educação', 'color' => '#10b981', 'emoji' => '📚'],
-                            ['name' => 'Casa', 'color' => '#0ea5e9', 'emoji' => '🏠'],
-                        ] as $suggestion)
-                            <button type="button"
-                                wire:click="$set('categoryName', '{{ $suggestion['name'] }}'); $set('categoryColor', '{{ $suggestion['color'] }}')"
-                                class="p-3 bg-zinc-50 dark:bg-zinc-900 border-2 {{ $categoryName === $suggestion['name'] ? 'border-purple-500' : 'border-zinc-200 dark:border-zinc-800' }} hover:border-purple-400 rounded-2xl text-center transition-all">
-                                <p class="text-xl mb-1">{{ $suggestion['emoji'] }}</p>
-                                <p class="text-xs font-black dark:text-white">{{ $suggestion['name'] }}</p>
-                            </button>
-                        @endforeach
-                    </div>
-
-                    <div class="flex items-center gap-3">
-                        <div class="h-px flex-1 bg-zinc-100 dark:bg-zinc-800"></div>
-                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">ou cria a tua</span>
-                        <div class="h-px flex-1 bg-zinc-100 dark:bg-zinc-800"></div>
-                    </div>
-
-                    <div class="flex items-center gap-4">
-                        <div class="relative flex-1">
-                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-purple-600 z-10">Nome da Categoria</label>
-                            <input type="text" wire:model="categoryName" placeholder="Ex: Subscriçõess, Pets, Viagens..."
-                                class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-purple-500 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white outline-none transition-all">
-                        </div>
-                        <div class="relative shrink-0">
-                            <label class="absolute left-1/2 -translate-x-1/2 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-zinc-400 z-10 whitespace-nowrap">Cor</label>
-                            <input type="color" wire:model="categoryColor"
-                                class="size-16 rounded-2xl border-2 border-zinc-200 dark:border-zinc-800 cursor-pointer p-1 bg-zinc-50 dark:bg-zinc-900">
-                        </div>
-                    </div>
+                <div class="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border-l-4 border-indigo-500">
+                    <p class="text-[9px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-widest mb-1">Exemplo de Lançamento:</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-300 italic font-medium" x-text="hubs[active].ex"></p>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <div class="flex items-center justify-between pt-2">
-    <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-        Passo {{ $step }} de {{ $totalSteps }}
-    </p>
+    {{-- FOOTER --}}
+    <div class="flex items-center justify-between pt-2">
+        <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Passo 4 de 5</p>
 
-    <div class="flex items-center gap-3">
-        {{-- BOTÃO VOLTAR --}}
-        <button wire:click="previousStep"
-            class="px-5 h-12 text-zinc-400 hover:text-zinc-600 font-bold uppercase text-xs tracking-widest transition-colors flex items-center gap-2">
-            <flux:icon name="arrow-left" class="size-3" />
-            Voltar
-        </button>
+        <div class="flex items-center gap-3">
+            <button wire:click="previousStep"
+                class="px-5 h-12 text-zinc-400 hover:text-zinc-600 font-bold uppercase text-xs tracking-widest transition-colors flex items-center gap-2">
+                <flux:icon name="arrow-left" class="size-3" />
+                Voltar
+            </button>
 
-        <button wire:click="skipStep"
-            class="px-5 h-12 text-zinc-400 hover:text-zinc-600 font-bold uppercase text-xs tracking-widest transition-colors">
-            Saltar
-        </button>
-
-        <button wire:click="nextStep"
-            class="flex items-center gap-2 px-8 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]">
-            Continuar
-            <flux:icon name="arrow-right" class="size-4" />
-        </button>
+            <button wire:click="nextStep"
+                class="flex items-center gap-2 px-10 h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02]">
+                Concluído, Continuar
+                <flux:icon name="arrow-right" class="size-4" />
+            </button>
+        </div>
     </div>
 </div>
-            </div>
-            @endif
+@endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             {{-- ─────────────────────────────────── --}}
             {{-- PASSO 5: CONCLUÍDO                  --}}
