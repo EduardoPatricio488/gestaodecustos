@@ -425,18 +425,16 @@ Route::middleware(['auth'])->group(function () {
 // ══════════════════════════════════════════════════════════════════
 // 8. SERVIÇOS DE E-MAIL E CONFIGURAÇÕES FINAIS
 // ══════════════════════════════════════════════════════════════════
-Route::post('/email/verification-notification', function (Request $request) {
+Route::post('/verification-notification', function (Request $request) {
     $user = $request->user();
     $newCode = rand(100000, 999999);
     $user->update(['verification_code' => $newCode]);
-    try {
-        Mail::to($user->email)->send(new VerifyAccountMail($newCode));
 
-        return back()->with('status', 'verification-link-sent');
-    } catch (Exception $e) {
-        return back()->withErrors(['code' => 'Erro de conexão ao servidor de e-mail.']);
-    }
-})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+    // ✅ Mudámos de send() para queue()
+    Mail::to($user->email)->queue(new VerifyAccountMail($newCode));
+
+    return back()->with('status', 'Novo código enviado!');
+})->name('verification.send');
 
 require __DIR__.'/auth.php';
 require __DIR__.'/settings.php';
