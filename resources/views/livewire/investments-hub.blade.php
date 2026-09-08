@@ -252,7 +252,54 @@
                         {{ $companyAnalysis['error'] }}
                     </div>
                 @else
+                    @php
+                        $company = $this->getCompanyData(strtoupper($companyQuery));
+                        $marketData = $companyAnalysis['market_data'] ?? [];
+                        $companyName = $marketData['name'] ?? $company['name'] ?? strtoupper($companyQuery);
+                        $hasMarketData = filled($marketData['price'] ?? null) || filled($marketData['volume'] ?? null);
+                        $analysisLabels = [
+                            'fundamentals' => 'Fundamentais',
+                            'valuation' => 'Valorização',
+                            'risks' => 'Riscos',
+                            'strategy' => 'Estratégia',
+                            'portfolio_impact' => 'Impacto no portefólio',
+                            'recommendation' => 'Selo de decisão',
+                        ];
+                        $formatAnalysisValue = function ($value): string {
+                            if (is_array($value)) {
+                                return collect($value)->map(function ($item, $key): string {
+                                    return is_array($item)
+                                        ? ucfirst(str_replace('_', ' ', (string) $key)).': '.collect($item)->flatten()->implode(', ')
+                                        : (is_string($key) && ! is_numeric($key) ? ucfirst(str_replace('_', ' ', $key)).': ' : '').(string) $item;
+                                })->implode(' · ');
+                            }
+
+                            return (string) $value;
+                        };
+                    @endphp
+
                     <div class="space-y-6 animate-[fadeIn_0.3s_ease-out]">
+                        {{-- Identidade da empresa --}}
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5 p-6 rounded-[2.5rem] bg-zinc-950 text-white border border-zinc-800 shadow-xl">
+                            <div class="flex items-center gap-4 min-w-0">
+                                @if(!empty($company['logo']))
+                                    <img src="{{ $company['logo'] }}" alt="Logótipo de {{ $companyName }}" class="size-14 rounded-2xl bg-white object-contain p-2 shrink-0">
+                                @else
+                                    <div class="size-14 rounded-2xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-black text-xl shrink-0">
+                                        {{ substr($companyName, 0, 1) }}
+                                    </div>
+                                @endif
+                                <div class="min-w-0">
+                                    <p class="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">Empresa analisada</p>
+                                    <h2 class="text-2xl font-black uppercase italic tracking-tighter truncate">{{ $companyName }}</h2>
+                                    <p class="text-xs font-bold uppercase tracking-widest text-indigo-300">{{ strtoupper($companyQuery) }}</p>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl {{ $hasMarketData ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300' }}">
+                                {{ $hasMarketData ? 'Mercado atualizado' : 'Mercado indisponível' }}
+                            </span>
+                        </div>
+
                         {{-- Dados de Mercado --}}
                         <div class="p-6 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl space-y-4">
                             <div class="flex items-center gap-3 mb-2">
@@ -265,23 +312,27 @@
                             <div class="grid grid-cols-2 sm:grid-cols-5 gap-6">
                                 <div>
                                     <p class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Preço Atual</p>
-                                    <p class="text-lg font-black dark:text-white italic">{{ $companyAnalysis['market_data']['price'] }} €</p>
+                                    <p class="text-lg font-black dark:text-white italic">{{ $marketData['price'] ?? 'Indisponível' }}{{ filled($marketData['price'] ?? null) ? ' €' : '' }}</p>
                                 </div>
                                 <div>
                                     <p class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Variação %</p>
-                                    <p class="text-lg font-black {{ str_contains($companyAnalysis['market_data']['change'], '+') ? 'text-emerald-500' : 'text-red-500' }} italic">
-                                        {{ $companyAnalysis['market_data']['change'] }}
+                                    @php $change = (string) ($marketData['change'] ?? ''); @endphp
+                                    <p class="text-lg font-black {{ str_contains($change, '+') ? 'text-emerald-500' : 'text-red-500' }} italic">
+                                        {{ $change !== '' ? $change : 'Indisponível' }}
                                     </p>
                                 </div>
                                 <div>
                                     <p class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Volume</p>
-                                    <p class="text-lg font-black dark:text-white italic">{{ $companyAnalysis['market_data']['volume'] }}</p>
+                                    <p class="text-lg font-black dark:text-white italic">{{ $marketData['volume'] ?? 'Indisponível' }}</p>
                                 </div>
                                 <div class="col-span-2">
                                     <p class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">52 Semanas (Range)</p>
-                                    <p class="text-lg font-black dark:text-white italic">{{ $companyAnalysis['market_data']['52w_range'] }}</p>
+                                    <p class="text-lg font-black dark:text-white italic">{{ $marketData['52w_range'] ?? 'Indisponível' }}</p>
                                 </div>
                             </div>
+                            @if(!$hasMarketData)
+                                <p class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-xl px-4 py-3">As cotações em tempo real não estão disponíveis neste momento. A análise da empresa continua visível abaixo.</p>
+                            @endif
                         </div>
 
                         {{-- Análise IA --}}
@@ -290,13 +341,25 @@
                                 <div class="p-2 bg-indigo-500/10 rounded-lg">
                                     <flux:icon name="cpu-chip" class="size-5 text-indigo-500" />
                                 </div>
-                                <h2 class="text-xl font-black italic uppercase tracking-tighter dark:text-white">Relatório Deep Analysis</h2>
+                                <h2 class="text-xl font-black italic uppercase tracking-tighter dark:text-white">Análise da Empresa</h2>
                             </div>
 
-                            <div class="bg-zinc-50 dark:bg-zinc-950 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                                <pre class="text-xs font-mono text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap leading-relaxed">
-{{ is_array($companyAnalysis) ? json_encode($companyAnalysis, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : $companyAnalysis }}
-                                </pre>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach($analysisLabels as $key => $label)
+                                    @if(filled($companyAnalysis[$key] ?? null))
+                                        <div class="bg-zinc-50 dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800 {{ $key === 'risks' || $key === 'strategy' ? 'md:col-span-2' : '' }}">
+                                            <p class="text-[9px] font-black uppercase tracking-widest text-indigo-500 mb-2">{{ $label }}</p>
+                                            <p class="text-sm font-medium leading-relaxed text-zinc-600 dark:text-zinc-300">{{ $formatAnalysisValue($companyAnalysis[$key]) }}</p>
+                                        </div>
+                                    @endif
+                                @endforeach
+
+                                @if(isset($companyAnalysis['score']))
+                                    <div class="bg-indigo-600 text-white p-5 rounded-2xl">
+                                        <p class="text-[9px] font-black uppercase tracking-widest text-indigo-200 mb-2">Score de análise</p>
+                                        <p class="text-4xl font-black italic">{{ $companyAnalysis['score'] }}<span class="text-lg text-indigo-200">/100</span></p>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
