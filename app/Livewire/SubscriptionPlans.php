@@ -82,6 +82,26 @@ class SubscriptionPlans extends Component
         }
     }
 
+    public function manageSubscription()
+    {
+        $user = Auth::user();
+
+        if (! $user->stripe_id) {
+            $this->dispatch('toast', variant: 'error', text: 'Esta conta ainda não tem uma assinatura Stripe associada. Contacta o suporte para regularizar o acesso.');
+
+            return;
+        }
+
+        try {
+            return $user->redirectToBillingPortal(route('hub.pricing'));
+        } catch (\Throwable $e) {
+            Log::error('Erro ao abrir o portal de faturação do Stripe: '.$e->getMessage(), [
+                'user_id' => $user->id,
+            ]);
+            $this->dispatch('toast', variant: 'error', text: 'Não foi possível abrir a gestão da assinatura. Tenta novamente mais tarde.');
+        }
+    }
+
     private function showSuccessFor(?SubscriptionPlan $plan): void
     {
         $this->newPlanData = [

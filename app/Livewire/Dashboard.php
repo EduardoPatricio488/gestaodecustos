@@ -150,7 +150,7 @@ class Dashboard extends Component
 
             // --- CRYPTO via CoinGecko (gratuito, sem chave) ---
             try {
-                $response = Http::timeout(6)->get('https://api.coingecko.com/api/v3/simple/price', [
+                $response = Http::connectTimeout(1)->timeout(2)->get('https://api.coingecko.com/api/v3/simple/price', [
                     'ids' => 'bitcoin,ethereum,solana,binancecoin,ripple,cardano,avalanche-2,polkadot,chainlink,dogecoin,matic-network,uniswap',
                     'vs_currencies' => 'eur',
                     'include_24hr_change' => 'true',
@@ -180,7 +180,7 @@ class Dashboard extends Component
             // --- AÇÕES, ETFs e COMMODITIES via Yahoo Finance (gratuito, sem chave) ---
             try {
                 $symbols = 'NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,NFLX,AMD,TSM,SPY,QQQ,VTI,VOO,IUSA.L,CSPX.L,VWCE.DE,GC=F,CL=F';
-                $response = Http::timeout(6)
+                $response = Http::connectTimeout(1)->timeout(2)
                     ->withHeaders(['User-Agent' => 'Mozilla/5.0'])
                     ->get('https://query1.finance.yahoo.com/v7/finance/quote', [
                         'symbols' => $symbols,

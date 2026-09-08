@@ -2,6 +2,12 @@
     <div class="text-center space-y-4">
         <flux:heading size="xl" class="text-5xl font-black italic tracking-tighter uppercase">Planos e Mensalidades</flux:heading>
         <flux:subheading class="text-lg text-zinc-500">Escolha o nível de controlo que a sua família ou negócio exige.</flux:subheading>
+
+        @if($currentPlan !== 'free' && auth()->user()->stripe_id)
+            <flux:button wire:click="manageSubscription" variant="ghost" class="font-bold">
+                Gerir assinatura no Stripe
+            </flux:button>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-stretch">
