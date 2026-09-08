@@ -62,4 +62,8 @@ return [
         'model' => env('AI_MODEL', 'openai/gpt-4o-mini'),
     ],
 
+    'market_data' => [
+        'yahoo_api_key' => env('YAHOO_API_KEY'),
+    ],
+
 ];

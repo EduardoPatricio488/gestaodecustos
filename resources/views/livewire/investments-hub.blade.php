@@ -363,7 +363,7 @@
                                 @endforeach
 
                                 @foreach($extraAnalysis as $key => $value)
-                                    <div class="bg-zinc-50 dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800 {{ is_string($value) && strlen($value) > 180 ? 'md:col-span-2' : '' }}">
+                                    <div class="md:col-span-2 bg-zinc-50 dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                                         <p class="text-[9px] font-black uppercase tracking-widest text-indigo-500 mb-2">{{ ucfirst(str_replace(['_', '-'], ' ', (string) $key)) }}</p>
                                         <div class="space-y-2">
                                             @foreach($formatAnalysisLines($value) as $line)

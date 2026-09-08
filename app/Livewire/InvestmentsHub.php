@@ -274,27 +274,130 @@ class InvestmentsHub extends Component
     {
         try {
             $response = Http::withHeaders([
-                'X-RapidAPI-Key' => env('YAHOO_API_KEY'),
+                'X-RapidAPI-Key' => config('services.market_data.yahoo_api_key'),
                 'X-RapidAPI-Host' => 'yahoo-finance15.p.rapidapi.com',
-            ])->get('https://yahoo-finance15.p.rapidapi.com/api/yahoo/qu/quote/'.$symbol);
+            ])->timeout(15)->get('https://yahoo-finance15.p.rapidapi.com/api/yahoo/qu/quote/'.urlencode($symbol));
 
-            $data = json_decode($response->getBody(), true);
+            $data = $response->json();
             $body = $data['body'] ?? [];
 
-            return [
-                'symbol' => $body['symbol'] ?? $symbol,
-                'name' => $body['companyName'] ?? null,
-                'price' => $body['primaryData']['lastSalePrice'] ?? null,
-                'change' => $body['primaryData']['percentageChange'] ?? null,
-                'netChange' => $body['primaryData']['netChange'] ?? null,
-                'volume' => $body['primaryData']['volume'] ?? null,
-                'day_range' => $body['keyStats']['dayrange']['value'] ?? null,
-                '52w_range' => $body['keyStats']['fiftyTwoWeekHighLow']['value'] ?? null,
-                'marketStatus' => $body['marketStatus'] ?? null,
-            ];
+            if (is_array($body) && ! empty($body)) {
+                return $this->normalizeMarketData($body, $symbol);
+            }
+
+            return $this->fetchMarketDataFromYahooChart($symbol);
         } catch (\Throwable $e) {
-            return ['error' => $e->getMessage()];
+            Log::warning('InvestmentsHub: RapidAPI indisponível, usando Yahoo Chart', [
+                'symbol' => $symbol,
+                'message' => $e->getMessage(),
+            ]);
+
+            return $this->fetchMarketDataFromYahooChart($symbol);
         }
+    }
+
+    private function normalizeMarketData(array $body, string $symbol): array
+    {
+        $primary = $body['primaryData'] ?? [];
+
+        return [
+            'symbol' => $body['symbol'] ?? $symbol,
+            'name' => $body['companyName'] ?? null,
+            'price' => $primary['lastSalePrice'] ?? null,
+            'change' => $primary['percentageChange'] ?? null,
+            'netChange' => $primary['netChange'] ?? null,
+            'volume' => $primary['volume'] ?? null,
+            'day_range' => $body['keyStats']['dayrange']['value'] ?? null,
+            '52w_range' => $body['keyStats']['fiftyTwoWeekHighLow']['value'] ?? null,
+            'marketStatus' => $body['marketStatus'] ?? null,
+        ];
+    }
+
+    private function fetchMarketDataFromYahooChart(string $symbol): array
+    {
+        $response = Http::withHeaders([
+            'User-Agent' => 'Mozilla/5.0 FinanceProIA/1.0',
+        ])->timeout(15)->get('https://query1.finance.yahoo.com/v8/finance/chart/'.urlencode($symbol), [
+            'range' => '1d',
+            'interval' => '1d',
+            'events' => 'history',
+        ]);
+
+        if (! $response->successful()) {
+            return $this->fetchMarketDataFromStooq($symbol);
+        }
+
+        $meta = $response->json('chart.result.0.meta', []);
+        $price = $meta['regularMarketPrice'] ?? null;
+        $previous = $meta['previousClose'] ?? $meta['chartPreviousClose'] ?? null;
+        $change = is_numeric($price) && is_numeric($previous) && (float) $previous !== 0.0
+            ? ((float) $price - (float) $previous) / (float) $previous * 100
+            : null;
+
+        $marketData = [
+            'symbol' => $meta['symbol'] ?? $symbol,
+            'name' => $meta['longName'] ?? $meta['shortName'] ?? null,
+            'price' => $price,
+            'change' => $change !== null ? sprintf('%+.2f%%', $change) : null,
+            'netChange' => is_numeric($price) && is_numeric($previous) ? (float) $price - (float) $previous : null,
+            'volume' => $meta['regularMarketVolume'] ?? null,
+            'day_range' => isset($meta['regularMarketDayLow'], $meta['regularMarketDayHigh'])
+                ? $meta['regularMarketDayLow'].' - '.$meta['regularMarketDayHigh']
+                : null,
+            '52w_range' => isset($meta['fiftyTwoWeekLow'], $meta['fiftyTwoWeekHigh'])
+                ? $meta['fiftyTwoWeekLow'].' - '.$meta['fiftyTwoWeekHigh']
+                : null,
+            'marketStatus' => $meta['marketState'] ?? null,
+        ];
+
+        return filled($marketData['price']) ? $marketData : $this->fetchMarketDataFromStooq($symbol);
+    }
+
+    private function fetchMarketDataFromStooq(string $symbol): array
+    {
+        $ticker = strtolower(trim($symbol)).'.us';
+        $from = now()->subYear()->format('Ymd');
+        $response = Http::withHeaders([
+            'User-Agent' => 'Mozilla/5.0 FinanceProIA/1.0',
+        ])->timeout(15)->get('https://stooq.com/q/d/l/', [
+            's' => $ticker,
+            'i' => 'd',
+            'd1' => $from,
+        ]);
+
+        if (! $response->successful()) {
+            return ['error' => 'Fonte de cotações indisponível.'];
+        }
+
+        $rows = collect(preg_split('/\r\n|\r|\n/', trim($response->body())))
+            ->filter(fn ($line) => $line !== '' && ! str_starts_with($line, 'No data'))
+            ->values();
+
+        if ($rows->count() < 2) {
+            return ['error' => 'Fonte de cotações indisponível.'];
+        }
+
+        $header = str_getcsv($rows->shift());
+        $records = $rows->map(fn ($row) => array_combine($header, str_getcsv($row)) ?: [])->filter(fn ($row) => isset($row['Close']))->values();
+        $latest = $records->last();
+        $previous = $records->count() > 1 ? $records->get($records->count() - 2) : null;
+        $price = is_numeric($latest['Close'] ?? null) ? (float) $latest['Close'] : null;
+        $previousPrice = is_numeric($previous['Close'] ?? null) ? (float) $previous['Close'] : null;
+        $change = $price !== null && $previousPrice ? (($price - $previousPrice) / $previousPrice) * 100 : null;
+        $high = $records->max(fn ($row) => (float) ($row['High'] ?? 0));
+        $low = $records->min(fn ($row) => (float) ($row['Low'] ?? 0));
+
+        return [
+            'symbol' => strtoupper($symbol),
+            'name' => null,
+            'price' => $price,
+            'change' => $change !== null ? sprintf('%+.2f%%', $change) : null,
+            'netChange' => $price !== null && $previousPrice !== null ? $price - $previousPrice : null,
+            'volume' => $latest['Volume'] ?? null,
+            'day_range' => isset($latest['Low'], $latest['High']) ? $latest['Low'].' - '.$latest['High'] : null,
+            '52w_range' => $low > 0 && $high > 0 ? $low.' - '.$high : null,
+            'marketStatus' => 'closed',
+        ];
     }
 
     public function analyzeCompany()
