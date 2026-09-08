@@ -4,7 +4,8 @@
         @click="open = !open"
         @click.outside="open = false"
         type="button"
-        class="relative p-2 rounded-xl transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+        aria-label="Abrir notificações"
+        class="relative size-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
     >
         <flux:icon name="bell" class="size-5" />
 

@@ -1504,9 +1504,9 @@ $hasStoreAccess = $hasLockInAccess;
     {{-- ═══════════════════════════════════════════════════════════════ --}}
     <flux:header class="z-40 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-md flex justify-center">
 
-        {{-- Botão Mobile - Posicionado de forma a não empurrar o centro --}}
+        {{-- Navegação principal --}}
         <flux:button
-            class="lg:hidden ms-2 absolute left-2"
+            class="lg:hidden ms-2 shrink-0"
             variant="subtle"
             square
             icon="bars-2"
@@ -1514,14 +1514,14 @@ $hasStoreAccess = $hasLockInAccess;
             aria-label="Abrir menu"
         />
 
-        {{-- Container Centrado: Alinhado com o Dashboard (max-w-6xl) --}}
-        <div class="grid grid-cols-[auto_1fr_auto] items-center w-full max-w-6xl px-4 sm:px-6 lg:px-8 gap-3 mx-auto">
+        {{-- Container Centrado: Alinhado com o Dashboard --}}
+        <div class="flex items-center w-full max-w-7xl px-2 sm:px-6 lg:px-8 gap-2 sm:gap-3 mx-auto min-w-0">
 
             {{-- Lado Esquerdo: Ícone Fitness --}}
-            <div class="flex items-center">
+            <div class="flex items-center shrink-0">
                 <a href="{{ route('hub.fitness') }}"
                     wire:navigate
-                    class="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-orange-500 hover:border-orange-500/30 transition-all shadow-sm group"
+                    class="size-10 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-orange-500 hover:border-orange-500/30 transition-all shadow-sm group"
                     title="Zona de Treino">
                     <svg class="size-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
@@ -1536,7 +1536,7 @@ $hasStoreAccess = $hasLockInAccess;
 
 {{-- Centro: Barra de Pesquisa + Aviso de Contexto --}}
 {{-- Centro: Barra de Pesquisa + Aviso de Contexto --}}
-<div class="flex items-center justify-center flex-1 mx-1 sm:mx-8"> {{-- mx-1 remove o vácuo no telemóvel --}}
+<div class="flex items-center justify-center flex-1 min-w-0 mx-0 sm:mx-8">
 
     {{-- AVISO: MODO DE OBSERVAÇÃO (Oculto no mobile para ganhar espaço) --}}
     @if($isViewingOthers && $currentWs)
@@ -1556,7 +1556,8 @@ $hasStoreAccess = $hasLockInAccess;
 
     {{-- BOTÃO DE PESQUISA: Super colado aos lados no mobile, Gigante no PC --}}
     <button x-on:click="$dispatch('open-global-search')"
-        class="flex items-center justify-center sm:justify-start gap-3 p-2.5 sm:px-6 sm:py-2.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all group shadow-sm w-auto sm:w-full sm:max-w-5xl">
+        aria-label="Abrir pesquisa global"
+        class="size-10 sm:h-auto sm:w-full sm:max-w-5xl sm:px-6 sm:py-2.5 flex shrink-0 items-center justify-center sm:justify-start gap-3 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl sm:rounded-2xl text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all group shadow-sm">
 
         <flux:icon name="magnifying-glass" class="size-5 sm:size-4 group-hover:text-brand-500 transition-colors shrink-0" />
 
@@ -1567,7 +1568,7 @@ $hasStoreAccess = $hasLockInAccess;
 </div>
 
 {{-- Lado Direito: Ações e Perfil --}}
-<div class="flex items-center gap-2 sm:gap-3 justify-end">
+<div class="flex items-center gap-1 sm:gap-3 justify-end shrink-0">
 
     {{-- Loja --}}
     @php
@@ -1578,7 +1579,7 @@ $hasStoreAccess = $hasLockInAccess;
     {{-- LOJA DISPONÍVEL (PRO / BUSINESS) --}}
     <a href="{{ route('hub.store') }}"
        wire:navigate
-       class="relative p-2.5 rounded-xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-brand-600 hover:border-brand-500/30 transition-all group"
+    class="relative size-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-brand-600 hover:border-brand-500/30 transition-all group"
        title="Loja Digital">
         <flux:icon name="shopping-bag" class="size-5 group-hover:scale-110 transition-transform duration-300" />
     </a>
@@ -1586,7 +1587,7 @@ $hasStoreAccess = $hasLockInAccess;
     {{-- LOJA BLOQUEADA (REDIRECIONA PARA PLANOS) --}}
     <a href="{{ route('hub.pricing') }}"
        wire:navigate
-       class="relative p-2.5 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 shadow-sm border border-zinc-200/60 dark:border-zinc-800/60 text-zinc-400 opacity-80 hover:opacity-100 hover:border-amber-500/50 transition-all group"
+    class="relative size-10 flex items-center justify-center rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 shadow-sm border border-zinc-200/60 dark:border-zinc-800/60 text-zinc-400 opacity-80 hover:opacity-100 hover:border-amber-500/50 transition-all group"
        title="Loja Digital (Disponível nos planos Pro e Business)">
 
         {{-- Ícone da Loja em tons de cinza --}}
@@ -1604,7 +1605,7 @@ $hasStoreAccess = $hasLockInAccess;
                 {{-- Botão de Privacidade --}}
                 @if(request()->routeIs('dashboard') || request()->routeIs('social.profile') || request()->routeIs('profile.edit'))
                     <button @click="privacyMode = !privacyMode"
-                        class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-emerald-600 transition-all">
+                        class="size-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-emerald-600 transition-all">
                         <flux:icon x-show="!privacyMode" name="eye" class="size-5" />
                         <flux:icon x-show="privacyMode" name="eye-slash" class="size-5 text-emerald-500" />
                     </button>
@@ -1615,8 +1616,8 @@ $hasStoreAccess = $hasLockInAccess;
 
                 {{-- Menu de Utilizador --}}
                 <div x-data="{ open: false }" class="relative flex-shrink-0">
-                    <button @click="open = !open" type="button" class="flex items-center gap-2 sm:gap-3 px-1 sm:px-2 py-1.5 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all">
-    <flux:avatar :initials="auth()->user()->initials()" class="size-9 sm:size-10 shadow-sm" />
+                    <button @click="open = !open" type="button" aria-label="Abrir menu do perfil" class="size-10 flex items-center justify-center gap-2 sm:gap-3 sm:w-auto sm:px-2 py-1.5 rounded-xl sm:rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all">
+    <flux:avatar :initials="auth()->user()->initials()" class="size-9 sm:size-10 shadow-sm shrink-0" />
     <div class="hidden md:block text-left">
         <p class="text-sm font-bold text-zinc-800 dark:text-white leading-none">
             {{ auth()->user()->name }} <span class="ml-1">{{ $planEmoji }}</span>
