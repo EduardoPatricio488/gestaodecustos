@@ -23,7 +23,12 @@
 
         {{-- 2. TEMA & ASSETS --}}
         <script>
-            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            var savedAppearance = localStorage.getItem('flux.appearance') || localStorage.theme;
+            if (savedAppearance && !localStorage.getItem('flux.appearance') && ['dark', 'light'].includes(savedAppearance)) {
+                localStorage.setItem('flux.appearance', savedAppearance);
+            }
+
+            if (savedAppearance === 'dark' || ((!savedAppearance || savedAppearance === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.classList.add('dark')
             } else {
                 document.documentElement.classList.remove('dark')
@@ -53,7 +58,7 @@
         <nav class="flex items-center gap-4">
             <button
                 x-data="{ darkMode: document.documentElement.classList.contains('dark') }"
-                x-on:click="darkMode = !darkMode; darkMode ? (localStorage.theme = 'dark', document.documentElement.classList.add('dark')) : (localStorage.theme = 'light', document.documentElement.classList.remove('dark'))"
+                x-on:click="darkMode = !darkMode; window.Flux.applyAppearance(darkMode ? 'dark' : 'light')"
                 class="mr-2 flex size-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition-all hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
             >
                 <flux:icon.sun x-show="darkMode" variant="outline" class="size-5" />

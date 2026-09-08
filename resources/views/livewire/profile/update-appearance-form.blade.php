@@ -32,19 +32,12 @@
         {{-- SELETOR DE TEMA (Claro / Escuro / Automático) --}}
         <div
             x-data="{
-                theme: localStorage.theme || 'system',
+                theme: localStorage.getItem('flux.appearance') || localStorage.theme || 'system',
                 setTheme(value) {
                     this.theme = value;
                     document.documentElement.classList.add('theme-switching');
-                    if (value === 'system') {
-                        localStorage.removeItem('theme');
-                    } else {
-                        localStorage.theme = value;
-                    }
-                    document.documentElement.classList.toggle(
-                        'dark',
-                        value === 'dark' || (value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-                    );
+                    window.Flux.applyAppearance(value);
+                    localStorage.removeItem('theme');
                     setTimeout(() => document.documentElement.classList.remove('theme-switching'), 200);
                 }
             }"

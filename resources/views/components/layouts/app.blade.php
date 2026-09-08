@@ -34,8 +34,15 @@
     <script>
         (function () {
             function applyTheme() {
-                var isDark = localStorage.theme === 'dark' ||
-                    (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                var savedAppearance = localStorage.getItem('flux.appearance');
+
+                if (!savedAppearance && (localStorage.theme === 'dark' || localStorage.theme === 'light')) {
+                    savedAppearance = localStorage.theme;
+                    localStorage.setItem('flux.appearance', savedAppearance);
+                }
+
+                var isDark = savedAppearance === 'dark' ||
+                    ((!savedAppearance || savedAppearance === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
                 document.documentElement.classList.toggle('dark', isDark);
             }
             applyTheme();
@@ -1482,9 +1489,7 @@ $hasStoreAccess = $hasLockInAccess;
                 x-on:click="
                     darkMode = !darkMode;
                     document.documentElement.classList.add('theme-switching');
-                    darkMode
-                        ? (localStorage.theme = 'dark', document.documentElement.classList.add('dark'))
-                        : (localStorage.theme = 'light', document.documentElement.classList.remove('dark'));
+                    window.Flux.applyAppearance(darkMode ? 'dark' : 'light');
                     setTimeout(() => document.documentElement.classList.remove('theme-switching'), 200);
                 "
                 class="w-full glass-card flex items-center gap-3 px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
