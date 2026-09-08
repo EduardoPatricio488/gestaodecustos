@@ -471,6 +471,15 @@ COMO AGIR:
     private function runAgent(): void
     {
         try {
+            $apiKey = config('services.openrouter.api_key');
+
+            if (blank($apiKey)) {
+                Log::error('FinanceBot: OPENROUTER_API_KEY não está configurada.');
+                $this->messages[] = $this->botMessage('O meu serviço de IA não está configurado neste momento. Tenta novamente mais tarde.');
+
+                return;
+            }
+
             $history = collect($this->messages)
                 ->take(-12)
                 ->map(fn ($m) => [
@@ -488,10 +497,12 @@ COMO AGIR:
 
             for ($i = 0; $i < 6 && $finalReply === null; $i++) {
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer '.env('OPENROUTER_API_KEY'),
+                    'Authorization' => 'Bearer '.$apiKey,
                     'Content-Type' => 'application/json',
+                    'HTTP-Referer' => config('app.url'),
+                    'X-Title' => config('app.name'),
                 ])->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', [
-                    'model' => 'openai/gpt-4o-mini',
+                    'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
                     'messages' => $conversation,
                     'tools' => $this->getToolDefinitions(),
                     'tool_choice' => 'auto',
@@ -499,7 +510,11 @@ COMO AGIR:
                 ]);
 
                 if (! $response->successful()) {
-                    Log::error('FinanceBot: erro na API OpenRouter', ['status' => $response->status(), 'body' => $response->body()]);
+                    Log::error('FinanceBot: erro na API OpenRouter', [
+                        'status' => $response->status(),
+                        'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                        'body' => $response->json() ?: $response->body(),
+                    ]);
                     $this->messages[] = $this->botMessage('Estou com soluços técnicos. Tenta de novo.');
 
                     return;

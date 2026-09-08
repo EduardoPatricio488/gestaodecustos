@@ -57,4 +57,9 @@ return [
         ],
     ],
 
+    'openrouter' => [
+        'api_key' => env('OPENROUTER_API_KEY'),
+        'model' => env('AI_MODEL', 'openai/gpt-4o-mini'),
+    ],
+
 ];
