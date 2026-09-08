@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\BankAccount;
 use App\Models\RecurringIncome;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
@@ -10,9 +11,23 @@ class OnboardingWizard extends Component
 {
     public int $step = 1;
 
-    public int $totalSteps = 5;
+    public int $totalSteps = 6;
 
     public bool $show = true;
+
+    // =========================================================
+    // PASSO 2 — CONTAS BANCÁRIAS
+    // =========================================================
+
+    public array $bankAccounts = [
+        [
+            'name' => '',
+            'bank_name' => '',
+            'type' => 'corrente',
+            'balance' => 0,
+            'iban' => '',
+        ],
+    ];
 
     // =========================================================
     // PASSO 2 — FONTE DE RENDIMENTO
@@ -31,6 +46,8 @@ class OnboardingWizard extends Component
 
     // Dia em que o rendimento é recebido
     public int $salaryDay = 25;
+
+    public string $salaryBankAccountId = '';
 
     // =========================================================
     // EMPREGO / CONTRATO DE TRABALHO
@@ -239,6 +256,22 @@ class OnboardingWizard extends Component
         };
     }
 
+    public function bankAccountOptions()
+    {
+        $user = auth()->user();
+        $workspaceId = $user->current_workspace_id ?? $user->workspaces()->first()?->id;
+
+        if (! $workspaceId) {
+            return collect();
+        }
+
+        return BankAccount::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name', 'bank_name', 'currency']);
+    }
+
     // =========================================================
     // CÁLCULO DO VALOR LÍQUIDO
     // =========================================================
@@ -433,18 +466,24 @@ class OnboardingWizard extends Component
     public function nextStep()
     {
         if ($this->step === 2) {
-            $this->saveStep2();
+            $this->saveBankAccounts();
 
             return;
         }
 
         if ($this->step === 3) {
-            $this->saveStep3();
+            $this->saveStepSalary();
 
             return;
         }
 
         if ($this->step === 4) {
+            $this->saveStep3();
+
+            return;
+        }
+
+        if ($this->step === 5) {
             $this->saveStep4();
 
             return;
@@ -454,10 +493,71 @@ class OnboardingWizard extends Component
     }
 
     // =========================================================
-    // GUARDAR PASSO 2
+    // GUARDAR PASSO 2 — CONTAS BANCÁRIAS
     // =========================================================
 
-    private function saveStep2()
+    public function addBankAccount(): void
+    {
+        $this->bankAccounts[] = [
+            'name' => '',
+            'bank_name' => '',
+            'type' => 'corrente',
+            'balance' => 0,
+            'iban' => '',
+        ];
+    }
+
+    public function removeBankAccount(int $index): void
+    {
+        if (count($this->bankAccounts) === 1) {
+            return;
+        }
+
+        unset($this->bankAccounts[$index]);
+        $this->bankAccounts = array_values($this->bankAccounts);
+    }
+
+    private function saveBankAccounts(): void
+    {
+        $accounts = collect($this->bankAccounts)
+            ->filter(fn (array $account) => trim($account['name'] ?? '') !== '')
+            ->values();
+
+        $this->validate([
+            'bankAccounts.*.name' => 'nullable|string|max:100',
+            'bankAccounts.*.bank_name' => 'nullable|string|max:100',
+            'bankAccounts.*.type' => 'required|string|in:corrente,poupanca,credito,cash',
+            'bankAccounts.*.balance' => 'required|numeric',
+            'bankAccounts.*.iban' => 'nullable|string|max:34',
+        ]);
+
+        $user = auth()->user();
+        $workspaceId = $user->current_workspace_id ?? $user->workspaces()->first()?->id;
+
+        if ($workspaceId) {
+            foreach ($accounts as $account) {
+                BankAccount::create([
+                    'workspace_id' => $workspaceId,
+                    'user_id' => $user->id,
+                    'name' => trim($account['name']),
+                    'bank_name' => trim($account['bank_name'] ?? '') ?: null,
+                    'type' => $account['type'] ?? 'corrente',
+                    'balance' => (float) ($account['balance'] ?? 0),
+                    'iban' => trim($account['iban'] ?? '') ?: null,
+                    'currency' => 'EUR',
+                    'is_business' => false,
+                    'include_in_total' => true,
+                ]);
+            }
+        }
+
+        $this->step++;
+    }
+
+    // GUARDAR PASSO 3 — RENDIMENTO
+    // =========================================================
+
+    private function saveStepSalary()
     {
         /*
          * Validação base para todas as fontes.
@@ -465,6 +565,7 @@ class OnboardingWizard extends Component
         $rules = [
             'salaryAmount' => 'required|numeric|min:0.01',
             'salaryDay' => 'required|integer|between:1,31',
+            'salaryBankAccountId' => 'nullable|integer',
         ];
 
         /*
@@ -544,6 +645,13 @@ class OnboardingWizard extends Component
 
         if ($workspaceId) {
 
+            $bankAccountId = null;
+            if ($this->salaryBankAccountId !== '') {
+                $bankAccountId = BankAccount::where('workspace_id', $workspaceId)
+                    ->where('id', $this->salaryBankAccountId)
+                    ->value('id');
+            }
+
             $description = trim($this->salaryDescription);
 
             if (empty($description)) {
@@ -590,6 +698,8 @@ class OnboardingWizard extends Component
                 'amount' => $this->salaryAmount,
 
                 'day_of_month' => $this->salaryDay,
+
+                'bank_account_id' => $bankAccountId,
 
                 // Fonte selecionada
                 'source' => $this->salarySource,

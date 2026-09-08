@@ -90,9 +90,64 @@
 
 
 {{-- ─────────────────────────────────── --}}
-{{-- PASSO 2: FONTE DE RENDIMENTO        --}}
+{{-- PASSO 2: CONTAS BANCÁRIAS           --}}
 {{-- ─────────────────────────────────── --}}
 @if($step === 2)
+<div class="p-10 space-y-8">
+    <div class="flex items-center gap-4">
+        <div class="size-14 bg-sky-600 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
+            <flux:icon name="building-library" class="size-7 text-white" />
+        </div>
+        <div>
+            <h2 class="text-2xl font-black italic tracking-tighter dark:text-white">Onde guardas o teu dinheiro?</h2>
+            <p class="text-sm text-zinc-500 mt-0.5">Adiciona uma ou várias contas bancárias, carteiras ou cartões para começares com o saldo certo.</p>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        @foreach($bankAccounts as $index => $account)
+            <div wire:key="onboarding-bank-account-{{ $index }}" class="p-5 rounded-2xl border-2 border-zinc-100 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 space-y-4">
+                <div class="flex items-center justify-between">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-sky-600">Conta {{ $index + 1 }}</p>
+                    @if(count($bankAccounts) > 1)
+                        <button type="button" wire:click="removeBankAccount({{ $index }})" class="text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-600">Remover</button>
+                    @endif
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input type="text" wire:model="bankAccounts.{{ $index }}.name" placeholder="Nome da conta (ex.: Conta principal)" class="w-full bg-white dark:bg-zinc-950 border-2 border-zinc-200 dark:border-zinc-800 focus:border-sky-500 rounded-2xl py-3.5 px-4 text-sm font-bold dark:text-white outline-none transition-all">
+                    <input type="text" wire:model="bankAccounts.{{ $index }}.bank_name" placeholder="Banco (opcional)" class="w-full bg-white dark:bg-zinc-950 border-2 border-zinc-200 dark:border-zinc-800 focus:border-sky-500 rounded-2xl py-3.5 px-4 text-sm font-bold dark:text-white outline-none transition-all">
+                    <select wire:model="bankAccounts.{{ $index }}.type" class="w-full bg-white dark:bg-zinc-950 border-2 border-zinc-200 dark:border-zinc-800 focus:border-sky-500 rounded-2xl py-3.5 px-4 text-sm font-bold dark:text-white outline-none transition-all">
+                        <option value="corrente">Conta à ordem</option>
+                        <option value="poupanca">Conta poupança</option>
+                        <option value="credito">Cartão de crédito</option>
+                        <option value="cash">Carteira / Dinheiro</option>
+                    </select>
+                    <input type="number" step="0.01" wire:model="bankAccounts.{{ $index }}.balance" placeholder="Saldo atual (€)" class="w-full bg-white dark:bg-zinc-950 border-2 border-zinc-200 dark:border-zinc-800 focus:border-sky-500 rounded-2xl py-3.5 px-4 text-sm font-bold dark:text-white outline-none transition-all">
+                    <input type="text" wire:model="bankAccounts.{{ $index }}.iban" placeholder="IBAN (opcional)" class="sm:col-span-2 w-full bg-white dark:bg-zinc-950 border-2 border-zinc-200 dark:border-zinc-800 focus:border-sky-500 rounded-2xl py-3.5 px-4 text-sm font-bold dark:text-white outline-none transition-all">
+                </div>
+            </div>
+        @endforeach
+        <button type="button" wire:click="addBankAccount" class="w-full h-12 border-2 border-dashed border-sky-200 dark:border-sky-900 text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all">+ Adicionar outra conta</button>
+    </div>
+
+    <div class="bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800/30 rounded-2xl p-4 flex items-start gap-3">
+        <flux:icon name="shield-check" class="size-5 text-sky-500 shrink-0 mt-0.5" />
+        <p class="text-xs text-zinc-600 dark:text-zinc-400 font-medium">O saldo inicial serve apenas para começar o teu controlo financeiro. Podes alterar estes dados mais tarde.</p>
+    </div>
+
+    <div class="flex items-center justify-between pt-2">
+        <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Passo 2 de {{ $totalSteps }}</p>
+        <div class="flex items-center gap-3">
+            <button wire:click="skipStep" class="px-5 h-12 text-zinc-400 hover:text-zinc-600 font-bold uppercase text-xs tracking-widest transition-colors">Saltar</button>
+            <button wire:click="nextStep" class="flex items-center gap-2 px-8 h-12 bg-sky-600 hover:bg-sky-700 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg shadow-sky-500/20 transition-all hover:scale-[1.02]">Guardar e Continuar <flux:icon name="arrow-right" class="size-4" /></button>
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- PASSO 3: FONTE DE RENDIMENTO        --}}
+{{-- ─────────────────────────────────── --}}
+@if($step === 3)
 <div class="p-10 space-y-8">
 
     {{-- HEADER --}}
@@ -960,6 +1015,23 @@
                 >
             </div>
 
+            <div class="relative sm:col-span-2">
+                <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-emerald-600 z-10">
+                    Conta onde recebes este rendimento
+                </label>
+                <select wire:model="salaryBankAccountId" class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-emerald-500 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white outline-none transition-all">
+                    <option value="">Não associar a uma conta</option>
+                    @foreach($this->bankAccountOptions() as $bankAccount)
+                        <option value="{{ $bankAccount->id }}">
+                            {{ $bankAccount->name }}{{ $bankAccount->bank_name ? ' · '.$bankAccount->bank_name : '' }}
+                        </option>
+                    @endforeach
+                </select>
+                @if($this->bankAccountOptions()->isEmpty())
+                    <p class="mt-2 text-[10px] font-medium text-zinc-400">Ainda não tens contas cadastradas. Podes adicionar uma no passo anterior ou mais tarde no módulo Banco.</p>
+                @endif
+            </div>
+
         @endif
 
     </div>
@@ -1026,9 +1098,9 @@
 
 
             {{-- ─────────────────────────────────── --}}
-            {{-- PASSO 3: WORKSPACE                  --}}
+            {{-- PASSO 4: WORKSPACE                  --}}
             {{-- ─────────────────────────────────── --}}
-            @if($step === 3)
+            @if($step === 4)
             <div class="p-10 space-y-8">
                 <div class="flex items-center gap-4">
                     <div class="size-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
@@ -1113,7 +1185,7 @@
 {{-- ─────────────────────────────────── --}}
 {{-- PASSO 4: EXPLORAÇÃO DE HUBS         --}}
 {{-- ─────────────────────────────────── --}}
-@if($step === 4)
+@if($step === 5)
 <div class="p-10 space-y-8"
      wire:key="step-4-exploration"
      x-data="{
@@ -1205,7 +1277,7 @@
 
     {{-- FOOTER --}}
     <div class="flex items-center justify-between pt-2">
-        <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Passo 4 de 5</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Passo 5 de {{ $totalSteps }}</p>
 
         <div class="flex items-center gap-3">
             <button wire:click="previousStep"
@@ -1246,9 +1318,9 @@
 
 
             {{-- ─────────────────────────────────── --}}
-            {{-- PASSO 5: CONCLUÍDO                  --}}
+            {{-- PASSO 6: CONCLUÍDO                  --}}
             {{-- ─────────────────────────────────── --}}
-            @if($step === 5)
+            @if($step === 6)
             <div class="p-10 space-y-8 text-center">
                 <div class="space-y-4">
                     <div class="size-24 bg-gradient-to-br from-emerald-400 to-indigo-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl shadow-indigo-500/30 animate-bounce">
