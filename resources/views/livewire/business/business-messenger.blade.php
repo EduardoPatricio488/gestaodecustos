@@ -1,4 +1,4 @@
-<div class="flex h-[calc(100vh-10rem)] gap-6 pb-6" x-data="{
+<div class="flex min-w-0 flex-col lg:flex-row h-[calc(100vh-10rem)] gap-4 lg:gap-6 pb-6" x-data="{
     scrollToBottom() {
         $nextTick(() => {
             const container = $refs.chatContainer;
@@ -8,7 +8,7 @@
 }" x-init="scrollToBottom()" x-on:message-sent.window="scrollToBottom()">
 
     {{-- 1. BARRA LATERAL DE CANAIS (ESTILO BLACK GLASS) --}}
-    <aside class="w-72 flex flex-col bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
+    <aside class="w-full lg:w-72 min-h-48 lg:min-h-0 lg:shrink-0 flex flex-col bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
         {{-- Efeito de Glow IA ao fundo --}}
         <div class="absolute -top-24 -left-24 size-48 bg-brand-500/10 blur-[80px] rounded-full opacity-50"></div>
 
@@ -21,7 +21,7 @@
             </div>
         </div>
 
-        <nav class="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar relative z-10">
+        <nav class="flex-1 max-h-52 lg:max-h-none overflow-y-auto p-4 space-y-2 no-scrollbar relative z-10">
             {{-- Canal Geral --}}
             <button wire:click="selectChannel(null)"
                 class="w-full flex items-center justify-between px-5 py-4 rounded-[1.5rem] transition-all duration-300 group/item
@@ -74,7 +74,7 @@
     </aside>
 
     {{-- 2. JANELA DE CHAT PRINCIPAL (ESTILO HIGH-FIDELITY) --}}
-    <main class="flex-1 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden relative">
+    <main class="flex-1 min-h-0 min-w-0 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden relative">
 
         {{-- Cabeçalho do Chat (Estilo Glass) --}}
         <header class="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md relative z-10">
@@ -117,7 +117,7 @@
                     </div>
 
                     {{-- Balão de Mensagem --}}
-                    <div class="max-w-[65%] space-y-1.5">
+                    <div class="max-w-[85%] sm:max-w-[65%] space-y-1.5">
                         <div class="flex items-center gap-3 {{ $msg->isFromAuthUser() ? 'flex-row-reverse text-right' : '' }}">
                             <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400">{{ $msg->user->name }}</span>
                             <span class="text-[9px] font-bold text-zinc-300 dark:text-zinc-600 uppercase">{{ $msg->sent_at }}</span>

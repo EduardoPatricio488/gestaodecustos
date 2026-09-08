@@ -58,6 +58,21 @@
     min-width: 0;
 }
 
+.business-main #page-container > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+@media (max-width: 1023px) {
+    .business-main {
+        padding-inline-start: 0 !important;
+    }
+
+    .business-main #page-container {
+        overflow-x: hidden;
+    }
+}
+
 .glass-card,
 .stat-card {
     -webkit-backdrop-filter: none !important;
