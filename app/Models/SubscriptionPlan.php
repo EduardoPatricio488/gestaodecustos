@@ -44,10 +44,6 @@ class SubscriptionPlan extends Model
     {
         $stored = trim((string) $this->stripe_price_id);
 
-        if ($stored !== '' && str_starts_with($stored, 'price_')) {
-            return $stored;
-        }
-
         if ($stored !== '') {
             $configKey = str_starts_with(strtoupper($stored), 'STRIPE_PRICE_')
                 ? strtolower(substr($stored, strlen('STRIPE_PRICE_')))
@@ -61,7 +57,11 @@ class SubscriptionPlan extends Model
 
         $fromConfig = config("services.stripe.prices.{$this->slug}");
 
-        return $fromConfig ? (string) $fromConfig : ($stored !== '' ? $stored : null);
+        if ($fromConfig) {
+            return (string) $fromConfig;
+        }
+
+        return $stored !== '' ? $stored : null;
     }
 
     public function subscriberCount(): int
