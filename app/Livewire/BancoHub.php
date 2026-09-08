@@ -401,9 +401,9 @@ class BancoHub extends Component
 
         // Actualizar saldos se a transferência estiver completa
         if ($transfer->status === 'completed' && ! $this->editingId) {
-            BankAccount::withoutGlobalScopes()->where('id', $this->tr_from_id)
+            BankAccount::where('workspace_id', $wsId)->where('id', $this->tr_from_id)
                 ->decrement('balance', $this->tr_amount);
-            BankAccount::withoutGlobalScopes()->where('id', $this->tr_to_id)
+            BankAccount::where('workspace_id', $wsId)->where('id', $this->tr_to_id)
                 ->increment('balance', $this->tr_amount);
         }
     }

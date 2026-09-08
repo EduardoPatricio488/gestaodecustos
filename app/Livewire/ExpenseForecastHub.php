@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
+use App\Services\SubscriptionCycleService;
 use Carbon\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -118,12 +119,7 @@ class ExpenseForecastHub extends Component
             ->get(['category_id', 'amount', 'cycle', 'status', 'is_active'])
             ->filter(fn ($sub) => ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')
             ->groupBy('category_id')
-            ->map(fn ($subs) => (float) $subs->sum(fn ($sub) => match ($sub->cycle) {
-                'quarterly' => (float) $sub->amount / 3,
-                'semiannual' => (float) $sub->amount / 6,
-                'annual' => (float) $sub->amount / 12,
-                default => (float) $sub->amount,
-            }));
+            ->map(fn ($subs) => (float) $subs->sum(fn ($sub) => SubscriptionCycleService::toMonthly((float) $sub->amount, $sub->cycle)));
 
         $categories = Category::where('workspace_id', $workspaceId)->orderBy('name')->get();
 

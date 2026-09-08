@@ -268,8 +268,8 @@ class BankAccountHub extends Component
         $riscoCartoes = round($creditAccounts->avg('risk_score') ?? 0);
 
         // Fluxos do dia
-        $entradasHoje = Income::where('workspace_id', $workspace->id)->sum('amount');
-        $saidasHoje = Expense::where('workspace_id', $workspace->id)->sum('amount');
+        $entradasHoje = Income::where('workspace_id', $workspace->id)->whereDate('received_at', today())->sum('amount');
+        $saidasHoje = Expense::where('workspace_id', $workspace->id)->whereDate('spent_at', today())->sum('amount');
         $fluxoHoje = $entradasHoje - $saidasHoje;
 
         // Forecast avançado

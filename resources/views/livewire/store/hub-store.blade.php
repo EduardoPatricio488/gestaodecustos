@@ -1,25 +1,25 @@
 <div class="space-y-8 pb-20" x-data="{ cartOpen: false }" @open-cart.window="cartOpen = true">
     {{-- HEADER --}}
-    <header class="relative overflow-hidden bg-zinc-100 rounded-[3rem] p-10 border border-zinc-300 shadow-xl">
+    <header class="relative overflow-hidden bg-zinc-100 dark:bg-zinc-900 rounded-[3rem] p-10 border border-zinc-300 dark:border-zinc-800 shadow-xl">
         <div class="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
             <div class="text-left">
-                <flux:badge variant="neutral" class="bg-zinc-200 border-zinc-300 text-zinc-700 font-black uppercase tracking-widest text-[9px] mb-4">
+                <flux:badge variant="neutral" class="bg-zinc-200 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-black uppercase tracking-widest text-[9px] mb-4">
                     Finance Hub PRO Store
                 </flux:badge>
-                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 uppercase italic tracking-tighter leading-none">
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white uppercase italic tracking-tighter leading-none">
                     Extensões PRO & IA Financeira
                 </h1>
-                <p class="text-zinc-600 font-medium mt-4 max-w-xl">
+                <p class="text-zinc-600 dark:text-zinc-400 font-medium mt-4 max-w-xl">
                     Pesquisa, compara e adquire extensões premium com confiança.
                 </p>
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
 
-                <a href="{{ route('store.wishlist') }}" wire:navigate class="px-4 py-2.5 bg-white border border-zinc-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-50 flex items-center gap-2">
+                <a href="{{ route('store.wishlist') }}" wire:navigate class="px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-50 dark:hover:bg-zinc-700 dark:text-white flex items-center gap-2">
                     <flux:icon name="heart" class="size-4" /> Favoritos
                 </a>
-                <a href="{{ route('store.compare') }}" wire:navigate class="px-4 py-2.5 bg-white border border-zinc-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-50 flex items-center gap-2">
+                <a href="{{ route('store.compare') }}" wire:navigate class="px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-50 dark:hover:bg-zinc-700 dark:text-white flex items-center gap-2">
                     <flux:icon name="scale" class="size-4" /> Comparar
                     @if($compareCount > 0)
                         <span class="bg-brand-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{{ $compareCount }}</span>
@@ -141,30 +141,30 @@
     </a>
 
     {{-- PESQUISA & FILTROS --}}
-    <div class="bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm space-y-4">
+    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm space-y-4">
         <div class="flex flex-col lg:flex-row gap-4">
             <div class="flex-1 relative">
                 <flux:icon name="magnifying-glass" class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-zinc-400" />
                 <input wire:model.live.debounce.300ms="search" type="search" placeholder="Pesquisar produtos..."
-                       class="w-full pl-12 pr-4 py-3 rounded-2xl border border-zinc-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm" />
+                       class="w-full pl-12 pr-4 py-3 rounded-2xl border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm" />
             </div>
             <div class="flex flex-wrap gap-3">
                 <input wire:model.live.debounce.500ms="priceMin" type="number" step="0.01" min="0" placeholder="Min €"
-                       class="w-24 px-3 py-3 rounded-xl border border-zinc-200 text-sm" />
+                       class="w-24 px-3 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white text-sm" />
                 <input wire:model.live.debounce.500ms="priceMax" type="number" step="0.01" min="0" placeholder="Max €"
-                       class="w-24 px-3 py-3 rounded-xl border border-zinc-200 text-sm" />
-                <select wire:model.live="sortBy" class="px-4 py-3 rounded-xl border border-zinc-200 text-sm font-bold">
+                       class="w-24 px-3 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white text-sm" />
+                <select wire:model.live="sortBy" class="px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white text-sm font-bold">
                     <option value="popular">Mais Popular</option>
                     <option value="rating">Melhor Avaliado</option>
                     <option value="price_asc">Preço ↑</option>
                     <option value="price_desc">Preço ↓</option>
                     <option value="newest">Mais Recente</option>
                 </select>
-                <label class="flex items-center gap-2 px-4 py-3 rounded-xl border border-zinc-200 text-sm font-bold cursor-pointer">
+                <label class="flex items-center gap-2 px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 dark:text-white text-sm font-bold cursor-pointer">
                     <input wire:model.live="onlyFeatured" type="checkbox" class="rounded" />
                     Destaques
                 </label>
-                <button wire:click="clearFilters" class="px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:bg-zinc-100">
+                <button wire:click="clearFilters" class="px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
                     Limpar
                 </button>
             </div>
@@ -199,11 +199,11 @@
                     ->all(),
             ];
         @endphp
-        <div class="flex overflow-x-auto gap-1 p-1 bg-zinc-100 rounded-2xl">
+        <div class="flex overflow-x-auto gap-1 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
             @foreach($storeTabs as $tab)
                 <button wire:click="setTab('{{ $tab['key'] }}')"
                         class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all
-                               {{ $activeTab === $tab['key'] ? 'bg-zinc-800 text-white' : 'text-zinc-600 hover:bg-zinc-200' }}">
+                               {{ $activeTab === $tab['key'] ? 'bg-zinc-800 dark:bg-brand-600 text-white' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700' }}">
                     {{ $tab['label'] }}
                 </button>
             @endforeach
@@ -213,18 +213,18 @@
     {{-- BUNDLES --}}
     @if($bundles->isNotEmpty() && $activeTab === 'all' && !$search)
         <section class="space-y-4">
-            <h2 class="text-lg font-black uppercase tracking-tight">Packs & Bundles</h2>
+            <h2 class="text-lg font-black uppercase tracking-tight dark:text-white">Packs & Bundles</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 @foreach($bundles as $bundle)
-                    <div class="bg-gradient-to-br from-brand-50 to-white border border-brand-200 rounded-3xl p-6 flex gap-4">
+                    <div class="bg-gradient-to-br from-brand-50 to-white dark:from-zinc-900 dark:to-zinc-950 border border-brand-200 dark:border-zinc-800 rounded-3xl p-6 flex gap-4">
                         <div class="text-5xl">{{ $bundle->image }}</div>
                         <div class="flex-1">
                             @if($bundle->badge)<span class="text-[9px] font-black text-brand-600 uppercase">{{ $bundle->badge }}</span>@endif
-                            <h3 class="font-black uppercase">{{ $bundle->title }}</h3>
-                            <p class="text-xs text-zinc-600 mt-1">{{ $bundle->description }}</p>
+                            <h3 class="font-black uppercase dark:text-white">{{ $bundle->title }}</h3>
+                            <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1">{{ $bundle->description }}</p>
                             <p class="text-xs text-emerald-600 font-bold mt-2">Poupa {{ $bundle->savings_percent }}%</p>
                             <div class="flex items-center gap-3 mt-4">
-                                <span class="text-xl font-black">{{ number_format($bundle->price, 2, ',', '.') }} €</span>
+                                <span class="text-xl font-black dark:text-white">{{ number_format($bundle->price, 2, ',', '.') }} €</span>
                                 <span class="text-xs text-zinc-400 line-through">{{ number_format($bundle->individualTotal(), 2, ',', '.') }} €</span>
                             </div>
                         </div>
@@ -236,15 +236,15 @@
 
     {{-- PRODUTOS --}}
     @if($products->isEmpty())
-        <div class="py-20 text-center bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-[3rem]">
-            <flux:icon name="magnifying-glass" class="size-12 mx-auto mb-4 text-zinc-300" />
+        <div class="py-20 text-center bg-zinc-50 dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-[3rem]">
+            <flux:icon name="magnifying-glass" class="size-12 mx-auto mb-4 text-zinc-300 dark:text-zinc-700" />
             <h3 class="text-xl font-black text-zinc-400 uppercase">Nenhum produto encontrado</h3>
             <button wire:click="clearFilters" class="mt-4 text-sm font-bold text-brand-600">Limpar filtros</button>
         </div>
     @else
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @foreach($products as $product)
-                <div class="group relative bg-zinc-50 border border-zinc-200 rounded-[2.5rem] overflow-hidden flex flex-col hover:border-brand-500 hover:shadow-xl transition-all" wire:key="product-{{ $product->id }}">
+                <div class="group relative bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] overflow-hidden flex flex-col hover:border-brand-500 hover:shadow-xl transition-all" wire:key="product-{{ $product->id }}">
                     @if(in_array($product->id, $ownedProductIds))
                         <div class="absolute top-4 left-4 z-10">
                             <span class="px-3 py-1 bg-emerald-600 text-white text-[9px] font-black uppercase rounded-full">Já tens</span>
@@ -256,16 +256,16 @@
                         </div>
                     @endif
 
-                    <div class="h-44 bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center text-6xl relative">
+                    <div class="h-44 bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 flex items-center justify-center text-6xl relative">
                         <span class="group-hover:scale-110 transition-transform">{{ $product->image }}</span>
                         <div class="absolute top-4 right-4 flex gap-2">
                             <button wire:click="toggleWishlist({{ $product->id }})"
-                                    class="p-2 bg-white/90 rounded-xl shadow hover:scale-110 transition-transform"
+                                    class="p-2 bg-white/90 dark:bg-zinc-950/80 rounded-xl shadow hover:scale-110 transition-transform"
                                     title="Favoritos">
                                 <flux:icon name="heart" class="size-4 {{ in_array($product->id, $wishlistIds) ? 'text-red-500 fill-red-500' : 'text-zinc-400' }}" />
                             </button>
                             <button wire:click="addToCompare({{ $product->id }})"
-                                    class="p-2 bg-white/90 rounded-xl shadow hover:scale-110 transition-transform"
+                                    class="p-2 bg-white/90 dark:bg-zinc-950/80 rounded-xl shadow hover:scale-110 transition-transform"
                                     title="Comparar">
                                 <flux:icon name="scale" class="size-4 text-zinc-400" />
                             </button>
@@ -275,12 +275,12 @@
                     <div class="p-6 flex flex-col flex-1">
                         <span class="text-[9px] font-black text-brand-600 uppercase tracking-widest">{{ $product->category_label }}</span>
                         @if($product->requires_business_plan)
-                            <span class="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-amber-800">
+                            <span class="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-500/10 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-amber-800 dark:text-amber-400">
                                 <flux:icon name="building-office-2" class="size-3" /> Plano Business
                             </span>
                         @endif
-                        <h3 class="text-lg font-black uppercase leading-tight mt-1">{{ $product->title }}</h3>
-                        <p class="text-xs text-zinc-600 mt-2 line-clamp-2">{{ $product->description }}</p>
+                        <h3 class="text-lg font-black uppercase leading-tight mt-1 dark:text-white">{{ $product->title }}</h3>
+                        <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-2 line-clamp-2">{{ $product->description }}</p>
 
                         @if($product->rating_count > 0)
                             <div class="flex items-center gap-2 mt-3">
@@ -289,13 +289,13 @@
                             </div>
                         @endif
 
-                        <div class="mt-auto pt-4 flex items-center justify-between border-t border-zinc-200 mt-4">
-                            <span class="text-2xl font-black italic">{{ number_format($product->price, 2, ',', '.') }} €</span>
+                        <div class="mt-auto pt-4 flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800 mt-4">
+                            <span class="text-2xl font-black italic dark:text-white">{{ number_format($product->price, 2, ',', '.') }} €</span>
                             <div class="flex flex-col gap-1.5">
                                 <a href="{{ route('store.product.show', $product) }}" wire:navigate
-                                   class="text-center px-3 py-2 bg-white border border-zinc-200 rounded-xl text-[9px] font-black uppercase">Ver</a>
+                                   class="text-center px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 dark:text-white rounded-xl text-[9px] font-black uppercase">Ver</a>
                                 <button wire:click="addToCart({{ $product->id }})"
-                                        class="px-3 py-2 {{ $product->requires_business_plan && ! $hasBusinessPlan ? 'bg-zinc-400 hover:bg-zinc-500' : 'bg-zinc-200 hover:bg-zinc-300' }} rounded-xl text-[9px] font-black uppercase {{ $product->requires_business_plan && ! $hasBusinessPlan ? 'text-white' : '' }}">
+                                        class="px-3 py-2 {{ $product->requires_business_plan && ! $hasBusinessPlan ? 'bg-zinc-400 hover:bg-zinc-500' : 'bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600' }} rounded-xl text-[9px] font-black uppercase {{ $product->requires_business_plan && ! $hasBusinessPlan ? 'text-white' : 'dark:text-white' }}">
                                     {{ $product->requires_business_plan && ! $hasBusinessPlan ? 'Business' : (in_array($product->id, $ownedProductIds) ? 'Comprar de novo' : '+ Carrinho') }}
                                 </button>
                                 <button wire:click="buyNow({{ $product->id }})"
@@ -313,16 +313,16 @@
     {{-- PLANOS --}}
     @if($activeTab === 'all' && $planProducts->isNotEmpty() && !$search)
         <section class="space-y-4">
-            <h2 class="text-lg font-black uppercase">Planos PRO</h2>
+            <h2 class="text-lg font-black uppercase dark:text-white">Planos PRO</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 @foreach($planProducts as $index => $plan)
-                    <div @class(['border rounded-3xl p-6', $index === 1 ? 'bg-zinc-200 border-zinc-400 shadow-lg' : 'bg-zinc-50 border-zinc-200'])>
-                        <h3 class="font-black uppercase">{{ $plan->title }}</h3>
-                        <p class="text-xs text-zinc-600 mt-2">{{ $plan->description }}</p>
-                        <p class="text-2xl font-black mt-4">{{ number_format($plan->price, 2, ',', '.') }} €/mês</p>
+                    <div @class(['border rounded-3xl p-6', $index === 1 ? 'bg-zinc-200 dark:bg-zinc-800 border-zinc-400 dark:border-zinc-600 shadow-lg' : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'])>
+                        <h3 class="font-black uppercase dark:text-white">{{ $plan->title }}</h3>
+                        <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-2">{{ $plan->description }}</p>
+                        <p class="text-2xl font-black mt-4 dark:text-white">{{ number_format($plan->price, 2, ',', '.') }} €/mês</p>
                         <div class="flex gap-2 mt-4">
-                            <button wire:click="addToCart({{ $plan->id }})" class="flex-1 py-2 bg-white border rounded-xl text-[9px] font-black uppercase">+ Carrinho</button>
-                            <button wire:click="buyNow({{ $plan->id }})" class="flex-1 py-2 bg-zinc-900 text-white rounded-xl text-[9px] font-black uppercase">Subscrever</button>
+                            <button wire:click="addToCart({{ $plan->id }})" class="flex-1 py-2 bg-white dark:bg-zinc-800 dark:text-white border dark:border-zinc-700 rounded-xl text-[9px] font-black uppercase">+ Carrinho</button>
+                            <button wire:click="buyNow({{ $plan->id }})" class="flex-1 py-2 bg-zinc-900 dark:bg-brand-600 text-white rounded-xl text-[9px] font-black uppercase">Subscrever</button>
                         </div>
                     </div>
                 @endforeach

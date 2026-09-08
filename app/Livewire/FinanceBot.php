@@ -2,13 +2,16 @@
 
 namespace App\Livewire;
 
+use App\Models\BankAccount;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Goal;
 use App\Models\Income;
 use App\Models\Investment;
+use App\Models\RecurringIncome;
 use App\Models\Reminder;
 use App\Models\Subscription;
+use App\Services\SubscriptionCycleService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
@@ -425,6 +428,11 @@ class FinanceBot extends Component
             ->where('received_at', '>=', $monthStart)
             ->sum('amount');
 
+        $earned += $user->recurringIncomes()
+            ->where('workspace_id', $ws->id)
+            ->where('is_active', true)
+            ->sum('amount');
+
         $categories = Category::where('workspace_id', $ws->id)
             ->pluck('name')
             ->implode(', ');
@@ -560,6 +568,7 @@ COMO AGIR:
                 'description' => ['type' => 'string', 'description' => 'Descrição curta da despesa.'],
                 'category_name' => ['type' => 'string', 'description' => 'Nome da categoria. Se não existir, é criada.'],
                 'date' => ['type' => 'string', 'description' => "Data (YYYY-MM-DD) ou termo natural como 'hoje', 'ontem'. Vazio = hoje."],
+                'payment_account_name' => ['type' => 'string', 'description' => 'Nome da conta bancária usada para pagar (opcional). Vazio = dinheiro físico.'],
             ], ['amount', 'description']),
 
             $tool('create_income', 'Regista um novo rendimento/entrada de dinheiro do utilizador.', [
@@ -720,10 +729,25 @@ COMO AGIR:
 
         $category = $this->resolveCategory($args['category_name'] ?? null, $wsId, $userId);
 
+        $bankAccountId = null;
+        if (! empty($args['payment_account_name'])) {
+            $account = BankAccount::where('workspace_id', $wsId)
+                ->where('name', 'like', '%'.$args['payment_account_name'].'%')
+                ->first();
+
+            if ($account) {
+                if ((float) $account->current_balance < $amount) {
+                    return ['error' => 'Saldo insuficiente na conta "'.$account->name.'": disponível '.number_format((float) $account->current_balance, 2, ',', '.').'€.'];
+                }
+                $bankAccountId = $account->id;
+            }
+        }
+
         $expense = Expense::create([
             'user_id' => $userId,
             'workspace_id' => $wsId,
             'category_id' => $category?->id,
+            'bank_account_id' => $bankAccountId,
             'description' => $args['description'] ?? 'Despesa',
             'amount' => $amount,
             'spent_at' => $this->resolveDate($args['date'] ?? null),
@@ -996,7 +1020,7 @@ COMO AGIR:
 
         return [
             'count' => $subs->count(),
-            'monthly_total' => (float) $subs->sum(fn ($s) => $s->cycle === 'yearly' ? $s->amount / 12 : $s->amount),
+            'monthly_total' => (float) $subs->sum(fn ($s) => SubscriptionCycleService::toMonthly((float) $s->amount, $s->cycle)),
             'items' => $subs->map(fn ($s) => [
                 'id' => $s->id,
                 'name' => $s->name,
@@ -1060,6 +1084,9 @@ COMO AGIR:
 
         $earned = (float) Income::where('workspace_id', $wsId)->where('received_at', '>=', $since)->sum('amount');
         $spent = (float) Expense::where('workspace_id', $wsId)->where('spent_at', '>=', $since)->sum('amount');
+
+        $fixedIncome = (float) RecurringIncome::where('workspace_id', $wsId)->where('is_active', true)->sum('amount');
+        $earned += $fixedIncome * ($days / 30);
 
         $byCategory = Expense::where('workspace_id', $wsId)
             ->where('spent_at', '>=', $since)

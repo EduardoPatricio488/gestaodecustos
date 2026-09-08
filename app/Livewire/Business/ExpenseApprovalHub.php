@@ -12,12 +12,14 @@ class ExpenseApprovalHub extends Component
     // Funções de decisão (CEO)
     public function approve($id)
     {
+        abort_unless(auth()->user()->isOwner() || auth()->user()->isAdminRole(), 403);
         Expense::findOrFail($id)->update(['status' => 'aprovado']);
         $this->dispatch('toast', variant: 'success', text: 'Despesa aprovada!');
     }
 
     public function reject($id)
     {
+        abort_unless(auth()->user()->isOwner() || auth()->user()->isAdminRole(), 403);
         Expense::findOrFail($id)->update(['status' => 'rejeitado']);
         $this->dispatch('toast', variant: 'warning', text: 'Despesa rejeitada.');
     }

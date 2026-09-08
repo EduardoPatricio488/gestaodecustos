@@ -19,6 +19,7 @@ use App\Services\FinanceScoreService;
 use App\Services\NotificationService;
 use App\Services\StoreEntitlementService;
 use App\Services\SubscriptionCheckoutService;
+use App\Services\SubscriptionCycleService;
 use App\Services\WellnessFinanceService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -713,6 +714,8 @@ class Dashboard extends Component
                     'quantity' => (float) $investment->quantity,
                     'current_price' => (float) $investment->current_price,
                 ])
+                ->values()
+                ->all()
         );
 
         foreach ($myInvestments as $inv) {
@@ -737,12 +740,7 @@ class Dashboard extends Component
         $subscriptionsMonthlyCost = (float) Subscription::where('workspace_id', $currentWs->id)
             ->get(['amount', 'cycle', 'status', 'is_active'])
             ->filter(fn ($sub) => ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')
-            ->sum(fn ($sub) => match ($sub->cycle) {
-                'quarterly' => (float) $sub->amount / 3,
-                'semiannual' => (float) $sub->amount / 6,
-                'annual' => (float) $sub->amount / 12,
-                default => (float) $sub->amount,
-            });
+            ->sum(fn ($sub) => SubscriptionCycleService::toMonthly((float) $sub->amount, $sub->cycle));
 
         $platformPlanSlug = $user->currentPlanSlug();
         if ($platformPlanSlug !== 'free') {

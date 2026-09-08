@@ -228,7 +228,7 @@
                 prose-p:text-zinc-300 prose-p:leading-relaxed
                 prose-strong:text-white prose-strong:font-black
                 prose-li:text-zinc-400">
-                {!! Str::markdown($aiAnalysis) !!}
+                {!! Str::markdown($aiAnalysis, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
             </div>
 
             <div class="mt-8 pt-6 border-t border-white/5 flex justify-between items-center">

@@ -20,9 +20,11 @@ class StoreCatalogService
 
     public function allProducts(): Collection
     {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
-            return StoreProduct::orderBy('type')->orderBy('title')->get();
+        $rows = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
+            return StoreProduct::orderBy('type')->orderBy('title')->get()->map->getAttributes()->all();
         });
+
+        return StoreProduct::hydrate($rows);
     }
 
     public function filter(array $filters): Collection

@@ -130,11 +130,17 @@ class TeamHub extends Component
     // 3. Método para eliminar um documento (Opcional, mas recomendado)
     public function deleteDocument($docId)
     {
-        $doc = DB::table('business_documents')->where('id', $docId)->first();
+        $doc = DB::table('business_documents')
+            ->where('id', $docId)
+            ->where('workspace_id', auth()->user()->current_workspace_id)
+            ->first();
 
         if ($doc) {
             \Storage::disk('local')->delete($doc->file_path);
-            DB::table('business_documents')->where('id', $docId)->delete();
+            DB::table('business_documents')
+                ->where('id', $docId)
+                ->where('workspace_id', auth()->user()->current_workspace_id)
+                ->delete();
 
             // Refresh da lista
             $this->viewDocuments($this->selectedEmpIdForUpload);
@@ -205,8 +211,10 @@ class TeamHub extends Component
         if (! $email) {
             $application = DB::table('job_applications')
                 ->where('workspace_id', $workspace->id)
-                ->where('user_id', $emp->user_id) // Tentativa por user_id
-                ->orWhere('name', 'like', '%'.$emp->name.'%') // Tentativa por nome
+                ->where(function ($query) use ($emp) {
+                    $query->where('user_id', $emp->user_id) // Tentativa por user_id
+                        ->orWhere('name', 'like', '%'.$emp->name.'%'); // Tentativa por nome
+                })
                 ->first();
 
             $email = $application?->email;

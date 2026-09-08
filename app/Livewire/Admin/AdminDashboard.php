@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Expense;
 use App\Models\Income;
+use App\Models\RecurringIncome;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,7 @@ class AdminDashboard extends Component
         // 2. FINANCEIRO GLOBAL (Soma de todas as transações do site)
         $totalExpenses = Expense::withoutGlobalScopes()->sum('amount') ?: 0;
         $totalIncomes = Income::withoutGlobalScopes()->sum('amount') ?: 0;
+        $totalIncomes += RecurringIncome::withoutGlobalScopes()->where('is_active', true)->sum('amount') ?: 0;
 
         // 3. INTELIGÊNCIA IA (Dados Reais da tabela de chat)
         $aiMessagesToday = 0;

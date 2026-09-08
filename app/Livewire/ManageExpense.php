@@ -2,12 +2,14 @@
 
 namespace App\Livewire;
 
+use App\Models\BankAccount;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Services\CurrencyService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -33,6 +35,9 @@ class ManageExpense extends Component
     public $meta = [];
 
     public $currency = 'EUR';
+
+    // Destino do pagamento: conta bancária ou dinheiro físico (vazio = físico)
+    public $bankAccountId = '';
 
     public $receipt;
 
@@ -62,6 +67,14 @@ class ManageExpense extends Component
         'receipt' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:20480',
     ];
 
+    #[Computed]
+    public function bankAccounts()
+    {
+        return BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+            ->orderBy('name')
+            ->get();
+    }
+
     public function updatedReceipt(): void
     {
         $this->resetValidation('receipt');
@@ -89,6 +102,7 @@ class ManageExpense extends Component
             $this->category_id = $expense->category_id;
             $this->subcategory = $expense->subcategory;
             $this->description = $expense->description;
+            $this->bankAccountId = $expense->bank_account_id ?: '';
             $rawMetadata = $expense->getRawOriginal('metadata');
             if (is_array($expense->metadata)) {
                 $this->meta = $expense->metadata;
@@ -217,6 +231,26 @@ PROMPT;
             'category_id' => 'required',
         ]);
 
+        if ($this->bankAccountId) {
+            $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+                ->find($this->bankAccountId);
+
+            if ($account) {
+                $available = (float) $account->current_balance;
+
+                if ($this->expense && $this->expense->exists && (int) $this->expense->bank_account_id === (int) $this->bankAccountId) {
+                    $available += (float) $this->expense->amount;
+                }
+
+                if ((float) $this->amount > $available) {
+                    $this->addError('bankAccountId', 'Saldo insuficiente nesta conta.');
+                    $this->dispatch('toast', variant: 'error', text: 'Saldo insuficiente em "'.$account->name.'": disponível '.number_format($available, 2, ',', '.').'€.');
+
+                    return;
+                }
+            }
+        }
+
         $data = [
             'user_id' => auth()->id(),
             'category_id' => $this->category_id,
@@ -226,6 +260,7 @@ PROMPT;
             'description' => $this->description,
             'spent_at' => $this->spent_at,
             'workspace_id' => auth()->user()->current_workspace_id,
+            'bank_account_id' => $this->bankAccountId ?: null,
             'metadata' => ! empty($this->meta) ? $this->meta : null,
         ];
 

@@ -42,7 +42,7 @@
 
                     <tr>
                         <td style="padding: 24px 32px 32px; color: #374151; font-size: 14px; line-height: 24px;">
-                            {!! Str::markdown($analysis) !!}
+                            {!! Str::markdown($analysis, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
                         </td>
                     </tr>
 

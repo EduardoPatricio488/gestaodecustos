@@ -61,7 +61,8 @@ class RecruitmentHub extends Component
 
     public function rejectCandidate($id)
     {
-        DB::table('job_applications')->where('id', $id)->update(['status' => 'rejected']);
+        $workspace = auth()->user()->currentWorkspace;
+        DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->update(['status' => 'rejected']);
         $this->dispatch('toast', variant: 'warning', text: 'Candidatura arquivada.');
     }
 
@@ -70,13 +71,13 @@ class RecruitmentHub extends Component
      */
     public function acceptCandidate($id)
     {
-        $app = DB::table('job_applications')->where('id', $id)->first();
+        $workspace = auth()->user()->currentWorkspace;
+        $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
         if (! $app) {
             return;
         }
 
         $user = User::find($app->user_id);
-        $workspace = auth()->user()->currentWorkspace;
 
         // 1. ENVIAR E-MAIL DE CONTRATAÇÃO (Via MailHog)
         try {
@@ -98,7 +99,7 @@ class RecruitmentHub extends Component
         ]);
 
         // 3. ATUALIZAR STATUS DA CANDIDATURA
-        DB::table('job_applications')->where('id', $id)->update(['status' => 'accepted']);
+        DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->update(['status' => 'accepted']);
 
         $this->dispatch('toast', variant: 'success', text: 'Colaborador contratado e notificado!');
 
@@ -107,7 +108,8 @@ class RecruitmentHub extends Component
 
     public function reopenCandidate($id)
     {
-        DB::table('job_applications')->where('id', $id)->update(['status' => 'pending']);
+        $workspace = auth()->user()->currentWorkspace;
+        DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->update(['status' => 'pending']);
         $this->dispatch('toast', text: 'Candidatura reaberta.');
     }
 

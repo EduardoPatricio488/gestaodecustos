@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
+use App\Services\SubscriptionCycleService;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -339,12 +340,7 @@ class SubscriptionHub extends Component
     private function decorateSubscription(Subscription $sub): Subscription
     {
         $sub->status = $sub->status ?: ($sub->is_active ? 'active' : 'paused');
-        $sub->monthly_equivalent = match ($sub->cycle) {
-            'quarterly' => (float) $sub->amount / 3,
-            'semiannual' => (float) $sub->amount / 6,
-            'annual' => (float) $sub->amount / 12,
-            default => (float) $sub->amount,
-        };
+        $sub->monthly_equivalent = SubscriptionCycleService::toMonthly((float) $sub->amount, $sub->cycle);
 
         $today = Carbon::now();
         $billingDate = $today->copy()->day(min((int) $sub->billing_day, $today->daysInMonth));

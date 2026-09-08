@@ -25,6 +25,15 @@
             scannerOpen: false,
             reviewOpen: false,
             scannerPreview: null,
+            confirmAndSave() {
+                if (!$wire.bankAccountId) {
+                    const value = Number($wire.amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    if (!confirm(`Confirmas que tens ${value}€ disponíveis em dinheiro físico? Pretendes continuar?`)) {
+                        return;
+                    }
+                }
+                $wire.save();
+            },
         }"
         x-on:scan-completed.window="scannerOpen = false; setTimeout(() => reviewOpen = true, 250);"
         x-on:open-review-modal.window="scannerOpen = false; setTimeout(() => reviewOpen = true, 250);"
@@ -99,7 +108,7 @@
             <div class="lg:col-span-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-hidden">
                 <div class="h-1.5 w-full transition-colors duration-500" style="background-color: var(--cat-color);"></div>
 
-                <form wire:submit.prevent="save" class="p-6 sm:p-10 space-y-8" autocomplete="off">
+                <form @submit.prevent="confirmAndSave()" class="p-6 sm:p-10 space-y-8" autocomplete="off">
 
                     {{-- Valor e Data --}}
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -139,6 +148,30 @@
                             @endforeach
                         </select>
                     </label>
+
+                    {{-- Origem do pagamento --}}
+                    <label class="block space-y-2">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Pago com</span>
+                        <select wire:model.live="bankAccountId" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 dark:bg-zinc-950 px-6 text-sm font-bold shadow-inner focus:ring-2 focus:ring-brand-500/20 dark:text-white transition-all">
+                            <option value="">💵 Dinheiro Físico</option>
+                            @foreach($this->bankAccounts as $acc)
+                                <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+
+                    @php
+                        $selectedAccount = $bankAccountId ? $this->bankAccounts->firstWhere('id', (int) $bankAccountId) : null;
+                        $insufficientBank = $selectedAccount && (float) $amount > (float) $selectedAccount->current_balance;
+                    @endphp
+                    @if($insufficientBank)
+                        <div class="flex items-start gap-2.5 p-3 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40">
+                            <flux:icon name="exclamation-triangle" class="size-4 text-red-500 shrink-0 mt-0.5" />
+                            <p class="text-[11px] font-bold text-red-600 dark:text-red-400">
+                                Saldo insuficiente em "{{ $selectedAccount->name }}": disponível {{ number_format($selectedAccount->current_balance, 2, ',', '.') }}€, valor do gasto {{ number_format((float) $amount, 2, ',', '.') }}€.
+                            </p>
+                        </div>
+                    @endif
 
                     {{-- Campos Dinâmicos (Hub Específico) --}}
                     @php $activeSlugKey = is_string($activeSlug) ? $activeSlug : null; @endphp

@@ -112,19 +112,26 @@ class NetWorthHub extends Component
             ->pluck('total', 'month');
 
         // Gerar array dos últimos 12 meses
+        $fixedIncome = (float) $user->recurringIncomes()
+            ->where('workspace_id', $workspaceId)
+            ->where('is_active', true)
+            ->sum('amount');
+
+        $currentMonthKey = now()->format('Y-m');
         $last12Months = collect();
         for ($i = 11; $i >= 0; $i--) {
             $m = now()->subMonths($i)->format('Y-m');
+            $monthIncome = (float) ($monthlyIncomes[$m] ?? 0) + ($m === $currentMonthKey ? $fixedIncome : 0);
             $last12Months->put($m, [
                 'month' => $m,
                 'label' => now()->subMonths($i)->translatedFormat('M'),
-                'income' => (float) ($monthlyIncomes[$m] ?? 0),
+                'income' => $monthIncome,
                 'expense' => (float) ($monthlyExpenses[$m] ?? 0),
-                'net' => (float) ($monthlyIncomes[$m] ?? 0) - (float) ($monthlyExpenses[$m] ?? 0),
+                'net' => $monthIncome - (float) ($monthlyExpenses[$m] ?? 0),
             ]);
         }
 
-        $totalIncome = (float) Income::where('workspace_id', $workspaceId)->sum('amount');
+        $totalIncome = (float) Income::where('workspace_id', $workspaceId)->sum('amount') + $fixedIncome;
         $totalExpense = (float) Expense::where('workspace_id', $workspaceId)->sum('amount');
         $cashFlow = $totalIncome - $totalExpense;
         $cashOnHand = max(0, $cashFlow);
