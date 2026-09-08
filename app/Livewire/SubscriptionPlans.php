@@ -36,9 +36,9 @@ class SubscriptionPlans extends Component
         }
 
         $priceId = $planModel->resolvedStripePriceId() ?: match ($plan) {
-            'pro' => env('STRIPE_PRICE_PRO'),
-            'business' => env('STRIPE_PRICE_BUSINESS'),
-            default => env('STRIPE_PRICE_'.strtoupper(str_replace('-', '_', $plan))),
+            'pro' => config('services.stripe.prices.pro'),
+            'business' => config('services.stripe.prices.business'),
+            default => config("services.stripe.prices.{$plan}"),
         };
 
         if (! $priceId) {
@@ -67,8 +67,12 @@ class SubscriptionPlans extends Component
                 ]);
 
             return redirect($checkout->url);
-        } catch (\Exception $e) {
-            Log::error('Erro no Stripe Checkout: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Erro no Stripe Checkout: '.$e->getMessage(), [
+                'user_id' => $user->id,
+                'plan' => $planModel->slug,
+                'price_id_prefix' => substr((string) $priceId, 0, 10),
+            ]);
 
             if (app()->environment('production')) {
                 $this->dispatch('toast', variant: 'error', text: 'Não foi possível contactar o Stripe. Tenta novamente mais tarde.');

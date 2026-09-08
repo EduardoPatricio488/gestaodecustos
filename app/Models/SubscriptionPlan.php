@@ -48,14 +48,20 @@ class SubscriptionPlan extends Model
             return $stored;
         }
 
-        if ($stored !== '' && env($stored)) {
-            return (string) env($stored);
+        if ($stored !== '') {
+            $configKey = str_starts_with(strtoupper($stored), 'STRIPE_PRICE_')
+                ? strtolower(substr($stored, strlen('STRIPE_PRICE_')))
+                : $stored;
+            $fromConfig = config("services.stripe.prices.{$configKey}");
+
+            if ($fromConfig) {
+                return (string) $fromConfig;
+            }
         }
 
-        $envKey = 'STRIPE_PRICE_'.strtoupper(str_replace('-', '_', $this->slug));
-        $fromEnv = env($envKey);
+        $fromConfig = config("services.stripe.prices.{$this->slug}");
 
-        return $fromEnv ? (string) $fromEnv : ($stored !== '' ? $stored : null);
+        return $fromConfig ? (string) $fromConfig : ($stored !== '' ? $stored : null);
     }
 
     public function subscriberCount(): int
