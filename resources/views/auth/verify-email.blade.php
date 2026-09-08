@@ -20,23 +20,28 @@
                     Verificar Conta
                 </h1>
 
-                {{-- MOSTRAR O CÓDIGO DIRETAMENTE --}}
-                <div class="mt-6 p-6 bg-zinc-950 border-2 border-emerald-500/20 rounded-[2rem] shadow-2xl relative overflow-hidden group">
-                    <div class="absolute -right-4 -top-4 size-20 bg-emerald-500/5 blur-2xl"></div>
+                @if(! app()->environment('production'))
+                    <div class="mt-6 p-6 bg-zinc-950 border-2 border-emerald-500/20 rounded-[2rem] shadow-2xl relative overflow-hidden group">
+                        <div class="absolute -right-4 -top-4 size-20 bg-emerald-500/5 blur-2xl"></div>
 
-                    <p class="text-[9px] font-black uppercase text-emerald-500 tracking-[0.4em] mb-3 opacity-80">
-                        Código Gerado (Apenas para testes rápidos)
-                    </p>
+                        <p class="text-[9px] font-black uppercase text-emerald-500 tracking-[0.4em] mb-3 opacity-80">
+                            Código de teste local
+                        </p>
 
-                    <div class="flex items-center justify-center gap-4">
-                        <span class="text-4xl font-black text-white tracking-[0.2em] font-mono italic">
-                            {{ auth()->user()->verification_code }}
-                        </span>
+                        <div class="flex items-center justify-center gap-4">
+                            <span class="text-4xl font-black text-white tracking-[0.2em] font-mono italic">
+                                {{ auth()->user()->verification_code }}
+                            </span>
+                        </div>
                     </div>
-                </div>
+                @endif
 
                 <p class="text-zinc-500 font-medium mt-4 text-sm leading-relaxed px-8">
-                    Copia os dígitos acima para o campo de segurança para ativar o teu acesso.
+                    @if(app()->environment('production'))
+                        Enviámos um código de segurança para o teu email. Verifica também a pasta de spam.
+                    @else
+                        Copia os dígitos acima para o campo de segurança para ativar o teu acesso.
+                    @endif
                 </p>
             </div>
 

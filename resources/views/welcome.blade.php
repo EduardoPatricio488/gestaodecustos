@@ -112,7 +112,7 @@
 
     {{-- O BOTÃO NA NAVBAR --}}
     <button @click="openExternal = true"
-        class="px-5 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm uppercase tracking-tight">
+        class="normal-case px-5 py-2.5 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all active:scale-95 shadow-sm tracking-tight">
         Área Externa
     </button>
 
