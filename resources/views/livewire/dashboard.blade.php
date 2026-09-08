@@ -214,8 +214,8 @@
 {{-- 3. HEADER PRINCIPAL COM CLIMA DINÂMICO E MODAL DETALHADO --}}
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-4"
      x-data="{
-        loading: true,
-        data: { temp: '--', city: 'A detetar...', code: 0, humidity: 0, wind: 0, feels_like: '--', forecast: [] },
+        loading: false,
+        data: { temp: '--', city: 'Localização', code: 0, humidity: 0, wind: 0, feels_like: '--', forecast: [] },
 
         getWeatherIcon(code) {
             if (code <= 3) return 'sun';
@@ -223,33 +223,10 @@
             return 'bolt';
         },
 
-        async init() {
-            if (!navigator.geolocation) return;
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                const { latitude: lat, longitude: lon } = pos.coords;
-                try {
-                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-                    const geoData = await geoRes.json();
-                    this.data.city = geoData.address.city || geoData.address.town || 'Localização';
-
-                    const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`);
-                    const wData = await wRes.json();
-
-                    this.data.temp = Math.round(wData.current.temperature_2m);
-                    this.data.feels_like = Math.round(wData.current.apparent_temperature);
-                    this.data.humidity = wData.current.relative_humidity_2m;
-                    this.data.wind = Math.round(wData.current.wind_speed_10m);
-                    this.data.code = wData.current.weather_code;
-
-                    this.data.forecast = wData.daily.time.slice(1, 6).map((time, i) => ({
-                        day: new Date(time).toLocaleDateString('pt-PT', { weekday: 'short' }),
-                        max: Math.round(wData.daily.temperature_2m_max[i+1]),
-                        min: Math.round(wData.daily.temperature_2m_min[i+1]),
-                        code: wData.daily.weather_code[i+1]
-                    }));
-                    this.loading = false;
-                } catch (e) { console.error('Erro clima:', e); }
-            });
+        init() {
+            // Não pedimos geolocalização automática para evitar o prompt do navegador.
+            this.loading = false;
+            this.data.city = 'Localização';
         }
      }"
      x-init="init()"
