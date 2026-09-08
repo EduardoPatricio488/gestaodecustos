@@ -324,7 +324,7 @@ class InvestmentsHub extends Component
         ]);
 
         if (! $response->successful()) {
-            return $this->fetchMarketDataFromStooq($symbol);
+            return $this->fetchMarketDataFromAlphaVantage($symbol);
         }
 
         $meta = $response->json('chart.result.0.meta', []);
@@ -350,7 +350,36 @@ class InvestmentsHub extends Component
             'marketStatus' => $meta['marketState'] ?? null,
         ];
 
-        return filled($marketData['price']) ? $marketData : $this->fetchMarketDataFromStooq($symbol);
+        return filled($marketData['price']) ? $marketData : $this->fetchMarketDataFromAlphaVantage($symbol);
+    }
+
+    private function fetchMarketDataFromAlphaVantage(string $symbol): array
+    {
+        $response = Http::timeout(15)->get('https://www.alphavantage.co/query', [
+            'function' => 'GLOBAL_QUOTE',
+            'symbol' => strtoupper($symbol),
+            'apikey' => self::ALPHA_VANTAGE_KEY,
+        ]);
+
+        $quote = $response->json('Global Quote', []);
+        $price = $quote['05. price'] ?? null;
+        $change = $quote['10. change percent'] ?? null;
+
+        if (! $response->successful() || blank($price)) {
+            return $this->fetchMarketDataFromStooq($symbol);
+        }
+
+        return [
+            'symbol' => $quote['01. symbol'] ?? strtoupper($symbol),
+            'name' => null,
+            'price' => is_numeric($price) ? (float) $price : $price,
+            'change' => $change,
+            'netChange' => $quote['09. change'] ?? null,
+            'volume' => $quote['06. volume'] ?? null,
+            'day_range' => isset($quote['04. low'], $quote['03. high']) ? $quote['04. low'].' - '.$quote['03. high'] : null,
+            '52w_range' => null,
+            'marketStatus' => 'closed',
+        ];
     }
 
     private function fetchMarketDataFromStooq(string $symbol): array
