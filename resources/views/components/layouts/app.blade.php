@@ -1662,7 +1662,7 @@ $hasStoreAccess = $hasLockInAccess;
 
                             @if(!$isAnyPremium && !auth()->user()->isAdmin())
                                 <a href="{{ route('hub.pricing') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-brand-600 font-black hover:bg-brand-50 dark:hover:bg-brand-500/10">
-                                    <span class="animate-pulse">⭐</span> OBTER PLANO PRO
+                                    <span class="animate-pulse">⭐</span> Planos Pro & Business
                                 </a>
                             @endif
 
