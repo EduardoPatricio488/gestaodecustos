@@ -32,6 +32,9 @@
             <p class="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 mb-2">Previsão Próximo Mês</p>
             <h3 class="text-5xl font-black tracking-tighter italic">{{ number_format($totalPredicted, 2, ',', '.') }}€</h3>
             <p class="text-[10px] text-zinc-500 mt-2 uppercase font-bold">base: {{ $months }} meses</p>
+            @if($platformPlanCost > 0)
+                <p class="text-[10px] text-blue-400 mt-1 uppercase font-bold">inclui {{ number_format($platformPlanCost, 2, ',', '.') }}€ da assinatura Finance Pro IA</p>
+            @endif
         </div>
 
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 rounded-[2.5rem] shadow-sm">
@@ -103,7 +106,14 @@
                             <td class="p-4">
                                 <p class="text-sm font-black dark:text-white">{{ $row['category']->name }}</p>
                                 <p class="text-[10px] font-bold uppercase text-zinc-400 mt-1">
-                                    tendência {{ $row['trend'] >= 0 ? 'ascendente' : 'descendente' }}
+                                    @if($row['noHistory'] ?? false)
+                                        sem histórico · estimativa do mês em curso
+                                    @else
+                                        tendência {{ $row['trend'] >= 0 ? 'ascendente' : 'descendente' }}
+                                    @endif
+                                    @if($row['hasSubscriptions'] ?? false)
+                                        <span class="text-blue-500">· inclui assinaturas</span>
+                                    @endif
                                 </p>
                             </td>
                             <td class="p-4 text-right text-sm font-black text-zinc-500 tabular-nums">{{ number_format($row['last'], 2, ',', '.') }}€</td>

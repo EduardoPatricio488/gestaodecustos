@@ -18,11 +18,29 @@
             </div>
         </div>
 
-        <flux:button wire:click="openModal" variant="primary" icon="plus"
-            class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-violet-500/20 !bg-violet-600 hover:!bg-violet-500 border-none">
+        <flux:button wire:click="openModal" variant="primary" icon="plus" :disabled="! $hasFamily"
+            class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-violet-500/20 !bg-violet-600 hover:!bg-violet-500 border-none disabled:opacity-40 disabled:cursor-not-allowed">
             Nova Divisão
         </flux:button>
     </div>
+
+    {{-- BLOQUEIO: PRECISA DE FAMÍLIA PARA DIVIDIR DESPESAS --}}
+    @unless($hasFamily)
+        <div class="flex items-center gap-4 p-6 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-[2rem]">
+            <div class="p-3 bg-amber-500/10 rounded-2xl text-amber-600 shrink-0">
+                <flux:icon name="lock-closed" class="size-6" />
+            </div>
+            <div class="flex-1">
+                <p class="text-sm font-black text-amber-800 dark:text-amber-300 uppercase tracking-tight">Funcionalidade bloqueada</p>
+                <p class="text-xs text-amber-700/80 dark:text-amber-400/70 font-medium mt-1">
+                    Só podes dividir despesas quando tiveres mais alguém da tua Família com acesso a este espaço. Convida um membro para começares a dividir contas.
+                </p>
+            </div>
+            <flux:button :href="route('hub.family.manage')" wire:navigate variant="ghost" class="rounded-2xl font-black uppercase text-[10px] tracking-widest bg-white dark:bg-zinc-900 border border-amber-200 dark:border-amber-900/40 shrink-0">
+                Convidar Família
+            </flux:button>
+        </div>
+    @endunless
 
     {{-- KPIs --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -149,9 +167,13 @@
             <div class="py-24 text-center bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-[2.5rem]">
                 <flux:icon name="users" class="size-12 mx-auto mb-4 text-zinc-200 dark:text-zinc-700" />
                 <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Nenhuma divisão encontrada</p>
-                <button wire:click="openModal" class="mt-6 px-6 py-3 bg-violet-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-violet-500 transition-all">
-                    Criar Primeira Divisão
-                </button>
+                @if($hasFamily)
+                    <button wire:click="openModal" class="mt-6 px-6 py-3 bg-violet-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-violet-500 transition-all">
+                        Criar Primeira Divisão
+                    </button>
+                @else
+                    <p class="mt-4 text-[10px] font-bold uppercase tracking-widest text-amber-600">Convida alguém da tua Família para desbloqueares esta opção</p>
+                @endif
             </div>
         @endforelse
     </div>

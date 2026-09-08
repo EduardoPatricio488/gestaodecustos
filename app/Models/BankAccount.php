@@ -79,6 +79,11 @@ class BankAccount extends Model
         return $this->hasMany(Income::class);
     }
 
+    public function recurringIncomes(): HasMany
+    {
+        return $this->hasMany(RecurringIncome::class);
+    }
+
     public function reserves(): HasMany
     {
         return $this->hasMany(BankReserve::class);
@@ -103,7 +108,14 @@ class BankAccount extends Model
         $incomes = (float) $this->incomes()->sum('amount');
         $expenses = (float) $this->expenses()->sum('amount');
 
-        return (float) ($this->balance + $incomes - $expenses);
+        // Rendimentos fixos (ex.: ordenado) já associados a esta conta e cujo dia de
+        // recebimento já passou este mês contam como dinheiro já disponível.
+        $recurringDue = (float) $this->recurringIncomes()
+            ->where('is_active', true)
+            ->where('day_of_month', '<=', now()->day)
+            ->sum('amount');
+
+        return (float) ($this->balance + $incomes - $expenses + $recurringDue);
     }
 
     public function getCreditUsedAttribute(): float
@@ -136,7 +148,7 @@ class BankAccount extends Model
     public function getIcon()
     {
         return match ($this->type) {
-            'poupanca' => 'piggy-bank',
+            'poupanca' => 'wallet',
             'cash' => 'banknotes',
             'credito' => 'credit-card',
             'tesouraria' => 'building-office',

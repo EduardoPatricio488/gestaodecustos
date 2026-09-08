@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -193,12 +194,26 @@ class Workspace extends Model
     public function getBurnRate(): float
     {
         $threeMonthsAgo = now()->subMonths(3);
-        $totalSpent = $this->expenses()
+        $expensesQuery = $this->expenses()
             ->where('is_company', true)
-            ->where('spent_at', '>=', $threeMonthsAgo)
-            ->sum('amount');
+            ->where('spent_at', '>=', $threeMonthsAgo);
 
-        return (float) ($totalSpent / 3);
+        $totalSpent = (float) (clone $expensesQuery)->sum('amount');
+
+        // Divide apenas pelos meses que realmente têm despesas registadas (máx. 3), para não
+        // desvalorizar artificialmente o burn rate de empresas com pouco histórico.
+        $monthsWithData = (clone $expensesQuery)->pluck('spent_at')
+            ->map(fn ($date) => Carbon::parse($date)->format('Y-m'))
+            ->unique()
+            ->count();
+
+        $avgExpense = $totalSpent / max(1, $monthsWithData);
+
+        // Os salários são um custo fixo garantido todos os meses; sem eles o runway fica
+        // demasiado otimista para qualquer empresa com colaboradores.
+        $monthlyPayroll = (float) $this->employees()->sum('salary');
+
+        return $avgExpense + $monthlyPayroll;
     }
 
     public function getLiquidezAtual(): float

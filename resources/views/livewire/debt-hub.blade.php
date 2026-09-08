@@ -103,7 +103,7 @@
                 <div class="p-2 bg-orange-500/10 rounded-lg text-orange-500">
                     <flux:icon name="arrow-down-circle" variant="outline" class="size-4" />
                 </div>
-                <h2 class="text-sm font-black uppercase tracking-widest text-zinc-400">Mapa de Passivos (Owe)</h2>
+                <h2 class="text-sm font-black uppercase tracking-widest text-zinc-400">Tenho de pagar:</h2>
                 <span class="ml-auto text-[9px] font-black bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-2.5 py-1 rounded-full">{{ $iOwe->count() }}</span>
             </div>
 
@@ -140,7 +140,7 @@
                             </div>
                             <div class="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 {{-- Liquidar --}}
-                                <button wire:click="togglePaid({{ $debt->id }})"
+                                <button wire:click="openSettleModal({{ $debt->id }})"
                                     class="w-7 h-7 flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-100 transition-colors"
                                     title="Liquidar">
                                     <flux:icon name="check" class="w-3.5 h-3.5" />
@@ -174,7 +174,7 @@
                 <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
                     <flux:icon name="arrow-up-circle" variant="outline" class="size-4" />
                 </div>
-                <h2 class="text-sm font-black uppercase tracking-widest text-zinc-400">Mapa de Ativos (Owed)</h2>
+                <h2 class="text-sm font-black uppercase tracking-widest text-zinc-400">Tenho que receber:</h2>
                 <span class="ml-auto text-[9px] font-black bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-2.5 py-1 rounded-full">{{ $theyOweMe->count() }}</span>
             </div>
 
@@ -207,7 +207,7 @@
                             </div>
                             <div class="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 {{-- Confirmar Recebimento --}}
-                                <button wire:click="togglePaid({{ $debt->id }})"
+                                <button wire:click="openSettleModal({{ $debt->id }})"
                                     class="w-7 h-7 flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-100 transition-colors"
                                     title="Confirmar Recebimento">
                                     <flux:icon name="check" class="w-3.5 h-3.5" />
@@ -272,7 +272,7 @@
                             <span class="text-sm font-black dark:text-zinc-300 tracking-tighter tabular-nums">{{ number_format($item->amount, 2, ',', ' ') }} €</span>
 
                             {{-- Botão Reabrir (Anular Liquidação) --}}
-                            <button wire:click="togglePaid({{ $item->id }})"
+                            <button wire:click="reopenDebt({{ $item->id }})"
                                 class="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:bg-zinc-200 text-[10px]"
                                 title="Reabrir">
                                 <flux:icon name="arrow-uturn-left" class="w-3 h-3" />
@@ -429,6 +429,101 @@
 
                 </div>
 
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- 6. MODAL: CONFIRMAR LIQUIDAÇÃO (BANCO OU DINHEIRO FÍSICO) --}}
+<div
+    x-data="{
+        open: false,
+        show() {
+            this.open = true;
+            document.documentElement.classList.add('overflow-hidden');
+        },
+        close() {
+            this.open = false;
+            document.documentElement.classList.remove('overflow-hidden');
+        },
+        confirmAndSettle() {
+            if (!$wire.settleBankAccountId) {
+                const value = Number($wire.settlingAmount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                if (!confirm(`Confirmas que tens ${value}€ disponíveis em dinheiro físico? Pretendes continuar?`)) {
+                    return;
+                }
+            }
+            $wire.confirmSettle();
+        }
+    }"
+    x-on:open-settle-modal.window="show()"
+    x-on:close-settle-modal.window="close()"
+    x-on:keydown.escape.window="close()"
+    style="display: none;"
+    x-show="open"
+>
+    <div
+        x-show="open"
+        x-cloak
+        x-transition.opacity.duration.120ms
+        @click="close()"
+        class="fixed inset-0 z-50 bg-zinc-950/80"
+    ></div>
+
+    <div
+        x-show="open"
+        x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    >
+        <div
+            @click.stop
+            x-transition.scale.duration.120ms
+            class="relative w-full max-w-md rounded-[2rem] overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl"
+        >
+            <form @submit.prevent="confirmAndSettle()" class="flex flex-col">
+                <div class="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                    <div class="p-3 bg-emerald-600 rounded-2xl text-white shadow-lg">
+                        <flux:icon name="check-badge" class="size-5" />
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-base font-black uppercase italic text-zinc-900 dark:text-white leading-none">Confirmar Liquidação</h3>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1.5">De onde saiu / para onde entrou o dinheiro?</p>
+                    </div>
+                    <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
+                </div>
+
+                <div class="p-6 space-y-4">
+                    <label class="block space-y-2">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Origem / Destino</span>
+                        <select wire:model.live="settleBankAccountId" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 dark:bg-zinc-950 px-4 text-sm font-bold shadow-inner outline-none ring-0 transition focus:ring-2 focus:ring-emerald-500/40 dark:text-white">
+                            <option value="">💵 Dinheiro Físico</option>
+                            @foreach($this->bankAccounts as $acc)
+                                <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+
+                    @php
+                        $settlingDebtAmount = $this->settlingDebt()->amount ?? 0;
+                        $selectedSettleAccount = $settleBankAccountId ? $this->bankAccounts->firstWhere('id', (int) $settleBankAccountId) : null;
+                        $insufficientSettleBank = $selectedSettleAccount && (float) $settlingDebtAmount > (float) $selectedSettleAccount->current_balance;
+                    @endphp
+                    @if($insufficientSettleBank)
+                        <div class="flex items-start gap-2.5 p-3 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40">
+                            <flux:icon name="exclamation-triangle" class="size-4 text-red-500 shrink-0 mt-0.5" />
+                            <p class="text-[11px] font-bold text-red-600 dark:text-red-400">
+                                Saldo insuficiente em "{{ $selectedSettleAccount->name }}": disponível {{ number_format($selectedSettleAccount->current_balance, 2, ',', '.') }}€, valor a liquidar {{ number_format((float) $settlingDebtAmount, 2, ',', '.') }}€.
+                            </p>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="p-6 pt-2 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20 transition-all">
+                        Confirmar Liquidação ✅
+                    </button>
+                </div>
             </form>
         </div>
     </div>

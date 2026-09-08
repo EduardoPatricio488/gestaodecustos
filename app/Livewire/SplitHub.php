@@ -46,6 +46,14 @@ class SplitHub extends Component
 
     public function openModal(): void
     {
+        $ws = auth()->user()?->currentWorkspace;
+
+        if (! $ws || $ws->users->count() <= 1) {
+            $this->dispatch('toast', variant: 'error', text: 'Precisas de mais alguém na tua Família com acesso a este espaço para poderes dividir despesas.');
+
+            return;
+        }
+
         $this->resetForm();
         $this->showModal = true;
     }
@@ -192,6 +200,7 @@ class SplitHub extends Component
                 'totalTheyOwe' => 0,
                 'members' => collect(),
                 'categories' => collect(),
+                'hasFamily' => false,
             ]);
         }
 
@@ -222,10 +231,11 @@ class SplitHub extends Component
 
         $members = $ws->users;
         $categories = Category::where('workspace_id', $ws->id)->get();
+        $hasFamily = $members->count() > 1;
 
         return view('livewire.split-hub', compact(
             'allSplits', 'iOwe', 'theyOwe', 'settled',
-            'totalIOwe', 'totalTheyOwe', 'members', 'categories'
+            'totalIOwe', 'totalTheyOwe', 'members', 'categories', 'hasFamily'
         ));
     }
 }

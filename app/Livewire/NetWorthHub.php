@@ -10,6 +10,7 @@ use App\Models\Income;
 use App\Models\Investment;
 use App\Models\InvestmentIncome;
 use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use Carbon\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -30,12 +31,11 @@ class NetWorthHub extends Component
 
     private function monthGroupingExpression(string $column): string
     {
-        if (config('database.default') === 'sqlite') {
-            return "strftime('%Y-%m', {$column})";
-        }
-
-        return "TO_CHAR($column, 'YYYY-MM')";
-
+        return match (config('database.default')) {
+            'sqlite' => "strftime('%Y-%m', {$column})",
+            'pgsql' => "TO_CHAR({$column}, 'YYYY-MM')",
+            default => "DATE_FORMAT({$column}, '%Y-%m')",
+        };
     }
 
     public function render()
@@ -136,7 +136,9 @@ class NetWorthHub extends Component
 
         // ─── 5. PASSIVOS / DÍVIDAS ────────────────────────────────────────────
         $debts = Debt::where('workspace_id', $workspaceId)->where('is_paid', false)->get();
-        $liabilities = (float) $debts->sum('amount');
+        // 'owe' = eu devo (passivo real). 'owed' = devem-me (é um recebível, não um passivo).
+        $liabilities = (float) $debts->where('type', 'owe')->sum('amount');
+        $receivables = (float) $debts->where('type', 'owed')->sum('amount');
 
         $debtsByType = $debts->groupBy('type')->map(fn ($g) => [
             'count' => $g->count(),
@@ -150,20 +152,43 @@ class NetWorthHub extends Component
         $activeSubscriptions = Subscription::where('workspace_id', $workspaceId)
             ->where('is_active', true)
             ->get();
-        $monthlySubscriptionCost = (float) $activeSubscriptions
-            ->where('cycle', 'monthly')->sum('amount');
-        $yearlySubscriptionCost = (float) $activeSubscriptions
-            ->where('cycle', 'yearly')->sum('amount');
+
+        // O plano da própria plataforma é uma assinatura real, mas não fica gravado na tabela
+        // subscriptions (para não duplicar); entra aqui como registo sintético só para exibição/totais.
+        $platformPlanSlug = $user->currentPlanSlug();
+        $platformPlanEntry = null;
+        if ($platformPlanSlug !== 'free') {
+            $platformPlan = SubscriptionPlan::where('slug', $platformPlanSlug)->first();
+            if ($platformPlan) {
+                $platformPlanEntry = (object) [
+                    'name' => 'Finance Pro '.$platformPlan->name,
+                    'amount' => (float) $platformPlan->price,
+                    'cycle' => 'monthly',
+                    'renewal_date' => null,
+                ];
+            }
+        }
+
+        $displaySubscriptions = $platformPlanEntry
+            ? $activeSubscriptions->values()->push($platformPlanEntry)
+            : $activeSubscriptions;
+
+        $monthlySubscriptionCost = (float) $activeSubscriptions->where('cycle', 'monthly')->sum('amount')
+            + ($platformPlanEntry->amount ?? 0);
+        $yearlySubscriptionCost = (float) $activeSubscriptions->where('cycle', 'yearly')->sum('amount');
         $totalAnnualSubscriptions = $monthlySubscriptionCost * 12 + $yearlySubscriptionCost;
+        $activeSubscriptionsCount = $displaySubscriptions->count();
 
         // ─── 7. TOTAIS E RÁCIOS ───────────────────────────────────────────────
-        $totalAssets = $investmentsValue + $goalsSaved + $totalBankBalance;
+        $totalAssets = $investmentsValue + $goalsSaved + $totalBankBalance + $receivables;
         $netWorth = $totalAssets - $liabilities;
 
         $liquidityRatio = $totalAssets > 0 ? ($totalBankBalance / $totalAssets) * 100 : 0;
         $investmentExposure = $totalAssets > 0 ? ($investmentsValue / $totalAssets) * 100 : 0;
         $savingsHealth = $totalAssets > 0 ? ($goalsSaved / $totalAssets) * 100 : 0;
-        $debtToAssetRatio = $totalAssets > 0 ? ($liabilities / $totalAssets) * 100 : 0;
+        $receivablesRatio = $totalAssets > 0 ? ($receivables / $totalAssets) * 100 : 0;
+        // Sem ativos mas com dívida = risco máximo (não 0%, senão parece que não há risco nenhum).
+        $debtToAssetRatio = $totalAssets > 0 ? ($liabilities / $totalAssets) * 100 : ($liabilities > 0 ? 999 : 0);
         $solvencyRatio = $liabilities > 0 ? ($totalAssets / $liabilities) : 999;
 
         // Score de saúde financeira (0–100)
@@ -203,12 +228,14 @@ class NetWorthHub extends Component
             // Totais
             'totalAssets' => $totalAssets,
             'liabilities' => $liabilities,
+            'receivables' => $receivables,
             'netWorth' => $netWorth,
 
             // Rácios
             'liquidityRatio' => $liquidityRatio,
             'investmentExposure' => $investmentExposure,
             'savingsHealth' => $savingsHealth,
+            'receivablesRatio' => $receivablesRatio,
             'debtToAssetRatio' => $debtToAssetRatio,
             'solvencyRatio' => $solvencyRatio,
             'avgSavingsRate' => $avgSavingsRate,
@@ -247,7 +274,8 @@ class NetWorthHub extends Component
             'upcomingDebts' => $upcomingDebts,
 
             // Subscrições
-            'activeSubscriptions' => $activeSubscriptions,
+            'activeSubscriptions' => $displaySubscriptions,
+            'activeSubscriptionsCount' => $activeSubscriptionsCount,
             'monthlySubscriptionCost' => $monthlySubscriptionCost,
             'totalAnnualSubscriptions' => $totalAnnualSubscriptions,
 

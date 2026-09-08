@@ -101,6 +101,7 @@
                         ['label' => 'Liquidez (Bancos)',  'value' => $totalBankBalance,  'color' => '#38bdf8', 'pct' => $liquidityRatio],
                         ['label' => 'Investimentos',      'value' => $investmentsValue,  'color' => '#818cf8', 'pct' => $investmentExposure],
                         ['label' => 'Metas de Poupança', 'value' => $goalsSaved,         'color' => '#34d399', 'pct' => $savingsHealth],
+                        ['label' => 'A Receber',          'value' => $receivables,       'color' => '#f59e0b', 'pct' => $receivablesRatio],
                     ];
                     $maxVal = max(array_column($slices, 'value'), 0.01);
                 @endphp
@@ -111,8 +112,8 @@
                     $donutR = 40; $donutC = 50;
                     $circ = 2 * M_PI * $donutR;
                     $offset = 0;
-                    $donutColors = ['#38bdf8','#818cf8','#34d399'];
-                    $donutVals  = [$totalBankBalance, $investmentsValue, $goalsSaved];
+                    $donutColors = ['#38bdf8','#818cf8','#34d399','#f59e0b'];
+                    $donutVals  = [$totalBankBalance, $investmentsValue, $goalsSaved, $receivables];
                 @endphp
                 <div class="flex items-center justify-center">
                     <svg viewBox="0 0 100 100" class="w-36 h-36">
@@ -163,7 +164,7 @@
                 <p class="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-400">Rácios Chave</p>
                 @php
                     $ratios = [
-                        ['label' => 'Dívida / Ativo',       'val' => round($debtToAssetRatio, 1).'%',  'good' => $debtToAssetRatio < 30,   'tip' => 'Ideal < 30%'],
+                        ['label' => 'Dívida / Ativo',       'val' => ($debtToAssetRatio >= 999 ? '∞' : round($debtToAssetRatio, 1).'%'),  'good' => $debtToAssetRatio < 30,   'tip' => 'Ideal < 30%'],
                         ['label' => 'Taxa de Poupança',     'val' => round($avgSavingsRate, 1).'%',     'good' => $avgSavingsRate > 20,      'tip' => 'Ideal > 20%'],
                         ['label' => 'Solvabilidade',        'val' => ($solvencyRatio >= 99 ? '∞' : number_format($solvencyRatio,1,',','')).'x', 'good' => $solvencyRatio >= 2, 'tip' => 'Ideal > 2x'],
                         ['label' => 'Exposição Invest.',    'val' => round($investmentExposure, 1).'%', 'good' => $investmentExposure > 30,   'tip' => 'Ideal > 30%'],
@@ -186,7 +187,7 @@
                 <div class="px-4 py-3 bg-red-500/10 rounded-2xl border border-red-500/20">
                     <p class="text-[9px] uppercase font-black tracking-widest text-red-400">Custo Anual Subs.</p>
                     <p class="text-sm font-black text-red-300 tabular-nums mt-0.5">{{ number_format($totalAnnualSubscriptions, 0, ',', ' ') }} €/ano</p>
-                    <p class="text-[10px] text-red-400/60 mt-0.5">{{ $activeSubscriptions->count() }} subscrições ativas</p>
+                    <p class="text-[10px] text-red-400/60 mt-0.5">{{ $activeSubscriptionsCount }} subscrições ativas</p>
                 </div>
             </div>
         </div>
@@ -507,7 +508,12 @@
                     <h2 class="font-black text-zinc-900 dark:text-white uppercase tracking-tight text-sm">Passivos / Dívidas</h2>
                     <p class="text-xs text-zinc-400 mt-0.5">Por liquidar</p>
                 </div>
-                <span class="text-base font-black text-red-400 tabular-nums">{{ number_format($liabilities, 0, ',', ' ') }} €</span>
+                <div class="text-right">
+                    <span class="text-base font-black text-red-400 tabular-nums block">{{ number_format($liabilities, 0, ',', ' ') }} €</span>
+                    @if($receivables > 0)
+                        <span class="text-[10px] font-bold text-emerald-500 tabular-nums">+{{ number_format($receivables, 0, ',', ' ') }} € a receber</span>
+                    @endif
+                </div>
             </div>
 
             @if($upcomingDebts->count())
@@ -518,17 +524,18 @@
             @endif
 
             @forelse($debts->take(6) as $debt)
+                @php $isOwe = $debt->type === 'owe'; @endphp
                 <div class="flex items-center justify-between py-2.5 border-b border-zinc-100 dark:border-zinc-800 last:border-0">
                     <div>
                         <p class="text-xs font-bold text-zinc-800 dark:text-zinc-200">{{ $debt->person_name }}</p>
                         <div class="flex gap-2 mt-0.5">
-                            <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">{{ $debt->type }}</span>
+                            <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded {{ $isOwe ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' }}">{{ $isOwe ? 'devo' : 'devem-me' }}</span>
                             @if($debt->due_at)
                                 <span class="text-[9px] text-zinc-400">{{ \Carbon\Carbon::parse($debt->due_at)->format('d/m/Y') }}</span>
                             @endif
                         </div>
                     </div>
-                    <p class="text-sm font-black text-red-400 tabular-nums">{{ number_format($debt->amount, 0, ',', ' ') }} €</p>
+                    <p class="text-sm font-black tabular-nums {{ $isOwe ? 'text-red-400' : 'text-emerald-500' }}">{{ number_format($debt->amount, 0, ',', ' ') }} €</p>
                 </div>
             @empty
                 <div class="text-center py-8">

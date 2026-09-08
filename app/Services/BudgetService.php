@@ -30,11 +30,23 @@ class BudgetService
             ->sum('amount');
 
         $daysInMonth = $month->daysInMonth;
-        $dayOfMonth = min($month->day, $daysInMonth);
+        $today = now();
+
+        // O $month recebido é sempre o dia 1 do mês selecionado, por isso o "dia atual" tem de ser
+        // deduzido comparando com a data real: mês em curso usa o dia de hoje, mês passado conta-se
+        // como completo (todos os dias já passaram) e mês futuro ainda não teve nenhum dia.
+        if ($month->isSameMonth($today)) {
+            $dayOfMonth = min($today->day, $daysInMonth);
+        } elseif ($month->lessThan($today->copy()->startOfMonth())) {
+            $dayOfMonth = $daysInMonth;
+        } else {
+            $dayOfMonth = 0;
+        }
+
         $daysRemaining = max(0, $daysInMonth - $dayOfMonth);
 
         $dailyAvg = $dayOfMonth > 0 ? $totalSpent / $dayOfMonth : 0;
-        $projectedSpend = $dailyAvg * $daysInMonth;
+        $projectedSpend = $daysRemaining > 0 ? $dailyAvg * $daysInMonth : $totalSpent;
 
         return [
             'month' => $month->translatedFormat('F Y'),

@@ -74,6 +74,7 @@ use App\Livewire\FitnessHub;
 use App\Livewire\GoalsHub;
 use App\Livewire\Hub\RemindersHub;
 use App\Livewire\IncomeHub;
+use App\Livewire\Incomes;
 use App\Livewire\InflationHub;
 use App\Livewire\InvestmentsHub;
 use App\Livewire\LockInHub;
@@ -205,6 +206,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/despesas-pessoais', Expenses::class)->name('expenses.index');
     Route::get('/expenses/create', ManageExpense::class)->name('expenses.create');
     Route::get('/expenses/{expense}/edit', ManageExpense::class)->name('expenses.edit');
+    Route::get('/receitas-todas', Incomes::class)->name('incomes.index');
 
     // Categorias e Hubs Dinâmicos
     Route::get('/categorias', Categories::class)->name('categories');

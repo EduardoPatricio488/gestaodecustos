@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\BankAccount;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\PriceHistory;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -43,6 +45,9 @@ class CategoryHub extends Component
     public $meta = [];
 
     public $currency = 'EUR';
+
+    // Destino do pagamento: conta bancária ou dinheiro físico (vazio = físico)
+    public $bankAccountId = '';
 
     public $receipt;
 
@@ -85,6 +90,14 @@ class CategoryHub extends Component
         $this->validate([
             'photo' => 'image|max:5120',
         ]);
+    }
+
+    #[Computed]
+    public function bankAccounts()
+    {
+        return BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+            ->orderBy('name')
+            ->get();
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -345,7 +358,7 @@ PROMPT;
 
     public function openCreateModal(): void
     {
-        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId']);
+        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId']);
         $this->spent_at = now()->format('Y-m-d');
     }
 
@@ -368,6 +381,7 @@ PROMPT;
         $this->spent_at = $expense->spent_at->format('Y-m-d');
         $this->subcategory = trim($expense->subcategory);
         $this->description = $expense->description;
+        $this->bankAccountId = $expense->bank_account_id ?: '';
         if (! in_array($this->subcategory, $this->subcategories)) {
             $this->customSubcategory = $this->subcategory;
             $this->subcategory = 'Outro';
@@ -404,6 +418,30 @@ PROMPT;
             'subcategory' => 'required',
         ]);
 
+        if ($this->bankAccountId) {
+            $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+                ->find($this->bankAccountId);
+
+            if ($account) {
+                $available = (float) $account->current_balance;
+
+                // Ao editar, devolve o valor antigo desta despesa antes de validar o novo montante
+                if ($this->editingId) {
+                    $original = Expense::find($this->editingId);
+                    if ($original && (int) $original->bank_account_id === (int) $this->bankAccountId) {
+                        $available += (float) $original->amount;
+                    }
+                }
+
+                if ((float) $this->amount > $available) {
+                    $this->addError('bankAccountId', 'Saldo insuficiente nesta conta.');
+                    $this->dispatch('toast', variant: 'error', text: 'Saldo insuficiente em "'.$account->name.'": disponível '.number_format($available, 2, ',', '.').'€.');
+
+                    return;
+                }
+            }
+        }
+
         $category = Category::firstOrCreate([
             'name' => $this->dbName,
             'workspace_id' => auth()->user()->current_workspace_id,
@@ -419,6 +457,7 @@ PROMPT;
             'description' => $this->description,
             'spent_at' => $this->spent_at,
             'workspace_id' => auth()->user()->current_workspace_id,
+            'bank_account_id' => $this->bankAccountId ?: null,
             'metadata' => ! empty($this->meta) ? $this->meta : null,
         ];
 
@@ -437,7 +476,7 @@ PROMPT;
         $this->trackPriceHistory($expense, $category);
         app(PriceComparisonService::class)->recordFromExpense($expense, $category);
 
-        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId']);
+        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId']);
         $this->spent_at = now()->format('Y-m-d');
 
         $this->dispatch('modal-close-add-expense');
@@ -502,7 +541,8 @@ PROMPT;
         $categoryColor = $category->color ?? '#6366f1';
 
         // 2. Query das despesas
-        $query = Expense::whereHas('category', fn ($q) => $q->where('name', $this->dbName))
+        $query = Expense::with('bankAccount')
+            ->whereHas('category', fn ($q) => $q->where('name', $this->dbName))
             ->where('workspace_id', $currentWs->id);
 
         // 3. Carrega os campos dinâmicos

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Category;
 use App\Models\Expense;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -90,7 +91,10 @@ class Expenses extends Component
 
         return view('livewire.expenses', [
             'expenses' => $expenses,
-            'categories' => $user->categories()->orderBy('name')->get(),
+            'categories' => Category::where('workspace_id', $user->current_workspace_id)
+                ->where('hidden_from_sidebar', false)
+                ->orderBy('name')
+                ->get(),
             'monthTotal' => $monthTotal,
             'isShared' => $user->currentWorkspace->users()->count() > 1,
 

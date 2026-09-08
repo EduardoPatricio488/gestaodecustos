@@ -34,9 +34,12 @@
     {{-- Saldo --}}
     <div class="mb-3">
         <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-0.5">Saldo Actual</p>
-        <p class="text-2xl font-black tabular-nums privacy-target {{ $acc->balance < 0 ? 'text-red-600' : 'text-zinc-900 dark:text-white' }}">
-            {{ number_format($acc->balance, 2, ',', '.') }} {{ $acc->currency ?? 'EUR' }}
+        <p class="text-2xl font-black tabular-nums privacy-target {{ $acc->current_balance < 0 ? 'text-red-600' : 'text-zinc-900 dark:text-white' }}">
+            {{ number_format($acc->current_balance, 2, ',', '.') }} {{ $acc->currency ?? 'EUR' }}
         </p>
+        @if(round($acc->current_balance, 2) !== round($acc->balance, 2))
+            <p class="text-[9px] text-emerald-600 font-bold mt-0.5">Inclui rendimentos fixos já associados</p>
+        @endif
     </div>
 
     {{-- Barra de crédito (apenas para contas crédito) --}}

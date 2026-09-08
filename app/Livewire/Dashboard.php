@@ -2,7 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Models\BankAccount;
 use App\Models\Category;
+use App\Models\Debt;
 use App\Models\Expense;
 use App\Models\FitnessActivity;
 use App\Models\Goal;
@@ -10,6 +12,7 @@ use App\Models\Income;
 use App\Models\Investment;
 use App\Models\Reminder;
 use App\Models\SocialNotification;
+use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 use App\Models\Workspace;
 use App\Services\FinanceScoreService;
@@ -673,8 +676,6 @@ class Dashboard extends Component
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
         $sixMonthsStart = now()->subMonths(5)->startOfMonth();
-        $dayOfMonth = now()->day;
-        $daysInMonth = now()->daysInMonth;
 
         $fixedIncome = (float) Cache::remember(
             "dashboard:fixed-income:{$currentWs->id}:{$user->id}",
@@ -731,10 +732,94 @@ class Dashboard extends Component
         }
 
         // --- PREVISÃO INTELIGENTE ---
-        $dailyBurnRate = $dayOfMonth > 1 ? $totalMonthExpenses / $dayOfMonth : $totalMonthExpenses;
-        $projectedExpenses = $dailyBurnRate * $daysInMonth;
-        $projectedBalance = $totalMonthIncome - $projectedExpenses;
+        // As assinaturas (incluindo o plano Finance Pro) são custos fixos garantidos: contam sempre
+        // para o gasto projetado, mesmo que ainda não tenham sido lançados como despesas este mês.
+        $subscriptionsMonthlyCost = (float) Subscription::where('workspace_id', $currentWs->id)
+            ->get(['amount', 'cycle', 'status', 'is_active'])
+            ->filter(fn ($sub) => ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')
+            ->sum(fn ($sub) => match ($sub->cycle) {
+                'quarterly' => (float) $sub->amount / 3,
+                'semiannual' => (float) $sub->amount / 6,
+                'annual' => (float) $sub->amount / 12,
+                default => (float) $sub->amount,
+            });
+
+        $platformPlanSlug = $user->currentPlanSlug();
+        if ($platformPlanSlug !== 'free') {
+            $subscriptionsMonthlyCost += (float) (SubscriptionPlan::where('slug', $platformPlanSlug)->value('price') ?? 0);
+        }
+
+        // Dívidas/créditos por liquidar são compromissos garantidos: contam já para a projeção,
+        // tal como as assinaturas, mesmo antes de serem lançados como despesa/receita reais.
+        $pendingDebtsToPay = (float) Debt::where('workspace_id', $currentWs->id)
+            ->where('type', 'owe')
+            ->where('is_paid', false)
+            ->sum('amount');
+
+        $pendingDebtsToReceive = (float) Debt::where('workspace_id', $currentWs->id)
+            ->where('type', 'owed')
+            ->where('is_paid', false)
+            ->sum('amount');
+
+        // Gasto projetado = despesas já lançadas este mês + custos fixos garantidos (assinaturas e plano)
+        // + dívidas por pagar, sem extrapolar uma média diária (evita valores irreais logo nos primeiros dias do mês).
+        $projectedExpenses = $totalMonthExpenses + $subscriptionsMonthlyCost + $pendingDebtsToPay;
+        $projectedIncome = $totalMonthIncome + $pendingDebtsToReceive;
+
+        // Saldo bancário atual (todas as contas do workspace) para o Saldo Estimado refletir o que
+        // já existe na conta, e não apenas o fluxo isolado deste mês.
+        $totalBankBalance = (float) Cache::remember(
+            "dashboard:bank-balance:{$currentWs->id}",
+            60,
+            fn () => BankAccount::where('workspace_id', $currentWs->id)->get()->sum(fn ($account) => $account->current_balance)
+        );
+
+        $projectedBalance = $totalBankBalance + $projectedIncome - $projectedExpenses;
         $projectionStatus = $projectedBalance < 0 ? 'critical' : ($projectedBalance < ($totalMonthIncome * 0.15) ? 'warning' : 'stable');
+
+        // --- RESUMO DA CONTA (widget premium) ---
+        $topBankAccounts = Cache::remember(
+            "dashboard:top-accounts:{$currentWs->id}",
+            60,
+            // Guarda um array simples (não uma Collection) para evitar corrupção ao
+            // fazer unserialize a partir da cache.
+            fn () => BankAccount::where('workspace_id', $currentWs->id)->get()
+                ->sortByDesc(fn ($account) => $account->current_balance)
+                ->take(3)
+                ->map(fn ($account) => [
+                    'name' => $account->name,
+                    'balance' => $account->current_balance,
+                    'icon' => $account->getIcon(),
+                    'color' => $account->color ?? '#6366f1',
+                ])
+                ->values()
+                ->all()
+        );
+
+        $topExpenseCategory = Cache::remember(
+            "dashboard:top-category:{$currentWs->id}:{$monthStart->toDateString()}",
+            60,
+            function () use ($currentWs, $monthStart, $monthEnd) {
+                $row = Expense::where('workspace_id', $currentWs->id)
+                    ->whereBetween('spent_at', [$monthStart, $monthEnd])
+                    ->select('category_id', DB::raw('SUM(amount) as total'))
+                    ->groupBy('category_id')
+                    ->orderByDesc('total')
+                    ->with('category:id,name,icon,color')
+                    ->first();
+
+                if (! $row || ! $row->category) {
+                    return null;
+                }
+
+                // Guarda um array simples em vez do modelo Eloquent: cachear objetos com
+                // relações carregadas pode corromper-se ao fazer unserialize (incomplete object).
+                return [
+                    'name' => $row->category->name,
+                    'total' => (float) $row->total,
+                ];
+            }
+        );
 
         // --- GRÁFICO (ÚLTIMOS 6 MESES) ---
         $last6 = collect(Cache::remember(
@@ -749,16 +834,42 @@ class Dashboard extends Component
             fn () => $this->buildCategoryBudgets($currentWs->id, $monthStart, $monthEnd)->toArray()
         ))->map(fn ($item) => (object) $item);
 
-        $overallScore = $this->calculateScore($monthTotals['expenses'], $monthTotals['income'], $monthTotals['budget']);
+        $overallScore = $this->calculateScore($totalMonthExpenses, $totalMonthIncome, $monthTotals['budget']);
+
+        // Score do mês anterior (mesma fórmula) para mostrar uma tendência real, em vez de um valor fixo.
+        $prevMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
+        $prevMonthEnd = $prevMonthStart->copy()->endOfMonth();
+        $prevMonthTotals = Cache::remember("dashboard:month-totals:{$currentWs->id}:{$prevMonthStart->toDateString()}", 60, function () use ($currentWs, $prevMonthStart, $prevMonthEnd) {
+            return [
+                'expenses' => (float) Expense::where('workspace_id', $currentWs->id)
+                    ->whereBetween('spent_at', [$prevMonthStart, $prevMonthEnd])
+                    ->sum('amount'),
+                'income' => (float) Income::where('workspace_id', $currentWs->id)
+                    ->whereBetween('received_at', [$prevMonthStart, $prevMonthEnd])
+                    ->sum('amount'),
+                'budget' => (float) Category::where('workspace_id', $currentWs->id)->sum('budget_limit'),
+            ];
+        });
+        $prevOverallScore = $this->calculateScore($prevMonthTotals['expenses'], $prevMonthTotals['income'] + $fixedIncome, $prevMonthTotals['budget']);
+        $overallScoreTrend = $overallScore - $prevOverallScore;
 
         $financeScore = app(FinanceScoreService::class)->calculate($currentWs);
         $wellnessInsights = app(WellnessFinanceService::class)->getInsights($currentWs);
         $storeEntitlements = app(StoreEntitlementService::class);
 
+        $totalSaved = (float) Cache::remember(
+            "dashboard:total-saved:{$currentWs->id}",
+            60,
+            fn () => Goal::where('workspace_id', $currentWs->id)->sum('current_amount')
+        );
+
+        $totalPatrimony = $totalBankBalance + $portfolioValue + $totalSaved;
+
         return view('livewire.dashboard', [
             'currentWs' => $currentWs,
             'userWorkspaces' => $user->workspaces,
             'overallScore' => $overallScore,
+            'overallScoreTrend' => $overallScoreTrend,
             'financeScore' => $financeScore,
             'wellnessInsights' => $wellnessInsights,
             'hasWidgetMercado' => $storeEntitlements->hasWidget($user, 'mercado-global') || $user->isStar(),
@@ -766,19 +877,24 @@ class Dashboard extends Component
 
             // Financeiro
             'totalMonth' => $totalMonthExpenses,
-            'totalIncomeMonth' => $totalMonthIncome,
+            'totalIncomeMonth' => $projectedIncome,
             'netBalance' => $totalMonthIncome - $totalMonthExpenses,
             'portfolioValue' => $portfolioValue,
-            'totalSaved' => (float) Cache::remember(
-                "dashboard:total-saved:{$currentWs->id}",
-                60,
-                fn () => Goal::where('workspace_id', $currentWs->id)->sum('current_amount')
-            ),
+            'totalSaved' => $totalSaved,
 
             // Previsão
             'projectedExpenses' => $projectedExpenses,
             'projectedBalance' => $projectedBalance,
             'projectionStatus' => $projectionStatus,
+
+            // Resumo da Conta (widget premium)
+            'totalBankBalance' => $totalBankBalance,
+            'totalPatrimony' => $totalPatrimony,
+            'topBankAccounts' => $topBankAccounts,
+            'topExpenseCategory' => $topExpenseCategory,
+            'subscriptionsMonthlyCost' => $subscriptionsMonthlyCost,
+            'pendingDebtsToPay' => $pendingDebtsToPay,
+            'pendingDebtsToReceive' => $pendingDebtsToReceive,
 
             'chartMax' => max(
                 $last6->max('spent') ?? 0,

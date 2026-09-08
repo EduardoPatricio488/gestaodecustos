@@ -69,6 +69,17 @@
 
     <div x-show="filterOpen" x-collapse x-cloak>
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 flex flex-wrap gap-4 shadow-sm mb-6">
+            @php
+                // Classes Tailwind escritas por extenso (não concatenadas) para o compilador conseguir detetá-las.
+                $filterStyles = [
+                    'emerald' => ['active' => 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-emerald-500/50'],
+                    'red' => ['active' => 'border-red-500 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-red-500/50'],
+                    'purple' => ['active' => 'border-purple-500 bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-purple-500/50'],
+                    'amber' => ['active' => 'border-amber-500 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-amber-500/50'],
+                    'orange' => ['active' => 'border-orange-500 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-orange-500/50'],
+                    'indigo' => ['active' => 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-indigo-500/50'],
+                ];
+            @endphp
             @foreach([
                 'incomes' => ['label' => 'Receitas', 'color' => 'emerald'],
                 'expenses' => ['label' => 'Despesas', 'color' => 'red'],
@@ -77,12 +88,16 @@
                 'fitness' => ['label' => 'Treino', 'color' => 'orange'],
                 'reminders' => ['label' => 'Lembretes', 'color' => 'indigo']
             ] as $key => $filter)
+                @php
+                    $isActive = in_array($key, $activeFilters, true);
+                    $style = $filterStyles[$filter['color']];
+                @endphp
                 <button
-                    {{-- wire:click="toggleFilter('{{ $key }}')" --}}
-                    class="flex items-center gap-3 px-5 py-2.5 rounded-2xl border-2 transition-all border-zinc-100 dark:border-zinc-800 hover:border-{{ $filter['color'] }}-500/50 group"
+                    wire:click="toggleFilter('{{ $key }}')"
+                    class="flex items-center gap-3 px-5 py-2.5 rounded-2xl border-2 transition-all group {{ $isActive ? $style['active'] : $style['idle'].' text-zinc-500 group-hover:text-zinc-800 dark:group-hover:text-white' }}"
                 >
                     <div class="size-3 rounded-full bg-{{ $filter['color'] }}-500 shadow-[0_0_8px_rgba(var(--{{ $filter['color'] }}-500),0.4)]"></div>
-                    <span class="text-[11px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-zinc-800 dark:group-hover:text-white">{{ $filter['label'] }}</span>
+                    <span class="text-[11px] font-black uppercase tracking-widest">{{ $filter['label'] }}</span>
                 </button>
             @endforeach
         </div>
@@ -110,7 +125,7 @@
             @for($day = 1; $day <= $totalDays; $day++)
                 @php
                     $dateKey = sprintf('%04d-%02d-%02d', $year, $month, $day);
-                    $events = $this->dayEvents->get($dateKey, collect());
+                    $events = $this->visibleDayEvents->get($dateKey, collect());
                     $isToday = $dateKey === now()->format('Y-m-d');
                     $isRiskDay = $riskDays->has($dateKey);
                     $riskBalance = $riskDays->get($dateKey)['projected_balance'] ?? null;
@@ -120,7 +135,7 @@
                 @endphp
 
                 <div
-                    {{-- wire:click="openDayDetail('{{ $dateKey }}')" --}}
+                    wire:click="openDayDetail('{{ $dateKey }}')"
                     class="relative min-h-[110px] sm:min-h-[150px] border-r border-b border-zinc-100 dark:border-zinc-800 p-3 transition-all hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group/day cursor-pointer {{ $isRiskDay ? 'bg-red-50/70 dark:bg-red-950/20 ring-1 ring-inset ring-red-200 dark:ring-red-900' : '' }}"
                 >
                     {{-- Cabeçalho da Célula --}}
@@ -294,4 +309,58 @@
             </button>
         </div>
     </div>
+
+    {{-- ── MODAL: DETALHE COMPLETO DO DIA ── --}}
+    @if($showDayDetailModal)
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <div class="absolute inset-0 bg-zinc-950/60 backdrop-blur-md" wire:click="closeDayDetail"></div>
+
+            <div class="relative w-full max-w-lg max-h-[85vh] flex flex-col bg-white dark:bg-zinc-900 rounded-[3rem] shadow-2xl border border-zinc-200 dark:border-zinc-800">
+                <div class="p-8 pb-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between shrink-0">
+                    <div>
+                        <h2 class="text-xl font-black uppercase italic tracking-tighter dark:text-white leading-none">
+                            @if($selectedDayKey)
+                                {{ \Carbon\Carbon::parse($selectedDayKey)->day }} de {{ \Carbon\Carbon::parse($selectedDayKey)->translatedFormat('F') }}
+                            @endif
+                        </h2>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1.5">
+                            {{ $this->selectedDayEvents->count() }} registo(s) neste dia
+                        </p>
+                    </div>
+                    <button wire:click="closeDayDetail" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                        <flux:icon name="x-mark" class="size-5" />
+                    </button>
+                </div>
+
+                <div class="p-8 pt-4 space-y-3 overflow-y-auto custom-scrollbar flex-1">
+                    @forelse($this->selectedDayEvents as $event)
+                        <div class="flex items-center justify-between gap-3 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="size-2.5 rounded-full shrink-0 {{ str_replace('text', 'bg', $event['color']) }}"></div>
+                                <span class="text-sm font-bold text-zinc-800 dark:text-zinc-200 truncate">{{ $event['label'] }}</span>
+                            </div>
+                            @if(isset($event['amount']))
+                                <span class="text-sm font-black shrink-0 {{ $event['color'] }}">
+                                    {{ in_array($event['type'], ['income', 'salary']) ? '+' : '-' }}{{ number_format($event['amount'], 2, ',', '.') }}€
+                                </span>
+                            @elseif(isset($event['meta']))
+                                <span class="text-xs font-bold text-zinc-400 shrink-0">{{ $event['meta'] }}</span>
+                            @endif
+                        </div>
+                    @empty
+                        <div class="py-12 text-center">
+                            <flux:icon name="calendar" class="size-8 mx-auto mb-3 text-zinc-200 dark:text-zinc-700" />
+                            <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest">Sem registos neste dia</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                <div class="p-8 pt-4 border-t border-zinc-100 dark:border-zinc-800 shrink-0">
+                    <button wire:click="closeDayDetail" class="w-full py-4 text-[10px] font-black uppercase text-zinc-400 hover:text-zinc-600 dark:hover:text-white transition-colors">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

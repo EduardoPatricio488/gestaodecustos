@@ -13,6 +13,7 @@ use App\Models\Expense;
 use App\Models\Goal;
 use App\Models\Income;
 use App\Models\Investment;
+use App\Models\RecurringIncome;
 use Illuminate\Support\Collection;
 
 class BancoService
@@ -36,7 +37,7 @@ class BancoService
         $investments = $this->getInvestments();
         $patrimony = $this->getPatrimony();
 
-        $totalBankBalance = $accounts->where('status', '!=', 'archived')->sum('balance');
+        $totalBankBalance = $accounts->where('status', '!=', 'archived')->sum(fn ($a) => $a->current_balance);
         $totalReserves = $reserves->where('status', 'active')->sum('amount');
         $totalTransitIn = $transitItems->where('direction', 'in')->where('status', 'pending')->sum('amount');
         $totalTransitOut = $transitItems->where('direction', 'out')->where('status', 'pending')->sum('amount');
@@ -252,6 +253,7 @@ class BancoService
     public function getMonthlyFlow(int $months = 12): array
     {
         $data = [];
+        $fixedIncome = $this->getFixedMonthlyIncome();
 
         for ($i = $months - 1; $i >= 0; $i--) {
             $date = now()->subMonths($i);
@@ -271,9 +273,9 @@ class BancoService
             $data[] = [
                 'month' => $month,
                 'label' => $label,
-                'income' => (float) $income,
+                'income' => (float) $income + $fixedIncome,
                 'expense' => (float) $expense,
-                'balance' => (float) ($income - $expense),
+                'balance' => (float) ($income + $fixedIncome - $expense),
             ];
         }
 
@@ -290,7 +292,7 @@ class BancoService
         $reserves = $this->getReserves()->where('status', 'active');
         $investments = $this->getInvestments();
 
-        $immediateCash = $accounts->whereIn('type', ['corrente', 'cash', 'poupanca'])->sum('balance');
+        $immediateCash = $accounts->whereIn('type', ['corrente', 'cash', 'poupanca'])->sum(fn ($a) => $a->current_balance);
         $totalReserved = $reserves->sum('amount');
         $totalInvested = $investments->sum(fn ($i) => $i->quantity * $i->current_price);
 
@@ -467,10 +469,12 @@ class BancoService
 
     private function getCurrentMonthIncome(): float
     {
-        return (float) Income::where('workspace_id', $this->workspaceId)
+        $variable = (float) Income::where('workspace_id', $this->workspaceId)
             ->whereYear('received_at', now()->year)
             ->whereMonth('received_at', now()->month)
             ->sum('amount');
+
+        return $variable + $this->getFixedMonthlyIncome();
     }
 
     private function getCurrentMonthExpense(): float
@@ -483,10 +487,12 @@ class BancoService
 
     private function getPrevMonthIncome(): float
     {
-        return (float) Income::where('workspace_id', $this->workspaceId)
+        $variable = (float) Income::where('workspace_id', $this->workspaceId)
             ->whereYear('received_at', now()->subMonth()->year)
             ->whereMonth('received_at', now()->subMonth()->month)
             ->sum('amount');
+
+        return $variable + $this->getFixedMonthlyIncome();
     }
 
     private function getPrevMonthExpense(): float
@@ -495,6 +501,21 @@ class BancoService
             ->whereYear('spent_at', now()->subMonth()->year)
             ->whereMonth('spent_at', now()->subMonth()->month)
             ->sum('amount');
+    }
+
+    /**
+     * Soma dos rendimentos fixos/recorrentes ativos, convertidos para o equivalente mensal.
+     */
+    private function getFixedMonthlyIncome(): float
+    {
+        return (float) RecurringIncome::where('workspace_id', $this->workspaceId)
+            ->where('is_active', true)
+            ->get()
+            ->sum(fn ($r) => match ($r->frequency) {
+                'semanal' => (float) $r->amount * 52 / 12,
+                'anual' => (float) $r->amount / 12,
+                default => (float) $r->amount,
+            });
     }
 
     private function getAvgMonthlyExpense(int $months = 6): float

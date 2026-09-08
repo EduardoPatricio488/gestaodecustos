@@ -258,8 +258,10 @@ class Categories extends Component
     {
         $monthStart = Carbon::now()->startOfMonth();
 
-        // 1. Mostra todas as categorias do workspace atual, sem exclusões manuais.
+        // 1. Mostra apenas as categorias reais do workspace (exclui as internas criadas
+        // só para classificar assinaturas, que também não aparecem na sidebar).
         $categories = Category::where('workspace_id', $this->workspaceId())
+            ->where('hidden_from_sidebar', false)
             ->withCount(['expenses as expenses_count' => fn ($q) => $q->where('workspace_id', $this->workspaceId())
                 ->where('spent_at', '>=', $monthStart),
             ])

@@ -21,10 +21,45 @@ class PersonalCalendar extends Component
 
     public $year;
 
+    public bool $showDayDetailModal = false;
+
+    public ?string $selectedDayKey = null;
+
+    public array $activeFilters = [];
+
+    private const FILTER_TYPE_MAP = [
+        'incomes' => ['income', 'salary'],
+        'expenses' => ['expense'],
+        'subscriptions' => ['subscription'],
+        'debts' => ['debt'],
+        'fitness' => ['fitness'],
+        'reminders' => ['reminder'],
+    ];
+
     public function mount()
     {
         $this->month = now()->month;
         $this->year = now()->year;
+    }
+
+    public function toggleFilter(string $key)
+    {
+        if (in_array($key, $this->activeFilters, true)) {
+            $this->activeFilters = array_values(array_diff($this->activeFilters, [$key]));
+        } else {
+            $this->activeFilters[] = $key;
+        }
+    }
+
+    public function openDayDetail(string $dateKey)
+    {
+        $this->selectedDayKey = $dateKey;
+        $this->showDayDetailModal = true;
+    }
+
+    public function closeDayDetail()
+    {
+        $this->showDayDetailModal = false;
     }
 
     public function prevMonth()
@@ -135,15 +170,47 @@ class PersonalCalendar extends Component
                 'color' => 'text-indigo-500',
             ]);
 
-        return collect()
+        $allEvents = collect()
             ->concat($expenses)
             ->concat($incomes)
             ->concat($recurringIncomes)
             ->concat($subscriptions)
             ->concat($debts)
             ->concat($fitness)
-            ->concat($reminders)
-            ->groupBy('date');
+            ->concat($reminders);
+
+        return $allEvents->groupBy('date');
+    }
+
+    /**
+     * Versão filtrada de dayEvents(), usada só para o que é mostrado nas células/modal.
+     * Não deve ser usada nos cálculos financeiros (saldo, dias de risco), que têm de
+     * refletir sempre a realidade completa, independentemente dos filtros visuais ativos.
+     */
+    #[Computed]
+    public function visibleDayEvents()
+    {
+        if (empty($this->activeFilters)) {
+            return $this->dayEvents;
+        }
+
+        $allowedTypes = collect($this->activeFilters)
+            ->flatMap(fn ($key) => self::FILTER_TYPE_MAP[$key] ?? [])
+            ->all();
+
+        return $this->dayEvents
+            ->map(fn ($events) => $events->whereIn('type', $allowedTypes))
+            ->filter(fn ($events) => $events->isNotEmpty());
+    }
+
+    #[Computed]
+    public function selectedDayEvents()
+    {
+        if (! $this->selectedDayKey) {
+            return collect();
+        }
+
+        return $this->visibleDayEvents->get($this->selectedDayKey, collect());
     }
 
     #[Computed]

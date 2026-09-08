@@ -2,11 +2,14 @@
 
 namespace App\Livewire;
 
+use App\Mail\CfoReportMail;
 use App\Models\Expense;
 use App\Models\Income;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -35,16 +38,20 @@ class AiInsights extends Component
 
     /**
      * Ganhos e gastos de um mês específico (reutilizável para mês atual e anterior).
+     * O 3º valor (hasRealData) indica se há registos DATADOS reais nesse mês — o rendimento
+     * fixo (recorrente) é sempre somado ao total porque reflete a situação atual, mas não deve
+     * por si só fazer parecer que existem dados históricos desse mês específico.
      */
     private function getMonthlyTotals(int $month, int $year): array
     {
         $user = auth()->user();
 
-        $earned = (float) Income::where('user_id', $user->id)
+        $datedEarned = (float) Income::where('user_id', $user->id)
             ->whereMonth('received_at', $month)
             ->whereYear('received_at', $year)
-            ->sum('amount')
-            + (float) $user->recurringIncomes()->where('is_active', true)->sum('amount');
+            ->sum('amount');
+
+        $fixedIncome = (float) $user->recurringIncomes()->where('is_active', true)->sum('amount');
 
         $spent = (float) Expense::where('user_id', $user->id)
             ->where('is_company', false)
@@ -52,7 +59,9 @@ class AiInsights extends Component
             ->whereYear('spent_at', $year)
             ->sum('amount');
 
-        return [$earned, $spent];
+        $hasRealData = $datedEarned > 0 || $spent > 0;
+
+        return [$datedEarned + $fixedIncome, $spent, $hasRealData];
     }
 
     /**
@@ -158,6 +167,23 @@ class AiInsights extends Component
                 if (method_exists($user, 'addXp')) {
                     $user->addXp(150);
                 }
+
+                // Avisa o utilizador e envia o relatório para o email assim que fica pronto.
+                if ($user->email) {
+                    try {
+                        Mail::to($user->email)->send(new CfoReportMail($user, $this->aiAnalysis, [
+                            'earned' => $totalEarned,
+                            'spent' => $totalSpent,
+                            'healthScore' => $this->calculateHealthScore($totalEarned, $totalSpent),
+                        ]));
+                        $this->dispatch('toast', variant: 'success', text: 'Relatório gerado e enviado para o teu email! 📧');
+                    } catch (\Throwable $mailException) {
+                        Log::error('CfoReportMail: '.$mailException->getMessage());
+                        $this->dispatch('toast', variant: 'success', text: 'Relatório gerado! (não foi possível enviar o email)');
+                    }
+                } else {
+                    $this->dispatch('toast', variant: 'success', text: 'Relatório gerado! ✨');
+                }
             } else {
                 $this->aiAnalysis = 'Erro HTTP '.$response->status().': '.$response->body();
             }
@@ -177,8 +203,7 @@ class AiInsights extends Component
         [$earned, $spent] = $this->getMonthlyTotals($month, $year);
 
         $prevDate = now()->subMonth();
-        [$prevEarned, $prevSpent] = $this->getMonthlyTotals($prevDate->month, $prevDate->year);
-        $hasPrevData = $prevEarned > 0 || $prevSpent > 0;
+        [$prevEarned, $prevSpent, $hasPrevData] = $this->getMonthlyTotals($prevDate->month, $prevDate->year);
 
         $netWorth = (float) $user->currentWorkspace->getLiquidezAtual()
                   + (float) $user->investments->sum(fn ($i) => $i->quantity * $i->current_price);
@@ -200,8 +225,8 @@ class AiInsights extends Component
             'netWorth' => $netWorth,
             'healthScore' => $healthScore,
             'healthScoreDelta' => $hasPrevData ? ($healthScore - $prevHealthScore) : null,
-            'earnedDelta' => $this->percentDelta($earned, $prevEarned),
-            'spentDelta' => $this->percentDelta($spent, $prevSpent),
+            'earnedDelta' => $hasPrevData ? $this->percentDelta($earned, $prevEarned) : null,
+            'spentDelta' => $hasPrevData ? $this->percentDelta($spent, $prevSpent) : null,
             'netWorthDelta' => $this->trackNetWorthSnapshot($netWorth, $year, $month),
             'insights' => $manualInsights,
             'reportGeneratedAt' => $this->lastGeneratedAt ? Carbon::parse($this->lastGeneratedAt) : null,  // 👈 nome novo

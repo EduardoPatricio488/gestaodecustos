@@ -20,6 +20,8 @@ class Debt extends Model
         'description',
         'due_at',
         'is_paid',
+        'expense_id',
+        'income_id',
     ];
 
     protected $casts = [

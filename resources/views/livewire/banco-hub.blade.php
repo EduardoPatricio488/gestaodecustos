@@ -212,7 +212,7 @@
             @endphp
             <div class="flex items-end gap-1 h-40">
                 @foreach($monthlyFlow as $month)
-                    <div class="flex-1 flex items-end gap-0.5 group relative">
+                    <div class="flex-1 h-full flex items-end gap-0.5 group relative">
                         {{-- Receita --}}
                         <div
                             class="flex-1 bg-emerald-500/80 hover:bg-emerald-500 rounded-t transition-all"
@@ -473,15 +473,15 @@
                                 <p class="text-[12px] font-bold text-zinc-800 dark:text-zinc-200 truncate">{{ $acc->name }}</p>
                                 <p class="text-[10px] text-zinc-400">{{ $acc->bank_name ?? $acc->type }}</p>
                             </div>
-                            <p class="text-sm font-black {{ $acc->balance < 0 ? 'text-red-500' : 'text-zinc-900 dark:text-white' }} privacy-target">
-                                {{ number_format($acc->balance, 2, ',', '.') }} €
+                            <p class="text-sm font-black {{ $acc->current_balance < 0 ? 'text-red-500' : 'text-zinc-900 dark:text-white' }} privacy-target">
+                                {{ number_format($acc->current_balance, 2, ',', '.') }} €
                             </p>
                         </div>
                     @endforeach
                 </div>
                 <div class="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
                     <span class="text-[11px] font-bold text-zinc-500">Total Pessoal</span>
-                    <span class="text-base font-black text-zinc-900 dark:text-white privacy-target">{{ number_format($personalAccounts->sum('balance'), 2, ',', '.') }} €</span>
+                    <span class="text-base font-black text-zinc-900 dark:text-white privacy-target">{{ number_format($personalAccounts->sum(fn ($a) => $a->current_balance), 2, ',', '.') }} €</span>
                 </div>
             @else
                 <div class="text-center py-6 text-zinc-400">
@@ -514,15 +514,15 @@
                                 <p class="text-[12px] font-bold text-zinc-800 dark:text-zinc-200 truncate">{{ $acc->name }}</p>
                                 <p class="text-[10px] text-zinc-400">{{ $acc->bank_name ?? $acc->type }}</p>
                             </div>
-                            <p class="text-sm font-black {{ $acc->balance < 0 ? 'text-red-500' : 'text-zinc-900 dark:text-white' }} privacy-target">
-                                {{ number_format($acc->balance, 2, ',', '.') }} €
+                            <p class="text-sm font-black {{ $acc->current_balance < 0 ? 'text-red-500' : 'text-zinc-900 dark:text-white' }} privacy-target">
+                                {{ number_format($acc->current_balance, 2, ',', '.') }} €
                             </p>
                         </div>
                     @endforeach
                 </div>
                 <div class="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
                     <span class="text-[11px] font-bold text-zinc-500">Total Empresa</span>
-                    <span class="text-base font-black text-zinc-900 dark:text-white privacy-target">{{ number_format($businessAccounts->sum('balance'), 2, ',', '.') }} €</span>
+                    <span class="text-base font-black text-zinc-900 dark:text-white privacy-target">{{ number_format($businessAccounts->sum(fn ($a) => $a->current_balance), 2, ',', '.') }} €</span>
                 </div>
             @else
                 <div class="text-center py-6 text-zinc-400">
@@ -558,7 +558,7 @@
         <h3 class="text-[11px] font-black text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2">
             <flux:icon name="user" variant="micro" class="size-3" /> Contas Pessoais
             <span class="font-black text-zinc-900 dark:text-white text-base ml-2 normal-case tracking-normal privacy-target">
-                {{ number_format($personalAccounts->sum('balance'), 2, ',', '.') }} €
+                {{ number_format($personalAccounts->sum(fn ($a) => $a->current_balance), 2, ',', '.') }} €
             </span>
         </h3>
         @if($personalAccounts->count() > 0)
@@ -581,7 +581,7 @@
         <h3 class="text-[11px] font-black text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2">
             <flux:icon name="building-office" variant="micro" class="size-3" /> Contas Empresariais
             <span class="font-black text-zinc-900 dark:text-white text-base ml-2 normal-case tracking-normal privacy-target">
-                {{ number_format($businessAccounts->sum('balance'), 2, ',', '.') }} €
+                {{ number_format($businessAccounts->sum(fn ($a) => $a->current_balance), 2, ',', '.') }} €
             </span>
         </h3>
         @if($businessAccounts->count() > 0)
@@ -917,46 +917,121 @@
             Ir para Gestão de Dívidas
         </a>
     </div>
+
+    @php
+        $debtsOwe = $debts->where('type', 'owe');
+        $debtsOwed = $debts->where('type', 'owed');
+    @endphp
+
     @if($debts->count() > 0)
-        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider">Pessoa / Entidade</th>
-                            <th class="px-4 py-3 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider">Descrição</th>
-                            <th class="px-4 py-3 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider">Vencimento</th>
-                            <th class="px-4 py-3 text-right text-[10px] font-black text-zinc-400 uppercase tracking-wider">Valor</th>
-                            <th class="px-4 py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider">Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                        @foreach($debts as $debt)
-                            <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                                <td class="px-4 py-3 text-sm font-bold text-zinc-800 dark:text-zinc-200">{{ $debt->person_name }}</td>
-                                <td class="px-4 py-3 text-[12px] text-zinc-500">{{ $debt->description ?? '—' }}</td>
-                                <td class="px-4 py-3 text-[12px] text-zinc-500">
-                                    @if($debt->due_at)
-                                        <span class="{{ \Carbon\Carbon::parse($debt->due_at)->isPast() ? 'text-red-500 font-bold' : '' }}">
-                                            {{ \Carbon\Carbon::parse($debt->due_at)->format('d/m/Y') }}
-                                        </span>
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3 text-right text-sm font-black text-red-500 privacy-target">-{{ number_format($debt->amount, 2, ',', '.') }} €</td>
-                                <td class="px-4 py-3 text-center">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">Pendente</span>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {{-- TENHO DE PAGAR --}}
+            <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                <div class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+                    <flux:icon name="arrow-down-circle" variant="micro" class="size-4 text-orange-500" />
+                    <span class="text-[11px] font-black text-zinc-500 uppercase tracking-wider">Tenho de Pagar</span>
+                    <span class="ml-auto text-[9px] font-black bg-orange-100 dark:bg-orange-900/30 text-orange-600 px-2 py-0.5 rounded-full">{{ $debtsOwe->count() }}</span>
+                </div>
+                @if($debtsOwe->count() > 0)
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
+                                <tr>
+                                    <th class="px-4 py-2.5 text-left text-[9px] font-black text-zinc-400 uppercase tracking-wider">Pessoa</th>
+                                    <th class="px-4 py-2.5 text-left text-[9px] font-black text-zinc-400 uppercase tracking-wider">Vencimento</th>
+                                    <th class="px-4 py-2.5 text-right text-[9px] font-black text-zinc-400 uppercase tracking-wider">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                @foreach($debtsOwe as $debt)
+                                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                                        <td class="px-4 py-2.5">
+                                            <p class="text-[12px] font-bold text-zinc-800 dark:text-zinc-200">{{ $debt->person_name }}</p>
+                                            @if($debt->description)
+                                                <p class="text-[10px] text-zinc-400">{{ $debt->description }}</p>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-2.5 text-[11px] text-zinc-500">
+                                            @if($debt->due_at)
+                                                <span class="{{ \Carbon\Carbon::parse($debt->due_at)->isPast() ? 'text-red-500 font-bold' : '' }}">
+                                                    {{ \Carbon\Carbon::parse($debt->due_at)->format('d/m/Y') }}
+                                                </span>
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-2.5 text-right text-sm font-black text-orange-500 privacy-target">-{{ number_format($debt->amount, 2, ',', '.') }} €</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-orange-50/50 dark:bg-orange-900/10">
+                        <span class="text-[11px] font-bold text-orange-700 dark:text-orange-400">Total a Pagar</span>
+                        <span class="text-base font-black text-orange-600 privacy-target">-{{ number_format($debtsOwe->sum('amount'), 2, ',', '.') }} €</span>
+                    </div>
+                @else
+                    <p class="px-4 py-8 text-center text-[11px] text-zinc-400 italic">Sem passivo pendente ✓</p>
+                @endif
+            </div>
+
+            {{-- TENHO QUE RECEBER --}}
+            <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                <div class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+                    <flux:icon name="arrow-up-circle" variant="micro" class="size-4 text-emerald-500" />
+                    <span class="text-[11px] font-black text-zinc-500 uppercase tracking-wider">Tenho que Receber</span>
+                    <span class="ml-auto text-[9px] font-black bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 px-2 py-0.5 rounded-full">{{ $debtsOwed->count() }}</span>
+                </div>
+                @if($debtsOwed->count() > 0)
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
+                                <tr>
+                                    <th class="px-4 py-2.5 text-left text-[9px] font-black text-zinc-400 uppercase tracking-wider">Pessoa</th>
+                                    <th class="px-4 py-2.5 text-left text-[9px] font-black text-zinc-400 uppercase tracking-wider">Vencimento</th>
+                                    <th class="px-4 py-2.5 text-right text-[9px] font-black text-zinc-400 uppercase tracking-wider">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                @foreach($debtsOwed as $debt)
+                                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                                        <td class="px-4 py-2.5">
+                                            <p class="text-[12px] font-bold text-zinc-800 dark:text-zinc-200">{{ $debt->person_name }}</p>
+                                            @if($debt->description)
+                                                <p class="text-[10px] text-zinc-400">{{ $debt->description }}</p>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-2.5 text-[11px] text-zinc-500">
+                                            @if($debt->due_at)
+                                                <span class="{{ \Carbon\Carbon::parse($debt->due_at)->isPast() ? 'text-red-500 font-bold' : '' }}">
+                                                    {{ \Carbon\Carbon::parse($debt->due_at)->format('d/m/Y') }}
+                                                </span>
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-2.5 text-right text-sm font-black text-emerald-500 privacy-target">+{{ number_format($debt->amount, 2, ',', '.') }} €</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-emerald-50/50 dark:bg-emerald-900/10">
+                        <span class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">Total a Receber</span>
+                        <span class="text-base font-black text-emerald-600 privacy-target">+{{ number_format($debtsOwed->sum('amount'), 2, ',', '.') }} €</span>
+                    </div>
+                @else
+                    <p class="px-4 py-8 text-center text-[11px] text-zinc-400 italic">Sem créditos pendentes</p>
+                @endif
             </div>
         </div>
-        <div class="bg-red-900/80 rounded-2xl p-4 flex items-center justify-between">
-            <span class="text-sm font-bold text-red-200">Total de Dívidas</span>
-            <span class="text-xl font-black text-red-300 privacy-target">-{{ number_format($debts->sum('amount'), 2, ',', '.') }} €</span>
+
+        @php
+            $debtsNetBalance = $debtsOwed->sum('amount') - $debtsOwe->sum('amount');
+        @endphp
+        <div class="{{ $debtsNetBalance >= 0 ? 'bg-emerald-900/80' : 'bg-red-900/80' }} rounded-2xl p-4 flex items-center justify-between">
+            <span class="text-sm font-bold {{ $debtsNetBalance >= 0 ? 'text-emerald-200' : 'text-red-200' }}">Balanço Líquido (Receber − Pagar)</span>
+            <span class="text-xl font-black {{ $debtsNetBalance >= 0 ? 'text-emerald-300' : 'text-red-300' }} privacy-target">{{ $debtsNetBalance >= 0 ? '+' : '' }}{{ number_format($debtsNetBalance, 2, ',', '.') }} €</span>
         </div>
     @else
         <div class="text-center py-16 bg-white dark:bg-zinc-900 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-400">
@@ -1264,7 +1339,7 @@
 
             @php
                 $compareItems = [
-                    ['label' => 'Saldo Disponível', 'personal' => $personalAccounts->sum('balance'), 'business' => $businessAccounts->sum('balance'), 'format' => 'money'],
+                    ['label' => 'Saldo Disponível', 'personal' => $personalAccounts->sum(fn ($a) => $a->current_balance), 'business' => $businessAccounts->sum(fn ($a) => $a->current_balance), 'format' => 'money'],
                     ['label' => 'Nº Contas',         'personal' => $personalAccounts->count(),         'business' => $businessAccounts->count(),         'format' => 'number'],
                     ['label' => 'Reservas',          'personal' => $reserves->where('is_business', false)->sum('amount'), 'business' => $reserves->where('is_business', true)->sum('amount'), 'format' => 'money'],
                 ];

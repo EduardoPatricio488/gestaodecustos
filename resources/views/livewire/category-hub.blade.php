@@ -103,6 +103,15 @@
             formOpen: false,
             scannerPreview: null,
             uploadingFile: false,
+            confirmAndSave() {
+                if (!$wire.bankAccountId) {
+                    const value = Number($wire.amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    if (!confirm(`Confirmas que tens ${value}€ disponíveis em dinheiro físico? Pretendes continuar?`)) {
+                        return;
+                    }
+                }
+                $wire.save();
+            },
         }"
         x-init="
             if (new URLSearchParams(window.location.search).get('open_scanner')) {
@@ -320,41 +329,6 @@
                 </p>
             </div>
 
-        {{-- ALIMENTAÇÃO --}}
-        @elseif($slug === 'alimentacao')
-             @php
-                $totalGasto = $expenses->sum('amount');
-                $expensesWithPeople = $expenses->filter(function ($e) {
-                    $m = is_array($e->metadata) ? $e->metadata : (json_decode($e->metadata, true) ?? []);
-                    return isset($m['pessoas']) && $m['pessoas'] > 0;
-                });
-                $custoPorPessoa = $expensesWithPeople->count() > 0
-                    ? $expensesWithPeople->sum(fn($e) => $e->amount / (json_decode($e->metadata,true)['pessoas'])) / $expensesWithPeople->count()
-                    : 0;
-            @endphp
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            <div class="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 rounded-2xl p-4 sm:p-6 border border-orange-200 dark:border-orange-800/30 shadow-md">
-                <p class="text-[9px] text-orange-600 dark:text-orange-400 font-bold uppercase mb-1">Média p/ Pessoa</p>
-                <p class="text-xl sm:text-3xl font-black text-orange-700 dark:text-orange-300 tracking-tighter">{{ number_format($custoPorPessoa, 2, ',', '.') }}€</p>
-            </div>
-
         {{-- TECNOLOGIA --}}
         @elseif($slug === 'tecnologia')
             <div class="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 rounded-2xl p-4 sm:p-6 border border-indigo-200 dark:border-indigo-800/30 shadow-md">
@@ -435,6 +409,38 @@
                     {{ $proximaRenovacaoSeguro ? \Carbon\Carbon::parse(json_decode($proximaRenovacaoSeguro->metadata, true)['data_renovacao'])->format('d/m') : 'N/A' }}
                 </p>
             </div>
+
+        {{-- ALIMENTAÇÃO: Hábitos de Consumo --}}
+        @elseif($slug === 'alimentacao')
+            @php
+                $gastoMedioPorCompra = $expenses->count() > 0 ? $expenses->sum('amount') / $expenses->count() : 0;
+
+                $metaList = $expenses->map(fn ($e) => is_array($e->metadata) ? $e->metadata : (json_decode($e->metadata, true) ?? []));
+
+                $estabelecimentoMaisFrequente = $metaList
+                    ->map(fn ($m) => $m['estabelecimento'] ?? $m['local'] ?? null)
+                    ->filter()
+                    ->countBy()
+                    ->sortDesc()
+                    ->keys()
+                    ->first();
+
+                $totalComMetadata = $metaList->filter()->count();
+                $countSaudavel = $metaList->filter(fn ($m) => ! empty($m['saudavel']))->count();
+                $percentSaudavel = $totalComMetadata > 0 ? round(($countSaudavel / $totalComMetadata) * 100) : 0;
+            @endphp
+            <div class="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 rounded-2xl p-4 sm:p-6 border border-orange-200 dark:border-orange-800/30 shadow-md">
+                <p class="text-[9px] text-orange-600 dark:text-orange-400 font-bold uppercase mb-1">Gasto Médio p/ Compra</p>
+                <p class="text-xl sm:text-3xl font-black text-orange-700 dark:text-orange-300 tracking-tighter">{{ number_format($gastoMedioPorCompra, 2, ',', '.') }}€</p>
+            </div>
+            <div class="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-2xl p-4 sm:p-6 border border-orange-200 dark:border-orange-800/30 shadow-md">
+                <p class="text-[9px] text-orange-600 dark:text-orange-400 font-bold uppercase mb-1">Estabelecimento Frequente</p>
+                <p class="text-lg sm:text-2xl font-black text-orange-700 dark:text-orange-300 truncate">{{ $estabelecimentoMaisFrequente ?? 'N/A' }}</p>
+            </div>
+            <div class="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 rounded-2xl p-4 sm:p-6 border border-emerald-200 dark:border-emerald-800/30 shadow-md">
+                <p class="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase mb-1">Opções Saudáveis</p>
+                <p class="text-xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-300 tracking-tighter">{{ $percentSaudavel }}%</p>
+            </div>
         @endif
     </div>
 
@@ -511,6 +517,9 @@
                                     @if(!empty($meta['data_vencimento']))
                                         <div class="text-xs text-zinc-600 dark:text-zinc-400">🗓️ Venc.: {{ \Carbon\Carbon::parse($meta['data_vencimento'])->format('d/m/Y') }}</div>
                                     @endif
+                                    @if(!empty($meta['local']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">📍 {{ $meta['local'] }}</div>
+                                    @endif
 
                                     {{-- ALIMENTAÇÃO --}}
                                 @elseif($slug === 'alimentacao' && !empty($meta))
@@ -521,8 +530,8 @@
                                             <span class="font-semibold text-zinc-700 dark:text-zinc-300">{{ number_format($custoPessoa, 2, ',', '.') }}€/pessoa ({{ $meta['pessoas'] }})</span>
                                         </div>
                                     @endif
-                                    @if(!empty($meta['estabelecimento']))
-                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">🏪 {{ $meta['estabelecimento'] }}</div>
+                                    @if(!empty($meta['estabelecimento']) || !empty($meta['local']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">🏪 {{ $meta['estabelecimento'] ?? $meta['local'] }}</div>
                                     @endif
                                     @if(!empty($meta['saudavel']))
                                         <div class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">✓ Opção saudável</div>
@@ -544,6 +553,9 @@
                                     @if(!empty($meta['proxima_consulta']))
                                         <div class="text-xs text-zinc-600 dark:text-zinc-400">🗓️ Próx.: {{ \Carbon\Carbon::parse($meta['proxima_consulta'])->format('d/m/Y') }}</div>
                                     @endif
+                                    @if(!empty($meta['local']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">📍 {{ $meta['local'] }}</div>
+                                    @endif
 
                                 {{-- TECNOLOGIA --}}
                                 @elseif($slug === 'tecnologia' && !empty($meta))
@@ -561,6 +573,9 @@
                                     @if(!empty($meta['proxima_renovacao']))
                                         <div class="text-xs text-zinc-600 dark:text-zinc-400">🗓️ Renova: {{ \Carbon\Carbon::parse($meta['proxima_renovacao'])->format('d/m/Y') }}</div>
                                     @endif
+                                    @if(!empty($meta['local']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">📍 {{ $meta['local'] }}</div>
+                                    @endif
 
                                 {{-- EDUCAÇÃO --}}
                                 @elseif($slug === 'educacao' && !empty($meta))
@@ -572,6 +587,9 @@
                                     @endif
                                     @if(!empty($meta['certificacao']))
                                         <div class="text-xs text-amber-600 dark:text-amber-400 font-semibold">🏅 Com certificação</div>
+                                    @endif
+                                    @if(!empty($meta['local']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">📍 {{ $meta['local'] }}</div>
                                     @endif
 
                                 {{-- EMPRÉSTIMOS --}}
@@ -585,6 +603,9 @@
                                     @if(!empty($meta['saldo_atual']))
                                         <div class="text-xs text-zinc-600 dark:text-zinc-400">Saldo: {{ number_format($meta['saldo_atual'], 2, ',', '.') }}€</div>
                                     @endif
+                                    @if(!empty($meta['local']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">📍 {{ $meta['local'] }}</div>
+                                    @endif
 
                                 {{-- SEGUROS --}}
                                 @elseif($slug === 'seguros' && !empty($meta))
@@ -597,13 +618,19 @@
                                     @if(!empty($meta['cobertura_valor']))
                                         <div class="text-xs font-semibold text-sky-600 dark:text-sky-400">💰 Cobertura: {{ number_format($meta['cobertura_valor'], 0, ',', '.') }}€</div>
                                     @endif
+                                    @if(!empty($meta['local']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">📍 {{ $meta['local'] }}</div>
+                                    @endif
                                 @else
-                                    @if(!empty($meta))
+                                    @if(!empty($meta['local']))
+                                        <div class="text-xs text-zinc-600 dark:text-zinc-400 italic">📍 {{ $meta['local'] }}</div>
+                                    @elseif(!empty($meta))
                                         <div class="text-xs text-zinc-500 italic">{{ count($meta) }} campo(s) registado(s)</div>
                                     @else
                                         <div class="text-xs text-zinc-400 italic">—</div>
                                     @endif
                                 @endif
+                                @include('livewire.partials.bank-source-badge', ['record' => $expense])
                             </div>
                         </td>
                         <td class="p-6 align-top">
@@ -652,6 +679,7 @@
                                 @if($expense->description)
                                     <p class="text-[11px] text-zinc-500 italic mt-1 line-clamp-1 max-w-[150px]">"{{ $expense->description }}"</p>
                                 @endif
+                                <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $expense])</div>
                             </div>
                         </div>
                         <div class="text-right">
@@ -1016,8 +1044,7 @@
             class="relative z-10 w-full max-w-2xl bg-white dark:bg-zinc-950 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transform-gpu will-change-transform"
             @click.stop>
 
-            <form wire:submit.prevent="save" class="flex max-h-[86vh] flex-col" autocomplete="off">
-
+            <form @submit.prevent="confirmAndSave()" class="flex max-h-[86vh] flex-col" autocomplete="off">
                 {{-- HEADER (Igual às Assinaturas) --}}
                 <div class="shrink-0 p-5 sm:p-6 pb-4 flex items-center gap-4 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
                     <div class="p-3 rounded-2xl text-white shadow-md shadow-brand-500/20" style="background-color: var(--cat-color);">
@@ -1044,7 +1071,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <label class="block space-y-2">
                             <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valor da Transação</span>
-                            <input wire:model="amount" type="number" step="0.01" placeholder="0.00"
+                            <input wire:model.live.blur="amount" type="number" step="0.01" placeholder="0.00"
                                 class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-black text-brand-600 shadow-inner outline-none ring-0 transition focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-900">
                         </label>
                         <label class="block space-y-2">
@@ -1054,7 +1081,29 @@
                         </label>
                     </div>
 
-                    {{-- Classificação --}}
+                    {{-- Origem do pagamento --}}
+                    <label class="block space-y-2">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Pago com</span>
+                        <select wire:model.live="bankAccountId" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-bold shadow-inner outline-none ring-0 transition focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-900 dark:text-white">
+                            <option value="">💵 Dinheiro Físico</option>
+                            @foreach($this->bankAccounts as $acc)
+                                <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+
+                    @php
+                        $selectedAccount = $bankAccountId ? $this->bankAccounts->firstWhere('id', (int) $bankAccountId) : null;
+                        $insufficientBank = $selectedAccount && (float) $amount > (float) $selectedAccount->current_balance;
+                    @endphp
+                    @if($insufficientBank)
+                        <div class="flex items-start gap-2.5 p-3 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40">
+                            <flux:icon name="exclamation-triangle" class="size-4 text-red-500 shrink-0 mt-0.5" />
+                            <p class="text-[11px] font-bold text-red-600 dark:text-red-400">
+                                Saldo insuficiente em "{{ $selectedAccount->name }}": disponível {{ number_format($selectedAccount->current_balance, 2, ',', '.') }}€, valor do gasto {{ number_format((float) $amount, 2, ',', '.') }}€.
+                            </p>
+                        </div>
+                    @endif
                     <label class="block space-y-2">
     <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Subcategoria</span>
     <select wire:model.live="subcategory" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-bold shadow-inner outline-none ring-0 transition focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-900 dark:text-white">

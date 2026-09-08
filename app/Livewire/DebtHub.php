@@ -2,8 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Models\BankAccount;
 use App\Models\Debt;
+use App\Models\Expense;
+use App\Models\Income;
 use Carbon\Carbon;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -22,6 +26,30 @@ class DebtHub extends Component
     public string $due_at = '';
 
     public ?int $editingId = null;
+
+    // Liquidação: escolha de destino (banco ou dinheiro físico)
+    public ?int $settlingId = null;
+
+    public $settleBankAccountId = '';
+
+    public $settlingAmount = 0;
+
+    #[Computed]
+    public function bankAccounts()
+    {
+        return BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function settlingDebt(): ?Debt
+    {
+        if (! $this->settlingId) {
+            return null;
+        }
+
+        return Debt::where('workspace_id', auth()->user()->current_workspace_id)->find($this->settlingId);
+    }
 
     public function openCreateModal()
     {
@@ -82,11 +110,96 @@ class DebtHub extends Component
         $this->dispatch('open-debt-modal');
     }
 
-    public function togglePaid(int $id)
+    public function openSettleModal(int $id)
     {
         $debt = Debt::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
-        $debt->update(['is_paid' => ! $debt->is_paid]);
-        $this->dispatch('toast', text: $debt->is_paid ? 'Operação liquidada!' : 'Registo reaberto.');
+
+        if ($debt->is_paid) {
+            $this->reopenDebt($id);
+
+            return;
+        }
+
+        $this->settlingId = $id;
+        $this->settleBankAccountId = '';
+        $this->settlingAmount = (float) $debt->amount;
+        $this->dispatch('open-settle-modal');
+    }
+
+    public function confirmSettle(): void
+    {
+        $debt = $this->settlingDebt();
+
+        if (! $debt) {
+            return;
+        }
+
+        $workspaceId = auth()->user()->current_workspace_id;
+        $bankAccountId = $this->settleBankAccountId ?: null;
+
+        // Só bloqueia por saldo insuficiente quando é um pagamento (saída de dinheiro)
+        if ($debt->type === 'owe' && $bankAccountId) {
+            $account = BankAccount::where('workspace_id', $workspaceId)->find($bankAccountId);
+
+            if ($account && (float) $debt->amount > (float) $account->current_balance) {
+                $this->dispatch('toast', variant: 'error', text: 'Saldo insuficiente em "'.$account->name.'": disponível '.number_format($account->current_balance, 2, ',', '.').'€.');
+
+                return;
+            }
+        }
+
+        if ($debt->type === 'owe') {
+            $expense = Expense::create([
+                'user_id' => auth()->id(),
+                'workspace_id' => $workspaceId,
+                'bank_account_id' => $bankAccountId,
+                'description' => 'Pagamento a '.$debt->person_name.($debt->description ? ' - '.$debt->description : ''),
+                'amount' => $debt->amount,
+                'spent_at' => now(),
+                'is_company' => false,
+            ]);
+            $debt->expense_id = $expense->id;
+        } else {
+            $income = Income::create([
+                'user_id' => auth()->id(),
+                'workspace_id' => $workspaceId,
+                'bank_account_id' => $bankAccountId,
+                'description' => 'Recebimento de '.$debt->person_name.($debt->description ? ' - '.$debt->description : ''),
+                'amount' => $debt->amount,
+                'received_at' => now(),
+                'type' => 'Extra',
+                'source' => 'outro',
+                'frequency' => 'pontual',
+            ]);
+            $debt->income_id = $income->id;
+        }
+
+        $debt->is_paid = true;
+        $debt->save();
+
+        $this->reset(['settlingId', 'settleBankAccountId']);
+        $this->dispatch('close-settle-modal');
+        $this->dispatch('toast', text: 'Liquidado e lançado em '.($debt->type === 'owe' ? 'Despesas' : 'Receitas').'!');
+    }
+
+    public function reopenDebt(int $id)
+    {
+        $debt = Debt::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+
+        if (! $debt->is_paid) {
+            return;
+        }
+
+        // Reabrir: remove a despesa/receita que tinha sido lançada
+        if ($debt->expense_id) {
+            Expense::where('id', $debt->expense_id)->delete();
+        }
+        if ($debt->income_id) {
+            Income::where('id', $debt->income_id)->delete();
+        }
+
+        $debt->update(['is_paid' => false, 'expense_id' => null, 'income_id' => null]);
+        $this->dispatch('toast', text: 'Registo reaberto.');
     }
 
     public function delete(int $id)

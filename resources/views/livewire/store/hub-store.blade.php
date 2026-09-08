@@ -170,12 +170,30 @@
             </div>
         </div>
 
+        {{-- SEPARADOR PRINCIPAL: PESSOAL VS EMPRESARIAL --}}
+        <div class="flex justify-center">
+            <div class="inline-flex bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-lg shadow-brand-500/10 p-1">
+                <button wire:click="setTab('personal')"
+                    class="px-6 py-3 text-sm font-black uppercase tracking-widest rounded-xl transition-all
+                        {{ $activeTab === 'personal'
+                            ? 'bg-brand-600 text-white shadow-md shadow-brand-500/30 scale-[1.03]'
+                            : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">
+                    Conta Pessoal
+                </button>
+                <button wire:click="setTab('business')"
+                    class="px-6 py-3 text-sm font-black uppercase tracking-widest rounded-xl transition-all
+                        {{ $activeTab === 'business'
+                            ? 'bg-brand-600 text-white shadow-md shadow-brand-500/30 scale-[1.03]'
+                            : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">
+                    Área Empresarial
+                </button>
+            </div>
+        </div>
+
         {{-- TABS --}}
         @php
             $storeTabs = [
                 ['key' => 'all', 'label' => 'Todos'],
-                ['key' => 'personal', 'label' => 'Pessoais'],
-                ['key' => 'business', 'label' => 'Empresariais'],
                 ...collect(app(\App\Services\StoreTabsService::class)->visible())
                     ->reject(fn (array $tab) => $tab['key'] === 'all')
                     ->all(),

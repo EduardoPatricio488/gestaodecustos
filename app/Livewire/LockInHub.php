@@ -7,6 +7,7 @@ use App\Models\Expense;
 use App\Models\Goal;
 use App\Models\Income;
 use App\Models\Invoice;
+use App\Models\RecurringIncome;
 use App\Models\Subscription;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -103,6 +104,19 @@ class LockInHub extends Component
             ->whereMonth('received_at', $now->month)
             ->whereYear('received_at', $now->year)
             ->sum('amount');
+
+        // Rendimentos fixos/recorrentes (salário, rendas...) nunca aparecem como transações
+        // avulsas na tabela incomes, por isso têm de ser somados à parte.
+        $fixedIncomeMonth = (float) RecurringIncome::where('workspace_id', $wsId)
+            ->where('is_active', true)
+            ->get()
+            ->sum(fn ($r) => match ($r->frequency) {
+                'semanal' => (float) $r->amount * 52 / 12,
+                'anual' => (float) $r->amount / 12,
+                default => (float) $r->amount,
+            });
+
+        $personalIncomeMonth += $fixedIncomeMonth;
 
         $personalExpenseMonth = Expense::where('workspace_id', $wsId)
             ->whereMonth('spent_at', $now->month)

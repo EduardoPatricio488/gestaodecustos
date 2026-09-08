@@ -37,15 +37,40 @@
         {{-- Botões de ação --}}
         <div class="flex items-center gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-[1.8rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
 
-            {{-- Botão salário fixo --}}
+            {{-- Botão: escolher tipo de fonte de rendimento --}}
+            <div x-data="{ openSourceMenu: false }" class="relative">
+                <flux:button
+                    @click="openSourceMenu = !openSourceMenu"
+                    variant="primary"
+                    class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20">
+                    <flux:icon name="calendar-days" class="size-4" />
+                    Adicionar Rendimento
+                    <flux:icon name="chevron-down" variant="micro" class="size-3 transition-transform" x-bind:class="openSourceMenu ? 'rotate-180' : ''" />
+                </flux:button>
 
-<flux:button
-    @click="$dispatch('modal-show-salario')"
-    variant="primary"
-    class="rounded-2xl px-6 font-black uppercase tracking-widest shadow-lg shadow-brand-500/20">
-    <flux:icon name="calendar-days" class="size-4" />
-    Configurar Salário
-</flux:button>
+                <div x-show="openSourceMenu" x-cloak x-transition @click.outside="openSourceMenu = false"
+                     class="absolute left-0 z-30 mt-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden text-left">
+                    <p class="px-4 pt-4 pb-2 text-[9px] font-black uppercase tracking-widest text-zinc-400">Para que fonte de rendimento é este registo?</p>
+                    <div class="py-1">
+                        @foreach([
+                            ['event' => 'emprego', 'icon' => 'briefcase', 'label' => 'Salário / Contrato de Trabalho', 'color' => 'text-indigo-600'],
+                            ['event' => 'renda', 'icon' => 'home', 'label' => 'Renda Imobiliária', 'color' => 'text-emerald-600'],
+                            ['event' => 'freelance', 'icon' => 'computer-desktop', 'label' => 'Freelance / Trabalho Independente', 'color' => 'text-brand-600'],
+                            ['event' => 'investimento', 'icon' => 'chart-bar-square', 'label' => 'Rendimento de Investimento', 'color' => 'text-amber-600'],
+                            ['event' => 'reforma', 'icon' => 'building-library', 'label' => 'Reforma / Pensão', 'color' => 'text-sky-600'],
+                            ['event' => 'bolsa', 'icon' => 'academic-cap', 'label' => 'Bolsa de Estudo', 'color' => 'text-fuchsia-600'],
+                            ['event' => 'outro', 'icon' => 'ellipsis-horizontal-circle', 'label' => 'Outra Fonte', 'color' => 'text-zinc-500'],
+                        ] as $source)
+                            <button type="button"
+                                @click="openSourceMenu = false; $dispatch('modal-show-{{ $source['event'] }}')"
+                                class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                                <flux:icon name="{{ $source['icon'] }}" variant="micro" class="size-4 {{ $source['color'] }}" />
+                                <span class="text-xs font-bold text-zinc-700 dark:text-zinc-200">{{ $source['label'] }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
 
 <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
 
@@ -317,7 +342,7 @@
 
 
 {{-- ============================================================= --}}
-{{-- RENDIMENTOS FIXOS COM GESTÃO DE AUMENTO                        --}}
+{{-- RENDIMENTOS FIXOS · VISTA RÁPIDA (SÓ O REGISTO)                --}}
 {{-- ============================================================= --}}
 <div class="space-y-6">
 
@@ -340,101 +365,33 @@
         </flux:badge>
     </div>
 
-    {{-- Lista de Cards --}}
-    <div class="space-y-4">
+    {{-- Lista simples: só o registo, sem detalhes de contrato --}}
+    <div class="space-y-3">
       @forelse($fixedIncomes as $fixed)
-    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.2rem] p-0 group transition-all hover:border-emerald-500/40 shadow-sm relative overflow-hidden w-full">
-
-        {{-- Linha de Cor --}}
-        <div class="h-1.5 w-full {{ $fixed->source === 'emprego' ? 'bg-indigo-500' : ($fixed->source === 'imobiliario' ? 'bg-blue-500' : 'bg-emerald-500') }}"></div>
-
-        <div class="p-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
-                {{-- Esquerda --}}
-                <div class="flex items-start gap-5 flex-1">
-                    <div class="flex flex-col items-center justify-center size-14 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 shadow-inner shrink-0">
-                        <span class="text-[7px] font-black text-zinc-400 uppercase leading-none mb-1">DIA</span>
-                        <span class="text-xl font-black text-zinc-800 dark:text-white">{{ sprintf('%02d', $fixed->day_of_month) }}</span>
-                    </div>
-
-                    <div>
-                        <p class="text-sm font-black dark:text-white uppercase tracking-tight flex items-center gap-2">
-                            {{ $fixed->description }}
-                           @if($fixed->source === 'emprego')
-            <span class="text-[9px] bg-indigo-500/10 text-indigo-500 px-2 py-0.5 rounded-lg border border-indigo-500/20 font-black tracking-widest">
-                CONTRATO
-            </span>
-        @elseif($fixed->source === 'imobiliario')
-            <span class="text-[9px] bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-lg border border-blue-500/20 font-black tracking-widest">
-                RENDAS
-            </span>
-        @endif
-                        </p>
-                        <p class="text-[10px] text-zinc-500 uppercase font-black tracking-widest mt-1.5">
-                            Frequência: {{ ucfirst($fixed->frequency ?? 'mensal') }}
-                            @if($fixed->notes) · <span class="italic text-zinc-400">"{{ $fixed->notes }}"</span> @endif
-                        </p>
-                    </div>
+        <div class="flex items-center justify-between gap-4 p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm">
+            <div class="flex items-center gap-4 min-w-0">
+                <div class="flex flex-col items-center justify-center size-11 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 shrink-0">
+                    <span class="text-[7px] font-black text-zinc-400 uppercase leading-none mb-0.5">DIA</span>
+                    <span class="text-sm font-black text-zinc-800 dark:text-white">{{ sprintf('%02d', $fixed->day_of_month) }}</span>
                 </div>
-
-                {{-- Direita --}}
-                <div class="text-right">
-                    <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 italic">Disponível Líquido</p>
-                    <span class="text-3xl font-black text-emerald-600 tracking-tighter italic">
-                        {{ number_format($fixed->amount, 2, ',', ' ') }}€
-                    </span>
+                <div class="min-w-0">
+                    <p class="text-sm font-black dark:text-white uppercase tracking-tight truncate">{{ $fixed->description }}</p>
+                    <p class="text-[9px] text-zinc-400 uppercase font-black tracking-widest mt-0.5">Frequência: {{ ucfirst($fixed->frequency ?? 'mensal') }}</p>
+                    @include('livewire.partials.bank-source-badge', ['record' => $fixed])
                 </div>
             </div>
-
-            {{-- ── DETALHES DE CONTRATO (SE FOR EMPREGO) ── --}}
-            @if($fixed->source === 'emprego' && $fixed->metadata)
-                <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-zinc-100 dark:border-zinc-800 animate-in fade-in">
-                    <div class="p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                        <p class="text-[8px] font-black text-zinc-400 uppercase mb-1">Salário Bruto</p>
-                        <p class="text-xs font-black dark:text-white">{{ number_format($fixed->metadata['salary_gross'] ?? 0, 2, ',', ' ') }}€</p>
-                    </div>
-
-                    <div class="p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                        <p class="text-[8px] font-black text-red-400 uppercase mb-1">Descontos Est.</p>
-                        @php
-                            $ss = ($fixed->metadata['salary_gross'] ?? 0) * 0.11;
-                            $irs = ($fixed->amount - ($fixed->metadata['calculated_sa'] ?? 0)) - (($fixed->metadata['salary_gross'] ?? 0) - $ss);
-                        @endphp
-                        <p class="text-xs font-black text-red-500">-{{ number_format(abs($ss + $irs), 2, ',', ' ') }}€</p>
-                    </div>
-
-                    <div class="p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                        <p class="text-[8px] font-black text-emerald-500 uppercase mb-1">Subs. Almoço</p>
-                        <p class="text-xs font-black text-emerald-600">+{{ number_format($fixed->metadata['calculated_sa'] ?? 0, 2, ',', ' ') }}€</p>
-                    </div>
-
-                    <div class="flex items-center justify-end gap-2">
-                        <button wire:click="openRaiseModal({{ $fixed->id }})" class="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all">
-                            <flux:icon name="rocket-launch" variant="micro" class="size-4" />
-                        </button>
-                        <flux:button wire:click="editFixed({{ $fixed->id }})" variant="ghost" icon="pencil-square" size="xs" />
-                        <flux:button wire:click="deleteFixed({{ $fixed->id }})" wire:confirm="Apagar?" variant="ghost" icon="trash" size="xs" color="red" />
-                    </div>
-                </div>
-            @else
-                {{-- Outras fontes: Botões normais --}}
-                <div class="mt-4 flex items-center justify-end gap-2">
-                    <button wire:click="openRaiseModal({{ $fixed->id }})" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all font-black text-[9px] uppercase shadow-sm">
-                        <flux:icon name="rocket-launch" variant="micro" class="size-3" /> Aumento
-                    </button>
-                    <flux:button wire:click="editFixed({{ $fixed->id }})" variant="ghost" icon="pencil-square" size="xs" />
-                    <flux:button wire:click="deleteFixed({{ $fixed->id }})" variant="ghost" icon="trash" size="xs" color="red" />
-                </div>
-            @endif
+            <span class="text-lg font-black text-emerald-600 tracking-tighter italic shrink-0">
+                +{{ number_format($fixed->amount, 2, ',', ' ') }}€
+            </span>
         </div>
-    </div>
-@empty
+      @empty
             <div class="p-16 border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[2.5rem] text-center">
                 <flux:icon name="clock" class="size-8 text-zinc-200 dark:text-zinc-800 mx-auto mb-4" />
                 <p class="text-zinc-400 font-black uppercase text-[10px] tracking-widest">Sem salários configurados</p>
             </div>
         @endforelse
     </div>
+
 
 
 
@@ -517,6 +474,7 @@
                             <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">
                                 {{ $job->notes ?: 'Vínculo laboral ativo' }}
                             </p>
+                            <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $job])</div>
                         </div>
                     </div>
 
@@ -685,10 +643,21 @@
                     </div>
                     @endif
 
-                    {{-- DIA DE PAGAMENTO --}}
-                    <div class="relative w-40">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
-                        <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                    {{-- DIA DE PAGAMENTO + DESTINO --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-indigo-600 z-10">Onde entra este valor?</label>
+                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-indigo-500 transition-all">
+                                <option value="">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts as $acc)
+                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -779,6 +748,7 @@
                                     Registado em: <span class="text-zinc-600 dark:text-zinc-300">{{ $fixed->created_at->translatedFormat('d M, Y') }}</span>
                                     @if($fixed->notes) · <span class="italic opacity-70">"{{ $fixed->notes }}"</span> @endif
                                 </p>
+                                <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $fixed])</div>
                             </div>
                         </div>
 
@@ -897,6 +867,7 @@
                                 <p class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest mt-1">
                                     {{ $fixed->metadata['freelance_activity'] ?? 'Atividade independente' }}
                                 </p>
+                                <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $fixed])</div>
                             </div>
                         </div>
 
@@ -999,6 +970,7 @@
                                     {{ ucfirst($fixed->metadata['investment_type'] ?? 'dividendos') }}
                                     @if($fixed->metadata['investment_name'] ?? null) · <span class="italic text-zinc-400">"{{ $fixed->metadata['investment_name'] }}"</span> @endif
                                 </p>
+                                <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $fixed])</div>
                             </div>
                         </div>
 
@@ -1097,6 +1069,7 @@
                                     {{ ucfirst($fixed->metadata['pension_type'] ?? 'velhice') }}
                                     @if($fixed->metadata['pension_entity'] ?? null) · <span class="italic text-zinc-400">{{ $fixed->metadata['pension_entity'] }}</span> @endif
                                 </p>
+                                <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $fixed])</div>
                             </div>
                         </div>
 
@@ -1196,6 +1169,7 @@
                                     @if($fixed->metadata['scholarship_entity'] ?? null) · <span class="italic text-zinc-400">{{ $fixed->metadata['scholarship_entity'] }}</span> @endif
                                     @if($fixed->metadata['scholarship_end_date'] ?? null) · <span class="text-zinc-400">até {{ \Carbon\Carbon::parse($fixed->metadata['scholarship_end_date'])->format('d/m/Y') }}</span> @endif
                                 </p>
+                                <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $fixed])</div>
                             </div>
                         </div>
 
@@ -1282,6 +1256,7 @@
                                 <p class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest mt-1">
                                     Frequência: {{ ucfirst($fixed->frequency ?? 'mensal') }}
                                 </p>
+                                <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $fixed])</div>
                             </div>
                         </div>
 
@@ -1390,10 +1365,21 @@
                         </p>
                     </div>
 
-                    {{-- DIA DE RECOLHA --}}
-                    <div class="relative w-40">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia da Cobrança</label>
-                        <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                    {{-- DIA DE RECOLHA + DESTINO --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia da Cobrança</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-blue-600 z-10">Onde entra este valor?</label>
+                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-blue-500 transition-all">
+                                <option value="">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts as $acc)
+                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -1500,9 +1486,20 @@
                         </p>
                     </div>
 
-                    <div class="relative w-40">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
-                        <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-sky-600 z-10">Onde entra este valor?</label>
+                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-sky-500 transition-all">
+                                <option value="">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts as $acc)
+                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -1602,9 +1599,20 @@
                         </p>
                     </div>
 
-                    <div class="relative w-40">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
-                        <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-violet-600 z-10">Onde entra este valor?</label>
+                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-violet-500 transition-all">
+                                <option value="">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts as $acc)
+                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -1684,9 +1692,20 @@
                         </div>
                     </div>
 
-                    <div class="relative w-40">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
-                        <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-rose-600 z-10">Onde entra este valor?</label>
+                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-rose-500 transition-all">
+                                <option value="">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts as $acc)
+                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -1781,6 +1800,16 @@
                             <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-center text-zinc-900 dark:text-white">
                         </div>
                     </div>
+
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-amber-600 z-10">Onde entra este valor?</label>
+                        <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-amber-500 transition-all">
+                            <option value="">💵 Dinheiro Físico</option>
+                            @foreach($this->bankAccounts as $acc)
+                                <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
@@ -1849,9 +1878,20 @@
                         </div>
                     </div>
 
-                    <div class="relative w-40">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
-                        <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-600 z-10">Onde entra este valor?</label>
+                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-zinc-500 transition-all">
+                                <option value="">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts as $acc)
+                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -2098,15 +2138,20 @@
                                                 ~{{ $extra->tax_estimate }}% imposto
                                             </p>
                                         @endif
+
+                                        <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $extra])</div>
                                     </td>
 
                                     <td class="p-5">
                                         @php
                                             $sourceMap = [
-                                                'emprego'     => ['icon' => '💼', 'color' => 'text-blue-600'],
-                                                'freelance'   => ['icon' => '💻', 'color' => 'text-purple-600'],
-                                                'investimento'=> ['icon' => '📈', 'color' => 'text-emerald-600'],
-                                                'outro'       => ['icon' => '✨', 'color' => 'text-zinc-500'],
+                                                'emprego'      => ['icon' => '💼', 'color' => 'text-blue-600'],
+                                                'imobiliario'  => ['icon' => '🏠', 'color' => 'text-sky-600'],
+                                                'freelance'    => ['icon' => '💻', 'color' => 'text-purple-600'],
+                                                'investimento' => ['icon' => '📈', 'color' => 'text-emerald-600'],
+                                                'reforma'      => ['icon' => '🏦', 'color' => 'text-indigo-600'],
+                                                'bolsa'        => ['icon' => '🎓', 'color' => 'text-fuchsia-600'],
+                                                'outro'        => ['icon' => '✨', 'color' => 'text-zinc-500'],
                                             ];
                                         @endphp
 
@@ -2166,272 +2211,130 @@
 <div
     x-data="{
         open: false,
-        show() {
-            requestAnimationFrame(() => {
-                this.open = true;
-                document.documentElement.classList.add('overflow-hidden');
-            });
-        },
-        close() {
-            this.open = false;
-            document.documentElement.classList.remove('overflow-hidden');
-        }
+        show() { this.open = true; document.documentElement.classList.add('overflow-hidden'); },
+        close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); }
     }"
     x-on:modal-show-receita-extra.window="show()"
     x-on:modal-close-receita-extra.window="close()"
     x-on:keydown.escape.window="close()"
 >
+    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
 
-    {{-- BACKDROP — instantâneo e suave --}}
-    <div
-        x-show="open"
-        x-cloak
-        x-transition.opacity.duration.60ms
-        @click="close()"
-        class="fixed inset-0 z-50 bg-zinc-950/70 backdrop-blur-md will-change-opacity will-change-transform"
-    ></div>
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
 
-    {{-- WRAPPER --}}
-    <div
-        x-show="open"
-        x-cloak
-        @click.self="close()"
-        class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
-    >
-
-        {{-- PAINEL — animação POP ultra fluida --}}
-        <div
-            x-show="open"
-            x-transition:enter="transition ease-out duration-90 transform-gpu"
-            x-transition:enter-start="opacity-0 scale-[0.92] translate-y-2"
-            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-            x-transition:leave="transition ease-in duration-70 transform-gpu"
-            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-            x-transition:leave-end="opacity-0 scale-[0.92] translate-y-2"
-            class="relative z-10 w-full max-w-2xl rounded-[2rem] shadow-xl overflow-hidden
-                   bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/20
-                   will-change-transform will-change-opacity"
-            @click.stop
-        >
-
-            <form wire:submit.prevent="saveExtra" class="flex max-h-[86vh] flex-col" autocomplete="off">
-
+            <form wire:submit.prevent="saveExtra" class="flex flex-col" autocomplete="off">
                 {{-- HEADER --}}
-                <div class="shrink-0 p-6 pb-4 flex items-center gap-4 border-b border-white/10 bg-white/10 backdrop-blur-sm">
-                    <div class="p-3 bg-emerald-600 rounded-2xl text-white shadow-md shadow-emerald-500/20
-                                transition-transform duration-150 group-hover:scale-105">
-                        <flux:icon name="sparkles" class="size-5" />
+                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                    <div class="p-3 bg-emerald-600 rounded-2xl text-white shadow-lg">
+                        <flux:icon name="sparkles" class="size-6" />
                     </div>
-
-                    <div class="flex-1 min-w-0">
-                        <h2 class="font-black uppercase italic tracking-tight leading-none text-white">
-                            Receita Extra
-                        </h2>
-                        <p class="text-[10px] text-emerald-300 font-black uppercase tracking-widest mt-1.5 italic">
-                            Regista uma entrada pontual ou recorrente
-                        </p>
+                    <div class="flex-1">
+                        <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white leading-none">Receita Extra</h2>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Regista uma entrada pontual ou recorrente</p>
                     </div>
-
-                    <button
-                        type="button"
-                        @click="close(); $wire.closeExtraModal()"
-                         class="rounded-full p-2 hover:bg-white/10 text-zinc-300 hover:text-white transition-all">
-                        <flux:icon name="x-mark" class="size-5" />
-                    </button>
+                    <button type="button" @click="close(); $wire.closeExtraModal()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
                 </div>
 
-                {{-- BODY — animações internas + scroll suave --}}
-                <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6
-                            transition-all duration-150 ease-out will-change-scroll">
+                {{-- BODY --}}
+                <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
 
-                    {{-- Descrição --}}
-                    <div class="relative transition-all duration-150 ease-out">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
-                                       text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
-                            Origem do Ganho
-                        </label>
-                        <input
-                            type="text"
-                            wire:model="description"
-                            placeholder="Ex: Freelance, Venda, Bónus..."
-                            class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
-                                   text-sm font-bold text-white placeholder-white/40 outline-none
-                                   transition-all duration-150 ease-out
-                                   focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/20"
-                        >
+                    {{-- DESCRIÇÃO --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">Origem do Ganho</label>
+                        <input type="text" wire:model="description" placeholder="Ex: Freelance, Venda, Bónus..." class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
                     </div>
 
-                    {{-- Valor + Data --}}
+                    {{-- VALOR + MOEDA + DATA --}}
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-                        <div class="relative transition-all duration-150 ease-out">
-                            <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
-                                           text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
-                                Valor ({{ strtoupper($currency) }})
-                            </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                wire:model="amount"
-                                placeholder="0,00"
-                                class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
-                                       text-lg font-black text-emerald-400 placeholder-white/40 outline-none
-                                       transition-all duration-150 ease-out
-                                       focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/20"
-                            >
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Valor ({{ strtoupper($currency) }})</label>
+                            <input type="number" step="0.01" wire:model="amount" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
                         </div>
-
-                        <div class="relative transition-all duration-150 ease-out">
-                            <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
-                                           text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
-                                Moeda
-                            </label>
-                            <select
-                                wire:model="currency"
-                                class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
-                                       text-sm font-bold text-white outline-none appearance-none
-                                       transition-all duration-150 ease-out
-                                       focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/20"
-                            >
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Moeda</label>
+                            <select wire:model="currency" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
                                 @foreach($currencyOptions as $code => $label)
                                     <option value="{{ $code }}">{{ $code }}</option>
                                 @endforeach
                             </select>
                         </div>
-
-                        <div class="relative transition-all duration-150 ease-out">
-                            <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
-                                           text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
-                                Data
-                            </label>
-                            <input
-                                type="date"
-                                wire:model="received_at"
-                                class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
-                                       text-sm font-bold text-white outline-none
-                                       transition-all duration-150 ease-out
-                                       focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/20"
-                            >
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Data</label>
+                            <input type="date" wire:model="received_at" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none">
                         </div>
-
                     </div>
 
-                    {{-- Fonte + Frequência --}}
+                    {{-- FONTE + FREQUÊNCIA --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                        <div class="relative transition-all duration-150 ease-out">
-                            <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
-                                           text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
-                                Fonte
-                            </label>
-                            <select
-                                wire:model="source"
-                                class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
-                                       text-sm font-bold text-white outline-none appearance-none
-                                       transition-all duration-150 ease-out
-                                       focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/20"
-                            >
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">Fonte</label>
+                            <select wire:model="source" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
                                 <option value="emprego">💼 Emprego</option>
+                                <option value="imobiliario">🏠 Renda Imobiliária</option>
                                 <option value="freelance">💻 Freelance</option>
                                 <option value="investimento">📈 Investimento</option>
+                                <option value="reforma">🏦 Reforma / Pensão</option>
+                                <option value="bolsa">🎓 Bolsa de Estudo</option>
                                 <option value="outro">✨ Outro</option>
                             </select>
                         </div>
-
-                        <div class="relative transition-all duration-150 ease-out">
-                            <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
-                                           text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
-                                Frequência
-                            </label>
-                            <select
-                                wire:model="frequency"
-                                class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
-                                       text-sm font-bold text-white outline-none appearance-none
-                                       transition-all duration-150 ease-out
-                                       focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/20"
-                            >
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-zinc-400 z-10">Frequência</label>
+                            <select wire:model="frequency" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
                                 <option value="pontual">📌 Pontual</option>
                                 <option value="semanal">📅 Semanal</option>
                                 <option value="mensal">🔁 Mensal</option>
                                 <option value="anual">📆 Anual</option>
                             </select>
                         </div>
-
                     </div>
 
-                    {{-- Imposto estimado --}}
-                    <div class="relative transition-all duration-150 ease-out">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
-                                       text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
-                            Imposto Estimado (%)
-                        </label>
+                    {{-- IMPOSTO ESTIMADO --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-amber-600 z-10">Imposto Estimado (%)</label>
                         <div class="relative">
-                            <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                max="100"
-                                wire:model="tax_estimate"
-                                placeholder="Ex: 25 (IRS, IVA...)"
-                                class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
-                                       text-sm font-bold text-white placeholder-white/40 outline-none
-                                       transition-all duration-150 ease-out
-                                       focus:ring-2 focus:ring-amber-500/40 focus:bg-white/20"
-                            >
-                            <span class="absolute right-5 top-1/2 -translate-y-1/2 text-emerald-300 font-black text-sm">%</span>
+                            <input type="number" step="0.1" min="0" max="100" wire:model="tax_estimate" placeholder="Ex: 25 (IRS, IVA...)" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-amber-500 transition-all">
+                            <span class="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 font-black text-sm">%</span>
                         </div>
-
                         @if($tax_estimate && $amount)
-                            <p class="text-[10px] text-amber-400 font-bold mt-1.5 transition-all duration-150 ease-out">
+                            <p class="text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-1.5">
                                 Imposto estimado: ~{{ number_format($amount * $tax_estimate / 100, 2, ',', '.') }} {{ strtoupper($currency) }}
                                 · Líquido: ~{{ number_format($amount - ($amount * $tax_estimate / 100), 2, ',', '.') }} {{ strtoupper($currency) }}
                             </p>
                         @endif
                     </div>
 
-                    {{-- Notas --}}
-                    <div class="relative transition-all duration-150 ease-out">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm
-                                       text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
-                            Notas (opcional)
-                        </label>
-                        <textarea
-                            wire:model="notes"
-                            rows="2"
-                            placeholder="Observações, cliente, referência..."
-                            class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
-                                   text-sm font-medium text-white placeholder-white/40 resize-none outline-none
-                                   transition-all duration-150 ease-out
-                                   focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/20"
-                        ></textarea>
+                    {{-- NOTAS --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-zinc-400 z-10">Notas (opcional)</label>
+                        <textarea wire:model="notes" rows="2" placeholder="Observações, cliente, referência..." class="w-full bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 py-4 text-sm font-medium text-zinc-900 dark:text-white resize-none outline-none focus:border-emerald-500 transition-all"></textarea>
                     </div>
 
+                    {{-- DESTINO DO DINHEIRO --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">Onde entra este valor?</label>
+                        <select wire:model="bankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-emerald-500 transition-all">
+                            <option value="">💵 Dinheiro Físico</option>
+                            @foreach($this->bankAccounts as $acc)
+                                <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 {{-- FOOTER --}}
-                <div class="shrink-0 p-6 pt-4 flex flex-col sm:flex-row gap-3 border-t border-white/10 bg-white/10 backdrop-blur-sm">
-                    <button
-                        type="button"
-                        @click="close(); $wire.closeExtraModal()"
-                        class="w-full h-14 rounded-2xl text-zinc-300 hover:text-white hover:bg-white/10
-                               font-bold uppercase text-xs tracking-widest transition-all duration-150 active:scale-95"
-                    >
-                        Cancelar
-                    </button>
-
+                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close(); $wire.closeExtraModal()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
                     <button
                         wire:click="saveExtra"
                         @click="close()"
                         wire:loading.attr="disabled"
                         wire:target="saveExtra"
-                        class="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white
-                               font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20
-                               transition-all duration-150 active:scale-95 disabled:opacity-60"
-                    >
-                        Confirmar Ganho
+                        class="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20 transition-all disabled:opacity-60">
+                        Confirmar Ganho ✨
                     </button>
                 </div>
-
             </form>
         </div>
     </div>
@@ -2633,6 +2536,23 @@
                             </select>
                         </div>
 
+                    </div>
+
+                    {{-- Onde entra este valor --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                            Onde entra este valor?
+                        </label>
+                        <select
+                            wire:model="recBankAccountId"
+                            class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
+                                   text-sm font-bold text-white outline-none transition-all focus:ring-2 focus:ring-emerald-500/30 appearance-none"
+                        >
+                            <option value="" class="bg-white text-zinc-900">💵 Dinheiro Físico</option>
+                            @foreach($this->bankAccounts as $acc)
+                                <option value="{{ $acc->id }}" class="bg-white text-zinc-900">🏦 {{ $acc->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     {{-- Imposto estimado --}}

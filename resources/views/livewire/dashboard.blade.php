@@ -3,6 +3,13 @@
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Garante que os modais (não-flyout) desta página ficam sempre centrados no ecrã */
+        .dashboard-page [data-flux-modal] > dialog:not([data-flux-flyout]) {
+            position: fixed !important;
+            inset: 0 !important;
+            margin: auto !important;
+        }
     </style>
 
     @php
@@ -415,7 +422,7 @@
             <span class="hidden sm:inline">Despesas</span>
         </a>
 
-        <a href="{{ route('hub.incomes') }}" wire:navigate
+        <a href="{{ route('incomes.index') }}" wire:navigate
             class="flex items-center justify-center gap-2 px-3 sm:px-5 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 font-black uppercase text-[10px] tracking-widest border border-emerald-100 dark:border-emerald-900/50 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
             <flux:icon name="plus-circle" variant="micro" class="size-4 shrink-0" />
             <span class="hidden sm:inline">Receitas</span>
@@ -613,7 +620,9 @@
             <p class="text-[10px] text-zinc-400 mt-2 font-medium">Baseado no teu rácio de poupança e cumprimento de orçamentos.</p>
 
             <div class="mt-6 w-full px-4">
-                <flux:button variant="ghost" size="sm" class="w-full rounded-xl text-[10px] font-black uppercase tracking-widest">Ver análise detalhada</flux:button>
+                <a href="{{ route('hub.budget') }}" wire:navigate>
+                    <flux:button variant="ghost" size="sm" class="w-full rounded-xl text-[10px] font-black uppercase tracking-widest">Ver análise detalhada</flux:button>
+                </a>
             </div>
         </div>
     </div>
@@ -727,7 +736,13 @@
             <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Saúde Financeira</p>
             <div class="flex items-baseline gap-2">
                 <h3 class="text-2xl font-black text-brand-600 tracking-tighter">{{ $overallScore }}%</h3>
-                <span class="text-[9px] font-bold text-emerald-500">▲ 2%</span>
+                @if($overallScoreTrend > 0)
+                    <span class="text-[9px] font-bold text-emerald-500">▲ {{ $overallScoreTrend }}%</span>
+                @elseif($overallScoreTrend < 0)
+                    <span class="text-[9px] font-bold text-red-500">▼ {{ abs($overallScoreTrend) }}%</span>
+                @else
+                    <span class="text-[9px] font-bold text-zinc-400">— 0%</span>
+                @endif
             </div>
             <div class="mt-2 h-1 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                 <div class="h-full bg-brand-500" style="width: {{ $overallScore }}%"></div>
@@ -775,108 +790,7 @@
     </div>
 
 
-    {{-- 7. GRÁFICOS E ORÇAMENTOS (VISUAL ANALYTICS) --}}
-    <div class="grid gap-6 lg:grid-cols-5">
 
-        {{-- GRÁFICO: FLUXO DE CAIXA (6 MESES) --}}
-        <div class="glass-card p-6 lg:col-span-3 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden group">
-            <div class="flex items-center justify-between mb-10">
-                <div>
-                    <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1">Tendência de Fluxo</h2>
-                    <p class="text-lg font-black dark:text-white uppercase italic tracking-tighter">Análise Semestral de Caixa</p>
-                </div>
-                {{-- Legenda Discreta --}}
-                <div class="flex gap-4">
-                    <div class="flex items-center gap-2">
-                        <div class="size-2 rounded-full bg-emerald-500"></div>
-                        <span class="text-[9px] font-black uppercase text-zinc-500">Ganhos</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="size-2 rounded-full bg-brand-500"></div>
-                        <span class="text-[9px] font-black uppercase text-zinc-500">Gastos</span>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Container das Barras --}}
-            <div class="flex h-64 items-end gap-3 sm:gap-6 px-2 relative z-10">
-                @foreach ($last6 as $m)
-                    @php
-                        $hE = ($m['earned'] / ($chartMax ?: 1)) * 100;
-                        $hS = ($m['spent'] / ($chartMax ?: 1)) * 100;
-                    @endphp
-                    <div class="flex flex-1 flex-col items-center gap-3 h-full justify-end group/bar">
-                        <div class="flex items-end gap-1.5 w-full h-full pb-2">
-                            {{-- Barra Ganhos --}}
-                            <div class="flex-1 bg-emerald-500/20 hover:bg-emerald-500 rounded-t-lg transition-all duration-500 cursor-help relative"
-                                 style="height: {{ max(4, $hE) }}%"
-                                 title="Ganhos: {{ $currentWs->money($m['earned']) }}">
-                            </div>
-                            {{-- Barra Gastos --}}
-                            <div class="flex-1 bg-brand-500/20 hover:bg-brand-500 rounded-t-lg transition-all duration-500 cursor-help relative"
-                                 style="height: {{ max(4, $hS) }}%"
-                                 title="Gastos: {{ $currentWs->money($m['spent']) }}">
-                            </div>
-                        </div>
-                        <span class="text-[10px] font-black text-zinc-400 uppercase tracking-widest group-hover/bar:text-brand-500 transition-colors">{{ $m['label'] }}</span>
-                    </div>
-                @endforeach
-            </div>
-
-            {{-- Linhas de Grelha de Fundo Subtis --}}
-            <div class="absolute inset-0 flex flex-col justify-between p-6 pointer-events-none opacity-20 dark:opacity-10">
-                @foreach(range(1, 4) as $i) <div class="w-full border-t border-dashed border-zinc-300 dark:border-zinc-700"></div> @endforeach
-                <div class="w-full"></div>
-            </div>
-        </div>
-
-        {{-- WIDGET: ESTADO DOS ORÇAMENTOS (PROGRESS BARS) --}}
-        <div class="glass-card p-6 lg:col-span-2 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col group">
-            <div class="mb-8">
-                <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1">Limites por Categoria</h2>
-                <p class="text-lg font-black dark:text-white uppercase italic tracking-tighter">Performance de Gastos</p>
-            </div>
-
-            <div class="space-y-6 overflow-y-auto flex-1 pr-2 custom-scrollbar">
-                @forelse ($byCategory as $cat)
-                    <div class="group/item">
-                        <div class="flex justify-between items-end mb-2">
-                            <div class="flex flex-col">
-                                <span class="text-xs font-black uppercase tracking-tight text-zinc-800 dark:text-zinc-200 group-hover/item:text-brand-500 transition-colors">{{ $cat->name }}</span>
-                                <span class="text-[9px] font-bold {{ $cat->over ? 'text-red-500' : 'text-zinc-400' }} uppercase italic">
-                                    {{ $cat->over ? 'Orçamento Excedido' : 'Dentro da Meta' }}
-                                </span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-xs font-black {{ $cat->over ? 'text-red-500' : 'text-zinc-600 dark:text-zinc-300' }}">
-                                    {{ $currentWs->money($cat->total) }}
-                                </span>
-                                <span class="text-[9px] font-bold text-zinc-400 uppercase">/ {{ $currentWs->money($cat->budget) }}</span>
-                            </div>
-                        </div>
-
-                        {{-- Barra Neon Subtil --}}
-                        <div class="h-2 w-full bg-zinc-100 dark:bg-zinc-800/50 rounded-full overflow-hidden border border-zinc-50 dark:border-zinc-800">
-                            <div class="h-full transition-all duration-1000 ease-out {{ $cat->over ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)]' : 'bg-brand-500 shadow-[0_0_10px_rgba(59,130,246,0.4)]' }}"
-                                 style="width: {{ min($cat->percentage, 100) }}%">
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="flex flex-col items-center justify-center py-20 text-center">
-                        <flux:icon name="document-magnifying-glass" class="size-10 text-zinc-200 dark:text-zinc-800 mb-4" />
-                        <p class="text-zinc-400 text-[10px] font-black uppercase tracking-widest italic">Sem orçamentos ativos.</p>
-                    </div>
-                @endforelse
-            </div>
-
-            <div class="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                <flux:button href="{{ route('categories') }}" variant="ghost" size="sm" class="w-full rounded-xl text-[10px] font-black uppercase tracking-widest text-zinc-500" wire:navigate>
-                    Configurar Orçamentos
-                </flux:button>
-            </div>
-        </div>
-    </div>
 
     {{-- 8. MOVIMENTOS RECENTES (ESTILO TIMELINE) --}}
     <div class="glass-card bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden group">
@@ -1122,12 +1036,12 @@
                 <div class="size-20 bg-zinc-900 rounded-[2rem] flex items-center justify-center mb-6 border border-zinc-800 shadow-2xl animate-bounce">
                     <span class="text-4xl text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">⭐</span>
                 </div>
-                <h3 class="text-2xl font-black uppercase italic tracking-tighter text-white">Protocolo Restrito</h3>
-                <p class="text-zinc-500 text-xs font-bold uppercase tracking-[0.3em] mt-2">Requer Plano Pro</p>
+                <h3 class="text-2xl font-black uppercase italic tracking-tighter text-white">Resumo Restrito</h3>
+                <p class="text-zinc-500 text-xs font-bold uppercase tracking-[0.3em] mt-2">Requer Plano Pro ou Business</p>
 
                 <a href="{{ route('hub.pricing') }}" wire:navigate
                    class="mt-10 flex items-center justify-center bg-white text-zinc-950 px-12 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-zinc-200 transition-all hover:scale-105 active:scale-95">
-                   Desbloquear Terminal ⭐
+                   Desbloquear Resumo ⭐
                 </a>
             </div>
         @endif
@@ -1139,12 +1053,12 @@
             <div class="flex flex-col md:flex-row justify-between items-center gap-8 mb-14 pb-10 border-b border-white/5">
                 <div class="flex items-center gap-6">
                     <div class="p-5 bg-zinc-900 rounded-3xl border border-zinc-800 shadow-inner relative">
-                        <flux:icon name="command-line" variant="solid" class="size-8 text-emerald-500" />
+                        <flux:icon name="user-circle" variant="solid" class="size-8 text-emerald-500" />
                         <div class="absolute -top-1 -right-1 size-3 bg-emerald-500 rounded-full animate-ping"></div>
                     </div>
                     <div>
-                        <h2 class="text-3xl font-black uppercase italic tracking-tighter dark:text-white leading-none">Daily Ops Report</h2>
-                        <p class="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 mt-2">Log de Atividade · Ciclo 24H Ativo</p>
+                        <h2 class="text-3xl font-black uppercase italic tracking-tighter dark:text-white leading-none">Resumo da Conta</h2>
+                        <p class="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 mt-2">Visão 360º · {{ $currentWs->name }}</p>
                     </div>
                 </div>
 
@@ -1163,84 +1077,90 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
 
-                {{-- COLUNA 1: FINANÇAS (4/12) --}}
+                {{-- COLUNA 1: VISÃO FINANCEIRA (4/12) --}}
                 <div class="lg:col-span-4 space-y-8">
                     <h4 class="text-[11px] font-black uppercase text-zinc-500 tracking-[0.3em] flex items-center gap-3">
-                        <span class="size-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></span> 01. Financial Flow
+                        <span class="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span> Visão Financeira
                     </h4>
 
                     <div class="space-y-4">
-                        @forelse($report['expenses'] ?? [] as $exp)
-                            <div class="flex justify-between items-center bg-white/2 p-5 rounded-[1.5rem] border border-white/5 group/item hover:border-zinc-700 transition-colors">
-                                <span class="text-xs font-bold text-zinc-400 truncate pr-4">{{ $exp->description }}</span>
-                                <span class="text-sm font-black text-white">-{{ number_format($exp->amount, 2) }}€</span>
-                            </div>
-                        @empty
-                            <div class="py-10 text-center border border-dashed border-white/5 rounded-[2rem] bg-white/2">
-                                <p class="text-[10px] text-zinc-600 font-black uppercase tracking-widest italic">Carteira Imaculada</p>
-                                <p class="text-[8px] text-zinc-700 font-bold uppercase mt-1">Nenhum débito registado</p>
-                            </div>
-                        @endforelse
+                        <div class="flex justify-between items-center bg-white/2 p-5 rounded-[1.5rem] border border-white/5">
+                            <span class="text-xs font-bold text-zinc-400">Saldo Líquido (Mês)</span>
+                            <span class="text-sm font-black {{ $netBalance >= 0 ? 'text-emerald-400' : 'text-red-400' }}">{{ $currentWs->money($netBalance) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-white/2 p-5 rounded-[1.5rem] border border-white/5">
+                            <span class="text-xs font-bold text-zinc-400">Património Total</span>
+                            <span class="text-sm font-black text-white">{{ $currentWs->money($totalPatrimony) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-white/2 p-5 rounded-[1.5rem] border border-white/5">
+                            <span class="text-xs font-bold text-zinc-400">Poupança Total</span>
+                            <span class="text-sm font-black text-emerald-400">{{ $currentWs->money($totalSaved) }}</span>
+                        </div>
 
-                        @if(($report['spend_total'] ?? 0) > 0)
+                        @if($topExpenseCategory)
                             <div class="pt-6 mt-6 border-t border-white/5 flex justify-between items-center text-white px-2">
-                                <span class="text-[10px] font-black uppercase opacity-40 tracking-widest">Total Outflow</span>
-                                <span class="text-xl font-black italic tracking-tighter">{{ number_format($report['spend_total'], 2) }}€</span>
+                                <span class="text-[10px] font-black uppercase opacity-40 tracking-widest">Maior Gasto: {{ $topExpenseCategory['name'] }}</span>
+                                <span class="text-xl font-black italic tracking-tighter">{{ $currentWs->money($topExpenseCategory['total']) }}</span>
                             </div>
                         @endif
                     </div>
                 </div>
 
-                {{-- COLUNA 2: PERFORMANCE HUB (5/12) --}}
+                {{-- COLUNA 2: CONTAS & COMPROMISSOS (5/12) --}}
                 <div class="lg:col-span-5 space-y-8 bg-white/2 p-8 rounded-[3rem] border border-white/5 shadow-inner backdrop-blur-xl">
                     <h4 class="text-[11px] font-black uppercase text-zinc-500 tracking-[0.3em] flex items-center gap-3">
-                        <span class="size-2 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316]"></span> 02. Biometric Data
+                        <span class="size-2 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></span> Contas & Compromissos
                     </h4>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        @forelse($report['fitness'] ?? [] as $fit)
-                            <div class="p-5 bg-zinc-950 border border-white/5 rounded-[1.8rem] group/fit hover:border-orange-500/40 transition-all">
-                                <div class="flex items-center gap-4 mb-4">
-                                    <span class="text-3xl transition-transform group-hover/fit:scale-110">{{ $fit->type_icon ?? '🏃' }}</span>
-                                    <div>
-                                        <p class="text-[10px] font-black text-zinc-500 uppercase leading-none">{{ $fit->type }}</p>
-                                        <p class="text-xs font-black text-white mt-1 uppercase">Valid</p>
+                    <div class="space-y-3">
+                        @forelse($topBankAccounts as $acc)
+                            <div class="flex items-center justify-between p-4 bg-zinc-950 border border-white/5 rounded-[1.5rem]">
+                                <div class="flex items-center gap-3">
+                                    <div class="size-9 rounded-xl flex items-center justify-center" style="background-color: {{ $acc['color'] }}20">
+                                        <flux:icon name="{{ $acc['icon'] }}" class="size-4" style="color: {{ $acc['color'] }}" />
                                     </div>
+                                    <span class="text-xs font-bold text-zinc-300 uppercase tracking-tight">{{ $acc['name'] }}</span>
                                 </div>
-                                <div class="flex justify-between items-end">
-                                    <p class="text-2xl font-black text-orange-500 tracking-tighter leading-none">{{ $fit->duration_minutes }}<small class="text-[10px] ml-1 uppercase opacity-60">min</small></p>
-                                    <p class="text-sm font-black text-zinc-300 tracking-tighter leading-none">{{ $fit->distance_km ?? '--' }}<small class="text-[10px] ml-1 opacity-60">km</small></p>
-                                </div>
+                                <span class="text-sm font-black text-white">{{ $currentWs->money($acc['balance']) }}</span>
                             </div>
                         @empty
-                            <div class="col-span-2 py-12 text-center border border-dashed border-white/5 rounded-[2.5rem]">
-                                <p class="text-[10px] text-zinc-600 font-black uppercase tracking-widest italic">Repouso Sistémico</p>
-                                <p class="text-[8px] text-zinc-700 font-bold uppercase mt-1">Nenhum treino detectado hoje</p>
+                            <div class="py-8 text-center border border-dashed border-white/5 rounded-[2rem]">
+                                <p class="text-[10px] text-zinc-600 font-black uppercase tracking-widest italic">Sem contas registadas</p>
                             </div>
                         @endforelse
                     </div>
 
-                    {{-- Barra de Progresso Físico --}}
-                    @if(($report['fitness_min'] ?? 0) > 0)
-                        <div class="pt-4 border-t border-white/5">
-                            <div class="flex justify-between items-center mb-2 px-1">
-                                <span class="text-[9px] font-black uppercase text-zinc-500 tracking-widest">Active Time Today</span>
-                                <span class="text-[9px] font-black text-orange-500 uppercase">{{ $report['fitness_min'] }} / 60 min</span>
-                            </div>
-                            <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                <div class="h-full bg-orange-500 rounded-full shadow-[0_0_10px_#f97316] transition-all duration-1000" style="width: {{ min(($report['fitness_min'] / 60) * 100, 100) }}%"></div>
-                            </div>
+                    <div class="pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="p-4 bg-zinc-950 border border-white/5 rounded-[1.5rem]">
+                            <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Assinaturas/Mês</p>
+                            <p class="text-sm font-black text-zinc-200">{{ $currentWs->money($subscriptionsMonthlyCost) }}</p>
                         </div>
-                    @endif
+                        <div class="p-4 bg-zinc-950 border border-white/5 rounded-[1.5rem]">
+                            <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">A Pagar</p>
+                            <p class="text-sm font-black text-orange-400">{{ $currentWs->money($pendingDebtsToPay) }}</p>
+                        </div>
+                        <div class="p-4 bg-zinc-950 border border-white/5 rounded-[1.5rem]">
+                            <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">A Receber</p>
+                            <p class="text-sm font-black text-emerald-400">{{ $currentWs->money($pendingDebtsToReceive) }}</p>
+                        </div>
+                    </div>
                 </div>
 
-                {{-- COLUNA 3: FOCO & SOCIAL (3/12) --}}
+                {{-- COLUNA 3: SAÚDE & ATIVIDADE (3/12) --}}
                 <div class="lg:col-span-3 space-y-8">
                     <h4 class="text-[11px] font-black uppercase text-zinc-500 tracking-[0.3em] flex items-center gap-3">
-                        <span class="size-2 rounded-full bg-indigo-500 shadow-[0_0_8px_#6366f1]"></span> 03. Core Stats
+                        <span class="size-2 rounded-full bg-indigo-500 shadow-[0_0_8px_#6366f1]"></span> Saúde & Atividade
                     </h4>
 
                     <div class="space-y-6">
+                        <div class="flex items-center justify-between p-5 bg-white/2 rounded-[1.5rem] border border-white/5">
+                            <div class="flex items-center gap-4">
+                                <flux:icon name="heart" variant="solid" class="size-5 text-indigo-400" />
+                                <span class="text-xs font-bold text-zinc-300 uppercase tracking-tight">Saúde Financeira</span>
+                            </div>
+                            <span class="text-lg font-black text-white italic">{{ $overallScore }}%</span>
+                        </div>
+
                         <div class="flex items-center justify-between p-5 bg-white/2 rounded-[1.5rem] border border-white/5">
                             <div class="flex items-center gap-4">
                                 <flux:icon name="check-badge" variant="solid" class="size-5 text-indigo-400" />
@@ -1262,10 +1182,12 @@
                             <p class="text-xs font-medium text-zinc-300 leading-relaxed italic">
                                 @if(!$isPremium)
                                     "..."
-                                @elseif(($report['xp_today'] ?? 0) > 50)
-                                    "A tua performance diária é superior à média do grupo. O teu ganho de XP hoje acelerou a tua subida de nível em 22%."
+                                @elseif($projectedBalance < 0)
+                                    "Atenção: a projeção de fim de mês está negativa em {{ $currentWs->money(abs($projectedBalance)) }}. Considera rever os gastos."
+                                @elseif($overallScore >= 70)
+                                    "Excelente gestão este mês. A tua saúde financeira está em {{ $overallScore }}%, acima da média recomendada."
                                 @else
-                                    "Dia de estabilidade sistémica. Lembra-te que cada pequeno registo contribui para a pontuação de saúde global."
+                                    "A tua saúde financeira está em {{ $overallScore }}%. Reduzir gastos supérfluos pode melhorar este número rapidamente."
                                 @endif
                             </p>
                         </div>
@@ -1278,10 +1200,10 @@
         {{-- RODAPÉ TÉCNICO --}}
         <div class="relative z-10 bg-zinc-900/50 px-10 py-6 border-t border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4 opacity-40">
             <div class="flex items-center gap-4">
-                <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-[0.2em]">TERMINAL_ID: #{{ auth()->id() }}</span>
-                <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-[0.2em]">NODE: v4.8_STABLE</span>
+                <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-[0.2em]">CONTA: #{{ auth()->id() }}</span>
+                <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-[0.2em]">PLANO: {{ strtoupper(auth()->user()->currentPlanSlug()) }}</span>
             </div>
-            <p class="text-[9px] font-black text-zinc-500 uppercase tracking-[0.4em] italic text-center md:text-right">Finance Pro Intelligent Hub Operations · Last Synced {{ now()->format('H:i:s') }}</p>
+            <p class="text-[9px] font-black text-zinc-500 uppercase tracking-[0.4em] italic text-center md:text-right">Finance Pro Intelligent Hub · Atualizado às {{ now()->format('H:i:s') }}</p>
         </div>
     </div>
 

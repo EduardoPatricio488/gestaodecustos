@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\BankAccount;
 use App\Models\Employee;
 use App\Models\Income;
 use App\Models\RecurringIncome;
@@ -9,6 +10,7 @@ use App\Models\Workspace;
 use App\Services\CurrencyService;
 use Illuminate\Support\Facades\Auth; // <--- FALTA ISTO
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -25,6 +27,12 @@ class IncomeHub extends Component
     public bool $showExtraModal = false;
 
     public $received_at = '';
+
+    // Destino do dinheiro: conta bancária ou dinheiro físico (vazio = físico)
+    public $bankAccountId = '';
+
+    // Destino usado pelos modais de Rendimentos Fixos (partilhado, só 1 modal aberto de cada vez)
+    public $recBankAccountId = '';
 
     public bool $showRaiseModal = false;
 
@@ -175,6 +183,7 @@ class IncomeHub extends Component
             'source' => 'emprego',
             'frequency' => 'mensal',
             'is_active' => true,
+            'bank_account_id' => $this->recBankAccountId ?: null,
             'metadata' => [
                 'salary_gross' => $this->recSalaryGross,   // Aqueles 1000€
                 'meal_allowance' => $this->recMealAllowance, // Aqueles 8€/dia
@@ -197,7 +206,7 @@ class IncomeHub extends Component
         $this->dispatch('toast', text: 'Contrato gravado com sucesso! ✅');
 
         // 5. Reset aos campos
-        $this->reset(['recDescription', 'recAmount', 'recSalaryGross', 'recMealAllowance', 'recDay', 'editingFixedId']);
+        $this->reset(['recDescription', 'recAmount', 'recSalaryGross', 'recMealAllowance', 'recDay', 'recBankAccountId', 'editingFixedId']);
     }
 
     // Edição de rendimento fixo
@@ -217,6 +226,14 @@ class IncomeHub extends Component
             ->sum(DB::raw('COALESCE(amount_converted, amount)'));
     }
 
+    #[Computed]
+    public function bankAccounts()
+    {
+        return BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+            ->orderBy('name')
+            ->get();
+    }
+
     public function saveExtra()
     {
         $this->validate([
@@ -224,7 +241,7 @@ class IncomeHub extends Component
             'amount' => 'required|numeric|min:0.01',
             'currency' => 'required|string|size:3',
             'received_at' => 'required|date',
-            'source' => 'required|in:emprego,freelance,investimento,outro',
+            'source' => 'required|in:emprego,imobiliario,freelance,investimento,reforma,bolsa,outro',
             'frequency' => 'required|in:pontual,semanal,mensal,anual',
             'tax_estimate' => 'nullable|numeric|min:0|max:100',
             'notes' => 'nullable|string|max:500',
@@ -235,6 +252,7 @@ class IncomeHub extends Component
         Income::create([
             'user_id' => auth()->id(),
             'workspace_id' => $user->current_workspace_id,
+            'bank_account_id' => $this->bankAccountId ?: null,
             'description' => $this->description,
             'amount' => $this->amount,
             'currency' => strtoupper($this->currency),
@@ -248,7 +266,7 @@ class IncomeHub extends Component
 
         $user->awardXp(25, 'receita registada');
 
-        $this->reset(['description', 'amount', 'tax_estimate', 'notes']);
+        $this->reset(['description', 'amount', 'tax_estimate', 'notes', 'bankAccountId']);
         $this->currency = strtoupper((string) ($user->currentWorkspace?->currency ?? 'EUR'));
         $this->received_at = now()->format('Y-m-d');
         $this->source = 'emprego';
@@ -339,6 +357,7 @@ class IncomeHub extends Component
         RecurringIncome::create([
             'user_id' => auth()->id(),
             'workspace_id' => $user->current_workspace_id,
+            'bank_account_id' => $this->recBankAccountId ?: null,
             'description' => $this->recDescription,
             'amount' => $this->recAmount,
             'day_of_month' => $this->recDay,
@@ -351,7 +370,7 @@ class IncomeHub extends Component
 
         $user->awardXp(30, 'rendimento fixo configurado');
 
-        $this->reset(['recWorkspaceId', 'recDescription', 'recAmount', 'recDay', 'recTaxEstimate', 'recNotes']);
+        $this->reset(['recWorkspaceId', 'recDescription', 'recAmount', 'recDay', 'recTaxEstimate', 'recNotes', 'recBankAccountId']);
         $this->recSource = 'emprego';
         $this->recFrequency = 'mensal';
         $this->dispatch('modal-close-salario');
@@ -360,7 +379,7 @@ class IncomeHub extends Component
 
     public function openExtraModal()
     {
-        $this->reset(['description', 'amount', 'tax_estimate', 'notes']);
+        $this->reset(['description', 'amount', 'tax_estimate', 'notes', 'bankAccountId']);
         $this->currency = strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR'));
         $this->received_at = now()->format('Y-m-d');
         $this->source = 'emprego';
@@ -397,6 +416,7 @@ class IncomeHub extends Component
         $this->recDay = $record->day_of_month;
         $this->recAmount = $record->amount;
         $this->recSource = $record->source;
+        $this->recBankAccountId = $record->bank_account_id ?: '';
 
         // LÓGICA DE DECISÃO: Qual modal abrir?
         if ($record->source === 'imobiliario') {
@@ -540,6 +560,7 @@ class IncomeHub extends Component
             'source' => 'imobiliario',
             'frequency' => 'mensal',
             'is_active' => true,
+            'bank_account_id' => $this->recBankAccountId ?: null,
             'metadata' => [
                 'rental_gross' => $this->recRentalGross,
                 'rental_expenses' => $this->recRentalExpenses,
@@ -561,7 +582,7 @@ class IncomeHub extends Component
 
         $this->editingFixedId = null; // Limpa o estado de edição
         $this->dispatch('modal-close-renda');
-        $this->reset(['recDescription', 'recAmount', 'recRentalGross', 'recRentalExpenses', 'recDay']);
+        $this->reset(['recDescription', 'recAmount', 'recRentalGross', 'recRentalExpenses', 'recDay', 'recBankAccountId']);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -570,7 +591,7 @@ class IncomeHub extends Component
     public function openFreelanceModal()
     {
         $this->editingFixedId = null;
-        $this->reset(['recDescription', 'recFreelanceActivity', 'recFreelanceGross', 'recFreelanceExpenses', 'recFreelanceWithholding', 'recAmount', 'recDay']);
+        $this->reset(['recDescription', 'recFreelanceActivity', 'recFreelanceGross', 'recFreelanceExpenses', 'recFreelanceWithholding', 'recAmount', 'recDay', 'recBankAccountId']);
         $this->recFreelanceType = 'prestacao_servicos';
         $this->recFreelanceFrequency = 'mensal';
         $this->recDay = 1;
@@ -592,6 +613,7 @@ class IncomeHub extends Component
             'source' => 'freelance',
             'frequency' => $this->recFreelanceFrequency,
             'is_active' => true,
+            'bank_account_id' => $this->recBankAccountId ?: null,
             'metadata' => [
                 'freelance_activity' => $this->recFreelanceActivity,
                 'freelance_type' => $this->recFreelanceType,
@@ -615,7 +637,7 @@ class IncomeHub extends Component
 
         $this->editingFixedId = null;
         $this->dispatch('modal-close-freelance');
-        $this->reset(['recDescription', 'recFreelanceActivity', 'recFreelanceGross', 'recFreelanceExpenses', 'recFreelanceWithholding', 'recAmount', 'recDay']);
+        $this->reset(['recDescription', 'recFreelanceActivity', 'recFreelanceGross', 'recFreelanceExpenses', 'recFreelanceWithholding', 'recAmount', 'recDay', 'recBankAccountId']);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -624,7 +646,7 @@ class IncomeHub extends Component
     public function openInvestmentModal()
     {
         $this->editingFixedId = null;
-        $this->reset(['recDescription', 'recInvestmentName', 'recInvestmentAmount', 'recInvestmentExpenses', 'recAmount', 'recDay']);
+        $this->reset(['recDescription', 'recInvestmentName', 'recInvestmentAmount', 'recInvestmentExpenses', 'recAmount', 'recDay', 'recBankAccountId']);
         $this->recInvestmentType = 'dividendos';
         $this->recInvestmentFrequency = 'mensal';
         $this->recDay = 1;
@@ -646,6 +668,7 @@ class IncomeHub extends Component
             'source' => 'investimento',
             'frequency' => $this->recInvestmentFrequency,
             'is_active' => true,
+            'bank_account_id' => $this->recBankAccountId ?: null,
             'metadata' => [
                 'investment_type' => $this->recInvestmentType,
                 'investment_name' => $this->recInvestmentName,
@@ -668,7 +691,7 @@ class IncomeHub extends Component
 
         $this->editingFixedId = null;
         $this->dispatch('modal-close-investimento');
-        $this->reset(['recDescription', 'recInvestmentName', 'recInvestmentAmount', 'recInvestmentExpenses', 'recAmount', 'recDay']);
+        $this->reset(['recDescription', 'recInvestmentName', 'recInvestmentAmount', 'recInvestmentExpenses', 'recAmount', 'recDay', 'recBankAccountId']);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -677,7 +700,7 @@ class IncomeHub extends Component
     public function openPensionModal()
     {
         $this->editingFixedId = null;
-        $this->reset(['recDescription', 'recPensionEntity', 'recPensionGross', 'recPensionAmount', 'recAmount', 'recDay']);
+        $this->reset(['recDescription', 'recPensionEntity', 'recPensionGross', 'recPensionAmount', 'recAmount', 'recDay', 'recBankAccountId']);
         $this->recPensionType = 'velhice';
         $this->recDay = 1;
         $this->dispatch('modal-show-reforma');
@@ -698,6 +721,7 @@ class IncomeHub extends Component
             'source' => 'reforma',
             'frequency' => 'mensal',
             'is_active' => true,
+            'bank_account_id' => $this->recBankAccountId ?: null,
             'metadata' => [
                 'pension_type' => $this->recPensionType,
                 'pension_entity' => $this->recPensionEntity,
@@ -719,7 +743,7 @@ class IncomeHub extends Component
 
         $this->editingFixedId = null;
         $this->dispatch('modal-close-reforma');
-        $this->reset(['recDescription', 'recPensionEntity', 'recPensionGross', 'recPensionAmount', 'recAmount', 'recDay']);
+        $this->reset(['recDescription', 'recPensionEntity', 'recPensionGross', 'recPensionAmount', 'recAmount', 'recDay', 'recBankAccountId']);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -728,7 +752,7 @@ class IncomeHub extends Component
     public function openScholarshipModal()
     {
         $this->editingFixedId = null;
-        $this->reset(['recDescription', 'recScholarshipEntity', 'recScholarshipAmount', 'recScholarshipEndDate', 'recAmount', 'recDay']);
+        $this->reset(['recDescription', 'recScholarshipEntity', 'recScholarshipAmount', 'recScholarshipEndDate', 'recAmount', 'recDay', 'recBankAccountId']);
         $this->recScholarshipType = 'estudo';
         $this->recScholarshipFrequency = 'mensal';
         $this->recDay = 1;
@@ -750,6 +774,7 @@ class IncomeHub extends Component
             'source' => 'bolsa',
             'frequency' => $this->recScholarshipFrequency,
             'is_active' => true,
+            'bank_account_id' => $this->recBankAccountId ?: null,
             'metadata' => [
                 'scholarship_type' => $this->recScholarshipType,
                 'scholarship_entity' => $this->recScholarshipEntity,
@@ -771,7 +796,7 @@ class IncomeHub extends Component
 
         $this->editingFixedId = null;
         $this->dispatch('modal-close-bolsa');
-        $this->reset(['recDescription', 'recScholarshipEntity', 'recScholarshipAmount', 'recScholarshipEndDate', 'recAmount', 'recDay']);
+        $this->reset(['recDescription', 'recScholarshipEntity', 'recScholarshipAmount', 'recScholarshipEndDate', 'recAmount', 'recDay', 'recBankAccountId']);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -780,7 +805,7 @@ class IncomeHub extends Component
     public function openOtherModal()
     {
         $this->editingFixedId = null;
-        $this->reset(['recDescription', 'recOtherSourceDetail', 'recOtherAmount', 'recAmount', 'recDay']);
+        $this->reset(['recDescription', 'recOtherSourceDetail', 'recOtherAmount', 'recAmount', 'recDay', 'recBankAccountId']);
         $this->recOtherFrequency = 'mensal';
         $this->recDay = 1;
         $this->dispatch('modal-show-outro');
@@ -801,6 +826,7 @@ class IncomeHub extends Component
             'source' => 'outro',
             'frequency' => $this->recOtherFrequency,
             'is_active' => true,
+            'bank_account_id' => $this->recBankAccountId ?: null,
             'metadata' => [
                 'other_source_detail' => $this->recOtherSourceDetail,
             ],
@@ -876,10 +902,11 @@ class IncomeHub extends Component
                 'frequency' => $this->recFrequency,
                 'tax_estimate' => $this->recTaxEstimate ?: null,
                 'notes' => $this->recNotes ?: null,
+                'bank_account_id' => $this->recBankAccountId ?: null,
             ]);
 
         $this->editingFixedId = null;
-        $this->reset(['recWorkspaceId', 'recDescription', 'recAmount', 'recDay', 'recTaxEstimate', 'recNotes']);
+        $this->reset(['recWorkspaceId', 'recDescription', 'recAmount', 'recDay', 'recTaxEstimate', 'recNotes', 'recBankAccountId']);
         $this->recSource = 'emprego';
         $this->recFrequency = 'mensal';
         $this->dispatch('modal-close-salario');
@@ -919,9 +946,9 @@ class IncomeHub extends Component
             ->wherePivot('role', '!=', 'admin')
             ->get();
 
-        $fixedIncomes = RecurringIncome::where('workspace_id', $workspaceId)->get();
+        $fixedIncomes = RecurringIncome::with('bankAccount')->where('workspace_id', $workspaceId)->get();
 
-        $extraIncomes = Income::where('workspace_id', $workspaceId)
+        $extraIncomes = Income::with('bankAccount')->where('workspace_id', $workspaceId)
             ->whereMonth('received_at', now()->month)
             ->whereYear('received_at', now()->year)
             ->latest()

@@ -1,6 +1,4 @@
-@extends('components.layouts.app')
-
-@section('content')
+<x-layouts.app>
 <div class="flex flex-col items-center justify-center min-h-[600px] text-center space-y-8 animate-in fade-in zoom-in-95 duration-700">
     {{-- Efeito Visual de Fundo --}}
     <div class="relative">
@@ -22,4 +20,4 @@
         Voltar ao Início
     </flux:button>
 </div>
-@endsection
+</x-layouts.app>
