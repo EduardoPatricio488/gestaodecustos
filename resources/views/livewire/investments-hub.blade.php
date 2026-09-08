@@ -265,6 +265,10 @@
                             'portfolio_impact' => 'Impacto no portefólio',
                             'recommendation' => 'Selo de decisão',
                         ];
+                        $extraAnalysis = collect($companyAnalysis)
+                            ->except(['market_data', 'analysis_message', 'score'])
+                            ->reject(fn ($value, $key) => array_key_exists($key, $analysisLabels) || blank($value))
+                            ->all();
                         $formatAnalysisValue = function ($value): string {
                             if (is_array($value)) {
                                 return collect($value)->map(function ($item, $key): string {
@@ -354,6 +358,13 @@
                                     @endif
                                 @endforeach
 
+                                @foreach($extraAnalysis as $key => $value)
+                                    <div class="bg-zinc-50 dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                                        <p class="text-[9px] font-black uppercase tracking-widest text-indigo-500 mb-2">{{ ucfirst(str_replace(['_', '-'], ' ', (string) $key)) }}</p>
+                                        <p class="text-sm font-medium leading-relaxed text-zinc-600 dark:text-zinc-300">{{ $formatAnalysisValue($value) }}</p>
+                                    </div>
+                                @endforeach
+
                                 @if(isset($companyAnalysis['score']))
                                     <div class="bg-indigo-600 text-white p-5 rounded-2xl">
                                         <p class="text-[9px] font-black uppercase tracking-widest text-indigo-200 mb-2">Score de análise</p>
@@ -365,6 +376,12 @@
                             @if(!empty($companyAnalysis['analysis_message']))
                                 <p class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-xl px-4 py-3">
                                     {{ $companyAnalysis['analysis_message'] }}
+                                </p>
+                            @endif
+
+                            @if(!collect($analysisLabels)->keys()->contains(fn ($key) => filled($companyAnalysis[$key] ?? null)) && empty($extraAnalysis) && empty($companyAnalysis['analysis_message']))
+                                <p class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-xl px-4 py-3">
+                                    A IA não devolveu dados detalhados para esta pesquisa. Tenta novamente em instantes.
                                 </p>
                             @endif
                         </div>
