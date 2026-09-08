@@ -36,7 +36,13 @@
                 setTheme(value) {
                     this.theme = value;
                     document.documentElement.classList.add('theme-switching');
-                    window.Flux.applyAppearance(value);
+                    if (window.Flux?.applyAppearance) {
+                        window.Flux.applyAppearance(value);
+                    }
+                    document.documentElement.classList.toggle(
+                        'dark',
+                        value === 'dark' || (value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+                    );
                     localStorage.removeItem('theme');
                     setTimeout(() => document.documentElement.classList.remove('theme-switching'), 200);
                 }

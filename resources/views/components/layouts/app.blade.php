@@ -55,6 +55,21 @@
 
     @include('partials.head')
 
+    <script>
+        (function () {
+            var appearance = localStorage.getItem('flux.appearance') || localStorage.getItem('theme') || 'system';
+            var isDark = appearance === 'dark' ||
+                (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+            document.documentElement.classList.toggle('dark', isDark);
+
+            if (appearance === 'dark' || appearance === 'light') {
+                localStorage.setItem('flux.appearance', appearance);
+                localStorage.removeItem('theme');
+            }
+        })();
+    </script>
+
     <link rel="stylesheet" href="/flux/flux.css">
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     @vite([
