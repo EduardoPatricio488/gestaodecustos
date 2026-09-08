@@ -1,4 +1,4 @@
-<div class="flex min-w-0 flex-col lg:flex-row h-[calc(100vh-10rem)] gap-4 lg:gap-6 pb-6" x-data="{
+<div class="flex min-h-[calc(100dvh-9rem)] min-w-0 flex-col gap-4 pb-6 lg:h-[calc(100vh-10rem)] lg:flex-row lg:gap-6" x-data="{
     scrollToBottom() {
         $nextTick(() => {
             const container = $refs.chatContainer;

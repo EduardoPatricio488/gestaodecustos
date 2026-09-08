@@ -1682,7 +1682,7 @@ $hasStoreAccess = $hasLockInAccess;
     </flux:header>
 
     <flux:main class="{{ $isBusinessMode ? 'business-main' : '' }} lg:ps-64 h-screen min-w-0 overflow-x-hidden overflow-y-auto custom-scrollbar pt-16">
-        <div id="page-container" class="mx-auto w-full max-w-6xl min-w-0 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+        <div id="page-container" class="mx-auto w-full max-w-7xl min-w-0 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
             {{ $slot }}
         </div>
     </flux:main>
