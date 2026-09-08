@@ -266,19 +266,21 @@
                             'recommendation' => 'Selo de decisão',
                         ];
                         $extraAnalysis = collect($companyAnalysis)
-                            ->except(['market_data', 'analysis_message', 'score'])
+                            ->except(['market_data', 'analysis_message', 'score', 'empresa', 'company', 'company_name', 'name', 'ticker', 'symbol'])
                             ->reject(fn ($value, $key) => array_key_exists($key, $analysisLabels) || blank($value))
                             ->all();
-                        $formatAnalysisValue = function ($value): string {
+                        $formatAnalysisLines = function ($value): array {
                             if (is_array($value)) {
                                 return collect($value)->map(function ($item, $key): string {
                                     return is_array($item)
                                         ? ucfirst(str_replace('_', ' ', (string) $key)).': '.collect($item)->flatten()->implode(', ')
                                         : (is_string($key) && ! is_numeric($key) ? ucfirst(str_replace('_', ' ', $key)).': ' : '').(string) $item;
-                                })->implode(' · ');
+                                })->values()->all();
                             }
 
-                            return (string) $value;
+                            $text = trim((string) $value);
+
+                            return preg_split('/(?<=[.!?])\s+/', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [$text];
                         };
                     @endphp
 
@@ -353,15 +355,21 @@
                                     @if(filled($companyAnalysis[$key] ?? null))
                                         <div class="bg-zinc-50 dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800 {{ $key === 'risks' || $key === 'strategy' ? 'md:col-span-2' : '' }}">
                                             <p class="text-[9px] font-black uppercase tracking-widest text-indigo-500 mb-2">{{ $label }}</p>
-                                            <p class="text-sm font-medium leading-relaxed text-zinc-600 dark:text-zinc-300">{{ $formatAnalysisValue($companyAnalysis[$key]) }}</p>
+                                            @foreach($formatAnalysisLines($companyAnalysis[$key]) as $line)
+                                                <p class="text-sm font-medium leading-relaxed text-zinc-600 dark:text-zinc-300">{{ $line }}</p>
+                                            @endforeach
                                         </div>
                                     @endif
                                 @endforeach
 
                                 @foreach($extraAnalysis as $key => $value)
-                                    <div class="bg-zinc-50 dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                                    <div class="bg-zinc-50 dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800 {{ is_string($value) && strlen($value) > 180 ? 'md:col-span-2' : '' }}">
                                         <p class="text-[9px] font-black uppercase tracking-widest text-indigo-500 mb-2">{{ ucfirst(str_replace(['_', '-'], ' ', (string) $key)) }}</p>
-                                        <p class="text-sm font-medium leading-relaxed text-zinc-600 dark:text-zinc-300">{{ $formatAnalysisValue($value) }}</p>
+                                        <div class="space-y-2">
+                                            @foreach($formatAnalysisLines($value) as $line)
+                                                <p class="text-sm font-medium leading-relaxed text-zinc-600 dark:text-zinc-300">{{ $line }}</p>
+                                            @endforeach
+                                        </div>
                                     </div>
                                 @endforeach
 
