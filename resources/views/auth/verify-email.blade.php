@@ -20,7 +20,7 @@
                     Verificar Conta
                 </h1>
 
-                @if(! app()->environment('production'))
+                @if(auth()->user()->verification_code)
                     <div class="mt-6 p-6 bg-zinc-950 border-2 border-emerald-500/20 rounded-[2rem] shadow-2xl relative overflow-hidden group">
                         <div class="absolute -right-4 -top-4 size-20 bg-emerald-500/5 blur-2xl"></div>
 
