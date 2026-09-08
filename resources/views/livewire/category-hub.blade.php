@@ -153,15 +153,6 @@
                     Scanner IA
                 </button>
 
-                <button type="button"
-                    wire:click="openCreateModal"
-                    @click="scannerOpen = false; reviewOpen = false; formOpen = true"
-                    class="flex items-center justify-center gap-2 px-4 h-10 sm:h-11 rounded-xl sm:rounded-2xl text-white font-black uppercase text-[10px] sm:text-sm shadow-lg transition-all hover:scale-[1.02]"
-                    style="background-color: var(--cat-color);">
-                    <flux:icon name="plus" class="size-4" />
-                    Novo Registo
-                </button>
-
                 <div class="hidden sm:block h-8 w-px bg-zinc-200 dark:border-zinc-800"></div>
                 <flux:button href="{{ route('dashboard') }}" variant="ghost" icon="arrow-left" wire:navigate class="hidden sm:flex rounded-xl" />
             </div>
@@ -1209,16 +1200,6 @@
 
 
 
-
-    {{-- BOTÃO FLUTUANTE (MOBILE / ACESSO RÁPIDO) --}}
-    <button type="button"
-        wire:click="openCreateModal"
-        @click="scannerOpen = false; reviewOpen = false; formOpen = true"
-        class="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 h-14 rounded-2xl text-white font-black uppercase text-[10px] tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95 lg:hidden"
-        style="background-color: var(--cat-color);">
-        <flux:icon name="plus" class="size-5" />
-        Novo Registo
-    </button>
 
     {{-- ── RODAPÉ DE PROTOCOLO ── --}}
     <footer class="pt-16 pb-12 text-center opacity-40 mx-4 border-t border-zinc-100 dark:border-zinc-800 mt-10">
