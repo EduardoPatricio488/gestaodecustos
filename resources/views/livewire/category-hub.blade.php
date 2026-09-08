@@ -153,6 +153,15 @@
                     Scanner IA
                 </button>
 
+                <button type="button"
+                    wire:click="openCreateModal"
+                    @click="scannerOpen = false; reviewOpen = false; formOpen = true"
+                    class="flex items-center justify-center gap-2 px-4 h-10 sm:h-11 rounded-xl sm:rounded-2xl text-white font-black uppercase text-[10px] sm:text-sm shadow-lg transition-all hover:scale-[1.02]"
+                    style="background-color: var(--cat-color);">
+                    <flux:icon name="plus" class="size-4" />
+                    Novo Registo
+                </button>
+
                 <div class="hidden sm:block h-8 w-px bg-zinc-200 dark:border-zinc-800"></div>
                 <flux:button href="{{ route('dashboard') }}" variant="ghost" icon="arrow-left" wire:navigate class="hidden sm:flex rounded-xl" />
             </div>
