@@ -57,8 +57,19 @@
 
         <nav class="flex items-center gap-4">
             <button
-                x-data="{ darkMode: document.documentElement.classList.contains('dark') }"
-                x-on:click="darkMode = !darkMode; window.Flux.applyAppearance(darkMode ? 'dark' : 'light')"
+                x-data="{
+                    darkMode: document.documentElement.classList.contains('dark'),
+                    toggleTheme() {
+                        this.darkMode = !this.darkMode;
+                        var appearance = this.darkMode ? 'dark' : 'light';
+                        localStorage.setItem('flux.appearance', appearance);
+                        localStorage.removeItem('theme');
+                        document.documentElement.classList.toggle('dark', this.darkMode);
+                        if (window.Flux?.applyAppearance) window.Flux.applyAppearance(appearance);
+                    }
+                }"
+                x-on:click="toggleTheme()"
+                aria-label="Alternar modo claro e escuro"
                 class="mr-2 flex size-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition-all hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
             >
                 <flux:icon.sun x-show="darkMode" variant="outline" class="size-5" />
