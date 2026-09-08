@@ -8,6 +8,7 @@ use App\Services\DebtInstrumentCalculator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -181,6 +182,12 @@ class InvestmentsHub extends Component
 
     private function analyzeWithOpenRouter(string $company)
     {
+        $apiKey = config('services.openrouter.api_key');
+
+        if (blank($apiKey)) {
+            return ['analysis_message' => 'A análise IA não está configurada neste ambiente.'];
+        }
+
         $prompt = "
             Faz uma análise financeira profunda da empresa '{$company}'.
             Inclui:
@@ -195,10 +202,12 @@ class InvestmentsHub extends Component
         ";
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer '.env('OPENROUTER_API_KEY'),
+            'Authorization' => 'Bearer '.$apiKey,
             'Content-Type' => 'application/json',
-        ])->post('https://openrouter.ai/api/v1/chat/completions', [
-            'model' => 'openai/gpt-4o-mini',
+            'HTTP-Referer' => config('app.url'),
+            'X-Title' => config('app.name'),
+        ])->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', [
+            'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
             'messages' => [
                 ['role' => 'system', 'content' => 'És um analista financeiro profissional.'],
                 ['role' => 'user', 'content' => $prompt],
@@ -207,7 +216,27 @@ class InvestmentsHub extends Component
             'max_tokens' => 2000,
         ]);
 
-        $json = json_decode($response->json()['choices'][0]['message']['content'] ?? '{}', true);
+        if (! $response->successful()) {
+            Log::error('InvestmentsHub: erro na análise OpenRouter', [
+                'status' => $response->status(),
+                'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                'body' => $response->json() ?: $response->body(),
+            ]);
+
+            return ['analysis_message' => 'Não foi possível obter a análise IA neste momento.'];
+        }
+
+        $content = (string) ($response->json('choices.0.message.content') ?? '');
+        $content = trim(preg_replace('/^```(?:json)?\s*|\s*```$/i', '', $content) ?? $content);
+        $json = json_decode($content, true);
+
+        if (! is_array($json) || $json === []) {
+            Log::warning('InvestmentsHub: resposta OpenRouter sem JSON utilizável', [
+                'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+            ]);
+
+            return ['analysis_message' => 'A IA devolveu uma resposta sem dados estruturados para esta empresa.'];
+        }
 
         return $json;
     }

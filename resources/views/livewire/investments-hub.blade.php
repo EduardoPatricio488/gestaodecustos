@@ -361,6 +361,12 @@
                                     </div>
                                 @endif
                             </div>
+
+                            @if(!empty($companyAnalysis['analysis_message']))
+                                <p class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-xl px-4 py-3">
+                                    {{ $companyAnalysis['analysis_message'] }}
+                                </p>
+                            @endif
                         </div>
                     </div>
                 @endif
