@@ -11,40 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch bank UI and theme
+      - name: Patch bank access UI
         shell: python
         run: |
           from pathlib import Path
-          import re
           p=Path('resources/views/livewire/business/bank-account-hub.blade.php'); s=p.read_text()
-          # Remove access action from the three-dot menu if present.
-          s=re.sub(r'\s*\{\{--[^\n]*ADICIONA ESTE NOVO BOTÃO[^\n]*--\}\}\s*<button[^>]*wire:click="generateAuditCode".*?</button>\s*<div class="border-t[^>]*></div>', '', s, count=1, flags=re.S)
-          s=s.replace('name="audit-code-modal" position="center" class="md:w-[500px] !p-0 overflow-visible"','name="audit-code-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[560px] !p-0"',1)
-          s=s.replace('<div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">','<div class="relative w-full max-h-[90vh] overflow-y-auto p-8 sm:p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">',1)
-          s=s.replace('text-5xl font-mono font-black text-white tracking-[0.2em]','text-2xl sm:text-3xl font-mono font-black text-white tracking-[0.18em]',1)
-          s=s.replace('{{ $companyTaxNumber }}',"{{ $companyTaxNumber ? implode(' ', str_split(preg_replace('/\\D/', '', (string) $companyTaxNumber), 3)) : 'S/ NIF' }}",1)
-          s=s.replace('Partilhar Acesso','Partilhar Token',1)
-          s=s.replace("http://localhost:8000/portal/banco","{{ url('/portal/banco') }}",1)
-          # Add standalone action immediately before account listing.
-          marker='{{-- 3. LISTAGEM DE CONTAS — DOSSIÊ EXECUTIVO (VERSÃO FINAL COM MENU 3 PONTOS) --}}'
-          button='''<div class="mb-5 flex justify-end"><button type="button" wire:click="generateAuditCode" class="inline-flex items-center gap-3 px-5 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest text-white bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:scale-[1.01] shadow-lg shadow-zinc-900/20 transition-all"><flux:icon name="shield-check" class="size-5" /> Gerar Acesso Bancário</button></div>\n\n'''
-          if marker in s and 'mb-5 flex justify-end' not in s: s=s.replace(marker,button+marker,1)
-          p.write_text(s)
-
-          p=Path('resources/views/components/layouts/app.blade.php'); s=p.read_text()
-          # Remove the duplicate inline appearance controller, leaving app.js as the single source of truth.
-          pattern=r"\n    <script>\n        \(function \(\) \{\n            var appearance = localStorage\.getItem\('flux\.appearance'\).*?\n        \}\)\(\);\n    </script>\n\n    <link rel=\"stylesheet\" href=\"/flux/flux\.css\">"
-          s=re.sub(pattern,'\n    <link rel="stylesheet" href="/flux/flux.css">',s,count=1,flags=re.S)
-          p.write_text(s)
-
-          # Ensure Fitness remains visually locked like other premium items.
-          p=Path('resources/views/components/layouts/app.blade.php'); s=p.read_text()
-          s=s.replace('class="text-orange-500 dark:text-orange-400 font-black"','class="text-orange-500 dark:text-orange-400 font-black relative"',1)
+          s=s.replace("navigator.clipboard.writeText('http://localhost:8000/portal/banco'); copiedPortal = true", "navigator.clipboard.writeText('{{ $generatedAuditCode }}'); copiedPortal = true")
+          s=s.replace("copiedPortal ? 'Link Copiado!' : 'Partilhar Token'", "copiedPortal ? 'Token Copiado!' : 'Partilhar Token")
           p.write_text(s)
       - name: Commit
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add resources/views/livewire/business/bank-account-hub.blade.php resources/views/components/layouts/app.blade.php
-          git commit -m "Fix bank access UI and theme persistence" || exit 0
+          git add resources/views/livewire/business/bank-account-hub.blade.php
+          git commit -m "Make bank share button copy token" || exit 0
           git push
