@@ -12,31 +12,12 @@ use Illuminate\Support\Facades\Storage;
 class Workspace extends Model
 {
     protected $fillable = [
-        'name',
-        'type',
-        'owner_id',
-        'invite_code',
-        'legal_name',
-        'logo_path',
-        'tax_number',
-        'industry',
-        'currency',
-        'initial_capital',
-        'audit_token',
-        'audit_token_expires_at',
-        'audit_token_revoked_at',
-        'audit_token_purpose',
-        'recruitment_extra_info',
-        'business_email',
-        'plan',
-        'plan_expires_at',
-        'address',
-        'recruitment_active',
-        'recruitment_description',
-        'recruitment_announcement',
-        'recruitment_vacancies',
-        'recruitment_extra_info',
-        'fiscal_year_start',
+        'name', 'type', 'owner_id', 'invite_code', 'legal_name', 'logo_path', 'tax_number',
+        'industry', 'currency', 'initial_capital', 'audit_token', 'audit_access_code',
+        'audit_token_expires_at', 'audit_token_revoked_at', 'audit_token_purpose',
+        'recruitment_extra_info', 'business_email', 'plan', 'plan_expires_at', 'address',
+        'recruitment_active', 'recruitment_description', 'recruitment_announcement',
+        'recruitment_vacancies', 'fiscal_year_start',
     ];
 
     protected $casts = [
@@ -44,27 +25,16 @@ class Workspace extends Model
         'audit_token_revoked_at' => 'datetime',
     ];
 
-    /**
-     * VALORES PADRÃO (Para evitar empresas "fantasmas" sem tipo)
-     */
-    protected $attributes = [
-        'type' => 'business',
-        'currency' => 'EUR',
-    ];
+    protected $attributes = ['type' => 'business', 'currency' => 'EUR'];
 
-    /**
-     * IDENTIDADE VISUAL
-     */
     public function generateInviteCode()
     {
         if (! $this->invite_code) {
             $prefix = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $this->name), 0, 3));
-            $random = strtoupper(bin2hex(random_bytes(3))); // Gera algo como 'A1B2C3'
-
+            $random = strtoupper(bin2hex(random_bytes(3)));
             $this->invite_code = $prefix.'-'.$random;
             $this->save();
         }
-
         return $this->invite_code;
     }
 
@@ -73,183 +43,60 @@ class Workspace extends Model
         if (! $this->logo_path) {
             return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=10b981&background=ecfdf5&bold=true';
         }
-
         $storedPath = preg_replace('#^/?storage/#', '', $this->logo_path);
-
         return Storage::url($storedPath);
     }
 
-    /**
-     * RELAÇÕES DE ESTRUTURA E UTILIZADORES
-     */
-    public function owner(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'owner_id');
-    }
+    public function owner(): BelongsTo { return $this->belongsTo(User::class, 'owner_id'); }
+    public function users(): BelongsToMany { return $this->belongsToMany(User::class, 'workspace_user')->withPivot('role')->withTimestamps(); }
+    public function expenses(): HasMany { return $this->hasMany(Expense::class); }
+    public function incomes(): HasMany { return $this->hasMany(Income::class); }
+    public function invoices(): HasMany { return $this->hasMany(Invoice::class); }
+    public function employees(): HasMany { return $this->hasMany(Employee::class); }
+    public function categories(): HasMany { return $this->hasMany(Category::class); }
+    public function clients(): HasMany { return $this->hasMany(Client::class); }
+    public function suppliers(): HasMany { return $this->hasMany(Supplier::class); }
+    public function projects(): HasMany { return $this->hasMany(Project::class); }
+    public function products(): HasMany { return $this->hasMany(Product::class); }
+    public function documents(): HasMany { return $this->hasMany(BusinessDocument::class); }
+    public function tasks(): HasMany { return $this->hasMany(Task::class); }
+    public function messages(): HasMany { return $this->hasMany(BusinessMessage::class); }
+    public function proposals(): HasMany { return $this->hasMany(Proposal::class); }
+    public function bankAccounts(): HasMany { return $this->hasMany(BankAccount::class); }
+    public function absences(): HasMany { return $this->hasMany(Absence::class); }
 
-    public function users(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class, 'workspace_user')->withPivot('role')->withTimestamps();
-    }
-
-    /**
-     * RELAÇÕES DE NEGÓCIO E OPERAÇÕES
-     */
-    public function expenses(): HasMany
-    {
-        return $this->hasMany(Expense::class);
-    }
-
-    public function incomes(): HasMany
-    {
-        return $this->hasMany(Income::class);
-    }
-
-    public function invoices(): HasMany
-    {
-        return $this->hasMany(Invoice::class);
-    }
-
-    public function employees(): HasMany
-    {
-        return $this->hasMany(Employee::class);
-    }
-
-    public function categories(): HasMany
-    {
-        return $this->hasMany(Category::class);
-    }
-
-    public function clients(): HasMany
-    {
-        return $this->hasMany(Client::class);
-    }
-
-    public function suppliers(): HasMany
-    {
-        return $this->hasMany(Supplier::class);
-    }
-
-    public function projects(): HasMany
-    {
-        return $this->hasMany(Project::class);
-    }
-
-    public function products(): HasMany
-    {
-        return $this->hasMany(Product::class);
-    }
-
-    public function documents(): HasMany
-    {
-        return $this->hasMany(BusinessDocument::class);
-    }
-
-    public function tasks(): HasMany
-    {
-        return $this->hasMany(Task::class);
-    }
-
-    public function messages(): HasMany
-    {
-        return $this->hasMany(BusinessMessage::class);
-    }
-
-    public function proposals(): HasMany
-    {
-        return $this->hasMany(Proposal::class);
-    }
-
-    public function bankAccounts(): HasMany
-    {
-        return $this->hasMany(BankAccount::class);
-    }
-
-    /**
-     * GESTÃO DE FÉRIAS E AUSÊNCIAS
-     */
-    public function absences(): HasMany
-    {
-        return $this->hasMany(Absence::class);
-    }
-
-    /**
-     * TRADUÇÃO E INTERFACE
-     */
     public function getTypeText(): string
     {
         return match ($this->type) {
-            'personal' => 'Conta Individual',
-            'couple' => 'Conta Partilhada (Casal)',
-            'family' => 'Conta Familiar',
-            'business' => 'Gestão Empresarial', // Ajustado para coincidir com o valor da DB
-            'company' => 'Gestão Empresarial',
-            default => 'Outro'
+            'personal' => 'Conta Individual', 'couple' => 'Conta Partilhada (Casal)',
+            'family' => 'Conta Familiar', 'business', 'company' => 'Gestão Empresarial', default => 'Outro'
         };
     }
 
-    /**
-     * MÉTRICAS DE GESTÃO EMPRESARIAL
-     */
     public function getBurnRate(): float
     {
         $threeMonthsAgo = now()->subMonths(3);
-        $expensesQuery = $this->expenses()
-            ->where('is_company', true)
-            ->where('spent_at', '>=', $threeMonthsAgo);
-
+        $expensesQuery = $this->expenses()->where('is_company', true)->where('spent_at', '>=', $threeMonthsAgo);
         $totalSpent = (float) (clone $expensesQuery)->sum('amount');
-
-        // Divide apenas pelos meses que realmente têm despesas registadas (máx. 3), para não
-        // desvalorizar artificialmente o burn rate de empresas com pouco histórico.
-        $monthsWithData = (clone $expensesQuery)->pluck('spent_at')
-            ->map(fn ($date) => Carbon::parse($date)->format('Y-m'))
-            ->unique()
-            ->count();
-
+        $monthsWithData = (clone $expensesQuery)->pluck('spent_at')->map(fn ($date) => Carbon::parse($date)->format('Y-m'))->unique()->count();
         $avgExpense = $totalSpent / max(1, $monthsWithData);
-
-        // Os salários são um custo fixo garantido todos os meses; sem eles o runway fica
-        // demasiado otimista para qualquer empresa com colaboradores.
-        $monthlyPayroll = (float) $this->employees()->sum('salary');
-
-        return $avgExpense + $monthlyPayroll;
+        return $avgExpense + (float) $this->employees()->sum('salary');
     }
 
     public function getLiquidezAtual(): float
     {
-        // Se o utilizador já registou contas bancárias, somamos o saldo real delas
-        if ($this->bankAccounts()->exists()) {
-            // 🔥 FIX: Mudado de 'current_balance' para 'balance' (nome real na tua BD MySQL)
-            return (float) $this->bankAccounts()->sum('balance');
-        }
-
-        // Caso contrário, fazemos o cálculo teórico baseado na operação
+        if ($this->bankAccounts()->exists()) return (float) $this->bankAccounts()->sum('balance');
         $revenue = (float) $this->invoices()->where('status', 'paga')->sum('total_amount');
         $spent = (float) $this->expenses()->where('is_company', true)->sum('amount');
         $payroll = (float) $this->employees()->sum('salary');
-
-        // Capital Inicial + Faturas Pagas - Despesas - Salários
         return (float) (($this->initial_capital ?? 0) + $revenue - $spent - $payroll);
     }
 
     public function money($amount)
     {
-        $symbols = [
-            'EUR' => '€',
-            'USD' => '$',
-            'BRL' => 'R$',
-            'GBP' => '£',
-            'CHF' => 'CHF',
-            'JPY' => '¥',
-        ];
-
+        $symbols = ['EUR' => '€', 'USD' => '$', 'BRL' => 'R$', 'GBP' => '£', 'CHF' => 'CHF', 'JPY' => '¥'];
         $symbol = $symbols[$this->currency] ?? $this->currency;
-
-        if (in_array($this->currency, ['USD', 'BRL'])) {
-            return $symbol.' '.number_format($amount, 2, ',', ' ');
-        }
-
+        if (in_array($this->currency, ['USD', 'BRL'])) return $symbol.' '.number_format($amount, 2, ',', ' ');
         return number_format($amount, 2, ',', ' ').' '.$symbol;
     }
 
@@ -257,63 +104,34 @@ class Workspace extends Model
     {
         static::created(function ($workspace) {
             $defaults = [
-                ['name' => 'Alimentação',   'icon' => 'shopping-cart', 'color' => '#ef4444'],
-                ['name' => 'Carro',         'icon' => 'truck',         'color' => '#f59e0b'],
-                ['name' => 'Casa',          'icon' => 'home',          'color' => '#3b82f6'],
-                ['name' => 'Educação',      'icon' => 'academic-cap',  'color' => '#6366f1'],
-                ['name' => 'Empréstimos',   'icon' => 'banknotes',     'color' => '#10b981'],
-                ['name' => 'Entretenimento', 'icon' => 'film',          'color' => '#a855f7'],
-                ['name' => 'Saúde',         'icon' => 'heart',         'color' => '#f43f5e'],
-                ['name' => 'Seguros',       'icon' => 'shield-check',  'color' => '#0ea5e9'],
-                ['name' => 'Tecnologia',    'icon' => 'cpu-chip',      'color' => '#06b6d4'],
-                ['name' => 'Transporte',    'icon' => 'bolt',          'color' => '#64748b'],
+                ['name'=>'Alimentação','icon'=>'shopping-cart','color'=>'#ef4444'], ['name'=>'Carro','icon'=>'truck','color'=>'#f59e0b'],
+                ['name'=>'Casa','icon'=>'home','color'=>'#3b82f6'], ['name'=>'Educação','icon'=>'academic-cap','color'=>'#6366f1'],
+                ['name'=>'Empréstimos','icon'=>'banknotes','color'=>'#10b981'], ['name'=>'Entretenimento','icon'=>'film','color'=>'#a855f7'],
+                ['name'=>'Saúde','icon'=>'heart','color'=>'#f43f5e'], ['name'=>'Seguros','icon'=>'shield-check','color'=>'#0ea5e9'],
+                ['name'=>'Tecnologia','icon'=>'cpu-chip','color'=>'#06b6d4'], ['name'=>'Transporte','icon'=>'bolt','color'=>'#64748b'],
             ];
-
             foreach ($defaults as $index => $data) {
-                $workspace->categories()->create($data + [
-                    'slug' => str($data['name'])->slug(),
-                    'is_fixed' => true,
-                    'order' => $index,
-                    'user_id' => $workspace->owner_id,
-                ]);
+                $workspace->categories()->create($data + ['slug'=>str($data['name'])->slug(),'is_fixed'=>true,'order'=>$index,'user_id'=>$workspace->owner_id]);
             }
         });
     }
 
-    public function recurringIncomes(): HasMany
-    {
-        return $this->hasMany(RecurringIncome::class);
-    }
-
+    public function recurringIncomes(): HasMany { return $this->hasMany(RecurringIncome::class); }
     public function getRunway(): string
     {
-        $burnRate = $this->getBurnRate();
-        $liquidez = $this->getLiquidezAtual();
-        if ($burnRate <= 0) {
-            return '∞';
-        }
-        if ($liquidez <= 0) {
-            return '0 meses';
-        }
-        $months = $liquidez / $burnRate;
-
-        return number_format($months, 1).' meses';
+        $burnRate = $this->getBurnRate(); $liquidez = $this->getLiquidezAtual();
+        if ($burnRate <= 0) return '∞'; if ($liquidez <= 0) return '0 meses';
+        return number_format($liquidez / $burnRate, 1).' meses';
     }
 
-    /**
-     * SCORE DE SAÚDE FINANCEIRA
-     */
     public function calculateScore(): int
     {
         $monthStart = now()->startOfMonth();
-        $spent = Expense::where('workspace_id', $this->id)->where('spent_at', '>=', $monthStart)->sum('amount') ?: 0;
-        $earned = Income::where('workspace_id', $this->id)->where('received_at', '>=', $monthStart)->sum('amount') ?: 0;
-        $budget = Category::where('workspace_id', $this->id)->sum('budget_limit') ?: 0;
-        $net = (float) $earned - (float) $spent;
-        $savingsRate = $earned > 0 ? ($net / $earned) * 100 : 0;
-        $budgetAdherence = $budget > 0 ? (1 - (min($spent, $budget) / $budget)) * 100 : 100;
-        $score = ($savingsRate * 0.7) + ($budgetAdherence * 0.3) + 20;
-
-        return (int) max(0, min(100, $score));
+        $spent = Expense::where('workspace_id',$this->id)->where('spent_at','>=',$monthStart)->sum('amount') ?: 0;
+        $earned = Income::where('workspace_id',$this->id)->where('received_at','>=',$monthStart)->sum('amount') ?: 0;
+        $budget = Category::where('workspace_id',$this->id)->sum('budget_limit') ?: 0;
+        $net = (float)$earned-(float)$spent; $savingsRate = $earned>0 ? ($net/$earned)*100 : 0;
+        $budgetAdherence = $budget>0 ? (1-(min($spent,$budget)/$budget))*100 : 100;
+        return (int)max(0,min(100,($savingsRate*0.7)+($budgetAdherence*0.3)+20));
     }
 }
