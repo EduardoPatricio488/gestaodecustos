@@ -14,24 +14,14 @@ class BusinessSettings extends Component
     use WithFileUploads;
 
     public $workspace;
-
-    // Campos do formulário
     public $name;
-
     public $legal_name;
-
     public $tax_number;
-
     public $industry;
-
     public $business_email;
-
     public $address;
-
     public $currency;
-
     public $initial_capital;
-
     public $logo;
 
     public function mount()
@@ -42,7 +32,6 @@ class BusinessSettings extends Component
             return redirect()->route('hub.business.gateway');
         }
 
-        // Preencher campos
         $this->name = $this->workspace->name;
         $this->legal_name = $this->workspace->legal_name;
         $this->tax_number = $this->formatTaxNumber($this->workspace->tax_number);
@@ -61,22 +50,21 @@ class BusinessSettings extends Component
     private function formatTaxNumber($value): string
     {
         $digits = substr(preg_replace('/\D/', '', (string) $value), 0, 9);
-
         return implode(' ', str_split($digits, 3));
     }
 
-    /**
-     * Guardar dados do perfil empresarial
-     */
     public function save()
     {
         $this->validate([
             'name' => 'required|string|max:100',
             'legal_name' => 'nullable|string|max:200',
             'tax_number' => 'nullable|string|max:11',
-            'business_email' => 'nullable|email',
+            'business_email' => 'required|email:rfc|max:255',
             'logo' => 'nullable|image|max:2048',
             'initial_capital' => 'numeric|min:0',
+        ], [
+            'business_email.required' => 'O email da empresa é obrigatório.',
+            'business_email.email' => 'Introduz um email empresarial válido.',
         ]);
 
         $data = [
@@ -84,16 +72,13 @@ class BusinessSettings extends Component
             'legal_name' => $this->legal_name,
             'tax_number' => preg_replace('/\D/', '', (string) $this->tax_number),
             'industry' => $this->industry,
-            'business_email' => $this->business_email,
+            'business_email' => strtolower(trim($this->business_email)),
             'address' => $this->address,
             'currency' => $this->currency,
             'initial_capital' => $this->initial_capital,
         ];
 
-        // Gestão de logótipo
         if ($this->logo) {
-
-            // Apagar logo antigo
             if ($this->workspace->logo_path) {
                 $oldLogo = preg_replace('#^/?storage/#', '', $this->workspace->logo_path);
                 if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
@@ -101,52 +86,29 @@ class BusinessSettings extends Component
                 }
             }
 
-            // Guardar novo logo
             $data['logo_path'] = $this->logo->store('logos', 'public');
-
-            // Limpar variável para evitar erro 500
             $this->logo = null;
         }
 
-        // Atualizar workspace
         $this->workspace->update($data);
-
-        // Manter o campo apresentado no formato 123 456 789
         $this->tax_number = $this->formatTaxNumber($data['tax_number']);
-
-        // Toast premium
         $this->dispatch('toast', text: 'Dados da empresa atualizados com sucesso!', variant: 'success');
     }
 
-    /**
-     * Getter de URL do logo (fallback incluído)
-     */
     public function getLogoUrlAttribute()
     {
         return $this->workspace->logo_url ?: asset('images/default-logo.png');
     }
 
-    /**
-     * Renderização com métricas empresariais
-     */
     public function leaveCompany()
     {
         $user = auth()->user();
-
-        // Remove a ligação na tabela pivot
         $this->workspace->users()->detach($user->id);
-
-        // Limpa o workspace atual do utilizador
         $user->update(['current_workspace_id' => null]);
-
         $this->dispatch('toast', variant: 'success', heading: 'Sessão Terminada', message: 'Saíste da equipa com sucesso.');
-
         return redirect()->route('hub.business.gateway');
     }
 
-    /**
-     * Apagar Empresa (Apenas para o Dono)
-     */
     public function deleteCompany()
     {
         if (! auth()->user()->isOwner()) {
@@ -154,18 +116,10 @@ class BusinessSettings extends Component
         }
 
         $user = auth()->user();
-
-        // Limpar apenas a referência ao workspace; o plano do utilizador mantém-se intacto
-        $user->update([
-            'current_workspace_id' => null,
-        ]);
-
-        // Apagar a empresa
+        $user->update(['current_workspace_id' => null]);
         $this->workspace->employees()->delete();
         $this->workspace->delete();
-
         $this->dispatch('toast', variant: 'success', heading: 'Empresa Eliminada', message: 'O teu plano Business continua ativo.');
-
         return redirect()->route('hub.business.gateway');
     }
 
