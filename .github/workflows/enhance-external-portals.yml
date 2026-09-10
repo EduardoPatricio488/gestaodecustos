@@ -15,26 +15,23 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import re
-          # Client modal: centered, contained and scrollable.
           p=Path('resources/views/livewire/business/client-hub.blade.php'); s=p.read_text()
           s=s.replace('name="client-modal" position="center" class="md:w-[650px] !p-0 overflow-visible"','name="client-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[650px] !p-0 !max-h-[90vh] overflow-hidden"',1)
           s=s.replace('<div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800">','<div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800">',1)
           p.write_text(s)
-          # Supplier modal: force centered viewport and internal scrolling where present.
           p=Path('resources/views/livewire/business/supplier-hub.blade.php'); s=p.read_text()
-          s=re.sub(r'<flux:modal name="supplier-modal"([^>]*)>', lambda m: '<flux:modal name="supplier-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[650px] !p-0 !max-h-[90vh] overflow-hidden">', s, count=1)
-          if 'supplier-modal' in s:
-              s=s.replace('<div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem]', '<div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem]',1)
+          s=s.replace('name="supplier-modal" position="center" class="md:w-[650px] !p-0 overflow-visible"','name="supplier-modal" position="center" class="w-[calc(100vw-2rem)] max-w-[650px] max-h-[90vh] !p-0 overflow-hidden"',1)
+          s=s.replace('<div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800">','<div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800">',1)
           p.write_text(s)
-          # Landing: emphasize Enter without changing the other actions.
           p=Path('resources/views/welcome.blade.php'); s=p.read_text()
-          s=s.replace('class="text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition"','class="inline-flex items-center justify-center rounded-xl bg-zinc-950 dark:bg-white px-5 py-2.5 text-sm font-black text-white dark:text-zinc-950 shadow-lg shadow-zinc-950/15 hover:scale-[1.02] transition-all"',1)
+          old='<a href="/login" wire:navigate class="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">'
+          new='<a href="/login" wire:navigate class="inline-flex items-center justify-center rounded-xl bg-zinc-950 dark:bg-white px-5 py-2.5 text-sm font-black text-white dark:text-zinc-950 shadow-lg shadow-zinc-950/15 hover:scale-[1.02] transition-all">'
+          s=s.replace(old,new,1)
           p.write_text(s)
       - name: Commit
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add resources/views/livewire/business/client-hub.blade.php resources/views/livewire/business/supplier-hub.blade.php resources/views/welcome.blade.php
-          git commit -m "Polish client supplier modals and landing login" || exit 0
+          git commit -m "Polish external modals and landing login" || exit 0
           git push
