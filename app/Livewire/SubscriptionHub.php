@@ -15,54 +15,35 @@ use Livewire\Component;
 class SubscriptionHub extends Component
 {
     public $name;
-
     public $amount;
-
     public $category_id;
-
     public $billing_day;
-
     public $billing_cycle = 'monthly';
-
     public $payment_method;
-
     public $status = 'active';
-
     public $started_at;
-
     public $renewal_date;
-
     public $notes;
-
     public bool $notify_before_billing = false;
-
     public $notify_days_before;
-
     public $showModal = false;
-
     public $editingId = null;
-
     public string $search = '';
-
     public string $categoryFilter = 'all';
-
     public bool $showExtraModal = false;
     public bool $showPlatformPlanModal = false;
-
     public string $statusFilter = 'all';
-
     public string $cycleFilter = 'all';
-
     public string $amountFilter = 'all';
-
     public string $sortBy = 'billing_day';
+
+    public array $stripePlanDetails = [];
+    public ?string $stripePlanError = null;
 
     public function edit($id)
     {
         $this->editingId = $id;
         $sub = Subscription::where('user_id', auth()->id())->findOrFail($id);
-
-        // Preenche as propriedades com os dados atuais
         $this->name = $sub->name;
         $this->amount = $sub->amount;
         $this->category_id = $sub->category_id;
@@ -75,8 +56,6 @@ class SubscriptionHub extends Component
         $this->notes = $sub->notes;
         $this->notify_before_billing = $sub->notify_before_billing;
         $this->notify_days_before = $sub->notify_days_before;
-
-        // Abre o modal (usando o evento que o teu Blade já ouve)
         $this->dispatch('modal-show-add-sub');
     }
 
@@ -91,6 +70,7 @@ class SubscriptionHub extends Component
     public function openPlatformPlanModal(): void
     {
         $this->showPlatformPlanModal = true;
+        $this->loadStripePlanDetails();
     }
 
     public function closePlatformPlanModal(): void
@@ -98,24 +78,161 @@ class SubscriptionHub extends Component
         $this->showPlatformPlanModal = false;
     }
 
+    protected function loadStripePlanDetails(): void
+    {
+        $this->stripePlanDetails = [];
+        $this->stripePlanError = null;
+
+        $user = auth()->user();
+        $planSlug = $user?->currentPlanSlug();
+        $cashierSub = $planSlug && $planSlug !== 'free' ? $user?->subscription($planSlug) : null;
+        $customerId = $user?->stripe_id;
+
+        if (! $customerId) {
+            $this->stripePlanError = 'Não existe um Stripe Customer associado a esta conta.';
+            return;
+        }
+
+        $secret = config('services.stripe.secret');
+        if (! $secret) {
+            $this->stripePlanError = 'A integração Stripe não está configurada no servidor.';
+            return;
+        }
+
+        try {
+            $stripe = new \Stripe\StripeClient($secret);
+            $customer = $stripe->customers->retrieve($customerId, []);
+
+            $subscription = null;
+            if ($cashierSub?->stripe_id) {
+                $subscription = $stripe->subscriptions->retrieve($cashierSub->stripe_id, [
+                    'expand' => ['default_payment_method', 'latest_invoice'],
+                ]);
+            }
+
+            $paymentMethodId = null;
+            if ($subscription?->default_payment_method) {
+                $paymentMethodId = is_string($subscription->default_payment_method)
+                    ? $subscription->default_payment_method
+                    : $subscription->default_payment_method->id;
+            } elseif ($customer->invoice_settings?->default_payment_method) {
+                $paymentMethodId = is_string($customer->invoice_settings->default_payment_method)
+                    ? $customer->invoice_settings->default_payment_method
+                    : $customer->invoice_settings->default_payment_method->id;
+            }
+
+            $paymentMethod = null;
+            if ($paymentMethodId) {
+                $paymentMethod = is_object($subscription?->default_payment_method)
+                    ? $subscription->default_payment_method
+                    : $stripe->paymentMethods->retrieve($paymentMethodId, []);
+            }
+
+            $invoices = $stripe->invoices->all([
+                'customer' => $customerId,
+                'limit' => 100,
+            ])->data ?? [];
+
+            $safeAddress = function ($address): array {
+                return [
+                    'line1' => $address?->line1,
+                    'line2' => $address?->line2,
+                    'city' => $address?->city,
+                    'state' => $address?->state,
+                    'postal_code' => $address?->postal_code,
+                    'country' => $address?->country,
+                ];
+            };
+
+            $invoiceRows = collect($invoices)->map(function ($invoice): array {
+                $paymentIntentId = null;
+                if ($invoice->payment_intent) {
+                    $paymentIntentId = is_string($invoice->payment_intent)
+                        ? $invoice->payment_intent
+                        : $invoice->payment_intent->id;
+                }
+
+                return [
+                    'id' => $invoice->id,
+                    'number' => $invoice->number,
+                    'status' => $invoice->status,
+                    'amount_paid' => $invoice->amount_paid,
+                    'amount_due' => $invoice->amount_due,
+                    'currency' => strtoupper((string) $invoice->currency),
+                    'created' => $invoice->created,
+                    'paid_at' => $invoice->status_transitions?->paid_at,
+                    'hosted_invoice_url' => $invoice->hosted_invoice_url,
+                    'invoice_pdf' => $invoice->invoice_pdf,
+                    'payment_intent_id' => $paymentIntentId,
+                ];
+            })->values()->all();
+
+            $latestInvoice = $subscription?->latest_invoice;
+            $subscriptionAmount = null;
+            $subscriptionCurrency = null;
+            if ($subscription && isset($subscription->items->data[0]->price)) {
+                $price = $subscription->items->data[0]->price;
+                $subscriptionAmount = $price->unit_amount;
+                $subscriptionCurrency = strtoupper((string) $price->currency);
+            }
+
+            $stripeStatus = $subscription?->status;
+            $statusLabel = match ($stripeStatus) {
+                'active' => 'Ativa',
+                'trialing' => 'Em período de teste',
+                'past_due' => 'Pagamento em atraso',
+                'unpaid' => 'Não paga',
+                'incomplete' => 'Incompleta',
+                'incomplete_expired' => 'Expirada',
+                'canceled' => 'Cancelada',
+                default => $stripeStatus ? ucfirst(str_replace('_', ' ', $stripeStatus)) : 'Não encontrada',
+            };
+
+            $this->stripePlanDetails = [
+                'customer' => [
+                    'id' => $customer->id,
+                    'name' => $customer->name,
+                    'email' => $customer->email,
+                    'phone' => $customer->phone,
+                    'currency' => $customer->currency ? strtoupper((string) $customer->currency) : null,
+                    'description' => $customer->description,
+                    'address' => $safeAddress($customer->address),
+                ],
+                'subscription' => $subscription ? [
+                    'id' => $subscription->id,
+                    'status' => $stripeStatus,
+                    'status_label' => $statusLabel,
+                    'current_period_start' => $subscription->current_period_start,
+                    'current_period_end' => $subscription->current_period_end,
+                    'cancel_at_period_end' => (bool) $subscription->cancel_at_period_end,
+                    'cancel_at' => $subscription->cancel_at,
+                    'created' => $subscription->created,
+                    'amount' => $subscriptionAmount,
+                    'currency' => $subscriptionCurrency,
+                    'latest_invoice_id' => is_string($latestInvoice ?? null) ? $latestInvoice : ($latestInvoice?->id),
+                ] : null,
+                'payment_method' => $paymentMethod ? [
+                    'id' => $paymentMethod->id,
+                    'type' => $paymentMethod->type,
+                    'brand' => $paymentMethod->card?->brand,
+                    'last4' => $paymentMethod->card?->last4,
+                    'exp_month' => $paymentMethod->card?->exp_month,
+                    'exp_year' => $paymentMethod->card?->exp_year,
+                    'holder' => $paymentMethod->billing_details?->name,
+                    'billing_email' => $paymentMethod->billing_details?->email,
+                    'billing_address' => $safeAddress($paymentMethod->billing_details?->address),
+                ] : null,
+                'invoices' => $invoiceRows,
+            ];
+        } catch (\Throwable $e) {
+            report($e);
+            $this->stripePlanError = 'Não foi possível carregar os dados do Stripe neste momento.';
+        }
+    }
+
     public function openExtraModal()
     {
-        $this->reset([
-            'name',
-            'amount',
-            'billing_day',
-            'category_id',
-            'billing_cycle',
-            'payment_method',
-            'status',
-            'started_at',
-            'renewal_date',
-            'notes',
-            'notify_before_billing',
-            'notify_days_before',
-            'editingId',
-        ]);
-
+        $this->reset(['name', 'amount', 'billing_day', 'category_id', 'billing_cycle', 'payment_method', 'status', 'started_at', 'renewal_date', 'notes', 'notify_before_billing', 'notify_days_before', 'editingId']);
         $this->showExtraModal = true;
     }
 
@@ -150,7 +267,6 @@ class SubscriptionHub extends Component
             'notify_days_before' => 'nullable|integer|between:1,30',
         ]);
 
-        // Se tivermos um editingId, atualizamos. Se não, criamos.
         $subscriptionData = [
             'user_id' => auth()->id(),
             'workspace_id' => auth()->user()->current_workspace_id,
@@ -187,7 +303,6 @@ class SubscriptionHub extends Component
     public function delete($id)
     {
         $sub = Subscription::where('user_id', auth()->id())->find($id);
-
         if ($sub) {
             $sub->delete();
             $this->dispatch('toast', text: 'Assinatura removida com sucesso!');
@@ -208,25 +323,15 @@ class SubscriptionHub extends Component
     {
         $user = auth()->user();
         $wsId = $user->current_workspace_id;
+        $cashierSub = null;
 
-        // 1. Definir categorias que FAZEM SENTIDO para assinaturas
         $subCatNames = [
-            'Streaming (Vídeo/TV)',
-            'Música & Podcasts',
-            'Software & SaaS',
-            'Gaming',
-            'Fitness & Ginásio',
-            'Cloud & Armazenamento',
-            'Notícias & Revistas',
-            'Educação & Cursos',
-            'VPN & Segurança',
-            'Seguros & Finanças',
-            'Serviços Casa (Net/TV)',
-            'Outros',
+            'Streaming (Vídeo/TV)', 'Música & Podcasts', 'Software & SaaS', 'Gaming',
+            'Fitness & Ginásio', 'Cloud & Armazenamento', 'Notícias & Revistas',
+            'Educação & Cursos', 'VPN & Segurança', 'Seguros & Finanças',
+            'Serviços Casa (Net/TV)', 'Outros',
         ];
 
-        // 2. Garantir que estas categorias existem no banco de dados para este Workspace
-        // Escondidas da sidebar: servem só para classificar assinaturas, não para navegação
         foreach ($subCatNames as $name) {
             Category::firstOrCreate(
                 ['name' => $name, 'workspace_id' => $wsId],
@@ -234,38 +339,25 @@ class SubscriptionHub extends Component
             );
         }
 
-        // 3. Buscar APENAS estas categorias para o formulário e filtros
         $subscriptionCategories = Category::where('workspace_id', $wsId)
             ->whereIn('name', $subCatNames)
             ->orderBy('name')
             ->get();
 
-        // --- Lógica original de busca de assinaturas ---
         $baseQuery = Subscription::where('workspace_id', $wsId)->with('category');
 
-        // Filtros
         if (filled($this->search)) {
             $baseQuery->where(function ($inner) {
                 $inner->where('name', 'like', '%'.$this->search.'%')
                     ->orWhere('notes', 'like', '%'.$this->search.'%');
             });
         }
-
-        if ($this->categoryFilter !== 'all') {
-            $baseQuery->where('category_id', $this->categoryFilter);
-        }
-
-        if ($this->statusFilter !== 'all') {
-            $baseQuery->where('status', $this->statusFilter);
-        }
-
-        if ($this->cycleFilter !== 'all') {
-            $baseQuery->where('cycle', $this->cycleFilter);
-        }
+        if ($this->categoryFilter !== 'all') $baseQuery->where('category_id', $this->categoryFilter);
+        if ($this->statusFilter !== 'all') $baseQuery->where('status', $this->statusFilter);
+        if ($this->cycleFilter !== 'all') $baseQuery->where('cycle', $this->cycleFilter);
 
         $allSubs = $baseQuery->get()->map(fn ($sub) => $this->decorateSubscription($sub));
 
-        // Filtros de valor e ordenação (original)
         $subs = match ($this->amountFilter) {
             'under_10' => $allSubs->where('amount', '<', 10),
             '10_30' => $allSubs->filter(fn ($sub) => $sub->amount >= 10 && $sub->amount <= 30),
@@ -282,34 +374,17 @@ class SubscriptionHub extends Component
         };
 
         $activeSubs = $allSubs->where('status', 'active');
-
-        // Plano da própria plataforma: sempre derivado do estado atual (nunca duplica nem fica desatualizado),
-        // mas conta para os totais porque é uma despesa fixa real.
         $planSlug = $user->currentPlanSlug();
-        $platformPlan = $planSlug !== 'free'
-            ? SubscriptionPlan::where('slug', $planSlug)->first()
-            : null;
-
+        $platformPlan = $planSlug !== 'free' ? SubscriptionPlan::where('slug', $planSlug)->first() : null;
         $platformEntry = null;
 
         if ($platformPlan) {
-            // Ordem de preferência para descobrir o dia de ativação real: subscrição Stripe (Cashier),
-            // depois o primeiro pagamento registado deste plano, e só por fim o dia de hoje (fallback).
             $cashierSub = $user->subscription($planSlug);
-            $firstPayment = Payment::where('user_id', $user->id)
-                ->where('plan_type', $planSlug)
-                ->oldest('paid_at')
-                ->first();
-
-            $billingDay = $cashierSub?->created_at?->day
-                ?? $firstPayment?->paid_at?->day
-                ?? now()->day;
-
+            $firstPayment = Payment::where('user_id', $user->id)->where('plan_type', $planSlug)->oldest('paid_at')->first();
+            $billingDay = $cashierSub?->created_at?->day ?? $firstPayment?->paid_at?->day ?? now()->day;
             $today = Carbon::now()->startOfDay();
             $nextBilling = $today->copy()->day(min($billingDay, $today->daysInMonth));
-            if ($nextBilling->lte($today)) {
-                $nextBilling = $nextBilling->addMonthNoOverflow();
-            }
+            if ($nextBilling->lte($today)) $nextBilling = $nextBilling->addMonthNoOverflow();
 
             $platformEntry = (object) [
                 'name' => 'Finance Pro '.$platformPlan->name,
@@ -322,22 +397,13 @@ class SubscriptionHub extends Component
 
         $totalMonthly = $activeSubs->sum('monthly_equivalent') + ($platformEntry->monthly_equivalent ?? 0);
         $alreadyPaid = $activeSubs->where('billing_day', '<', now()->day)->sum('monthly_equivalent');
-        if ($platformEntry && $platformEntry->billing_day <= now()->day) {
-            $alreadyPaid += $platformEntry->monthly_equivalent;
-        }
+        if ($platformEntry && $platformEntry->billing_day <= now()->day) $alreadyPaid += $platformEntry->monthly_equivalent;
 
         $activeCount = $activeSubs->count() + ($platformEntry ? 1 : 0);
-        $nextSub = $activeSubs->values()
-            ->push($platformEntry)
-            ->filter()
-            ->sortBy('days_until_billing')
-            ->first();
+        $nextSub = $activeSubs->values()->push($platformEntry)->filter()->sortBy('days_until_billing')->first();
 
         $platformPayments = $platformPlan
-            ? Payment::where('user_id', $user->id)
-                ->where('plan_type', $planSlug)
-                ->latest('paid_at')
-                ->get()
+            ? Payment::where('user_id', $user->id)->where('plan_type', $planSlug)->latest('paid_at')->get()
             : collect();
 
         return view('livewire.subscription-hub', [
@@ -350,7 +416,7 @@ class SubscriptionHub extends Component
             'pausedCount' => $allSubs->where('status', 'paused')->count(),
             'cancelledCount' => $allSubs->where('status', 'cancelled')->count(),
             'averageMonthly' => $activeCount ? $totalMonthly / $activeCount : 0,
-            'categories' => $subscriptionCategories, // Passamos a nova lista para o Blade
+            'categories' => $subscriptionCategories,
             'platformPlan' => $platformPlan,
             'platformPayments' => $platformPayments,
             'platformCashierSubscription' => $cashierSub,
@@ -361,18 +427,14 @@ class SubscriptionHub extends Component
     {
         $sub->status = $sub->status ?: ($sub->is_active ? 'active' : 'paused');
         $sub->monthly_equivalent = SubscriptionCycleService::toMonthly((float) $sub->amount, $sub->cycle);
-
         $today = Carbon::now();
         $billingDate = $today->copy()->day(min((int) $sub->billing_day, $today->daysInMonth));
-
         if ($billingDate->isPast() && ! $billingDate->isToday()) {
             $nextMonth = $today->copy()->addMonthNoOverflow();
             $billingDate = $nextMonth->day(min((int) $sub->billing_day, $nextMonth->daysInMonth));
         }
-
         $sub->next_billing_date = $billingDate;
         $sub->days_until_billing = (int) $today->copy()->startOfDay()->diffInDays($billingDate->copy()->startOfDay(), false);
-
         return $sub;
     }
 }
