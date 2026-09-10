@@ -3,7 +3,7 @@ import './offline-expenses';
 
 /**
  * Finance Pro theme manager.
- * Keeps the sidebar toggle, profile selector and page navigation in sync.
+ * Single source of truth for the sidebar and profile theme selectors.
  */
 (function () {
     const STORAGE_KEY = 'flux.appearance';
@@ -21,24 +21,24 @@ import './offline-expenses';
             return legacy;
         }
 
-        localStorage.setItem(STORAGE_KEY, 'system');
-        localStorage.removeItem(LEGACY_KEY);
         return 'system';
     }
 
-    function isDark(theme) {
+    function isDark(theme = getTheme()) {
         return theme === 'dark' || (
-            theme === 'system' &&
-            window.matchMedia(MEDIA_QUERY).matches
+            theme === 'system' && window.matchMedia(MEDIA_QUERY).matches
         );
     }
 
     function applyTheme(theme) {
+        if (!['dark', 'light', 'system'].includes(theme)) theme = 'system';
+
+        localStorage.setItem(STORAGE_KEY, theme);
+        localStorage.removeItem(LEGACY_KEY);
+
         const dark = isDark(theme);
         document.documentElement.classList.toggle('dark', dark);
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
-        localStorage.setItem(STORAGE_KEY, theme);
-        localStorage.removeItem(LEGACY_KEY);
 
         window.dispatchEvent(new CustomEvent('finance-pro-theme-changed', {
             detail: { value: theme, dark },
@@ -46,15 +46,11 @@ import './offline-expenses';
     }
 
     function setTheme(theme) {
-        if (!['dark', 'light', 'system'].includes(theme)) {
-            theme = 'system';
-        }
-
         applyTheme(theme);
     }
 
     function toggleTheme() {
-        setTheme(isDark(getTheme()) ? 'light' : 'dark');
+        setTheme(isDark() ? 'light' : 'dark');
     }
 
     window.FinanceProTheme = {
@@ -64,32 +60,37 @@ import './offline-expenses';
         toggleTheme,
     };
 
-    // Apply immediately on every full page load.
+    // Restore the saved preference immediately.
     applyTheme(getTheme());
 
-    // Livewire SPA navigation replaces page content without reloading app.js.
-    // Re-apply the persisted theme after every navigation so the new page
-    // cannot revert to light mode.
+    // Livewire navigation must never reset the user's choice.
     document.addEventListener('livewire:navigated', () => {
         applyTheme(getTheme());
-    });
-
-    // Some Livewire/Flux initialisation can run just after navigation.
-    // Run once more on the next frame as a final synchronisation point.
-    document.addEventListener('livewire:navigated', () => {
         requestAnimationFrame(() => applyTheme(getTheme()));
     });
 
-    // Follow the OS only when the user selected Automatic.
-    const media = window.matchMedia(MEDIA_QUERY);
-    media.addEventListener('change', () => {
-        if (getTheme() === 'system') {
-            applyTheme('system');
+    // Flux/Alpine can initialise after navigation and alter the class.
+    // Observe only the html class attribute and restore the persisted choice.
+    const observer = new MutationObserver(() => {
+        const desiredDark = isDark();
+        if (document.documentElement.classList.contains('dark') !== desiredDark) {
+            document.documentElement.classList.toggle('dark', desiredDark);
         }
     });
 
-    // Keep the existing sidebar button working even if its Alpine handler
-    // still exists in an older cached layout. Use the same persistent source.
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class'],
+    });
+
+    // Keep the OS preference in sync when Automatic is selected.
+    const media = window.matchMedia(MEDIA_QUERY);
+    media.addEventListener('change', () => {
+        if (getTheme() === 'system') applyTheme('system');
+    });
+
+    // Sidebar toggle: use the same persistent manager instead of letting
+    // an older Alpine/Flux handler create a temporary-only change.
     document.addEventListener('click', (event) => {
         const button = event.target.closest('button');
         if (!button) return;
@@ -98,17 +99,22 @@ import './offline-expenses';
         if (label !== 'Modo Claro' && label !== 'Modo Escuro') return;
 
         event.preventDefault();
-        event.stopPropagation();
+        event.stopImmediatePropagation();
         toggleTheme();
     }, true);
+
+    // Other tabs/windows changing the preference should update this page too.
+    window.addEventListener('storage', (event) => {
+        if (event.key === STORAGE_KEY || event.key === LEGACY_KEY) {
+            applyTheme(getTheme());
+        }
+    });
 })();
 
 window.addEventListener('copy-to-clipboard', (event) => {
     const text = event.detail.text;
 
-    if (!text) {
-        return;
-    }
+    if (!text) return;
 
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text);
