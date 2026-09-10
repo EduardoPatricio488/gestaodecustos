@@ -765,7 +765,7 @@
                     <div class="space-y-3">
                         <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-start gap-3">
                             <span class="size-4 shrink-0 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[8px] mt-0.5">1</span>
-                            <span>Endereço: <br><span class="text-zinc-900 dark:text-zinc-100 font-mono break-all text-[10px]">{{ url('/portal/banco') }}</span></span>
+                            <span>Endereço: <br><span class="text-zinc-900 dark:text-zinc-100 font-mono break-all text-[10px]">https://gestaodecustos.onrender.com/portal/banco</span></span>
                         </p>
                         <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-3">
                             <span class="size-4 shrink-0 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[8px]">2</span>
