@@ -63,6 +63,7 @@ class Workspace extends Model
     public function messages(): HasMany { return $this->hasMany(BusinessMessage::class); }
     public function proposals(): HasMany { return $this->hasMany(Proposal::class); }
     public function bankAccounts(): HasMany { return $this->hasMany(BankAccount::class); }
+    public function bankAccessRequests(): HasMany { return $this->hasMany(BankAccessRequest::class); }
     public function absences(): HasMany { return $this->hasMany(Absence::class); }
 
     public function getTypeText(): string
