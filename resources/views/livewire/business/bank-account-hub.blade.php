@@ -724,7 +724,7 @@
         </div>
     </flux:modal>
     {{-- MODAL: CREDENCIAIS DE AUDITORIA BANCÁRIA --}}
-    <flux:modal name="audit-code-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[560px] !p-0">
+    <flux:modal name="audit-code-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] md:w-[560px] !h-fit max-h-[90vh] !p-0">
         <div class="relative w-full max-h-[90vh] overflow-y-auto p-8 sm:p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
 
             <div class="flex items-center gap-4">
