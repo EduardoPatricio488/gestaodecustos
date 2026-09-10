@@ -145,12 +145,12 @@ class Dashboard extends Component
         $this->exportEnd = now()->endOfMonth()->format('Y-m-d');
 
         // 4. PREÇOS DE MERCADO COM CACHE (atualiza a cada 5 minutos)
-        $this->marketPrices = Cache::remember('market_prices_all', 300, function () {
+        $this->marketPrices = Cache::remember('market_prices_all', 60, function () {
             $result = [];
 
             // --- CRYPTO via CoinGecko (gratuito, sem chave) ---
             try {
-                $response = Http::connectTimeout(1)->timeout(2)->get('https://api.coingecko.com/api/v3/simple/price', [
+                $response = Http::connectTimeout(3)->timeout(6)->get('https://api.coingecko.com/api/v3/simple/price', [
                     'ids' => 'bitcoin,ethereum,solana,binancecoin,ripple,cardano,avalanche-2,polkadot,chainlink,dogecoin,matic-network,uniswap',
                     'vs_currencies' => 'eur',
                     'include_24hr_change' => 'true',
@@ -163,7 +163,7 @@ class Dashboard extends Component
                         'XRP' => 'ripple',        'ADA' => 'cardano',
                         'AVAX' => 'avalanche-2',   'DOT' => 'polkadot',
                         'LINK' => 'chainlink',     'DOGE' => 'dogecoin',
-                        'MATIC' => 'matic-network', 'UNI' => 'uniswap',
+                        'MATIC' => 'polygon-ecosystem-token', 'UNI' => 'uniswap',
                     ];
                     foreach ($map as $symbol => $id) {
                         if (isset($data[$id])) {

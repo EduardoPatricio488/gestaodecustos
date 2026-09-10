@@ -60,6 +60,14 @@
         foreach ($marketPrices as $symbol => $data) {
             $tickers[$symbol] = $data;
         }
+
+        // Nunca apresentar preços de crypto antigos/fictícios quando a API não respondeu.
+        // As cryptos devem vir exclusivamente dos dados atuais da CoinGecko.
+        foreach (['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'AVAX', 'DOT', 'LINK', 'DOGE', 'MATIC', 'UNI'] as $cryptoSymbol) {
+            if (! isset($marketPrices[$cryptoSymbol])) {
+                unset($tickers[$cryptoSymbol]);
+            }
+        }
     @endphp
 
     {{-- 1. TICKER DE MERCADO ULTRA COMPACTO --}}
