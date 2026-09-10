@@ -1,0 +1,129 @@
+name: Fix theme persistence
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-theme:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply persistent theme manager
+        shell: python
+        run: |
+          from pathlib import Path
+
+          layout = Path('resources/views/components/layouts/app.blade.php')
+          s = layout.read_text(encoding='utf-8')
+
+          start = s.index("    <script>\n        (function () {\n            function applyTheme()")
+          end = s.index("    @include('partials.head')", start)
+
+          block = '''    <script>
+        (function () {
+            const STORAGE_KEY = 'flux.appearance';
+            const LEGACY_KEY = 'theme';
+            const MEDIA_QUERY = '(prefers-color-scheme: dark)';
+
+            function getTheme() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved === 'light' || saved === 'dark' || saved === 'system') return saved;
+
+                const legacy = localStorage.getItem(LEGACY_KEY);
+                if (legacy === 'light' || legacy === 'dark') {
+                    localStorage.setItem(STORAGE_KEY, legacy);
+                    localStorage.removeItem(LEGACY_KEY);
+                    return legacy;
+                }
+
+                localStorage.setItem(STORAGE_KEY, 'system');
+                localStorage.removeItem(LEGACY_KEY);
+                return 'system';
+            }
+
+            function isDark(theme) {
+                return theme === 'dark' ||
+                    (theme === 'system' && window.matchMedia(MEDIA_QUERY).matches);
+            }
+
+            function applyTheme(theme) {
+                const dark = isDark(theme);
+                document.documentElement.classList.toggle('dark', dark);
+                document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+            }
+
+            window.FinanceProTheme = {
+                getTheme,
+                applyTheme,
+                setTheme(theme) {
+                    if (!['light', 'dark', 'system'].includes(theme)) theme = 'system';
+                    localStorage.setItem(STORAGE_KEY, theme);
+                    localStorage.removeItem(LEGACY_KEY);
+                    applyTheme(theme);
+                    window.dispatchEvent(new CustomEvent('finance-pro-theme-changed', {
+                        detail: { value: theme }
+                    }));
+                }
+            };
+
+            applyTheme(getTheme());
+
+            window.matchMedia(MEDIA_QUERY).addEventListener('change', function () {
+                if (getTheme() === 'system') applyTheme('system');
+            });
+        })();
+    </script>
+
+'''
+          layout.write_text(s[:start] + block + s[end:], encoding='utf-8')
+
+          # Replace the sidebar toggle so it uses the same persistent source of truth.
+          s = layout.read_text(encoding='utf-8')
+          old = '''                x-on:click="
+                    darkMode = !darkMode;
+                    document.documentElement.classList.add('theme-switching');
+                    window.Flux.applyAppearance(darkMode ? 'dark' : 'light');
+                    setTimeout(() => document.documentElement.classList.remove('theme-switching'), 200);
+                "'''
+          new = '''                x-on:click="
+                    const current = window.FinanceProTheme?.getTheme() || 'system';
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    document.documentElement.classList.add('theme-switching');
+                    window.FinanceProTheme?.setTheme(next);
+                    setTimeout(() => document.documentElement.classList.remove('theme-switching'), 200);
+                "'''
+          if old in s:
+              s = s.replace(old, new, 1)
+          layout.write_text(s, encoding='utf-8')
+
+          # Profile theme selector must use exactly the same manager and must not call Flux separately.
+          form = Path('resources/views/livewire/profile/update-appearance-form.blade.php')
+          s = form.read_text(encoding='utf-8')
+          s = s.replace("window.FinanceProTheme?.getTheme() || localStorage.getItem('flux.appearance') || 'system'", "window.FinanceProTheme?.getTheme() || localStorage.getItem('flux.appearance') || 'system'")
+          s = s.replace("""                    if (window.Flux?.applyAppearance) {
+                        window.Flux.applyAppearance(value);
+                    }
+
+""", "")
+          form.write_text(s, encoding='utf-8')
+
+      - name: Commit and remove workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/views/components/layouts/app.blade.php resources/views/livewire/profile/update-appearance-form.blade.php
+          git diff --cached --quiet || git commit -m "Fix persistent light and dark theme"
+          git push
+          git rm .github/workflows/fix-theme-persistence.yml
+          git commit -m "Remove temporary theme persistence workflow"
+          git push
