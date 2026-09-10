@@ -1,0 +1,82 @@
+name: Apply platform plan payment modal
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'chore: apply platform plan payment modal'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Patch SubscriptionHub
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/Livewire/SubscriptionHub.php')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace(
+              "    public bool $showExtraModal = false;\n",
+              "    public bool $showExtraModal = false;\n\n    public bool $showPlatformPlanModal = false;\n"
+          )
+
+          s = s.replace(
+              "    public function closeExtraModal()\n    {\n        $this->showExtraModal = false;\n    }\n",
+              "    public function closeExtraModal()\n    {\n        $this->showExtraModal = false;\n    }\n\n    public function openPlatformPlanModal(): void\n    {\n        $this->showPlatformPlanModal = true;\n    }\n\n    public function closePlatformPlanModal(): void\n    {\n        $this->showPlatformPlanModal = false;\n    }\n"
+          )
+
+          s = s.replace(
+              "        $platformEntry = null;\n\n        if ($platformPlan) {",
+              "        $platformEntry = null;\n        $cashierSub = null;\n        $platformPayments = collect();\n\n        if ($platformPlan) {"
+          )
+
+          s = s.replace(
+              "            $cashierSub = $user->subscription($planSlug);\n            $firstPayment = Payment::where('user_id', $user->id)",
+              "            $cashierSub = $user->subscription($planSlug);\n            $platformPayments = Payment::where('user_id', $user->id)\n                ->where('plan_type', $planSlug)\n                ->orderByDesc('paid_at')\n                ->orderByDesc('id')\n                ->get();\n\n            $firstPayment = Payment::where('user_id', $user->id)"
+          )
+
+          s = s.replace(
+              "            'platformPlan' => $platformPlan,\n",
+              "            'platformPlan' => $platformPlan,\n            'platformPayments' => $platformPayments,\n            'cashierSub' => $cashierSub,\n"
+          )
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Patch subscription hub Blade
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('resources/views/livewire/subscription-hub.blade.php')
+          s = p.read_text(encoding='utf-8')
+
+          old_button = '''                <flux:button :href="route('hub.pricing')" wire:navigate variant="ghost" class="rounded-2xl font-black uppercase tracking-widest text-[10px] bg-white/10 hover:bg-white/20 border-none text-white">\n                    Gerir Plano\n                </flux:button>'''
+          new_button = '''                <flux:button wire:click="openPlatformPlanModal" variant="ghost" class="rounded-2xl font-black uppercase tracking-widest text-[10px] bg-white/10 hover:bg-white/20 border-none text-white">\n                    Gerir Plano\n                </flux:button>'''
+          if old_button not in s:
+              raise SystemExit('Target button not found')
+          s = s.replace(old_button, new_button, 1)
+
+          modal = r'''\n\n    {{-- MODAL: DETALHES DO PLANO FINANCE PRO --}}\n    @if($showPlatformPlanModal && $platformPlan)\n        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" wire:click.self="closePlatformPlanModal">\n            <div class="absolute inset-0 bg-zinc-950/70 backdrop-blur-md" wire:click="closePlatformPlanModal"></div>\n\n            <div class="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[2rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl">\n                <div class="flex items-start justify-between gap-4 p-6 sm:p-8 border-b border-zinc-200 dark:border-zinc-800">\n                    <div>\n                        <p class="text-[9px] font-black uppercase tracking-[0.3em] text-brand-600">Finance Pro · Pagamentos</p>\n                        <h2 class="mt-2 text-2xl sm:text-3xl font-black uppercase italic tracking-tighter dark:text-white">Detalhes do plano</h2>\n                        <p class="mt-2 text-sm text-zinc-500">Informação da subscrição e histórico de pagamentos registados.</p>\n                    </div>\n                    <button type="button" wire:click="closePlatformPlanModal" class="size-10 shrink-0 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white font-black">\n                        ×\n                    </button>\n                </div>\n\n                <div class="max-h-[calc(90vh-130px)] overflow-y-auto p-6 sm:p-8 space-y-6">\n                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">\n                        <div class="rounded-2xl bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/20 p-5">\n                            <p class="text-[9px] font-black uppercase tracking-widest text-brand-600">Plano atual</p>\n                            <p class="mt-2 text-xl font-black dark:text-white">Finance Pro {{ $platformPlan->name }}</p>\n                        </div>\n                        <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-5">\n                            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Valor mensal</p>\n                            <p class="mt-2 text-xl font-black dark:text-white">{{ number_format($platformPlan->price, 2, ',', ' ') }} EUR</p>\n                        </div>\n                        <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-5">\n                            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Estado</p>\n                            <p class="mt-2 text-xl font-black text-emerald-600">\n                                {{ $cashierSub?->active() ? 'Ativo' : 'Registado' }}\n                            </p>\n                        </div>\n                    </div>\n\n                    <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">\n                        <div class="p-5 sm:p-6 border-b border-zinc-200 dark:border-zinc-800">\n                            <h3 class="text-sm font-black uppercase tracking-widest dark:text-white">Dados do pagamento</h3>\n                        </div>\n                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 sm:p-6">\n                            @php\n                                $latestPayment = $platformPayments->first();\n                                $methodLabels = [\n                                    'stripe' => 'Stripe',\n                                    'system' => 'Processamento interno',\n                                    'card' => 'Cartão',\n                                    'direct_debit' => 'Débito direto',\n                                    'bank_transfer' => 'Transferência bancária',\n                                    'paypal' => 'PayPal',\n                                    'mbway' => 'MB WAY',\n                                ];\n                                $paymentStatusLabels = [\n                                    'paid' => 'Pago',\n                                    'pending' => 'Pendente',\n                                    'failed' => 'Falhado',\n                                    'refunded' => 'Reembolsado',\n                                ];\n                            @endphp\n                            <div>\n                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Método</p>\n                                <p class="mt-1 text-sm font-black dark:text-white">{{ $latestPayment ? ($methodLabels[$latestPayment->method] ?? ucfirst($latestPayment->method)) : 'Sem registo' }}</p>\n                            </div>\n                            <div>\n                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Moeda</p>\n                                <p class="mt-1 text-sm font-black dark:text-white">{{ $latestPayment?->currency ?? 'EUR' }}</p>\n                            </div>\n                            <div>\n                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Último pagamento</p>\n                                <p class="mt-1 text-sm font-black dark:text-white">{{ $latestPayment?->paid_at?->format('d/m/Y H:i') ?? 'Sem registo' }}</p>\n                            </div>\n                            <div>\n                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Fatura / referência</p>\n                                <p class="mt-1 text-sm font-black dark:text-white break-all">{{ $latestPayment?->invoice_id ?? 'Sem registo' }}</p>\n                            </div>\n                        </div>\n                    </div>\n\n                    <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">\n                        <div class="p-5 sm:p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-4">\n                            <div>\n                                <h3 class="text-sm font-black uppercase tracking-widest dark:text-white">Histórico de pagamentos</h3>\n                                <p class="mt-1 text-xs text-zinc-500">Todos os pagamentos do plano registados na conta.</p>\n                            </div>\n                            <span class="px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[9px] font-black uppercase tracking-widest text-zinc-500">{{ $platformPayments->count() }} registos</span>\n                        </div>\n\n                        @if($platformPayments->isNotEmpty())\n                            <div class="divide-y divide-zinc-100 dark:divide-zinc-800">\n                                @foreach($platformPayments as $payment)\n                                    <div class="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center">\n                                        <div>\n                                            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Data</p>\n                                            <p class="mt-1 text-sm font-bold dark:text-white">{{ $payment->paid_at?->format('d/m/Y H:i') ?? '—' }}</p>\n                                        </div>\n                                        <div>\n                                            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Referência</p>\n                                            <p class="mt-1 text-xs font-bold dark:text-white break-all">{{ $payment->invoice_id }}</p>\n                                        </div>\n                                        <div>\n                                            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Método</p>\n                                            <p class="mt-1 text-sm font-bold dark:text-white">{{ $methodLabels[$payment->method] ?? ucfirst($payment->method) }}</p>\n                                        </div>\n                                        <div>\n                                            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Estado</p>\n                                            <span class="inline-flex mt-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest {{ $payment->status === 'paid' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' }}">\n                                                {{ $paymentStatusLabels[$payment->status] ?? ucfirst($payment->status) }}\n                                            </span>\n                                        </div>\n                                        <div class="sm:text-right">\n                                            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Valor</p>\n                                            <p class="mt-1 text-lg font-black dark:text-white">{{ number_format($payment->amount, 2, ',', ' ') }} {{ $payment->currency }}</p>\n                                        </div>\n                                    </div>\n                                @endforeach\n                            </div>\n                        @else\n                            <div class="p-8 text-center">\n                                <p class="text-sm font-bold text-zinc-500">Ainda não existem pagamentos registados para este plano.</p>\n                            </div>\n                        @endif\n                    </div>\n\n                    <div class="rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/5 p-5 sm:p-6">\n                        <div class="flex gap-3">\n                            <flux:icon name="information-circle" class="size-5 text-amber-600 shrink-0" />\n                            <div>\n                                <h3 class="text-sm font-black uppercase tracking-widest text-amber-800 dark:text-amber-300">Dados bancários</h3>\n                                <p class="mt-2 text-xs leading-5 text-amber-700 dark:text-amber-200/80">\n                                    O sistema apresenta aqui os dados de pagamento que estão efetivamente registados. IBAN, número completo de cartão e outros dados bancários sensíveis não são armazenados nem apresentados nesta área.\n                                    @if($latestPayment && $latestPayment->method === 'bank_transfer')\n                                        Para este pagamento, a base de dados regista apenas o método como transferência bancária; não existe um IBAN ou número de conta associado ao registo.\n                                    @endif\n                                </p>\n                            </div>\n                        </div>\n                    </div>\n\n                    <div class="flex justify-end">\n                        <flux:button wire:click="closePlatformPlanModal" variant="primary" class="rounded-2xl font-black uppercase tracking-widest text-[10px]">\n                            Fechar\n                        </flux:button>\n                    </div>\n                </div>\n            </div>\n        </div>\n    @endif\n'''
+
+          marker = '\n</div>\n'
+          if marker not in s:
+              raise SystemExit('Blade closing marker not found')
+          head, tail = s.rsplit(marker, 1)
+          s = head + modal + marker + tail
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit patched files and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/.apply-platform-plan-modal.yml
+          git add app/Livewire/SubscriptionHub.php resources/views/livewire/subscription-hub.blade.php .github/workflows/.apply-platform-plan-modal.yml
+          git commit -m "feat: add platform plan payment details modal"
+          git push
