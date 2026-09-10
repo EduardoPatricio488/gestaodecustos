@@ -29,7 +29,6 @@ jobs:
           if marker not in text:
               raise SystemExit('Platform plan modal marker not found.')
 
-          # Repair literal escape sequences if the first helper run already modified the file.
           text = text.replace(r'\n', '\n')
 
           stripe_block = '''
@@ -189,3 +188,5 @@ jobs:
           git rm -f .github/workflows/.sync-stripe-plan-details.yml
           git commit -m "feat: sync platform plan modal with Stripe details"
           git push origin main
+
+# Trigger a fresh synchronization run.
