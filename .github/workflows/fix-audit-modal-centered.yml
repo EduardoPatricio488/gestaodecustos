@@ -1,0 +1,37 @@
+name: Fix audit modal centered
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Center audit modal
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('resources/views/livewire/business/bank-account-hub.blade.php')
+          s = p.read_text()
+          old = '<flux:modal name="audit-code-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[560px] !p-0">'
+          new = '<flux:modal name="audit-code-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] md:w-[560px] !h-fit max-h-[90vh] !p-0">'
+          if old not in s:
+              raise SystemExit('Audit modal marker not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/views/livewire/business/bank-account-hub.blade.php
+          git diff --cached --quiet || git commit -m "Center bank audit protocol modal"
+          git push
+      - name: Remove temporary workflow
+        if: success()
+        run: |
+          rm .github/workflows/fix-audit-modal-centered.yml
+          git add .github/workflows/fix-audit-modal-centered.yml
+          git commit -m "Remove temporary audit modal workflow"
+          git push
