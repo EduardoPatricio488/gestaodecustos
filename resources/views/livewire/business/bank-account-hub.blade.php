@@ -783,12 +783,12 @@
 
                 <button
                     x-data="{ copiedPortal: false }"
-                    @click="navigator.clipboard.writeText('http://localhost:8000/portal/banco'); copiedPortal = true; setTimeout(() => copiedPortal = false, 2000)"
+                    @click="navigator.clipboard.writeText('{{ $generatedAuditCode }}'); copiedPortal = true; setTimeout(() => copiedPortal = false, 2000)"
                     class="flex-[2] h-14 bg-zinc-900 text-white rounded-2xl font-black uppercase text-xs shadow-xl hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 border-none"
                 >
                     <flux:icon x-show="!copiedPortal" name="share" class="size-4" />
                     <flux:icon x-show="copiedPortal" name="check" class="size-4" />
-                    <span x-text="copiedPortal ? 'Link Copiado!' : 'Partilhar Token'"></span>
+                    <span x-text="copiedPortal ? 'Token Copiado!' : 'Partilhar Token'"></span>
                 </button>
 
                 <button
