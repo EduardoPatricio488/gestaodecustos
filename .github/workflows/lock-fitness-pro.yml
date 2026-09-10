@@ -1,0 +1,72 @@
+name: Lock training zone behind Pro plan
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  lock-fitness:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update sidebar
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('resources/views/components/layouts/app.blade.php')
+          s = path.read_text(encoding='utf-8')
+
+          old = '''                    wire:navigate.hover
+                    class="text-orange-500 dark:text-orange-400 font-black"
+                >
+                    Zona de Treino {!! $badge($counts['fitness']) !!}
+                    <span class="ml-auto text-[8px] font-black bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400 px-1.5 py-0.5 rounded uppercase">Novo</span>
+                </flux:sidebar.item>'''
+
+          new = '''                    wire:navigate.hover
+                    class="text-orange-500 dark:text-orange-400 font-black {{ !$isAnyPremium ? 'opacity-60 cursor-not-allowed' : '' }}"
+                    :disabled="{{ $isAnyPremium ? 'false' : 'true' }}"
+                    @if($isAnyPremium)
+                        href="{{ route('fitness') }}"
+                    @endif
+                >
+                    @if($isAnyPremium)
+                        Zona de Treino {!! $badge($counts['fitness']) !!}
+                    @else
+                        Zona de Treino
+                    @endif
+                    @if(!$isAnyPremium)
+                        <span class="ml-auto inline-flex items-center gap-1 text-[8px] font-black bg-violet-100 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                            <flux:icon name="lock-closed" class="size-2.5" /> PRO
+                        </span>
+                    @else
+                        <span class="ml-auto text-[8px] font-black bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400 px-1.5 py-0.5 rounded uppercase">Novo</span>
+                    @endif
+                </flux:sidebar.item>'''
+
+          if old not in s:
+              raise SystemExit('Zona de Treino sidebar block not found')
+
+          s = s.replace(old, new, 1)
+          path.write_text(s, encoding='utf-8')
+
+      - name: Remove workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/views/components/layouts/app.blade.php
+          git diff --cached --quiet || git commit -m "Lock training zone for Pro users"
+          git push
+          git rm .github/workflows/lock-fitness-pro.yml
+          git commit -m "Remove temporary fitness lock workflow"
+          git push
