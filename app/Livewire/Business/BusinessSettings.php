@@ -45,12 +45,24 @@ class BusinessSettings extends Component
         // Preencher campos
         $this->name = $this->workspace->name;
         $this->legal_name = $this->workspace->legal_name;
-        $this->tax_number = $this->workspace->tax_number;
+        $this->tax_number = $this->formatTaxNumber($this->workspace->tax_number);
         $this->industry = $this->workspace->industry;
         $this->business_email = $this->workspace->business_email;
         $this->address = $this->workspace->address;
         $this->currency = $this->workspace->currency ?? 'EUR';
         $this->initial_capital = (float) $this->workspace->initial_capital;
+    }
+
+    public function updatedTaxNumber($value)
+    {
+        $this->tax_number = $this->formatTaxNumber($value);
+    }
+
+    private function formatTaxNumber($value): string
+    {
+        $digits = substr(preg_replace('/\D/', '', (string) $value), 0, 9);
+
+        return implode(' ', str_split($digits, 3));
     }
 
     /**
@@ -61,7 +73,7 @@ class BusinessSettings extends Component
         $this->validate([
             'name' => 'required|string|max:100',
             'legal_name' => 'nullable|string|max:200',
-            'tax_number' => 'nullable|string|max:20',
+            'tax_number' => 'nullable|string|max:11',
             'business_email' => 'nullable|email',
             'logo' => 'nullable|image|max:2048',
             'initial_capital' => 'numeric|min:0',
@@ -70,7 +82,7 @@ class BusinessSettings extends Component
         $data = [
             'name' => $this->name,
             'legal_name' => $this->legal_name,
-            'tax_number' => $this->tax_number,
+            'tax_number' => preg_replace('/\D/', '', (string) $this->tax_number),
             'industry' => $this->industry,
             'business_email' => $this->business_email,
             'address' => $this->address,
@@ -98,6 +110,9 @@ class BusinessSettings extends Component
 
         // Atualizar workspace
         $this->workspace->update($data);
+
+        // Manter o campo apresentado no formato 123 456 789
+        $this->tax_number = $this->formatTaxNumber($data['tax_number']);
 
         // Toast premium
         $this->dispatch('toast', text: 'Dados da empresa atualizados com sucesso!', variant: 'success');
