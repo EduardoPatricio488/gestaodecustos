@@ -44,9 +44,10 @@ class BankPortal extends Component
             ->where('audit_token_purpose', 'bank_audit')
             ->whereNull('audit_token_revoked_at')
             ->where('audit_access_code', $cleanTokenInput)
+            ->whereNotNull('audit_token')
             ->first();
 
-        if ($workspace && Hash::check($cleanTokenInput, $workspace->audit_token)) {
+        if ($workspace && Hash::check($cleanTokenInput, (string) $workspace->audit_token)) {
             RateLimiter::clear($rateLimitKey);
             session()->put('bank_portal_workspace_id', $workspace->id);
             return redirect()->route('bank.dashboard');
@@ -79,13 +80,11 @@ class BankPortal extends Component
     private function isInstitutionalEmail(string $email): bool
     {
         $domain = strtolower((string) substr(strrchr($email, '@') ?: '', 1));
-
         $freeProviders = [
             'gmail.com', 'googlemail.com', 'hotmail.com', 'outlook.com', 'live.com',
             'msn.com', 'yahoo.com', 'yahoo.pt', 'icloud.com', 'me.com', 'aol.com',
             'proton.me', 'protonmail.com', 'gmx.com', 'mail.com', 'sapo.pt', 'iol.pt',
         ];
-
         return $domain !== '' && ! in_array($domain, $freeProviders, true) && str_contains($domain, '.');
     }
 
