@@ -1,0 +1,89 @@
+name: Improve bank audit access
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-bank-audit-access.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch bank audit access
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p = Path('app/Livewire/Business/BankAccountHub.php')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace("$plainToken = Str::random(64);", """$plainToken = $workspace->audit_access_code;
+          if (! $plainToken) {
+              $plainToken = strtoupper(Str::random(8));
+              $workspace->audit_access_code = $plainToken;
+          }""", 1)
+          s = s.replace("'audit_token' => Hash::make($plainToken),", "'audit_token' => Hash::make($plainToken),\n            'audit_access_code' => $plainToken,", 1)
+          s = s.replace("'audit_token_purpose' => 'bank_audit',", "'audit_token_purpose' => 'bank_audit',", 1)
+          p.write_text(s, encoding='utf-8')
+
+          p = Path('resources/views/livewire/business/bank-account-hub.blade.php')
+          s = p.read_text(encoding='utf-8')
+
+          old_button = '''    <button type="button" wire:click="generateAuditCode" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 transition-all">
+        <flux:icon name="shield-check" class="size-4 text-zinc-900 dark:text-white" /> Gerar Acesso Bancário
+    </button>
+'''
+          new_button = '''    <button type="button" wire:click="generateAuditCode" class="w-full flex items-center justify-center gap-3 px-5 py-3.5 mb-3 rounded-2xl text-[11px] font-black uppercase tracking-widest text-white bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:scale-[1.01] shadow-lg shadow-zinc-900/20 transition-all">
+        <flux:icon name="shield-check" class="size-5" /> Gerar Acesso Bancário
+    </button>
+'''
+          if old_button not in s:
+              raise SystemExit('Audit access button block not found')
+          s = s.replace(old_button, new_button, 1)
+
+          s = s.replace('<flux:modal name="audit-code-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">', '<flux:modal name="audit-code-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[560px] !p-0">', 1)
+          s = s.replace('<div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">', '<div class="relative w-full max-h-[90vh] overflow-y-auto p-8 sm:p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">', 1)
+
+          s = s.replace('<span class="text-5xl font-mono font-black text-white tracking-[0.2em]">\n                            {{ $generatedAuditCode }}\n                        </span>', '<span class="text-2xl sm:text-3xl font-mono font-black text-white tracking-[0.18em]">\n                            {{ $generatedAuditCode }}\n                        </span>', 1)
+          s = s.replace('<span>NIF da Empresa: <span class="font-black text-zinc-900 dark:text-white">{{ $companyTaxNumber }}</span></span>', '<span>NIF da Empresa: <span class="font-black text-zinc-900 dark:text-white">{{ $companyTaxNumber ? implode(\' \', str_split(preg_replace(\'/\\D/\', \'\', (string) $companyTaxNumber), 3)) : \'S/ NIF\' }}</span></span>', 1)
+          s = s.replace('<span>Token Único: <span class="font-black text-zinc-900 dark:text-white">{{ $generatedAuditCode }}</span></span>', '<span>Token Único: <span class="font-black font-mono text-zinc-900 dark:text-white tracking-widest">{{ $generatedAuditCode }}</span></span>', 1)
+          s = s.replace('<span>Endereço: <br><span class="text-zinc-900 dark:text-zinc-100 font-mono break-all text-[10px]">http://localhost:8000/portal/banco</span></span>', '<span>Endereço: <br><span class="text-zinc-900 dark:text-zinc-100 font-mono break-all text-[10px]">{{ url(\'/portal/banco\') }}</span></span>', 1)
+          s = s.replace("navigator.clipboard.writeText('http://localhost:8000/portal/banco'); copiedPortal = true", "navigator.clipboard.writeText('{{ url('/portal/banco') }}'); copiedPortal = true", 1)
+          s = s.replace("copiedPortal ? 'Link Copiado!' : 'Partilhar Acesso'", "copiedPortal ? 'Token Copiado!' : 'Partilhar Token'", 1)
+          s = s.replace("navigator.clipboard.writeText('{{ $generatedAuditCode }}')", "navigator.clipboard.writeText('{{ $generatedAuditCode }}')", 1)
+          p.write_text(s, encoding='utf-8')
+
+          migration = Path('database/migrations/2026_09_10_190000_add_audit_access_code_to_workspaces_table.php')
+          if not migration.exists():
+              migration.write_text('''<?php\n\nuse Illuminate\\Database\\Migrations\\Migration;\nuse Illuminate\\Database\\Schema\\Blueprint;\nuse Illuminate\\Support\\Facades\\Schema;\n\nreturn new class extends Migration\n{\n    public function up(): void\n    {\n        Schema::table(\'workspaces\', function (Blueprint $table) {\n            $table->string(\'audit_access_code\', 8)->nullable()->unique()->after(\'audit_token\');\n        });\n    }\n\n    public function down(): void\n    {\n        Schema::table(\'workspaces\', function (Blueprint $table) {\n            $table->dropUnique([\'audit_access_code\']);\n            $table->dropColumn(\'audit_access_code\');\n        });\n    }\n};\n''', encoding='utf-8')
+
+          p = Path('app/Models/Workspace.php')
+          s = p.read_text(encoding='utf-8')
+          if "'audit_access_code'," not in s:
+              s = s.replace("'audit_token',", "'audit_token',\n        'audit_access_code',", 1)
+              p.write_text(s, encoding='utf-8')
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Livewire/Business/BankAccountHub.php resources/views/livewire/business/bank-account-hub.blade.php app/Models/Workspace.php database/migrations/2026_09_10_190000_add_audit_access_code_to_workspaces_table.php
+          git commit -m "Improve bank audit access and persistent token"
+          git push
+
+      - name: Remove temporary workflow
+        if: always()
+        run: |
+          rm -f .github/workflows/fix-bank-audit-access.yml
+          git add .github/workflows/fix-bank-audit-access.yml
+          git commit -m "Remove temporary bank audit workflow" || true
+          git push || true
