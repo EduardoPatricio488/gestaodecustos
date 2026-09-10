@@ -720,6 +720,29 @@
 
 
 <flux:sidebar.nav>
+            @if(request()->routeIs('hub.business.gateway') || request()->routeIs('hub.pricing'))
+      <div class="px-2 py-4">
+          @if($allBusinessWs->count() > 0)
+              <div class="space-y-1">
+                  @foreach($allBusinessWs as $ws)
+                      <flux:sidebar.item
+                          icon="building-office-2"
+                          :href="route('workspace.switch.fast', $ws->id)"
+                          wire:navigate
+                          class="text-[11px] font-bold py-2"
+                      >
+                          {{ $ws->name }}
+                      </flux:sidebar.item>
+                  @endforeach
+              </div>
+          @else
+              <div class="rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-4 text-center">
+                  <flux:icon name="building-office-2" class="size-7 mx-auto text-zinc-300 dark:text-zinc-700 mb-2" />
+                  <p class="text-[10px] font-black uppercase text-zinc-500 dark:text-zinc-400">Não tens nenhuma empresa</p>
+              </div>
+          @endif
+      </div>
+  @else
       @if($isViewingOthers)
         <flux:sidebar.item
             icon="arrow-left-circle"
@@ -1493,6 +1516,8 @@ $hasStoreAccess = $hasLockInAccess;
                         Painel Administrador
                     </flux:sidebar.item>
                 @endif
+            @endif
+        
             @endif
         </flux:sidebar.nav>
 
