@@ -55,11 +55,15 @@ class BankPortal extends Component
 
     public function selectCompany(int $companyId): void
     {
-        $exists = Workspace::whereKey($companyId)->where('type', 'company')->exists();
+        $exists = Workspace::whereKey($companyId)
+            ->whereIn('type', ['business', 'company', 'bussiness'])
+            ->exists();
+
         if (! $exists) {
             $this->selectedCompanyId = null;
             return;
         }
+
         $this->selectedCompanyId = $companyId;
         $this->requestSent = false;
     }
@@ -81,7 +85,10 @@ class BankPortal extends Component
             'requestEmail.email' => 'Introduz um email válido.',
         ]);
 
-        $workspace = Workspace::whereKey($this->selectedCompanyId)->where('type', 'company')->first();
+        $workspace = Workspace::whereKey($this->selectedCompanyId)
+            ->whereIn('type', ['business', 'company', 'bussiness'])
+            ->first();
+
         if (! $workspace) {
             $this->addError('selectedCompanyId', 'A empresa selecionada não está disponível.');
             return;
@@ -96,13 +103,13 @@ class BankPortal extends Component
     public function companies()
     {
         return Workspace::query()
-            ->where('type', 'company')
+            ->whereIn('type', ['business', 'company', 'bussiness'])
             ->where(function ($query) {
                 $query->where('name', 'like', '%'.$this->companySearch.'%')
                     ->orWhere('legal_name', 'like', '%'.$this->companySearch.'%');
             })
             ->orderBy('name')
-            ->limit(30)
+            ->limit(100)
             ->get(['id', 'name', 'legal_name']);
     }
 
