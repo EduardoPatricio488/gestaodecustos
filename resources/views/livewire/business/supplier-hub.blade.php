@@ -244,7 +244,7 @@
 
 
     {{-- 4. MODAL: FICHA EXECUTIVA DE FORNECEDOR (DESIGN SaaS PRO) --}}
-    <flux:modal name="supplier-modal" position="center" class="w-[calc(100vw-2rem)] max-w-[650px] max-h-[90vh] !p-0 overflow-hidden">
+    <flux:modal name="supplier-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[650px] !p-0 !max-h-[90vh] overflow-hidden">
         <div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent">
 
             {{-- Botão Fechar --}}
@@ -355,7 +355,7 @@
 {{-- MODAL: ACESSO AO PORTAL DO FORNECEDOR --}}
    {{-- 5. MODAL: ACESSO AO PORTAL DO FORNECEDOR --}}
     <flux:modal name="supplier-portal-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">
-        <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
+        <div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
 
             <div class="flex items-center gap-4">
                 <div class="p-3 bg-zinc-900 rounded-2xl text-white shadow-lg">

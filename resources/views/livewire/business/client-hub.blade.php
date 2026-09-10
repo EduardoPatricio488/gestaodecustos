@@ -229,8 +229,8 @@
     </div>
 
     {{-- 4. MODAL: FICHA EXECUTIVA DE CLIENTE (DESIGN CRM PRO) --}}
-    <flux:modal name="client-modal" position="center" class="md:w-[650px] !p-0 overflow-visible">
-        <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800">
+    <flux:modal name="client-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[650px] !p-0 !max-h-[90vh] overflow-hidden">
+        <div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800">
 
             {{-- Botão Fechar --}}
             <div class="absolute top-6 right-6">
