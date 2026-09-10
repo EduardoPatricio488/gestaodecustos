@@ -11,11 +11,8 @@ use Livewire\Component;
 class CareersHub extends Component
 {
     public $email;
-
     public $password;
-
     public $name;
-
     public $isRegistering = true;
 
     #[Layout('layouts.guest')]
@@ -50,16 +47,12 @@ class CareersHub extends Component
         }
 
         $this->reset(['password']);
-
         return redirect()->route('careers.apply');
     }
 
     public function logout()
     {
         Auth::guard('candidate')->logout();
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
-
         return redirect('/');
     }
 
