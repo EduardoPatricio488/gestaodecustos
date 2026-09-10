@@ -1,0 +1,124 @@
+name: Fix theme synchronization
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-theme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fix theme logic
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p = Path('resources/views/components/layouts/app.blade.php')
+          s = p.read_text(encoding='utf-8')
+
+          start = s.index("    <script>\n        (function () {\n            function applyTheme() {")
+          end_marker = "    @include('partials.head')"
+          end = s.index(end_marker, start)
+
+          replacement = '''    <script>
+        (function () {
+            function getAppearance() {
+                return localStorage.getItem('flux.appearance') || localStorage.getItem('theme') || 'system';
+            }
+
+            function applyTheme(appearance) {
+                var isDark = appearance === 'dark' ||
+                    (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+                document.documentElement.classList.toggle('dark', isDark);
+                document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+            }
+
+            var legacyTheme = localStorage.getItem('theme');
+            var appearance = localStorage.getItem('flux.appearance');
+
+            if (!appearance && (legacyTheme === 'dark' || legacyTheme === 'light')) {
+                appearance = legacyTheme;
+                localStorage.setItem('flux.appearance', appearance);
+            }
+
+            if (!appearance) {
+                appearance = 'system';
+                localStorage.setItem('flux.appearance', 'system');
+            }
+
+            localStorage.removeItem('theme');
+            applyTheme(appearance);
+
+            var media = window.matchMedia('(prefers-color-scheme: dark)');
+            media.addEventListener('change', function () {
+                if (getAppearance() === 'system') applyTheme('system');
+            });
+
+            window.addEventListener('finance-pro-theme-changed', function (event) {
+                var value = event.detail && event.detail.value ? event.detail.value : 'system';
+                localStorage.setItem('flux.appearance', value);
+                localStorage.removeItem('theme');
+                applyTheme(value);
+            });
+        })();
+    </script>
+
+'''
+          p.write_text(s[:start] + replacement + s[end:], encoding='utf-8')
+
+          p = Path('resources/views/livewire/profile/update-appearance-form.blade.php')
+          s = p.read_text(encoding='utf-8')
+
+          old_start = s.index("        <div\n            x-data=\"{\n                theme:")
+          old_end = s.index("        >\n            <flux:label>Tema</flux:label>", old_start) + len("        >\n")
+
+          new = '''        <div
+            x-data="{
+                theme: localStorage.getItem('flux.appearance') || 'system',
+                setTheme(value) {
+                    this.theme = value;
+                    localStorage.setItem('flux.appearance', value);
+                    localStorage.removeItem('theme');
+                    document.documentElement.classList.add('theme-switching');
+
+                    const isDark = value === 'dark' ||
+                        (value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+                    document.documentElement.classList.toggle('dark', isDark);
+                    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+                    window.dispatchEvent(new CustomEvent('finance-pro-theme-changed', { detail: { value } }));
+
+                    if (window.Flux?.applyAppearance) {
+                        window.Flux.applyAppearance(value);
+                    }
+
+                    setTimeout(() => document.documentElement.classList.remove('theme-switching'), 200);
+                }
+            }"
+        >
+'''
+          p.write_text(s[:old_start] + new + s[old_end:], encoding='utf-8')
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/views/components/layouts/app.blade.php resources/views/livewire/profile/update-appearance-form.blade.php
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix sidebar light and dark theme synchronization"
+          git push
+
+      - name: Remove temporary workflow
+        if: success()
+        run: |
+          rm -f .github/workflows/fix-theme-sidebar.yml
+          git add .github/workflows/fix-theme-sidebar.yml
+          git commit -m "Remove temporary theme fix workflow"
+          git push
