@@ -34,15 +34,13 @@ class ClientPortal extends Component
     {
         $this->validate(['subject' => 'required|min:5', 'message' => 'required|min:10']);
 
-        // 1. Procurar o admin para evitar o erro de NOT NULL
         $admin = DB::table('workspace_user')
             ->where('workspace_id', $this->client->workspace_id)
             ->where('role', 'admin')
             ->first();
 
-        $adminId = $admin ? $admin->user_id : auth()->id();
+        $adminId = $admin ? $admin->user_id : null;
 
-        // 2. Criar o Ticket
         $ticket = SupportTicket::create([
             'workspace_id' => $this->client->workspace_id,
             'client_id' => $this->client->id,
@@ -53,12 +51,11 @@ class ClientPortal extends Component
             'priority' => 'high',
         ]);
 
-        // 3. Criar a Mensagem no histórico (Passando o user_id do admin para satisfazer a BD)
         SupportMessage::create([
             'support_ticket_id' => $ticket->id,
             'user_id' => $adminId,
             'message' => $this->message,
-            'is_admin_reply' => false, // Importante: define que veio do cliente
+            'is_admin_reply' => false,
         ]);
 
         $this->reset(['subject', 'message']);
@@ -72,7 +69,6 @@ class ClientPortal extends Component
 
         $ticket = $this->ticketForClient($this->activeTicketId);
 
-        // Enviar a resposta usando o user_id que o ticket já tem
         SupportMessage::create([
             'support_ticket_id' => $ticket->id,
             'user_id' => $ticket->user_id,
@@ -90,6 +86,26 @@ class ClientPortal extends Component
         $this->dispatch('modal-show', name: 'view-ticket-modal');
     }
 
+    public function approveProposal($id): void
+    {
+        $proposal = Proposal::where('client_id', $this->client->id)
+            ->where('status', 'pendente')
+            ->findOrFail($id);
+
+        $proposal->update(['status' => 'aceite']);
+        $this->dispatch('toast', variant: 'success', text: 'Proposta aceite com sucesso.');
+    }
+
+    public function declineProposal($id): void
+    {
+        $proposal = Proposal::where('client_id', $this->client->id)
+            ->where('status', 'pendente')
+            ->findOrFail($id);
+
+        $proposal->update(['status' => 'recusada']);
+        $this->dispatch('toast', variant: 'success', text: 'Proposta recusada.');
+    }
+
     private function ticketForClient($id): SupportTicket
     {
         return $this->client->supportTickets()->findOrFail($id);
@@ -99,17 +115,30 @@ class ClientPortal extends Component
     public function render()
     {
         $projectIds = Project::where('client_id', $this->client->id)->pluck('id');
+        $projects = Project::where('client_id', $this->client->id)
+            ->withCount(['tasks' => fn ($q) => $q->where('status', '!=', 'concluida')])
+            ->get();
+        $tickets = SupportTicket::where('client_id', $this->client->id)->with('messages')->latest()->get();
+        $invoices = Invoice::where('client_id', $this->client->id)->latest()->get();
+        $proposals = Proposal::where('client_id', $this->client->id)->where('status', 'pendente')->get();
 
         return view('livewire.client-portal', [
-            'projects' => Project::where('client_id', $this->client->id)->withCount(['tasks' => fn ($q) => $q->where('status', '!=', 'concluida')])->get(),
-            'invoices' => Invoice::where('client_id', $this->client->id)->latest()->get(),
-            'proposals' => Proposal::where('client_id', $this->client->id)->where('status', 'pendente')->get(),
+            'projects' => $projects,
+            'invoices' => $invoices,
+            'proposals' => $proposals,
             'recentActivity' => Task::whereIn('project_id', $projectIds)->where('status', 'concluida')->whereNotNull('completed_at')->latest('completed_at')->limit(5)->get(),
-            'tickets' => SupportTicket::where('client_id', $this->client->id)->with('messages')->latest()->get(),
+            'tickets' => $tickets,
             'activeMessages' => $this->activeTicketId
                 ? $this->ticketForClient($this->activeTicketId)->messages()->oldest()->get()
                 : collect(),
             'workspace' => $this->client->workspace,
+            'portalStats' => [
+                'projects' => $projects->count(),
+                'openTasks' => $projects->sum('tasks_count'),
+                'pendingProposals' => $proposals->count(),
+                'openTickets' => $tickets->whereIn('status', ['open', 'em_aberto', 'pending'])->count(),
+                'invoiceTotal' => (float) $invoices->sum('total'),
+            ],
         ]);
     }
 }
