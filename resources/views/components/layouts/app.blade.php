@@ -720,7 +720,7 @@
 
 
 <flux:sidebar.nav>
-            @if(request()->routeIs('hub.business.gateway') || request()->routeIs('hub.pricing'))
+            @if(request()->routeIs('hub.business.gateway') || request()->routeIs('hub.pricing') || request()->routeIs('empresa.onboarding'))
       <div class="px-2 py-4">
           @if($allBusinessWs->count() > 0)
               <div class="space-y-1">
