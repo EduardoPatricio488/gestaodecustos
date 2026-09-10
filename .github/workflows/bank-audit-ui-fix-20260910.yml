@@ -23,9 +23,9 @@ jobs:
           from pathlib import Path
           p=Path('app/Livewire/Business/BankAccountHub.php'); s=p.read_text()
           s=s.replace('$plainToken = Str::random(64);', "$plainToken = $workspace->audit_access_code;\n        if (! $plainToken) {\n            $plainToken = strtoupper(Str::random(8));\n        }")
-          s=s.replace("'audit_token' => Hash::make($plainToken),", "'audit_token' => Hash::make($plainToken),\n            'audit_access_code' => $plainToken,")
+          s=s.replace("'audit_token' => Hash::make($plainToken),", "'audit_token' => Hash::make($plainToken),\n            'audit_access_code' => $plainToken,",1)
           p.write_text(s)
-          p=Path('app/Models/Workspace.php'); s=p.read_text(); s=s.replace("'audit_token',", "'audit_token',\n        'audit_access_code',", 1); p.write_text(s)
+          p=Path('app/Models/Workspace.php'); s=p.read_text(); s=s.replace("'audit_token',", "'audit_token',\n        'audit_access_code',",1); p.write_text(s)
           p=Path('resources/views/livewire/business/bank-account-hub.blade.php'); s=p.read_text()
           s=s.replace('''    <button type="button" wire:click="generateAuditCode" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 transition-all">
         <flux:icon name="shield-check" class="size-4 text-zinc-900 dark:text-white" /> Gerar Acesso Bancário
@@ -35,7 +35,7 @@ jobs:
           s=s.replace('<flux:modal name="audit-code-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">','<flux:modal name="audit-code-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[560px] !p-0">',1)
           s=s.replace('<div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">','<div class="relative w-full max-h-[90vh] overflow-y-auto p-8 sm:p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">',1)
           s=s.replace('class="text-5xl font-mono font-black text-white tracking-[0.2em]"','class="text-2xl sm:text-3xl font-mono font-black text-white tracking-[0.18em]"',1)
-          s=s.replace('http://localhost:8000/portal/banco','{{ url('/portal/banco') }}')
+          s=s.replace('http://localhost:8000/portal/banco',"{{ url('/portal/banco') }}")
           s=s.replace("<span>NIF da Empresa: <span class=\"font-black text-zinc-900 dark:text-white\">{{ $companyTaxNumber }}</span></span>","<span>NIF da Empresa: <span class=\"font-black text-zinc-900 dark:text-white\">{{ $companyTaxNumber ? implode(' ', str_split(preg_replace('/\\D/', '', (string) $companyTaxNumber), 3)) : 'S/ NIF' }}</span></span>",1)
           s=s.replace("copiedPortal ? 'Link Copiado!' : 'Partilhar Acesso'","copiedPortal ? 'Token Copiado!' : 'Partilhar Token'",1)
           s=s.replace("navigator.clipboard.writeText('{{ url('/portal/banco') }}'); copiedPortal = true","navigator.clipboard.writeText('{{ $generatedAuditCode }}'); copiedPortal = true",1)
