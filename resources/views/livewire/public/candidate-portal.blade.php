@@ -9,7 +9,7 @@
                             <span class="size-1.5 rounded-full bg-emerald-500"></span>
                             Portal do Candidato
                         </div>
-                        <h1 class="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-white">Olá, {{ auth()->user()->name }} 👋</h1>
+                        <h1 class="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-white">Olá, {{ auth('candidate')->user()->name }} 👋</h1>
                         <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400 max-w-xl">O teu perfil de candidato está ativo. Consulta oportunidades e acompanha as tuas candidaturas num só lugar.</p>
                     </div>
 
@@ -46,13 +46,10 @@
                         <flux:icon name="arrow-left" class="size-4" />
                         Início
                     </a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-black uppercase tracking-wider hover:bg-red-500/15 transition-all">
-                            <flux:icon name="arrow-right-start-on-rectangle" class="size-4" />
-                            Terminar sessão
-                        </button>
-                    </form>
+                    <button type="button" wire:click="logout" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-black uppercase tracking-wider hover:bg-red-500/15 transition-all">
+                        <flux:icon name="arrow-right-start-on-rectangle" class="size-4" />
+                        Terminar sessão
+                    </button>
                 </div>
             </div>
         </div>
