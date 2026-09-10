@@ -27,3 +27,4 @@ jobs:
           git add resources/views/livewire/business/business-settings.blade.php
           git diff --cached --quiet || git commit -m "Rename business email label"
           git push
+      # trigger
