@@ -33,3 +33,5 @@ jobs:
           git add resources/views/components/layouts/app.blade.php
           git commit -m "Make Business Dashboard prominent in sidebar"
           git push
+
+# trigger
