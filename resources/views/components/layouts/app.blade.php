@@ -896,8 +896,20 @@
         {{-- ==========================================
              VISTA: CEO / OWNER (ACESSO TOTAL)
         ========================================== --}}
-        <flux:sidebar.item icon="chart-pie" :href="route('hub.business.dashboard')" :current="request()->routeIs('hub.business.dashboard')" wire:navigate.hover>
-            Dashboard Business
+        <flux:sidebar.item
+            icon="chart-pie"
+            :href="route('hub.business.dashboard')"
+            :current="request()->routeIs('hub.business.dashboard')"
+            wire:navigate.hover
+            class="!bg-brand-50 !text-brand-700 dark:!bg-brand-500/15 dark:!text-brand-300 !font-black !rounded-2xl !shadow-sm !border !border-brand-200/70 dark:!border-brand-500/20 !py-3 !px-3 hover:!bg-brand-100 dark:hover:!bg-brand-500/20 transition-all duration-200"
+        >
+            <span class="flex items-center gap-2.5">
+                <span class="flex size-8 items-center justify-center rounded-xl bg-brand-600 text-white shadow-md shadow-brand-600/20 dark:bg-brand-500">
+                    <flux:icon name="chart-pie" class="size-4" />
+                </span>
+                <span class="font-black tracking-tight">Dashboard Business</span>
+                <span class="ml-auto size-2 rounded-full bg-brand-500 shadow-[0_0_0_4px_rgba(59,130,246,0.10)]"></span>
+            </span>
         </flux:sidebar.item>
 
         <flux:sidebar.group heading="Gestão de Operações" class="mt-4">
