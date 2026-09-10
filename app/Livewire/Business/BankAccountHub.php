@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Business;
 
+use App\Mail\BankAccessCredentialsMail;
+use App\Models\BankAccessRequest;
 use App\Models\BankAccount;
 use App\Models\Expense;
 use App\Models\Income;
@@ -52,15 +54,17 @@ class BankAccountHub extends Component
         'notes' => 'nullable|string',
     ];
 
-    public function generateAuditCode()
+    private function ensureAuditCode(): string
     {
         $workspace = auth()->user()->currentWorkspace;
         $plainToken = $workspace->audit_access_code;
+
         if (! $plainToken) {
             do {
                 $plainToken = strtoupper(Str::random(8));
             } while (Workspace::where('audit_access_code', $plainToken)->exists());
         }
+
         $workspace->update([
             'audit_token' => Hash::make($plainToken),
             'audit_access_code' => $plainToken,
@@ -68,6 +72,14 @@ class BankAccountHub extends Component
             'audit_token_revoked_at' => null,
             'audit_token_purpose' => 'bank_audit',
         ]);
+
+        return $plainToken;
+    }
+
+    public function generateAuditCode()
+    {
+        $workspace = auth()->user()->currentWorkspace;
+        $plainToken = $this->ensureAuditCode();
         $this->generatedAuditCode = $plainToken;
         $this->companyTaxNumber = $workspace->tax_number;
         $this->dispatch('modal-show', name: 'audit-code-modal');
@@ -80,6 +92,44 @@ class BankAccountHub extends Component
         $this->generatedAuditCode = '';
         $this->dispatch('modal-close', name: 'audit-code-modal');
         $this->dispatch('toast', text: 'Acesso bancário revogado.');
+    }
+
+    public function approveBankAccessRequest(int $requestId): void
+    {
+        $workspace = auth()->user()->currentWorkspace;
+        $request = BankAccessRequest::where('workspace_id', $workspace->id)
+            ->whereKey($requestId)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $token = $this->ensureAuditCode();
+        $this->companyTaxNumber = $workspace->tax_number;
+
+        \Mail::to($request->bank_email)->send(new BankAccessCredentialsMail($workspace, $request, $token));
+
+        $request->update([
+            'status' => 'approved',
+            'responded_at' => now(),
+        ]);
+
+        $this->dispatch('modal-close', name: 'bank-request-modal');
+        $this->dispatch('toast', text: 'Credenciais enviadas para '.$request->bank_email.'.', variant: 'success');
+    }
+
+    public function rejectBankAccessRequest(int $requestId): void
+    {
+        $workspace = auth()->user()->currentWorkspace;
+        $request = BankAccessRequest::where('workspace_id', $workspace->id)
+            ->whereKey($requestId)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $request->update([
+            'status' => 'rejected',
+            'responded_at' => now(),
+        ]);
+
+        $this->dispatch('toast', text: 'Pedido bancário recusado.', variant: 'warning');
     }
 
     public function mount() { $this->isBusinessMode = request()->routeIs('hub.business.*'); }
@@ -173,6 +223,9 @@ class BankAccountHub extends Component
     {
         $workspace=auth()->user()->currentWorkspace;
         $accounts=$workspace->bankAccounts()->where('is_business',$this->isBusinessMode)->where('name','like','%'.$this->search.'%')->get();
+        $bankAccessRequests=$this->isBusinessMode
+            ? $workspace->bankAccessRequests()->where('status','pending')->latest('requested_at')->get()
+            : collect();
         $totalLiquidez=$accounts->where('type','!=','credito')->sum(fn($a)=>$a->current_balance);
         $totalDividaCartao=$accounts->where('type','credito')->sum(fn($a)=>abs($a->current_balance));
         $forecastCash=$accounts->sum(fn($a)=>$a->forecast_balance ?? $a->current_balance); $globalRisk=round($accounts->avg('risk_score') ?? 0);
@@ -180,6 +233,6 @@ class BankAccountHub extends Component
         $percentUtilizacao=$limiteTotalCartoes>0?round(($totalDividaCartao/$limiteTotalCartoes)*100,1):0; $riscoCartoes=round($creditAccounts->avg('risk_score') ?? 0);
         $entradasHoje=Income::where('workspace_id',$workspace->id)->whereDate('received_at',today())->sum('amount'); $saidasHoje=Expense::where('workspace_id',$workspace->id)->whereDate('spent_at',today())->sum('amount'); $fluxoHoje=$entradasHoje-$saidasHoje;
         $forecast7=$forecastCash+($fluxoHoje*7); $forecast30=$forecastCash+($fluxoHoje*30);
-        return view('livewire.business.bank-account-hub',compact('accounts','totalLiquidez','totalDividaCartao','forecastCash','globalRisk','limiteTotalCartoes','percentUtilizacao','riscoCartoes','entradasHoje','saidasHoje','fluxoHoje','forecast7','forecast30')+['netCash'=>(float)($totalLiquidez-$totalDividaCartao),'modeTitle'=>$this->isBusinessMode?'Contas da Empresa':'Contas Pessoais']);
+        return view('livewire.business.bank-account-hub',compact('accounts','totalLiquidez','totalDividaCartao','forecastCash','globalRisk','limiteTotalCartoes','percentUtilizacao','riscoCartoes','entradasHoje','saidasHoje','fluxoHoje','forecast7','forecast30','bankAccessRequests')+['netCash'=>(float)($totalLiquidez-$totalDividaCartao),'modeTitle'=>$this->isBusinessMode?'Contas da Empresa':'Contas Pessoais']);
     }
 }
