@@ -3,17 +3,16 @@ import './offline-expenses';
 
 /**
  * Finance Pro theme manager.
- * Keeps the sidebar toggle, profile selector and Flux in sync.
+ * Keeps the sidebar toggle, profile selector and page navigation in sync.
  */
 (function () {
     const STORAGE_KEY = 'flux.appearance';
     const LEGACY_KEY = 'theme';
+    const MEDIA_QUERY = '(prefers-color-scheme: dark)';
 
     function getTheme() {
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved === 'dark' || saved === 'light' || saved === 'system') {
-            return saved;
-        }
+        if (saved === 'dark' || saved === 'light' || saved === 'system') return saved;
 
         const legacy = localStorage.getItem(LEGACY_KEY);
         if (legacy === 'dark' || legacy === 'light') {
@@ -30,13 +29,12 @@ import './offline-expenses';
     function isDark(theme) {
         return theme === 'dark' || (
             theme === 'system' &&
-            window.matchMedia('(prefers-color-scheme: dark)').matches
+            window.matchMedia(MEDIA_QUERY).matches
         );
     }
 
     function applyTheme(theme) {
         const dark = isDark(theme);
-
         document.documentElement.classList.toggle('dark', dark);
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
         localStorage.setItem(STORAGE_KEY, theme);
@@ -52,17 +50,7 @@ import './offline-expenses';
             theme = 'system';
         }
 
-        document.documentElement.classList.add('theme-switching');
         applyTheme(theme);
-
-        if (window.Flux?.applyAppearance) {
-            // Flux receives the same source of truth; the DOM is already updated.
-            window.Flux.applyAppearance(theme);
-        }
-
-        window.setTimeout(() => {
-            document.documentElement.classList.remove('theme-switching');
-        }, 200);
     }
 
     function toggleTheme() {
@@ -79,17 +67,29 @@ import './offline-expenses';
     // Apply immediately on every full page load.
     applyTheme(getTheme());
 
+    // Livewire SPA navigation replaces page content without reloading app.js.
+    // Re-apply the persisted theme after every navigation so the new page
+    // cannot revert to light mode.
+    document.addEventListener('livewire:navigated', () => {
+        applyTheme(getTheme());
+    });
+
+    // Some Livewire/Flux initialisation can run just after navigation.
+    // Run once more on the next frame as a final synchronisation point.
+    document.addEventListener('livewire:navigated', () => {
+        requestAnimationFrame(() => applyTheme(getTheme()));
+    });
+
     // Follow the OS only when the user selected Automatic.
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const media = window.matchMedia(MEDIA_QUERY);
     media.addEventListener('change', () => {
         if (getTheme() === 'system') {
             applyTheme('system');
         }
     });
 
-    // Fix the existing sidebar toggle without requiring a layout rewrite.
-    // Its Alpine state can become stale after Livewire navigation; this makes
-    // the actual theme and the button behaviour use the same source of truth.
+    // Keep the existing sidebar button working even if its Alpine handler
+    // still exists in an older cached layout. Use the same persistent source.
     document.addEventListener('click', (event) => {
         const button = event.target.closest('button');
         if (!button) return;
@@ -99,7 +99,7 @@ import './offline-expenses';
 
         event.preventDefault();
         event.stopPropagation();
-        setTheme(isDark(getTheme()) ? 'light' : 'dark');
+        toggleTheme();
     }, true);
 })();
 
