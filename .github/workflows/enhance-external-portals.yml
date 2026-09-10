@@ -2,7 +2,7 @@ name: Finalize external portal UI
 on:
   workflow_dispatch:
   push:
-    paths: ['.github/workflows/enhance-external-portals.yml']
+    branches: [main]
 permissions:
   contents: write
 jobs:
