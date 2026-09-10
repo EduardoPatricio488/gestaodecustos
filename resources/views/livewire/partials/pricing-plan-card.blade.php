@@ -62,7 +62,7 @@
 
     {{-- BOTÕES DE ACÇÃO --}}
     @if($isCurrent && $plan->hasFeature('business_mode'))
-        <flux:button href="{{ route('hub.business.gateway') }}" variant="primary" class="w-full !h-14 font-black uppercase tracking-widest shadow-lg rounded-2xl">
+        <flux:button href="{{ route('hub.business.gateway', ['new' => 1]) }}" variant="primary" class="w-full !h-14 font-black uppercase tracking-widest shadow-lg rounded-2xl">
             Aceder à Empresa
         </flux:button>
     @else
