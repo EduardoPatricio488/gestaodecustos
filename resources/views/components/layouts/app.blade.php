@@ -1379,17 +1379,24 @@ $hasStoreAccess = $hasLockInAccess;
                     </flux:sidebar.item>
 
                 </flux:sidebar.group>
-{{-- ✅ ZONA DE TREINO — usa icon="bolt" nativo do Flux/Heroicons --}}
-                <flux:sidebar.item
-                    icon="bolt"
-                    :href="route('hub.fitness')"
-                    :current="request()->routeIs('hub.fitness')"
-                    wire:navigate.hover
-                    class="text-orange-500 dark:text-orange-400 font-black relative"
-                >
-                    Zona de Treino {!! $badge($counts['fitness']) !!}
-                    <span class="ml-auto text-[8px] font-black bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400 px-1.5 py-0.5 rounded uppercase">Novo</span>
-                </flux:sidebar.item>
+{{-- ZONA DE TREINO — PREMIUM --}}
+      <flux:sidebar.item
+          icon="bolt"
+          :href="$isAnyPremium ? route('hub.fitness') : route('hub.pricing')"
+          :current="request()->routeIs('hub.fitness')"
+          wire:navigate.hover
+          class="text-orange-500 dark:text-orange-400 font-black relative {{ !$isAnyPremium ? 'opacity-60 grayscale' : '' }}"
+      >
+          <span class="flex items-center justify-between w-full">
+              <span>Zona de Treino</span>
+              @if($isAnyPremium)
+                  {!! $badge($counts['fitness']) !!}
+                  <span class="ml-auto text-[8px] font-black bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400 px-1.5 py-0.5 rounded uppercase">Novo</span>
+              @else
+                  <span class="ml-auto inline-flex items-center gap-1 text-[8px] font-black bg-violet-100 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400 px-1.5 py-0.5 rounded uppercase tracking-wide"><flux:icon name="lock-closed" class="size-2.5" /> PRO</span>
+              @endif
+          </span>
+      </flux:sidebar.item>
 
                @php
     // Detecção simplificada e segura dos planos
