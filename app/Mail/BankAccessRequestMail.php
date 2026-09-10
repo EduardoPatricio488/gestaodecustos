@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\BankAccessRequest;
 use App\Models\Workspace;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -11,9 +12,10 @@ class BankAccessRequestMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public Workspace $workspace)
-    {
-    }
+    public function __construct(
+        public Workspace $workspace,
+        public BankAccessRequest $request,
+    ) {}
 
     public function build()
     {
