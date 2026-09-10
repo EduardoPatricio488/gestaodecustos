@@ -24,6 +24,26 @@
             </a>
         </div>
 
+        {{-- RESUMO DO FORNECEDOR --}}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Movimentos</p>
+                <p class="text-2xl font-black dark:text-white mt-2">{{ $portalStats['movements'] }}</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Total liquidado</p>
+                <p class="text-xl font-black text-emerald-600 mt-2">{{ number_format($portalStats['totalPaid'], 2, ',', ' ') }}€</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Tickets abertos</p>
+                <p class="text-2xl font-black text-brand-600 mt-2">{{ $portalStats['openTickets'] }}</p>
+            </div>
+            <div class="bg-zinc-950 rounded-3xl p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Último movimento</p>
+                <p class="text-sm font-black text-white mt-2">{{ $portalStats['lastMovement'] ? number_format($portalStats['lastMovement']->amount, 2, ',', ' ').'€' : 'Sem movimentos' }}</p>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
 
             {{-- COLUNA ESQUERDA: OPERACIONAL (8 Colunas) --}}

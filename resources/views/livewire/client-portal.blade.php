@@ -27,6 +27,30 @@
             </a>
         </div>
 
+        {{-- RESUMO RÁPIDO --}}
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Projetos</p>
+                <p class="text-2xl font-black dark:text-white mt-2">{{ $portalStats['projects'] }}</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Tarefas abertas</p>
+                <p class="text-2xl font-black dark:text-white mt-2">{{ $portalStats['openTasks'] }}</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Propostas</p>
+                <p class="text-2xl font-black text-indigo-600 mt-2">{{ $portalStats['pendingProposals'] }}</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Pedidos</p>
+                <p class="text-2xl font-black text-emerald-600 mt-2">{{ $portalStats['openTickets'] }}</p>
+            </div>
+            <div class="col-span-2 lg:col-span-1 bg-zinc-950 rounded-3xl p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Faturação</p>
+                <p class="text-xl font-black text-white mt-2">{{ number_format($portalStats['invoiceTotal'], 2, ',', ' ') }}€</p>
+            </div>
+        </div>
+
         {{-- 2. ALERTA DE PROPOSTAS --}}
         @if($proposals->count() > 0)
             <div class="bg-indigo-600 rounded-[2rem] p-6 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-indigo-500/20 animate-in fade-in slide-in-from-top-4 duration-700 text-left">
@@ -37,7 +61,12 @@
                         <p class="text-xs text-indigo-100 opacity-80 font-medium">Analisámos os teus requisitos e enviámos uma nova proposta. Analisa e aprova online.</p>
                     </div>
                 </div>
-                <button class="px-8 py-3 bg-white text-indigo-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-50 transition-all shadow-lg shrink-0">Ver Proposta</button>
+                <div class="flex gap-2 shrink-0">
+                    @foreach($proposals as $proposal)
+                        <button wire:click="approveProposal({{ $proposal->id }})" class="px-5 py-3 bg-white text-indigo-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-50 transition-all shadow-lg">Aceitar</button>
+                        <button wire:click="declineProposal({{ $proposal->id }})" class="px-5 py-3 bg-indigo-700/50 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-700 transition-all">Recusar</button>
+                    @endforeach
+                </div>
             </div>
         @endif
 
