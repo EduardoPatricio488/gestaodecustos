@@ -157,7 +157,7 @@
 
                     <div class="space-y-2">
                         <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest px-1">
-                            Email de Faturação
+                            Email da Empresa
                         </flux:label>
                         <flux:input wire:model="business_email"
                             icon="envelope"
