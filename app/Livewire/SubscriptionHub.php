@@ -47,6 +47,7 @@ class SubscriptionHub extends Component
     public string $categoryFilter = 'all';
 
     public bool $showExtraModal = false;
+    public bool $showPlatformPlanModal = false;
 
     public string $statusFilter = 'all';
 
@@ -85,6 +86,16 @@ class SubscriptionHub extends Component
         $sub->status = ($sub->status === 'active') ? 'paused' : 'active';
         $sub->save();
         $this->dispatch('toast', text: 'Estado atualizado!');
+    }
+
+    public function openPlatformPlanModal(): void
+    {
+        $this->showPlatformPlanModal = true;
+    }
+
+    public function closePlatformPlanModal(): void
+    {
+        $this->showPlatformPlanModal = false;
     }
 
     public function openExtraModal()
@@ -322,6 +333,13 @@ class SubscriptionHub extends Component
             ->sortBy('days_until_billing')
             ->first();
 
+        $platformPayments = $platformPlan
+            ? Payment::where('user_id', $user->id)
+                ->where('plan_type', $planSlug)
+                ->latest('paid_at')
+                ->get()
+            : collect();
+
         return view('livewire.subscription-hub', [
             'subscriptions' => $subs->values(),
             'totalMonthly' => $totalMonthly,
@@ -334,6 +352,8 @@ class SubscriptionHub extends Component
             'averageMonthly' => $activeCount ? $totalMonthly / $activeCount : 0,
             'categories' => $subscriptionCategories, // Passamos a nova lista para o Blade
             'platformPlan' => $platformPlan,
+            'platformPayments' => $platformPayments,
+            'platformCashierSubscription' => $cashierSub,
         ]);
     }
 

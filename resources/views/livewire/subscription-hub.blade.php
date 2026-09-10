@@ -112,7 +112,7 @@
                     <p class="text-2xl font-black italic tracking-tighter">{{ number_format($platformPlan->price, 2, ',', ' ') }} EUR</p>
                     <p class="text-[9px] font-black uppercase tracking-widest text-white/70">por mês</p>
                 </div>
-                <flux:button :href="route('hub.pricing')" wire:navigate variant="ghost" class="rounded-2xl font-black uppercase tracking-widest text-[10px] bg-white/10 hover:bg-white/20 border-none text-white">
+                <flux:button wire:click="openPlatformPlanModal" variant="ghost" class="rounded-2xl font-black uppercase tracking-widest text-[10px] bg-white/10 hover:bg-white/20 border-none text-white">
                     Gerir Plano
                 </flux:button>
             </div>
@@ -685,4 +685,70 @@
             (c) {{ date('Y') }} {{ config('app.name') }} - Sistema de Monitorizacao
         </p>
     </footer>
+
+
+    @if($showPlatformPlanModal)
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" wire:click.self="closePlatformPlanModal">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="closePlatformPlanModal"></div>
+            <div class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl" @keydown.escape.window="$wire.closePlatformPlanModal()">
+                <div class="sticky top-0 z-10 flex items-center justify-between gap-4 p-6 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur">
+                    <div>
+                        <p class="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">Finance Pro</p>
+                        <h3 class="text-2xl font-black tracking-tight">Informação do plano e pagamentos</h3>
+                    </div>
+                    <button type="button" wire:click="closePlatformPlanModal" class="size-10 rounded-xl flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                        <flux:icon name="x-mark" class="size-5" />
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    @if($platformPlan)
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-5">
+                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Plano</p>
+                                <p class="mt-1 text-lg font-black">Finance Pro {{ $platformPlan->name }}</p>
+                            </div>
+                            <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-5">
+                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Preço</p>
+                                <p class="mt-1 text-lg font-black">{{ number_format($platformPlan->price, 2, ',', ' ') }} EUR / mês</p>
+                            </div>
+                            <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-5">
+                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Método de pagamento</p>
+                                <p class="mt-1 text-lg font-black">{{ $platformPayments->first()?->method ?? '—' }}</p>
+                            </div>
+                            <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-5">
+                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Estado da subscrição</p>
+                                <p class="mt-1 text-lg font-black">{{ $platformCashierSubscription?->active() ? 'Ativa' : 'Inativa' }}</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-sm font-black uppercase tracking-widest">Registo de pagamentos</h4>
+                                <span class="text-xs font-bold text-zinc-500">{{ $platformPayments->count() }} pagamento(s)</span>
+                            </div>
+                            <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                                @forelse($platformPayments as $payment)
+                                    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 p-4 border-b last:border-b-0 border-zinc-200 dark:border-zinc-800">
+                                        <div><p class="text-[9px] font-black uppercase text-zinc-500">Fatura</p><p class="text-xs font-bold break-all">{{ $payment->invoice_id }}</p></div>
+                                        <div><p class="text-[9px] font-black uppercase text-zinc-500">Valor</p><p class="text-xs font-bold">{{ number_format($payment->amount, 2, ',', ' ') }} {{ $payment->currency }}</p></div>
+                                        <div><p class="text-[9px] font-black uppercase text-zinc-500">Método</p><p class="text-xs font-bold">{{ $payment->method }}</p></div>
+                                        <div><p class="text-[9px] font-black uppercase text-zinc-500">Estado</p><p class="text-xs font-bold">{{ ucfirst($payment->status) }}</p></div>
+                                        <div><p class="text-[9px] font-black uppercase text-zinc-500">Data</p><p class="text-xs font-bold">{{ $payment->paid_at?->format('d/m/Y H:i') ?? '—' }}</p></div>
+                                    </div>
+                                @empty
+                                    <div class="p-6 text-sm text-zinc-500">Ainda não existem pagamentos registados para este plano.</div>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 p-5">
+                            <p class="text-xs font-bold text-amber-800 dark:text-amber-300">Dados bancários</p>
+                            <p class="mt-1 text-xs text-amber-700 dark:text-amber-400">Não são mostrados números completos de cartões, contas bancárias ou outros dados financeiros sensíveis. O sistema apresenta apenas os dados de pagamento que estão efetivamente registados.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
