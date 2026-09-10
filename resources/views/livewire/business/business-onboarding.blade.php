@@ -83,7 +83,16 @@
                 </div>
             @endif
 
-            <flux:input wire:model="tax_number" label="NIF / Tax ID" placeholder="Opcional" />
+            {{-- NIF / TAX ID: 9 DÍGITOS, FORMATADO EM GRUPOS DE 3 --}}
+            <flux:input
+                wire:model.live="tax_number"
+                label="NIF / Tax ID"
+                placeholder="123 456 789"
+                inputmode="numeric"
+                maxlength="11"
+                autocomplete="off"
+            />
+            <p class="-mt-4 text-[10px] font-bold text-zinc-400">Introduza exatamente 9 dígitos. O formato será 123 456 789.</p>
         </div>
 
         <div class="flex gap-4">
