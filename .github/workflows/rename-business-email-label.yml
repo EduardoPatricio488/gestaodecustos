@@ -1,0 +1,29 @@
+name: Rename business email label
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rename label
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('resources/views/livewire/business/business-settings.blade.php')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('Email de Faturação', 'Email da Empresa', 1)
+          p.write_text(s, encoding='utf-8')
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/views/livewire/business/business-settings.blade.php
+          git diff --cached --quiet || git commit -m "Rename business email label"
+          git push
