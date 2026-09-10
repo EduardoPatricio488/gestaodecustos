@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Public;
 
-use App\Models\User;
+use App\Models\Candidate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
@@ -21,42 +21,51 @@ class CareersHub extends Component
     #[Layout('layouts.guest')]
     public function authenticate()
     {
+        $guard = Auth::guard('candidate');
+
         if ($this->isRegistering) {
             $this->validate([
-                'name' => 'required|min:3',
-                'email' => 'required|email|unique:users,email',
-                'password' => 'required|min:8',
+                'name' => 'required|string|min:3|max:120',
+                'email' => 'required|email|max:255|unique:candidates,email',
+                'password' => 'required|string|min:8',
             ]);
 
-            $user = User::create([
+            $candidate = Candidate::create([
                 'name' => $this->name,
                 'email' => $this->email,
                 'password' => Hash::make($this->password),
-                'role' => 'candidate',
             ]);
 
-            Auth::login($user);
+            $guard->login($candidate);
         } else {
             $this->validate([
                 'email' => 'required|email',
                 'password' => 'required',
             ]);
 
-            if (! Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
+            if (! $guard->attempt(['email' => $this->email, 'password' => $this->password])) {
                 session()->flash('error', 'Credenciais inválidas.');
-
                 return;
             }
         }
 
-        // /carreiras é o portal de entrada e, para candidatos autenticados,
-        // o próprio componente apresenta diretamente a área de candidato.
-        return redirect('/carreiras');
+        $this->reset(['password']);
+
+        return redirect()->route('careers.apply');
+    }
+
+    public function logout()
+    {
+        Auth::guard('candidate')->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect('/');
     }
 
     public function render()
     {
-        if (Auth::check() && Auth::user()->role === 'candidate') {
+        if (Auth::guard('candidate')->check()) {
             return view('livewire.public.candidate-portal');
         }
 
