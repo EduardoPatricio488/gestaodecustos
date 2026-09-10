@@ -49,7 +49,9 @@ class CareersHub extends Component
             }
         }
 
-        return redirect()->route('careers.portal');
+        // /carreiras é o portal de entrada e, para candidatos autenticados,
+        // o próprio componente apresenta diretamente a área de candidato.
+        return redirect('/carreiras');
     }
 
     public function render()
