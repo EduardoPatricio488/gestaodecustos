@@ -55,21 +55,6 @@
 
     @include('partials.head')
 
-    <script>
-        (function () {
-            var appearance = localStorage.getItem('flux.appearance') || localStorage.getItem('theme') || 'system';
-            var isDark = appearance === 'dark' ||
-                (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-            document.documentElement.classList.toggle('dark', isDark);
-
-            if (appearance === 'dark' || appearance === 'light') {
-                localStorage.setItem('flux.appearance', appearance);
-                localStorage.removeItem('theme');
-            }
-        })();
-    </script>
-
     <link rel="stylesheet" href="/flux/flux.css">
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     @vite([
@@ -1400,7 +1385,7 @@ $hasStoreAccess = $hasLockInAccess;
                     :href="route('hub.fitness')"
                     :current="request()->routeIs('hub.fitness')"
                     wire:navigate.hover
-                    class="text-orange-500 dark:text-orange-400 font-black"
+                    class="text-orange-500 dark:text-orange-400 font-black relative"
                 >
                     Zona de Treino {!! $badge($counts['fitness']) !!}
                     <span class="ml-auto text-[8px] font-black bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400 px-1.5 py-0.5 rounded uppercase">Novo</span>

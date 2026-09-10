@@ -188,6 +188,8 @@
 
 
 
+<div class="mb-5 flex justify-end"><button type="button" wire:click="generateAuditCode" class="inline-flex items-center gap-3 px-5 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest text-white bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:scale-[1.01] shadow-lg shadow-zinc-900/20 transition-all"><flux:icon name="shield-check" class="size-5" /> Gerar Acesso Bancário</button></div>
+
 {{-- 3. LISTAGEM DE CONTAS — DOSSIÊ EXECUTIVO (VERSÃO FINAL COM MENU 3 PONTOS) --}}
 <div class="flex flex-col gap-6 w-full">
     @forelse($accounts as $account)
@@ -346,12 +348,6 @@
                     <button type="button" wire:click="edit({{ $account->id }})" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 hover:text-brand-600 transition-all">
                         <flux:icon name="pencil-square" class="size-4 text-brand-500" /> Configurar Conta
                     </button>
-                     {{-- ✅ ADICIONA ESTE NOVO BOTÃO AQUI --}}
-    <button type="button" wire:click="generateAuditCode" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 transition-all">
-        <flux:icon name="shield-check" class="size-4 text-zinc-900 dark:text-white" /> Gerar Acesso Bancário
-    </button>
-
-    <div class="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
                     <div class="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
                     <button type="button" wire:click="delete({{ $account->id }})" wire:confirm="Eliminar conta permanentemente?" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 transition-all">
                         <flux:icon name="trash" class="size-4 text-red-500" /> Remover
@@ -725,8 +721,8 @@
         </div>
     </flux:modal>
     {{-- MODAL: CREDENCIAIS DE AUDITORIA BANCÁRIA --}}
-    <flux:modal name="audit-code-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">
-        <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
+    <flux:modal name="audit-code-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[560px] !p-0">
+        <div class="relative w-full max-h-[90vh] overflow-y-auto p-8 sm:p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
 
             <div class="flex items-center gap-4">
                 <div class="p-3 bg-zinc-900 rounded-2xl text-white shadow-lg">
@@ -745,7 +741,7 @@
                     <p class="relative z-10 text-[9px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-4">Token de Verificação Ativo</p>
 
                     <div class="relative z-10 flex items-center justify-center gap-6">
-                        <span class="text-5xl font-mono font-black text-white tracking-[0.2em]">
+                        <span class="text-2xl sm:text-3xl font-mono font-black text-white tracking-[0.18em]">
                             {{ $generatedAuditCode }}
                         </span>
 
@@ -766,11 +762,11 @@
                     <div class="space-y-3">
                         <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-start gap-3">
                             <span class="size-4 shrink-0 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[8px] mt-0.5">1</span>
-                            <span>Endereço: <br><span class="text-zinc-900 dark:text-zinc-100 font-mono break-all text-[10px]">http://localhost:8000/portal/banco</span></span>
+                            <span>Endereço: <br><span class="text-zinc-900 dark:text-zinc-100 font-mono break-all text-[10px]">{{ url('/portal/banco') }}</span></span>
                         </p>
                         <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-3">
                             <span class="size-4 shrink-0 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[8px]">2</span>
-                            <span>NIF da Empresa: <span class="font-black text-zinc-900 dark:text-white">{{ $companyTaxNumber }}</span></span>
+                            <span>NIF da Empresa: <span class="font-black text-zinc-900 dark:text-white">{{ $companyTaxNumber ? implode(' ', str_split(preg_replace('/\D/', '', (string) $companyTaxNumber), 3)) : 'S/ NIF' }}</span></span>
                         </p>
                         <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-3">
                             <span class="size-4 shrink-0 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[8px]">3</span>
@@ -792,7 +788,7 @@
                 >
                     <flux:icon x-show="!copiedPortal" name="share" class="size-4" />
                     <flux:icon x-show="copiedPortal" name="check" class="size-4" />
-                    <span x-text="copiedPortal ? 'Link Copiado!' : 'Partilhar Acesso'"></span>
+                    <span x-text="copiedPortal ? 'Link Copiado!' : 'Partilhar Token'"></span>
                 </button>
 
                 <button
