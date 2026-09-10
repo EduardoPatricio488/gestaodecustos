@@ -512,7 +512,7 @@
     <div class="space-y-2">
         <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">IBAN Internacional</flux:label>
         <flux:input
-            wire:model="iban"
+            wire:model.live="iban"
             placeholder="PT50 0000 0000 0000 0000 0000 0"
             class="font-mono text-sm !bg-white dark:!bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl h-12 shadow-sm"
         />
@@ -563,9 +563,10 @@
                         <div class="space-y-2">
                             <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Saldo Inicial (€)</flux:label>
                             <flux:input
-                                wire:model="balance"
-                                type="number"
-                                step="0.01"
+                                wire:model.live="balance"
+                                type="text"
+                                inputmode="decimal"
+                                autocomplete="off"
                                 class="font-black text-lg text-brand-600 !bg-white dark:!bg-zinc-950 !border-none rounded-xl h-12 shadow-sm"
                                 placeholder="0,00"
                             />
@@ -576,9 +577,10 @@
                         <div class="space-y-2">
                             <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Limite de Crédito (€)</flux:label>
                             <flux:input
-                                wire:model="credit_limit"
-                                type="number"
-                                step="0.01"
+                                wire:model.live="credit_limit"
+                                type="text"
+                                inputmode="decimal"
+                                autocomplete="off"
                                 class="font-black text-sm !bg-white dark:!bg-zinc-950 !border-none rounded-xl h-12 shadow-sm"
                                 placeholder="Ex: 5000,00"
                             />
@@ -586,9 +588,10 @@
                         <div class="space-y-2">
                             <flux:label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Saldo Projetado (€)</flux:label>
                             <flux:input
-                                wire:model="forecast_balance"
-                                type="number"
-                                step="0.01"
+                                wire:model.live="forecast_balance"
+                                type="text"
+                                inputmode="decimal"
+                                autocomplete="off"
                                 class="font-black text-sm !bg-white dark:!bg-zinc-950 !border-none rounded-xl h-12 shadow-sm"
                                 placeholder="Ex: 12000,00"
                             />
