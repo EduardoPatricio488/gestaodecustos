@@ -32,7 +32,7 @@ class CareersHub extends Component
                 'name' => $this->name,
                 'email' => $this->email,
                 'password' => Hash::make($this->password),
-                'role' => 'candidate', // Define uma role para saberes que é candidato
+                'role' => 'candidate',
             ]);
 
             Auth::login($user);
@@ -42,13 +42,11 @@ class CareersHub extends Component
                 'password' => 'required',
             ]);
 
-            if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
-                return redirect()->route('careers.portal');
+            if (! Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
+                session()->flash('error', 'Credenciais inválidas.');
+
+                return;
             }
-
-            session()->flash('error', 'Credenciais inválidas.');
-
-            return;
         }
 
         return redirect()->route('careers.portal');
@@ -56,6 +54,10 @@ class CareersHub extends Component
 
     public function render()
     {
+        if (Auth::check() && Auth::user()->role === 'candidate') {
+            return view('livewire.public.candidate-portal');
+        }
+
         return view('livewire.public.careers-hub');
     }
 }
