@@ -131,8 +131,42 @@ class SubscriptionHub extends Component
             $subscription = null;
             if ($cashierSub?->stripe_id) {
                 $subscription = $stripe->subscriptions->retrieve($cashierSub->stripe_id, [
-                    'expand' => ['default_payment_method', 'latest_invoice'],
+                    'expand' => ['default_payment_method', 'latest_invoice', 'items.data.price'],
                 ]);
+            }
+
+            // Cashier may not have a local subscription even when Stripe does.
+            // Fall back to Stripe's subscriptions for this customer.
+            if (! $subscription) {
+                $stripeSubscriptions = $stripe->subscriptions->all([
+                    'customer' => $customerId,
+                    'status' => 'all',
+                    'limit' => 100,
+                    'expand' => ['data.default_payment_method', 'data.latest_invoice', 'data.items.data.price'],
+                ])->data ?? [];
+
+                $priority = [
+                    'active' => 1,
+                    'trialing' => 2,
+                    'past_due' => 3,
+                    'unpaid' => 4,
+                    'incomplete' => 5,
+                    'incomplete_expired' => 6,
+                    'canceled' => 7,
+                ];
+
+                usort($stripeSubscriptions, function ($a, $b) use ($priority) {
+                    $aPriority = $priority[$a->status ?? ''] ?? 99;
+                    $bPriority = $priority[$b->status ?? ''] ?? 99;
+
+                    if ($aPriority !== $bPriority) {
+                        return $aPriority <=> $bPriority;
+                    }
+
+                    return ($b->created ?? 0) <=> ($a->created ?? 0);
+                });
+
+                $subscription = $stripeSubscriptions[0] ?? null;
             }
 
             $paymentMethodId = null;
