@@ -1,15 +1,13 @@
 name: Sync Stripe plan details modal
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   sync:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,16 +19,12 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-
           path = Path('resources/views/livewire/subscription-hub.blade.php')
           text = path.read_text(encoding='utf-8')
-
-          marker = "    {{-- MODAL: INFORMAÇÃO DO PLANO FINANCE PRO --}}"
+          marker = '    {{-- MODAL: INFORMAÇÃO DO PLANO FINANCE PRO --}}'
           if marker not in text:
               raise SystemExit('Platform plan modal marker not found.')
-
           text = text.replace(r'\n', '\n')
-
           stripe_block = '''
         @php
             $stripeCustomer = null;
@@ -40,20 +34,18 @@ jobs:
             $stripeError = null;
 
             try {
-                $stripeSecret = env('STRIPE_SECRET');
+                $stripeSecret = config('services.stripe.secret');
                 $stripeCustomerId = auth()->user()?->stripe_id;
 
                 if ($stripeSecret && $stripeCustomerId) {
                     $stripe = new \\Stripe\\StripeClient($stripeSecret);
                     $stripeCustomer = $stripe->customers->retrieve($stripeCustomerId, []);
-
                     $subscriptionId = $platformCashierSubscription?->stripe_id;
                     if ($subscriptionId) {
                         $stripeSubscription = $stripe->subscriptions->retrieve($subscriptionId, [
                             'expand' => ['default_payment_method', 'latest_invoice'],
                         ]);
                     }
-
                     $paymentMethodId = null;
                     if ($stripeSubscription?->default_payment_method) {
                         $paymentMethodId = is_string($stripeSubscription->default_payment_method)
@@ -64,13 +56,11 @@ jobs:
                             ? $stripeCustomer->invoice_settings->default_payment_method
                             : $stripeCustomer->invoice_settings->default_payment_method->id;
                     }
-
                     if ($paymentMethodId) {
                         $stripePaymentMethod = is_object($stripeSubscription?->default_payment_method)
                             ? $stripeSubscription->default_payment_method
                             : $stripe->paymentMethods->retrieve($paymentMethodId, []);
                     }
-
                     $stripeInvoices = $stripe->invoices->all([
                         'customer' => $stripeCustomerId,
                         'limit' => 100,
@@ -82,12 +72,9 @@ jobs:
             }
         @endphp
 '''
-
-          if '$stripeCustomer = null;' not in text:
-              target = marker + '\n    @if($showPlatformPlanModal)'
-              replacement = marker + '\n    @if($showPlatformPlanModal)' + stripe_block
-              text = text.replace(target, replacement, 1)
-
+          target = marker + '\n    @if($showPlatformPlanModal)'
+          if '$stripeCustomer = null;' not in text and target in text:
+              text = text.replace(target, target + stripe_block, 1)
           details = '''
                         <div class="rounded-2xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/20 p-5 space-y-5">
                             <div class="flex items-center justify-between gap-3">
@@ -95,11 +82,8 @@ jobs:
                                     <p class="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-600 dark:text-indigo-300">Stripe • dados reais</p>
                                     <h4 class="mt-1 text-sm font-black uppercase tracking-widest dark:text-white">Dados do cliente e faturação</h4>
                                 </div>
-                                @if($stripeCustomer?->id)
-                                    <span class="text-[10px] font-mono font-bold text-zinc-500 break-all">{{ $stripeCustomer->id }}</span>
-                                @endif
+                                @if($stripeCustomer?->id)<span class="text-[10px] font-mono font-bold text-zinc-500 break-all">{{ $stripeCustomer->id }}</span>@endif
                             </div>
-
                             @if($stripeError)
                                 <p class="text-xs font-bold text-amber-700 dark:text-amber-300">{{ $stripeError }}</p>
                             @elseif($stripeCustomer)
@@ -108,85 +92,60 @@ jobs:
                                     <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Email</p><p class="mt-1 text-sm font-bold break-all dark:text-white">{{ $stripeCustomer->email ?: '—' }}</p></div>
                                     <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Telefone</p><p class="mt-1 text-sm font-bold dark:text-white">{{ $stripeCustomer->phone ?: '—' }}</p></div>
                                     <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Moeda</p><p class="mt-1 text-sm font-bold uppercase dark:text-white">{{ $stripeCustomer->currency ?: '—' }}</p></div>
-                                    <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4 sm:col-span-2"><p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Descrição</p><p class="mt-1 text-sm font-bold dark:text-white">{{ $stripeCustomer->description ?: '—' }}</p></div>
+                                    <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4 sm:col-span-2"><p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Stripe Customer ID</p><p class="mt-1 text-xs font-mono font-bold break-all dark:text-white">{{ $stripeCustomer->id }}</p></div>
                                 </div>
-
                                 @if($stripeCustomer->address)
-                                    <div>
-                                        <p class="mb-2 text-[9px] font-black uppercase tracking-widest text-zinc-500">Morada de faturação</p>
-                                        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4 text-sm font-bold dark:text-white">
-                                            {{ $stripeCustomer->address->line1 ?: '' }}{{ $stripeCustomer->address->line2 ? ', '.$stripeCustomer->address->line2 : '' }}<br>
-                                            {{ $stripeCustomer->address->postal_code ?: '' }} {{ $stripeCustomer->address->city ?: '' }}<br>
-                                            {{ $stripeCustomer->address->state ?: '' }}{{ $stripeCustomer->address->country ? ' • '.$stripeCustomer->address->country : '' }}
-                                        </div>
-                                    </div>
+                                    <div><p class="mb-2 text-[9px] font-black uppercase tracking-widest text-zinc-500">Morada de faturação</p><div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4 text-sm font-bold dark:text-white">{{ $stripeCustomer->address->line1 ?: '' }}{{ $stripeCustomer->address->line2 ? ', '.$stripeCustomer->address->line2 : '' }}<br>{{ $stripeCustomer->address->postal_code ?: '' }} {{ $stripeCustomer->address->city ?: '' }}<br>{{ $stripeCustomer->address->state ?: '' }}{{ $stripeCustomer->address->country ? ' • '.$stripeCustomer->address->country : '' }}</div></div>
                                 @endif
-
                                 @if($stripePaymentMethod)
-                                    <div>
-                                        <p class="mb-2 text-[9px] font-black uppercase tracking-widest text-zinc-500">Método de pagamento</p>
-                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                            <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Tipo</p><p class="mt-1 text-sm font-black uppercase dark:text-white">{{ $stripePaymentMethod->type ?: '—' }}</p></div>
-                                            @if($stripePaymentMethod->card)
-                                                <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Cartão</p><p class="mt-1 text-sm font-black uppercase dark:text-white">{{ $stripePaymentMethod->card->brand }} •••• {{ $stripePaymentMethod->card->last4 }}</p></div>
-                                                <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Validade</p><p class="mt-1 text-sm font-black dark:text-white">{{ str_pad($stripePaymentMethod->card->exp_month, 2, '0', STR_PAD_LEFT) }}/{{ $stripePaymentMethod->card->exp_year }}</p></div>
-                                            @endif
-                                            <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Titular</p><p class="mt-1 text-sm font-black dark:text-white">{{ $stripePaymentMethod->billing_details->name ?: '—' }}</p></div>
-                                        </div>
-                                    </div>
+                                    <div><p class="mb-2 text-[9px] font-black uppercase tracking-widest text-zinc-500">Método de pagamento</p><div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Tipo</p><p class="mt-1 text-sm font-black uppercase dark:text-white">{{ $stripePaymentMethod->type ?: '—' }}</p></div>
+                                        @if($stripePaymentMethod->card)
+                                            <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Cartão</p><p class="mt-1 text-sm font-black uppercase dark:text-white">{{ $stripePaymentMethod->card->brand }} •••• {{ $stripePaymentMethod->card->last4 }}</p></div>
+                                            <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Validade</p><p class="mt-1 text-sm font-black dark:text-white">{{ str_pad($stripePaymentMethod->card->exp_month, 2, '0', STR_PAD_LEFT) }}/{{ $stripePaymentMethod->card->exp_year }}</p></div>
+                                        @endif
+                                        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Titular</p><p class="mt-1 text-sm font-black dark:text-white">{{ $stripePaymentMethod->billing_details->name ?: '—' }}</p></div>
+                                    </div></div>
                                 @endif
-
                                 @if($stripeSubscription)
-                                    <div>
-                                        <p class="mb-2 text-[9px] font-black uppercase tracking-widest text-zinc-500">Subscrição Stripe</p>
-                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                            <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">ID</p><p class="mt-1 text-xs font-mono font-bold break-all dark:text-white">{{ $stripeSubscription->id }}</p></div>
-                                            <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Estado</p><p class="mt-1 text-sm font-black uppercase dark:text-white">{{ $stripeSubscription->status }}</p></div>
-                                            <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Renovação</p><p class="mt-1 text-sm font-black dark:text-white">{{ $stripeSubscription->current_period_end ? \\Carbon\\Carbon::createFromTimestamp($stripeSubscription->current_period_end)->format('d/m/Y H:i') : '—' }}</p></div>
-                                        </div>
-                                    </div>
+                                    <div><p class="mb-2 text-[9px] font-black uppercase tracking-widest text-zinc-500">Subscrição Stripe</p><div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Subscription ID</p><p class="mt-1 text-xs font-mono font-bold break-all dark:text-white">{{ $stripeSubscription->id }}</p></div>
+                                        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Estado</p><p class="mt-1 text-sm font-black uppercase dark:text-white">{{ $stripeSubscription->status }}</p></div>
+                                        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4"><p class="text-[9px] font-black uppercase text-zinc-500">Renovação</p><p class="mt-1 text-sm font-black dark:text-white">{{ $stripeSubscription->current_period_end ? \\Carbon\\Carbon::createFromTimestamp($stripeSubscription->current_period_end)->format('d/m/Y H:i') : '—' }}</p></div>
+                                    </div></div>
                                 @endif
-
                                 @if(!empty($stripeInvoices))
-                                    <div>
-                                        <div class="flex items-center justify-between mb-2"><p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Invoices Stripe</p><span class="text-[10px] font-bold text-zinc-500">{{ count($stripeInvoices) }} registo(s)</span></div>
-                                        <div class="space-y-2 max-h-64 overflow-y-auto">
-                                            @foreach($stripeInvoices as $invoice)
-                                                <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4">
-                                                    <div><p class="text-[9px] font-black uppercase text-zinc-500">Invoice</p><p class="text-xs font-mono font-bold break-all dark:text-white">{{ $invoice->number ?: $invoice->id }}</p></div>
-                                                    <div><p class="text-[9px] font-black uppercase text-zinc-500">Valor</p><p class="text-xs font-bold dark:text-white">{{ number_format(($invoice->amount_paid ?? $invoice->amount_due ?? 0) / 100, 2, ',', ' ') }} {{ strtoupper($invoice->currency ?? 'EUR') }}</p></div>
-                                                    <div><p class="text-[9px] font-black uppercase text-zinc-500">Estado</p><p class="text-xs font-bold uppercase dark:text-white">{{ $invoice->status ?: '—' }}</p></div>
-                                                    <div><p class="text-[9px] font-black uppercase text-zinc-500">Data</p><p class="text-xs font-bold dark:text-white">{{ $invoice->created ? \\Carbon\\Carbon::createFromTimestamp($invoice->created)->format('d/m/Y H:i') : '—' }}</p></div>
-                                                    <div class="flex items-end sm:justify-end">@if($invoice->hosted_invoice_url)<a href="{{ $invoice->hosted_invoice_url }}" target="_blank" rel="noopener" class="text-[10px] font-black uppercase tracking-widest text-brand-600 hover:underline">Abrir invoice</a>@endif</div>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
+                                    <div><div class="flex items-center justify-between mb-2"><p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Histórico Stripe</p><span class="text-[10px] font-bold text-zinc-500">{{ count($stripeInvoices) }} invoice(s)</span></div><div class="space-y-2 max-h-80 overflow-y-auto">
+                                        @foreach($stripeInvoices as $invoice)
+                                            <div class="grid grid-cols-1 sm:grid-cols-6 gap-3 rounded-xl bg-white/80 dark:bg-zinc-900/60 p-4">
+                                                <div><p class="text-[9px] font-black uppercase text-zinc-500">Invoice</p><p class="text-xs font-mono font-bold break-all dark:text-white">{{ $invoice->number ?: $invoice->id }}</p></div>
+                                                <div><p class="text-[9px] font-black uppercase text-zinc-500">ID</p><p class="text-xs font-mono font-bold break-all dark:text-white">{{ $invoice->id }}</p></div>
+                                                <div><p class="text-[9px] font-black uppercase text-zinc-500">Valor</p><p class="text-xs font-bold dark:text-white">{{ number_format(($invoice->amount_paid ?? $invoice->amount_due ?? 0) / 100, 2, ',', ' ') }} {{ strtoupper($invoice->currency ?? 'EUR') }}</p></div>
+                                                <div><p class="text-[9px] font-black uppercase text-zinc-500">Estado</p><p class="text-xs font-bold uppercase dark:text-white">{{ $invoice->status ?: '—' }}</p></div>
+                                                <div><p class="text-[9px] font-black uppercase text-zinc-500">Data</p><p class="text-xs font-bold dark:text-white">{{ $invoice->created ? \\Carbon\\Carbon::createFromTimestamp($invoice->created)->format('d/m/Y H:i') : '—' }}</p></div>
+                                                <div class="flex items-end sm:justify-end">@if($invoice->hosted_invoice_url)<a href="{{ $invoice->hosted_invoice_url }}" target="_blank" rel="noopener" class="text-[10px] font-black uppercase tracking-widest text-brand-600 hover:underline">Abrir invoice</a>@endif</div>
+                                            </div>
+                                        @endforeach
+                                    </div></div>
                                 @endif
                             @else
                                 <p class="text-xs font-bold text-zinc-500">Este utilizador ainda não tem um cliente Stripe associado.</p>
                             @endif
+                            <div class="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 p-4"><p class="text-xs font-bold text-amber-800 dark:text-amber-300">Segurança do cartão</p><p class="mt-1 text-xs text-amber-700 dark:text-amber-400">O Stripe não disponibiliza à aplicação o número completo do cartão nem o CVC. São mostrados apenas marca, últimos 4 dígitos, validade e titular.</p></div>
                         </div>
 '''
-
           if 'Stripe • dados reais' not in text:
               anchor = '                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">'
               pos = text.find(anchor, text.find(marker))
-              if pos == -1:
-                  raise SystemExit('Platform plan details grid not found.')
-              text = text[:pos] + details + text[pos:]
-
+              if pos != -1:
+                  text = text[:pos] + details + text[pos:]
           path.write_text(text, encoding='utf-8')
-          print('Stripe details added.')
           PY
 
-      - name: Commit and remove helper workflow
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add resources/views/livewire/subscription-hub.blade.php
-          git rm -f .github/workflows/.sync-stripe-plan-details.yml
-          git commit -m "feat: sync platform plan modal with Stripe details"
+          git commit -m "feat: add Stripe details to platform plan modal" || exit 0
           git push origin main
-
-# Trigger a fresh synchronization run.
