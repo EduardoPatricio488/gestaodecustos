@@ -16,25 +16,16 @@ class SupplierDashboard extends Component
     use WithFileUploads;
 
     public $supplier;
-
     public $subject = '';
-
     public $message = '';
-
     public $activeTicketId = null;
-
     public $replyMessage = '';
-
-    // Campos para submissão de fatura
     public $invoice_amount;
-
     public $invoice_doc;
-
     public $invoice_notes;
 
     public function mount($token)
     {
-        // Garante que o fornecedor existe com o token fornecido
         $this->supplier = Supplier::where('portal_token', $token)->with('workspace')->firstOrFail();
     }
 
@@ -113,19 +104,25 @@ class SupplierDashboard extends Component
     #[Layout('layouts.guest')]
     public function render()
     {
-        // Carrega o histórico para a tabela (chamada 'history' no blade)
         $history = Expense::where('supplier_id', $this->supplier->id)
             ->where('workspace_id', $this->supplier->workspace_id)
             ->latest('spent_at')
             ->get();
+        $tickets = $this->supplier->supportTickets()->latest()->get();
 
         return view('livewire.public.supplier-dashboard', [
             'history' => $history,
-            'tickets' => $this->supplier->supportTickets()->latest()->get(),
+            'tickets' => $tickets,
             'activeMessages' => $this->activeTicketId
                 ? $this->ticketForSupplier($this->activeTicketId)->messages()->oldest()->get()
                 : collect(),
             'workspace' => $this->supplier->workspace,
+            'portalStats' => [
+                'movements' => $history->count(),
+                'totalPaid' => (float) $history->sum('amount'),
+                'openTickets' => $tickets->whereIn('status', ['open', 'em_aberto', 'pending'])->count(),
+                'lastMovement' => $history->first(),
+            ],
         ]);
     }
 }
