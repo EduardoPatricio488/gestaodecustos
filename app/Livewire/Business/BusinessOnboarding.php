@@ -22,7 +22,9 @@ class BusinessOnboarding extends Component
 
     public $tax_number;
 
-    public $customIndustry; // 🔥 Adiciona esta propriedade
+    public $business_email;
+
+    public $customIndustry;
 
     public $photo;
 
@@ -36,6 +38,7 @@ class BusinessOnboarding extends Component
             'name' => 'required|min:3|max:50',
             'industry' => 'required',
             'tax_number' => 'nullable|digits:9',
+            'business_email' => 'required|email:rfc|max:255',
         ],
         3 => [
             'initial_capital' => 'required|numeric|min:0',
@@ -65,41 +68,36 @@ class BusinessOnboarding extends Component
 
     public function createCompany()
     {
+        $this->validate($this->rules[2]);
         $user = auth()->user();
 
-        // 1. Lógica de Indústria Personalizada
         $finalIndustry = ($this->industry === 'Outro')
             ? $this->customIndustry
             : $this->industry;
 
-        // Normalizar o NIF antes de guardar: apenas os 9 dígitos.
         $taxNumber = preg_replace('/\D/', '', (string) $this->tax_number);
 
-        // 2. Criar o Workspace do tipo Business
         $workspace = Workspace::create([
             'name' => $this->name,
             'owner_id' => $user->id,
             'type' => 'business',
             'industry' => $finalIndustry,
             'tax_number' => $taxNumber ?: null,
+            'business_email' => strtolower(trim($this->business_email)),
             'currency' => $this->currency ?? 'EUR',
             'initial_capital' => (float) ($this->initial_capital ?? 0),
             'invite_code' => strtoupper(Str::random(8)),
             'plan' => 'business',
         ]);
 
-        // 3. Processar a Foto se existir
         if ($this->photo) {
             $path = $this->photo->store('workspaces/logos', 'public');
             $workspace->update(['logo_path' => $path]);
         }
 
-        // 4. Associar o utilizador como Admin e atualizar contexto
         $user->workspaces()->attach($workspace->id, ['role' => 'admin']);
         $user->update(['current_workspace_id' => $workspace->id]);
 
-        // 🔥 5. DISPARAR E-MAIL DE BOAS-VINDAS
-        // Usamos um try-catch para o site não crashar se o Mailpit estiver desligado
         try {
             Mail::to($user->email)->send(new WelcomeBusinessMail($workspace));
         } catch (\Exception $e) {
