@@ -3,6 +3,7 @@
 namespace App\Livewire\Public;
 
 use App\Mail\BankAccessRequestMail;
+use App\Models\BankAccessRequest;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -16,6 +17,7 @@ class BankPortal extends Component
     public $token = '';
     public $companySearch = '';
     public $selectedCompanyId = null;
+    public $bankName = '';
     public $requestEmail = '';
     public $requestSent = false;
 
@@ -74,16 +76,36 @@ class BankPortal extends Component
         $this->requestSent = false;
     }
 
+    private function isInstitutionalEmail(string $email): bool
+    {
+        $domain = strtolower((string) substr(strrchr($email, '@') ?: '', 1));
+
+        $freeProviders = [
+            'gmail.com', 'googlemail.com', 'hotmail.com', 'outlook.com', 'live.com',
+            'msn.com', 'yahoo.com', 'yahoo.pt', 'icloud.com', 'me.com', 'aol.com',
+            'proton.me', 'protonmail.com', 'gmx.com', 'mail.com', 'sapo.pt', 'iol.pt',
+        ];
+
+        return $domain !== '' && ! in_array($domain, $freeProviders, true) && str_contains($domain, '.');
+    }
+
     public function sendAccessRequest(): void
     {
         $this->validate([
             'selectedCompanyId' => 'required|integer|exists:workspaces,id',
+            'bankName' => 'required|string|min:2|max:150',
             'requestEmail' => 'required|email:rfc|max:255',
         ], [
             'selectedCompanyId.required' => 'Seleciona uma empresa.',
-            'requestEmail.required' => 'Introduz o email de destino.',
+            'bankName.required' => 'Indica o nome do banco.',
+            'requestEmail.required' => 'Introduz o email institucional do banco.',
             'requestEmail.email' => 'Introduz um email válido.',
         ]);
+
+        if (! $this->isInstitutionalEmail($this->requestEmail)) {
+            $this->addError('requestEmail', 'É necessário utilizar um email institucional do banco.');
+            return;
+        }
 
         $workspace = Workspace::whereKey($this->selectedCompanyId)
             ->whereIn('type', ['business', 'company', 'bussiness'])
@@ -94,9 +116,34 @@ class BankPortal extends Component
             return;
         }
 
-        Mail::to($this->requestEmail)->send(new BankAccessRequestMail($workspace));
+        if (! filled($workspace->business_email)) {
+            $this->addError('selectedCompanyId', 'Esta empresa ainda não tem um email empresarial configurado.');
+            return;
+        }
+
+        $pending = BankAccessRequest::where('workspace_id', $workspace->id)
+            ->where('bank_email', strtolower(trim($this->requestEmail)))
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($pending) {
+            $this->addError('requestEmail', 'Já existe um pedido pendente deste banco para esta empresa.');
+            return;
+        }
+
+        $request = BankAccessRequest::create([
+            'workspace_id' => $workspace->id,
+            'bank_name' => trim($this->bankName),
+            'bank_email' => strtolower(trim($this->requestEmail)),
+            'status' => 'pending',
+            'requested_at' => now(),
+        ]);
+
+        Mail::to($workspace->business_email)->send(new BankAccessRequestMail($workspace, $request));
+
         $this->requestSent = true;
         $this->requestEmail = '';
+        $this->bankName = '';
     }
 
     #[\Livewire\Attributes\Computed]
@@ -110,7 +157,7 @@ class BankPortal extends Component
             })
             ->orderBy('name')
             ->limit(100)
-            ->get(['id', 'name', 'legal_name']);
+            ->get(['id', 'name', 'legal_name', 'business_email']);
     }
 
     public function render()
