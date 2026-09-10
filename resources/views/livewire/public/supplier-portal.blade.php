@@ -1,70 +1,69 @@
-{{-- ESTA É A PARTE BRANCA ARREDONDADA --}}
-<div class="w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 sm:p-14 rounded-[3.5rem] shadow-2xl backdrop-blur-md space-y-8 relative mx-auto">
-
-    {{-- ÍCONE DO PORTAL --}}
+<div class="w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 sm:p-14 rounded-[3.5rem] shadow-2xl backdrop-blur-md space-y-8 relative mx-auto" x-data="{ open: false }">
     <div class="flex justify-center">
         <div class="size-20 bg-emerald-600 rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center">
             <flux:icon name="{{ $isLoggedIn ? 'document-text' : 'building-storefront' }}" variant="solid" class="size-10 text-white" />
         </div>
     </div>
 
-    {{-- TÍTULOS --}}
     <div class="text-center space-y-2">
         <h1 class="text-2xl font-black text-zinc-900 dark:text-white uppercase italic tracking-tighter leading-none">
             {{ $isLoggedIn ? 'Submeter Faturação' : 'Portal do Fornecedor' }}
         </h1>
         <p class="text-[11px] text-zinc-500 font-medium italic text-center w-full">
-            {{ $isLoggedIn ? 'Parceiro: ' . $supplier->name : 'Introduz o teu código de acesso exclusivo.' }}
+            {{ $isLoggedIn ? 'Parceiro: ' . $supplier->name : 'Acede à área privada do fornecedor.' }}
         </p>
     </div>
 
     @if (!$isLoggedIn)
-        {{-- 1. FORMULÁRIO DE LOGIN --}}
-        <form wire:submit.prevent="login" class="space-y-6 text-left">
-            @if (session()->has('error'))
-                <div class="p-3 bg-red-500/10 text-red-500 text-[10px] font-bold rounded-xl border border-red-500/20 text-center uppercase tracking-widest italic">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            <div class="space-y-5">
-                {{-- NIF FORMATADO --}}
-                <div class="space-y-2" x-data="{
-                    nif: @entangle('tax_number'),
-                    formatNIF(value) {
-                        if (!value) return '';
-                        return value.replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ').substring(0, 11);
-                    }
-                }" x-init="nif = formatNIF(nif)">
-                    <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">NIF da Empresa</label>
-                    <input type="text" x-model="nif" x-on:input="nif = formatNIF($event.target.value)" placeholder="000 000 000"
-                           class="w-full h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-center font-mono font-bold text-sm tracking-[0.1em] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all dark:text-white" />
-                </div>
-
-                {{-- CHAVE (PIN) --}}
-                <div class="space-y-2">
-                    <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Chave de Parceiro (PIN)</label>
-                    <input wire:model="token" type="text" maxlength="6" placeholder="000000"
-                           class="w-full h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-center font-mono font-black text-lg tracking-[0.4em] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all dark:text-white" />
-                </div>
-
-                <flux:button type="submit" variant="primary" class="w-full h-14 !bg-emerald-600 hover:!bg-emerald-500 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-emerald-500/20 transition-all active:scale-95 border-none text-white mt-4">
-                    Entrar no Portal
-                </flux:button>
+        @if (session()->has('error'))
+            <div class="p-3 bg-red-500/10 text-red-500 text-[10px] font-bold rounded-xl border border-red-500/20 text-center uppercase tracking-widest italic">
+                {{ session('error') }}
             </div>
-        </form>
+        @endif
+
+        <button type="button" @click="open = true" class="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-[11px] shadow-lg shadow-emerald-500/20 transition-all active:scale-[.98] flex items-center justify-center gap-2">
+            <flux:icon name="key" class="size-5" />
+            Introduzir dados de acesso
+        </button>
+
+        <div x-show="open" x-cloak x-transition class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm" @keydown.escape.window="open = false">
+            <div @click.stop class="w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl p-6 sm:p-8">
+                <div class="flex items-start justify-between gap-4 mb-7">
+                    <div>
+                        <p class="text-[9px] font-black uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400">Acesso do fornecedor</p>
+                        <h2 class="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white mt-1">Dados de acesso</h2>
+                        <p class="text-xs text-zinc-500 mt-1">Introduz o NIF da empresa e a chave de parceiro.</p>
+                    </div>
+                    <button type="button" @click="open = false" class="size-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
+                        <flux:icon name="x-mark" class="size-5" />
+                    </button>
+                </div>
+
+                <form wire:submit.prevent="login" class="space-y-5">
+                    <div class="space-y-2" x-data="{ nif: @entangle('tax_number'), formatNIF(value) { return (value || '').replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ').substring(0, 11); } }" x-init="nif = formatNIF(nif)">
+                        <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">NIF da Empresa</label>
+                        <input type="text" x-model="nif" x-on:input="nif = formatNIF($event.target.value)" inputmode="numeric" maxlength="11" placeholder="000 000 000" class="w-full h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-center font-mono font-bold text-sm tracking-[0.1em] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none dark:text-white" />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Chave de Parceiro</label>
+                        <input wire:model="token" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" class="w-full h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-center font-mono font-black text-lg tracking-[0.4em] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none dark:text-white" />
+                    </div>
+
+                    <flux:button type="submit" variant="primary" class="w-full h-14 !bg-emerald-600 hover:!bg-emerald-500 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-emerald-500/20 text-white border-none">
+                        Entrar no Portal
+                    </flux:button>
+                </form>
+            </div>
+        </div>
     @else
-        {{-- 2. FORMULÁRIO DE SUBMISSÃO --}}
         <form wire:submit.prevent="submitInvoice" class="space-y-6">
-             <flux:button type="submit" variant="primary" class="w-full h-14 !bg-emerald-600 rounded-2xl font-black uppercase">Submeter Documento</flux:button>
-             <button type="button" wire:click="$set('isLoggedIn', false)" class="w-full text-center text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-red-500 transition-colors">Sair da Sessão</button>
+            <flux:button type="submit" variant="primary" class="w-full h-14 !bg-emerald-600 rounded-2xl font-black uppercase">Submeter Documento</flux:button>
+            <button type="button" wire:click="$set('isLoggedIn', false)" class="w-full text-center text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-red-500 transition-colors">Sair da Sessão</button>
         </form>
     @endif
 
-    {{-- LINK DE VOLTA --}}
     <div class="text-center pt-2 border-t border-zinc-100 dark:border-zinc-800/50">
-        <a href="/" class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] hover:text-emerald-600 transition-colors">
-            ← Voltar ao site principal
-        </a>
+        <a href="/" class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] hover:text-emerald-600 transition-colors">← Voltar ao site principal</a>
     </div>
 </div>
