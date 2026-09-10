@@ -1,0 +1,52 @@
+name: Enhance client and supplier portals
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/enhance-external-portals.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  enhance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enhance portal views
+        shell: python
+        run: |
+          from pathlib import Path
+
+          client = Path('resources/views/livewire/client-portal.blade.php')
+          s = client.read_text(encoding='utf-8')
+          marker = '        {{-- 2. ALERTA DE PROPOSTAS --}}'
+          block = '''        {{-- RESUMO RÁPIDO --}}\n        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">\n            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">\n                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Projetos</p>\n                <p class="text-2xl font-black dark:text-white mt-2">{{ $portalStats['projects'] }}</p>\n            </div>\n            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">\n                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Tarefas abertas</p>\n                <p class="text-2xl font-black dark:text-white mt-2">{{ $portalStats['openTasks'] }}</p>\n            </div>\n            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">\n                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Propostas</p>\n                <p class="text-2xl font-black text-indigo-600 mt-2">{{ $portalStats['pendingProposals'] }}</p>\n            </div>\n            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">\n                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Pedidos</p>\n                <p class="text-2xl font-black text-emerald-600 mt-2">{{ $portalStats['openTickets'] }}</p>\n            </div>\n            <div class="col-span-2 lg:col-span-1 bg-zinc-950 rounded-3xl p-5 shadow-sm">\n                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Faturação</p>\n                <p class="text-xl font-black text-white mt-2">{{ number_format($portalStats['invoiceTotal'], 2, ',', ' ') }}€</p>\n            </div>\n        </div>\n\n'''
+          if marker not in s or '{{-- RESUMO RÁPIDO --}}' in s:
+              raise SystemExit('Client marker missing or already enhanced')
+          s = s.replace(marker, block + marker, 1)
+          old = '<button class="px-8 py-3 bg-white text-indigo-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-50 transition-all shadow-lg shrink-0">Ver Proposta</button>'
+          new = '''<div class="flex gap-2 shrink-0">\n                    @foreach($proposals as $proposal)\n                        <button wire:click="approveProposal({{ $proposal->id }})" class="px-5 py-3 bg-white text-indigo-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-50 transition-all shadow-lg">Aceitar</button>\n                        <button wire:click="declineProposal({{ $proposal->id }})" class="px-5 py-3 bg-indigo-700/50 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-700 transition-all">Recusar</button>\n                    @endforeach\n                </div>'''
+          if old not in s:
+              raise SystemExit('Client proposal button missing')
+          client.write_text(s.replace(old, new, 1), encoding='utf-8')
+
+          supplier = Path('resources/views/livewire/public/supplier-dashboard.blade.php')
+          s = supplier.read_text(encoding='utf-8')
+          marker = '        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">'
+          block = '''        {{-- RESUMO DO FORNECEDOR --}}\n        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">\n            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">\n                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Movimentos</p>\n                <p class="text-2xl font-black dark:text-white mt-2">{{ $portalStats['movements'] }}</p>\n            </div>\n            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">\n                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Total liquidado</p>\n                <p class="text-xl font-black text-emerald-600 mt-2">{{ number_format($portalStats['totalPaid'], 2, ',', ' ') }}€</p>\n            </div>\n            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">\n                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Tickets abertos</p>\n                <p class="text-2xl font-black text-brand-600 mt-2">{{ $portalStats['openTickets'] }}</p>\n            </div>\n            <div class="bg-zinc-950 rounded-3xl p-5 shadow-sm">\n                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Último movimento</p>\n                <p class="text-sm font-black text-white mt-2">{{ $portalStats['lastMovement'] ? number_format($portalStats['lastMovement']->amount, 2, ',', ' ').'€' : 'Sem movimentos' }}</p>\n            </div>\n        </div>\n\n'''
+          if marker not in s or '{{-- RESUMO DO FORNECEDOR --}}' in s:
+              raise SystemExit('Supplier marker missing or already enhanced')
+          supplier.write_text(s.replace(marker, block + marker, 1), encoding='utf-8')
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/views/livewire/client-portal.blade.php resources/views/livewire/public/supplier-dashboard.blade.php
+          git commit -m "Enhance client and supplier portal UI"
+          git push
