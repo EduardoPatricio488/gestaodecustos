@@ -1,7 +1,9 @@
 name: Apply bank access UI fix
 on:
   push:
-    paths: ['.github/workflows/fix-bank-audit-access.yml']
+    paths:
+      - '.github/workflows/fix-bank-audit-access.yml'
+      - 'README.md'
   workflow_dispatch:
 permissions:
   contents: write
