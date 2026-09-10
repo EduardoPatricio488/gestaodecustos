@@ -35,12 +35,20 @@ class BusinessOnboarding extends Component
         2 => [
             'name' => 'required|min:3|max:50',
             'industry' => 'required',
-            'tax_number' => 'nullable|numeric',
+            'tax_number' => 'nullable|digits:9',
         ],
         3 => [
             'initial_capital' => 'required|numeric|min:0',
         ],
     ];
+
+    public function updatedTaxNumber($value)
+    {
+        $digits = preg_replace('/\D/', '', (string) $value);
+        $digits = substr($digits, 0, 9);
+
+        $this->tax_number = trim(implode(' ', str_split($digits, 3)));
+    }
 
     public function nextStep()
     {
@@ -64,13 +72,16 @@ class BusinessOnboarding extends Component
             ? $this->customIndustry
             : $this->industry;
 
+        // Normalizar o NIF antes de guardar: apenas os 9 dígitos.
+        $taxNumber = preg_replace('/\D/', '', (string) $this->tax_number);
+
         // 2. Criar o Workspace do tipo Business
         $workspace = Workspace::create([
             'name' => $this->name,
             'owner_id' => $user->id,
             'type' => 'business',
             'industry' => $finalIndustry,
-            'tax_number' => $this->tax_number,
+            'tax_number' => $taxNumber ?: null,
             'currency' => $this->currency ?? 'EUR',
             'initial_capital' => (float) ($this->initial_capital ?? 0),
             'invite_code' => strtoupper(Str::random(8)),
