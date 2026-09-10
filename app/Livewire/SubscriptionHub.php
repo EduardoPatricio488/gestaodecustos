@@ -10,34 +10,57 @@ use App\Services\SubscriptionCycleService;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Stripe\StripeClient;
 
 #[Layout('components.layouts.app')]
 class SubscriptionHub extends Component
 {
     public $name;
+
     public $amount;
+
     public $category_id;
+
     public $billing_day;
+
     public $billing_cycle = 'monthly';
+
     public $payment_method;
+
     public $status = 'active';
+
     public $started_at;
+
     public $renewal_date;
+
     public $notes;
+
     public bool $notify_before_billing = false;
+
     public $notify_days_before;
+
     public $showModal = false;
+
     public $editingId = null;
+
     public string $search = '';
+
     public string $categoryFilter = 'all';
+
     public bool $showExtraModal = false;
+
     public bool $showPlatformPlanModal = false;
+
     public string $statusFilter = 'all';
+
     public string $cycleFilter = 'all';
+
     public string $amountFilter = 'all';
+
     public string $sortBy = 'billing_day';
 
     public array $stripePlanDetails = [];
+
     public ?string $stripePlanError = null;
 
     public function edit($id)
@@ -90,17 +113,19 @@ class SubscriptionHub extends Component
 
         if (! $customerId) {
             $this->stripePlanError = 'Não existe um Stripe Customer associado a esta conta.';
+
             return;
         }
 
         $secret = config('services.stripe.secret');
         if (! $secret) {
             $this->stripePlanError = 'A integração Stripe não está configurada no servidor.';
+
             return;
         }
 
         try {
-            $stripe = new \Stripe\StripeClient($secret);
+            $stripe = new StripeClient($secret);
             $customer = $stripe->customers->retrieve($customerId, []);
 
             $subscription = null;
@@ -352,9 +377,15 @@ class SubscriptionHub extends Component
                     ->orWhere('notes', 'like', '%'.$this->search.'%');
             });
         }
-        if ($this->categoryFilter !== 'all') $baseQuery->where('category_id', $this->categoryFilter);
-        if ($this->statusFilter !== 'all') $baseQuery->where('status', $this->statusFilter);
-        if ($this->cycleFilter !== 'all') $baseQuery->where('cycle', $this->cycleFilter);
+        if ($this->categoryFilter !== 'all') {
+            $baseQuery->where('category_id', $this->categoryFilter);
+        }
+        if ($this->statusFilter !== 'all') {
+            $baseQuery->where('status', $this->statusFilter);
+        }
+        if ($this->cycleFilter !== 'all') {
+            $baseQuery->where('cycle', $this->cycleFilter);
+        }
 
         $allSubs = $baseQuery->get()->map(fn ($sub) => $this->decorateSubscription($sub));
 
@@ -384,7 +415,9 @@ class SubscriptionHub extends Component
             $billingDay = $cashierSub?->created_at?->day ?? $firstPayment?->paid_at?->day ?? now()->day;
             $today = Carbon::now()->startOfDay();
             $nextBilling = $today->copy()->day(min($billingDay, $today->daysInMonth));
-            if ($nextBilling->lte($today)) $nextBilling = $nextBilling->addMonthNoOverflow();
+            if ($nextBilling->lte($today)) {
+                $nextBilling = $nextBilling->addMonthNoOverflow();
+            }
 
             $platformEntry = (object) [
                 'name' => 'Finance Pro '.$platformPlan->name,
@@ -397,7 +430,9 @@ class SubscriptionHub extends Component
 
         $totalMonthly = $activeSubs->sum('monthly_equivalent') + ($platformEntry->monthly_equivalent ?? 0);
         $alreadyPaid = $activeSubs->where('billing_day', '<', now()->day)->sum('monthly_equivalent');
-        if ($platformEntry && $platformEntry->billing_day <= now()->day) $alreadyPaid += $platformEntry->monthly_equivalent;
+        if ($platformEntry && $platformEntry->billing_day <= now()->day) {
+            $alreadyPaid += $platformEntry->monthly_equivalent;
+        }
 
         $activeCount = $activeSubs->count() + ($platformEntry ? 1 : 0);
         $nextSub = $activeSubs->values()->push($platformEntry)->filter()->sortBy('days_until_billing')->first();
@@ -435,6 +470,7 @@ class SubscriptionHub extends Component
         }
         $sub->next_billing_date = $billingDate;
         $sub->days_until_billing = (int) $today->copy()->startOfDay()->diffInDays($billingDate->copy()->startOfDay(), false);
+
         return $sub;
     }
 }
