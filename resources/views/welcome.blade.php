@@ -97,7 +97,7 @@
             @else
                <div class="flex items-center gap-2">
     {{-- 1. Botão Entrar --}}
-    <a href="/login" wire:navigate class="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">
+    <a href="/login" wire:navigate class="inline-flex items-center justify-center rounded-xl bg-zinc-950 dark:bg-white px-5 py-2.5 text-sm font-black text-white dark:text-zinc-950 shadow-lg shadow-zinc-950/15 hover:scale-[1.02] transition-all">
         Entrar
     </a>
 
