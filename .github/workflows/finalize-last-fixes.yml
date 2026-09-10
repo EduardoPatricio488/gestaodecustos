@@ -1,0 +1,97 @@
+name: Finalize Finance Pro fixes
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply remaining fixes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          # BankAccountHub: missing Workspace import and permanent short token.
+          p=Path('app/Livewire/Business/BankAccountHub.php'); s=p.read_text()
+          if 'use App\\Models\\Workspace;' not in s:
+              s=s.replace('use App\\Models\\Income;','use App\\Models\\Income;\nuse App\\Models\\Workspace;',1)
+          p.write_text(s)
+
+          # Bank portal accepts the persistent 8-character code without expiry.
+          p=Path('app/Livewire/Public/BankPortal.php'); s=p.read_text()
+          s=s.replace("'token' => 'required|string|min:32|max:128',", "'token' => 'required|string|min:8|max:8',",1)
+          old="""        $workspace = Workspace::whereRaw(\"REPLACE(REPLACE(REPLACE(tax_number, ' ', ''), '.', ''), '-', '') = ?\", [$cleanNifInput])
+            ->where('audit_token_purpose', 'bank_audit')
+            ->whereNull('audit_token_revoked_at')
+            ->where(function ($query) {
+                $query->whereNull('audit_token_expires_at')
+                    ->orWhere('audit_token_expires_at', '>', now());
+            })
+            ->first();
+
+        if ($workspace && Hash::check($cleanTokenInput, $workspace->audit_token)) {"""
+          new="""        $workspace = Workspace::whereRaw(\"REPLACE(REPLACE(REPLACE(tax_number, ' ', ''), '.', ''), '-', '') = ?\", [$cleanNifInput])
+            ->where('audit_token_purpose', 'bank_audit')
+            ->whereNull('audit_token_revoked_at')
+            ->where('audit_access_code', $cleanTokenInput)
+            ->first();
+
+        if ($workspace && Hash::check($cleanTokenInput, $workspace->audit_token)) {"""
+          if old in s: s=s.replace(old,new,1)
+          p.write_text(s)
+
+          # Theme: remove the duplicate inline theme controller from the layout.
+          p=Path('resources/views/components/layouts/app.blade.php'); s=p.read_text()
+          pattern=r"\n    <script>\n        \(function \(\) \{\n            var appearance = localStorage\.getItem\('flux\.appearance'\).*?\n        \}\)\(\);\n    </script>\n\n    <link rel=\"stylesheet\" href=\"/flux/flux\.css\">"
+          s2=re.sub(pattern, '\n    <link rel="stylesheet" href="/flux/flux.css">', s, count=1, flags=re.S)
+          if s2 != s: p.write_text(s2)
+
+          # Bank UI: make access action standalone before account listing and modernize modal.
+          p=Path('resources/views/livewire/business/bank-account-hub.blade.php'); s=p.read_text()
+          old="""                     {{-- ✅ ADICIONA ESTE NOVO BOTÃO AQUI --}}
+    <button type=\"button\" wire:click=\"generateAuditCode\" @click=\"optionsOpen = false\" class=\"w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 transition-all\">
+        <flux:icon name=\"shield-check\" class=\"size-4 text-zinc-900 dark:text-white\" /> Gerar Acesso Bancário
+    </button>
+
+    <div class=\"border-t border-zinc-100 dark:border-zinc-800 my-1\"></div>"""
+          s=s.replace(old,'',1)
+          marker="{{-- 3. LISTAGEM DE CONTAS — DOSSIÊ EXECUTIVO (VERSÃO FINAL COM MENU 3 PONTOS) --}}"
+          button="""<div class=\"mb-5 flex justify-end\">
+    <button type=\"button\" wire:click=\"generateAuditCode\" class=\"inline-flex items-center gap-3 px-5 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest text-white bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:scale-[1.01] shadow-lg shadow-zinc-900/20 transition-all\">
+        <flux:icon name=\"shield-check\" class=\"size-5\" /> Gerar Acesso Bancário
+    </button>
+</div>
+
+"""
+          if button not in s and marker in s: s=s.replace(marker,button+marker,1)
+          s=s.replace('name=\"audit-code-modal\" position=\"center\" class=\"md:w-[500px] !p-0 overflow-visible\"','name=\"audit-code-modal\" position=\"center\" class=\"w-[calc(100vw-2rem)] md:w-[560px] !p-0\"',1)
+          s=s.replace('text-2xl sm:text-3xl','text-2xl sm:text-3xl',1)
+          # Protocol display: group NIF and use the shorter token with copy action.
+          s=s.replace('{{ $companyTaxNumber }}','{{ $companyTaxNumber ? implode(\' \', str_split(preg_replace(\'/\\D/\', \'\', (string) $companyTaxNumber), 3)) : \'S/ NIF\' }}',1)
+          s=s.replace('Partilhar Acesso','Partilhar Token',1)
+          p.write_text(s)
+
+          # Fitness sidebar: if the old unlocked item exists, add PRO lock styling.
+          p=Path('resources/views/components/layouts/app.blade.php'); s=p.read_text()
+          old='''wire:navigate.hover\n     class=\"text-orange-500 dark:text-orange-400 font-black\"'''
+          new='''wire:navigate.hover\n     class=\"text-orange-500 dark:text-orange-400 font-black relative\"'''
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Finalize remaining Finance Pro fixes"
+          git push
