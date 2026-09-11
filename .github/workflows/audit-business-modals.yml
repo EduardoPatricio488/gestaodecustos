@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/audit-business-modals.yml'
+      - '.github/business-modal-audit-trigger.txt'
 permissions:
   contents: write
 jobs:
@@ -12,14 +13,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Standardize business modals and fields
+      - name: Restore supplier view and standardize fields
         shell: python
         run: |
           import subprocess
           from pathlib import Path
-
           supplier = Path('resources/views/livewire/business/supplier-hub.blade.php')
-          original = subprocess.check_output(['git', 'show', 'e4dc6496983afa10843c303390160c0ef9ecb85e:resources/views/livewire/business/supplier-hub.blade.php']).decode('utf-8')
+          original = subprocess.check_output(['git','show','e4dc6496983afa10843c303390160c0ef9ecb85e:resources/views/livewire/business/supplier-hub.blade.php']).decode()
           old = '''                            <flux:input
                                 wire:model="tax_number"
                                 placeholder="500 000 000"
@@ -34,64 +34,23 @@ jobs:
                                 class="font-black !bg-white dark:!bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl h-12 shadow-sm"
                             />
                             <p class="px-1 text-[9px] font-bold text-zinc-400 uppercase tracking-widest">O NIF é dividido automaticamente em grupos de 3 dígitos.</p>'''
-          if old not in original:
-              raise SystemExit('Supplier NIF input pattern not found')
-          supplier.write_text(original.replace(old, new, 1), encoding='utf-8')
-
+          if old not in original: raise SystemExit('Supplier NIF pattern not found')
+          supplier.write_text(original.replace(old,new,1), encoding='utf-8')
           modal = Path('resources/views/flux/modal/index.blade.php')
           text = modal.read_text(encoding='utf-8')
           text = text.replace("default => 'p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',", "default => 'fixed inset-0 m-auto max-h-[90vh] overflow-y-auto p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',")
           text = text.replace('<div class="absolute top-0 end-0 mt-4 me-4">', '<div class="absolute top-4 end-4 z-50">')
           modal.write_text(text, encoding='utf-8')
-
           js = Path('resources/js/app.js')
           app = js.read_text(encoding='utf-8')
           marker = '// Global business field formatting.'
           if marker not in app:
-              app += r'''
-
-// Global business field formatting.
-(function () {
-    const digits = (value) => (value || '').replace(/\D/g, '');
-    const groups = (value, sizes) => {
-        let raw = digits(value).slice(0, sizes.reduce((a, b) => a + b, 0));
-        const parts = [];
-        let offset = 0;
-        for (const size of sizes) {
-            if (offset >= raw.length) break;
-            parts.push(raw.slice(offset, offset + size));
-            offset += size;
-        }
-        return parts.join(' ');
-    };
-    const context = (input) => {
-        const parent = input.closest('div');
-        return `${parent?.innerText || ''} ${input.getAttribute('aria-label') || ''} ${input.getAttribute('placeholder') || ''}`.toLowerCase();
-    };
-    const apply = (input) => {
-        if (!(input instanceof HTMLInputElement) || input.type === 'password' || input.type === 'email' || input.type === 'hidden') return;
-        const text = context(input);
-        let value = null;
-        if (/\b(nif|vat|tax id|tax number)\b/.test(text)) value = groups(input.value, [3, 3, 3]);
-        else if (/\b(iban)\b/.test(text)) value = groups(input.value, [4, 4, 4, 4, 4, 3]);
-        else if (/\b(telem[oó]vel|telefone|phone|contacto telef[oó]nico|mobile)\b/.test(text)) value = groups(input.value, [3, 3, 3]);
-        else if (/\b(c[oó]digo postal|postal code|zip)\b/.test(text)) value = groups(input.value, [4, 3]);
-        if (value !== null && value !== input.value) {
-            input.value = value;
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-    };
-    document.addEventListener('input', (event) => apply(event.target), true);
-    document.addEventListener('focusin', (event) => apply(event.target), true);
-    document.addEventListener('livewire:navigated', () => document.querySelectorAll('input').forEach(apply));
-})();
-'''
+              app += '''\n\n// Global business field formatting.\n(function () {\n    const digits = (v) => (v || '').replace(/\\D/g, '');\n    const groups = (v, sizes) => {\n        const raw = digits(v).slice(0, sizes.reduce((a,b) => a+b, 0));\n        const parts = []; let i = 0;\n        for (const size of sizes) { if (i >= raw.length) break; parts.push(raw.slice(i, i + size)); i += size; }\n        return parts.join(' ');\n    };\n    const apply = (input) => {\n        if (!(input instanceof HTMLInputElement) || ['password','email','hidden','number'].includes(input.type)) return;\n        const text = `${input.closest('div')?.innerText || ''} ${input.getAttribute('aria-label') || ''} ${input.getAttribute('placeholder') || ''}`.toLowerCase();\n        let value = null;\n        if (/\\b(nif|vat|tax id|tax number)\\b/.test(text)) value = groups(input.value,[3,3,3]);\n        else if (/\\b(iban)\\b/.test(text)) value = groups(input.value,[4,4,4,4,4,3]);\n        else if (/\\b(telem[oó]vel|telefone|phone|contacto telef[oó]nico|mobile)\\b/.test(text)) value = groups(input.value,[3,3,3]);\n        else if (/\\b(c[oó]digo postal|postal code|zip)\\b/.test(text)) value = groups(input.value,[4,3]);\n        if (value !== null && value !== input.value) { input.value = value; input.dispatchEvent(new Event('input',{bubbles:true})); }\n    };\n    document.addEventListener('input', e => apply(e.target), true);\n    document.addEventListener('focusin', e => apply(e.target), true);\n    document.addEventListener('livewire:navigated', () => document.querySelectorAll('input').forEach(apply));\n})();\n'''
               js.write_text(app, encoding='utf-8')
-
       - name: Commit
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add resources/views/livewire/business/supplier-hub.blade.php resources/views/flux/modal/index.blade.php resources/js/app.js
-          git commit -m 'Standardize business modals and field formatting' || exit 0
+          git commit -m 'Restore supplier hub and standardize business modals' || exit 0
           git push
