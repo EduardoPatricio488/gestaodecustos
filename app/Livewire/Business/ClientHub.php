@@ -4,6 +4,7 @@ namespace App\Livewire\Business;
 
 use App\Mail\ClientPortalAccessMail;
 use App\Models\Client;
+use App\Models\PortalAccessRequest;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -145,7 +146,6 @@ class ClientHub extends Component
         $this->generatedPasscode = $client->portal_token;
         $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
 
-        // Usar exatamente o mesmo mecanismo da área de Fornecedores.
         $this->dispatch('modal-show', name: 'portal-link-modal');
     }
 
@@ -171,14 +171,36 @@ class ClientHub extends Component
         $this->dispatch('toast', text: 'Código de acesso enviado para '.$client->email.'.', variant: 'success');
     }
 
+    /**
+     * Returns pending public portal access requests for the current business workspace.
+     * The Client CRM uses this method to expose requests submitted from /portal/login.
+     */
+    public function getPendingAccessRequests(): array
+    {
+        return PortalAccessRequest::query()
+            ->where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('portal_type', 'client')
+            ->where('status', 'pending')
+            ->latest('requested_at')
+            ->limit(50)
+            ->get()
+            ->map(fn (PortalAccessRequest $request) => [
+                'id' => $request->id,
+                'name' => $request->requester_name,
+                'email' => $request->requester_email,
+                'tax_number' => $request->tax_number,
+                'requested_at' => optional($request->requested_at)->format('d/m/Y H:i'),
+            ])
+            ->values()
+            ->all();
+    }
+
     public function render()
     {
         $clients = auth()->user()->clients()
             ->where('name', 'like', '%'.$this->search.'%')
             ->get();
 
-        // Igual ao módulo de Fornecedores: renderizar diretamente a view,
-        // sem wrapper intermédio nem JavaScript a intercetar os cliques.
         return view('livewire.business.client-hub', [
             'clients' => $clients,
             'totalClients' => $clients->count(),
