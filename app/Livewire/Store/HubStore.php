@@ -6,6 +6,7 @@ use App\Livewire\Store\Concerns\InteractsWithStore;
 use App\Models\StoreBundle;
 use App\Models\StoreProduct;
 use App\Models\StorePurchase;
+use App\Services\StoreCartService;
 use App\Services\StoreCatalogService;
 use App\Services\StoreCompareService;
 use App\Services\StoreWishlistService;
@@ -19,36 +20,18 @@ class HubStore extends Component
 {
     use InteractsWithStore;
 
-    #[Url(as: 'tab')]
-    public string $activeTab = 'all';
-
-    #[Url(as: 'q')]
-    public string $search = '';
-
-    #[Url(as: 'min')]
-    public ?string $priceMin = null;
-
-    #[Url(as: 'max')]
-    public ?string $priceMax = null;
-
-    #[Url(as: 'sort')]
-    public string $sortBy = 'popular';
-
+    #[Url(as: 'tab')] public string $activeTab = 'all';
+    #[Url(as: 'q')] public string $search = '';
+    #[Url(as: 'min')] public ?string $priceMin = null;
+    #[Url(as: 'max')] public ?string $priceMax = null;
+    #[Url(as: 'sort')] public string $sortBy = 'popular';
     public bool $onlyFeatured = false;
 
-    public function setTab(string $tab): void
-    {
-        $this->activeTab = $tab;
-    }
-
+    public function setTab(string $tab): void { $this->activeTab = $tab; }
     public function updatedSearch(): void {}
-
     public function updatedPriceMin(): void {}
-
     public function updatedPriceMax(): void {}
-
     public function updatedSortBy(): void {}
-
     public function updatedOnlyFeatured(): void {}
 
     public function clearFilters(): void
@@ -63,6 +46,7 @@ class HubStore extends Component
     public function render()
     {
         $catalog = app(StoreCatalogService::class);
+        $cart = app(StoreCartService::class);
         $query = StoreProduct::query();
 
         $catalog->applyFilters($query, [
@@ -74,21 +58,13 @@ class HubStore extends Component
             'onlyFeatured' => $this->onlyFeatured,
         ]);
 
-        // --- BUSCAR DADOS DO CARRINHO DIRETAMENTE DA SESSÃO ---
-        $cartItems = session()->get('cart', []);
-        $cartTotal = collect($cartItems)->sum('price');
-        // ----------------------------------------------------
-
         return view('livewire.store.hub-store', [
             'products' => $query->get(),
-            'planProducts' => StoreProduct::where('type', 'plan')->orderBy('price')->get(),
+            'planProducts' => StoreProduct::where('is_active', true)->where('type', 'plan')->orderBy('price')->get(),
             'bundles' => StoreBundle::where('is_active', true)->with('products')->get(),
-
-            // Passamos as variáveis que o Blade (aba lateral) precisa
-            'cartItems' => $cartItems,
-            'cartTotal' => $cartTotal,
-            'cartCount' => count($cartItems),
-
+            'cartItems' => $cart->items(),
+            'cartTotal' => $cart->total(),
+            'cartCount' => $cart->count(),
             'wishlistIds' => app(StoreWishlistService::class)->ids(),
             'ownedProductIds' => Auth::check()
                 ? StorePurchase::where('user_id', Auth::id())->where('payment_status', 'completed')->pluck('product_id')->all()

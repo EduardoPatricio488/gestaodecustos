@@ -13,95 +13,45 @@ class StoreCartService
     public function items(): Collection
     {
         $ids = array_keys($this->raw());
+        if (empty($ids)) return collect();
 
-        if (empty($ids)) {
-            return collect();
-        }
+        $products = StoreProduct::whereIn('id', $ids)->where('is_active', true)->get()->keyBy('id');
 
-        $products = StoreProduct::whereIn('id', $ids)->get()->keyBy('id');
-
-        return collect($this->raw())
-            ->map(function (int $quantity, int $productId) use ($products) {
-                $product = $products->get($productId);
-
-                if (! $product) {
-                    return null;
-                }
-
-                return [
-                    'product' => $product,
-                    'quantity' => $quantity,
-                    'subtotal' => $product->price * $quantity,
-                ];
-            })
-            ->filter()
-            ->values();
+        return collect($this->raw())->map(function (int $quantity, int $productId) use ($products) {
+            $product = $products->get($productId);
+            if (! $product) return null;
+            return ['product' => $product, 'quantity' => 1, 'subtotal' => (float) $product->price];
+        })->filter()->values();
     }
 
-    public function count(): int
-    {
-        return array_sum($this->raw());
-    }
-
-    public function total(): float
-    {
-        return $this->items()->sum('subtotal');
-    }
+    public function count(): int { return $this->items()->count(); }
+    public function total(): float { return (float) $this->items()->sum('subtotal'); }
 
     public function add(int $productId, int $quantity = 1): void
     {
-        StoreProduct::findOrFail($productId);
-
+        StoreProduct::query()->where('is_active', true)->findOrFail($productId);
         $cart = $this->raw();
-        $cart[$productId] = ($cart[$productId] ?? 0) + $quantity;
+        $cart[$productId] = 1;
         $this->save($cart);
     }
 
     public function setQuantity(int $productId, int $quantity): void
     {
         $cart = $this->raw();
-
-        if ($quantity <= 0) {
-            unset($cart[$productId]);
-        } else {
-            $cart[$productId] = $quantity;
-        }
-
+        if ($quantity <= 0) unset($cart[$productId]);
+        else $cart[$productId] = 1;
         $this->save($cart);
     }
 
-    public function remove(int $productId): void
-    {
-        $cart = $this->raw();
-        unset($cart[$productId]);
-        $this->save($cart);
-    }
-
-    public function clear(): void
-    {
-        session()->forget(self::SESSION_KEY);
-    }
+    public function remove(int $productId): void { $cart = $this->raw(); unset($cart[$productId]); $this->save($cart); }
+    public function clear(): void { session()->forget(self::SESSION_KEY); }
 
     public function isOwned(int $productId): bool
     {
-        if (! Auth::check()) {
-            return false;
-        }
-
-        return Auth::user()
-            ->storePurchases()
-            ->where('product_id', $productId)
-            ->where('payment_status', 'completed')
-            ->exists();
+        if (! Auth::check()) return false;
+        return Auth::user()->storePurchases()->where('product_id', $productId)->where('payment_status', 'completed')->exists();
     }
 
-    private function raw(): array
-    {
-        return session(self::SESSION_KEY, []);
-    }
-
-    private function save(array $cart): void
-    {
-        session([self::SESSION_KEY => $cart]);
-    }
+    private function raw(): array { return (array) session(self::SESSION_KEY, []); }
+    private function save(array $cart): void { session([self::SESSION_KEY => $cart]); }
 }
