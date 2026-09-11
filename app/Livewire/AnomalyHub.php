@@ -40,12 +40,14 @@ class AnomalyHub extends Component
 
         $history = Expense::with('category')
             ->where('workspace_id', $workspaceId)
+            ->where('is_company', false)
             ->where('spent_at', '>=', $startHistory)
             ->where('spent_at', '<', $startCurrentMonth)
             ->get();
 
         $currentMonth = Expense::with('category')
             ->where('workspace_id', $workspaceId)
+            ->where('is_company', false)
             ->where('spent_at', '>=', $startCurrentMonth)
             ->latest('spent_at')
             ->get();
@@ -100,6 +102,7 @@ class AnomalyHub extends Component
             $date = now()->copy()->subMonths($i);
 
             return (float) Expense::where('workspace_id', $workspaceId)
+                ->where('is_company', false)
                 ->whereYear('spent_at', $date->year)
                 ->whereMonth('spent_at', $date->month)
                 ->sum('amount');
