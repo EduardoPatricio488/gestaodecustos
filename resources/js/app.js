@@ -35,9 +35,7 @@ import './offline-expenses';
     function toggleTheme() { setTheme(isDark() ? 'light' : 'dark'); }
     window.FinanceProTheme = { getTheme, applyTheme, setTheme, toggleTheme };
     applyTheme(getTheme());
-    document.addEventListener('livewire:navigated', () => { applyTheme(getTheme()); requestAnimationFrame(() => applyTheme(getTheme())); });
-    const observer = new MutationObserver(() => { const desiredDark = isDark(); if (document.documentElement.classList.contains('dark') !== desiredDark) document.documentElement.classList.toggle('dark', desiredDark); });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    document.addEventListener('livewire:navigated', () => applyTheme(getTheme()));
     const media = window.matchMedia(MEDIA_QUERY);
     media.addEventListener('change', () => { if (getTheme() === 'system') applyTheme('system'); });
     document.addEventListener('click', (event) => {
@@ -114,7 +112,8 @@ window.addEventListener('copy-to-clipboard', (event) => {
     document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); textArea.remove();
 });
 
-// Global business field formatting.
+// Global business field formatting. Field classification is cached per input so
+// typing does not repeatedly traverse the DOM and read innerText on every keystroke.
 (function () {
     const digits = (v) => (v || '').replace(/\D/g, '');
     const groups = (v, sizes) => {
@@ -123,15 +122,24 @@ window.addEventListener('copy-to-clipboard', (event) => {
         for (const size of sizes) { if (i >= raw.length) break; parts.push(raw.slice(i, i + size)); i += size; }
         return parts.join(' ');
     };
+    const fieldTypes = new WeakMap();
+    const getFieldType = (input) => {
+        if (fieldTypes.has(input)) return fieldTypes.get(input);
+        const text = `${input.getAttribute('aria-label') || ''} ${input.getAttribute('placeholder') || ''} ${input.name || ''}`.toLowerCase();
+        let type = null;
+        if (/\b(nif|vat|tax id|tax number)\b/.test(text)) type = [3,3,3];
+        else if (/\b(iban)\b/.test(text)) type = [4,4,4,4,4,3];
+        else if (/\b(telem[oó]vel|telefone|phone|contacto telef[oó]nico|mobile)\b/.test(text)) type = [3,3,3];
+        else if (/\b(c[oó]digo postal|postal code|zip)\b/.test(text)) type = [4,3];
+        fieldTypes.set(input, type);
+        return type;
+    };
     const apply = (input) => {
         if (!(input instanceof HTMLInputElement) || ['password','email','hidden','number'].includes(input.type)) return;
-        const text = `${input.closest('div')?.innerText || ''} ${input.getAttribute('aria-label') || ''} ${input.getAttribute('placeholder') || ''}`.toLowerCase();
-        let value = null;
-        if (/\b(nif|vat|tax id|tax number)\b/.test(text)) value = groups(input.value,[3,3,3]);
-        else if (/\b(iban)\b/.test(text)) value = groups(input.value,[4,4,4,4,4,3]);
-        else if (/\b(telem[oó]vel|telefone|phone|contacto telef[oó]nico|mobile)\b/.test(text)) value = groups(input.value,[3,3,3]);
-        else if (/\b(c[oó]digo postal|postal code|zip)\b/.test(text)) value = groups(input.value,[4,3]);
-        if (value !== null && value !== input.value) { input.value = value; input.dispatchEvent(new Event('input',{bubbles:true})); }
+        const sizes = getFieldType(input);
+        if (!sizes) return;
+        const value = groups(input.value, sizes);
+        if (value !== input.value) { input.value = value; input.dispatchEvent(new Event('input',{bubbles:true})); }
     };
     document.addEventListener('input', e => apply(e.target), true);
     document.addEventListener('focusin', e => apply(e.target), true);
