@@ -6,6 +6,7 @@ use App\Mail\CfoReportMail;
 use App\Services\AI\AiBrainService;
 use App\Services\AI\FinancialHealthScoreService;
 use App\Services\AI\FinancialIntelligenceService;
+use App\Services\FinanceScoreService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -96,6 +97,14 @@ class AiInsights extends Component
         $netWorth = $workspace ? (float) $workspace->getLiquidezAtual() + (float) data_get($snapshot, 'investment_value', 0) : 0;
         $healthScore = $workspace ? app(FinancialHealthScoreService::class)->personal($workspace)['score'] : 0;
 
+        $previousHealthScore = null;
+        if ($workspace) {
+            $previousHealthScore = app(FinanceScoreService::class)->calculate(
+                $workspace,
+                now()->copy()->subMonth()
+            )['score'] ?? null;
+        }
+
         $manualInsights = [];
         if ($earned > 0 && $spent > $earned) $manualInsights[] = ['type' => 'danger', 'icon' => 'arrow-trending-down', 'title' => 'Saldo Negativo', 'text' => 'Estás a gastar mais do que o rendimento registado neste período.'];
         if ($earned > 0 && ($spent / $earned) > 0.9) $manualInsights[] = ['type' => 'warning', 'icon' => 'bell', 'title' => 'Margem Crítica', 'text' => 'Mais de 90% do rendimento registado está comprometido com gastos.'];
@@ -105,7 +114,7 @@ class AiInsights extends Component
             'totalSpent' => $spent,
             'netWorth' => $netWorth,
             'healthScore' => $healthScore,
-            'healthScoreDelta' => isset($previous['income']) ? $healthScore - (int) max(0, min(100, 100 - (($previous['expenses'] ?? 0) / max(0.01, $previous['income'] ?? 0)) * 100 + 20)) : null,
+            'healthScoreDelta' => $previousHealthScore !== null ? $healthScore - (int) $previousHealthScore : null,
             'earnedDelta' => data_get($changes, 'income_percent'),
             'spentDelta' => data_get($changes, 'expenses_percent'),
             'netWorthDelta' => null,
