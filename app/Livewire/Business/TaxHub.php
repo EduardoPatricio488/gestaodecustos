@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Business;
 
-use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\Invoice;
 use Livewire\Attributes\Layout;
@@ -13,71 +12,36 @@ class TaxHub extends Component
 {
     public function render()
     {
-        $user = auth()->user();
-        $workspace = $user->currentWorkspace;
+        $workspace = auth()->user()->currentWorkspace;
+        if (! $workspace) {
+            return <<<'HTML'
+                <div class="p-10 text-center italic text-zinc-500">Nenhum workspace empresarial selecionado.</div>
+            HTML;
+        }
+
         $month = now()->month;
         $year = now()->year;
 
-        // IVA DAS VENDAS
-        $vatCollected = (float) Invoice::where('workspace_id', $workspace->id)
-            ->whereMonth('created_at', $month)
-            ->whereYear('created_at', $year)
-            ->sum('vat_amount');
+        $vatCollected = (float) $workspace->invoices()
+            ->whereMonth('created_at', $month)->whereYear('created_at', $year)->sum('vat_amount');
 
-        // IVA DEDUTÍVEL
-        $vatDeductible = (float) Expense::where('workspace_id', $workspace->id)
-            ->where('is_company', true)
-            ->whereMonth('spent_at', $month)
-            ->whereYear('spent_at', $year)
-            ->sum('vat_amount');
+        $vatDeductible = (float) $workspace->expenses()
+            ->where('is_company', true)->whereMonth('spent_at', $month)->whereYear('spent_at', $year)->sum('vat_amount');
 
-        // SALDO DE IVA
-        $vatNet = $vatCollected - $vatDeductible;
+        $vatNet = round($vatCollected - $vatDeductible, 2);
 
-        // TSU — APENAS COLABORADORES ATIVOS
-        $totalSalaries = (float) Employee::where('workspace_id', $workspace->id)
-            ->where('active', true)
-            ->sum('salary');
-
-        $tsuEstimate = $totalSalaries * 0.2375;
-
-        // IRC — LUCRO TRIBUTÁVEL REAL
-        $revenue = (float) Invoice::where('workspace_id', $workspace->id)
-            ->whereMonth('created_at', $month)
-            ->whereYear('created_at', $year)
-            ->sum('amount_excl_vat');
-
-        $expenses = (float) Expense::where('workspace_id', $workspace->id)
-            ->where('is_company', true)
-            ->whereMonth('spent_at', $month)
-            ->whereYear('spent_at', $year)
-            ->sum('amount');
-
-        $estimatedProfit = max(0, $revenue - $expenses - $totalSalaries);
-
-        // IRC + DERRAMA MUNICIPAL (1.5%)
-        $ircProvision = $estimatedProfit * 0.21;
-        $derrama = $estimatedProfit * 0.015;
-
-        // IRS — RETENÇÕES NA FONTE (se existirem)
-        $irsWithheld = (float) Expense::where('workspace_id', $workspace->id)
-            ->where('type', 'irs_withheld')
-            ->whereMonth('spent_at', $month)
-            ->whereYear('spent_at', $year)
-            ->sum('amount');
-
-        // TOTAL DE PROVISÃO
-        $totalTaxDebt = max(0, $vatNet) + $tsuEstimate + $ircProvision + $derrama + $irsWithheld;
-
+        // Não estimamos TSU, IRS, IRC ou derrama sem dados e regras fiscais suficientes.
+        // Isto evita apresentar uma estimativa como se fosse uma obrigação legal real.
         return view('livewire.business.tax-hub', [
             'vatNet' => $vatNet,
-            'vatCollected' => $vatCollected,
-            'vatDeductible' => $vatDeductible,
-            'tsuEstimate' => $tsuEstimate,
-            'ircProvision' => $ircProvision,
-            'derrama' => $derrama,
-            'irsWithheld' => $irsWithheld,
-            'totalTaxDebt' => $totalTaxDebt,
+            'vatCollected' => round($vatCollected, 2),
+            'vatDeductible' => round($vatDeductible, 2),
+            'tsuEstimate' => 0,
+            'ircProvision' => 0,
+            'derrama' => 0,
+            'irsWithheld' => 0,
+            'totalTaxDebt' => max(0, $vatNet),
+            'taxDisclaimer' => 'Os valores de IVA apresentados resultam apenas dos montantes de IVA registados. TSU, IRS, IRC, derrama e obrigações fiscais oficiais não são calculados automaticamente nesta área. Confirma os valores com o contabilista.',
         ]);
     }
 }
