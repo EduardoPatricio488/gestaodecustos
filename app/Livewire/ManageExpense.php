@@ -20,36 +20,19 @@ class ManageExpense extends Component
     use WithFileUploads;
 
     public ?Expense $expense = null;
-
-    // Propriedades do Form
     public $amount;
-
     public $description;
-
     public $spent_at;
-
     public $category_id;
-
     public $subcategory;
-
     public $meta = [];
-
     public $currency = 'EUR';
-
-    // Destino do pagamento: conta bancária ou dinheiro físico (vazio = físico)
     public $bankAccountId = '';
-
     public $receipt;
-
-    public $previousUrl; // <--- NOVA PROPRIEDADE
-
-    // Estado do Scanner
+    public $previousUrl;
     public $isScanning = false;
-
     public $scannedData = [];
-
     public $scanSuccess = false;
-
     public $scanError = '';
 
     public array $hubConfigs = [
@@ -92,7 +75,6 @@ class ManageExpense extends Component
 
     public function mount(?Expense $expense = null): void
     {
-        // GUARDA A URL DE ONDE O UTILIZADOR VEIO
         $this->previousUrl = url()->previous();
 
         if ($expense && $expense->exists) {
@@ -118,6 +100,22 @@ class ManageExpense extends Component
         $this->currency = auth()->user()->currentWorkspace->currency ?? 'EUR';
     }
 
+    public function updatedCategoryId($value): void
+    {
+        if (! $value || ($this->expense && $this->expense->exists)) {
+            return;
+        }
+
+        $category = Category::where('workspace_id', auth()->user()->current_workspace_id)
+            ->find($value);
+
+        if (! $category) {
+            return;
+        }
+
+        $this->redirect(route('hub.category', ['slug' => $category->slug]), navigate: true);
+    }
+
     public function scanReceiptWithAI(): void
     {
         $this->scanSuccess = false;
@@ -128,7 +126,6 @@ class ManageExpense extends Component
         if (! $this->receipt) {
             $this->scanError = 'Nenhum ficheiro selecionado.';
             $this->isScanning = false;
-
             return;
         }
 
@@ -168,7 +165,7 @@ PROMPT;
                     [
                         'role' => 'user',
                         'content' => [
-                            ['type' => 'text',      'text' => $prompt],
+                            ['type' => 'text', 'text' => $prompt],
                             ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$imageData]],
                         ],
                     ],
@@ -184,7 +181,6 @@ PROMPT;
 
             if (preg_match('/\{.*\}/s', $rawText, $matches)) {
                 $result = json_decode($matches[0], true);
-
                 $amount = $result['amount'] ?? 0;
                 if (is_string($amount)) {
                     $amount = str_replace([' ', "\u{00A0}"], '', $amount);
@@ -206,12 +202,10 @@ PROMPT;
                 $this->scannedData = $result;
                 $this->scannedData['amount'] = $amount;
                 $this->scannedData['date'] = $date;
-
                 $this->amount = $amount;
                 $this->spent_at = $date;
                 $this->description = trim($result['store'] ?? '');
                 $this->subcategory = $result['subcategory'] ?? $this->subcategory;
-
                 $this->scanSuccess = true;
                 $this->dispatch('scan-completed');
             }
@@ -237,15 +231,12 @@ PROMPT;
 
             if ($account) {
                 $available = (float) $account->current_balance;
-
                 if ($this->expense && $this->expense->exists && (int) $this->expense->bank_account_id === (int) $this->bankAccountId) {
                     $available += (float) $this->expense->amount;
                 }
-
                 if ((float) $this->amount > $available) {
                     $this->addError('bankAccountId', 'Saldo insuficiente nesta conta.');
                     $this->dispatch('toast', variant: 'error', text: 'Saldo insuficiente em "'.$account->name.'": disponível '.number_format($available, 2, ',', '.').'€.');
-
                     return;
                 }
             }
@@ -274,7 +265,6 @@ PROMPT;
             Expense::create($data);
         }
 
-        // REDIRECIONA PARA A PÁGINA ANTERIOR SE POSSÍVEL, CASO CONTRÁRIO PARA A LISTA
         $target = ($this->previousUrl && $this->previousUrl !== url()->current())
                   ? $this->previousUrl
                   : route('expenses');
@@ -285,7 +275,6 @@ PROMPT;
     public function render()
     {
         $wsId = auth()->user()->current_workspace_id;
-
         $categories = Category::where('workspace_id', $wsId)->orderBy('order')->get();
         $selectedCat = $this->category_id ? Category::find($this->category_id) : null;
 
