@@ -2,137 +2,50 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BankAccount extends Model
 {
+    use BelongsToWorkspace;
+
     protected $fillable = [
-        'workspace_id',
-        'user_id',
-
-        // Identificação
-        'name',
-        'type',
-        'is_business',
-        'color',
-        'icon',
-        'status',
-        'description',
-        'opened_at',
-        'include_in_total',
-        'alert_below',
-
-        // Dados bancários
-        'bank_name',
-        'country',
-        'iban',
-        'swift',
-        'holder_name',
-        'currency',
-
-        // Financeiro
-        'balance',
-        'credit_limit',
-        'forecast_balance',
-        'risk_score',
-
-        // Tags e notas
-        'tags',
-        'notes',
+        'workspace_id','user_id','name','type','is_business','color','icon','status','description','opened_at','include_in_total','alert_below',
+        'bank_name','country','iban','swift','holder_name','currency','balance','credit_limit','forecast_balance','risk_score','tags','notes',
     ];
 
     protected $casts = [
-        'tags' => 'array',
-        'is_business' => 'boolean',
-        'include_in_total' => 'boolean',
-        'balance' => 'float',
-        'credit_limit' => 'float',
-        'forecast_balance' => 'float',
-        'alert_below' => 'float',
-        'risk_score' => 'integer',
-        'opened_at' => 'date',
+        'tags'=>'array','is_business'=>'boolean','include_in_total'=>'boolean','balance'=>'float','credit_limit'=>'float','forecast_balance'=>'float','alert_below'=>'float','risk_score'=>'integer','opened_at'=>'date',
     ];
 
-    /* ============================================================
-       RELAÇÕES
-       ============================================================ */
-
-    public function workspace(): BelongsTo
-    {
-        return $this->belongsTo(Workspace::class);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function expenses(): HasMany
-    {
-        return $this->hasMany(Expense::class);
-    }
-
-    public function incomes(): HasMany
-    {
-        return $this->hasMany(Income::class);
-    }
-
-    public function recurringIncomes(): HasMany
-    {
-        return $this->hasMany(RecurringIncome::class);
-    }
-
-    public function reserves(): HasMany
-    {
-        return $this->hasMany(BankReserve::class);
-    }
-
-    public function transfersOut(): HasMany
-    {
-        return $this->hasMany(BankTransfer::class, 'from_account_id');
-    }
-
-    public function transfersIn(): HasMany
-    {
-        return $this->hasMany(BankTransfer::class, 'to_account_id');
-    }
-
-    /* ============================================================
-       ACESSORES FINANCEIROS
-       ============================================================ */
+    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
+    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function expenses(): HasMany { return $this->hasMany(Expense::class); }
+    public function incomes(): HasMany { return $this->hasMany(Income::class); }
+    public function recurringIncomes(): HasMany { return $this->hasMany(RecurringIncome::class); }
+    public function reserves(): HasMany { return $this->hasMany(BankReserve::class); }
+    public function transfersOut(): HasMany { return $this->hasMany(BankTransfer::class, 'from_account_id'); }
+    public function transfersIn(): HasMany { return $this->hasMany(BankTransfer::class, 'to_account_id'); }
 
     public function getCurrentBalanceAttribute(): float
     {
         $incomes = (float) $this->incomes()->sum('amount');
         $expenses = (float) $this->expenses()->sum('amount');
-
-        // Rendimentos fixos (ex.: ordenado) já associados a esta conta e cujo dia de
-        // recebimento já passou este mês contam como dinheiro já disponível.
-        $recurringDue = (float) $this->recurringIncomes()
-            ->where('is_active', true)
-            ->where('day_of_month', '<=', now()->day)
-            ->sum('amount');
-
+        $recurringDue = (float) $this->recurringIncomes()->where('is_active', true)->where('day_of_month', '<=', now()->day)->sum('amount');
         return (float) ($this->balance + $incomes - $expenses + $recurringDue);
     }
 
     public function getCreditUsedAttribute(): float
     {
-        if ($this->type !== 'credito' || ! $this->credit_limit) {
-            return 0;
-        }
-
+        if ($this->type !== 'credito' || ! $this->credit_limit) return 0;
         return abs($this->current_balance);
     }
 
     public function getCreditUsagePercentAttribute(): float
     {
-        if ($this->type !== 'credito' || ! $this->credit_limit) {
-            return 0;
-        }
-
+        if ($this->type !== 'credito' || ! $this->credit_limit) return 0;
         return round(($this->credit_used / $this->credit_limit) * 100, 2);
     }
 
@@ -141,21 +54,10 @@ class BankAccount extends Model
         return (float) ($this->forecast_balance ?? $this->current_balance);
     }
 
-    /* ============================================================
-       HELPERS
-       ============================================================ */
-
-    public function getIcon()
+    public function getIcon(): string
     {
         return match ($this->type) {
-            'poupanca' => 'wallet',
-            'cash' => 'banknotes',
-            'credito' => 'credit-card',
-            'tesouraria' => 'building-office',
-            'operacoes' => 'cog',
-            'salarios' => 'users',
-            'impostos' => 'document-currency-euro',
-            default => 'building-library',
+            'poupanca'=>'wallet','cash'=>'banknotes','credito'=>'credit-card','tesouraria'=>'building-office','operacoes'=>'cog','salarios'=>'users','impostos'=>'document-currency-euro',default=>'building-library',
         };
     }
 }
