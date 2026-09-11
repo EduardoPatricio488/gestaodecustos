@@ -1,4 +1,4 @@
-import './offline-bunker';
+import './offline-bunker-boot';
 
 const QUEUE_KEY = 'finance-pro-offline-expenses';
 
