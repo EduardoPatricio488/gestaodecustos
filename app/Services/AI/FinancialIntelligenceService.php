@@ -6,7 +6,9 @@ use App\Models\Goal;
 use App\Models\Investment;
 use App\Models\Subscription;
 use App\Models\Workspace;
+use App\Services\BudgetService;
 use App\Services\BusinessFinancialMetrics;
+use App\Services\SubscriptionCycleService;
 use Illuminate\Support\Carbon;
 
 class FinancialIntelligenceService
@@ -90,11 +92,18 @@ class FinancialIntelligenceService
             ->get(['quantity', 'current_price'])
             ->sum(fn ($investment) => (float) $investment->quantity * (float) $investment->current_price);
 
+        $budget = app(BudgetService::class)->getMonthlyOverview($workspace, $period);
+        $budgetCategories = app(BudgetService::class)->getCategoryBreakdown($workspace, $period)
+            ->filter(fn (array $category) => $category['budget'] > 0 || $category['spent'] > 0)
+            ->sortByDesc('spent')
+            ->take(10)
+            ->values()
+            ->all();
+
         return [
             'kind' => 'personal',
             'period' => $start->format('Y-m'),
             'currency' => strtoupper((string) ($workspace->currency ?: 'EUR')),
-            // Backwards-compatible aggregate, explicitly documented by the fields below.
             'income' => round($earned + $recurring, 2),
             'income_actual' => round($earned, 2),
             'income_recurring' => round($recurring, 2),
@@ -125,8 +134,25 @@ class FinancialIntelligenceService
             'top_categories' => $categories,
             'goals' => $goals,
             'active_subscriptions' => $subscriptions->count(),
-            'active_subscription_cost' => round((float) $subscriptions->sum('amount'), 2),
+            'active_subscription_cost' => round((float) $subscriptions->sum(fn ($subscription) => SubscriptionCycleService::toMonthly((float) $subscription->amount, $subscription->cycle)), 2),
             'investment_value' => round((float) $investmentValue, 2),
+            'budget' => [
+                'total_budget' => round((float) $budget['total_budget'], 2),
+                'total_spent' => round((float) $budget['total_spent'], 2),
+                'remaining' => round((float) $budget['remaining'], 2),
+                'percentage' => (float) $budget['percentage'],
+                'days_remaining' => (int) $budget['days_remaining'],
+                'daily_average' => (float) $budget['daily_avg'],
+                'safe_to_spend_daily' => (float) $budget['safe_to_spend_daily'],
+                'projected_spend' => (float) $budget['projected_spend'],
+                'projected_over_budget' => (float) $budget['projected_spend'] > (float) $budget['total_budget'] && (float) $budget['total_budget'] > 0,
+                'categories' => $budgetCategories,
+            ],
+            'forecast' => [
+                'method' => 'deterministic_daily_run_rate',
+                'projected_month_end_expenses' => (float) $budget['projected_spend'],
+                'remaining_budget_at_current_pace' => round((float) $budget['total_budget'] - (float) $budget['projected_spend'], 2),
+            ],
             'source' => 'Finance Pro AI database',
             'data_quality' => 'deterministic_backend_calculation',
         ];
@@ -136,6 +162,13 @@ class FinancialIntelligenceService
     {
         $metrics = app(BusinessFinancialMetrics::class)->forMonth($workspace, $period);
         $previous = app(BusinessFinancialMetrics::class)->forMonth($workspace, $period->copy()->subMonth());
+        $budget = app(BudgetService::class)->getMonthlyOverview($workspace, $period);
+        $budgetCategories = app(BudgetService::class)->getCategoryBreakdown($workspace, $period)
+            ->filter(fn (array $category) => $category['budget'] > 0 || $category['spent'] > 0)
+            ->sortByDesc('spent')
+            ->take(10)
+            ->values()
+            ->all();
 
         return [
             'kind' => 'business',
@@ -159,6 +192,20 @@ class FinancialIntelligenceService
                 'invoices' => $workspace->invoices()->count(),
             ],
             'runway' => $workspace->getRunway(),
+            'budget' => [
+                'total_budget' => round((float) $budget['total_budget'], 2),
+                'total_spent' => round((float) $budget['total_spent'], 2),
+                'remaining' => round((float) $budget['remaining'], 2),
+                'percentage' => (float) $budget['percentage'],
+                'daily_average' => (float) $budget['daily_avg'],
+                'projected_spend' => (float) $budget['projected_spend'],
+                'projected_over_budget' => (float) $budget['projected_spend'] > (float) $budget['total_budget'] && (float) $budget['total_budget'] > 0,
+                'categories' => $budgetCategories,
+            ],
+            'forecast' => [
+                'method' => 'deterministic_daily_run_rate',
+                'projected_month_end_expenses' => (float) $budget['projected_spend'],
+            ],
             'source' => 'Finance Pro AI database',
             'data_quality' => 'deterministic_backend_calculation',
         ];
