@@ -17,10 +17,7 @@ class FinanceScoreService
 {
     /**
      * Calculate one deterministic 0-100 personal finance score for a workspace.
-     *
-     * Important: components without enough data are excluded from the weighted
-     * average instead of receiving an arbitrary score. This prevents an empty
-     * account from being presented as financially healthy or unhealthy by default.
+     * Components without enough data are excluded from the weighted average.
      */
     public function calculate(Workspace $workspace, ?CarbonInterface $month = null): array
     {
@@ -28,11 +25,11 @@ class FinanceScoreService
         $start = $month->copy()->startOfMonth();
         $end = $month->copy()->endOfMonth();
 
-        $earned = (float) $workspace->incomes()
+        $earned = (float) Income::where('workspace_id', $workspace->id)
             ->whereBetween('received_at', [$start, $end])
             ->sum('amount_converted');
 
-        $spent = (float) $workspace->expenses()
+        $spent = (float) Expense::where('workspace_id', $workspace->id)
             ->where('is_company', false)
             ->whereBetween('spent_at', [$start, $end])
             ->sum('amount_converted');
@@ -65,15 +62,13 @@ class FinanceScoreService
             ];
         }
 
-        // 20% — debt. Uses outstanding debt against annualised monthly income.
-        $totalDebt = (float) $workspace->debts()
+        // 20% — debt against annualised monthly income.
+        $totalDebt = (float) Debt::where('workspace_id', $workspace->id)
             ->where('is_paid', false)
             ->sum('amount');
 
         if ($earned > 0 || $totalDebt > 0) {
-            $debtRatio = $earned > 0
-                ? ($totalDebt / ($earned * 12)) * 100
-                : 100;
+            $debtRatio = $earned > 0 ? ($totalDebt / ($earned * 12)) * 100 : 100;
             $debtScore = max(0, 100 - min(100, $debtRatio));
             $breakdown['debt'] = [
                 'score' => round($debtScore),
@@ -96,13 +91,12 @@ class FinanceScoreService
         }
 
         // 20% — budget adherence. Requires a configured budget.
-        $budget = (float) $workspace->categories()->sum('budget_limit');
+        $budget = (float) Category::where('workspace_id', $workspace->id)->sum('budget_limit');
         if ($budget > 0) {
             $usageRate = ($spent / $budget) * 100;
-            $budgetScore = max(0, min(100, 100 - max(0, $usageRate - 80) * 5));
-            if ($usageRate <= 80) {
-                $budgetScore = 100;
-            }
+            $budgetScore = $usageRate <= 80
+                ? 100
+                : max(0, min(100, 100 - (($usageRate - 80) * 5)));
 
             $breakdown['budget'] = [
                 'score' => round($budgetScore),
@@ -124,29 +118,26 @@ class FinanceScoreService
             ];
         }
 
-        // 15% — goal progress. Only available when at least one goal exists.
-        $goals = $workspace->goals()->get(['target_amount', 'current_amount']);
-        if ($goals->isNotEmpty()) {
-            $validGoals = $goals->filter(fn ($goal) => (float) $goal->target_amount > 0);
-            if ($validGoals->isNotEmpty()) {
-                $goalsScore = (float) $validGoals->avg(fn ($goal) => min(
-                    100,
-                    max(0, ((float) $goal->current_amount / (float) $goal->target_amount) * 100)
-                ));
-                $breakdown['goals'] = [
-                    'score' => round($goalsScore),
-                    'label' => 'Metas',
-                    'weight' => '15%',
-                    'available' => true,
-                    'value' => round($goalsScore, 2),
-                    'unit' => '% de progresso médio',
-                ];
-                $weightedScore += $goalsScore * 0.15;
-                $availableWeight += 0.15;
-            }
-        }
-
-        if (! isset($breakdown['goals'])) {
+        // 15% — goal progress.
+        $goals = Goal::where('workspace_id', $workspace->id)
+            ->get(['target_amount', 'current_amount']);
+        $validGoals = $goals->filter(fn ($goal) => (float) $goal->target_amount > 0);
+        if ($validGoals->isNotEmpty()) {
+            $goalsScore = (float) $validGoals->avg(fn ($goal) => min(
+                100,
+                max(0, ((float) $goal->current_amount / (float) $goal->target_amount) * 100)
+            ));
+            $breakdown['goals'] = [
+                'score' => round($goalsScore),
+                'label' => 'Metas',
+                'weight' => '15%',
+                'available' => true,
+                'value' => round($goalsScore, 2),
+                'unit' => '% de progresso médio',
+            ];
+            $weightedScore += $goalsScore * 0.15;
+            $availableWeight += 0.15;
+        } else {
             $breakdown['goals'] = [
                 'score' => null,
                 'label' => 'Metas',
@@ -156,9 +147,9 @@ class FinanceScoreService
             ];
         }
 
-        // 15% — diversification proxy. This is explicitly a proxy based on
-        // recorded asset types, not a claim about portfolio risk/weighting.
-        $investments = $workspace->investments()->get(['product_type']);
+        // 15% — diversification proxy based on recorded asset types.
+        $investments = Investment::where('workspace_id', $workspace->id)
+            ->get(['product_type']);
         if ($investments->isNotEmpty()) {
             $types = $investments->pluck('product_type')->filter()->unique()->count();
             $diversificationScore = min(100, 30 + ($types * 20) + min(30, $investments->count() * 5));
@@ -188,7 +179,6 @@ class FinanceScoreService
         $score = max(0, min(100, $score));
 
         $availableComponents = collect($breakdown)->where('available', true)->count();
-        $totalComponents = count($breakdown);
 
         return [
             'score' => $score,
@@ -196,7 +186,7 @@ class FinanceScoreService
             'tips' => $this->generateTips($breakdown, $score),
             'data_quality' => [
                 'available_components' => $availableComponents,
-                'total_components' => $totalComponents,
+                'total_components' => count($breakdown),
                 'status' => $availableComponents >= 3 ? 'adequate' : ($availableComponents > 0 ? 'limited' : 'insufficient'),
             ],
         ];
@@ -252,19 +242,19 @@ class FinanceScoreService
     {
         $tips = [];
 
-        if (($breakdown['savings']['score'] ?? 100) !== null && ($breakdown['savings']['score'] ?? 100) < 50) {
+        if (($breakdown['savings']['score'] ?? null) !== null && $breakdown['savings']['score'] < 50) {
             $tips[] = 'A tua taxa de poupança está baixa — revê as despesas variáveis e define um objetivo mensal realista.';
         }
-        if (($breakdown['debt']['score'] ?? 100) !== null && ($breakdown['debt']['score'] ?? 100) < 60) {
+        if (($breakdown['debt']['score'] ?? null) !== null && $breakdown['debt']['score'] < 60) {
             $tips[] = 'As tuas dívidas estão a pesar no score — avalia a amortização das dívidas com maior custo.';
         }
-        if (($breakdown['budget']['score'] ?? 100) !== null && ($breakdown['budget']['score'] ?? 100) < 60) {
+        if (($breakdown['budget']['score'] ?? null) !== null && $breakdown['budget']['score'] < 60) {
             $tips[] = 'Estás acima do teu orçamento em algumas categorias — ajusta limites ou despesas.';
         }
-        if (($breakdown['goals']['score'] ?? 100) !== null && ($breakdown['goals']['score'] ?? 100) < 50) {
+        if (($breakdown['goals']['score'] ?? null) !== null && $breakdown['goals']['score'] < 50) {
             $tips[] = 'O progresso das tuas metas está baixo — define valores e prazos que consigas acompanhar.';
         }
-        if (($breakdown['diversification']['score'] ?? 100) !== null && ($breakdown['diversification']['score'] ?? 100) < 50) {
+        if (($breakdown['diversification']['score'] ?? null) !== null && $breakdown['diversification']['score'] < 50) {
             $tips[] = 'A diversificação registada é limitada. Analisa o risco e a distribuição real da tua carteira antes de investir mais.';
         }
         if ($score >= 80) {
