@@ -168,7 +168,7 @@ class ClientHub extends Component
             ->where('name', 'like', '%'.$this->search.'%')
             ->get();
 
-        return view('livewire.business.client-hub', [
+        return view('livewire.business.client-hub-wrapper', [
             'clients' => $clients,
             'totalClients' => $clients->count(),
             'activeLeads' => $clients->where('status', 'lead')->count(),
