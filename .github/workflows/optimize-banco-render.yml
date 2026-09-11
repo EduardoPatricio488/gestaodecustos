@@ -1,0 +1,132 @@
+name: Optimize Banco Render
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache repeated BancoService calculations
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/Services/BancoService.php')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace('''    private ?Collection $creditsCache = null;''', '''    private ?Collection $creditsCache = null;
+    private ?array $summaryCache = null;
+    private ?array $liquidityCache = null;
+    private ?array $statsCache = null;
+    private ?array $alertsCache = null;
+    private ?array $monthlyFlowCache = null;''', 1)
+
+          s = s.replace('''    public function getSummary(): array
+    {
+        $accounts = $this->getAccounts();''', '''    public function getSummary(): array
+    {
+        if ($this->summaryCache !== null) {
+            return $this->summaryCache;
+        }
+
+        $accounts = $this->getAccounts();''', 1)
+          s = s.replace('''        return [
+            'total_bank_balance' => $totalBankBalance,''', '''        return $this->summaryCache = [
+            'total_bank_balance' => $totalBankBalance,''', 1)
+
+          s = s.replace('''    public function getLiquidity(): array
+    {
+        $accounts = $this->getAccounts()->where('status', '!=', 'archived');''', '''    public function getLiquidity(): array
+    {
+        if ($this->liquidityCache !== null) {
+            return $this->liquidityCache;
+        }
+
+        $accounts = $this->getAccounts()->where('status', '!=', 'archived');''', 1)
+          s = s.replace('''        return [
+            'immediate_cash' => $immediateCash,''', '''        return $this->liquidityCache = [
+            'immediate_cash' => $immediateCash,''', 1)
+
+          s = s.replace('''    public function getStats(): array
+    {
+        $accounts = $this->getAccounts();''', '''    public function getStats(): array
+    {
+        if ($this->statsCache !== null) {
+            return $this->statsCache;
+        }
+
+        $accounts = $this->getAccounts();''', 1)
+          s = s.replace('''        return [
+            'total_accounts' => $accounts->count(),''', '''        return $this->statsCache = [
+            'total_accounts' => $accounts->count(),''', 1)
+
+          s = s.replace('''    public function getAlerts(): array
+    {
+        $alerts = [];''', '''    public function getAlerts(): array
+    {
+        if ($this->alertsCache !== null) {
+            return $this->alertsCache;
+        }
+
+        $alerts = [];''', 1)
+          s = s.replace('''        return $alerts;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       DISTRIBUIÇÃO DO PATRIMÓNIO''', '''        return $this->alertsCache = $alerts;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       DISTRIBUIÇÃO DO PATRIMÓNIO''', 1)
+
+          # getMonthlyFlow already exists in the optimized form; cache its result by months.
+          s = s.replace('''    public function getMonthlyFlow(int $months = 12): array
+    {
+        $months = max(1, min($months, 24));''', '''    public function getMonthlyFlow(int $months = 12): array
+    {
+        if ($months === 12 && $this->monthlyFlowCache !== null) {
+            return $this->monthlyFlowCache;
+        }
+
+        $months = max(1, min($months, 24));''', 1)
+          s = s.replace('''        return $data;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       LIQUIDEZ''', '''        if ($months === 12) {
+            $this->monthlyFlowCache = $data;
+        }
+
+        return $data;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       LIQUIDEZ''', 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          git diff --check
+          git diff -- app/Services/BancoService.php
+          if git diff --quiet -- app/Services/BancoService.php; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/Services/BancoService.php
+          git commit -m 'perf: cache repeated BancoService calculations'
+          git push
+
+      - name: Remove temporary workflow
+        if: success()
+        run: |
+          git rm .github/workflows/optimize-banco-render.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore: remove temporary Banco render optimizer'
+          git push
