@@ -13,34 +13,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore supplier view and standardize fields
+      - name: Restore supplier view and standardize business modals
         shell: python
         run: |
           import subprocess
+          import re
           from pathlib import Path
+
           supplier = Path('resources/views/livewire/business/supplier-hub.blade.php')
-          original = subprocess.check_output(['git','show','e4dc6496983afa10843c303390160c0ef9ecb85e:resources/views/livewire/business/supplier-hub.blade.php']).decode()
-          old = '''                            <flux:input
-                                wire:model="tax_number"
-                                placeholder="500 000 000"
-                                class="font-black !bg-white dark:!bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl h-12 shadow-sm"
-                            />'''
-          new = '''                            <flux:input
-                                wire:model.live="tax_number"
-                                placeholder="500 000 000"
-                                inputmode="numeric"
-                                maxlength="11"
-                                autocomplete="off"
-                                class="font-black !bg-white dark:!bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl h-12 shadow-sm"
-                            />
-                            <p class="px-1 text-[9px] font-bold text-zinc-400 uppercase tracking-widest">O NIF é dividido automaticamente em grupos de 3 dígitos.</p>'''
-          if old not in original: raise SystemExit('Supplier NIF pattern not found')
-          supplier.write_text(original.replace(old,new,1), encoding='utf-8')
+          original = subprocess.check_output([
+              'git','show','e4dc6496983afa10843c303390160c0ef9ecb85e:resources/views/livewire/business/supplier-hub.blade.php'
+          ]).decode()
+          original = original.replace('wire:model="tax_number"', 'wire:model.live="tax_number" inputmode="numeric" maxlength="11" autocomplete="off"', 1)
+          supplier.write_text(original, encoding='utf-8')
+
           modal = Path('resources/views/flux/modal/index.blade.php')
           text = modal.read_text(encoding='utf-8')
-          text = text.replace("default => 'p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',", "default => 'fixed inset-0 m-auto max-h-[90vh] overflow-y-auto p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',")
+          text = text.replace(
+              "default => 'p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',",
+              "default => 'fixed inset-0 m-auto max-h-[90vh] overflow-y-auto p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',"
+          )
           text = text.replace('<div class="absolute top-0 end-0 mt-4 me-4">', '<div class="absolute top-4 end-4 z-50">')
           modal.write_text(text, encoding='utf-8')
+
           js = Path('resources/js/app.js')
           app = js.read_text(encoding='utf-8')
           marker = '// Global business field formatting.'
@@ -54,4 +49,3 @@ jobs:
           git add resources/views/livewire/business/supplier-hub.blade.php resources/views/flux/modal/index.blade.php resources/js/app.js
           git commit -m 'Restore supplier hub and standardize business modals' || exit 0
           git push
-# retrigger audit
