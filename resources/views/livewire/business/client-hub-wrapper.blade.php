@@ -87,17 +87,56 @@
             });
         };
 
-        markPortalModal();
+        const bindNewClientButton = () => {
+            document.querySelectorAll('button').forEach((button) => {
+                if (button.dataset.financeProClientModalBound === '1') {
+                    return;
+                }
 
-        if (!window.__financeProPortalModalObserver) {
-            window.__financeProPortalModalObserver = new MutationObserver(markPortalModal);
-            window.__financeProPortalModalObserver.observe(document.body, {
+                if ((button.textContent || '').trim().replace(/\s+/g, ' ') !== 'Novo Cliente') {
+                    return;
+                }
+
+                const component = button.closest('[wire\\:id]');
+                if (!component || !window.Livewire) {
+                    return;
+                }
+
+                const componentId = component.getAttribute('wire:id');
+                if (!componentId) {
+                    return;
+                }
+
+                button.dataset.financeProClientModalBound = '1';
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+
+                    const livewireComponent = window.Livewire.find(componentId);
+                    if (livewireComponent) {
+                        livewireComponent.call('openClientModal');
+                    }
+                }, true);
+            });
+        };
+
+        const refresh = () => {
+            markPortalModal();
+            bindNewClientButton();
+        };
+
+        refresh();
+
+        if (!window.__financeProClientHubObserver) {
+            window.__financeProClientHubObserver = new MutationObserver(refresh);
+            window.__financeProClientHubObserver.observe(document.body, {
                 childList: true,
                 subtree: true,
             });
         }
 
-        document.addEventListener('livewire:navigated', markPortalModal);
+        document.addEventListener('livewire:navigated', refresh);
     })();
 </script>
 
