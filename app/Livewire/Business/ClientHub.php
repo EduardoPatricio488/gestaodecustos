@@ -44,28 +44,27 @@ class ClientHub extends Component
     }
 
     /**
-     * Abre o formulário de cliente de forma explícita via Livewire.
-     * Evita depender do trigger automático do Flux dentro do wrapper da página.
+     * Abre o formulário de cliente através da API nativa do Flux.
      */
     public function openClientModal(): void
     {
         $this->resetForm();
         $this->status = 'ativo';
-        $this->dispatch('modal-show', name: 'client-modal');
+        $this->modal('client-modal')->show();
     }
 
-    public function openHistory($id)
+    public function openHistory($id): void
     {
         $this->selectedClient = auth()->user()->clients()
             ->with(['projects', 'invoices' => fn ($q) => $q->latest()])
             ->findOrFail($id);
 
-        $this->dispatch('modal-show', name: 'history-modal');
+        $this->modal('history-modal')->show();
     }
 
     public $clientTaxNumber = '';
 
-    public function save()
+    public function save(): void
     {
         $this->validate();
 
@@ -88,11 +87,11 @@ class ClientHub extends Component
         );
 
         $this->resetForm();
-        $this->dispatch('modal-close', name: 'client-modal');
+        $this->modal('client-modal')->close();
         $this->dispatch('toast', text: 'Cliente atualizado no sistema.');
     }
 
-    public function edit($id)
+    public function edit($id): void
     {
         $client = auth()->user()->clients()->findOrFail($id);
         $this->editingId = $client->id;
@@ -105,21 +104,21 @@ class ClientHub extends Component
         $this->address = $client->address;
         $this->notes = $client->notes;
 
-        $this->dispatch('modal-show', name: 'client-modal');
+        $this->modal('client-modal')->show();
     }
 
-    public function delete($id)
+    public function delete($id): void
     {
         auth()->user()->clients()->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Cliente removido.', variant: 'warning');
     }
 
-    public function resetForm()
+    public function resetForm(): void
     {
         $this->reset(['name', 'legal_name', 'tax_number', 'email', 'phone', 'status', 'address', 'notes', 'editingId']);
     }
 
-    public function generatePortalLink($id)
+    public function generatePortalLink($id): void
     {
         $client = auth()->user()->clients()->findOrFail($id);
 
@@ -149,7 +148,10 @@ class ClientHub extends Component
             $this->dispatch('toast', text: 'Código gerado, mas este cliente não tem email registado.', variant: 'warning');
         }
 
-        $this->dispatch('modal-show', name: 'portal-link-modal');
+        // O evento modal-show não é a API correta do Flux 2. Abrimos o modal
+        // diretamente através da API Livewire do Flux para garantir que funciona
+        // mesmo quando a página é renderizada através do wrapper.
+        $this->modal('portal-link-modal')->show();
     }
 
     public function render()
