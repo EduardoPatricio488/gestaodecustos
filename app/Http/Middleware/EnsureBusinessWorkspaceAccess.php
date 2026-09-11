@@ -34,7 +34,7 @@ class EnsureBusinessWorkspaceAccess
                 $permission = match ($name) {
                     'business.team-hub' => 'manage_team',
                     'business.business-settings' => 'manage_settings',
-                    'business.business-dashboard', 'business.business-pnl-hub', 'business.tax-hub', 'business.invoicing-hub', 'business.cash-flow-hub' => 'view_financials',
+                    'business.business-dashboard', 'business.business-pnl-hub', 'business.tax-hub', 'business.invoicing-hub', 'business.cash-flow-hub', 'business.business-ai-hub' => 'view_financials',
                     'business.bank-account-hub' => 'view_bank_accounts',
                     'business.company-expenses' => 'view_business',
                     default => 'view_business',
