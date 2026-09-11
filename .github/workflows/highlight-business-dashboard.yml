@@ -1,4 +1,4 @@
-name: Remove duplicate Business Dashboard icon
+name: Remove first Business Dashboard icon
 
 on:
   push:
@@ -9,31 +9,34 @@ permissions:
   contents: write
 
 jobs:
-  remove-duplicate-icon:
+  remove-first-icon:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Remove duplicate icon
+      - name: Remove first icon from Business Dashboard item
         shell: python
         run: |
           from pathlib import Path
+          import re
+
           p = Path('resources/views/components/layouts/app.blade.php')
           s = p.read_text(encoding='utf-8')
-          duplicate = '''                <span class="flex size-8 items-center justify-center rounded-xl bg-brand-600 text-white shadow-md shadow-brand-600/20 dark:bg-brand-500">
-                    <flux:icon name="chart-pie" class="size-4" />
-                </span>
-'''
-          if duplicate not in s:
-              raise SystemExit('Duplicate Business Dashboard icon not found; no changes made.')
-          p.write_text(s.replace(duplicate, '', 1), encoding='utf-8')
+
+          pattern = r'(<flux:sidebar\.item\s+)icon="chart-pie"(\s+:href="\{\{ route\(\'hub\.business\.dashboard\'\) \}\}")'
+          new_s, count = re.subn(pattern, r'\1\2', s, count=1)
+
+          if count != 1:
+              raise SystemExit('Business Dashboard icon attribute not found; no changes made.')
+
+          p.write_text(new_s, encoding='utf-8')
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add resources/views/components/layouts/app.blade.php
-          git commit -m "Remove duplicate Business Dashboard icon"
+          git commit -m "Remove first Business Dashboard icon"
           git push
 
-# trigger-fix
+# trigger-fix-2
