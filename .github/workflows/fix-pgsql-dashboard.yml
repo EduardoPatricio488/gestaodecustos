@@ -19,14 +19,16 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path('app/Livewire/Dashboard.php')
           text = path.read_text(encoding='utf-8')
 
-          old = '''        $driver = DB::connection()->getDriverName();
-        $expenseMonth = $driver === 'sqlite' ? "strftime('%Y-%m', spent_at)" : "DATE_FORMAT(spent_at, '%Y-%m')";
-        $incomeMonth = $driver === 'sqlite' ? "strftime('%Y-%m', received_at)" : "DATE_FORMAT(received_at, '%Y-%m')";
-          '''
+          pattern = re.compile(
+              r"(?m)^        \$driver = DB::connection\(\)->getDriverName\(\);\n"
+              r"        \$expenseMonth = .*?;\n"
+              r"        \$incomeMonth = .*?;\n"
+          )
 
           new = '''        $driver = DB::connection()->getDriverName();
 
@@ -41,12 +43,13 @@ jobs:
             'pgsql' => "TO_CHAR(received_at, 'YYYY-MM')",
             default => "DATE_FORMAT(received_at, '%Y-%m')",
         };
-          '''
+'''
 
-          if old not in text:
-              raise SystemExit('Expected Dashboard date aggregation block was not found; refusing to modify the file.')
+          text, count = pattern.subn(new, text, count=1)
+          if count != 1:
+              raise SystemExit('Dashboard aggregation block not found; refusing to modify the file.')
 
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          path.write_text(text, encoding='utf-8')
           PY
 
       - name: Validate PHP syntax
