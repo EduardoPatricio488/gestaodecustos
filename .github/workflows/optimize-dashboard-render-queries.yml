@@ -12,106 +12,61 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Optimize repeated dashboard queries
+        with:
+          fetch-depth: 0
+
+      - name: Fix bank balance accessor query
         shell: python
         run: |
           from pathlib import Path
           path = Path("app/Livewire/Dashboard.php")
           text = path.read_text(encoding="utf-8")
-          original = text
 
-          old = """        $subscriptionsMonthlyCost = (float) Subscription::where('workspace_id', $currentWs->id)
-            ->get(['amount', 'cycle', 'status', 'is_active'])
-            ->filter(fn ($sub) => ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')
-            ->sum(fn ($sub) => SubscriptionCycleService::toMonthly((float) $sub->amount, $sub->cycle));
-"""
-          new = """        $subscriptionsMonthlyCost = (float) Cache::remember(
-            \"dashboard:subscriptions-monthly:{$currentWs->id}\",
+          old = """        $totalBankBalance = (float) Cache::remember(
+            \"dashboard:bank-balance:{$currentWs->id}\",
             60,
-            fn () => Subscription::where('workspace_id', $currentWs->id)
-                ->where(function ($query) {
-                    $query->where('status', 'active')
-                        ->orWhere(function ($query) {
-                            $query->whereNull('status')->where('is_active', true);
-                        });
-                })
-                ->get(['amount', 'cycle'])
-                ->sum(fn ($sub) => SubscriptionCycleService::toMonthly((float) $sub->amount, $sub->cycle))
-        );
-"""
-          if old not in text:
-              raise SystemExit("subscriptions block not found")
-          text = text.replace(old, new, 1)
+            fn () => (float) BankAccount::where('workspace_id', $currentWs->id)->sum('current_balance')
+        );"""
 
-          old = """        $pendingDebtsToPay = (float) Debt::where('workspace_id', $currentWs->id)
-            ->where('type', 'owe')
-            ->where('is_paid', false)
-            ->sum('amount');
-
-        $pendingDebtsToReceive = (float) Debt::where('workspace_id', $currentWs->id)
-            ->where('type', 'owed')
-            ->where('is_paid', false)
-            ->sum('amount');
-"""
-          new = """        $pendingDebts = Cache::remember(
-            \"dashboard:pending-debts:{$currentWs->id}\",
+          new = """        $totalBankBalance = (float) Cache::remember(
+            \"dashboard:bank-balance:{$currentWs->id}\",
             60,
-            fn () => Debt::where('workspace_id', $currentWs->id)
-                ->where('is_paid', false)
-                ->selectRaw(\"COALESCE(SUM(CASE WHEN type = 'owe' THEN amount ELSE 0 END), 0) as to_pay\")
-                ->selectRaw(\"COALESCE(SUM(CASE WHEN type = 'owed' THEN amount ELSE 0 END), 0) as to_receive\")
-                ->first()
-        );
+            function () use ($currentWs): float {
+                // current_balance is an Eloquent accessor, not a database column.
+                $baseBalance = (float) BankAccount::where('workspace_id', $currentWs->id)
+                    ->sum('balance');
 
-        $pendingDebtsToPay = (float) ($pendingDebts->to_pay ?? 0);
-        $pendingDebtsToReceive = (float) ($pendingDebts->to_receive ?? 0);
-"""
+                $incomeBalance = (float) Income::where('workspace_id', $currentWs->id)
+                    ->whereNotNull('bank_account_id')
+                    ->sum('amount');
+
+                $expenseBalance = (float) Expense::where('workspace_id', $currentWs->id)
+                    ->whereNotNull('bank_account_id')
+                    ->sum('amount');
+
+                $recurringDue = (float) RecurringIncome::where('workspace_id', $currentWs->id)
+                    ->whereNotNull('bank_account_id')
+                    ->where('is_active', true)
+                    ->where('day_of_month', '<=', now()->day)
+                    ->sum('amount');
+
+                return $baseBalance + $incomeBalance - $expenseBalance + $recurringDue;
+            }
+        );"""
+
           if old not in text:
-              raise SystemExit("debt blocks not found")
-          text = text.replace(old, new, 1)
+              raise SystemExit("Invalid current_balance query not found")
 
-          old = """        $totalMonthExpenses = $monthTotals['expenses'];
-        $totalMonthIncome = $monthTotals['income'] + $fixedIncome;
-"""
-          new = """        $totalMonthExpenses = $monthTotals['expenses'];
-        $totalMonthIncome = $monthTotals['income'] + $fixedIncome;
-"""
-          # Keep this marker replacement intentionally neutral; it validates the expected render structure.
-          if old not in text:
-              raise SystemExit("month totals marker not found")
+          path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
-          # Cache the expensive service-level dashboard insights so repeated Livewire renders
-          # do not recompute the same workspace data during the same minute.
-          old = """        $financeScore = app(FinanceScoreService::class)->calculate($currentWs);
-        $wellnessInsights = app(WellnessFinanceService::class)->getInsights($currentWs);
-"""
-          new = """        $financeScore = Cache::remember(
-            \"dashboard:finance-score:{$currentWs->id}\",
-            60,
-            fn () => app(FinanceScoreService::class)->calculate($currentWs)
-        );
-        $wellnessInsights = Cache::remember(
-            \"dashboard:wellness:{$currentWs->id}\",
-            60,
-            fn () => app(WellnessFinanceService::class)->getInsights($currentWs)
-        );
-"""
-          if old not in text:
-              raise SystemExit("score/wellness block not found")
-          text = text.replace(old, new, 1)
-
-          if text == original:
-              raise SystemExit("No changes made")
-          path.write_text(text, encoding="utf-8")
-
-          Path(".github/workflows/optimize-dashboard-render-queries.yml").unlink(missing_ok=True)
       - name: Validate PHP syntax
         run: php -l app/Livewire/Dashboard.php
-      - name: Commit optimization
+
+      - name: Commit correction
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/Livewire/Dashboard.php .github/workflows/optimize-dashboard-render-queries.yml
-          git commit -m "Reduce dashboard render query count"
+          git add app/Livewire/Dashboard.php
+          git commit -m "Fix dashboard bank balance calculation"
           git push
