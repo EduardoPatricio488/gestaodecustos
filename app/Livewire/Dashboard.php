@@ -411,6 +411,7 @@ class Dashboard extends Component
             "dashboard:ai-insights:{$currentWs->id}:".now()->format('Y-m'),
             [120, 600],
             function () use ($currentWs) {
+                $insights = [];
 
         // -----------------------------------------
         // 1) MERCADOS AVANÇADOS (S&P500, NASDAQ, DAX, CAC40, FTSE100)
