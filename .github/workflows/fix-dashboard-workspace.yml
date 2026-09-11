@@ -1,0 +1,43 @@
+name: Fix dashboard workspace
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor == 'EduardoPatricio488' || github.actor == 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore dashboard and patch workspace resolution
+        shell: bash
+        run: |
+          git checkout f33d0a6c20055fe6ca25b93c1596a022f13a096a -- resources/views/livewire/dashboard.blade.php
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('resources/views/livewire/dashboard.blade.php')
+          text = path.read_text(encoding='utf-8')
+          old = "        $firstName = explode(' ', auth()->user()->name)[0] ?? auth()->user()->name;\n        $others = $currentWs->users->where('id', '!=', auth()->id())->pluck('name')->map(fn($name) => explode(' ', $name)[0]);"
+          new = "        $firstName = explode(' ', auth()->user()->name)[0] ?? auth()->user()->name;\n        $currentWs = auth()->user()->currentWorkspace;\n        $others = $currentWs\n            ? $currentWs->users->where('id', '!=', auth()->id())->pluck('name')->map(fn($name) => explode(' ', $name)[0])\n            : collect();"
+          if old not in text:
+              raise SystemExit('Expected dashboard block not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Commit fix and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -f .github/workflows/fix-dashboard-workspace.yml
+          git add resources/views/livewire/dashboard.blade.php .github/workflows/fix-dashboard-workspace.yml
+          git commit -m 'fix: restore complete dashboard and resolve workspace safely'
+          git push origin HEAD:main
