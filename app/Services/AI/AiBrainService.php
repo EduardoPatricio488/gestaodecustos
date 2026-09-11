@@ -27,6 +27,17 @@ class AiBrainService
         $workspace = $this->contextEngine->resolveWorkspace($user);
         if (! $workspace) throw new RuntimeException('Não existe um workspace ativo para esta conta.');
         $this->assertAiAccess($user);
+
+        // The active workspace is the hard security boundary. A persisted Livewire
+        // component or stale conversation ID must never be able to carry data from
+        // another Personal/Business workspace into this request.
+        if ($conversation && (
+            (int) $conversation->user_id !== (int) $user->id
+            || (int) $conversation->workspace_id !== (int) $workspace->id
+        )) {
+            $conversation = null;
+        }
+
         $conversation ??= $this->conversation($user, $workspace);
         $startedAt = microtime(true);
 
@@ -90,7 +101,7 @@ class AiBrainService
                 'user_id' => $user->id,
                 'role' => 'assistant',
                 'content' => $final,
-                'metadata' => ['workspace_id' => $workspace->id, 'page_context' => $context['page'], 'pending_actions' => array_map(fn ($action) => Arr::except($action, ['token']), $pendingActions), 'data_source' => 'Finance Pro AI database'],
+                'metadata' => ['workspace_id' => $workspace->id, 'workspace_type' => $workspace->type, 'page_context' => $context['page'], 'pending_actions' => array_map(fn ($action) => Arr::except($action, ['token']), $pendingActions), 'data_source' => 'Finance Pro AI database'],
                 'latency_ms' => (int) round((microtime(true) - $startedAt) * 1000),
             ]);
             $conversation->update(['last_activity_at' => now(), 'title' => $conversation->title ?: Str::limit($input, 60)]);
@@ -122,7 +133,14 @@ class AiBrainService
 
     public function conversation(User $user, Workspace $workspace, ?int $id = null): AiConversation
     {
-        if ($id) return AiConversation::query()->where('id', $id)->where('user_id', $user->id)->where('workspace_id', $workspace->id)->firstOrFail();
+        if ($id) {
+            return AiConversation::query()
+                ->whereKey($id)
+                ->where('user_id', $user->id)
+                ->where('workspace_id', $workspace->id)
+                ->firstOrFail();
+        }
+
         return AiConversation::create(['user_id' => $user->id, 'workspace_id' => $workspace->id, 'last_activity_at' => now()]);
     }
 
@@ -155,8 +173,26 @@ class AiBrainService
         $contextJson = json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $snapshotJson = json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $memoryJson = json_encode($memories, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $workspaceType = (string) ($context['workspace']['type'] ?? 'unknown');
+        $workspaceName = (string) ($context['workspace']['name'] ?? 'workspace atual');
+        $workspaceMode = match ($workspaceType) {
+            'personal' => 'PESSOAL',
+            'business', 'company' => 'EMPRESARIAL',
+            default => 'DESCONHECIDO',
+        };
+
         return <<<PROMPT
 És o Finance Pro AI — Financial Copilot. Fala sempre em Português de Portugal.
+
+FRONTEIRA FINANCEIRA ABSOLUTA
+O workspace atual é "{$workspaceName}" e o modo financeiro atual é {$workspaceMode}.
+Tudo o que analisas pertence EXCLUSIVAMENTE a este workspace e a este modo.
+
+- Se o modo for PESSOAL: considera apenas dinheiro, receitas, despesas, metas, investimentos, subscrições e outros dados pessoais do workspace atual. NUNCA uses dinheiro, receitas, despesas, faturas, clientes, fornecedores, payroll, stock ou KPIs de um workspace empresarial.
+- Se o modo for EMPRESARIAL: considera apenas dinheiro, receitas, despesas, faturas, clientes, fornecedores, payroll, stock e KPIs do workspace empresarial atual. NUNCA trates dinheiro empresarial como dinheiro pessoal.
+- Nunca somes ou compares saldos pessoais e empresariais como se fossem uma única carteira.
+- Se o utilizador pedir dados do outro modo, não os consultes através de contexto, memória ou histórico. Explica que tem de mudar para o workspace correspondente.
+- Se houver dúvida sobre a origem de um valor, não o atribuas ao lado errado e pede esclarecimento.
 
 MISSÃO
 És a camada de inteligência do Finance Pro AI, não um chatbot genérico. Acompanhas o utilizador, explicas os dados reais, identificas padrões e ajudas a executar tarefas com segurança.
@@ -184,7 +220,7 @@ ANÁLISE DETERMINÍSTICA DO BACKEND
 MEMÓRIA CONTROLADA DO UTILIZADOR
 {$memoryJson}
 
-Ao analisar, explica a origem quando for relevante: workspace, período e dados analisados.
+Ao analisar, explica a origem quando for relevante: workspace, modo (pessoal/empresarial), período e dados analisados.
 PROMPT;
     }
 }
