@@ -92,9 +92,13 @@ class BusinessDashboard extends Component
         $metrics = app(BusinessFinancialMetrics::class)->forMonth($workspace);
         $activeProjects = $workspace->projects()->where('status', 'em_curso')->get();
         $businessWorkspaces = $user->workspaces()->where('type', '!=', 'personal')->get();
-        $lowStockCount = $workspace->products()->whereRaw('stock <= min_stock')->count();
+        $lowStockCount = $workspace->products()->whereColumn('stock_quantity', '<=', 'min_stock_alert')->count();
         $criticalDocsCount = $workspace->documents()->where(fn ($q) => $q->where('expires_at', '<', now())->orWhere('expires_at', '<=', now()->addDays(15)))->count();
         $overdueTasksCount = $workspace->tasks()->where('due_date', '<', now())->where('status', '!=', 'concluido')->count();
+
+        $vatCollected = (float) $workspace->invoices()->where('status', 'paga')->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('vat_amount');
+        $vatDeductible = (float) $workspace->expenses()->where('is_company', true)->whereBetween('spent_at', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])->sum('vat_amount');
+        $vatBalance = round($vatCollected - $vatDeductible, 2);
 
         return view('livewire.business.business-dashboard', [
             'workspace' => $workspace, 'businessWorkspaces' => $businessWorkspaces,
@@ -105,8 +109,8 @@ class BusinessDashboard extends Component
             'activeProjects' => $activeProjects, 'lowStockCount' => $lowStockCount,
             'criticalDocsCount' => $criticalDocsCount, 'overdueTasksCount' => $overdueTasksCount,
             'teamCount' => $workspace->employees()->where('active', true)->where('suspended', false)->whereNull('terminated_at')->count(),
-            'vatProvision' => 0, 'ircProvision' => 0,
-            'financialDisclaimer' => 'Os valores financeiros são calculados a partir dos dados registados. Os indicadores fiscais são estimativas e devem ser validados pelo contabilista.',
+            'vatProvision' => max(0, $vatBalance), 'ircProvision' => 0,
+            'financialDisclaimer' => 'Os valores financeiros são calculados a partir dos dados registados. O IVA é um saldo informativo baseado nos valores registados. IRC, IRS, TSU e outras obrigações fiscais não são calculados automaticamente e devem ser validados pelo contabilista.',
         ]);
     }
 }
