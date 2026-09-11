@@ -15,71 +15,191 @@ use Carbon\CarbonInterface;
 
 class FinanceScoreService
 {
+    /**
+     * Calculate one deterministic 0-100 personal finance score for a workspace.
+     *
+     * Important: components without enough data are excluded from the weighted
+     * average instead of receiving an arbitrary score. This prevents an empty
+     * account from being presented as financially healthy or unhealthy by default.
+     */
     public function calculate(Workspace $workspace, ?CarbonInterface $month = null): array
     {
         $month = $month ?? now();
         $start = $month->copy()->startOfMonth();
         $end = $month->copy()->endOfMonth();
 
-        $earned = (float) Income::where('workspace_id', $workspace->id)
+        $earned = (float) $workspace->incomes()
             ->whereBetween('received_at', [$start, $end])
-            ->sum('amount');
+            ->sum('amount_converted');
 
-        $spent = (float) Expense::where('workspace_id', $workspace->id)
+        $spent = (float) $workspace->expenses()
             ->where('is_company', false)
             ->whereBetween('spent_at', [$start, $end])
-            ->sum('amount');
+            ->sum('amount_converted');
 
-        $savingsRate = $earned > 0 ? max(0, (($earned - $spent) / $earned) * 100) : 0;
-        $savingsScore = min(100, $savingsRate * 2);
+        $breakdown = [];
+        $weightedScore = 0.0;
+        $availableWeight = 0.0;
 
-        $totalDebt = (float) Debt::where('workspace_id', $workspace->id)
-            ->where('is_paid', false)
-            ->sum('amount');
-        $debtRatio = $earned > 0 ? ($totalDebt / ($earned * 12)) * 100 : ($totalDebt > 0 ? 100 : 0);
-        $debtScore = max(0, 100 - min(100, $debtRatio));
-
-        $budget = (float) Category::where('workspace_id', $workspace->id)->sum('budget_limit');
-        $budgetAdherence = $budget > 0 ? max(0, (1 - min($spent, $budget) / $budget) * 100) : 70;
-        $budgetScore = $budget > 0 ? $budgetAdherence : 70;
-
-        $goals = Goal::where('workspace_id', $workspace->id)->get();
-        $goalsScore = 70;
-        if ($goals->isNotEmpty()) {
-            $avgProgress = $goals->avg(fn ($g) => $g->target_amount > 0
-                ? min(100, ($g->current_amount / $g->target_amount) * 100)
-                : 0);
-            $goalsScore = (float) $avgProgress;
+        // 30% — savings. Requires actual income for the selected month.
+        if ($earned > 0) {
+            $savingsRate = (($earned - $spent) / $earned) * 100;
+            $savingsScore = min(100, max(0, $savingsRate * 2));
+            $breakdown['savings'] = [
+                'score' => round($savingsScore),
+                'label' => 'Taxa de Poupança',
+                'weight' => '30%',
+                'available' => true,
+                'value' => round($savingsRate, 2),
+                'unit' => '%',
+            ];
+            $weightedScore += $savingsScore * 0.30;
+            $availableWeight += 0.30;
+        } else {
+            $breakdown['savings'] = [
+                'score' => null,
+                'label' => 'Taxa de Poupança',
+                'weight' => '30%',
+                'available' => false,
+                'reason' => 'Sem receitas registadas no período.',
+            ];
         }
 
-        $investments = Investment::where('workspace_id', $workspace->id)->get();
-        $diversificationScore = 50;
+        // 20% — debt. Uses outstanding debt against annualised monthly income.
+        $totalDebt = (float) $workspace->debts()
+            ->where('is_paid', false)
+            ->sum('amount');
+
+        if ($earned > 0 || $totalDebt > 0) {
+            $debtRatio = $earned > 0
+                ? ($totalDebt / ($earned * 12)) * 100
+                : 100;
+            $debtScore = max(0, 100 - min(100, $debtRatio));
+            $breakdown['debt'] = [
+                'score' => round($debtScore),
+                'label' => 'Gestão de Dívidas',
+                'weight' => '20%',
+                'available' => true,
+                'value' => round($debtRatio, 2),
+                'unit' => '% da receita anualizada',
+            ];
+            $weightedScore += $debtScore * 0.20;
+            $availableWeight += 0.20;
+        } else {
+            $breakdown['debt'] = [
+                'score' => null,
+                'label' => 'Gestão de Dívidas',
+                'weight' => '20%',
+                'available' => false,
+                'reason' => 'Sem dados suficientes de receitas ou dívidas.',
+            ];
+        }
+
+        // 20% — budget adherence. Requires a configured budget.
+        $budget = (float) $workspace->categories()->sum('budget_limit');
+        if ($budget > 0) {
+            $usageRate = ($spent / $budget) * 100;
+            $budgetScore = max(0, min(100, 100 - max(0, $usageRate - 80) * 5));
+            if ($usageRate <= 80) {
+                $budgetScore = 100;
+            }
+
+            $breakdown['budget'] = [
+                'score' => round($budgetScore),
+                'label' => 'Disciplina Orçamental',
+                'weight' => '20%',
+                'available' => true,
+                'value' => round($usageRate, 2),
+                'unit' => '% do orçamento utilizado',
+            ];
+            $weightedScore += $budgetScore * 0.20;
+            $availableWeight += 0.20;
+        } else {
+            $breakdown['budget'] = [
+                'score' => null,
+                'label' => 'Disciplina Orçamental',
+                'weight' => '20%',
+                'available' => false,
+                'reason' => 'Não existem limites orçamentais configurados.',
+            ];
+        }
+
+        // 15% — goal progress. Only available when at least one goal exists.
+        $goals = $workspace->goals()->get(['target_amount', 'current_amount']);
+        if ($goals->isNotEmpty()) {
+            $validGoals = $goals->filter(fn ($goal) => (float) $goal->target_amount > 0);
+            if ($validGoals->isNotEmpty()) {
+                $goalsScore = (float) $validGoals->avg(fn ($goal) => min(
+                    100,
+                    max(0, ((float) $goal->current_amount / (float) $goal->target_amount) * 100)
+                ));
+                $breakdown['goals'] = [
+                    'score' => round($goalsScore),
+                    'label' => 'Metas',
+                    'weight' => '15%',
+                    'available' => true,
+                    'value' => round($goalsScore, 2),
+                    'unit' => '% de progresso médio',
+                ];
+                $weightedScore += $goalsScore * 0.15;
+                $availableWeight += 0.15;
+            }
+        }
+
+        if (! isset($breakdown['goals'])) {
+            $breakdown['goals'] = [
+                'score' => null,
+                'label' => 'Metas',
+                'weight' => '15%',
+                'available' => false,
+                'reason' => 'Não existem metas com valor-alvo válido.',
+            ];
+        }
+
+        // 15% — diversification proxy. This is explicitly a proxy based on
+        // recorded asset types, not a claim about portfolio risk/weighting.
+        $investments = $workspace->investments()->get(['product_type']);
         if ($investments->isNotEmpty()) {
             $types = $investments->pluck('product_type')->filter()->unique()->count();
             $diversificationScore = min(100, 30 + ($types * 20) + min(30, $investments->count() * 5));
+            $breakdown['diversification'] = [
+                'score' => round($diversificationScore),
+                'label' => 'Diversificação (proxy)',
+                'weight' => '15%',
+                'available' => true,
+                'value' => $types,
+                'unit' => 'tipos de ativo registados',
+            ];
+            $weightedScore += $diversificationScore * 0.15;
+            $availableWeight += 0.15;
+        } else {
+            $breakdown['diversification'] = [
+                'score' => null,
+                'label' => 'Diversificação (proxy)',
+                'weight' => '15%',
+                'available' => false,
+                'reason' => 'Não existem investimentos registados.',
+            ];
         }
 
-        $score = (int) round(
-            ($savingsScore * 0.30) +
-            ($debtScore * 0.20) +
-            ($budgetScore * 0.20) +
-            ($goalsScore * 0.15) +
-            ($diversificationScore * 0.15)
-        );
-
+        $score = $availableWeight > 0
+            ? (int) round($weightedScore / $availableWeight)
+            : 0;
         $score = max(0, min(100, $score));
 
-        $breakdown = [
-            'savings' => ['score' => round($savingsScore), 'label' => 'Taxa de Poupança', 'weight' => '30%'],
-            'debt' => ['score' => round($debtScore), 'label' => 'Gestão de Dívidas', 'weight' => '20%'],
-            'budget' => ['score' => round($budgetScore), 'label' => 'Disciplina Orçamental', 'weight' => '20%'],
-            'goals' => ['score' => round($goalsScore), 'label' => 'Metas', 'weight' => '15%'],
-            'diversification' => ['score' => round($diversificationScore), 'label' => 'Diversificação', 'weight' => '15%'],
+        $availableComponents = collect($breakdown)->where('available', true)->count();
+        $totalComponents = count($breakdown);
+
+        return [
+            'score' => $score,
+            'breakdown' => $breakdown,
+            'tips' => $this->generateTips($breakdown, $score),
+            'data_quality' => [
+                'available_components' => $availableComponents,
+                'total_components' => $totalComponents,
+                'status' => $availableComponents >= 3 ? 'adequate' : ($availableComponents > 0 ? 'limited' : 'insufficient'),
+            ],
         ];
-
-        $tips = $this->generateTips($breakdown, $score);
-
-        return compact('score', 'breakdown', 'tips');
     }
 
     public function snapshot(Workspace $workspace, int $userId, ?CarbonInterface $month = null): FinanceScoreSnapshot
@@ -132,23 +252,23 @@ class FinanceScoreService
     {
         $tips = [];
 
-        if ($breakdown['savings']['score'] < 50) {
-            $tips[] = 'Tenta poupar pelo menos 20% das tuas receitas mensais.';
+        if (($breakdown['savings']['score'] ?? 100) !== null && ($breakdown['savings']['score'] ?? 100) < 50) {
+            $tips[] = 'A tua taxa de poupança está baixa — revê as despesas variáveis e define um objetivo mensal realista.';
         }
-        if ($breakdown['debt']['score'] < 60) {
-            $tips[] = 'As tuas dívidas estão a pesar no score — prioriza amortizações.';
+        if (($breakdown['debt']['score'] ?? 100) !== null && ($breakdown['debt']['score'] ?? 100) < 60) {
+            $tips[] = 'As tuas dívidas estão a pesar no score — avalia a amortização das dívidas com maior custo.';
         }
-        if ($breakdown['budget']['score'] < 60) {
-            $tips[] = 'Define limites por categoria e acompanha no Hub de Orçamento.';
+        if (($breakdown['budget']['score'] ?? 100) !== null && ($breakdown['budget']['score'] ?? 100) < 60) {
+            $tips[] = 'Estás acima do teu orçamento em algumas categorias — ajusta limites ou despesas.';
         }
-        if ($breakdown['goals']['score'] < 50) {
-            $tips[] = 'Cria metas concretas para melhorar a tua saúde financeira.';
+        if (($breakdown['goals']['score'] ?? 100) !== null && ($breakdown['goals']['score'] ?? 100) < 50) {
+            $tips[] = 'O progresso das tuas metas está baixo — define valores e prazos que consigas acompanhar.';
         }
-        if ($breakdown['diversification']['score'] < 50) {
-            $tips[] = 'Diversifica os teus investimentos em diferentes classes de ativos.';
+        if (($breakdown['diversification']['score'] ?? 100) !== null && ($breakdown['diversification']['score'] ?? 100) < 50) {
+            $tips[] = 'A diversificação registada é limitada. Analisa o risco e a distribuição real da tua carteira antes de investir mais.';
         }
         if ($score >= 80) {
-            $tips[] = 'Excelente trabalho! Mantém a disciplina e partilha o teu progresso.';
+            $tips[] = 'Bom progresso financeiro. Mantém o acompanhamento regular dos teus indicadores.';
         }
 
         return array_slice($tips, 0, 3);
