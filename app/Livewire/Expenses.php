@@ -41,6 +41,25 @@ class Expenses extends Component
     }
 
     /**
+     * Abre o formulário de nova despesa com a categoria escolhida.
+     */
+    public function selectCategory(int $categoryId): void
+    {
+        if (auth()->user()->isViewer()) {
+            $this->dispatch('toast', variant: 'error', text: 'Apenas leitura: não tens permissão para criar registos.');
+
+            return;
+        }
+
+        $category = Category::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('hidden_from_sidebar', false)
+            ->whereKey($categoryId)
+            ->firstOrFail();
+
+        $this->redirect(route('expenses.create', ['category' => $category->id]), navigate: true);
+    }
+
+    /**
      * Redireciona para a página de edição.
      * BLOQUEIO: Visualizadores não podem editar.
      */
