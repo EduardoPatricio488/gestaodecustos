@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Business;
 
+use App\Services\BusinessFinancialMetrics;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -11,62 +12,39 @@ use Livewire\Component;
 class BusinessAiHub extends Component
 {
     public $lastAudit = null;
-
     public $targetHourlyRate = 50.00;
 
-    /**
-     * Executa a animação de auditoria
-     */
-    public function runAnalysis()
+    public function runAnalysis(): void
     {
-        sleep(2); // Simulação para efeito visual de "processamento inteligente"
         $this->lastAudit = now()->format('H:i:s');
-        $this->dispatch('toast', text: 'Auditoria estratégica concluída!');
+        $this->dispatch('toast', variant: 'success', text: 'Análise estratégica recalculada com os dados atuais.');
     }
 
     public function render()
     {
         $workspace = Auth::user()->currentWorkspace;
+        if (! $workspace) return <<<'HTML'
+            <div class="p-10 text-center italic text-zinc-500">Nenhum workspace empresarial detetado.</div>
+        HTML;
 
-        if (! $workspace) {
-            return <<<'HTML'
-                <div class="p-10 text-center italic text-zinc-500">Nenhum workspace empresarial detetado.</div>
-            HTML;
-        }
+        $metrics = app(BusinessFinancialMetrics::class)->forMonth($workspace);
+        $cash = $metrics['cash'];
+        $totalPayroll = $metrics['payroll'];
+        $totalRevenue = (float) $workspace->invoices()->where('status', 'paga')->sum('amount_excl_vat');
 
-        $month = now()->month;
-
-        // 1. DADOS FINANCEIROS & LIQUIDEZ
-        $cash = (float) $workspace->getLiquidezAtual();
-        $totalPayroll = (float) $workspace->employees()->sum('salary');
-        $totalRevenue = (float) $workspace->invoices()->where('status', 'paga')->sum('total_amount');
-
-        // 2. RISCO DE CONCENTRAÇÃO (Clientes)
-        $topClient = $workspace->invoices()
-            ->where('status', 'paga')
-            ->select('client_name', DB::raw('SUM(total_amount) as total'))
-            ->groupBy('client_name')
-            ->orderByDesc('total')
-            ->first();
-
+        $topClient = $workspace->invoices()->where('status', 'paga')
+            ->select('client_name', DB::raw('SUM(amount_excl_vat) as total'))
+            ->groupBy('client_name')->orderByDesc('total')->first();
         $riskConcentration = ($totalRevenue > 0 && $topClient) ? ($topClient->total / $totalRevenue) * 100 : 0;
 
-        // 3. PERFORMANCE DE PROJETOS (Lucro por Hora)
-        $projects = $workspace->projects()->get()->map(function ($p) {
-            return [
-                'name' => $p->name,
-                'hourly_profit' => (float) $p->hourly_profit,
-                'hours' => round($p->total_time_seconds / 3600, 1),
-                'margin' => (float) $p->margin,
-            ];
-        })->sortByDesc('hourly_profit');
+        $projects = $workspace->projects()->get()->map(fn ($p) => [
+            'name' => $p->name, 'hourly_profit' => (float) $p->hourly_profit,
+            'hours' => round($p->total_time_seconds / 3600, 1), 'margin' => (float) $p->margin,
+        ])->sortByDesc('hourly_profit');
 
-        // 4. AUDITORIA DE STOCK (Património Imobilizado)
         $products = $workspace->products()->get();
         $inventoryValue = (float) $products->sum(fn ($p) => $p->stock_quantity * $p->unit_cost);
         $lowStockCount = $products->filter(fn ($p) => $p->isLowStock())->count();
-
-        // 5. CÁLCULO DE SCORE DE RESILIÊNCIA
         $healthScore = $this->calculateBusinessHealth($cash, $totalPayroll, $riskConcentration, $lowStockCount);
 
         return view('livewire.business.business-ai-hub', [
@@ -80,54 +58,31 @@ class BusinessAiHub extends Component
             'lowStockCount' => $lowStockCount,
             'projects' => $projects,
             'insights' => $this->generateStrategicInsights($cash, $totalPayroll, $riskConcentration, $lowStockCount, $projects),
+            'analysisDisclaimer' => 'Esta análise é baseada nos dados registados na plataforma e em regras de gestão. Não substitui aconselhamento financeiro, contabilístico ou fiscal.',
         ]);
     }
 
-    private function generateStrategicInsights($cash, $payroll, $risk, $lowStock, $projects)
+    private function generateStrategicInsights($cash, $payroll, $risk, $lowStock, $projects): array
     {
         $insights = [];
-
-        // Insight: Liquidez
-        if ($payroll > 0) {
-            if ($cash < $payroll) {
-                $insights[] = ['type' => 'danger', 'title' => 'Ruptura de Tesouraria', 'text' => 'O saldo atual não cobre os salários do mês. Antecipa recebimentos imediatamente.'];
-            } elseif ($cash > ($payroll * 6)) {
-                $insights[] = ['type' => 'success', 'title' => 'Capacidade de Investimento', 'text' => 'Tens reserva para +6 meses. É o momento ideal para expandir ou investir em novos ativos.'];
-            }
+        if ($payroll > 0 && $cash < $payroll) {
+            $insights[] = ['type' => 'danger', 'title' => 'Pressão de tesouraria', 'text' => 'O saldo disponível está abaixo do custo salarial mensal registado.'];
+        } elseif ($payroll > 0 && $cash >= $payroll * 6) {
+            $insights[] = ['type' => 'success', 'title' => 'Boa cobertura de tesouraria', 'text' => 'O saldo disponível cobre pelo menos seis meses do custo salarial registado.'];
         }
-
-        // Insight: Clientes
-        if ($risk > 45) {
-            $insights[] = ['type' => 'warning', 'title' => 'Risco de Dependência', 'text' => 'Mais de 45% da faturação vem de um só cliente. Perder este contrato compromete a operação.'];
-        }
-
-        // Insight: Operações
+        if ($risk > 45) $insights[] = ['type' => 'warning', 'title' => 'Concentração de receita', 'text' => 'Um cliente representa mais de 45% da receita recebida registada.'];
         $inefficient = $projects->filter(fn ($p) => $p['hourly_profit'] > 0 && $p['hourly_profit'] < $this->targetHourlyRate)->count();
-        if ($inefficient > 0) {
-            $insights[] = ['type' => 'warning', 'title' => 'Dreno de Produtividade', 'text' => "Tens $inefficient projetos a render menos de {$this->targetHourlyRate}€/hora. Revê processos."];
-        }
-
-        // Insight: Inventário
-        if ($lowStock > 0) {
-            $insights[] = ['type' => 'info', 'title' => 'Reposição de Stock', 'text' => "Tens $lowStock artigos em nível crítico. Evita perder vendas por falta de material."];
-        }
-
+        if ($inefficient > 0) $insights[] = ['type' => 'warning', 'title' => 'Projetos abaixo do objetivo', 'text' => "$inefficient projetos estão abaixo de {$this->targetHourlyRate}€/hora de resultado registado."];
+        if ($lowStock > 0) $insights[] = ['type' => 'info', 'title' => 'Stock baixo', 'text' => "$lowStock artigos estão abaixo do nível mínimo configurado."];
         return $insights;
     }
 
-    private function calculateBusinessHealth($cash, $payroll, $risk, $lowStock)
+    private function calculateBusinessHealth($cash, $payroll, $risk, $lowStock): int
     {
         $score = 100;
-        if ($payroll > 0 && $cash < $payroll) {
-            $score -= 40;
-        }
-        if ($risk > 50) {
-            $score -= 20;
-        }
-        if ($lowStock > 3) {
-            $score -= 10;
-        }
-
-        return max(5, $score);
+        if ($payroll > 0 && $cash < $payroll) $score -= 40;
+        if ($risk > 50) $score -= 20;
+        if ($lowStock > 3) $score -= 10;
+        return max(5, min(100, $score));
     }
 }
