@@ -30,11 +30,15 @@ class ClientPortalAccessMail extends Mailable
 
     public function content(): Content
     {
-        $companyName = $this->workspace->legal_name ?: $this->workspace->name;
+        $companyName = e($this->workspace->legal_name ?: $this->workspace->name);
         $clientName = e($this->client->name);
+        $taxNumber = e($this->workspace->tax_number ?? $this->workspace->nif ?? '');
         $token = e($this->token);
         $portalUrl = e($this->portalUrl);
-        $companyName = e($companyName);
+
+        $companyTaxNumberHtml = $taxNumber !== ''
+            ? "<div style='margin-top:8px;font-size:13px;color:#52525b;'>NIF da empresa: <strong style='color:#18181b;'>{$taxNumber}</strong></div>"
+            : '';
 
         return new Content(
             htmlString: "
@@ -43,6 +47,7 @@ class ClientPortalAccessMail extends Mailable
                         <div style='font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#059669;'>Finance Pro IA</div>
                         <h1 style='margin:12px 0 8px;font-size:25px;'>O teu acesso ao portal está pronto</h1>
                         <p style='font-size:15px;line-height:1.7;'>Olá <strong>{$clientName}</strong>, a empresa <strong>{$companyName}</strong> disponibilizou-te acesso ao portal de cliente.</p>
+                        {$companyTaxNumberHtml}
                         <div style='background:#ecfdf5;border:1px solid #a7f3d0;border-radius:18px;padding:22px;margin:24px 0;'>
                             <div style='font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#047857;'>Código de acesso</div>
                             <div style='font-size:32px;font-weight:900;letter-spacing:6px;color:#065f46;font-family:monospace;margin-top:8px;'>{$token}</div>
