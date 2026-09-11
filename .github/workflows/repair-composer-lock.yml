@@ -33,3 +33,5 @@ jobs:
           git add composer.lock
           git commit -m 'ci: synchronize composer lock file'
           git push origin main
+
+# Temporary synchronization workflow; remove after CI is green.
