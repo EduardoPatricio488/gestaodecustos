@@ -12,16 +12,11 @@ use Illuminate\Support\Facades\Storage;
 class Workspace extends Model
 {
     protected $fillable = [
-        'name','type','owner_id','invite_code','legal_name','logo_path','tax_number','industry','currency','initial_capital',
-        'country_code','vat_rate','vat_regime',
-        'audit_token','audit_access_code','audit_token_expires_at','audit_token_revoked_at','audit_token_purpose',
-        'recruitment_extra_info','business_email','plan','plan_expires_at','address','recruitment_active',
+        'name','type','owner_id','invite_code','legal_name','logo_path','tax_number','industry','currency','initial_capital','country_code','vat_rate','vat_regime',
+        'audit_token','audit_access_code','audit_token_expires_at','audit_token_revoked_at','audit_token_purpose','recruitment_extra_info','business_email','plan','plan_expires_at','address','recruitment_active',
         'recruitment_description','recruitment_announcement','recruitment_vacancies','fiscal_year_start',
     ];
-    protected $casts = [
-        'audit_token_expires_at'=>'datetime','audit_token_revoked_at'=>'datetime','initial_capital'=>'decimal:2',
-        'vat_rate'=>'decimal:2','fiscal_year_start'=>'integer',
-    ];
+    protected $casts = ['audit_token_expires_at'=>'datetime','audit_token_revoked_at'=>'datetime','initial_capital'=>'decimal:2','vat_rate'=>'decimal:2','fiscal_year_start'=>'integer'];
     protected $attributes = ['type'=>'business','currency'=>'EUR','country_code'=>'PT','vat_rate'=>23,'vat_regime'=>'normal','fiscal_year_start'=>1];
 
     public function generateInviteCode()
@@ -76,9 +71,11 @@ class Workspace extends Model
 
     public function getLiquidezAtual(): float
     {
-        if ($this->bankAccounts()->exists()) return round((float)$this->bankAccounts()->sum('balance'),2);
-        $revenue = (float)$this->invoices()->where('status','paga')->sum('total_amount');
-        $spent = (float)$this->expenses()->where('is_company',true)->sum('amount');
+        if ($this->bankAccounts()->exists()) {
+            return round((float) $this->bankAccounts()->where('type', '!=', 'credito')->sum('balance'), 2);
+        }
+        $revenue = (float)$this->invoices()->where('status','paga')->sum('total_amount_converted');
+        $spent = (float)$this->expenses()->where('is_company',true)->sum('amount_converted');
         return round((float)($this->initial_capital ?? 0) + $revenue - $spent,2);
     }
 
