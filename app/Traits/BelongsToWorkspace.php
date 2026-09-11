@@ -2,9 +2,10 @@
 
 namespace App\Traits;
 
+use App\Services\BusinessAccessService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Auth\Access\AuthorizationException;
 use RuntimeException;
 
 trait BelongsToWorkspace
@@ -13,41 +14,93 @@ trait BelongsToWorkspace
     {
         static::creating(function ($model): void {
             if (! Auth::check()) return;
-            $workspaceId = Auth::user()->current_workspace_id;
-            if ($workspaceId && empty($model->workspace_id)) $model->workspace_id = $workspaceId;
-            if ($workspaceId && $model->workspace_id && (int)$model->workspace_id !== (int)$workspaceId) {
+
+            $user = Auth::user();
+            $workspaceId = $user->current_workspace_id;
+
+            if ($workspaceId && empty($model->workspace_id)) {
+                $model->workspace_id = $workspaceId;
+            }
+
+            if ($workspaceId && $model->workspace_id && (int) $model->workspace_id !== (int) $workspaceId) {
                 throw new RuntimeException('Não é permitido criar dados noutro workspace.');
             }
-            if ($workspaceId && method_exists(Auth::user(), 'currentRole') && Auth::user()->currentRole() === 'viewer') {
-                throw new AuthorizationException('Este perfil tem acesso apenas de leitura.');
-            }
+
+            static::assertMutationAllowed($model, 'create');
         });
 
         static::saving(function ($model): void {
             if (! Auth::check() || ! Auth::user()->current_workspace_id) return;
+
             $workspaceId = (int) Auth::user()->current_workspace_id;
-            if ($model->workspace_id && (int)$model->workspace_id !== $workspaceId) {
+            if ($model->workspace_id && (int) $model->workspace_id !== $workspaceId) {
                 throw new RuntimeException('Não é permitido alterar dados de outro workspace.');
             }
-            if (empty($model->workspace_id)) $model->workspace_id = $workspaceId;
-            if (method_exists(Auth::user(), 'currentRole') && Auth::user()->currentRole() === 'viewer') {
-                throw new AuthorizationException('Este perfil tem acesso apenas de leitura.');
+
+            if (empty($model->workspace_id)) {
+                $model->workspace_id = $workspaceId;
             }
+
+            static::assertMutationAllowed($model, $model->exists ? 'update' : 'create');
         });
 
         static::deleting(function ($model): void {
-            if (Auth::check() && method_exists(Auth::user(), 'currentRole') && Auth::user()->currentRole() === 'viewer') {
-                throw new AuthorizationException('Este perfil tem acesso apenas de leitura.');
-            }
-            if (Auth::check() && Auth::user()->current_workspace_id && (int)$model->workspace_id !== (int)Auth::user()->current_workspace_id) {
+            if (! Auth::check()) return;
+
+            if (Auth::user()->current_workspace_id && (int) $model->workspace_id !== (int) Auth::user()->current_workspace_id) {
                 throw new RuntimeException('Não é permitido eliminar dados de outro workspace.');
             }
+
+            static::assertMutationAllowed($model, 'delete');
         });
 
         static::addGlobalScope('workspace', function (Builder $builder): void {
             if (Auth::check() && Auth::user()->current_workspace_id) {
-                $builder->where($builder->getModel()->getTable().'.workspace_id', Auth::user()->current_workspace_id);
+                $builder->where(
+                    $builder->getModel()->getTable().'.workspace_id',
+                    Auth::user()->current_workspace_id
+                );
             }
         });
+    }
+
+    protected static function assertMutationAllowed($model, string $operation): void
+    {
+        $user = Auth::user();
+        $workspace = $user?->currentWorkspace;
+
+        if (! $user || ! $workspace || ! in_array($workspace->type, ['business', 'company'], true)) {
+            // Personal/family workspaces retain the legacy read/write behaviour.
+            if (method_exists($user, 'currentRole') && $user->currentRole() === 'viewer') {
+                throw new AuthorizationException('Este perfil tem acesso apenas de leitura.');
+            }
+
+            return;
+        }
+
+        $access = app(BusinessAccessService::class);
+        $role = $access->role($user, $workspace);
+
+        if ($role === 'viewer') {
+            throw new AuthorizationException('Este perfil tem acesso apenas de leitura.');
+        }
+
+        $modelClass = class_basename($model);
+        $isOwnExpense = $modelClass === 'Expense'
+            && (int) ($model->user_id ?? 0) === (int) $user->id;
+
+        if ($modelClass === 'Expense' && $role === 'employee' && $isOwnExpense && $operation !== 'delete') {
+            return;
+        }
+
+        $permission = match ($modelClass) {
+            'Employee' => 'manage_team',
+            'Workspace' => 'manage_settings',
+            'Expense' => $operation === 'delete' ? 'delete_financials' : 'create_expense',
+            'Invoice', 'Client', 'Supplier', 'Project', 'Product', 'Task', 'Proposal', 'Category', 'BankAccount', 'BusinessDocument', 'AtInvoice' => $operation === 'delete' ? 'delete_financials' : 'manage_financials',
+            default => 'manage_financials',
+        };
+
+        $access->assert($permission, $user, $workspace);
     }
 }
