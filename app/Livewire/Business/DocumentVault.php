@@ -41,44 +41,28 @@ class DocumentVault extends Component
     {
         $this->validate();
         $workspaceId = auth()->user()->current_workspace_id;
-
-        $data = [
-            'workspace_id' => $workspaceId,
-            'name' => $this->name,
-            'category' => $this->category,
-            'expiry_date' => $this->expiry_date,
-            'notes' => $this->notes,
-        ];
+        $data = ['workspace_id'=>$workspaceId,'name'=>$this->name,'category'=>$this->category,'expiry_date'=>$this->expiry_date,'notes'=>$this->notes];
 
         if ($this->file) {
             if ($this->editingId) {
                 $oldDoc = BusinessDocument::where('workspace_id', $workspaceId)->findOrFail($this->editingId);
-                if ($oldDoc->file_path) Storage::disk('local')->delete($oldDoc->file_path);
+                if ($oldDoc->file_path) Storage::disk('public')->delete($oldDoc->file_path);
             }
-            $data['file_path'] = $this->file->store('business_vault', 'local');
+            $data['file_path'] = $this->file->store('business_vault', 'public');
         }
 
-        BusinessDocument::updateOrCreate(['id' => $this->editingId, 'workspace_id' => $workspaceId], $data);
-
-        $this->reset(['name', 'category', 'expiry_date', 'file', 'editingId', 'notes']);
-        $this->dispatch('modal-close', name: 'document-modal');
-        $this->dispatch('toast', text: 'Documento arquivado com segurança.');
-    }
-
-    public function downloadDocument(int $id)
-    {
-        $doc = BusinessDocument::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
-        abort_unless($doc->file_path && Storage::disk('local')->exists($doc->file_path), 404);
-
-        return Storage::disk('local')->download($doc->file_path, $doc->name);
+        BusinessDocument::updateOrCreate(['id'=>$this->editingId,'workspace_id'=>$workspaceId], $data);
+        $this->reset(['name','category','expiry_date','file','editingId','notes']);
+        $this->dispatch('modal-close', name:'document-modal');
+        $this->dispatch('toast', text:'Documento arquivado com segurança.');
     }
 
     public function delete(int $id)
     {
         $doc = BusinessDocument::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
-        if ($doc->file_path) Storage::disk('local')->delete($doc->file_path);
+        if ($doc->file_path) Storage::disk('public')->delete($doc->file_path);
         $doc->delete();
-        $this->dispatch('toast', text: 'Documento removido do arquivo.', variant: 'warning');
+        $this->dispatch('toast', text:'Documento removido do arquivo.', variant:'warning');
     }
 
     public function render()
@@ -86,16 +70,10 @@ class DocumentVault extends Component
         $workspaceId = auth()->user()->current_workspace_id;
         $now = Carbon::now();
         $soon = Carbon::now()->addDays(30);
-
-        $documents = BusinessDocument::where('workspace_id', $workspaceId)
-            ->where('name', 'like', '%'.$this->search.'%')
-            ->when($this->categoryFilter, fn ($q) => $q->where('category', $this->categoryFilter))
-            ->latest()->get();
-
-        $totalDocs = BusinessDocument::where('workspace_id', $workspaceId)->count();
-        $expiredCount = BusinessDocument::where('workspace_id', $workspaceId)->whereNotNull('expiry_date')->where('expiry_date', '<', $now)->count();
-        $expiringSoonCount = BusinessDocument::where('workspace_id', $workspaceId)->whereNotNull('expiry_date')->whereBetween('expiry_date', [$now, $soon])->count();
-
-        return view('livewire.business.document-vault', compact('documents', 'totalDocs', 'expiredCount', 'expiringSoonCount'));
+        $documents = BusinessDocument::where('workspace_id',$workspaceId)->where('name','like','%'.$this->search.'%')->when($this->categoryFilter,fn($q)=>$q->where('category',$this->categoryFilter))->latest()->get();
+        $totalDocs = BusinessDocument::where('workspace_id',$workspaceId)->count();
+        $expiredCount = BusinessDocument::where('workspace_id',$workspaceId)->whereNotNull('expiry_date')->where('expiry_date','<',$now)->count();
+        $expiringSoonCount = BusinessDocument::where('workspace_id',$workspaceId)->whereNotNull('expiry_date')->whereBetween('expiry_date',[$now,$soon])->count();
+        return view('livewire.business.document-vault', compact('documents','totalDocs','expiredCount','expiringSoonCount'));
     }
 }
