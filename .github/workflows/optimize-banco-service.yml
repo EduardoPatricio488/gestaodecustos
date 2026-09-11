@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Optimize BancoService query patterns
+      - name: Optimize BancoService query patterns v2
         shell: bash
         run: |
           python3 <<'PY'
@@ -23,11 +23,6 @@ jobs:
 
           path = Path('app/Services/BancoService.php')
           text = path.read_text(encoding='utf-8')
-
-          text = text.replace(
-              "use Illuminate\\Support\\Collection;\n",
-              "use Illuminate\\Support\\Collection;\nuse Illuminate\\Support\\Facades\\DB;\n"
-          )
 
           text = text.replace(
               "    private ?Collection $patrimonyCache = null;\n",
@@ -104,7 +99,6 @@ jobs:
         return $data;
     }
 '''
-
           if old_flow not in text:
               raise SystemExit('getMonthlyFlow target not found')
           text = text.replace(old_flow, new_flow)
@@ -196,10 +190,6 @@ jobs:
           if old_avg not in text:
               raise SystemExit('getAvgMonthlyExpense target not found')
           text = text.replace(old_avg, new_avg)
-
-          # DB import is required by other query optimizations only if the service already uses it;
-          # remove it when unused to keep the file clean.
-          text = text.replace("use Illuminate\\Support\\Facades\\DB;\n", "")
 
           path.write_text(text, encoding='utf-8')
           PY
