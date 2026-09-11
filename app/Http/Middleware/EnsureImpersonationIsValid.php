@@ -16,7 +16,6 @@ class EnsureImpersonationIsValid
     public function handle(Request $request, Closure $next): Response
     {
         $context = $request->session()->get(ImpersonationController::sessionKey());
-
         if (! is_array($context)) {
             return $next($request);
         }
@@ -25,7 +24,7 @@ class EnsureImpersonationIsValid
         $actor = isset($context['actor_id']) ? User::query()->find($context['actor_id']) : null;
         $target = $request->user();
 
-        if (! $expiresAt || $expiresAt->isPast() || ! $actor?->isAdminRole() || ! $target || (int) $target->id !== (int) ($context['target_id'] ?? 0)) {
+        if (! $expiresAt || $expiresAt->isPast() || ! $actor?->isAdmin() || ! $target || (int) $target->id !== (int) ($context['target_id'] ?? 0)) {
             if (! empty($context['log_id'])) {
                 ImpersonationLog::query()->whereKey($context['log_id'])->update([
                     'action' => 'expired',
@@ -33,14 +32,13 @@ class EnsureImpersonationIsValid
                 ]);
             }
 
-            if ($actor?->isAdminRole()) {
+            if ($actor?->isAdmin()) {
                 Auth::login($actor);
             } else {
                 Auth::logout();
             }
 
             $request->session()->forget(ImpersonationController::sessionKey());
-
             return redirect()->route('admin.users');
         }
 
