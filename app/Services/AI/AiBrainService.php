@@ -5,9 +5,9 @@ namespace App\Services\AI;
 use App\Models\AiActionLog;
 use App\Models\AiConversation;
 use App\Models\AiMemory;
-use App\Models\AiMessage;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -31,7 +31,7 @@ class AiBrainService
         $conversation ??= $this->conversation($user, $workspace);
         $startedAt = microtime(true);
 
-        $userMessage = $conversation->messages()->create([
+        $conversation->messages()->create([
             'user_id' => $user->id,
             'role' => 'user',
             'content' => trim($input),
@@ -171,7 +171,9 @@ class AiBrainService
     public function confirm(User $user, int $actionId): array
     {
         $workspace = $this->contextEngine->resolveWorkspace($user);
-        if (! $workspace) throw new RuntimeException('Workspace inválido.');
+        if (! $workspace) {
+            throw new RuntimeException('Workspace inválido.');
+        }
 
         $action = AiActionLog::query()
             ->whereKey($actionId)
@@ -233,7 +235,9 @@ class AiBrainService
     private function provider(array $messages): array
     {
         $apiKey = config('services.openrouter.api_key');
-        if (blank($apiKey)) throw new RuntimeException('O serviço de IA não está configurado.');
+        if (blank($apiKey)) {
+            throw new RuntimeException('O serviço de IA não está configurado.');
+        }
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.$apiKey,
