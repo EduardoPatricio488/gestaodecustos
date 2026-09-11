@@ -9,25 +9,15 @@ use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\DomainException;
 
 class Income extends Model
 {
     use BelongsToWorkspace, LogsActivity;
 
     protected $fillable = [
-        'user_id',
-        'workspace_id',
-        'bank_account_id',
-        'description',
-        'amount',
-        'currency',
-        'amount_converted',
-        'received_at',
-        'type',
-        'source',
-        'frequency',
-        'tax_estimate',
-        'notes',
+        'user_id', 'workspace_id', 'bank_account_id', 'description', 'amount', 'currency',
+        'amount_converted', 'received_at', 'type', 'source', 'frequency', 'tax_estimate', 'notes',
     ];
 
     protected $casts = [
@@ -43,15 +33,19 @@ class Income extends Model
                 return;
             }
 
+            $amount = round((float) $income->amount, 2);
+            if ($amount <= 0) {
+                throw new DomainException('O valor da receita deve ser superior a zero.');
+            }
+
             $workspaceCurrency = strtoupper((string) (Workspace::find($income->workspace_id)?->currency ?? 'EUR'));
             $transactionCurrency = strtoupper((string) ($income->currency ?: $workspaceCurrency));
 
             $income->currency = $transactionCurrency;
-            $income->forceFill(['amount_converted' => round((float) CurrencyService::convert(
-                (float) $income->amount,
-                $transactionCurrency,
-                $workspaceCurrency
-            ), 2)]);
+            $income->forceFill([
+                'amount' => $amount,
+                'amount_converted' => round((float) CurrencyService::convert($amount, $transactionCurrency, $workspaceCurrency), 2),
+            ]);
         });
 
         static::created(function (Income $income): void {
@@ -64,7 +58,6 @@ class Income extends Model
         return $this->belongsTo(User::class);
     }
 
-    // RELAÇÃO ADICIONADA: Onde entrou o dinheiro?
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class);
