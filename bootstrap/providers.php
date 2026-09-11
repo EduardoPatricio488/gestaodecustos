@@ -1,5 +1,6 @@
 <?php
 
+use App\Providers\AiBrainServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\EventServiceProvider;
 use App\Providers\FortifyServiceProvider;
@@ -10,4 +11,5 @@ return [
     EventServiceProvider::class,
     FortifyServiceProvider::class,
     VoltServiceProvider::class,
+    AiBrainServiceProvider::class,
 ];
