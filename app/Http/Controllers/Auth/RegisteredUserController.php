@@ -21,7 +21,7 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $verificationCode = rand(100000, 999999);
+        $verificationCode = random_int(100000, 999999);
 
         $user = User::create([
             'name' => $request->name,
@@ -33,9 +33,9 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         try {
-            // Tenta enviar o e-mail
             Mail::to($user->email)->send(new VerifyAccountMail($verificationCode));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            report($e);
             return redirect()->back()->withErrors([
                 'email' => 'Não foi possível enviar a verificação. Tenta novamente.',
             ]);
