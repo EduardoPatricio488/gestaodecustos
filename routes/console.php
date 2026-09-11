@@ -3,6 +3,7 @@
 use App\Jobs\RunAiObserver;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\AI\AiReviewService;
 use App\Services\DailyReportService;
 use App\Services\MonthlyReportService;
 use App\Services\NotificationService;
@@ -43,7 +44,6 @@ Schedule::call(function () {
 })->dailyAt('08:30');
 
 // AI Observer: deterministic analysis runs asynchronously and is deduplicated by AiInsight.
-// Uses the existing default queue worker instead of introducing a new worker requirement.
 Schedule::call(function () {
     Workspace::query()
         ->select('id')
@@ -54,3 +54,22 @@ Schedule::call(function () {
             }
         });
 })->hourly();
+
+// AI reviews are deterministic backend summaries; they do not spend model tokens.
+Schedule::call(function () {
+    $service = app(AiReviewService::class);
+    Workspace::query()->select('id')->chunkById(100, function ($workspaces) use ($service) {
+        foreach ($workspaces as $workspace) {
+            $service->weekly($workspace);
+        }
+    });
+})->weeklyOn(1, '08:15');
+
+Schedule::call(function () {
+    $service = app(AiReviewService::class);
+    Workspace::query()->select('id')->chunkById(100, function ($workspaces) use ($service) {
+        foreach ($workspaces as $workspace) {
+            $service->monthly($workspace);
+        }
+    });
+})->monthlyOn(1, '08:20');
