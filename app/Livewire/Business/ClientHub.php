@@ -133,12 +133,7 @@ class ClientHub extends Component
         $client = auth()->user()->clients()->findOrFail($id);
 
         if (! $client->portal_token) {
-            do {
-                $passcode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-                $exists = Client::where('portal_token', $passcode)->exists();
-            } while ($exists);
-
-            $client->update(['portal_token' => $passcode]);
+            $client->update(['portal_token' => $this->generateUniquePortalToken()]);
             $client->refresh();
         }
 
@@ -173,14 +168,10 @@ class ClientHub extends Component
 
     /**
      * Returns pending public portal access requests for the current business workspace.
-     * The Client CRM uses this method to expose requests submitted from /portal/login.
      */
     public function getPendingAccessRequests(): array
     {
-        return PortalAccessRequest::query()
-            ->where('workspace_id', auth()->user()->current_workspace_id)
-            ->where('portal_type', 'client')
-            ->where('status', 'pending')
+        return $this->pendingAccessRequestsQuery()
             ->latest('requested_at')
             ->limit(50)
             ->get()
@@ -193,6 +184,101 @@ class ClientHub extends Component
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * Approves a public request, creates or reuses the CRM client, generates portal
+     * credentials and sends the credentials to the requester by email.
+     */
+    public function approveAccessRequest($id): void
+    {
+        $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
+
+        $taxNumber = preg_replace('/\D/', '', (string) $request->tax_number);
+        $taxNumber = substr($taxNumber, 0, 9);
+
+        $clientQuery = auth()->user()->clients();
+
+        $client = null;
+        if ($request->requester_email) {
+            $client = (clone $clientQuery)->where('email', $request->requester_email)->first();
+        }
+
+        if (! $client && $taxNumber) {
+            $client = (clone $clientQuery)->where('tax_number', $taxNumber)->first();
+        }
+
+        if (! $client) {
+            $client = Client::create([
+                'user_id' => auth()->id(),
+                'workspace_id' => auth()->user()->current_workspace_id,
+                'name' => $request->requester_name,
+                'legal_name' => $request->requester_name,
+                'tax_number' => $taxNumber ?: null,
+                'email' => $request->requester_email,
+                'status' => 'ativo',
+                'portal_token' => $this->generateUniquePortalToken(),
+            ]);
+        } else {
+            $client->update([
+                'name' => $client->name ?: $request->requester_name,
+                'email' => $client->email ?: $request->requester_email,
+                'tax_number' => $client->tax_number ?: ($taxNumber ?: null),
+                'status' => 'ativo',
+                'portal_token' => $client->portal_token ?: $this->generateUniquePortalToken(),
+            ]);
+            $client->refresh();
+        }
+
+        $portalUrl = route('client.portal', ['token' => $client->portal_token]);
+
+        Mail::to($client->email)->send(new ClientPortalAccessMail(
+            $client,
+            auth()->user()->currentWorkspace,
+            $client->portal_token,
+            $portalUrl,
+        ));
+
+        $request->update([
+            'status' => 'approved',
+            'responded_at' => now(),
+        ]);
+
+        $this->dispatch('toast', text: 'Pedido aprovado. Cliente criado e credenciais enviadas por email.', variant: 'success');
+        $this->dispatch('client-access-request-updated');
+    }
+
+    /**
+     * Rejects a public portal access request without creating a CRM client.
+     */
+    public function rejectAccessRequest($id): void
+    {
+        $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
+
+        $request->update([
+            'status' => 'rejected',
+            'responded_at' => now(),
+        ]);
+
+        $this->dispatch('toast', text: 'Pedido de acesso rejeitado.', variant: 'warning');
+        $this->dispatch('client-access-request-updated');
+    }
+
+    private function pendingAccessRequestsQuery()
+    {
+        return PortalAccessRequest::query()
+            ->where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('portal_type', 'client')
+            ->where('status', 'pending');
+    }
+
+    private function generateUniquePortalToken(): string
+    {
+        do {
+            $token = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        } while (Client::where('portal_token', $token)->exists());
+
+        return $token;
     }
 
     public function render()
