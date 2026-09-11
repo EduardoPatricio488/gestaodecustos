@@ -1,106 +1,13 @@
 <?php
-
 namespace App\Services;
-
-use App\Models\BankTransaction;
-use App\Models\CreditNote;
-use App\Models\Expense;
-use App\Models\Invoice;
-use App\Models\PaymentAllocation;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
-
+use App\Models\BankTransaction; use App\Models\CreditNote; use App\Models\Expense; use App\Models\Invoice; use App\Models\PaymentAllocation; use Illuminate\Support\Facades\DB; use Illuminate\Validation\ValidationException;
 class BusinessSettlementService
 {
-    public function receiveInvoice(Invoice $invoice, float $amount, ?int $bankAccountId = null, ?string $reference = null, ?string $paidAt = null): PaymentAllocation
-    {
-        $workspace = app(BusinessAccessService::class)->assertWorkspace();
-        $this->assertInvoiceWorkspace($invoice, $workspace->id);
-        $this->assertManageFinancials($workspace);
-
-        return DB::transaction(function () use ($invoice, $amount, $bankAccountId, $reference, $paidAt, $workspace) {
-            $invoice->refresh();
-            $credited = (float) $invoice->amount_credited;
-            $received = (float) $invoice->amount_paid;
-            $outstanding = max(0, (float) $invoice->total_amount - $credited - $received);
-            $amount = round($amount, 2);
-            if ($amount <= 0 || $amount > $outstanding) {
-                throw ValidationException::withMessages(['amount' => 'O valor recebido excede o saldo em aberto da fatura.']);
-            }
-            $this->assertBankAccount($bankAccountId, $workspace->id);
-            $allocation = PaymentAllocation::create([
-                'workspace_id'=>$workspace->id,'user_id'=>auth()->id(),'invoice_id'=>$invoice->id,
-                'bank_account_id'=>$bankAccountId,'amount'=>$amount,'currency'=>$invoice->currency,
-                'paid_at'=>$paidAt ?: now()->toDateString(),'reference'=>$reference,
-            ]);
-            $newPaid = round($received + $amount, 2);
-            $netDue = max(0, (float) $invoice->total_amount - $credited);
-            $invoice->update(['amount_paid'=>$newPaid,'status'=>$newPaid >= $netDue ? 'paga' : 'pendente','paid_at'=>$newPaid >= $netDue ? now() : null]);
-            return $allocation;
-        });
-    }
-
-    public function payExpense(Expense $expense, float $amount, ?int $bankAccountId = null, ?string $reference = null, ?string $paidAt = null): PaymentAllocation
-    {
-        $workspace = app(BusinessAccessService::class)->assertWorkspace();
-        if ((int) $expense->workspace_id !== (int) $workspace->id) abort(404);
-        $this->assertManageFinancials($workspace);
-        return DB::transaction(function () use ($expense, $amount, $bankAccountId, $reference, $paidAt, $workspace) {
-            $expense->refresh();
-            $outstanding = max(0, (float) $expense->amount - (float) $expense->amount_paid);
-            $amount = round($amount, 2);
-            if ($amount <= 0 || $amount > $outstanding) throw ValidationException::withMessages(['amount'=>'O pagamento excede o saldo da despesa.']);
-            $this->assertBankAccount($bankAccountId, $workspace->id);
-            $allocation = PaymentAllocation::create([
-                'workspace_id'=>$workspace->id,'user_id'=>auth()->id(),'expense_id'=>$expense->id,
-                'bank_account_id'=>$bankAccountId,'amount'=>$amount,'currency'=>$expense->currency ?: $workspace->currency,
-                'paid_at'=>$paidAt ?: now()->toDateString(),'reference'=>$reference,
-            ]);
-            $newPaid = round((float) $expense->amount_paid + $amount, 2);
-            $expense->update(['amount_paid'=>$newPaid,'status'=>$newPaid >= (float) $expense->amount ? 'paga' : $expense->status]);
-            return $allocation;
-        });
-    }
-
-    public function issueCreditNote(Invoice $invoice, float $amountExclVat, float $vatAmount, string $reason, string $number): CreditNote
-    {
-        $workspace = app(BusinessAccessService::class)->assertWorkspace();
-        $this->assertInvoiceWorkspace($invoice, $workspace->id);
-        $this->assertManageFinancials($workspace);
-        return DB::transaction(function () use ($invoice, $amountExclVat, $vatAmount, $reason, $number, $workspace) {
-            $invoice->refresh();
-            $alreadyCredited = (float) $invoice->amount_credited;
-            $totalCredit = round($amountExclVat + $vatAmount, 2);
-            $available = max(0, (float) $invoice->total_amount - $alreadyCredited);
-            if ($totalCredit <= 0 || $totalCredit > $available) throw ValidationException::withMessages(['amount'=>'A nota de crédito excede o valor ainda faturado.']);
-            $note = CreditNote::create([
-                'workspace_id'=>$workspace->id,'user_id'=>auth()->id(),'invoice_id'=>$invoice->id,'number'=>trim($number),
-                'amount_excl_vat'=>$amountExclVat,'vat_amount'=>$vatAmount,'currency'=>$invoice->currency,
-                'reason'=>trim($reason),'issued_at'=>now()->toDateString(),'status'=>'issued',
-            ]);
-            $invoice->update(['amount_credited'=>round($alreadyCredited + $totalCredit, 2)]);
-            return $note;
-        });
-    }
-
-    public function reconcile(BankTransaction $transaction, string $matchedType, int $matchedId): BankTransaction
-    {
-        $workspace = app(BusinessAccessService::class)->assertWorkspace();
-        if ((int) $transaction->workspace_id !== (int) $workspace->id) abort(404);
-        $this->assertManageFinancials($workspace);
-        $allowed = ['payment_allocation','invoice','expense'];
-        if (! in_array($matchedType, $allowed, true)) throw ValidationException::withMessages(['matched_type'=>'Tipo de reconciliação inválido.']);
-        $exists = match ($matchedType) {
-            'payment_allocation' => PaymentAllocation::where('workspace_id',$workspace->id)->whereKey($matchedId)->exists(),
-            'invoice' => Invoice::where('workspace_id',$workspace->id)->whereKey($matchedId)->exists(),
-            'expense' => Expense::where('workspace_id',$workspace->id)->whereKey($matchedId)->exists(),
-        };
-        if (! $exists) abort(404);
-        $transaction->update(['status'=>'reconciled','matched_type'=>$matchedType,'matched_id'=>$matchedId,'reconciled_at'=>now()]);
-        return $transaction->refresh();
-    }
-
-    private function assertInvoiceWorkspace(Invoice $invoice, int $workspaceId): void { if ((int) $invoice->workspace_id !== $workspaceId) abort(404); }
-    private function assertBankAccount(?int $id, int $workspaceId): void { if ($id && ! \App\Models\BankAccount::where('workspace_id',$workspaceId)->whereKey($id)->exists()) abort(404); }
-    private function assertManageFinancials($workspace): void { app(BusinessAccessService::class)->assert('manage_financials', auth()->user(), $workspace); }
+    public function receiveInvoice(Invoice $invoice,float $amount,?int $bankAccountId=null,?string $reference=null,?string $paidAt=null): PaymentAllocation { $workspace=app(BusinessAccessService::class)->assertWorkspace(); $this->assertInvoiceWorkspace($invoice,$workspace->id); $this->assertManageFinancials($workspace); return DB::transaction(function()use($invoice,$amount,$bankAccountId,$reference,$paidAt,$workspace){$invoice->refresh();$credited=(float)$invoice->amount_credited;$received=(float)$invoice->amount_paid;$outstanding=max(0,(float)$invoice->total_amount-$credited-$received);$amount=round($amount,2);if($amount<=0||$amount>$outstanding)throw ValidationException::withMessages(['amount'=>'O valor recebido excede o saldo em aberto da fatura.']);$this->assertBankAccount($bankAccountId,$workspace->id);$allocation=PaymentAllocation::create(['workspace_id'=>$workspace->id,'user_id'=>auth()->id(),'invoice_id'=>$invoice->id,'bank_account_id'=>$bankAccountId,'amount'=>$amount,'currency'=>$invoice->currency,'paid_at'=>$paidAt?:now()->toDateString(),'reference'=>$reference]);$newPaid=round($received+$amount,2);$netDue=max(0,(float)$invoice->total_amount-$credited);$invoice->update(['amount_paid'=>$newPaid,'status'=>$newPaid>=$netDue?'paga':'pendente','paid_at'=>$newPaid>=$netDue?now():null]);return $allocation;}); }
+    public function payExpense(Expense $expense,float $amount,?int $bankAccountId=null,?string $reference=null,?string $paidAt=null): PaymentAllocation { $workspace=app(BusinessAccessService::class)->assertWorkspace();if((int)$expense->workspace_id!==(int)$workspace->id)abort(404);$this->assertManageFinancials($workspace);return DB::transaction(function()use($expense,$amount,$bankAccountId,$reference,$paidAt,$workspace){$expense->refresh();$outstanding=max(0,(float)$expense->amount-(float)$expense->amount_paid);$amount=round($amount,2);if($amount<=0||$amount>$outstanding)throw ValidationException::withMessages(['amount'=>'O pagamento excede o saldo da despesa.']);$this->assertBankAccount($bankAccountId,$workspace->id);$allocation=PaymentAllocation::create(['workspace_id'=>$workspace->id,'user_id'=>auth()->id(),'expense_id'=>$expense->id,'bank_account_id'=>$bankAccountId,'amount'=>$amount,'currency'=>$expense->currency?:$workspace->currency,'paid_at'=>$paidAt?:now()->toDateString(),'reference'=>$reference]);$newPaid=round((float)$expense->amount_paid+$amount,2);$expense->update(['amount_paid'=>$newPaid,'status'=>$newPaid>=(float)$expense->amount?'paga':$expense->status]);return $allocation;}); }
+    public function issueCreditNote(Invoice $invoice,float $amountExclVat,float $vatAmount,string $reason,string $number): CreditNote { $workspace=app(BusinessAccessService::class)->assertWorkspace();$this->assertInvoiceWorkspace($invoice,$workspace->id);$this->assertManageFinancials($workspace);return DB::transaction(function()use($invoice,$amountExclVat,$vatAmount,$reason,$number,$workspace){$invoice->refresh();$alreadyCredited=(float)$invoice->amount_credited;$totalCredit=round($amountExclVat+$vatAmount,2);$available=max(0,(float)$invoice->total_amount-$alreadyCredited-(float)$invoice->amount_paid);if($totalCredit<=0||$totalCredit>$available)throw ValidationException::withMessages(['amount'=>'A nota de crédito excede o saldo ainda não liquidado da fatura.']);$note=CreditNote::create(['workspace_id'=>$workspace->id,'user_id'=>auth()->id(),'invoice_id'=>$invoice->id,'number'=>trim($number),'amount_excl_vat'=>$amountExclVat,'vat_amount'=>$vatAmount,'currency'=>$invoice->currency,'reason'=>trim($reason),'issued_at'=>now()->toDateString(),'status'=>'issued']);$invoice->update(['amount_credited'=>round($alreadyCredited+$totalCredit,2)]);return $note;}); }
+    public function reconcile(BankTransaction $transaction,string $matchedType,int $matchedId): BankTransaction { $workspace=app(BusinessAccessService::class)->assertWorkspace();if((int)$transaction->workspace_id!==(int)$workspace->id)abort(404);$this->assertManageFinancials($workspace);if(!in_array($matchedType,['payment_allocation','invoice','expense'],true))throw ValidationException::withMessages(['matched_type'=>'Tipo de reconciliação inválido.']);$exists=match($matchedType){'payment_allocation'=>PaymentAllocation::where('workspace_id',$workspace->id)->whereKey($matchedId)->exists(),'invoice'=>Invoice::where('workspace_id',$workspace->id)->whereKey($matchedId)->exists(),'expense'=>Expense::where('workspace_id',$workspace->id)->whereKey($matchedId)->exists()};if(!$exists)abort(404);$transaction->update(['status'=>'reconciled','matched_type'=>$matchedType,'matched_id'=>$matchedId,'reconciled_at'=>now()]);return $transaction->refresh(); }
+    private function assertInvoiceWorkspace(Invoice $invoice,int $workspaceId): void { if((int)$invoice->workspace_id!==$workspaceId)abort(404); }
+    private function assertBankAccount(?int $id,int $workspaceId): void { if($id&&!\App\Models\BankAccount::where('workspace_id',$workspaceId)->whereKey($id)->exists())abort(404); }
+    private function assertManageFinancials($workspace): void { app(BusinessAccessService::class)->assert('manage_financials',auth()->user(),$workspace); }
 }
