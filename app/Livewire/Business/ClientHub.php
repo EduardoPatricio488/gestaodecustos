@@ -6,6 +6,8 @@ use App\Mail\ClientPortalAccessMail;
 use App\Models\Client;
 use App\Models\PortalAccessRequest;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -16,31 +18,18 @@ class ClientHub extends Component
     use WithPagination;
 
     public $search = '';
-
     public $selectedClient = null;
-
     public $generatedPasscode = '';
-
     public $showModal = false;
-
     public $generatedPortalUrl = '';
-
     public $editingId = null;
-
     public $name;
-
     public $legal_name;
-
     public $tax_number;
-
     public $email;
-
     public $phone;
-
     public $status = 'ativo';
-
     public $address;
-
     public $notes;
 
     protected $rules = [
@@ -113,7 +102,6 @@ class ClientHub extends Component
         $this->status = $client->status;
         $this->address = $client->address;
         $this->notes = $client->notes;
-
         $this->dispatch('modal-show', name: 'client-modal');
     }
 
@@ -132,7 +120,9 @@ class ClientHub extends Component
     {
         $client = auth()->user()->clients()->findOrFail($id);
 
-        if (! $client->portal_token) {
+        // Portal credentials must have enough entropy to be unguessable online.
+        // Rotate legacy 6-digit tokens when the business user opens the credential modal.
+        if (! $client->portal_token || strlen((string) $client->portal_token) < 64) {
             $client->update(['portal_token' => $this->generateUniquePortalToken()]);
             $client->refresh();
         }
@@ -140,7 +130,6 @@ class ClientHub extends Component
         $this->clientTaxNumber = $client->tax_number;
         $this->generatedPasscode = $client->portal_token;
         $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
-
         $this->dispatch('modal-show', name: 'portal-link-modal');
     }
 
@@ -152,7 +141,6 @@ class ClientHub extends Component
 
         if (! $client->email) {
             $this->dispatch('toast', text: 'Este cliente não tem email registado.', variant: 'warning');
-
             return;
         }
 
@@ -166,9 +154,6 @@ class ClientHub extends Component
         $this->dispatch('toast', text: 'Código de acesso enviado para '.$client->email.'.', variant: 'success');
     }
 
-    /**
-     * Returns pending public portal access requests for the current business workspace.
-     */
     public function getPendingAccessRequests(): array
     {
         return $this->pendingAccessRequestsQuery()
@@ -186,24 +171,17 @@ class ClientHub extends Component
             ->all();
     }
 
-    /**
-     * Approves a public request, creates or reuses the CRM client, generates portal
-     * credentials and sends the credentials to the requester by email.
-     */
     public function approveAccessRequest($id): void
     {
         $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
-
         $taxNumber = preg_replace('/\D/', '', (string) $request->tax_number);
         $taxNumber = substr($taxNumber, 0, 9);
-
         $clientQuery = auth()->user()->clients();
-
         $client = null;
+
         if ($request->requester_email) {
             $client = (clone $clientQuery)->where('email', $request->requester_email)->first();
         }
-
         if (! $client && $taxNumber) {
             $client = (clone $clientQuery)->where('tax_number', $taxNumber)->first();
         }
@@ -231,7 +209,6 @@ class ClientHub extends Component
         }
 
         $portalUrl = route('client.portal', ['token' => $client->portal_token]);
-
         Mail::to($client->email)->send(new ClientPortalAccessMail(
             $client,
             auth()->user()->currentWorkspace,
@@ -239,27 +216,15 @@ class ClientHub extends Component
             $portalUrl,
         ));
 
-        $request->update([
-            'status' => 'approved',
-            'responded_at' => now(),
-        ]);
-
+        $request->update(['status' => 'approved', 'responded_at' => now()]);
         $this->dispatch('toast', text: 'Pedido aprovado. Cliente criado e credenciais enviadas por email.', variant: 'success');
         $this->dispatch('client-access-request-updated');
     }
 
-    /**
-     * Rejects a public portal access request without creating a CRM client.
-     */
     public function rejectAccessRequest($id): void
     {
         $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
-
-        $request->update([
-            'status' => 'rejected',
-            'responded_at' => now(),
-        ]);
-
+        $request->update(['status' => 'rejected', 'responded_at' => now()]);
         $this->dispatch('toast', text: 'Pedido de acesso rejeitado.', variant: 'warning');
         $this->dispatch('client-access-request-updated');
     }
@@ -275,7 +240,7 @@ class ClientHub extends Component
     private function generateUniquePortalToken(): string
     {
         do {
-            $token = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $token = Str::random(64);
         } while (Client::where('portal_token', $token)->exists());
 
         return $token;
