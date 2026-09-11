@@ -14,6 +14,10 @@ class EnsureBusinessWorkspaceAccess
         $path = $request->path();
         $access = app(BusinessAccessService::class);
 
+        if ($request->user()?->current_workspace_id && $access->workspace($request->user())) {
+            if ($path === 'receitas') return redirect()->route('hub.business.invoices');
+        }
+
         if (str_starts_with($path, 'empresa/')) {
             if (in_array($path, ['empresa/acesso', 'empresa/onboarding'], true)) return $next($request);
 
@@ -49,7 +53,6 @@ class EnsureBusinessWorkspaceAccess
                     'business.company-expenses' => 'view_business',
                     default => 'view_business',
                 };
-
                 $access->assert($permission, $request->user(), $workspace);
             }
         }
