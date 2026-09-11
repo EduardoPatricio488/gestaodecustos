@@ -19,6 +19,10 @@ use Illuminate\Support\Collection;
 class BancoService
 {
     private int $workspaceId;
+    private ?Collection $accountsCache = null;
+    private ?Collection $reservesCache = null;
+    private ?Collection $investmentsCache = null;
+    private ?Collection $patrimonyCache = null;
 
     public function __construct(int $workspaceId)
     {
@@ -126,7 +130,18 @@ class BancoService
 
     public function getAccounts(): Collection
     {
-        return BankAccount::where('workspace_id', $this->workspaceId)
+        if ($this->accountsCache !== null) {
+            return $this->accountsCache;
+        }
+
+        return $this->accountsCache = BankAccount::where('workspace_id', $this->workspaceId)
+            ->withSum('incomes as current_balance_income_total', 'amount')
+            ->withSum('expenses as current_balance_expense_total', 'amount')
+            ->withSum([
+                'recurringIncomes as current_balance_recurring_due' => fn ($query) => $query
+                    ->where('is_active', true)
+                    ->where('day_of_month', '<=', now()->day),
+            ], 'amount')
             ->orderBy('is_business')
             ->orderBy('name')
             ->get();
@@ -148,7 +163,11 @@ class BancoService
 
     public function getReserves(): Collection
     {
-        return BankReserve::where('workspace_id', $this->workspaceId)
+        if ($this->reservesCache !== null) {
+            return $this->reservesCache;
+        }
+
+        return $this->reservesCache = BankReserve::where('workspace_id', $this->workspaceId)
             ->orderBy('name')
             ->get();
     }
@@ -196,7 +215,11 @@ class BancoService
 
     public function getInvestments(): Collection
     {
-        return Investment::where('workspace_id', $this->workspaceId)->get();
+        if ($this->investmentsCache !== null) {
+            return $this->investmentsCache;
+        }
+
+        return $this->investmentsCache = Investment::where('workspace_id', $this->workspaceId)->get();
     }
 
     /* ══════════════════════════════════════════════════════════
@@ -205,7 +228,11 @@ class BancoService
 
     public function getPatrimony(): Collection
     {
-        return BankPatrimony::where('workspace_id', $this->workspaceId)
+        if ($this->patrimonyCache !== null) {
+            return $this->patrimonyCache;
+        }
+
+        return $this->patrimonyCache = BankPatrimony::where('workspace_id', $this->workspaceId)
             ->where('status', '!=', 'sold')
             ->orderBy('type')
             ->get();
