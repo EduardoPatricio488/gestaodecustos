@@ -46,7 +46,6 @@ class Categories extends Component
         return auth()->user()->currentWorkspace?->id ?? 0;
     }
 
-    // Inicializa as ordens se estiverem a null
     private function ensureOrdersAreSet()
     {
         $categories = Category::where('workspace_id', $this->workspaceId())
@@ -100,7 +99,6 @@ class Categories extends Component
 
     private function clearSidebarCache()
     {
-        // Limpa todas as possíveis chaves de cache que criámos para a sidebar
         Cache::forget("layout:user-categories:{$this->workspaceId()}");
         Cache::forget("layout:sidebar:categories:v100:{$this->workspaceId()}");
         Cache::forget("layout:sidebar:categories:v300:{$this->workspaceId()}");
@@ -116,10 +114,7 @@ class Categories extends Component
         ]);
 
         $maxOrder = Category::where('workspace_id', $this->workspaceId())->max('order') ?? 0;
-
         $slug = Str::slug($this->name, '-');
-
-        // Garante slug único no workspace
         $baseSlug = $slug;
         $i = 2;
         while (Category::where('workspace_id', $this->workspaceId())->where('slug', $slug)->exists()) {
@@ -144,8 +139,6 @@ class Categories extends Component
         return $this->redirect(route('categories'), navigate: true);
     }
 
-    // ... (restantes métodos update, delete, startEdit iguais ao anterior) ...
-
     public function update(): mixed
     {
         $this->validate([
@@ -156,42 +149,36 @@ class Categories extends Component
         ]);
 
         $category = Category::where('workspace_id', $this->workspaceId())->findOrFail($this->editingId);
-
-        // GERAR NOVO SLUG BASEADO NO NOVO NOME
         $newSlug = Str::slug($this->editName, '-');
-
-        // Garantir que o slug é único (se já existir outro igual, adiciona um número)
         $tempSlug = $newSlug;
         $i = 2;
         while (Category::where('workspace_id', $this->workspaceId())
             ->where('slug', $tempSlug)
-            ->where('id', '!=', $category->id) // Ignorar a própria categoria
+            ->where('id', '!=', $category->id)
             ->exists()) {
             $tempSlug = $newSlug.'-'.$i++;
         }
 
         $category->update([
             'name' => $this->editName,
-            'slug' => $tempSlug, // <--- ATUALIZA O ENDEREÇO AQUI
+            'slug' => $tempSlug,
             'color' => $this->editColor,
             'icon' => $this->editIcon,
             'budget_limit' => $this->editBudgetLimit,
         ]);
 
-        // Limpa a cache para a sidebar ler o novo link
         Cache::flush();
-
         $this->cancelEdit();
 
-        // Redireciona para atualizar as rotas
         return $this->redirect(route('categories'), navigate: true);
     }
 
     public function delete(int $id): mixed
     {
-        // 1. Procurar a categoria garantindo que pertence ao utilizador e não é fixa
-        $category = Category::where('user_id', auth()->id())
-            ->where('id', $id)
+        $category = Category::query()
+            ->where('workspace_id', $this->workspaceId())
+            ->where('user_id', auth()->id())
+            ->whereKey($id)
             ->where('is_fixed', false)
             ->first();
 
@@ -199,12 +186,10 @@ class Categories extends Component
             return null;
         }
 
-        // 2. Verificar se existem Subscrições ou Gastos associados
-        $hasSubscriptions = Subscription::where('category_id', $id)->exists();
-        $hasExpenses = Expense::where('category_id', $id)->exists();
+        $hasSubscriptions = Subscription::where('category_id', $category->id)->exists();
+        $hasExpenses = Expense::where('category_id', $category->id)->exists();
 
         if ($hasSubscriptions || $hasExpenses) {
-            // Dispara um aviso para o utilizador (Toast)
             $this->dispatch('toast',
                 text: 'Não podes apagar esta categoria porque existem gastos ou subscrições associadas a ela.',
                 variant: 'error'
@@ -213,10 +198,8 @@ class Categories extends Component
             return null;
         }
 
-        // 3. Se estiver limpa, apaga
         $category->delete();
         $this->clearSidebarCache();
-
         $this->dispatch('toast', text: 'Categoria eliminada com sucesso.');
 
         return $this->redirect(route('categories'), navigate: true);
@@ -229,7 +212,7 @@ class Categories extends Component
         $this->editName = $category->name;
         $this->editColor = $category->color ?? '#10b981';
         $this->editIcon = $category->icon ?? 'tag';
-        $this->editBudgetLimit = $category->budget_limit; // Carrega o plafond
+        $this->editBudgetLimit = $category->budget_limit;
     }
 
     public function cancelEdit()
@@ -247,10 +230,8 @@ class Categories extends Component
                 ->update(['order' => $item['order']]);
         }
 
-        // Limpa a cache para forçar a Sidebar a ler a nova ordem imediatamente
         Cache::flush();
 
-        // O navigate: true faz a página (e a sidebar) recarregar suavemente
         return $this->redirect(route('categories'), navigate: true);
     }
 
@@ -258,8 +239,6 @@ class Categories extends Component
     {
         $monthStart = Carbon::now()->startOfMonth();
 
-        // 1. Mostra apenas as categorias reais do workspace (exclui as internas criadas
-        // só para classificar assinaturas, que também não aparecem na sidebar).
         $categories = Category::where('workspace_id', $this->workspaceId())
             ->where('hidden_from_sidebar', false)
             ->withCount(['expenses as expenses_count' => fn ($q) => $q->where('workspace_id', $this->workspaceId())
