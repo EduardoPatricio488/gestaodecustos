@@ -20,19 +20,33 @@ class ManageExpense extends Component
     use WithFileUploads;
 
     public ?Expense $expense = null;
+
     public $amount;
+
     public $description;
+
     public $spent_at;
+
     public $category_id;
+
     public $subcategory;
+
     public $meta = [];
+
     public $currency = 'EUR';
+
     public $bankAccountId = '';
+
     public $receipt;
+
     public $previousUrl;
+
     public $isScanning = false;
+
     public $scannedData = [];
+
     public $scanSuccess = false;
+
     public $scanError = '';
 
     public array $hubConfigs = [
@@ -126,6 +140,7 @@ class ManageExpense extends Component
         if (! $this->receipt) {
             $this->scanError = 'Nenhum ficheiro selecionado.';
             $this->isScanning = false;
+
             return;
         }
 
@@ -237,6 +252,7 @@ PROMPT;
                 if ((float) $this->amount > $available) {
                     $this->addError('bankAccountId', 'Saldo insuficiente nesta conta.');
                     $this->dispatch('toast', variant: 'error', text: 'Saldo insuficiente em "'.$account->name.'": disponível '.number_format($available, 2, ',', '.').'€.');
+
                     return;
                 }
             }
