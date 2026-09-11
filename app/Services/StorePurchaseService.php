@@ -33,9 +33,14 @@ class StorePurchaseService
             }
 
             $purchase = StorePurchase::create([
-                'user_id' => $userId, 'product_id' => $product->id, 'amount_paid' => max(0, $amountPaid),
-                'payment_status' => 'completed', 'payment_method' => $paymentMethod, 'coupon_code' => $coupon?->code,
-                'discount_amount' => max(0, $discount), 'stripe_session_id' => $stripeSessionId,
+                'user_id' => $userId,
+                'product_id' => $product->id,
+                'amount_paid' => max(0, $amountPaid),
+                'payment_status' => 'completed',
+                'payment_method' => $paymentMethod,
+                'coupon_code' => $coupon?->code,
+                'discount_amount' => max(0, $discount),
+                'stripe_session_id' => $stripeSessionId,
             ]);
 
             $this->licenses->issue($purchase);
@@ -102,30 +107,53 @@ class StorePurchaseService
     {
         $purchases = DB::transaction(function () use ($pending, $stripeSessionId) {
             $locked = StoreCheckoutSession::where('id', $pending->id)->lockForUpdate()->first();
-            if (! $locked || $locked->status === 'completed') {
+
+            if (! $locked || $locked->status !== 'pending') {
                 return collect();
             }
+
+            if (! hash_equals((string) $locked->stripe_session_id, $stripeSessionId)) {
+                throw new \RuntimeException('A sessão Stripe não corresponde ao checkout pendente.');
+            }
+
             $coupon = $locked->coupon_code ? StoreCoupon::where('code', $locked->coupon_code)->first() : null;
             $purchases = collect();
+
             foreach ($locked->items as $index => $item) {
                 $product = StoreProduct::query()->where('is_active', true)->find($item['product_id']);
                 if (! $product) {
-                    continue;
+                    throw new \RuntimeException('Um produto do checkout deixou de estar disponível.');
                 }
-                $purchase = $this->completePurchase($product, (float) $item['amount_paid'], 'stripe', $index === 0 ? $coupon : null, 0, $locked->user_id, $stripeSessionId);
+
+                $amountPaid = max(0, (float) ($item['amount_paid'] ?? 0));
+                $purchase = $this->completePurchase(
+                    $product,
+                    $amountPaid,
+                    'stripe',
+                    $index === 0 ? $coupon : null,
+                    0,
+                    $locked->user_id,
+                    $stripeSessionId
+                );
                 $purchases->push($purchase);
+
                 if ($locked->add_expense_to_education && $purchase->wasRecentlyCreated) {
-                    $this->recordEducationExpense($product, (float) $item['amount_paid'], $locked->user_id);
+                    $this->recordEducationExpense($product, $amountPaid, $locked->user_id);
                 }
             }
-            $locked->update(['status' => 'completed', 'stripe_session_id' => $stripeSessionId]);
 
+            if ($purchases->isEmpty() && ! empty($locked->items)) {
+                throw new \RuntimeException('O checkout não contém produtos válidos.');
+            }
+
+            $locked->update(['status' => 'completed', 'stripe_session_id' => $stripeSessionId]);
             return $purchases->unique('id')->values();
         });
 
         if ($purchases->isEmpty()) {
             return;
         }
+
         $user = User::find($pending->user_id);
         if ($user) {
             try {
