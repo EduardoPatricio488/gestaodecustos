@@ -39,7 +39,6 @@ class Dashboard extends Component
 {
     public function formatInsight($text)
     {
-        // Mapeamento de cores para termos específicos
         $map = [
             'bitcoin' => '<span class="text-amber-400 font-black">'.$text.'</span>',
             'btc' => '<span class="text-amber-400 font-black">'.$text.'</span>',
@@ -64,49 +63,30 @@ class Dashboard extends Component
     }
 
     public $inviteCodeInput = '';
-
-    // Propriedades para Exportação PDF
     public $exportStart;
-
     public $exportEnd;
-
     public $exportExpenses = true;
-
     public $showSubSuggestion = false;
-
     public $suggestedName = '';
-
     public $suggestedPrice = 0;
-
     public $exportIncomes = true;
-
     public $includeReceipts = false;
-
     public $hideDescriptions = false;
-
-    public bool $privacyMode = false;         // false = valores visíveis ao entrar
-
-    public bool $showPrivacyModal = false;   // controla o modal
-
+    public bool $privacyMode = false;
+    public bool $showPrivacyModal = false;
     public string $privacyPassword = '';
-
-    // Preços de Mercado (Bitcoin, Ethereum, etc)
     public $marketPrices = [];
 
     public function mount()
     {
         $user = Auth::user();
         if (request()->query('checkout') === 'success') {
-            $user->refresh(); // Garante que o plano já está atualizado
-
-            // Rede de segurança: se o webhook do Stripe ainda não chegou, confirma
-            // diretamente com o Stripe através do session_id devolvido no redirect.
+            $user->refresh();
             $sessionId = (string) request()->query('session_id', '');
 
             if ($sessionId !== '') {
                 try {
                     $stripeSession = $user->stripe()->checkout->sessions->retrieve($sessionId);
-
                     if (($stripeSession->payment_status ?? null) === 'paid') {
                         app(SubscriptionCheckoutService::class)->activateFromStripeSession($stripeSession);
                         $user->refresh();
@@ -116,9 +96,7 @@ class Dashboard extends Component
                 }
             }
 
-            // Procuramos o plano real na base de dados pelo slug do utilizador
             $planRecord = SubscriptionPlan::where('slug', $user->plan)->first();
-
             if ($planRecord && $user->plan !== 'free') {
                 $this->suggestedName = 'Finance Pro '.$planRecord->name;
                 $this->suggestedPrice = $planRecord->price;
@@ -127,28 +105,20 @@ class Dashboard extends Component
         }
 
         $this->privacyMode = session('privacy_mode', false);
-        // 1. Verificação de Notificações Automáticas
         Cache::flexible("dashboard:notifications-checked:{$user->id}:".now()->toDateString(), [3600, 86400], function () use ($user) {
             NotificationService::checkAll($user);
-
             return true;
         });
-        // 🔥 NOVO: Detetar retorno do Stripe
 
-        // 2. Redirecionamento de Segurança para Admin Real
         if (in_array($user->role, ['admin', 'moderator', 'analyst']) && $user->email_verified_at && ! session()->has('admin_impersonation')) {
             return redirect()->route('admin.dashboard');
         }
 
-        // 3. Inicialização de Datas de Filtro
         $this->exportStart = now()->startOfMonth()->format('Y-m-d');
         $this->exportEnd = now()->endOfMonth()->format('Y-m-d');
 
-        // 4. PREÇOS DE MERCADO COM CACHE (atualiza a cada 5 minutos)
         $this->marketPrices = Cache::flexible('market_prices_all', [300, 1800], function () {
             $result = [];
-
-            // --- CRYPTO via CoinGecko (gratuito, sem chave) ---
             try {
                 $response = Http::connectTimeout(3)->timeout(6)->get('https://api.coingecko.com/api/v3/simple/price', [
                     'ids' => 'bitcoin,ethereum,solana,binancecoin,ripple,cardano,avalanche-2,polkadot,chainlink,dogecoin,matic-network,uniswap',
@@ -158,12 +128,9 @@ class Dashboard extends Component
                 if ($response->successful()) {
                     $data = $response->json();
                     $map = [
-                        'BTC' => 'bitcoin',      'ETH' => 'ethereum',
-                        'SOL' => 'solana',        'BNB' => 'binancecoin',
-                        'XRP' => 'ripple',        'ADA' => 'cardano',
-                        'AVAX' => 'avalanche-2',   'DOT' => 'polkadot',
-                        'LINK' => 'chainlink',     'DOGE' => 'dogecoin',
-                        'MATIC' => 'polygon-ecosystem-token', 'UNI' => 'uniswap',
+                        'BTC' => 'bitcoin', 'ETH' => 'ethereum', 'SOL' => 'solana', 'BNB' => 'binancecoin',
+                        'XRP' => 'ripple', 'ADA' => 'cardano', 'AVAX' => 'avalanche-2', 'DOT' => 'polkadot',
+                        'LINK' => 'chainlink', 'DOGE' => 'dogecoin', 'MATIC' => 'polygon-ecosystem-token', 'UNI' => 'uniswap',
                     ];
                     foreach ($map as $symbol => $id) {
                         if (isset($data[$id])) {
@@ -177,7 +144,6 @@ class Dashboard extends Component
             } catch (\Exception $e) {
             }
 
-            // --- AÇÕES, ETFs e COMMODITIES via Yahoo Finance (gratuito, sem chave) ---
             try {
                 $symbols = 'NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,NFLX,AMD,TSM,SPY,QQQ,VTI,VOO,IUSA.L,CSPX.L,VWCE.DE,GC=F,CL=F';
                 $response = Http::connectTimeout(1)->timeout(2)
@@ -189,13 +155,10 @@ class Dashboard extends Component
                 if ($response->successful()) {
                     $quotes = $response->json()['quoteResponse']['result'] ?? [];
                     $nameMap = [
-                        'NVDA' => 'NVDA',  'AAPL' => 'AAPL',  'MSFT' => 'MSFT',
-                        'AMZN' => 'AMZN',  'GOOGL' => 'GOOGL', 'META' => 'META',
-                        'TSLA' => 'TSLA',  'NFLX' => 'NFLX',  'AMD' => 'AMD',
-                        'TSM' => 'TSM',   'SPY' => 'SPY',   'QQQ' => 'QQQ',
-                        'VTI' => 'VTI',   'VOO' => 'VOO',   'IUSA.L' => 'IUSA',
-                        'CSPX.L' => 'CSPX',  'VWCE.DE' => 'VWCE',
-                        'GC=F' => 'GOLD',  'CL=F' => 'OIL',
+                        'NVDA' => 'NVDA', 'AAPL' => 'AAPL', 'MSFT' => 'MSFT', 'AMZN' => 'AMZN', 'GOOGL' => 'GOOGL',
+                        'META' => 'META', 'TSLA' => 'TSLA', 'NFLX' => 'NFLX', 'AMD' => 'AMD', 'TSM' => 'TSM',
+                        'SPY' => 'SPY', 'QQQ' => 'QQQ', 'VTI' => 'VTI', 'VOO' => 'VOO', 'IUSA.L' => 'IUSA',
+                        'CSPX.L' => 'CSPX', 'VWCE.DE' => 'VWCE', 'GC=F' => 'GOLD', 'CL=F' => 'OIL',
                     ];
                     foreach ($quotes as $quote) {
                         $sym = $quote['symbol'] ?? '';
@@ -212,7 +175,6 @@ class Dashboard extends Component
             return $result;
         });
 
-        // 5. AUTO-CONFIGURAÇÃO DE WORKSPACE (Para novos utilizadores)
         if (! $user->workspaces()->exists()) {
             $ws = Workspace::create([
                 'name' => 'Gestão de '.explode(' ', $user->name)[0],
@@ -220,39 +182,30 @@ class Dashboard extends Component
                 'owner_id' => $user->id,
                 'invite_code' => strtoupper(Str::random(8)),
             ]);
-
             $user->workspaces()->attach($ws->id, ['role' => 'admin']);
             $user->update(['current_workspace_id' => $ws->id]);
             $user->refresh();
 
-            // ── Criar categorias fixas para o novo utilizador ──────────
             $fixedCategories = [
-                'alimentacao' => ['name' => 'Alimentação',   'icon' => 'shopping-cart', 'color' => '#f59e0b', 'order' => 1],
-                'carro' => ['name' => 'Carro',          'icon' => 'truck',         'color' => '#3b82f6', 'order' => 2],
-                'casa' => ['name' => 'Casa',           'icon' => 'home',          'color' => '#10b981', 'order' => 3],
-                'educacao' => ['name' => 'Educação',       'icon' => 'academic-cap',  'color' => '#06b6d4', 'order' => 4],
-                'emprestimos' => ['name' => 'Empréstimos',    'icon' => 'banknotes',     'color' => '#84cc16', 'order' => 5],
-                'entretenimento' => ['name' => 'Entretenimento', 'icon' => 'film',          'color' => '#a855f7', 'order' => 6],
-                'saude' => ['name' => 'Saúde',          'icon' => 'heart',         'color' => '#ef4444', 'order' => 7],
-                'seguros' => ['name' => 'Seguros',        'icon' => 'shield-check',  'color' => '#0ea5e9', 'order' => 8],
-                'tecnologia' => ['name' => 'Tecnologia',     'icon' => 'cpu-chip',      'color' => '#6366f1', 'order' => 9],
-                'transporte' => ['name' => 'Transporte',     'icon' => 'bolt',          'color' => '#8b5cf6', 'order' => 10],
+                'alimentacao' => ['name' => 'Alimentação', 'icon' => 'shopping-cart', 'color' => '#f59e0b', 'order' => 1],
+                'carro' => ['name' => 'Carro', 'icon' => 'truck', 'color' => '#3b82f6', 'order' => 2],
+                'casa' => ['name' => 'Casa', 'icon' => 'home', 'color' => '#10b981', 'order' => 3],
+                'educacao' => ['name' => 'Educação', 'icon' => 'academic-cap', 'color' => '#06b6d4', 'order' => 4],
+                'emprestimos' => ['name' => 'Empréstimos', 'icon' => 'banknotes', 'color' => '#84cc16', 'order' => 5],
+                'entretenimento' => ['name' => 'Entretenimento', 'icon' => 'film', 'color' => '#a855f7', 'order' => 6],
+                'saude' => ['name' => 'Saúde', 'icon' => 'heart', 'color' => '#ef4444', 'order' => 7],
+                'seguros' => ['name' => 'Seguros', 'icon' => 'shield-check', 'color' => '#0ea5e9', 'order' => 8],
+                'tecnologia' => ['name' => 'Tecnologia', 'icon' => 'cpu-chip', 'color' => '#6366f1', 'order' => 9],
+                'transporte' => ['name' => 'Transporte', 'icon' => 'bolt', 'color' => '#8b5cf6', 'order' => 10],
             ];
 
             foreach ($fixedCategories as $slug => $data) {
                 Category::firstOrCreate(
                     ['user_id' => $user->id, 'workspace_id' => $ws->id, 'slug' => $slug],
-                    [
-                        'name' => $data['name'],
-                        'icon' => $data['icon'],
-                        'color' => $data['color'],
-                        'is_fixed' => true,
-                        'order' => $data['order'],
-                    ]
+                    ['name' => $data['name'], 'icon' => $data['icon'], 'color' => $data['color'], 'is_fixed' => true, 'order' => $data['order']]
                 );
             }
         }
-        // Garante que existe sempre um Workspace selecionado
         if (! $user->current_workspace_id) {
             $user->update(['current_workspace_id' => $user->workspaces()->first()->id]);
         }
@@ -276,20 +229,13 @@ class Dashboard extends Component
         }
     }
 
-    // Garante que o nome é exatamente unlockPrivacy
     public function unlockPrivacy()
     {
-        $this->validate([
-            'privacyPassword' => 'required',
-        ]);
-
-        // Verifica a password
+        $this->validate(['privacyPassword' => 'required']);
         if (Hash::check($this->privacyPassword, auth()->user()->password)) {
-            $this->privacyMode = false; // Desbloqueia os números
+            $this->privacyMode = false;
             $this->showPrivacyModal = false;
             $this->privacyPassword = '';
-
-            // Avisa o Alpine.js para tirar o blur no ecrã
             $this->dispatch('privacy-changed', state: false);
             $this->dispatch('toast', text: 'Privacidade desativada.');
         } else {
@@ -301,13 +247,10 @@ class Dashboard extends Component
     public function handlePrivacyToggle()
     {
         if (! $this->privacyMode) {
-            // Blur estava OFF → ativar livremente
             $this->privacyMode = true;
             $this->dispatch('privacy-changed', state: true);
-
             return;
         }
-        // Blur estava ON → pedir password para desativar
         $this->showPrivacyModal = true;
     }
 
@@ -320,15 +263,9 @@ class Dashboard extends Component
     public function greeting()
     {
         $hour = now()->hour;
-        if ($hour < 13) {
-            return 'Bom dia';
-        }
-        if ($hour < 19) {
-            return 'Boa tarde';
-        }
-
+        if ($hour < 13) return 'Bom dia';
+        if ($hour < 19) return 'Boa tarde';
         return 'Boa noite';
-
     }
 
     public function downloadCustomPdf()
@@ -339,7 +276,6 @@ class Dashboard extends Component
             'expenses' => $this->exportExpenses ? '1' : '0',
             'incomes' => $this->exportIncomes ? '1' : '0',
         ];
-
         return redirect()->to(route('export.dashboard.pdf').'?'.http_build_query($params));
     }
 
@@ -361,38 +297,22 @@ class Dashboard extends Component
     {
         $this->validate(['inviteCodeInput' => 'required|string|exists:workspaces,invite_code']);
         $workspace = Workspace::where('invite_code', $this->inviteCodeInput)->first();
-
         if ($workspace->users()->where('user_id', Auth::id())->exists()) {
             $this->dispatch('toast', variant: 'error', text: 'Já fazes parte desta conta.');
-
             return;
         }
-
         Auth::user()->workspaces()->attach($workspace->id, ['role' => 'member']);
         Auth::user()->update(['current_workspace_id' => $workspace->id]);
-
         return redirect()->route('dashboard');
     }
 
     public function switchWorkspace($id)
     {
         $user = Auth::user();
-
-        // 1. Procura o workspace na lista do utilizador
         $workspace = $user->workspaces()->find($id);
-
         if ($workspace) {
-            // 2. Atualiza o workspace ativo
             $user->update(['current_workspace_id' => $id]);
-
-            // 3. Redirecionamento Inteligente
-            if ($workspace->type === 'personal') {
-                // Se mudou para a conta pessoal, recarrega o Dashboard Pessoal
-                return redirect()->route('dashboard');
-            }
-
-            // Se for qualquer outro tipo (business/empresa), vai para a Dashboard de Empresa
-            // (O Laravel/Livewire já vai decidir se vês como CEO ou Colaborador lá)
+            if ($workspace->type === 'personal') return redirect()->route('dashboard');
             return redirect()->route('hub.business.dashboard');
         }
     }
@@ -400,186 +320,85 @@ class Dashboard extends Component
     #[Computed]
     public function aiInsights()
     {
-        $insights = [];
         $user = auth()->user();
         $currentWs = $user->currentWorkspace;
-        if (! $currentWs) {
-            return [];
-        }
+        if (! $currentWs) return [];
 
         return Cache::flexible(
             "dashboard:ai-insights:{$currentWs->id}:".now()->format('Y-m'),
             [120, 600],
             function () use ($currentWs) {
                 $insights = [];
+                try {
+                    $indices = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^GSPC,^IXIC,^GDAXI,^FCHI,^FTSE'])->json()['quoteResponse']['result'];
+                    foreach ($indices as $i) $insights[] = "ÍNDICE: {$i['shortName']} ".number_format($i['regularMarketPrice'], 2).' ('.number_format($i['regularMarketChangePercent'], 2).'%)';
+                } catch (\Exception $e) {}
+                try {
+                    $metals = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'GC=F,SI=F,PL=F,PA=F'])->json()['quoteResponse']['result'];
+                    foreach ($metals as $m) $insights[] = "METAIS: {$m['symbol']} ".number_format($m['regularMarketPrice'], 2).' ('.number_format($m['regularMarketChangePercent'], 2).'%)';
+                } catch (\Exception $e) {}
+                try {
+                    $energy = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'CL=F,NG=F,CO1.F'])->json()['quoteResponse']['result'];
+                    foreach ($energy as $e) $insights[] = "ENERGIA: {$e['symbol']} ".number_format($e['regularMarketPrice'], 2).' ('.number_format($e['regularMarketChangePercent'], 2).'%)';
+                } catch (\Exception $e) {}
+                try {
+                    $inflationEU = Http::get('https://api.worldbank.org/v2/country/EU/indicator/FP.CPI.TOTL.ZG?format=json')->json();
+                    if (isset($inflationEU[1][0]['value'])) $insights[] = 'MACRO: Inflação UE '.number_format($inflationEU[1][0]['value'], 1).'%';
+                } catch (\Exception $e) {}
+                try {
+                    $unemploymentPT = Http::get('https://api.worldbank.org/v2/country/PRT/indicator/SL.UEM.TOTL.ZS?format=json')->json();
+                    if (isset($unemploymentPT[1][0]['value'])) $insights[] = 'MACRO: Desemprego PT '.number_format($unemploymentPT[1][0]['value'], 1).'%';
+                } catch (\Exception $e) {}
+                try {
+                    $fx = Http::get('https://api.exchangerate.host/latest?base=EUR')->json();
+                    $insights[] = 'FX: EUR/JPY '.number_format($fx['rates']['JPY'], 2);
+                    $insights[] = 'FX: EUR/CHF '.number_format($fx['rates']['CHF'], 3);
+                    $insights[] = 'FX: EUR/AUD '.number_format($fx['rates']['AUD'], 3);
+                    $insights[] = 'FX: EUR/CAD '.number_format($fx['rates']['CAD'], 3);
+                } catch (\Exception $e) {}
+                try {
+                    $weather = Http::get('https://api.open-meteo.com/v1/forecast?latitude=38.7&longitude=-9.1&current_weather=true')->json();
+                    $temp = $weather['current_weather']['temperature'];
+                    $wind = $weather['current_weather']['windspeed'];
+                    $insights[] = "CLIMA: Lisboa {$temp}ºC • Vento {$wind}km/h";
+                } catch (\Exception $e) {}
+                try {
+                    $vix = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^VIX'])->json()['quoteResponse']['result'][0];
+                    $insights[] = 'RISCO: VIX '.number_format($vix['regularMarketPrice'], 2).' ('.number_format($vix['regularMarketChangePercent'], 2).'%)';
+                } catch (\Exception $e) {}
+                try {
+                    $bdi = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^BDI'])->json()['quoteResponse']['result'][0];
+                    $insights[] = 'LOGÍSTICA: Baltic Dry Index '.number_format($bdi['regularMarketPrice'], 0);
+                } catch (\Exception $e) {}
 
-        // -----------------------------------------
-        // 1) MERCADOS AVANÇADOS (S&P500, NASDAQ, DAX, CAC40, FTSE100)
-        // -----------------------------------------
-        try {
-            $indices = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', [
-                'symbols' => '^GSPC,^IXIC,^GDAXI,^FCHI,^FTSE',
-            ])->json()['quoteResponse']['result'];
-
-            foreach ($indices as $i) {
-                $insights[] = "ÍNDICE: {$i['shortName']} ".number_format($i['regularMarketPrice'], 2).' ('.number_format($i['regularMarketChangePercent'], 2).'%)';
-            }
-        } catch (\Exception $e) {
-        }
-
-        // -----------------------------------------
-        // 2) METAIS PRECIOSOS (Ouro, Prata, Platina, Paládio)
-        // -----------------------------------------
-        try {
-            $metals = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', [
-                'symbols' => 'GC=F,SI=F,PL=F,PA=F',
-            ])->json()['quoteResponse']['result'];
-
-            foreach ($metals as $m) {
-                $insights[] = "METAIS: {$m['symbol']} ".number_format($m['regularMarketPrice'], 2).' ('.number_format($m['regularMarketChangePercent'], 2).'%)';
-            }
-        } catch (\Exception $e) {
-        }
-
-        // -----------------------------------------
-        // 3) ENERGIA AVANÇADA (Petróleo, Gás, Carvão)
-        // -----------------------------------------
-        try {
-            $energy = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', [
-                'symbols' => 'CL=F,NG=F,CO1.F',
-            ])->json()['quoteResponse']['result'];
-
-            foreach ($energy as $e) {
-                $insights[] = "ENERGIA: {$e['symbol']} ".number_format($e['regularMarketPrice'], 2).' ('.number_format($e['regularMarketChangePercent'], 2).'%)';
-            }
-        } catch (\Exception $e) {
-        }
-
-        // -----------------------------------------
-        // 4) MACROECONOMIA AVANÇADA (UE + Portugal)
-        // -----------------------------------------
-        try {
-            $inflationEU = Http::get('https://api.worldbank.org/v2/country/EU/indicator/FP.CPI.TOTL.ZG?format=json')->json();
-            if (isset($inflationEU[1][0]['value'])) {
-                $insights[] = 'MACRO: Inflação UE '.number_format($inflationEU[1][0]['value'], 1).'%';
-            }
-        } catch (\Exception $e) {
-        }
-
-        try {
-            $unemploymentPT = Http::get('https://api.worldbank.org/v2/country/PRT/indicator/SL.UEM.TOTL.ZS?format=json')->json();
-            if (isset($unemploymentPT[1][0]['value'])) {
-                $insights[] = 'MACRO: Desemprego PT '.number_format($unemploymentPT[1][0]['value'], 1).'%';
-            }
-        } catch (\Exception $e) {
-        }
-
-        // -----------------------------------------
-        // 5) CÂMBIOS AVANÇADOS
-        // -----------------------------------------
-        try {
-            $fx = Http::get('https://api.exchangerate.host/latest?base=EUR')->json();
-            $insights[] = 'FX: EUR/JPY '.number_format($fx['rates']['JPY'], 2);
-            $insights[] = 'FX: EUR/CHF '.number_format($fx['rates']['CHF'], 3);
-            $insights[] = 'FX: EUR/AUD '.number_format($fx['rates']['AUD'], 3);
-            $insights[] = 'FX: EUR/CAD '.number_format($fx['rates']['CAD'], 3);
-        } catch (\Exception $e) {
-        }
-
-        // -----------------------------------------
-        // 6) CLIMA AVANÇADO (Lisboa)
-        // -----------------------------------------
-        try {
-            $weather = Http::get('https://api.open-meteo.com/v1/forecast?latitude=38.7&longitude=-9.1&current_weather=true')->json();
-            $temp = $weather['current_weather']['temperature'];
-            $wind = $weather['current_weather']['windspeed'];
-            $insights[] = "CLIMA: Lisboa {$temp}ºC • Vento {$wind}km/h";
-        } catch (\Exception $e) {
-        }
-
-        // -----------------------------------------
-        // 7) INDICADORES DE RISCO (VIX)
-        // -----------------------------------------
-        try {
-            $vix = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', [
-                'symbols' => '^VIX',
-            ])->json()['quoteResponse']['result'][0];
-
-            $insights[] = 'RISCO: VIX '.number_format($vix['regularMarketPrice'], 2).' ('.number_format($vix['regularMarketChangePercent'], 2).'%)';
-        } catch (\Exception $e) {
-        }
-
-        // -----------------------------------------
-        // 8) LOGÍSTICA GLOBAL (Baltic Dry Index)
-        // -----------------------------------------
-        try {
-            $bdi = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', [
-                'symbols' => '^BDI',
-            ])->json()['quoteResponse']['result'][0];
-
-            $insights[] = 'LOGÍSTICA: Baltic Dry Index '.number_format($bdi['regularMarketPrice'], 0);
-        } catch (\Exception $e) {
-        }
-
-        // -----------------------------------------
-        // 9) FINANÇAS PESSOAIS REAIS
-        // -----------------------------------------
-        $monthStart = now()->startOfMonth();
-        $monthEnd = now()->endOfMonth();
-
-        $categories = $this->buildCategoryBudgets($currentWs->id, $monthStart, $monthEnd);
-        $topCat = $categories->sortByDesc('total')->first();
-
-        if ($topCat && $topCat['total'] > 0) {
-            $insights[] = 'GASTOS: '.strtoupper($topCat['name']).' lidera despesas ('.number_format($topCat['total'], 0, ',', ' ').'€)';
-        }
-
-        $earned = Income::where('workspace_id', $currentWs->id)->whereBetween('received_at', [$monthStart, $monthEnd])->sum('amount');
-        $spent = Expense::where('workspace_id', $currentWs->id)->whereBetween('spent_at', [$monthStart, $monthEnd])->sum('amount');
-        $net = $earned - $spent;
-
-        $insights[] = 'FINANÇAS: Recebido '.number_format($earned, 0, ',', ' ').'€ • Gasto '.number_format($spent, 0, ',', ' ').'€';
-        $insights[] = 'FINANÇAS: Balanço '.($net > 0 ? '+' : '').number_format($net, 0, ',', ' ').'€';
-
-        if ($spent > $earned) {
-            $insights[] = 'ALERTA: Gastos superiores às receitas.';
-        }
-
-        // -----------------------------------------
-        // 10) SISTEMA / OPERACIONAL
-        // -----------------------------------------
-        $insights[] = 'SISTEMA: Sessão encriptada • Sync '.now()->format('H:i');
-        $insights[] = 'SISTEMA: IA a monitorizar padrões.';
-        $insights[] = 'SISTEMA: Todos os serviços operacionais.';
-        $insights[] = 'SISTEMA: Nenhum alerta crítico ativo.';
-
-        // -----------------------------------------
-        // 11) EXPANSÃO AUTOMÁTICA
-        // -----------------------------------------
-        $extra = [
-            'ANÁLISE: IA detectou estabilidade nos fluxos.',
-            'ANÁLISE: Mercado global sem variações abruptas.',
-            'ANÁLISE: Consumo dentro dos padrões normais.',
-            'ANÁLISE: Atividade empresarial consistente.',
-            'ANÁLISE: Dados sincronizados com sucesso.',
-            'ANÁLISE: Sistema a operar em modo otimizado.',
-            'ANÁLISE: Nenhuma anomalia financeira detetada.',
-            'ANÁLISE: IA prevê estabilidade para os próximos dias.',
-            'ANÁLISE: Tendência positiva nas últimas 48h.',
-            'ANÁLISE: Monitorização contínua ativa.',
-        ];
-
-        $insights = array_merge($insights, $extra);
-
-        // -----------------------------------------
-        // 12) ALEATORIEDADE + DUPLICAÇÃO INTELIGENTE
-        // -----------------------------------------
-        shuffle($insights);
-        $insights = array_unique($insights);
-        $insights = array_merge($insights, $insights);
-        shuffle($insights);
-
-        return $insights;
+                $monthStart = now()->startOfMonth();
+                $monthEnd = now()->endOfMonth();
+                $categories = $this->buildCategoryBudgets($currentWs->id, $monthStart, $monthEnd);
+                $topCat = $categories->sortByDesc('total')->first();
+                if ($topCat && $topCat['total'] > 0) $insights[] = 'GASTOS: '.strtoupper($topCat['name']).' lidera despesas ('.number_format($topCat['total'], 0, ',', ' ').'€)';
+                $earned = Income::where('workspace_id', $currentWs->id)->whereBetween('received_at', [$monthStart, $monthEnd])->sum('amount');
+                $spent = Expense::where('workspace_id', $currentWs->id)->whereBetween('spent_at', [$monthStart, $monthEnd])->sum('amount');
+                $net = $earned - $spent;
+                $insights[] = 'FINANÇAS: Recebido '.number_format($earned, 0, ',', ' ').'€ • Gasto '.number_format($spent, 0, ',', ' ').'€';
+                $insights[] = 'FINANÇAS: Balanço '.($net > 0 ? '+' : '').number_format($net, 0, ',', ' ').'€';
+                if ($spent > $earned) $insights[] = 'ALERTA: Gastos superiores às receitas.';
+                $insights[] = 'SISTEMA: Sessão encriptada • Sync '.now()->format('H:i');
+                $insights[] = 'SISTEMA: IA a monitorizar padrões.';
+                $insights[] = 'SISTEMA: Todos os serviços operacionais.';
+                $insights[] = 'SISTEMA: Nenhum alerta crítico ativo.';
+                $extra = [
+                    'ANÁLISE: IA detectou estabilidade nos fluxos.', 'ANÁLISE: Mercado global sem variações abruptas.',
+                    'ANÁLISE: Consumo dentro dos padrões normais.', 'ANÁLISE: Atividade empresarial consistente.',
+                    'ANÁLISE: Dados sincronizados com sucesso.', 'ANÁLISE: Sistema a operar em modo otimizado.',
+                    'ANÁLISE: Nenhuma anomalia financeira detetada.', 'ANÁLISE: IA prevê estabilidade para os próximos dias.',
+                    'ANÁLISE: Tendência positiva nas últimas 48h.', 'ANÁLISE: Monitorização contínua ativa.',
+                ];
+                $insights = array_merge($insights, $extra);
+                shuffle($insights);
+                $insights = array_unique($insights);
+                $insights = array_merge($insights, $insights);
+                shuffle($insights);
+                return $insights;
             }
         );
     }
@@ -588,23 +407,11 @@ class Dashboard extends Component
     {
         try {
             $response = Http::get('https://data360api.worldbank.org/data360/data', [
-                'DATABASE_ID' => 'WB_WDI',
-                'INDICATOR' => $indicator,
-                'REF_AREA' => $country,
-                'top' => 1,
+                'DATABASE_ID' => 'WB_WDI', 'INDICATOR' => $indicator, 'REF_AREA' => $country, 'top' => 1,
             ]);
-
             $data = $response->json();
-
-            if (! isset($data['value'][0]['OBS_VALUE'])) {
-                return null;
-            }
-
-            return [
-                'value' => $data['value'][0]['OBS_VALUE'],
-                'year' => $data['value'][0]['TIME_PERIOD'],
-                'desc' => $data['value'][0]['COMMENT_TS'] ?? null,
-            ];
+            if (! isset($data['value'][0]['OBS_VALUE'])) return null;
+            return ['value' => $data['value'][0]['OBS_VALUE'], 'year' => $data['value'][0]['TIME_PERIOD'], 'desc' => $data['value'][0]['COMMENT_TS'] ?? null];
         } catch (\Exception $e) {
             return null;
         }
@@ -615,274 +422,137 @@ class Dashboard extends Component
     {
         $user = auth()->user();
         $currentWs = $user->currentWorkspace;
-
-        // Identifica se tem plano Pro ou Business
         $isPremium = $user->isAnyPremium();
-
         $today = now()->startOfDay();
         $endDay = now()->endOfDay();
         $wsId = $currentWs->id;
-
-        if (! $isPremium) {
-            return ['is_premium' => false, 'expenses' => collect(), 'incomes' => collect(), 'fitness' => collect(), 'xp_today' => 0];
-        }
-
-        // 1. Finanças: Busca detalhada
+        if (! $isPremium) return ['is_premium' => false, 'expenses' => collect(), 'incomes' => collect(), 'fitness' => collect(), 'xp_today' => 0];
         $expenses = Expense::where('workspace_id', $wsId)->whereBetween('spent_at', [$today, $endDay])->get();
         $incomes = Income::where('workspace_id', $wsId)->whereBetween('received_at', [$today, $endDay])->get();
-
-        // 2. Saúde: Busca detalhada
-        $fitness = FitnessActivity::where('workspace_id', $wsId)
-            ->where('user_id', $user->id)
-            ->whereBetween('activity_date', [$today, $endDay])
-            ->get();
-
-        // 3. Foco: Lembretes concluídos hoje
-        $remindersDone = Reminder::where('workspace_id', $wsId)
-            ->where('is_completed', true)
-            ->whereBetween('updated_at', [$today, $endDay])
-            ->count();
-
-        // 4. Social: Interações recebidas hoje
-        $socialCount = SocialNotification::where('user_id', $user->id)
-            ->whereBetween('created_at', [$today, $endDay])
-            ->count();
-
-        // 5. XP: Cálculo de evolução
+        $fitness = FitnessActivity::where('workspace_id', $wsId)->where('user_id', $user->id)->whereBetween('activity_date', [$today, $endDay])->get();
+        $remindersDone = Reminder::where('workspace_id', $wsId)->where('is_completed', true)->whereBetween('updated_at', [$today, $endDay])->count();
+        $socialCount = SocialNotification::where('user_id', $user->id)->whereBetween('created_at', [$today, $endDay])->count();
         $xp = ($expenses->count() * 5) + ($fitness->count() * 50) + ($remindersDone * 15);
-
         return [
-            'is_premium' => true,
-            'expenses' => $expenses,
-            'incomes' => $incomes,
-            'fitness' => $fitness,
-            'reminders_count' => $remindersDone,
-            'social_count' => $socialCount,
-            'xp_today' => $xp,
-            'spend_total' => $expenses->sum('amount'),
-            'earn_total' => $incomes->sum('amount'),
-            'fitness_min' => $fitness->sum('duration_minutes'),
-            'fitness_kcal' => $fitness->sum('calories'),
+            'is_premium' => true, 'expenses' => $expenses, 'incomes' => $incomes, 'fitness' => $fitness,
+            'reminders_count' => $remindersDone, 'social_count' => $socialCount, 'xp_today' => $xp,
+            'spend_total' => $expenses->sum('amount'), 'earn_total' => $incomes->sum('amount'),
+            'fitness_min' => $fitness->sum('duration_minutes'), 'fitness_kcal' => $fitness->sum('calories'),
         ];
     }
 
     public function render()
     {
         $user = Auth::user();
-        $user->loadMissing([
-            'currentWorkspace.users:id,name',
-            'workspaces:id,name,type,currency',
-            'badges:id,name,color,icon',
-        ]);
-
+        $user->loadMissing(['currentWorkspace.users:id,name', 'workspaces:id,name,type,currency', 'badges:id,name,color,icon']);
         $currentWs = $user->currentWorkspace;
+        if (! $currentWs) return view('livewire.dashboard-loading');
 
-        if (! $currentWs) {
-            return view('livewire.dashboard-loading');
-        }
-
-        // --- CÁLCULOS FINANCEIROS DO MÊS ---
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
         $sixMonthsStart = now()->subMonths(5)->startOfMonth();
 
         $fixedIncome = (float) Cache::remember(
-            "dashboard:fixed-income:{$currentWs->id}:{$user->id}",
-            60,
-            fn () => $user->recurringIncomes()
-                ->where('workspace_id', $currentWs->id)
-                ->where('is_active', true)
-                ->sum('amount')
+            "dashboard:fixed-income:{$currentWs->id}:{$user->id}", 60,
+            fn () => $user->recurringIncomes()->where('workspace_id', $currentWs->id)->where('is_active', true)->sum('amount')
         );
 
         $monthTotals = Cache::remember("dashboard:month-totals:{$currentWs->id}:{$monthStart->toDateString()}", 60, function () use ($currentWs, $monthStart, $monthEnd) {
             return [
-                'expenses' => (float) Expense::where('workspace_id', $currentWs->id)
-                    ->whereBetween('spent_at', [$monthStart, $monthEnd])
-                    ->sum('amount'),
-                'income' => (float) Income::where('workspace_id', $currentWs->id)
-                    ->whereBetween('received_at', [$monthStart, $monthEnd])
-                    ->sum('amount'),
+                'expenses' => (float) Expense::where('workspace_id', $currentWs->id)->whereBetween('spent_at', [$monthStart, $monthEnd])->sum('amount'),
+                'income' => (float) Income::where('workspace_id', $currentWs->id)->whereBetween('received_at', [$monthStart, $monthEnd])->sum('amount'),
                 'budget' => (float) Category::where('workspace_id', $currentWs->id)->sum('budget_limit'),
             ];
         });
 
         $totalMonthExpenses = $monthTotals['expenses'];
         $totalMonthIncome = $monthTotals['income'] + $fixedIncome;
-
-        // --- VALORIZAÇÃO DE ATIVOS (PORTFOLIO) ---
         $portfolioValue = 0;
-        $myInvestments = Cache::remember(
-            "dashboard:investments:v2:{$currentWs->id}",
-            60,
-            fn () => Investment::where('workspace_id', $currentWs->id)
-                ->get(['id', 'workspace_id', 'symbol', 'quantity', 'current_price'])
-                ->map(fn ($investment) => [
-                    'symbol' => $investment->symbol,
-                    'quantity' => (float) $investment->quantity,
-                    'current_price' => (float) $investment->current_price,
-                ])
-                ->values()
-                ->all()
-        );
+        $myInvestments = Cache::remember("dashboard:investments:v2:{$currentWs->id}", 60, fn () => Investment::where('workspace_id', $currentWs->id)->get(['id', 'workspace_id', 'symbol', 'quantity', 'current_price'])->map(fn ($investment) => ['symbol' => $investment->symbol, 'quantity' => (float) $investment->quantity, 'current_price' => (float) $investment->current_price])->values()->all());
 
         foreach ($myInvestments as $inv) {
             $symbol = strtolower((string) data_get($inv, 'symbol', ''));
             $currentPrice = (float) data_get($inv, 'current_price', 0);
             $quantity = (float) data_get($inv, 'quantity', 0);
-
             $price = match ($symbol) {
                 'btc' => $this->marketPrices['bitcoin']['eur'] ?? $currentPrice,
                 'eth' => $this->marketPrices['ethereum']['eur'] ?? $currentPrice,
                 'sol' => $this->marketPrices['solana']['eur'] ?? $currentPrice,
                 'sp500', 'spx' => 5222.68,
                 'nvda' => 945.30,
-                default => $currentPrice
+                default => $currentPrice,
             };
             $portfolioValue += ($quantity * $price);
         }
 
-        // --- PREVISÃO INTELIGENTE ---
-        // As assinaturas (incluindo o plano Finance Pro) são custos fixos garantidos: contam sempre
-        // para o gasto projetado, mesmo que ainda não tenham sido lançados como despesas este mês.
-        $subscriptionsMonthlyCost = (float) Subscription::where('workspace_id', $currentWs->id)
-            ->get(['amount', 'cycle', 'status', 'is_active'])
-            ->filter(fn ($sub) => ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')
-            ->sum(fn ($sub) => SubscriptionCycleService::toMonthly((float) $sub->amount, $sub->cycle));
-
+        $subscriptionsMonthlyCost = (float) Cache::remember(
+            "dashboard:subscriptions-monthly:{$currentWs->id}", 60,
+            fn () => Subscription::where('workspace_id', $currentWs->id)->get(['amount', 'cycle', 'status', 'is_active'])->filter(fn ($sub) => ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')->sum(fn ($sub) => SubscriptionCycleService::toMonthly((float) $sub->amount, $sub->cycle))
+        );
         $platformPlanSlug = $user->currentPlanSlug();
-        if ($platformPlanSlug !== 'free') {
-            $subscriptionsMonthlyCost += (float) (SubscriptionPlan::where('slug', $platformPlanSlug)->value('price') ?? 0);
-        }
+        if ($platformPlanSlug !== 'free') $subscriptionsMonthlyCost += (float) (SubscriptionPlan::where('slug', $platformPlanSlug)->value('price') ?? 0);
 
-        // Dívidas/créditos por liquidar são compromissos garantidos: contam já para a projeção,
-        // tal como as assinaturas, mesmo antes de serem lançados como despesa/receita reais.
-        $pendingDebtsToPay = (float) Debt::where('workspace_id', $currentWs->id)
-            ->where('type', 'owe')
-            ->where('is_paid', false)
-            ->sum('amount');
-
-        $pendingDebtsToReceive = (float) Debt::where('workspace_id', $currentWs->id)
-            ->where('type', 'owed')
-            ->where('is_paid', false)
-            ->sum('amount');
-
-        // Gasto projetado = despesas já lançadas este mês + custos fixos garantidos (assinaturas e plano)
-        // + dívidas por pagar, sem extrapolar uma média diária (evita valores irreais logo nos primeiros dias do mês).
+        $pendingDebts = Cache::remember("dashboard:pending-debts:{$currentWs->id}", 60, fn () => [
+            'pay' => (float) Debt::where('workspace_id', $currentWs->id)->where('type', 'owe')->where('is_paid', false)->sum('amount'),
+            'receive' => (float) Debt::where('workspace_id', $currentWs->id)->where('type', 'owed')->where('is_paid', false)->sum('amount'),
+        ]);
+        $pendingDebtsToPay = $pendingDebts['pay'];
+        $pendingDebtsToReceive = $pendingDebts['receive'];
         $projectedExpenses = $totalMonthExpenses + $subscriptionsMonthlyCost + $pendingDebtsToPay;
         $projectedIncome = $totalMonthIncome + $pendingDebtsToReceive;
 
-        // Saldo bancário atual (todas as contas do workspace) para o Saldo Estimado refletir o que
-        // já existe na conta, e não apenas o fluxo isolado deste mês.
-        $totalBankBalance = (float) Cache::remember(
-            "dashboard:bank-balance:{$currentWs->id}",
-            60,
-            function () use ($currentWs): float {
-                $baseBalance = (float) BankAccount::where('workspace_id', $currentWs->id)
-                    ->sum('balance');
-
-                $incomeBalance = (float) Income::where('workspace_id', $currentWs->id)
-                    ->whereNotNull('bank_account_id')
-                    ->sum('amount');
-
-                $expenseBalance = (float) Expense::where('workspace_id', $currentWs->id)
-                    ->whereNotNull('bank_account_id')
-                    ->sum('amount');
-
-                return $baseBalance + $incomeBalance - $expenseBalance;
-            }
-        );
+        $totalBankBalance = (float) Cache::remember("dashboard:bank-balance:{$currentWs->id}", 60, function () use ($currentWs): float {
+            $baseBalance = (float) BankAccount::where('workspace_id', $currentWs->id)->where('include_in_total', true)->sum('balance');
+            $incomeBalance = (float) Income::where('workspace_id', $currentWs->id)->whereNotNull('bank_account_id')->sum('amount');
+            $expenseBalance = (float) Expense::where('workspace_id', $currentWs->id)->whereNotNull('bank_account_id')->sum('amount');
+            return $baseBalance + $incomeBalance - $expenseBalance;
+        });
 
         $projectedBalance = $totalBankBalance + $projectedIncome - $projectedExpenses;
         $projectionStatus = $projectedBalance < 0 ? 'critical' : ($projectedBalance < ($totalMonthIncome * 0.15) ? 'warning' : 'stable');
 
-        // --- RESUMO DA CONTA (widget premium) ---
-        $topBankAccounts = Cache::remember(
-            "dashboard:top-accounts:{$currentWs->id}",
-            60,
-            // Guarda um array simples (não uma Collection) para evitar corrupção ao
-            // fazer unserialize a partir da cache.
-            fn () => BankAccount::where('workspace_id', $currentWs->id)
-                ->get()
-                ->sortByDesc(fn ($account) => $account->current_balance)
-                ->take(3)
-                ->map(fn ($account) => [
-                    'name' => $account->name,
-                    'balance' => $account->current_balance,
-                    'icon' => $account->getIcon(),
-                    'color' => $account->color ?? '#6366f1',
-                ])
-                ->values()
-                ->all()
+        $topBankAccounts = Cache::remember("dashboard:top-accounts:{$currentWs->id}", 60, fn () => BankAccount::where('workspace_id', $currentWs->id)
+            ->withSum('incomes as current_balance_income_total', 'amount')
+            ->withSum('expenses as current_balance_expense_total', 'amount')
+            ->withSum(['recurringIncomes as current_balance_recurring_due' => fn ($query) => $query->where('is_active', true)->where('day_of_month', '<=', now()->day)], 'amount')
+            ->get(['id', 'name', 'balance', 'icon', 'color'])
+            ->map(fn ($account) => [
+                'name' => $account->name,
+                'balance' => $account->current_balance,
+                'icon' => $account->getIcon(),
+                'color' => $account->color ?? '#6366f1',
+            ])
+            ->sortByDesc('balance')->take(3)->values()->all()
         );
 
-        $topExpenseCategory = Cache::remember(
-            "dashboard:top-category:{$currentWs->id}:{$monthStart->toDateString()}",
-            60,
-            function () use ($currentWs, $monthStart, $monthEnd) {
-                $row = Expense::where('workspace_id', $currentWs->id)
-                    ->whereBetween('spent_at', [$monthStart, $monthEnd])
-                    ->select('category_id', DB::raw('SUM(amount) as total'))
-                    ->groupBy('category_id')
-                    ->orderByDesc('total')
-                    ->with('category:id,name,icon,color')
-                    ->first();
+        $topExpenseCategory = Cache::remember("dashboard:top-category:{$currentWs->id}:{$monthStart->toDateString()}", 60, function () use ($currentWs, $monthStart, $monthEnd) {
+            $row = Expense::where('workspace_id', $currentWs->id)->whereBetween('spent_at', [$monthStart, $monthEnd])->select('category_id', DB::raw('SUM(amount) as total'))->groupBy('category_id')->orderByDesc('total')->with('category:id,name,icon,color')->first();
+            if (! $row || ! $row->category) return null;
+            return ['name' => $row->category->name, 'total' => (float) $row->total];
+        });
 
-                if (! $row || ! $row->category) {
-                    return null;
-                }
-
-                // Guarda um array simples em vez do modelo Eloquent: cachear objetos com
-                // relações carregadas pode corromper-se ao fazer unserialize (incomplete object).
-                return [
-                    'name' => $row->category->name,
-                    'total' => (float) $row->total,
-                ];
-            }
-        );
-
-        // --- GRÁFICO (ÚLTIMOS 6 MESES) ---
-        $last6 = collect(Cache::remember(
-            "dashboard:last6:{$currentWs->id}:{$sixMonthsStart->toDateString()}:{$monthEnd->toDateString()}",
-            60,
-            fn () => $this->buildSixMonthSeries($currentWs->id, $sixMonthsStart, $monthEnd, $fixedIncome)->toArray()
-        ));
-
-        $byCategory = collect(Cache::remember(
-            "dashboard:category-budgets:{$currentWs->id}:{$monthStart->toDateString()}",
-            60,
-            fn () => $this->buildCategoryBudgets($currentWs->id, $monthStart, $monthEnd)->toArray()
-        ))->map(fn ($item) => (object) $item);
-
+        $last6 = collect(Cache::remember("dashboard:last6:{$currentWs->id}:{$sixMonthsStart->toDateString()}:{$monthEnd->toDateString()}", 60, fn () => $this->buildSixMonthSeries($currentWs->id, $sixMonthsStart, $monthEnd, $fixedIncome)->toArray()));
+        $byCategory = collect(Cache::remember("dashboard:category-budgets:{$currentWs->id}:{$monthStart->toDateString()}", 60, fn () => $this->buildCategoryBudgets($currentWs->id, $monthStart, $monthEnd)->toArray()))->map(fn ($item) => (object) $item);
         $overallScore = $this->calculateScore($totalMonthExpenses, $totalMonthIncome, $monthTotals['budget']);
 
-        // Score do mês anterior (mesma fórmula) para mostrar uma tendência real, em vez de um valor fixo.
         $prevMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
         $prevMonthEnd = $prevMonthStart->copy()->endOfMonth();
         $prevMonthTotals = Cache::remember("dashboard:month-totals:{$currentWs->id}:{$prevMonthStart->toDateString()}", 60, function () use ($currentWs, $prevMonthStart, $prevMonthEnd) {
             return [
-                'expenses' => (float) Expense::where('workspace_id', $currentWs->id)
-                    ->whereBetween('spent_at', [$prevMonthStart, $prevMonthEnd])
-                    ->sum('amount'),
-                'income' => (float) Income::where('workspace_id', $currentWs->id)
-                    ->whereBetween('received_at', [$prevMonthStart, $prevMonthEnd])
-                    ->sum('amount'),
+                'expenses' => (float) Expense::where('workspace_id', $currentWs->id)->whereBetween('spent_at', [$prevMonthStart, $prevMonthEnd])->sum('amount'),
+                'income' => (float) Income::where('workspace_id', $currentWs->id)->whereBetween('received_at', [$prevMonthStart, $prevMonthEnd])->sum('amount'),
                 'budget' => (float) Category::where('workspace_id', $currentWs->id)->sum('budget_limit'),
             ];
         });
         $prevOverallScore = $this->calculateScore($prevMonthTotals['expenses'], $prevMonthTotals['income'] + $fixedIncome, $prevMonthTotals['budget']);
         $overallScoreTrend = $overallScore - $prevOverallScore;
 
-        $financeScore = app(FinanceScoreService::class)->calculate($currentWs);
-        $wellnessInsights = app(WellnessFinanceService::class)->getInsights($currentWs);
+        $financeScore = Cache::remember("dashboard:finance-score:{$currentWs->id}", 60, fn () => app(FinanceScoreService::class)->calculate($currentWs));
+        $wellnessInsights = Cache::remember("dashboard:wellness:{$currentWs->id}", 60, fn () => app(WellnessFinanceService::class)->getInsights($currentWs));
         $storeEntitlements = app(StoreEntitlementService::class);
-
-        $totalSaved = (float) Cache::remember(
-            "dashboard:total-saved:{$currentWs->id}",
-            60,
-            fn () => Goal::where('workspace_id', $currentWs->id)->sum('current_amount')
-        );
-
+        $hasMarketWidget = Cache::remember("dashboard:entitlement:market:{$user->id}", 60, fn () => $storeEntitlements->hasWidget($user, 'mercado-global') || $user->isStar());
+        $ownedStoreSlugs = Cache::remember("dashboard:entitlements:{$user->id}", 60, fn () => $storeEntitlements->ownedSlugs($user));
+        $totalSaved = (float) Cache::remember("dashboard:total-saved:{$currentWs->id}", 60, fn () => Goal::where('workspace_id', $currentWs->id)->sum('current_amount'));
         $totalPatrimony = $totalBankBalance + $portfolioValue + $totalSaved;
 
         return view('livewire.dashboard', [
@@ -892,22 +562,16 @@ class Dashboard extends Component
             'overallScoreTrend' => $overallScoreTrend,
             'financeScore' => $financeScore,
             'wellnessInsights' => $wellnessInsights,
-            'hasWidgetMercado' => $storeEntitlements->hasWidget($user, 'mercado-global') || $user->isStar(),
-            'ownedStoreSlugs' => $storeEntitlements->ownedSlugs($user),
-
-            // Financeiro
+            'hasWidgetMercado' => $hasMarketWidget,
+            'ownedStoreSlugs' => $ownedStoreSlugs,
             'totalMonth' => $totalMonthExpenses,
             'totalIncomeMonth' => $projectedIncome,
             'netBalance' => $totalMonthIncome - $totalMonthExpenses,
             'portfolioValue' => $portfolioValue,
             'totalSaved' => $totalSaved,
-
-            // Previsão
             'projectedExpenses' => $projectedExpenses,
             'projectedBalance' => $projectedBalance,
             'projectionStatus' => $projectionStatus,
-
-            // Resumo da Conta (widget premium)
             'totalBankBalance' => $totalBankBalance,
             'totalPatrimony' => $totalPatrimony,
             'topBankAccounts' => $topBankAccounts,
@@ -915,41 +579,36 @@ class Dashboard extends Component
             'subscriptionsMonthlyCost' => $subscriptionsMonthlyCost,
             'pendingDebtsToPay' => $pendingDebtsToPay,
             'pendingDebtsToReceive' => $pendingDebtsToReceive,
-
-            'chartMax' => max(
-                $last6->max('spent') ?? 0,
-                $last6->max('earned') ?? 0,
-                1
-            ),
+            'chartMax' => max($last6->max('spent') ?? 0, $last6->max('earned') ?? 0, 1),
             'last6' => $last6,
             'byCategory' => $byCategory,
-            'recent' => Expense::with(['category:id,name', 'user:id,name'])
-                ->where('workspace_id', $currentWs->id)
-                ->latest('spent_at')
-                ->take(5)
-                ->get(['id', 'workspace_id', 'category_id', 'user_id', 'description', 'amount', 'spent_at']),
-
+            'recent' => Expense::with(['category:id,name', 'user:id,name'])->where('workspace_id', $currentWs->id)->latest('spent_at')->take(5)->get(['id', 'workspace_id', 'category_id', 'user_id', 'description', 'amount', 'spent_at']),
         ]);
     }
 
     private function buildSixMonthSeries(int $workspaceId, $start, $end, float $fixedIncome): Collection
     {
+        $driver = DB::connection()->getDriverName();
+        $expenseMonth = $driver === 'sqlite' ? "strftime('%Y-%m', spent_at)" : "DATE_FORMAT(spent_at, '%Y-%m')";
+        $incomeMonth = $driver === 'sqlite' ? "strftime('%Y-%m', received_at)" : "DATE_FORMAT(received_at, '%Y-%m')";
+
         $expenses = Expense::where('workspace_id', $workspaceId)
             ->whereBetween('spent_at', [$start, $end])
-            ->get(['amount', 'spent_at'])
-            ->groupBy(fn ($expense) => $expense->spent_at->format('Y-m'))
-            ->map(fn ($rows) => (float) $rows->sum('amount'));
+            ->selectRaw("{$expenseMonth} as month, SUM(amount) as total")
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->map(fn ($value) => (float) $value);
 
         $incomes = Income::where('workspace_id', $workspaceId)
             ->whereBetween('received_at', [$start, $end])
-            ->get(['amount', 'received_at'])
-            ->groupBy(fn ($income) => $income->received_at->format('Y-m'))
-            ->map(fn ($rows) => (float) $rows->sum('amount'));
+            ->selectRaw("{$incomeMonth} as month, SUM(amount) as total")
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->map(fn ($value) => (float) $value);
 
         return collect(range(5, 0))->map(function ($i) use ($expenses, $incomes, $fixedIncome) {
             $month = now()->subMonths($i);
             $key = $month->format('Y-m');
-
             return [
                 'label' => $month->translatedFormat('M'),
                 'spent' => (float) ($expenses[$key] ?? 0),
@@ -960,33 +619,13 @@ class Dashboard extends Component
 
     private function buildCategoryBudgets(int $workspaceId, $monthStart, $monthEnd): Collection
     {
-        return Category::query()
-            ->leftJoin('expenses', function ($join) use ($workspaceId, $monthStart, $monthEnd) {
-                $join->on('expenses.category_id', '=', 'categories.id')
-                    ->where('expenses.workspace_id', '=', $workspaceId)
-                    ->whereBetween('expenses.spent_at', [$monthStart, $monthEnd]);
-            })
-            ->where('categories.workspace_id', $workspaceId)
-            ->where('categories.budget_limit', '>', 0)
-            ->groupBy('categories.id', 'categories.name', 'categories.budget_limit')
-            ->orderByDesc(DB::raw('COALESCE(SUM(expenses.amount), 0)'))
-            ->get([
-                'categories.name',
-                'categories.budget_limit',
-                DB::raw('COALESCE(SUM(expenses.amount), 0) as total'),
-            ])
-            ->map(function ($cat) {
-                $spent = (float) $cat->total;
-                $budget = (float) $cat->budget_limit;
-
-                return [
-                    'name' => $cat->name,
-                    'total' => $spent,
-                    'budget' => $budget,
-                    'percentage' => $budget > 0 ? min(($spent / $budget) * 100, 100) : 0,
-                    'over' => $spent > $budget,
-                ];
-            });
+        return Category::query()->leftJoin('expenses', function ($join) use ($workspaceId, $monthStart, $monthEnd) {
+            $join->on('expenses.category_id', '=', 'categories.id')->where('expenses.workspace_id', '=', $workspaceId)->whereBetween('expenses.spent_at', [$monthStart, $monthEnd]);
+        })->where('categories.workspace_id', $workspaceId)->where('categories.budget_limit', '>', 0)->groupBy('categories.id', 'categories.name', 'categories.budget_limit')->orderByDesc(DB::raw('COALESCE(SUM(expenses.amount), 0)'))->get(['categories.name', 'categories.budget_limit', DB::raw('COALESCE(SUM(expenses.amount), 0) as total')])->map(function ($cat) {
+            $spent = (float) $cat->total;
+            $budget = (float) $cat->budget_limit;
+            return ['name' => $cat->name, 'total' => $spent, 'budget' => $budget, 'percentage' => $budget > 0 ? min(($spent / $budget) * 100, 100) : 0, 'over' => $spent > $budget];
+        });
     }
 
     private function calculateScore(float $spent, float $earned, float $budget): int
@@ -995,7 +634,6 @@ class Dashboard extends Component
         $savingsRate = $earned > 0 ? ($net / $earned) * 100 : 0;
         $budgetAdherence = $budget > 0 ? (1 - (min($spent, $budget) / $budget)) * 100 : 100;
         $score = ($savingsRate * 0.7) + ($budgetAdherence * 0.3) + 20;
-
         return (int) max(0, min(100, $score));
     }
 }
