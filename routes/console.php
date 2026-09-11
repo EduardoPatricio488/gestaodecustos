@@ -43,13 +43,14 @@ Schedule::call(function () {
 })->dailyAt('08:30');
 
 // AI Observer: deterministic analysis runs asynchronously and is deduplicated by AiInsight.
+// Uses the existing default queue worker instead of introducing a new worker requirement.
 Schedule::call(function () {
     Workspace::query()
         ->select('id')
         ->orderBy('id')
         ->chunkById(100, function ($workspaces) {
             foreach ($workspaces as $workspace) {
-                RunAiObserver::dispatch($workspace->id)->onQueue('ai-observer');
+                RunAiObserver::dispatch($workspace->id);
             }
         });
 })->hourly();
