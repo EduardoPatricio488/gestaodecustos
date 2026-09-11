@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\AiActionLog;
 use App\Models\AiConversation;
 use App\Models\Workspace;
 use App\Services\AI\AiBrainService;
@@ -107,8 +108,6 @@ class AiCopilot extends Component
                 fn (array $action) => (int) ($action['id'] ?? 0) !== $actionId
             ));
 
-            // Force the current page/components to refresh their server-side data
-            // after the AI writes to the database.
             $this->dispatch('finance-pro-data-changed', actionId: $actionId);
         } catch (\Throwable $e) {
             report($e);
@@ -182,15 +181,24 @@ class AiCopilot extends Component
                 'metadata' => $message->metadata,
             ])->values()->all();
 
-        $latest = $conversation->messages()
-            ->where('role', 'assistant')
+        // The action log is the source of truth. Never resurrect an already
+        // completed/failed write just because an older assistant message still
+        // contains its original preview metadata.
+        $this->pendingActions = AiActionLog::query()
+            ->where('user_id', Auth::id())
+            ->where('workspace_id', $this->loadedWorkspaceId)
+            ->where('status', 'awaiting_confirmation')
             ->latest('id')
-            ->first();
-
-        $metadataActions = $latest?->metadata['pending_actions'] ?? [];
-        if (is_array($metadataActions)) {
-            $this->pendingActions = array_values($metadataActions);
-        }
+            ->limit(20)
+            ->get()
+            ->map(fn (AiActionLog $action) => [
+                'id' => $action->id,
+                'token' => $action->confirmation_token,
+                'tool' => $action->tool_name,
+                'title' => $action->result_payload['title'] ?? 'Confirmar ação',
+                'summary' => $action->result_payload['summary'] ?? $action->tool_name,
+                'details' => $action->result_payload['details'] ?? [],
+            ])->values()->all();
     }
 
     public function render()
