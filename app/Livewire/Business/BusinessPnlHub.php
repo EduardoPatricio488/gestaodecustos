@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Business;
 
+use App\Services\BusinessFinancialMetrics;
+use Illuminate\Support\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -10,84 +12,39 @@ class BusinessPnlHub extends Component
 {
     public $year;
 
-    public function mount()
-    {
-        $this->year = now()->year;
-    }
+    public function mount(): void { $this->year = now()->year; }
 
-    public function setYear($year)
-    {
-        $this->year = $year;
-    }
+    public function setYear($year): void { $this->year = (int) $year; }
 
     public function render()
     {
         $workspace = auth()->user()->currentWorkspace;
-
         if (! $workspace) {
             return <<<'HTML'
                 <div class="p-10 text-center italic text-zinc-500">Nenhum workspace empresarial selecionado.</div>
             HTML;
         }
 
-        // 1. CONSOLIDAÇÃO MENSAL (12 Meses)
-        $monthlyData = collect(range(1, 12))->map(function ($month) use ($workspace) {
-            // Receitas (Faturas Pagas)
-            $revenue = (float) $workspace->invoices()
-                ->whereYear('created_at', $this->year)
-                ->whereMonth('created_at', $month)
-                ->where('status', 'paga')
-                ->sum('total_amount');
-
-            // Custos Operacionais (is_company = true)
-            $opEx = (float) $workspace->expenses()
-                ->where('is_company', true)
-                ->whereYear('spent_at', $this->year)
-                ->whereMonth('spent_at', $month)
-                ->sum('amount');
-
-            // Custos de Pessoal (Payroll)
-            // Assumimos que o custo salarial é recorrente mensalmente
-            $payroll = (float) $workspace->employees()->sum('salary');
-
-            // Impostos (IVA Estimado do Mês)
-            $vatIn = (float) $workspace->invoices()
-                ->whereYear('created_at', $this->year)
-                ->whereMonth('created_at', $month)
-                ->sum('vat_amount');
-
-            $vatOut = (float) $workspace->expenses()
-                ->where('is_company', true)
-                ->whereYear('spent_at', $this->year)
-                ->whereMonth('spent_at', $month)
-                ->sum('vat_amount');
-
-            $netVat = max(0, $vatIn - $vatOut);
-
-            $grossProfit = $revenue - $opEx - $payroll;
-            $netProfit = $grossProfit - ($grossProfit > 0 ? ($grossProfit * 0.21) : 0); // Estimativa de IRC
-
-            return [
-                'month_name' => mb_convert_case(now()->month($month)->translatedFormat('F'), MB_CASE_TITLE),
-                'revenue' => $revenue,
-                'costs' => $opEx + $payroll,
-                'vat' => $netVat,
-                'profit' => $netProfit,
-                'margin' => $revenue > 0 ? ($netProfit / $revenue) * 100 : 0,
-            ];
-        });
-
-        // 2. TOTAIS ANUAIS
-        $yearlyRevenue = $monthlyData->sum('revenue');
-        $yearlyProfit = $monthlyData->sum('profit');
-        $avgMargin = $monthlyData->where('revenue', '>', 0)->avg('margin') ?? 0;
+        $monthlyData = collect(app(BusinessFinancialMetrics::class)->forYear($workspace, (int) $this->year))
+            ->map(function (array $row, int $index) {
+                $month = $index + 1;
+                return [
+                    'month_name' => mb_convert_case(Carbon::create((int) $this->year, $month, 1)->translatedFormat('F'), MB_CASE_TITLE),
+                    'revenue' => $row['revenue_cash'],
+                    'costs' => $row['total_costs'],
+                    'vat' => 0,
+                    'profit' => $row['net_result'],
+                    'margin' => $row['margin'],
+                ];
+            });
 
         return view('livewire.business.business-pnl-hub', [
             'monthlyData' => $monthlyData,
-            'yearlyRevenue' => $yearlyRevenue,
-            'yearlyProfit' => $yearlyProfit,
-            'avgMargin' => $avgMargin,
+            'yearlyRevenue' => round($monthlyData->sum('revenue'), 2),
+            'yearlyProfit' => round($monthlyData->sum('profit'), 2),
+            'avgMargin' => round($monthlyData->where('revenue', '>', 0)->avg('margin') ?? 0, 2),
             'chartMax' => max($monthlyData->max('revenue'), $monthlyData->max('costs'), 1),
+            'fiscalDisclaimer' => 'Resultado operacional baseado nos dados registados e em base de caixa. Não substitui a contabilidade oficial nem representa um cálculo fiscal definitivo.',
         ]);
     }
 }
