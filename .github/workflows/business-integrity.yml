@@ -14,6 +14,9 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          tools: composer:v2
+      - name: Validate Composer
+        run: composer validate --strict
       - name: Validate PHP syntax
         shell: bash
         run: |
@@ -40,5 +43,7 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
-      - name: Run business regression tests
-        run: php artisan test --filter='Business(FinancialIntegrity|Authorization|Metrics|Settlement)Test' --without-tty
+      - name: Run Pint check
+        run: ./vendor/bin/pint --parallel --test
+      - name: Run full Laravel test suite
+        run: php artisan test --without-tty
