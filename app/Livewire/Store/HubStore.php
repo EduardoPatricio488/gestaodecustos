@@ -37,8 +37,21 @@ class HubStore extends Component
 
     public bool $onlyFeatured = false;
 
+    public function mount(): void
+    {
+        if ($this->activeTab === 'business' && ! Auth::user()->isBusinessPlan()) {
+            $this->redirect(route('hub.store', ['tab' => 'all']), navigate: true);
+        }
+    }
+
     public function setTab(string $tab): void
     {
+        if ($tab === 'business' && ! Auth::user()->isBusinessPlan()) {
+            $this->dispatch('toast', variant: 'error', text: 'A Área Empresarial da loja requer o plano Business.');
+
+            return;
+        }
+
         $this->activeTab = $tab;
     }
 
