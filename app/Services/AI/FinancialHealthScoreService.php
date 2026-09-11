@@ -9,17 +9,20 @@ class FinancialHealthScoreService
     public function personal(Workspace $workspace): array
     {
         $snapshot = app(FinancialIntelligenceService::class)->snapshot($workspace);
-        $income = (float) data_get($snapshot, 'personal.income.current', 0);
-        $expenses = (float) data_get($snapshot, 'personal.expenses.current', 0);
-        $savingsRate = $income > 0 ? (($income - $expenses) / $income) * 100 : 0;
+        $income = (float) data_get($snapshot, 'income', 0);
+        $expenses = (float) data_get($snapshot, 'expenses', 0);
+        $savingsRate = (float) data_get($snapshot, 'savings_rate', 0);
+        $goals = count((array) data_get($snapshot, 'goals', []));
+        $investments = (float) data_get($snapshot, 'investment_value', 0);
+        $subscriptions = (int) data_get($snapshot, 'active_subscriptions', 0);
 
         $score = 0;
         if ($income > 0) {
             $score += max(0, min(40, $savingsRate * 0.8));
             $score += $expenses <= $income ? 25 : 0;
-            $score += data_get($snapshot, 'personal.goals.active', 0) > 0 ? 10 : 0;
-            $score += data_get($snapshot, 'personal.investments.total_value', 0) > 0 ? 10 : 0;
-            $score += data_get($snapshot, 'personal.subscriptions.active', 0) <= 5 ? 10 : 0;
+            $score += $goals > 0 ? 10 : 0;
+            $score += $investments > 0 ? 10 : 0;
+            $score += $subscriptions <= 5 ? 10 : 0;
             $score += $savingsRate >= 20 ? 5 : 0;
         }
 
@@ -28,31 +31,26 @@ class FinancialHealthScoreService
             'label' => $this->label($score),
             'savings_rate' => round($savingsRate, 1),
             'method' => 'deterministic_backend_v1',
-            'inputs' => [
-                'income' => $income,
-                'expenses' => $expenses,
-                'active_goals' => (int) data_get($snapshot, 'personal.goals.active', 0),
-                'investments' => (float) data_get($snapshot, 'personal.investments.total_value', 0),
-                'active_subscriptions' => (int) data_get($snapshot, 'personal.subscriptions.active', 0),
-            ],
+            'inputs' => compact('income', 'expenses', 'goals', 'investments', 'subscriptions'),
         ];
     }
 
     public function business(Workspace $workspace): array
     {
         $snapshot = app(FinancialIntelligenceService::class)->snapshot($workspace);
-        $revenue = (float) data_get($snapshot, 'business.revenue.current', 0);
-        $costs = (float) data_get($snapshot, 'business.costs.current', 0);
-        $margin = $revenue > 0 ? (($revenue - $costs) / $revenue) * 100 : 0;
-        $runway = (float) data_get($snapshot, 'business.runway_months', 0);
+        $metrics = (array) data_get($snapshot, 'metrics', []);
+        $revenue = (float) data_get($metrics, 'revenue_cash', 0);
+        $costs = (float) data_get($metrics, 'total_costs', 0);
+        $margin = (float) data_get($metrics, 'margin', 0);
+        $runway = (float) data_get($snapshot, 'runway', 0);
+        $overdue = (int) data_get($metrics, 'overdue_invoices', 0);
 
         $score = 0;
         if ($revenue > 0) {
             $score += max(0, min(45, $margin * 1.2));
             $score += $revenue >= $costs ? 20 : 0;
             $score += $runway >= 6 ? 20 : ($runway >= 3 ? 10 : 0);
-            $score += data_get($snapshot, 'business.clients.active', 0) > 0 ? 5 : 0;
-            $score += data_get($snapshot, 'business.invoices.overdue', 0) === 0 ? 10 : 0;
+            $score += $overdue === 0 ? 15 : 0;
         }
 
         return [
