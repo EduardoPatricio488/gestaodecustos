@@ -21,7 +21,7 @@ class HubStore extends Component
     use InteractsWithStore;
 
     #[Url(as: 'tab')]
-    public string $activeTab = 'all';
+    public string $activeTab = 'personal';
 
     #[Url(as: 'q')]
     public string $search = '';
@@ -40,7 +40,7 @@ class HubStore extends Component
     public function mount(): void
     {
         if ($this->activeTab === 'business' && ! Auth::user()->isBusinessPlan()) {
-            $this->redirect(route('hub.store', ['tab' => 'all']), navigate: true);
+            $this->redirect(route('hub.store', ['tab' => 'personal']), navigate: true);
         }
     }
 
