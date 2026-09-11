@@ -1,58 +1,44 @@
 name: business-integrity
-
 on:
   push:
     branches: [main, master, develop]
   pull_request:
     branches: [main, master, develop]
-
 jobs:
   php-syntax:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-
       - name: Validate PHP syntax
         shell: bash
         run: |
           set -euo pipefail
           files=$(git diff --name-only HEAD^ HEAD -- '*.php' || true)
-          if [ -z "$files" ]; then
-            echo "No PHP files changed in this commit."
-            exit 0
-          fi
-          while IFS= read -r file; do
-            [ -f "$file" ] && php -l "$file"
-          done <<< "$files"
-
+          if [ -z "$files" ]; then echo "No PHP files changed in this commit."; exit 0; fi
+          while IFS= read -r file; do [ -f "$file" ] && php -l "$file"; done <<< "$files"
   business-tests:
     runs-on: ubuntu-latest
     needs: php-syntax
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           tools: composer:v2
-
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
         env:
           COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY }}"}}}'
-
       - name: Prepare test environment
         run: |
           cp .env.example .env
           php artisan key:generate
-
       - name: Run business regression tests
-        run: php artisan test --filter='Business(FinancialIntegrity|Authorization|Metrics)Test' --without-tty
+        run: php artisan test --filter='Business(FinancialIntegrity|Authorization|Metrics|Settlement)Test' --without-tty
