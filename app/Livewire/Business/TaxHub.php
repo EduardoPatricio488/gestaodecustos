@@ -38,6 +38,7 @@ class TaxHub extends Component
             'vatRate' => (float) ($workspace->vat_rate ?? 23),
             'vatRegime' => (string) ($workspace->vat_regime ?? 'normal'),
             'countryCode' => strtoupper((string) ($workspace->country_code ?? 'PT')),
+            'workspaceCurrency' => strtoupper((string) ($workspace->currency ?? 'EUR')),
             'taxDisclaimer' => 'O IVA apresentado é uma métrica informativa baseada nos valores de IVA registados e nos pagamentos registados. O IVA efetivamente dedutível, o momento de exigibilidade e as restantes obrigações dependem do regime fiscal, da natureza das operações e da documentação válida. TSU, IRS, IRC, derrama e obrigações oficiais não são calculados automaticamente. Confirma os valores com o contabilista.',
         ]);
     }
