@@ -8,18 +8,38 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (! Schema::hasColumn('workspaces', 'business_email')) {
+        if (! Schema::hasColumn('workspaces', 'business_email') || ! Schema::hasColumn('users', 'email')) {
             return;
         }
 
+        // Do not use a joined UPDATE here. SQLite (used by the test suite)
+        // cannot reference the joined table from the UPDATE SET expression.
+        // Updating each workspace from its owner also keeps this migration
+        // portable across SQLite, MySQL and PostgreSQL.
         DB::table('workspaces')
-            ->join('users', 'users.id', '=', 'workspaces.owner_id')
-            ->whereIn('workspaces.type', ['business', 'company', 'bussiness'])
+            ->whereIn('type', ['business', 'company', 'bussiness'])
             ->where(function ($query) {
-                $query->whereNull('workspaces.business_email')
-                    ->orWhere('workspaces.business_email', '');
+                $query->whereNull('business_email')
+                    ->orWhere('business_email', '');
             })
-            ->update(['workspaces.business_email' => DB::raw('users.email')]);
+            ->orderBy('id')
+            ->chunkById(250, function ($workspaces): void {
+                foreach ($workspaces as $workspace) {
+                    if (! $workspace->owner_id) {
+                        continue;
+                    }
+
+                    $ownerEmail = DB::table('users')
+                        ->where('id', $workspace->owner_id)
+                        ->value('email');
+
+                    if ($ownerEmail !== null && $ownerEmail !== '') {
+                        DB::table('workspaces')
+                            ->where('id', $workspace->id)
+                            ->update(['business_email' => $ownerEmail]);
+                    }
+                }
+            });
     }
 
     public function down(): void
