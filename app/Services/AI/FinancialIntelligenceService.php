@@ -13,8 +13,6 @@ class FinancialIntelligenceService
 {
     public function snapshot(Workspace $workspace, ?Carbon $period = null): array
     {
-        // Normalize the date explicitly because the application's Date facade
-        // can be configured to return CarbonImmutable from now().
         $period = $period
             ? Carbon::instance($period)->startOfMonth()
             : Carbon::now()->startOfMonth();
@@ -64,8 +62,10 @@ class FinancialIntelligenceService
             ->take(10)
             ->all();
 
-        $savings = $earned + $recurring - $spent;
-        $previousSavings = $previousEarned + $recurring - $previousSpent;
+        $actualSavings = $earned - $spent;
+        $projectedSavings = $earned + $recurring - $spent;
+        $previousActualSavings = $previousEarned - $previousSpent;
+        $previousProjectedSavings = $previousEarned + $recurring - $previousSpent;
 
         $goals = Goal::query()
             ->where('workspace_id', $workspace->id)
@@ -94,21 +94,33 @@ class FinancialIntelligenceService
             'kind' => 'personal',
             'period' => $start->format('Y-m'),
             'currency' => strtoupper((string) ($workspace->currency ?: 'EUR')),
+            // Backwards-compatible aggregate, explicitly documented by the fields below.
             'income' => round($earned + $recurring, 2),
+            'income_actual' => round($earned, 2),
+            'income_recurring' => round($recurring, 2),
+            'income_projected' => round($earned + $recurring, 2),
             'dated_income' => round($earned, 2),
             'recurring_income' => round($recurring, 2),
             'expenses' => round($spent, 2),
-            'savings' => round($savings, 2),
-            'savings_rate' => round(($earned + $recurring) > 0 ? ($savings / ($earned + $recurring)) * 100 : 0, 2),
+            'savings' => round($projectedSavings, 2),
+            'savings_actual' => round($actualSavings, 2),
+            'savings_projected' => round($projectedSavings, 2),
+            'savings_rate' => round(($earned + $recurring) > 0 ? ($projectedSavings / ($earned + $recurring)) * 100 : 0, 2),
+            'savings_rate_actual' => round($earned > 0 ? ($actualSavings / $earned) * 100 : 0, 2),
             'previous' => [
                 'income' => round($previousEarned + $recurring, 2),
+                'income_actual' => round($previousEarned, 2),
+                'income_recurring' => round($recurring, 2),
                 'expenses' => round($previousSpent, 2),
-                'savings' => round($previousSavings, 2),
+                'savings' => round($previousProjectedSavings, 2),
+                'savings_actual' => round($previousActualSavings, 2),
             ],
             'changes' => [
                 'income_percent' => $this->percentChange($previousEarned + $recurring, $earned + $recurring),
+                'income_actual_percent' => $this->percentChange($previousEarned, $earned),
                 'expenses_percent' => $this->percentChange($previousSpent, $spent),
-                'savings_percent' => $this->percentChange($previousSavings, $savings),
+                'savings_percent' => $this->percentChange($previousProjectedSavings, $projectedSavings),
+                'savings_actual_percent' => $this->percentChange($previousActualSavings, $actualSavings),
             ],
             'top_categories' => $categories,
             'goals' => $goals,
