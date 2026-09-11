@@ -15,32 +15,19 @@ class ClientHub extends Component
     use WithPagination;
 
     public $search = '';
-
     public $selectedClient = null;
-
     public $generatedPasscode = '';
-
     public $showModal = false;
-
     public $generatedPortalUrl = '';
-
     public $editingId = null;
 
-    // Campos do formulário
     public $name;
-
     public $legal_name;
-
     public $tax_number;
-
     public $email;
-
     public $phone;
-
     public $status = 'ativo';
-
     public $address;
-
     public $notes;
 
     protected $rules = [
@@ -49,10 +36,6 @@ class ClientHub extends Component
         'status' => 'required|in:ativo,lead,inativo',
     ];
 
-    /**
-     * Formata o NIF automaticamente em grupos de 3 dígitos.
-     * Exemplo: 123456789 -> 123 456 789
-     */
     public function updatedTaxNumber($value): void
     {
         $digits = preg_replace('/\D/', '', (string) $value);
@@ -60,9 +43,19 @@ class ClientHub extends Component
         $this->tax_number = implode(' ', str_split($digits, 3));
     }
 
+    /**
+     * Abre o formulário de cliente de forma explícita via Livewire.
+     * Evita depender do trigger automático do Flux dentro do wrapper da página.
+     */
+    public function openClientModal(): void
+    {
+        $this->resetForm();
+        $this->status = 'ativo';
+        $this->dispatch('modal-show', name: 'client-modal');
+    }
+
     public function openHistory($id)
     {
-        // Carregamos o cliente com as relações de faturas e projetos
         $this->selectedClient = auth()->user()->clients()
             ->with(['projects', 'invoices' => fn ($q) => $q->latest()])
             ->findOrFail($id);
@@ -130,7 +123,6 @@ class ClientHub extends Component
     {
         $client = auth()->user()->clients()->findOrFail($id);
 
-        // 1. Gerar ou recuperar o código de acesso.
         if (! $client->portal_token) {
             do {
                 $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -144,8 +136,6 @@ class ClientHub extends Component
         $this->generatedPasscode = $client->portal_token;
         $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
 
-        // Envio automático do código para o email do cliente, seguindo o mesmo princípio
-        // das credenciais enviadas automaticamente no acesso bancário empresarial.
         if ($client->email) {
             Mail::to($client->email)->send(new ClientPortalAccessMail(
                 $client,
@@ -172,7 +162,6 @@ class ClientHub extends Component
             'clients' => $clients,
             'totalClients' => $clients->count(),
             'activeLeads' => $clients->where('status', 'lead')->count(),
-            // O modelo Client já tem o atributo total_revenue que vamos usar no blade
         ]);
     }
 }
