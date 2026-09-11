@@ -31,10 +31,20 @@ class BankAccount extends Model
 
     public function getCurrentBalanceAttribute(): float
     {
-        $incomes = (float) $this->incomes()->sum('amount');
-        $expenses = (float) $this->expenses()->sum('amount');
-        $recurringDue = (float) $this->recurringIncomes()->where('is_active', true)->where('day_of_month', '<=', now()->day)->sum('amount');
-        return (float) ($this->balance + $incomes - $expenses + $recurringDue);
+        // When aggregate sums were eager-loaded, use them instead of issuing
+        // three extra queries per account. Keep the query fallback for callers
+        // that hydrate BankAccount without those aggregates.
+        $incomes = $this->attributes['current_balance_income_total']
+            ?? (float) $this->incomes()->sum('amount');
+        $expenses = $this->attributes['current_balance_expense_total']
+            ?? (float) $this->expenses()->sum('amount');
+        $recurringDue = $this->attributes['current_balance_recurring_due']
+            ?? (float) $this->recurringIncomes()
+                ->where('is_active', true)
+                ->where('day_of_month', '<=', now()->day)
+                ->sum('amount');
+
+        return (float) $this->balance + (float) $incomes - (float) $expenses + (float) $recurringDue;
     }
 
     public function getCreditUsedAttribute(): float
