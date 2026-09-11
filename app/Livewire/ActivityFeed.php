@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\ActivityLog;
+use App\Services\BusinessAccessService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -15,6 +16,11 @@ class ActivityFeed extends Component
         $workspaceId = $user?->current_workspace_id;
 
         abort_unless($workspaceId && $user->workspaces()->whereKey($workspaceId)->exists(), 403);
+
+        $workspace = $user->workspaces()->whereKey($workspaceId)->first();
+        if ($workspace && in_array($workspace->type, ['business', 'company'], true)) {
+            app(BusinessAccessService::class)->assert('view_audit', $user, $workspace);
+        }
 
         return view('livewire.activity-feed', [
             'logs' => ActivityLog::with('user')
