@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\AutoSavingsRule;
 use App\Models\BankAccount;
 use App\Models\BankReserve;
 use App\Models\BankTransaction;
@@ -9,9 +10,7 @@ use App\Models\GoalContribution;
 use App\Models\Income;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Models\AutoSavingsRule;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\QueryException;
 
 function createTestWorkspaceFor(User $user, string $name): Workspace
 {
