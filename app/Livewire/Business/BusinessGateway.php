@@ -3,6 +3,7 @@
 namespace App\Livewire\Business;
 
 use App\Models\Employee;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -49,7 +50,11 @@ class BusinessGateway extends Component
         RateLimiter::hit($rateLimitKey, 60);
 
         $employee = DB::transaction(function () use ($code, $user) {
-            $candidates = Employee::whereNull('user_id')
+            // Este fluxo começa sem workspace ativo. O scope global de
+            // Employee não pode esconder convites que o utilizador está a
+            // tentar aceitar; o token é a credencial que identifica o convite.
+            $candidates = Employee::withoutGlobalScopes()
+                ->whereNull('user_id')
                 ->where('active', true)
                 ->where('suspended', false)
                 ->whereNull('terminated_at')
@@ -59,6 +64,7 @@ class BusinessGateway extends Component
                     $query->whereNull('invite_expires_at')
                         ->orWhere('invite_expires_at', '>', now());
                 })
+                ->whereNotNull('portal_token')
                 ->lockForUpdate()
                 ->get();
 
@@ -68,7 +74,10 @@ class BusinessGateway extends Component
                 return null;
             }
 
-            $workspace = $employee->workspace;
+            $workspace = Workspace::withoutGlobalScopes()
+                ->whereKey($employee->workspace_id)
+                ->first();
+
             abort_unless($workspace && in_array($workspace->type, ['business', 'company'], true), 403);
 
             // O Employee usa LogsActivity. O utilizador tem de pertencer ao
