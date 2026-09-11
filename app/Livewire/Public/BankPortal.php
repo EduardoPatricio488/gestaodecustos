@@ -15,17 +15,11 @@ use Livewire\Component;
 class BankPortal extends Component
 {
     public $company_nif = '';
-
     public $token = '';
-
     public $companySearch = '';
-
     public $selectedCompanyId = null;
-
     public $bankName = '';
-
     public $requestEmail = '';
-
     public $requestSent = false;
 
     #[Layout('layouts.guest')]
@@ -36,7 +30,6 @@ class BankPortal extends Component
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
             session()->flash('error', 'CREDENCIAIS INVÁLIDAS.');
-
             return;
         }
 
@@ -46,9 +39,7 @@ class BankPortal extends Component
             'token' => 'required|string|min:8|max:255',
         ]);
 
-        // Tokens são case-sensitive: nunca alterar a capitalização antes do Hash::check().
         $cleanTokenInput = trim((string) $this->token);
-
         $workspace = Workspace::whereRaw("REPLACE(REPLACE(REPLACE(tax_number, ' ', ''), '.', ''), '-', '') = ?", [$cleanNifInput])
             ->where('audit_token_purpose', 'bank_audit')
             ->whereNull('audit_token_revoked_at')
@@ -60,8 +51,8 @@ class BankPortal extends Component
 
         if ($workspace && Hash::check($cleanTokenInput, (string) $workspace->audit_token)) {
             RateLimiter::clear($rateLimitKey);
+            session()->regenerate();
             session()->put('bank_portal_workspace_id', $workspace->id);
-
             return redirect()->route('bank.dashboard');
         }
 
@@ -71,12 +62,7 @@ class BankPortal extends Component
     public function selectCompany(int $companyId): void
     {
         $exists = Workspace::whereKey($companyId)->whereIn('type', ['business', 'company', 'bussiness'])->exists();
-        if (! $exists) {
-            $this->selectedCompanyId = null;
-
-            return;
-        }
-        $this->selectedCompanyId = $companyId;
+        $this->selectedCompanyId = $exists ? $companyId : null;
         $this->requestSent = false;
     }
 
@@ -90,7 +76,6 @@ class BankPortal extends Component
     {
         $domain = strtolower((string) substr(strrchr($email, '@') ?: '', 1));
         $freeProviders = ['gmail.com', 'googlemail.com', 'hotmail.com', 'outlook.com', 'live.com', 'msn.com', 'yahoo.com', 'yahoo.pt', 'icloud.com', 'me.com', 'aol.com', 'proton.me', 'protonmail.com', 'gmx.com', 'mail.com', 'sapo.pt', 'iol.pt'];
-
         return $domain !== '' && ! in_array($domain, $freeProviders, true) && str_contains($domain, '.');
     }
 
@@ -107,37 +92,41 @@ class BankPortal extends Component
             'requestEmail.email' => 'Introduz um email válido.',
         ]);
 
-        if (! $this->isInstitutionalEmail($this->requestEmail)) {
-            $this->addError('requestEmail', 'É necessário utilizar um email institucional do banco.');
+        $email = strtolower(trim($this->requestEmail));
+        $rateLimitKey = 'bank-portal-request:'.sha1($email.'|'.request()->ip());
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $this->addError('requestEmail', 'Demasiados pedidos. Tenta novamente mais tarde.');
+            return;
+        }
+        RateLimiter::hit($rateLimitKey, 300);
 
+        if (! $this->isInstitutionalEmail($email)) {
+            $this->addError('requestEmail', 'É necessário utilizar um email institucional do banco.');
             return;
         }
 
         $workspace = Workspace::whereKey($this->selectedCompanyId)->whereIn('type', ['business', 'company', 'bussiness'])->first();
         if (! $workspace) {
             $this->addError('selectedCompanyId', 'A empresa selecionada não está disponível.');
-
             return;
         }
         if (! filled($workspace->business_email)) {
             $this->addError('selectedCompanyId', 'Esta empresa ainda não tem um email empresarial configurado.');
-
             return;
         }
 
         $pending = BankAccessRequest::where('workspace_id', $workspace->id)
-            ->where('bank_email', strtolower(trim($this->requestEmail)))
+            ->where('bank_email', $email)
             ->where('status', 'pending')->exists();
         if ($pending) {
             $this->addError('requestEmail', 'Já existe um pedido pendente deste banco para esta empresa.');
-
             return;
         }
 
         $request = BankAccessRequest::create([
             'workspace_id' => $workspace->id,
             'bank_name' => trim($this->bankName),
-            'bank_email' => strtolower(trim($this->requestEmail)),
+            'bank_email' => $email,
             'status' => 'pending',
             'requested_at' => now(),
         ]);
@@ -153,7 +142,7 @@ class BankPortal extends Component
         return Workspace::query()->whereIn('type', ['business', 'company', 'bussiness'])
             ->where(function ($query) {
                 $query->where('name', 'like', '%'.$this->companySearch.'%')->orWhere('legal_name', 'like', '%'.$this->companySearch.'%');
-            })->orderBy('name')->limit(100)->get(['id', 'name', 'legal_name', 'business_email']);
+            })->orderBy('name')->limit(100)->get(['id', 'name', 'legal_name']);
     }
 
     public function render()
