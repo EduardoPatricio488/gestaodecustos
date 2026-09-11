@@ -1,0 +1,120 @@
+name: Temporary Supplier Access UI Fix
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch supplier access UI
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('resources/js/app.js')
+          text = path.read_text(encoding='utf-8')
+          marker = '// Show and manage pending public supplier portal access requests inside /empresa/fornecedores.'
+
+          if marker not in text:
+              text += r'''
+
+          // Show and manage pending public supplier portal access requests inside /empresa/fornecedores.
+          (function () {
+              const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+              const findComponent = () => {
+                  const heading = Array.from(document.querySelectorAll('h1')).find((el) => normalize(el.textContent).toLowerCase().includes('fornecedores & parceiros'));
+                  if (!heading || !window.Livewire) return null;
+                  const root = heading.closest('[wire\\:id]');
+                  if (!root) return null;
+                  const wireId = root.getAttribute('wire:id');
+                  return wireId ? window.Livewire.find(wireId) : null;
+              };
+              const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
+              const refresh = () => {
+                  const component = findComponent();
+                  if (!component) return;
+                  Promise.resolve(component.call('getPendingAccessRequests'))
+                      .then((requests) => render(component, Array.isArray(requests) ? requests : []))
+                      .catch(() => {});
+              };
+              const callAction = (component, method, id, button) => {
+                  if (!component || !id || !window.Livewire || button?.disabled) return;
+                  button.disabled = true;
+                  button.classList.add('opacity-60', 'cursor-wait');
+                  Promise.resolve(component.call(method, id))
+                      .then(() => refresh())
+                      .catch(() => {})
+                      .finally(() => {
+                          button.disabled = false;
+                          button.classList.remove('opacity-60', 'cursor-wait');
+                      });
+              };
+              const render = (component, requests) => {
+                  let panel = document.getElementById('finance-pro-supplier-access-requests');
+                  if (!requests.length) { panel?.remove(); return; }
+                  if (!panel) {
+                      panel = document.createElement('section');
+                      panel.id = 'finance-pro-supplier-access-requests';
+                      panel.className = 'mb-8 rounded-[2rem] border border-brand-200 dark:border-brand-900/50 bg-brand-50/70 dark:bg-brand-950/20 shadow-sm overflow-hidden';
+                      const heading = Array.from(document.querySelectorAll('h1')).find((el) => normalize(el.textContent).toLowerCase().includes('fornecedores & parceiros'));
+                      const header = heading?.closest('.relative')?.parentElement || heading?.closest('.relative') || heading?.parentElement;
+                      if (header?.parentElement) header.parentElement.insertBefore(panel, header.nextSibling);
+                  }
+                  panel.innerHTML = `
+                      <div class="px-6 py-5 border-b border-brand-200/70 dark:border-brand-900/40">
+                          <div class="flex items-center gap-3">
+                              <span class="inline-flex items-center justify-center min-w-7 h-7 px-2 rounded-full bg-brand-600 text-white text-[10px] font-black">${requests.length}</span>
+                              <h2 class="text-sm font-black uppercase tracking-widest text-brand-700 dark:text-brand-300">Pedidos de acesso ao portal</h2>
+                          </div>
+                          <p class="text-xs text-brand-700/70 dark:text-brand-300/70 mt-1">Fornecedores que solicitaram acesso através do portal público.</p>
+                      </div>
+                      <div class="divide-y divide-brand-200/70 dark:divide-brand-900/40">
+                          ${requests.map((request) => `
+                              <div class="px-6 py-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                                  <div class="min-w-0">
+                                      <p class="font-black text-sm text-zinc-900 dark:text-white">${escapeHtml(request.name)}</p>
+                                      <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">${escapeHtml(request.email)}${request.tax_number ? ` · NIF ${escapeHtml(request.tax_number)}` : ''}</p>
+                                      <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-2">Pedido em ${escapeHtml(request.requested_at || '')}</p>
+                                  </div>
+                                  <div class="flex flex-wrap items-center gap-2">
+                                      <button type="button" data-supplier-request-action="approve" data-supplier-request-id="${escapeHtml(request.id)}" class="inline-flex items-center justify-center h-10 px-4 rounded-xl bg-brand-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-brand-700 transition">Aprovar e enviar acesso</button>
+                                      <button type="button" data-supplier-request-action="reject" data-supplier-request-id="${escapeHtml(request.id)}" class="inline-flex items-center justify-center h-10 px-4 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 text-[10px] font-black uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">Rejeitar</button>
+                                  </div>
+                              </div>
+                          `).join('')}
+                      </div>`;
+                  panel.querySelectorAll('[data-supplier-request-action]').forEach((button) => {
+                      button.addEventListener('click', () => {
+                          const method = button.dataset.supplierRequestAction === 'approve' ? 'approveAccessRequest' : 'rejectAccessRequest';
+                          callAction(component, method, button.dataset.supplierRequestId, button);
+                      });
+                  });
+              };
+              let timer = null;
+              const schedule = () => { clearTimeout(timer); timer = setTimeout(refresh, 200); };
+              document.addEventListener('livewire:navigated', schedule);
+              document.addEventListener('livewire:initialized', schedule, { once: true });
+              document.addEventListener('supplier-access-request-updated', schedule);
+              schedule();
+          })();
+          '''
+              path.write_text(text, encoding='utf-8')
+
+      - name: Commit fix and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/js/app.js
+          git rm .github/workflows/_temporary_supplier_access_ui.yml
+          git commit -m "Adicionar pedidos de acesso de fornecedores ao painel empresarial"
+          git push
