@@ -47,7 +47,7 @@ class ClientHub extends Component
     {
         $this->resetForm();
         $this->status = 'ativo';
-        $this->modal('client-modal')->show();
+        $this->dispatch('client-modal-open');
     }
 
     public function openHistory($id): void
@@ -56,7 +56,7 @@ class ClientHub extends Component
             ->with(['projects', 'invoices' => fn ($q) => $q->latest()])
             ->findOrFail($id);
 
-        $this->modal('history-modal')->show();
+        $this->dispatch('history-modal-open');
     }
 
     public $clientTaxNumber = '';
@@ -84,7 +84,7 @@ class ClientHub extends Component
         );
 
         $this->resetForm();
-        $this->modal('client-modal')->close();
+        $this->dispatch('client-modal-close');
         $this->dispatch('toast', text: 'Cliente atualizado no sistema.');
     }
 
@@ -101,7 +101,7 @@ class ClientHub extends Component
         $this->address = $client->address;
         $this->notes = $client->notes;
 
-        $this->modal('client-modal')->show();
+        $this->dispatch('client-modal-open');
     }
 
     public function delete($id): void
@@ -132,11 +132,10 @@ class ClientHub extends Component
         $this->generatedPasscode = $client->portal_token;
         $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
 
-        // IMPORTANTE: não enviar o email nesta mesma request.
-        // O envio síncrono pode bloquear o Livewire (SMTP/Resend) e impedir
-        // que a resposta chegue ao browser, fazendo parecer que o modal não abre.
-        // O modal deve abrir imediatamente; o envio de email será uma ação separada.
-        $this->modal('portal-link-modal')->show();
+        // Abrir o Flux no browser depois de a resposta Livewire chegar.
+        // Isto evita depender do controlo de modal no lado PHP e também evita
+        // que problemas de SMTP/Resend impeçam a abertura do modal.
+        $this->dispatch('portal-link-modal-open');
     }
 
     public function sendPortalEmail(): void
