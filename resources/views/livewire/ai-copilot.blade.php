@@ -41,11 +41,28 @@
             const publish = () => {
                 const path = window.location.pathname;
                 const module = path === '/dashboard' ? 'dashboard' : path.split('/').filter(Boolean)[0] || 'finance-pro-ai';
+                let offlineStatus = navigator.onLine ? 'online' : 'offline';
+                let pendingOfflineItems = 0;
+                try {
+                    const raw = localStorage.getItem('finance-pro-offline-bunker');
+                    if (raw) {
+                        const data = JSON.parse(raw);
+                        pendingOfflineItems = Array.isArray(data?.queue) ? data.queue.length : Number(data?.pending_count || 0);
+                    }
+                } catch (_) {}
                 window.dispatchEvent(new CustomEvent('ai-page-context', {
-                    detail: { path, module, period: new URLSearchParams(window.location.search).get('period') },
+                    detail: {
+                        path,
+                        module,
+                        period: new URLSearchParams(window.location.search).get('period'),
+                        offline_status: offlineStatus,
+                        pending_offline_items: pendingOfflineItems,
+                    },
                 }));
             };
             publish();
+            window.addEventListener('online', publish);
+            window.addEventListener('offline', publish);
             window.addEventListener('livewire:navigated', publish);
         })();
     </script>
