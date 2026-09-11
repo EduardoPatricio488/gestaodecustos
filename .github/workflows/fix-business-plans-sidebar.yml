@@ -24,19 +24,15 @@ jobs:
           path = Path('resources/views/components/layouts/app.blade.php')
           text = path.read_text(encoding='utf-8')
 
-          old = "@if(request()->routeIs('hub.business.gateway') || request()->routeIs('hub.pricing'))"
-          new = "@if(request()->routeIs('hub.business.gateway') || request()->routeIs('hub.pricing') || request()->routeIs('empresa.onboarding'))"
+          old = "@if(request()->routeIs('hub.business.gateway') || request()->routeIs('hub.pricing') || request()->routeIs('empresa.onboarding'))"
+          new = "@if(request()->routeIs('hub.business.gateway') || request()->routeIs('hub.pricing'))"
 
-          if new in text:
-              print('Business Hub, Plans and Onboarding sidebar patch already present.')
-              raise SystemExit(0)
-
-          if old not in text:
-              raise SystemExit('Existing Business Hub/Plans sidebar marker not found')
-
-          text = text.replace(old, new, 1)
-          path.write_text(text, encoding='utf-8')
-          print('Business Hub, Plans and Onboarding sidebar patched successfully.')
+          if old in text:
+              text = text.replace(old, new, 1)
+              path.write_text(text, encoding='utf-8')
+              print('Onboarding removed from Business Hub/Plans sidebar condition.')
+          else:
+              print('Onboarding sidebar condition already corrected or not present.')
           PY
 
       - name: Commit and push
@@ -48,5 +44,5 @@ jobs:
             echo "No changes to commit."
             exit 0
           fi
-          git commit -m "Limit Business Onboarding sidebar to companies"
+          git commit -m "Show only companies in onboarding sidebar"
           git push
