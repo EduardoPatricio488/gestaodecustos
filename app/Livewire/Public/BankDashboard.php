@@ -23,7 +23,8 @@ class BankDashboard extends Component
         $workspaceId = session('bank_portal_workspace_id');
         abort_unless($workspaceId, 403);
 
-        $workspace = Workspace::whereKey($workspaceId)
+        $workspace = Workspace::withoutGlobalScopes()
+            ->whereKey($workspaceId)
             ->where('audit_token_purpose', 'bank_audit')
             ->whereNull('audit_token_revoked_at')
             ->where(function ($query) {
@@ -49,7 +50,9 @@ class BankDashboard extends Component
         $this->workspace = $this->authenticatedWorkspace();
         $workspace = $this->workspace;
 
-        $accounts = $workspace->bankAccounts()->orderBy('bank_name')->orderBy('name')->get();
+        // O portal bancário autentica através de sessão própria e não através
+        // do utilizador/workspace global scope da aplicação principal.
+        $accounts = $workspace->bankAccounts()->withoutGlobalScopes()->orderBy('bank_name')->orderBy('name')->get();
         $liquidez = (float) $accounts->where('type', '!=', 'credito')->sum('current_balance');
         $passivo = (float) $accounts->where('type', 'credito')->sum(fn ($account) => abs((float) $account->current_balance));
 
@@ -58,38 +61,38 @@ class BankDashboard extends Component
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
 
-        $revenue = (float) $workspace->invoices()
+        $revenue = (float) $workspace->invoices()->withoutGlobalScopes()
             ->where('status', 'paga')
             ->whereBetween('created_at', [$periodStart, now()])
             ->sum('total_amount');
 
-        $expenses = (float) $workspace->expenses()
+        $expenses = (float) $workspace->expenses()->withoutGlobalScopes()
             ->where('is_company', true)
             ->where('spent_at', '>=', $periodStart->toDateString())
             ->sum('amount');
 
-        $receivables = (float) $workspace->invoices()
+        $receivables = (float) $workspace->invoices()->withoutGlobalScopes()
             ->where('status', 'pendente')
             ->sum('total_amount');
 
-        $overdueReceivables = (float) $workspace->invoices()
+        $overdueReceivables = (float) $workspace->invoices()->withoutGlobalScopes()
             ->where('status', 'pendente')
             ->whereNotNull('due_date')
             ->whereDate('due_date', '<', today())
             ->sum('total_amount');
 
-        $payroll = (float) $workspace->employees()->sum('salary');
-        $employeeCount = $workspace->employees()->count();
-        $clientCount = $workspace->clients()->count();
-        $supplierCount = $workspace->suppliers()->count();
-        $projectCount = $workspace->projects()->count();
+        $payroll = (float) $workspace->employees()->withoutGlobalScopes()->sum('salary');
+        $employeeCount = $workspace->employees()->withoutGlobalScopes()->count();
+        $clientCount = $workspace->clients()->withoutGlobalScopes()->count();
+        $supplierCount = $workspace->suppliers()->withoutGlobalScopes()->count();
+        $projectCount = $workspace->projects()->withoutGlobalScopes()->count();
 
-        $monthRevenue = (float) $workspace->invoices()
+        $monthRevenue = (float) $workspace->invoices()->withoutGlobalScopes()
             ->where('status', 'paga')
             ->whereBetween('created_at', [$monthStart, $monthEnd])
             ->sum('total_amount');
 
-        $monthExpenses = (float) $workspace->expenses()
+        $monthExpenses = (float) $workspace->expenses()->withoutGlobalScopes()
             ->where('is_company', true)
             ->whereBetween('spent_at', [$monthStart->toDateString(), $monthEnd->toDateString()])
             ->sum('amount');
@@ -116,12 +119,12 @@ class BankDashboard extends Component
             $start = $date->copy()->startOfMonth();
             $end = $date->copy()->endOfMonth();
 
-            $revenue = (float) $workspace->invoices()
+            $revenue = (float) $workspace->invoices()->withoutGlobalScopes()
                 ->where('status', 'paga')
                 ->whereBetween('created_at', [$start, $end])
                 ->sum('total_amount');
 
-            $expenses = (float) $workspace->expenses()
+            $expenses = (float) $workspace->expenses()->withoutGlobalScopes()
                 ->where('is_company', true)
                 ->whereBetween('spent_at', [$start->toDateString(), $end->toDateString()])
                 ->sum('amount');
@@ -136,22 +139,22 @@ class BankDashboard extends Component
 
         $trendMax = max(1, $monthlyTrend->max(fn ($month) => max($month['revenue'], $month['expenses'])));
 
-        $recentInvoices = $workspace->invoices()
+        $recentInvoices = $workspace->invoices()->withoutGlobalScopes()
             ->orderByDesc('created_at')
             ->limit(8)
             ->get();
 
-        $recentExpenses = $workspace->expenses()
+        $recentExpenses = $workspace->expenses()->withoutGlobalScopes()
             ->where('is_company', true)
             ->orderByDesc('spent_at')
             ->limit(8)
             ->get();
 
-        $pendingBankRequests = $workspace->bankAccessRequests()
+        $pendingBankRequests = $workspace->bankAccessRequests()->withoutGlobalScopes()
             ->where('status', 'pending')
             ->count();
 
-        $lastBankAccessRequest = $workspace->bankAccessRequests()
+        $lastBankAccessRequest = $workspace->bankAccessRequests()->withoutGlobalScopes()
             ->latest('requested_at')
             ->first();
 
