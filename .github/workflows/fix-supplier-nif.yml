@@ -18,9 +18,7 @@ jobs:
           import subprocess
           from pathlib import Path
           path = Path('resources/views/livewire/business/supplier-hub.blade.php')
-          original = subprocess.check_output([
-              'git', 'show', 'e4dc6496983afa10843c303390160c0ef9ecb85e:resources/views/livewire/business/supplier-hub.blade.php'
-          ]).decode('utf-8')
+          original = subprocess.check_output(['git', 'show', 'e4dc6496983afa10843c303390160c0ef9ecb85e:resources/views/livewire/business/supplier-hub.blade.php']).decode('utf-8')
           old = '''                            <flux:input
                                 wire:model="tax_number"
                                 placeholder="500 000 000"
@@ -37,8 +35,7 @@ jobs:
                             <p class="px-1 text-[9px] font-bold text-zinc-400 uppercase tracking-widest">O NIF é dividido automaticamente em grupos de 3 dígitos.</p>'''
           if old not in original:
               raise SystemExit('Supplier NIF input pattern not found')
-          updated = original.replace(old, new, 1)
-          path.write_text(updated, encoding='utf-8')
+          path.write_text(original.replace(old, new, 1), encoding='utf-8')
       - name: Commit
         run: |
           git config user.name 'github-actions[bot]'
@@ -46,3 +43,4 @@ jobs:
           git add resources/views/livewire/business/supplier-hub.blade.php
           git commit -m 'Format supplier NIF input' || exit 0
           git push
+# trigger-2
