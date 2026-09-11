@@ -13,9 +13,11 @@ class FinancialIntelligenceService
 {
     public function snapshot(Workspace $workspace, ?Carbon $period = null): array
     {
-        // Use Laravel's Carbon class consistently with the rest of the
-        // application and BusinessFinancialMetrics service contracts.
-        $period = ($period ?: now())->copy()->startOfMonth();
+        // Normalize the date explicitly because the application's Date facade
+        // can be configured to return CarbonImmutable from now().
+        $period = $period
+            ? Carbon::instance($period)->startOfMonth()
+            : Carbon::now()->startOfMonth();
 
         return in_array($workspace->type, ['business', 'company'], true)
             ? $this->businessSnapshot($workspace, $period)
