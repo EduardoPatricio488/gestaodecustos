@@ -50,6 +50,61 @@ import './offline-expenses';
     window.addEventListener('storage', (event) => { if (event.key === STORAGE_KEY || event.key === LEGACY_KEY) applyTheme(getTheme()); });
 })();
 
+// State-changing navigation must use POST + CSRF, even when the UI is rendered as a link.
+(function () {
+    const protectedPaths = [
+        /^\/trocar-espaco\/\d+$/,
+        /^\/trocar-contexto\/\d+$/,
+        /^\/sair-empresa$/,
+        /^\/fitness\/strava\/disconnect$/,
+    ];
+
+    const isProtectedPath = (pathname) => protectedPaths.some((pattern) => pattern.test(pathname));
+
+    const submitPost = (url) => {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (!token) {
+            console.error('Finance Pro: token CSRF não encontrado.');
+            return false;
+        }
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url.toString();
+        form.style.display = 'none';
+
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_token';
+        csrf.value = token;
+        form.appendChild(csrf);
+
+        document.body.appendChild(form);
+        form.submit();
+        return true;
+    };
+
+    document.addEventListener('click', (event) => {
+        if (event.defaultPrevented || event.button !== 0) return;
+
+        const anchor = event.target.closest('a[href]');
+        if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) return;
+
+        let url;
+        try {
+            url = new URL(anchor.href, window.location.origin);
+        } catch {
+            return;
+        }
+
+        if (url.origin !== window.location.origin || !isProtectedPath(url.pathname)) return;
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        submitPost(url);
+    }, true);
+})();
+
 window.addEventListener('copy-to-clipboard', (event) => {
     const text = event.detail.text;
     if (!text) return;
