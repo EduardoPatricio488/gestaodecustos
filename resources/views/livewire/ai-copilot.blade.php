@@ -3,27 +3,17 @@
     x-on:ai-page-context.window="$wire.setPageContext($event.detail)"
     class="contents"
 >
-    <button
-        type="button"
-        wire:click="toggle"
-        aria-label="Abrir Finance Pro AI Copilot"
-        class="fixed bottom-5 right-5 z-[180] flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-zinc-950 text-white shadow-2xl shadow-black/30 transition hover:-translate-y-0.5 hover:bg-zinc-900 dark:bg-white dark:text-zinc-950"
-    >
+    <button type="button" wire:click="toggle" aria-label="Abrir Finance Pro AI Copilot" class="fixed bottom-5 right-5 z-[180] flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-zinc-950 text-white shadow-2xl shadow-black/30 transition hover:-translate-y-0.5 hover:bg-zinc-900 dark:bg-white dark:text-zinc-950">
         <span class="text-xl">✦</span>
         @if($pendingActions)
-            <span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-black text-white">
-                {{ count($pendingActions) }}
-            </span>
+            <span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-black text-white">{{ count($pendingActions) }}</span>
         @endif
     </button>
 
     @if($isOpen)
         <div class="fixed inset-0 z-[170] bg-zinc-950/20 backdrop-blur-[2px]" wire:click="toggle"></div>
 
-        <section
-            class="fixed bottom-5 right-5 z-[190] flex h-[min(760px,calc(100vh-40px))] w-[min(430px,calc(100vw-40px))] flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950"
-            aria-label="Finance Pro AI Copilot"
-        >
+        <section class="fixed bottom-5 right-5 z-[190] flex h-[min(760px,calc(100vh-40px))] w-[min(430px,calc(100vw-40px))] flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950" aria-label="Finance Pro AI Copilot">
             <header class="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
                 <div class="min-w-0">
                     <div class="flex items-center gap-2">
@@ -34,7 +24,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="flex items-center gap-1">
                     <button wire:click="newConversation" type="button" class="rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900">Novo</button>
                     <button wire:click="archiveConversation" type="button" class="rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900">Arquivar</button>
@@ -46,12 +35,10 @@
                 <div class="flex items-center justify-between gap-3">
                     <div class="min-w-0">
                         <p class="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">Contexto</p>
-                        <p class="truncate text-xs font-bold text-zinc-700 dark:text-zinc-200">
-                            {{ $pageContext['module'] ?? 'Finance Pro AI' }}
-                        </p>
+                        <p class="truncate text-xs font-bold text-zinc-700 dark:text-zinc-200">{{ $pageContext['module'] ?? 'Finance Pro AI' }}</p>
                     </div>
                     <span class="rounded-full border border-zinc-200 bg-white px-2 py-1 text-[9px] font-black uppercase text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950">
-                        {{ auth()->user()?->currentWorkspace?->type === 'business' || auth()->user()?->currentWorkspace?->type === 'company' ? 'Business' : 'Personal' }}
+                        {{ in_array(auth()->user()?->currentWorkspace?->type, ['business', 'company'], true) ? 'Business' : 'Personal' }}
                     </span>
                 </div>
             </div>
@@ -73,9 +60,7 @@
 
                 @if($isLoading)
                     <div class="flex justify-start">
-                        <div class="rounded-2xl bg-zinc-100 px-4 py-3 text-xs font-bold text-zinc-500 dark:bg-zinc-900">
-                            A analisar os teus dados…
-                        </div>
+                        <div class="rounded-2xl bg-zinc-100 px-4 py-3 text-xs font-bold text-zinc-500 dark:bg-zinc-900">A analisar os teus dados…</div>
                     </div>
                 @endif
             </div>
@@ -87,7 +72,6 @@
                             <p class="text-[9px] font-black uppercase tracking-[0.18em] text-amber-600">Confirmação necessária</p>
                             <p class="mt-1 text-sm font-black text-zinc-900 dark:text-white">{{ $action['title'] }}</p>
                             <p class="mt-1 text-xs text-zinc-500">{{ $action['summary'] }}</p>
-
                             <div class="mt-3 space-y-1 text-[11px] text-zinc-600 dark:text-zinc-300">
                                 @foreach(($action['details'] ?? []) as $key => $value)
                                     @if(is_scalar($value))
@@ -95,14 +79,7 @@
                                     @endif
                                 @endforeach
                             </div>
-
-                            <button
-                                type="button"
-                                wire:click="confirmAction({{ (int) $action['id'] }})"
-                                class="mt-4 w-full rounded-xl bg-zinc-950 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
-                            >
-                                Confirmar ação
-                            </button>
+                            <button type="button" wire:click="confirmAction({{ (int) $action['id'] }})" class="mt-4 w-full rounded-xl bg-zinc-950 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950">Confirmar ação</button>
                         </div>
                     @endforeach
                 </div>
@@ -110,18 +87,29 @@
 
             <form wire:submit="sendMessage" class="border-t border-zinc-200 p-3 dark:border-zinc-800">
                 <div class="flex items-end gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-900">
-                    <textarea
-                        wire:model="input"
-                        rows="1"
-                        placeholder="Pergunta ao teu copiloto…"
-                        class="min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-400 focus:border-0 focus:ring-0 dark:text-white"
-                        @keydown.enter.exact.prevent="$wire.sendMessage()"
-                    ></textarea>
-                    <button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-950 text-white transition hover:scale-105 dark:bg-white dark:text-zinc-950" wire:loading.attr="disabled">
-                        ↑
-                    </button>
+                    <textarea wire:model="input" rows="1" placeholder="Pergunta ao teu copiloto…" class="min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-400 focus:border-0 focus:ring-0 dark:text-white" @keydown.enter.exact.prevent="$wire.sendMessage()"></textarea>
+                    <button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-950 text-white transition hover:scale-105 dark:bg-white dark:text-zinc-950" wire:loading.attr="disabled">↑</button>
                 </div>
             </form>
         </section>
     @endif
+
+    @script
+    <script>
+        (() => {
+            const publish = () => {
+                window.dispatchEvent(new CustomEvent('ai-page-context', {
+                    detail: {
+                        route: @js(request()->route()?->getName()),
+                        module: @js(request()->route()?->getName()),
+                        period: @js(request()->query('period')),
+                    },
+                }));
+            };
+
+            publish();
+            window.addEventListener('livewire:navigated', publish);
+        })();
+    </script>
+    @endscript
 </div>
