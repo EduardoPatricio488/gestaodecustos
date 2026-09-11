@@ -2,66 +2,64 @@
 
 namespace App\Exports;
 
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
 class BusinessExport implements FromCollection, WithHeadings, WithMapping
 {
-    protected $user;
+    protected $workspace;
+    protected int $month;
+    protected int $year;
 
-    protected $month;
-
-    public function __construct($user, $month)
+    public function __construct($user, int $month, ?int $year = null)
     {
-        $this->user = $user;
-        $this->month = $month;
+        $this->workspace = $user->currentWorkspace;
+        $this->month = max(1, min(12, $month));
+        $this->year = $year ?: now()->year;
     }
 
     public function collection()
     {
-        // Busca as faturas e as despesas de empresa do mês selecionado
-        $expenses = $this->user->expenses()
-            ->where('is_company', true)
-            ->whereMonth('spent_at', $this->month)
-            ->get();
+        if (! $this->workspace) return collect();
 
-        $invoices = $this->user->invoices()
-            ->whereMonth('created_at', $this->month)
-            ->get();
+        $start = Carbon::create($this->year, $this->month, 1)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+
+        $expenses = $this->workspace->expenses()
+            ->where('is_company', true)
+            ->whereBetween('spent_at', [$start->toDateString(), $end->toDateString()])
+            ->with(['category', 'supplier'])
+            ->latest('spent_at')->get();
+
+        $invoices = $this->workspace->invoices()
+            ->whereBetween('created_at', [$start, $end])
+            ->latest('created_at')->get();
 
         return $invoices->concat($expenses);
     }
 
     public function headings(): array
     {
-        return ['Data', 'Tipo', 'Entidade/Cliente', 'Documento', 'Base (€)', 'IVA (€)', 'Total (€)'];
+        $currency = strtoupper((string) ($this->workspace?->currency ?? 'EUR'));
+        return ['Data', 'Tipo', 'Entidade/Cliente', 'Documento', "Base ({$currency})", "IVA ({$currency})", "Total ({$currency})", 'Estado'];
     }
 
     public function map($row): array
     {
-        // Se for uma Fatura (Venda)
         if (isset($row->invoice_number)) {
             return [
-                $row->created_at->format('d/m/Y'),
-                'VENDA',
-                $row->client_name,
-                $row->invoice_number,
-                $row->amount_excl_vat,
-                $row->vat_amount,
-                $row->total_amount,
+                optional($row->created_at)->format('d/m/Y'), 'VENDA', $row->client_name,
+                $row->invoice_number, $row->amount_excl_vat, $row->vat_amount,
+                $row->total_amount, $row->status,
             ];
         }
 
-        // Se for uma Despesa de Empresa (Compra)
         return [
-            $row->spent_at->format('d/m/Y'),
-            'COMPRA',
-            $row->description ?? 'Fornecedor Diversos',
-            '-',
-            $row->amount - ($row->vat_amount ?? 0),
-            $row->vat_amount ?? 0,
-            $row->amount,
+            optional($row->spent_at)->format('d/m/Y'), 'COMPRA', $row->supplier?->name ?? $row->description ?? 'Fornecedor não identificado',
+            '-', (float) $row->amount - (float) ($row->vat_amount ?? 0), $row->vat_amount ?? 0,
+            $row->amount, $row->status ?? 'registada',
         ];
     }
 }
