@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\FinanceScoreService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -46,5 +47,5 @@ class Workspace extends Model
     public function money($amount): string { $symbols=['EUR'=>'€','USD'=>'$','BRL'=>'R$','GBP'=>'£','CHF'=>'CHF','JPY'=>'¥']; $symbol=$symbols[$this->currency]??$this->currency; return in_array($this->currency,['USD','BRL'])?$symbol.' '.number_format($amount,2,',',' '):number_format($amount,2,',',' ').' '.$symbol; }
     protected static function booted(): void { static::created(function($workspace){ $defaults=[['name'=>'Alimentação','icon'=>'shopping-cart','color'=>'#ef4444'],['name'=>'Carro','icon'=>'truck','color'=>'#f59e0b'],['name'=>'Casa','icon'=>'home','color'=>'#3b82f6'],['name'=>'Educação','icon'=>'academic-cap','color'=>'#6366f1'],['name'=>'Empréstimos','icon'=>'banknotes','color'=>'#10b981'],['name'=>'Entretenimento','icon'=>'film','color'=>'#a855f7'],['name'=>'Saúde','icon'=>'heart','color'=>'#f43f5e'],['name'=>'Seguros','icon'=>'shield-check','color'=>'#0ea5e9'],['name'=>'Tecnologia','icon'=>'cpu-chip','color'=>'#06b6d4'],['name'=>'Transporte','icon'=>'bolt','color'=>'#64748b']]; foreach($defaults as $index=>$data)$workspace->categories()->create($data+['slug'=>str($data['name'])->slug(),'is_fixed'=>true,'order'=>$index,'user_id'=>$workspace->owner_id]); }); }
     public function getRunway(): string { $burn=$this->getBurnRate(); $cash=$this->getLiquidezAtual(); if($burn<=0)return '∞'; if($cash<=0)return '0 meses'; return number_format($cash/$burn,1).' meses'; }
-    public function calculateScore(): int { $monthStart=now()->startOfMonth(); $spent=(float)$this->expenses()->where('spent_at','>=',$monthStart)->sum('amount'); $earned=(float)$this->incomes()->where('received_at','>=',$monthStart)->sum('amount'); $budget=(float)$this->categories()->sum('budget_limit'); $net=$earned-$spent; $savings=$earned>0?($net/$earned)*100:0; $adherence=$budget>0?(1-(min($spent,$budget)/$budget))*100:100; return (int)max(0,min(100,($savings*.7)+($adherence*.3)+20)); }
+    public function calculateScore(): int { return app(FinanceScoreService::class)->calculate($this)['score']; }
 }
