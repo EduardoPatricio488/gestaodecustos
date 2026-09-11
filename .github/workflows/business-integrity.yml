@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
         env:
-          COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY"}}}}}'
+          COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY }}"}}}'
       - name: Prepare test environment
         run: |
           cp .env.example .env
