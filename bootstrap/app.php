@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             CheckRegistrationStatus::class,
             UpdateUserActivity::class,
             EnsureImpersonationIsValid::class,
+            EnsureBusinessWorkspaceAccess::class,
         ]);
 
         // 🔥 PERMITIR WEBHOOKS DO STRIPE (POST)
