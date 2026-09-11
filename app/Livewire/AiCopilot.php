@@ -12,17 +12,11 @@ use Livewire\Attributes\On;
 class AiCopilot extends Component
 {
     public bool $isOpen = false;
-
     public string $input = '';
-
     public array $messages = [];
-
     public array $pendingActions = [];
-
     public array $pageContext = [];
-
     public ?int $conversationId = null;
-
     public bool $isLoading = false;
 
     public function mount(ContextEngine $contextEngine): void
@@ -33,12 +27,11 @@ class AiCopilot extends Component
         $this->pageContext = [
             'module' => request()->route()?->getName(),
             'route' => request()->route()?->getName(),
+            'path' => request()->path(),
             'period' => request()->query('period'),
         ];
 
-        if (! $workspace) {
-            return;
-        }
+        if (! $workspace) return;
 
         $conversation = AiConversation::query()
             ->where('user_id', $user->id)
@@ -61,19 +54,16 @@ class AiCopilot extends Component
     public function setPageContext(array $context): void
     {
         $this->pageContext = array_merge($this->pageContext, array_intersect_key($context, array_flip([
-            'module', 'route', 'entity', 'entity_type', 'action', 'filters', 'period', 'state',
+            'module', 'route', 'path', 'entity', 'entity_type', 'action', 'filters', 'period', 'state',
         ])));
     }
 
     public function sendMessage(AiBrainService $brain): void
     {
         $input = trim($this->input);
-        if ($input === '' || $this->isLoading) {
-            return;
-        }
+        if ($input === '' || $this->isLoading) return;
 
         $this->isLoading = true;
-
         try {
             $conversation = $this->conversation($brain);
             $result = $brain->chat(Auth::user(), $input, $conversation, $this->pageContext);
@@ -83,10 +73,7 @@ class AiCopilot extends Component
             $this->input = '';
         } catch (\Throwable $e) {
             report($e);
-            $this->messages[] = [
-                'role' => 'assistant',
-                'content' => 'Não consegui concluir o pedido neste momento. Não alterei os teus dados.',
-            ];
+            $this->messages[] = ['role' => 'assistant', 'content' => 'Não consegui concluir o pedido neste momento. Não alterei os teus dados.'];
         } finally {
             $this->isLoading = false;
         }
@@ -95,26 +82,16 @@ class AiCopilot extends Component
     public function confirmAction(int $actionId, AiBrainService $brain): void
     {
         $this->isLoading = true;
-
         try {
             $result = $brain->confirm(Auth::user(), $actionId);
             $this->messages[] = [
                 'role' => 'assistant',
-                'content' => ! empty($result['success'])
-                    ? 'Ação executada com sucesso. Os dados foram atualizados. ✅'
-                    : 'A ação terminou sem confirmação de sucesso.',
+                'content' => ! empty($result['success']) ? 'Ação executada com sucesso. Os dados foram atualizados. ✅' : 'A ação terminou sem confirmação de sucesso.',
             ];
-
-            $this->pendingActions = array_values(array_filter(
-                $this->pendingActions,
-                fn (array $action) => (int) ($action['id'] ?? 0) !== $actionId
-            ));
+            $this->pendingActions = array_values(array_filter($this->pendingActions, fn (array $action) => (int) ($action['id'] ?? 0) !== $actionId));
         } catch (\Throwable $e) {
             report($e);
-            $this->messages[] = [
-                'role' => 'assistant',
-                'content' => 'Não consegui executar esta ação. O estado dos teus dados foi mantido.',
-            ];
+            $this->messages[] = ['role' => 'assistant', 'content' => 'Não consegui executar esta ação. O estado dos teus dados foi mantido.'];
         } finally {
             $this->isLoading = false;
         }
@@ -129,15 +106,8 @@ class AiCopilot extends Component
 
     public function archiveConversation(): void
     {
-        if (! $this->conversationId) {
-            return;
-        }
-
-        AiConversation::query()
-            ->whereKey($this->conversationId)
-            ->where('user_id', Auth::id())
-            ->update(['archived_at' => now()]);
-
+        if (! $this->conversationId) return;
+        AiConversation::query()->whereKey($this->conversationId)->where('user_id', Auth::id())->update(['archived_at' => now()]);
         $this->newConversation();
     }
 
@@ -150,6 +120,7 @@ class AiCopilot extends Component
     private function conversation(AiBrainService $brain): AiConversation
     {
         $workspace = app(ContextEngine::class)->resolveWorkspace(Auth::user());
+        if (! $workspace) throw new \RuntimeException('Workspace inválido.');
         return $brain->conversation(Auth::user(), $workspace, $this->conversationId);
     }
 
@@ -167,14 +138,9 @@ class AiCopilot extends Component
                 'metadata' => $message->metadata,
             ])->values()->all();
 
-        $metadataActions = $conversation->messages()
-            ->where('role', 'assistant')
-            ->latest('id')
-            ->first()?->metadata['pending_actions'] ?? [];
-
-        if (is_array($metadataActions)) {
-            $this->pendingActions = array_values($metadataActions);
-        }
+        $latest = $conversation->messages()->where('role', 'assistant')->latest('id')->first();
+        $metadataActions = $latest?->metadata['pending_actions'] ?? [];
+        if (is_array($metadataActions)) $this->pendingActions = array_values($metadataActions);
     }
 
     public function render()
