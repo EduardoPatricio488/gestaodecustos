@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Business;
 
+use App\Mail\ClientPortalAccessMail;
 use App\Models\Client;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\ClientPortalAccessMail;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -15,19 +15,31 @@ class ClientHub extends Component
     use WithPagination;
 
     public $search = '';
+
     public $selectedClient = null;
+
     public $generatedPasscode = '';
+
     public $showModal = false;
+
     public $generatedPortalUrl = '';
+
     public $editingId = null;
 
     public $name;
+
     public $legal_name;
+
     public $tax_number;
+
     public $email;
+
     public $phone;
+
     public $status = 'ativo';
+
     public $address;
+
     public $notes;
 
     protected $rules = [
@@ -145,6 +157,7 @@ class ClientHub extends Component
 
         if (! $client->email) {
             $this->dispatch('toast', text: 'Este cliente não tem email registado.', variant: 'warning');
+
             return;
         }
 
