@@ -1,62 +1,82 @@
-<!-- public/offline.html -->
-<!DOCTYPE html>
-<html lang="pt">
+<!doctype html>
+<html lang="pt-PT" class="bg-zinc-950">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Pro - Modo de Emergência</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#09090b">
+    <meta name="color-scheme" content="dark light">
+    <title>Finance Pro IA — Bunker Offline</title>
+    <style>
+        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; background: #09090b; color: #fafafa; }
+        button, input, select, textarea { font: inherit; }
+        button { cursor: pointer; }
+        .shell { width: min(1180px, 100%); margin: 0 auto; padding: 20px; }
+        .top { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(18px); background: rgba(9,9,11,.86); border-bottom: 1px solid #27272a; }
+        .top-inner { width: min(1180px, 100%); margin: 0 auto; padding: 16px 20px; display:flex; gap:16px; align-items:center; justify-content:space-between; }
+        .brand { display:flex; align-items:center; gap:12px; }
+        .logo { width:42px; height:42px; display:grid; place-items:center; border-radius:14px; background:linear-gradient(135deg,#10b981,#059669); box-shadow:0 12px 32px rgba(16,185,129,.2); font-size:20px; }
+        .eyebrow { font-size:11px; font-weight:900; letter-spacing:.16em; text-transform:uppercase; color:#a1a1aa; }
+        .title { margin:2px 0 0; font-size:18px; font-weight:900; letter-spacing:-.04em; }
+        .status { display:inline-flex; align-items:center; gap:8px; padding:9px 12px; border:1px solid #3f3f46; border-radius:999px; background:#18181b; font-size:11px; font-weight:800; }
+        .dot { width:8px; height:8px; border-radius:50%; background:#ef4444; box-shadow:0 0 0 4px rgba(239,68,68,.12); }
+        .dot.online { background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,.12); }
+        .hero { padding:34px 0 20px; }
+        .hero h1 { margin:0; font-size:clamp(34px,6vw,64px); line-height:.95; letter-spacing:-.07em; font-weight:950; }
+        .hero p { max-width:700px; margin:16px 0 0; color:#a1a1aa; line-height:1.65; }
+        .grid { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr); gap:18px; }
+        .card { background:rgba(24,24,27,.9); border:1px solid #27272a; border-radius:24px; padding:20px; box-shadow:0 18px 50px rgba(0,0,0,.18); }
+        .card h2 { margin:0; font-size:14px; font-weight:900; letter-spacing:-.01em; }
+        .muted { color:#a1a1aa; font-size:12px; line-height:1.55; }
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
+        .field { display:flex; flex-direction:column; gap:7px; }
+        .field.full { grid-column:1/-1; }
+        label { color:#d4d4d8; font-size:11px; font-weight:800; }
+        input, select, textarea { width:100%; border:1px solid #3f3f46; background:#09090b; color:#fafafa; border-radius:14px; outline:none; padding:12px 13px; min-height:46px; }
+        input:focus, select:focus, textarea:focus { border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.12); }
+        .amount { font-size:30px; font-weight:900; letter-spacing:-.04em; }
+        .actions { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+        .btn { border:1px solid #3f3f46; background:#18181b; color:#fafafa; border-radius:13px; padding:11px 15px; font-size:12px; font-weight:900; }
+        .btn.primary { border-color:#10b981; background:#10b981; color:#03251a; }
+        .btn.danger { border-color:#7f1d1d; color:#fca5a5; }
+        .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+        .chip { border:1px solid #3f3f46; background:#18181b; color:#d4d4d8; border-radius:999px; padding:8px 11px; font-size:11px; font-weight:800; }
+        .chip.active { border-color:#10b981; color:#6ee7b7; background:rgba(16,185,129,.08); }
+        .stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+        .stat { padding:13px; border:1px solid #27272a; border-radius:16px; background:#09090b; }
+        .stat span { display:block; color:#71717a; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+        .stat strong { display:block; margin-top:5px; font-size:20px; letter-spacing:-.04em; }
+        .list { margin-top:14px; display:grid; gap:8px; }
+        .item { padding:12px; border:1px solid #27272a; border-radius:16px; background:#09090b; display:flex; gap:12px; align-items:center; justify-content:space-between; }
+        .item-main { min-width:0; }
+        .item-title { font-size:12px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .item-meta { margin-top:4px; color:#71717a; font-size:10px; }
+        .item-amount { font-size:14px; font-weight:900; white-space:nowrap; }
+        .badge { display:inline-flex; margin-top:5px; padding:4px 7px; border-radius:999px; font-size:9px; font-weight:900; background:#27272a; color:#d4d4d8; }
+        .empty { text-align:center; padding:28px 10px; color:#71717a; }
+        .empty-icon { font-size:32px; margin-bottom:10px; }
+        .notice { position:fixed; right:18px; bottom:18px; z-index:50; max-width:360px; padding:13px 15px; border:1px solid #3f3f46; border-radius:16px; background:#18181b; box-shadow:0 20px 60px rgba(0,0,0,.35); font-size:12px; font-weight:800; }
+        .progress { height:8px; background:#27272a; border-radius:999px; overflow:hidden; margin-top:10px; }
+        .progress > div { height:100%; background:#10b981; border-radius:999px; width:0; transition:width .25s ease; }
+        .footer { padding:24px 0 36px; color:#52525b; font-size:10px; text-align:center; }
+        @media (max-width: 820px) { .grid { grid-template-columns:1fr; } .form-grid { grid-template-columns:1fr; } .shell { padding:14px; } .top-inner { padding:13px 14px; } .hero { padding-top:25px; } .status { font-size:10px; } }
+        @media (prefers-color-scheme: light) { body { background:#f4f4f5; color:#18181b; } .top { background:rgba(244,244,245,.88); border-color:#e4e4e7; } .status,.card,.btn,.chip { background:#fff; border-color:#e4e4e7; } .muted { color:#71717a; } input,select,textarea,.stat,.item { background:#fafafa; color:#18181b; border-color:#d4d4d8; } .hero p { color:#71717a; } }
+    </style>
 </head>
-<body class="bg-zinc-950 text-white flex items-center justify-center min-h-screen p-6">
-    <div class="w-full max-w-md space-y-8 text-center">
-        <div class="p-4 bg-red-500/10 rounded-2xl border border-red-500/20 text-red-500 font-black uppercase text-[10px] tracking-widest inline-block">
-            Sem Ligação à Internet
-        </div>
-
-        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black italic tracking-tighter uppercase">Bunker Offline</h1>
-        <p class="text-zinc-400 text-sm italic">Podes registar gastos agora. Eles serão sincronizados automaticamente assim que recuperares rede.</p>
-
-        <div class="space-y-4 bg-zinc-900 p-8 rounded-[2.5rem] border border-white/5">
-            <input type="number" id="offAmount" placeholder="Valor €" class="w-full h-16 bg-black/40 border-none rounded-2xl text-3xl font-black text-center focus:ring-2 focus:ring-emerald-500">
-            <input type="text" id="offDesc" placeholder="Descrição (Ex: Café)" class="w-full h-12 bg-black/40 border-none rounded-xl text-center">
-
-            <button onclick="saveToVault()" class="w-full h-14 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-emerald-500/10">
-                Guardar no Cofre Local
-            </button>
-        </div>
-
-        <div id="statusMsg" class="text-[10px] font-black uppercase text-zinc-500"></div>
-    </div>
-
-    <script>
-        function saveToVault() {
-            const amount = document.getElementById('offAmount').value;
-            const desc = document.getElementById('offDesc').value;
-
-            if(!amount) return alert('Insere um valor.');
-
-            const expense = {
-                id: Date.now(),
-                amount: amount,
-                description: desc,
-                date: new Date().toISOString(),
-                synced: false
-            };
-
-            const queue = JSON.parse(localStorage.getItem('offline_vault') || '[]');
-            queue.push(expense);
-            localStorage.setItem('offline_vault', JSON.stringify(queue));
-
-            document.getElementById('offAmount').value = '';
-            document.getElementById('offDesc').value = '';
-            document.getElementById('statusMsg').innerText = `Sucesso! Tens ${queue.length} despesa(s) em espera.`;
-        }
-
-        // Tentar voltar para a home automaticamente quando a net voltar
-        window.addEventListener('online', () => {
-            document.body.innerHTML = "<div class='text-center animate-pulse'><h1 class='text-2xl font-black'>A REESTABELECER CONEXÃO...</h1></div>";
-            setTimeout(() => window.location.href = '/dashboard', 2000);
-        });
-    </script>
-</body>
-</html>
+<body>
+<div class="top"><div class="top-inner"><div class="brand"><div class="logo">🔐</div><div><div class="eyebrow">Finance Pro IA</div><div class="title">Bunker Offline</div></div></div><div class="status"><span class="dot" id="dot"></span><span id="connectionText">Sem ligação à Internet</span></div></div></div>
+<main class="shell">
+<section class="hero"><div class="eyebrow">Central Offline Financeira</div><h1>A tua gestão financeira<br>continua a funcionar.</h1><p>Regista, consulta e organiza despesas neste dispositivo. Os registos ficam na fila local e, quando a ligação for restaurada, a aplicação principal tratará da sincronização.</p></section>
+<div class="grid">
+<section class="card"><h2>Registo rápido de despesa</h2><div class="muted">Guarda uma despesa em poucos segundos, mesmo sem Internet.</div><form id="expenseForm"><div class="form-grid"><div class="field full"><label for="amount">Valor</label><input id="amount" class="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0,00 €" required></div><div class="field full"><label for="title">Descrição / Local</label><input id="title" maxlength="255" placeholder="Continente, Uber, Restaurante, Galp..." required></div><div class="field"><label for="category">Categoria</label><select id="category"><option value="alimentacao">🍔 Alimentação</option><option value="transporte">🚗 Transporte</option><option value="casa">🏠 Casa</option><option value="compras">🛒 Compras</option><option value="entretenimento">🎮 Entretenimento</option><option value="saude">💊 Saúde</option><option value="seguros">🛡️ Seguros</option><option value="tecnologia">💻 Tecnologia</option><option value="educacao">📚 Educação</option><option value="outro">📦 Outro</option></select></div><div class="field"><label for="payment">Pagamento</label><select id="payment"><option value="cartao">Cartão</option><option value="mbway">MB WAY</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="outro">Outro</option></select></div><div class="field"><label for="date">Data</label><input id="date" type="datetime-local"></div><div class="field"><label for="notes">Notas</label><input id="notes" maxlength="500" placeholder="Opcional"></div></div><div class="actions"><button class="btn primary" type="submit">Guardar no Bunker</button><button class="btn" type="button" id="clearForm">Limpar</button></div></form><div class="chips" id="categoryChips"></div></section>
+<aside class="card"><h2>🔐 Cofre Offline</h2><div class="muted">Armazenamento local ativo neste dispositivo.</div><div class="stats"><div class="stat"><span>Registos</span><strong id="count">0</strong></div><div class="stat"><span>Total</span><strong id="total">€0,00</strong></div><div class="stat"><span>Média</span><strong id="average">€0,00</strong></div><div class="stat"><span>Maior</span><strong id="largest">€0,00</strong></div></div><div class="muted" style="margin-top:18px">Armazenamento local</div><div class="progress"><div id="storageBar"></div></div><div class="muted" id="storageText" style="margin-top:7px">A calcular...</div><div class="actions"><button class="btn" id="exportJson">Exportar JSON</button><button class="btn" id="exportCsv">Exportar CSV</button><button class="btn danger" id="clearAll">Limpar tudo</button></div></aside>
+</div>
+<section class="card" style="margin-top:18px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h2>📦 Fila de sincronização</h2><div class="muted" id="queueDescription">Os registos aguardam ligação para serem enviados.</div></div><button class="btn primary" id="backOnline" style="display:none">Abrir Finance Pro</button></div><div class="list" id="queue"></div></section>
+<section class="card" style="margin-top:18px"><h2>🧮 Soma de tickets rápida</h2><div class="muted">Soma vários valores sem criar despesas individuais.</div><div class="form-grid" style="margin-top:14px"><div class="field"><label for="ticketInput">Valor do ticket</label><input id="ticketInput" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0,00 €"></div><div class="field"><label>Total</label><input id="ticketTotal" value="€0,00" readonly></div></div><div class="actions"><button class="btn" id="addTicket">Adicionar ticket</button><button class="btn" id="clearTickets">Limpar tickets</button><button class="btn primary" id="saveTickets">Guardar como despesa</button></div><div class="list" id="tickets"></div></section>
+<section class="card" style="margin-top:18px"><h2>🕘 Histórico do Bunker</h2><div class="muted">Os últimos registos disponíveis neste dispositivo.</div><div class="field" style="margin-top:14px"><label for="search">Pesquisar</label><input id="search" placeholder="Pesquisar por descrição ou categoria..."></div><div class="list" id="history"></div></section>
+<div class="footer">Os dados desta página são armazenados localmente pelo navegador. A aplicação não afirma que estes dados estão cifrados, porque isso depende da implementação de armazenamento disponível no dispositivo.</div>
+</main><div class="notice" id="notice" hidden></div>
+<script>
+(()=>{const KEY='finance-pro-offline-expenses',LEGACY='offline_vault',euro=new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR'}),categories={alimentacao:'🍔 Alimentação',transporte:'🚗 Transporte',casa:'🏠 Casa',compras:'🛒 Compras',entretenimento:'🎮 Entretenimento',saude:'💊 Saúde',seguros:'🛡️ Seguros',tecnologia:'💻 Tecnologia',educacao:'📚 Educação',outro:'📦 Outro'};const read=(k,f=[])=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return Array.isArray(v)?v:f}catch{return f}};const normalize=x=>({client_id:x.client_id||x.id||crypto.randomUUID(),amount:Number(x.amount||0),title:x.title||x.description||'Despesa offline',description:x.description||null,category_slug:x.category_slug||x.category||'outro',spent_at:x.spent_at||x.date||x.created_at||new Date().toISOString(),payment_method:x.payment_method||null,notes:x.notes||null,created_at:x.created_at||x.date||new Date().toISOString(),local_status:x.local_status||'pending',attempts:Number(x.attempts||0),last_error:x.last_error||null});function queue(){let d=read(KEY),l=read(LEGACY);if(l.length){const ids=new Set(d.map(x=>x.client_id));l.map(normalize).forEach(x=>{if(!ids.has(x.client_id)){d.push(x);ids.add(x.client_id)}});localStorage.setItem(KEY,JSON.stringify(d));localStorage.removeItem(LEGACY)}return d.map(normalize)}function write(d){localStorage.setItem(KEY,JSON.stringify(d));render()}function notice(m){const e=document.getElementById('notice');e.textContent=m;e.hidden=false;clearTimeout(window.__notice);window.__notice=setTimeout(()=>e.hidden=true,3500)}function escapeHtml(v){const d=document.createElement('div');d.textContent=String(v??'');return d.innerHTML}function formatDate(v){try{return new Intl.DateTimeFormat('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(v))}catch{return'Agora'}}function render(){const d=queue(),valid=d.filter(x=>x.amount>0),total=valid.reduce((a,x)=>a+x.amount,0);document.getElementById('count').textContent=valid.length;document.getElementById('total').textContent=euro.format(total);document.getElementById('average').textContent=euro.format(valid.length?total/valid.length:0);document.getElementById('largest').textContent=euro.format(valid.reduce((m,x)=>Math.max(m,x.amount),0));document.getElementById('queue').innerHTML=d.length?d.slice().reverse().map(x=>`<div class="item"><div class="item-main"><div class="item-title">${escapeHtml(x.title)}</div><div class="item-meta">${categories[x.category_slug]||x.category_slug||'Sem categoria'} · ${formatDate(x.spent_at)}</div><span class="badge">${x.local_status==='error'?'🔴 Erro':'🟡 Pendente'}</span></div><div class="item-amount">${euro.format(x.amount)}</div></div>`).join(''):'<div class="empty"><div class="empty-icon">🔐</div><strong>O teu Bunker está pronto</strong><div class="muted">Ainda não existem registos locais.</div></div>';const s=document.getElementById('search').value.toLowerCase().trim(),h=d.slice().reverse().filter(x=>!s||`${x.title} ${x.description||''} ${x.category_slug}`.toLowerCase().includes(s));document.getElementById('history').innerHTML=h.length?h.map(x=>`<div class="item"><div class="item-main"><div class="item-title">${escapeHtml(x.title)}</div><div class="item-meta">${categories[x.category_slug]||x.category_slug||'Sem categoria'} · ${formatDate(x.spent_at)}</div></div><div class="item-amount">${euro.format(x.amount)}</div></div>`).join(''):'<div class="empty">Nenhum registo encontrado.</div>';document.getElementById('queueDescription').textContent=d.length?`${d.length} registo(s) pendente(s). Quando a ligação voltar, abre a aplicação para iniciar a sincronização automática.`:'A fila está vazia.';updateStorage()}function localDateTime(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}function saveExpense(){const a=Number(document.getElementById('amount').value),t=document.getElementById('title').value.trim();if(!Number.isFinite(a)||a<=0)return notice('Indica um valor válido.');if(!t)return notice('Indica onde ou em que foi feita a despesa.');const d=queue();d.push(normalize({client_id:crypto.randomUUID(),amount:a,title:t,description:t,category_slug:document.getElementById('category').value,payment_method:document.getElementById('payment').value,notes:document.getElementById('notes').value.trim(),spent_at:document.getElementById('date').value?new Date(document.getElementById('date').value).toISOString():new Date().toISOString(),created_at:new Date().toISOString()}));write(d);document.getElementById('expenseForm').reset();document.getElementById('date').value=localDateTime();document.getElementById('amount').focus();notice('✓ Despesa guardada localmente no Bunker.')}async function updateStorage(){if(!navigator.storage?.estimate)return;try{const e=await navigator.storage.estimate();if(e.quota){const r=Math.min(1,(e.usage||0)/e.quota);document.getElementById('storageBar').style.width=`${r*100}%`;document.getElementById('storageText').textContent=`${formatBytes(e.usage||0)} utilizados de aproximadamente ${formatBytes(e.quota)}.`}}catch{document.getElementById('storageText').textContent='O navegador não disponibiliza uma estimativa fiável.'}}function formatBytes(b){if(!b)return'0 B';const u=['B','KB','MB','GB'],i=Math.min(Math.floor(Math.log(b)/Math.log(1024)),u.length-1);return`${(b/Math.pow(1024,i)).toFixed(i?1:0)} ${u[i]}`}function download(c,n,t){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:t}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}function exportJson(){download(JSON.stringify({exported_at:new Date().toISOString(),expenses:queue()},null,2),'finance-pro-bunker.json','application/json');notice('Dados exportados em JSON.')}function exportCsv(){const f=['client_id','amount','title','description','category_slug','spent_at','payment_method','notes','created_at'],esc=v=>`"${String(v??'').replaceAll('"','""')}"`,csv=[f.join(','),...queue().map(x=>f.map(k=>esc(x[k])).join(','))].join('\n');download(csv,'finance-pro-bunker.csv','text/csv;charset=utf-8');notice('Dados exportados em CSV.')}let tickets=[];function renderTickets(){document.getElementById('ticketTotal').value=euro.format(tickets.reduce((a,b)=>a+b,0));document.getElementById('tickets').innerHTML=tickets.length?tickets.map((x,i)=>`<div class="item"><div class="item-title">Ticket ${i+1}</div><div class="item-amount">${euro.format(x)}</div></div>`).join(''):'<div class="muted">Nenhum ticket adicionado.</div>'}document.getElementById('expenseForm').addEventListener('submit',e=>{e.preventDefault();saveExpense()});document.getElementById('clearForm').onclick=()=>document.getElementById('expenseForm').reset();document.getElementById('search').addEventListener('input',render);document.getElementById('exportJson').onclick=exportJson;document.getElementById('exportCsv').onclick=exportCsv;document.getElementById('clearAll').onclick=()=>{const d=queue();if(!d.length)return notice('Não existem registos para apagar.');if(confirm(`Esta ação irá remover ${d.length} registo(s) armazenado(s) neste dispositivo. Esta ação não pode ser desfeita.\n\nContinuar?`)){localStorage.removeItem(KEY);localStorage.removeItem(LEGACY);render();notice('Registos locais removidos.')}};document.getElementById('addTicket').onclick=()=>{const n=Number(document.getElementById('ticketInput').value);if(!Number.isFinite(n)||n<=0)return notice('Indica um valor de ticket válido.');tickets.push(n);document.getElementById('ticketInput').value='';renderTickets()};document.getElementById('clearTickets').onclick=()=>{tickets=[];renderTickets()};document.getElementById('saveTickets').onclick=()=>{const t=tickets.reduce((a,b)=>a+b,0);if(!t)return notice('Adiciona pelo menos um ticket.');document.getElementById('amount').value=t.toFixed(2);document.getElementById('title').value='Soma de tickets';document.getElementById('category').value='compras';tickets=[];renderTickets();document.getElementById('amount').focus();notice('Total colocado no registo rápido.')};document.getElementById('backOnline').onclick=()=>location.href='/dashboard';document.getElementById('date').value=localDateTime();Object.entries(categories).forEach(([k,l])=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=l;b.onclick=()=>{document.getElementById('category').value=k;document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));b.classList.add('active')};document.getElementById('categoryChips').appendChild(b)});function updateConnection(){const o=navigator.onLine;document.getElementById('dot').classList.toggle('online',o);document.getElementById('connectionText').textContent=o?'Ligação restaurada — sincronização disponível':'Sem ligação à Internet';document.getElementById('backOnline').style.display=o?'inline-flex':'none';if(o){notice('Internet restaurada. A abrir Finance Pro para sincronizar os registos.');setTimeout(()=>location.href='/dashboard',1200)}}window.addEventListener('online',updateConnection);window.addEventListener('offline',updateConnection);updateConnection();render();renderTickets()})();
+</script></body></html>
