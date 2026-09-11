@@ -1,4 +1,4 @@
-<div x-data x-on:ai-page-context.window="$wire.setPageContext($event.detail)" class="contents">
+<div x-data="{ scrollMessages() { this.$nextTick(() => { const el = document.getElementById('finance-pro-ai-messages'); if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }); }); } }" x-on:ai-page-context.window="$wire.setPageContext($event.detail)" x-init="scrollMessages()" x-on:livewire:navigated.window="scrollMessages()" x-on:livewire:morph.updated="scrollMessages()" class="contents">
     <button type="button" wire:click="toggle" aria-label="Abrir Finance Pro AI Copilot" class="fixed bottom-5 right-5 z-[180] flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500 text-white shadow-2xl shadow-emerald-500/25 transition hover:-translate-y-0.5 hover:bg-emerald-600">
         <span class="text-xl">✦</span>
         @if($pendingActions)<span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-black text-white">{{ count($pendingActions) }}</span>@endif
@@ -33,14 +33,7 @@
 
             <form wire:submit="sendMessage" class="border-t border-zinc-200 p-3 dark:border-zinc-800">
                 <div class="flex items-end gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-900">
-                    <textarea
-                        wire:model.live="input"
-                        rows="1"
-                        placeholder="Pergunta ao teu copiloto…"
-                        autocomplete="off"
-                        class="min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-400 focus:border-0 focus:ring-0 dark:text-white"
-                        @keydown.enter.prevent.stop="$wire.sendMessage()"
-                    ></textarea>
+                    <textarea wire:model.live="input" rows="1" placeholder="Pergunta ao teu copiloto…" autocomplete="off" class="min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-400 focus:border-0 focus:ring-0 dark:text-white" @keydown.enter.prevent.stop="$wire.sendMessage()"></textarea>
                     <button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white transition hover:scale-105 hover:bg-emerald-600" wire:loading.attr="disabled">↑</button>
                 </div>
             </form>
@@ -62,15 +55,7 @@
                         pendingOfflineItems = Array.isArray(data?.queue) ? data.queue.length : Number(data?.pending_count || 0);
                     }
                 } catch (_) {}
-                window.dispatchEvent(new CustomEvent('ai-page-context', {
-                    detail: {
-                        path,
-                        module,
-                        period: new URLSearchParams(window.location.search).get('period'),
-                        offline_status: offlineStatus,
-                        pending_offline_items: pendingOfflineItems,
-                    },
-                }));
+                window.dispatchEvent(new CustomEvent('ai-page-context', { detail: { path, module, period: new URLSearchParams(window.location.search).get('period'), offline_status: offlineStatus, pending_offline_items: pendingOfflineItems } }));
             };
             publish();
             window.addEventListener('online', publish);
