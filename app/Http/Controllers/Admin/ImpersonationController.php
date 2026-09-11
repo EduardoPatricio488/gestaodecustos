@@ -12,14 +12,12 @@ use Illuminate\Support\Facades\Auth;
 class ImpersonationController extends Controller
 {
     private const SESSION_KEY = 'admin_impersonation';
-
     private const TTL_MINUTES = 30;
 
     public function start(Request $request, User $user): RedirectResponse
     {
         $admin = $request->user();
-
-        abort_unless($admin?->isAdminRole(), 403);
+        abort_unless($admin?->isAdmin(), 403);
         abort_if($admin->id === $user->id, 403);
         abort_if($user->isAdminRole() || ! $user->isActive(), 403);
         abort_if($request->session()->has(self::SESSION_KEY), 409);
@@ -42,29 +40,25 @@ class ImpersonationController extends Controller
         ]);
 
         Auth::login($user);
-
         return redirect()->route('dashboard');
     }
 
     public function stop(Request $request): RedirectResponse
     {
         $context = $request->session()->get(self::SESSION_KEY);
-
         if (! is_array($context) || ! isset($context['actor_id'], $context['target_id'])) {
             return redirect()->route('dashboard');
         }
 
         $actor = User::query()->find($context['actor_id']);
         $target = $request->user();
-
-        abort_unless($actor?->isAdminRole(), 403);
+        abort_unless($actor?->isAdmin(), 403);
         abort_unless($target && (int) $target->id === (int) $context['target_id'], 403);
 
         $this->finishLog($context);
         Auth::login($actor);
         $request->session()->forget(self::SESSION_KEY);
         $request->session()->regenerate();
-
         return redirect()->route('admin.users');
     }
 
