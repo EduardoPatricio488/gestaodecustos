@@ -16,6 +16,7 @@ class AiCopilot extends Component
     public string $input = '';
     public array $messages = [];
     public array $pendingActions = [];
+    public array $conversations = [];
     public array $pageContext = [];
     public ?int $conversationId = null;
     public bool $isLoading = false;
@@ -76,6 +77,7 @@ class AiCopilot extends Component
             $this->conversationId = $result['conversation_id'];
             $this->pendingActions = $result['pending_actions'] ?? [];
             $this->loadMessages($conversation->fresh());
+            $this->refreshConversations();
             $this->input = '';
         } catch (\Throwable $e) {
             report($e);
@@ -109,6 +111,7 @@ class AiCopilot extends Component
             ));
 
             $this->dispatch('finance-pro-data-changed', actionId: $actionId);
+            $this->refreshConversations();
         } catch (\Throwable $e) {
             report($e);
             $this->messages[] = [
@@ -125,6 +128,22 @@ class AiCopilot extends Component
         $this->conversationId = null;
         $this->messages = [];
         $this->pendingActions = [];
+        $this->input = '';
+    }
+
+    public function selectConversation(int $conversationId): void
+    {
+        $conversation = AiConversation::query()
+            ->whereKey($conversationId)
+            ->where('user_id', Auth::id())
+            ->where('workspace_id', $this->loadedWorkspaceId)
+            ->first();
+
+        if (! $conversation) return;
+
+        $this->conversationId = $conversation->id;
+        $this->loadMessages($conversation);
+        $this->input = '';
     }
 
     public function archiveConversation(): void
@@ -138,6 +157,7 @@ class AiCopilot extends Component
             ->update(['archived_at' => now()]);
 
         $this->newConversation();
+        $this->refreshConversations();
     }
 
     private function conversation(AiBrainService $brain, Workspace $workspace): AiConversation
@@ -150,6 +170,7 @@ class AiCopilot extends Component
         $this->conversationId = null;
         $this->messages = [];
         $this->pendingActions = [];
+        $this->conversations = [];
         $this->loadedWorkspaceId = $workspace?->id;
 
         if (! $workspace) return;
@@ -165,6 +186,33 @@ class AiCopilot extends Component
             $this->conversationId = $conversation->id;
             $this->loadMessages($conversation);
         }
+
+        $this->refreshConversations();
+    }
+
+    private function refreshConversations(): void
+    {
+        if (! $this->loadedWorkspaceId) {
+            $this->conversations = [];
+            return;
+        }
+
+        $this->conversations = AiConversation::query()
+            ->where('user_id', Auth::id())
+            ->where('workspace_id', $this->loadedWorkspaceId)
+            ->whereNull('archived_at')
+            ->withCount('messages')
+            ->latest('last_activity_at')
+            ->limit(30)
+            ->get()
+            ->map(fn (AiConversation $conversation) => [
+                'id' => $conversation->id,
+                'title' => $conversation->title ?: 'Nova conversa',
+                'messages_count' => $conversation->messages_count,
+                'last_activity_at' => optional($conversation->last_activity_at)->format('d/m H:i'),
+            ])
+            ->values()
+            ->all();
     }
 
     private function loadMessages(AiConversation $conversation): void
@@ -181,13 +229,11 @@ class AiCopilot extends Component
                 'metadata' => $message->metadata,
             ])->values()->all();
 
-        // The action log is the source of truth. Never resurrect an already
-        // completed/failed write just because an older assistant message still
-        // contains its original preview metadata.
         $this->pendingActions = AiActionLog::query()
             ->where('user_id', Auth::id())
             ->where('workspace_id', $this->loadedWorkspaceId)
             ->where('status', 'awaiting_confirmation')
+            ->where('conversation_id', $conversation->id)
             ->latest('id')
             ->limit(20)
             ->get()
