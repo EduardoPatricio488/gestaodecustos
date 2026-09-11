@@ -130,3 +130,28 @@ window.addEventListener('copy-to-clipboard', (event) => {
     document.execCommand('copy');
     textArea.remove();
 });
+
+
+// Global business field formatting.
+(function () {
+    const digits = (v) => (v || '').replace(/\D/g, '');
+    const groups = (v, sizes) => {
+        const raw = digits(v).slice(0, sizes.reduce((a,b) => a+b, 0));
+        const parts = []; let i = 0;
+        for (const size of sizes) { if (i >= raw.length) break; parts.push(raw.slice(i, i + size)); i += size; }
+        return parts.join(' ');
+    };
+    const apply = (input) => {
+        if (!(input instanceof HTMLInputElement) || ['password','email','hidden','number'].includes(input.type)) return;
+        const text = `${input.closest('div')?.innerText || ''} ${input.getAttribute('aria-label') || ''} ${input.getAttribute('placeholder') || ''}`.toLowerCase();
+        let value = null;
+        if (/\b(nif|vat|tax id|tax number)\b/.test(text)) value = groups(input.value,[3,3,3]);
+        else if (/\b(iban)\b/.test(text)) value = groups(input.value,[4,4,4,4,4,3]);
+        else if (/\b(telem[oó]vel|telefone|phone|contacto telef[oó]nico|mobile)\b/.test(text)) value = groups(input.value,[3,3,3]);
+        else if (/\b(c[oó]digo postal|postal code|zip)\b/.test(text)) value = groups(input.value,[4,3]);
+        if (value !== null && value !== input.value) { input.value = value; input.dispatchEvent(new Event('input',{bubbles:true})); }
+    };
+    document.addEventListener('input', e => apply(e.target), true);
+    document.addEventListener('focusin', e => apply(e.target), true);
+    document.addEventListener('livewire:navigated', () => document.querySelectorAll('input').forEach(apply));
+})();

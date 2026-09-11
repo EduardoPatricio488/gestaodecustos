@@ -51,7 +51,7 @@ if ($flyout) {
     $contentClasses = Flux::classes()
         ->add('relative')
         ->add(match ($variant) {
-            default => 'p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',
+            default => 'fixed inset-0 m-auto max-h-[90vh] overflow-y-auto p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',
             'bare' => '',
         })
         ->add(match ($variant) {
@@ -61,7 +61,7 @@ if ($flyout) {
 } else {
     $classes = Flux::classes()
         ->add(match ($variant) {
-            default => 'p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',
+            default => 'fixed inset-0 m-auto max-h-[90vh] overflow-y-auto p-6 [:where(&)]:max-w-xl [:where(&)]:min-w-xs shadow-lg rounded-xl',
             'bare' => '',
         })
         ->add(match ($variant) {
@@ -126,7 +126,7 @@ if (! $overflow) {
                     {{ $slot }}
 
                     <?php if ($closable): ?>
-                        <div class="absolute top-0 end-0 mt-4 me-4">
+                        <div class="absolute top-4 end-4 z-50">
                             <flux:modal.close>
                                 <flux:button variant="ghost" icon="x-mark" size="sm" aria-label="{{ __('Close modal') }}" class="text-zinc-400! hover:text-zinc-800! dark:text-zinc-500! dark:hover:text-white!"></flux:button>
                             </flux:modal.close>
@@ -138,7 +138,7 @@ if (! $overflow) {
             {{ $slot }}
 
             <?php if ($closable): ?>
-                <div class="absolute top-0 end-0 mt-4 me-4">
+                <div class="absolute top-4 end-4 z-50">
                     <flux:modal.close>
                         <flux:button variant="ghost" icon="x-mark" size="sm" aria-label="{{ __('Close modal') }}" class="text-zinc-400! hover:text-zinc-800! dark:text-zinc-500! dark:hover:text-white!"></flux:button>
                     </flux:modal.close>
