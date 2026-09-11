@@ -30,8 +30,7 @@
                     <tr>
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Utilizador</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Papel atual</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Novo papel</th>
-                        <th class="px-6 py-4"></th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Gestão</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -49,18 +48,16 @@
                             <td class="px-6 py-5">
                                 @if($isOwner)
                                     <span class="text-xs font-bold text-zinc-400">Protegido</span>
-                                @else
-                                    <select wire:click="selectMember({{ $member->id }})" wire:model="selectedRole" class="rounded-xl border-zinc-200 bg-zinc-50 text-sm dark:border-zinc-700 dark:bg-zinc-950">
-                                        @foreach($roles as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach
-                                    </select>
-                                @endif
-                            </td>
-                            <td class="px-6 py-5 text-right">
-                                @if(! $isOwner)
-                                    <flux:button wire:click="selectMember({{ $member->id }})" size="sm" variant="ghost">Selecionar</flux:button>
-                                    @if($selectedUserId === $member->id)
+                                @elseif($selectedUserId === $member->id)
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <select wire:model="selectedRole" class="rounded-xl border-zinc-200 bg-zinc-50 text-sm dark:border-zinc-700 dark:bg-zinc-950">
+                                            @foreach($roles as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach
+                                        </select>
                                         <flux:button wire:click="updateRole" size="sm" variant="primary">Guardar</flux:button>
-                                    @endif
+                                        <flux:button wire:click="$set('selectedUserId', null)" size="sm" variant="ghost">Cancelar</flux:button>
+                                    </div>
+                                @else
+                                    <flux:button wire:click="selectMember({{ $member->id }})" size="sm" variant="ghost">Gerir acesso</flux:button>
                                 @endif
                             </td>
                         </tr>
