@@ -1,6 +1,8 @@
 <?php
 
+use App\Jobs\RunAiObserver;
 use App\Models\User;
+use App\Models\Workspace;
 use App\Services\DailyReportService;
 use App\Services\MonthlyReportService;
 use App\Services\NotificationService;
@@ -39,3 +41,15 @@ Schedule::call(function () {
             NotificationService::checkAll($user);
         });
 })->dailyAt('08:30');
+
+// AI Observer: deterministic analysis runs asynchronously and is deduplicated by AiInsight.
+Schedule::call(function () {
+    Workspace::query()
+        ->select('id')
+        ->orderBy('id')
+        ->chunkById(100, function ($workspaces) {
+            foreach ($workspaces as $workspace) {
+                RunAiObserver::dispatch($workspace->id)->onQueue('ai-observer');
+            }
+        });
+})->hourly();
