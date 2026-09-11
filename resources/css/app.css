@@ -185,7 +185,6 @@ textarea {
 
 [x-cloak] { display: none !important; }
 
-/* Barra de progresso do Livewire no topo */
 .livewire-progress-bar {
     background-color: #10b981 !important;
     height: 3px !important;
@@ -202,14 +201,8 @@ textarea {
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(4px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes xpToastPop {
@@ -339,20 +332,17 @@ input:focus[data-flux-control], textarea:focus[data-flux-control], select:focus[
 }
 
 /* ─── CLIENTES: MODAL DE CHAVE DE ACESSO ───────────────────────────── */
-/* Garante que o diálogo nunca deixa o conteúdo escapar ou ficar por trás do código. */
 [data-flux-modal] {
     max-height: 90dvh;
     overflow: hidden;
 }
 
-[data-flux-modal] > div {
+[data-flux-modal] > dialog {
     max-height: 90dvh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    overscroll-behavior: contain;
+    overflow: hidden;
 }
 
-[data-flux-modal] > div > div {
+[data-flux-modal] > dialog > div {
     box-sizing: border-box;
 }
 
@@ -376,13 +366,13 @@ input:focus[data-flux-control], textarea:focus[data-flux-control], select:focus[
 }
 
 @media (max-width: 640px) {
-    [data-flux-modal] {
+    [data-flux-modal] > dialog {
         width: calc(100vw - 1rem) !important;
         max-width: calc(100vw - 1rem) !important;
         max-height: 94dvh !important;
     }
 
-    [data-flux-modal] > div {
+    [data-flux-modal] > dialog > div {
         max-height: 94dvh;
         padding: 1.25rem !important;
     }
@@ -393,6 +383,96 @@ input:focus[data-flux-control], textarea:focus[data-flux-control], select:focus[
     }
 
     [data-flux-modal] .flex.items-center.justify-center.gap-6 {
+        gap: 0.75rem !important;
+    }
+}
+
+/* ─── CLIENTE: PORTAL COM O MESMO COMPORTAMENTO DO FORNECEDOR ─────── */
+/* O modal do cliente usa a mesma estrutura visual/scroll do modal do fornecedor. */
+dialog[data-modal="portal-link-modal"] {
+    overflow: hidden !important;
+    max-height: 90vh !important;
+    padding: 0 !important;
+    width: calc(100vw - 2rem) !important;
+    max-width: 500px !important;
+    border-radius: 2.5rem !important;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child {
+    position: relative;
+    box-sizing: border-box;
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding: 2.5rem !important;
+    background: white;
+    border-radius: 2.5rem;
+}
+
+.dark dialog[data-modal="portal-link-modal"] > div:first-child {
+    background: #09090b;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-right: 3rem;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) h1,
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) h2,
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) h3 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child ui-close,
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child [data-flux-modal-close] {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 50;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child > div:nth-child(2) {
+    margin-top: 0;
+}
+
+dialog[data-modal="portal-link-modal"] .text-5xl {
+    line-height: 1;
+}
+
+@media (max-width: 640px) {
+    dialog[data-modal="portal-link-modal"] {
+        width: calc(100vw - 1rem) !important;
+        max-width: calc(100vw - 1rem) !important;
+        max-height: 94vh !important;
+    }
+
+    dialog[data-modal="portal-link-modal"] > div:first-child {
+        max-height: 94vh;
+        padding: 1.25rem !important;
+        border-radius: 1.5rem;
+    }
+
+    dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child {
+        padding-right: 2.75rem;
+    }
+
+    dialog[data-modal="portal-link-modal"] .text-5xl {
+        font-size: 2rem !important;
+        letter-spacing: 0.12em !important;
+    }
+
+    dialog[data-modal="portal-link-modal"] .flex.items-center.justify-center.gap-6 {
         gap: 0.75rem !important;
     }
 }
