@@ -16,30 +16,32 @@ class WellnessFinanceService
         $start = $month->copy()->startOfMonth();
         $end = $month->copy()->endOfMonth();
 
-        $healthCategory = Category::where('workspace_id', $workspace->id)
+        $healthCategoryId = Category::where('workspace_id', $workspace->id)
             ->where(fn ($q) => $q->where('slug', 'saude')->orWhere('name', 'like', '%Saúde%'))
-            ->first();
+            ->value('id');
 
-        $healthSpent = $healthCategory
+        $healthSpent = $healthCategoryId
             ? (float) Expense::where('workspace_id', $workspace->id)
-                ->where('category_id', $healthCategory->id)
+                ->where('category_id', $healthCategoryId)
                 ->whereBetween('spent_at', [$start, $end])
                 ->sum('amount')
-            : 0;
+            : 0.0;
 
-        $activities = FitnessActivity::where('user_id', auth()->id())
+        // Não carregar todas as atividades para PHP: agrega directamente na BD.
+        $activityStats = FitnessActivity::where('user_id', auth()->id())
             ->whereBetween('activity_date', [$start, $end])
-            ->get();
+            ->selectRaw('COALESCE(SUM(distance_km), 0) as total_km')
+            ->selectRaw('COALESCE(SUM(calories), 0) as total_calories')
+            ->selectRaw('COUNT(*) as activity_count')
+            ->first();
 
-        $totalKm = (float) $activities->sum('distance_km');
-        $totalCalories = (float) $activities->sum('calories');
-        $activityCount = $activities->count();
+        $totalKm = (float) ($activityStats->total_km ?? 0);
+        $totalCalories = (float) ($activityStats->total_calories ?? 0);
+        $activityCount = (int) ($activityStats->activity_count ?? 0);
 
         $costPerKm = $totalKm > 0 && $healthSpent > 0
             ? round($healthSpent / $totalKm, 2)
             : null;
-
-        $verdict = $this->generateVerdict($healthSpent, $totalKm, $activityCount);
 
         return [
             'health_spent' => $healthSpent,
@@ -47,7 +49,7 @@ class WellnessFinanceService
             'total_calories' => $totalCalories,
             'activity_count' => $activityCount,
             'cost_per_km' => $costPerKm,
-            'verdict' => $verdict,
+            'verdict' => $this->generateVerdict($healthSpent, $totalKm, $activityCount),
             'month' => $month->translatedFormat('F'),
         ];
     }
