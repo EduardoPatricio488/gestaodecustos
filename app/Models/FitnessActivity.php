@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Auth;
 
 class FitnessActivity extends Model
 {
@@ -17,7 +19,6 @@ class FitnessActivity extends Model
         'photo_path',
         'notes',
         'activity_date',
-        // --- NOVOS CAMPOS DE PERFORMANCE ---
         'pace',
         'hr_avg',
         'hr_max',
@@ -42,6 +43,18 @@ class FitnessActivity extends Model
         'training_load' => 'integer',
         'recovery_time' => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('workspace', function (Builder $builder): void {
+            if (Auth::check() && Auth::user()->current_workspace_id) {
+                $builder->where(
+                    $builder->getModel()->getTable().'.workspace_id',
+                    Auth::user()->current_workspace_id
+                );
+            }
+        });
+    }
 
     public function user(): BelongsTo
     {
