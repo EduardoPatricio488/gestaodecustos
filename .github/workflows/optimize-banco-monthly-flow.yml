@@ -1,0 +1,106 @@
+name: Optimize Banco monthly flow
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Optimize monthly flow queries
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('app/Services/BancoService.php')
+          text = path.read_text(encoding='utf-8')
+          old = '''        $data = [];
+        $fixedIncome = $this->getFixedMonthlyIncome();
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $month = $date->format('Y-m');
+            $label = $date->locale('pt')->isoFormat('MMM YY');
+
+            $income = Income::where('workspace_id', $this->workspaceId)
+                ->whereYear('received_at', $date->year)
+                ->whereMonth('received_at', $date->month)
+                ->sum('amount');
+
+            $expense = Expense::where('workspace_id', $this->workspaceId)
+                ->whereYear('spent_at', $date->year)
+                ->whereMonth('spent_at', $date->month)
+                ->sum('amount');
+
+            $data[] = [
+                'month' => $month,
+                'label' => $label,
+                'income' => (float) $income + $fixedIncome,
+                'expense' => (float) $expense,
+                'balance' => (float) ($income + $fixedIncome - $expense),
+            ];
+        }
+
+        return $data;'''
+          new = '''        $fixedIncome = $this->getFixedMonthlyIncome();
+        $start = now()->subMonths($months - 1)->startOfMonth();
+        $end = now()->endOfMonth();
+
+        $incomeByMonth = Income::where('workspace_id', $this->workspaceId)
+            ->whereBetween('received_at', [$start, $end])
+            ->selectRaw("DATE_FORMAT(received_at, '%Y-%m') as month, COALESCE(SUM(amount), 0) as total")
+            ->groupByRaw("DATE_FORMAT(received_at, '%Y-%m')")
+            ->pluck('total', 'month');
+
+        $expenseByMonth = Expense::where('workspace_id', $this->workspaceId)
+            ->whereBetween('spent_at', [$start, $end])
+            ->selectRaw("DATE_FORMAT(spent_at, '%Y-%m') as month, COALESCE(SUM(amount), 0) as total")
+            ->groupByRaw("DATE_FORMAT(spent_at, '%Y-%m')")
+            ->pluck('total', 'month');
+
+        $data = [];
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $month = $date->format('Y-m');
+            $income = (float) ($incomeByMonth[$month] ?? 0);
+            $expense = (float) ($expenseByMonth[$month] ?? 0);
+
+            $data[] = [
+                'month' => $month,
+                'label' => $date->locale('pt')->isoFormat('MMM YY'),
+                'income' => $income + $fixedIncome,
+                'expense' => $expense,
+                'balance' => $income + $fixedIncome - $expense,
+            ];
+        }
+
+        return $data;'''
+
+          if old not in text:
+              raise SystemExit('Expected monthly flow block not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+      - name: Commit optimization
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Services/BancoService.php
+          git commit -m "perf: aggregate Banco monthly flow in SQL"
+          git push
+
+      - name: Remove temporary workflow
+        if: success()
+        shell: bash
+        run: |
+          rm -f .github/workflows/optimize-banco-monthly-flow.yml
+          git add .github/workflows/optimize-banco-monthly-flow.yml
+          git commit -m "chore: remove temporary Banco optimization workflow"
+          git push
