@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   adjust:
-    if: github.event.head_commit.message != 'ui: move new expense button to header'
+    if: github.event.head_commit.message != 'ui: move new expense button to header' && github.event.head_commit.message != 'Trigger client portal modal fix'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,4 +51,146 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add resources/views/livewire/expenses.blade.php
           git commit -m "ui: move new expense button to header"
+          git push
+
+  fix-client-portal-modal:
+    if: github.event.head_commit.message == 'Trigger client portal modal fix'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fix client portal modal sizing
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('resources/css/app.css')
+          css = path.read_text(encoding='utf-8')
+          marker = '/* ─── CLIENTE: PORTAL COM O MESMO COMPORTAMENTO DO FORNECEDOR ─────── */'
+          start = css.find(marker)
+          if start == -1:
+              raise SystemExit('Portal modal CSS marker not found')
+
+          replacement = r'''/* ─── CLIENTE: PORTAL DE ACESSO — DIMENSÃO DESKTOP PROFISSIONAL ───── */
+dialog[data-modal="portal-link-modal"] {
+    box-sizing: border-box !important;
+    width: min(800px, calc(100vw - 2rem)) !important;
+    max-width: 800px !important;
+    max-height: 90vh !important;
+    margin: auto !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border-radius: 2rem !important;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none !important;
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2.5rem !important;
+    background: white;
+    border-radius: 2rem;
+}
+
+.dark dialog[data-modal="portal-link-modal"] > div:first-child {
+    background: #09090b;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    width: 100%;
+    min-width: 0;
+    padding-right: 3rem;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) h1,
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) h2,
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) h3 {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child ui-close,
+dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child [data-flux-modal-close] {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 50;
+}
+
+dialog[data-modal="portal-link-modal"] > div:first-child > div:nth-child(2) {
+    width: 100%;
+    max-width: none !important;
+    min-width: 0;
+    margin-top: 1.5rem;
+}
+
+dialog[data-modal="portal-link-modal"] .text-5xl {
+    font-size: 3.75rem !important;
+    line-height: 1 !important;
+    letter-spacing: 0.18em;
+}
+
+dialog[data-modal="portal-link-modal"] a,
+dialog[data-modal="portal-link-modal"] p,
+dialog[data-modal="portal-link-modal"] span,
+dialog[data-modal="portal-link-modal"] code {
+    overflow-wrap: anywhere;
+}
+
+dialog[data-modal="portal-link-modal"] input,
+dialog[data-modal="portal-link-modal"] textarea {
+    width: 100%;
+    max-width: 100%;
+}
+
+@media (max-width: 640px) {
+    dialog[data-modal="portal-link-modal"] {
+        width: calc(100vw - 1rem) !important;
+        max-width: calc(100vw - 1rem) !important;
+        max-height: 94vh !important;
+        border-radius: 1.5rem !important;
+    }
+
+    dialog[data-modal="portal-link-modal"] > div:first-child {
+        max-height: 94vh;
+        padding: 1.25rem !important;
+        border-radius: 1.5rem;
+    }
+
+    dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child {
+        padding-right: 2.75rem;
+    }
+
+    dialog[data-modal="portal-link-modal"] .text-5xl {
+        font-size: 2.5rem !important;
+        letter-spacing: 0.12em !important;
+    }
+}
+'''
+
+          path.write_text(css[:start] + replacement, encoding='utf-8')
+
+      - name: Commit modal fix and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/fix-client-portal-modal.yml
+          git add resources/css/app.css
+          git commit -m "Fix client portal modal sizing"
           git push
