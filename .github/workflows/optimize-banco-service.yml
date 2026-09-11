@@ -1,0 +1,190 @@
+name: Optimize BancoService
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Optimize BancoService
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/Services/BancoService.php')
+          s = p.read_text(encoding='utf-8')
+
+          old = '''    private ?Collection $patrimonyCache = null;'''
+          new = '''    private ?Collection $patrimonyCache = null;
+    private ?Collection $transitItemsCache = null;
+    private ?Collection $creditsCache = null;'''
+          if old in s and new not in s:
+              s = s.replace(old, new, 1)
+
+          old = '''    public function getTransitItems(): Collection
+    {
+        return BankTransitItem::where('workspace_id', $this->workspaceId)
+            ->where('status', 'pending')
+            ->orderBy('expected_date')
+            ->get();
+    }'''
+          new = '''    public function getTransitItems(): Collection
+    {
+        if ($this->transitItemsCache !== null) {
+            return $this->transitItemsCache;
+        }
+
+        return $this->transitItemsCache = BankTransitItem::where('workspace_id', $this->workspaceId)
+            ->where('status', 'pending')
+            ->orderBy('expected_date')
+            ->get();
+    }'''
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          old = '''    public function getCredits(): Collection
+    {
+        return BankCredit::where('workspace_id', $this->workspaceId)
+            ->whereIn('status', ['pending', 'partial'])
+            ->orderBy('due_date')
+            ->get();
+    }'''
+          new = '''    public function getCredits(): Collection
+    {
+        if ($this->creditsCache !== null) {
+            return $this->creditsCache;
+        }
+
+        return $this->creditsCache = BankCredit::where('workspace_id', $this->workspaceId)
+            ->whereIn('status', ['pending', 'partial'])
+            ->orderBy('due_date')
+            ->get();
+    }'''
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          start = s.index('    public function getMonthlyFlow(int $months = 12): array')
+          end = s.index('\n    /* ══════════════════════════════════════════════════════════\n       LIQUIDEZ', start)
+          new_method = '''    public function getMonthlyFlow(int $months = 12): array
+    {
+        $months = max(1, min($months, 24));
+        $start = now()->startOfMonth()->subMonths($months - 1);
+        $end = now()->endOfMonth();
+        $fixedIncome = $this->getFixedMonthlyIncome();
+
+        $incomeByMonth = Income::where('workspace_id', $this->workspaceId)
+            ->whereBetween('received_at', [$start, $end])
+            ->selectRaw("DATE_FORMAT(received_at, '%Y-%m') as month, SUM(amount) as total")
+            ->groupBy('month')
+            ->pluck('total', 'month');
+
+        $expenseByMonth = Expense::where('workspace_id', $this->workspaceId)
+            ->whereBetween('spent_at', [$start, $end])
+            ->selectRaw("DATE_FORMAT(spent_at, '%Y-%m') as month, SUM(amount) as total")
+            ->groupBy('month')
+            ->pluck('total', 'month');
+
+        $data = [];
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $date = now()->startOfMonth()->subMonths($i);
+            $month = $date->format('Y-m');
+            $income = (float) ($incomeByMonth[$month] ?? 0);
+            $expense = (float) ($expenseByMonth[$month] ?? 0);
+
+            $data[] = [
+                'month' => $month,
+                'label' => $date->locale('pt')->isoFormat('MMM YY'),
+                'income' => $income + $fixedIncome,
+                'expense' => $expense,
+                'balance' => $income + $fixedIncome - $expense,
+            ];
+        }
+
+        return $data;
+    }
+'''
+          s = s[:start] + new_method + s[end:]
+
+          old = '''    private function getFixedMonthlyIncome(): float
+    {
+        return (float) RecurringIncome::where('workspace_id', $this->workspaceId)
+            ->where('is_active', true)
+            ->get()
+            ->sum(fn ($r) => match ($r->frequency) {
+                'semanal' => (float) $r->amount * 52 / 12,
+                'anual' => (float) $r->amount / 12,
+                default => (float) $r->amount,
+            });
+    }'''
+          new = '''    private function getFixedMonthlyIncome(): float
+    {
+        return (float) RecurringIncome::where('workspace_id', $this->workspaceId)
+            ->where('is_active', true)
+            ->selectRaw("SUM(CASE
+                WHEN frequency = 'semanal' THEN amount * 52 / 12
+                WHEN frequency = 'anual' THEN amount / 12
+                ELSE amount
+            END) as monthly_total")
+            ->value('monthly_total');
+    }'''
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          old = '''    private function getAvgMonthlyExpense(int $months = 6): float
+    {
+        $total = 0;
+        for ($i = 1; $i <= $months; $i++) {
+            $date = now()->subMonths($i);
+            $total += (float) Expense::where('workspace_id', $this->workspaceId)
+                ->whereYear('spent_at', $date->year)
+                ->whereMonth('spent_at', $date->month)
+                ->sum('amount');
+        }
+
+        return $months > 0 ? $total / $months : 0;
+    }'''
+          new = '''    private function getAvgMonthlyExpense(int $months = 6): float
+    {
+        $months = max(1, min($months, 24));
+        $start = now()->startOfMonth()->subMonths($months);
+
+        $total = (float) Expense::where('workspace_id', $this->workspaceId)
+            ->whereBetween('spent_at', [$start, now()->endOfMonth()])
+            ->sum('amount');
+
+        return $total / $months;
+    }'''
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          git diff --check
+          git diff -- app/Services/BancoService.php
+
+          if git diff --quiet -- app/Services/BancoService.php; then
+            echo 'No changes detected'; exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/Services/BancoService.php
+          git commit -m 'perf: optimize BancoService aggregate queries'
+          git push
+
+      - name: Remove temporary workflow
+        if: success()
+        run: |
+          git rm .github/workflows/optimize-banco-service.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore: remove temporary BancoService optimizer'
+          git push
