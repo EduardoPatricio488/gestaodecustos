@@ -56,6 +56,8 @@ jobs:
               raise SystemExit('Expected bank balance block not found')
           p.write_text(s.replace(old, new, 1))
           PY
+      - name: Validate PHP syntax
+        run: php -l app/Livewire/Dashboard.php
       - name: Commit
         shell: bash
         run: |
