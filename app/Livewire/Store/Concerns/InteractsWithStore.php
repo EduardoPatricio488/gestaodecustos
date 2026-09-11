@@ -14,10 +14,7 @@ trait InteractsWithStore
     {
         $cart = app(StoreCartService::class);
 
-        if (! $this->canPurchase($productId)) {
-
-            return;
-        }
+        if (! $this->canPurchase($productId)) return;
 
         $cart->add($productId);
         $this->dispatch('cart-updated');
@@ -29,10 +26,7 @@ trait InteractsWithStore
     {
         $cart = app(StoreCartService::class);
 
-        if (! $this->canPurchase($productId)) {
-
-            return;
-        }
+        if (! $this->canPurchase($productId)) return;
 
         $cart->clear();
         $cart->add($productId);
@@ -44,11 +38,31 @@ trait InteractsWithStore
 
     private function canPurchase(int $productId): bool
     {
-        $product = StoreProduct::findOrFail($productId);
+        $user = Auth::user();
+        $product = StoreProduct::query()->where('is_active', true)->findOrFail($productId);
 
-        if ($product->requires_business_plan && ! (Auth::user()?->isBusinessPlan() ?? false)) {
+        if (! $user) {
+            $this->dispatch('toast', text: 'Inicia sessão para comprar produtos.');
+            return false;
+        }
+
+        if ($product->type === 'plan') {
+            $this->dispatch('toast', text: 'Os planos são geridos na área de subscrição.');
+            return false;
+        }
+
+        if (app(StoreCartService::class)->isOwned($productId)) {
+            $this->dispatch('toast', text: 'Já tens este produto no teu inventário.');
+            return false;
+        }
+
+        if ($product->requires_business_plan && ! $user->isBusinessPlan()) {
             $this->dispatch('toast', text: 'Este produto requer o plano Business.');
+            return false;
+        }
 
+        if (($product->audience ?? 'both') === 'business' && ! $user->isBusinessPlan()) {
+            $this->dispatch('toast', text: 'Este produto está disponível apenas para negócios.');
             return false;
         }
 
@@ -68,7 +82,6 @@ trait InteractsWithStore
 
         if (! $compare->add($productId)) {
             $this->dispatch('toast', text: 'Máximo de 4 produtos para comparar.');
-
             return;
         }
 
