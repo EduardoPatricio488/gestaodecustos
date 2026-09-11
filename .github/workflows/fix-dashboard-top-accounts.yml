@@ -1,0 +1,36 @@
+name: Fix dashboard top bank accounts query
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix query collection boundary
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path("app/Livewire/Dashboard.php")
+          text = path.read_text(encoding="utf-8")
+          old = "                ->take(3)\n                ->map(fn ($account) => ["
+          new = "                ->take(3)\n                ->get()\n                ->map(fn ($account) => ["
+          if old not in text:
+              raise SystemExit("Top bank accounts pattern not found")
+          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          Path(".github/workflows/fix-dashboard-top-accounts.yml").unlink(missing_ok=True)
+      - name: Validate PHP syntax
+        run: php -l app/Livewire/Dashboard.php
+      - name: Commit fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Livewire/Dashboard.php .github/workflows/fix-dashboard-top-accounts.yml
+          git commit -m "Fix dashboard top bank accounts query"
+          git push
