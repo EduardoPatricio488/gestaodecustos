@@ -1,0 +1,50 @@
+name: Repair malformed app.js
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Repair app.js
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+
+          path = Path('resources/js/app.js')
+          text = path.read_text(encoding='utf-8')
+
+          marker = r'\n\n// Global modal audit: one working close X, preserve every functional action.'
+          if marker in text:
+              text = text.split(marker, 1)[0].rstrip() + '\n'
+              path.write_text(text, encoding='utf-8')
+              print('Removed malformed literal escape sequence and corrupted modal-audit tail.')
+          else:
+              print('Malformed tail not present; no change required.')
+
+          subprocess.run(['node', '--check', str(path)], check=True)
+
+      - name: Commit repair and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/repair-app-js.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add resources/js/app.js .github/workflows/repair-app-js.yml
+          if git diff --cached --quiet; then
+            echo 'No repair needed.'
+            exit 0
+          fi
+          git commit -m 'fix: repair app.js production build syntax'
+          git push
