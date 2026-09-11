@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Business;
 
+use App\Mail\SupplierPortalAccessMail;
 use App\Models\Expense;
 use App\Models\Supplier;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -63,6 +65,28 @@ class SupplierHub extends Component
         $this->generatedPortalUrl = route('supplier.portal');
 
         $this->dispatch('modal-show', name: 'supplier-portal-modal');
+    }
+
+    public function sendPortalEmail(): void
+    {
+        $supplier = auth()->user()->suppliers()
+            ->where('portal_token', $this->generatedPasscode)
+            ->firstOrFail();
+
+        if (! $supplier->email) {
+            $this->dispatch('toast', text: 'Este fornecedor não tem email registado.', variant: 'warning');
+
+            return;
+        }
+
+        Mail::to($supplier->email)->send(new SupplierPortalAccessMail(
+            $supplier,
+            auth()->user()->currentWorkspace,
+            $supplier->portal_token,
+            $this->generatedPortalUrl,
+        ));
+
+        $this->dispatch('toast', text: 'Código de acesso enviado para '.$supplier->email.'.', variant: 'success');
     }
 
     public $viewMode = 'grid';
