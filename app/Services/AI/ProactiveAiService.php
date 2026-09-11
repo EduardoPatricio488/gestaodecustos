@@ -5,6 +5,7 @@ namespace App\Services\AI;
 use App\Models\AiInsight;
 use App\Models\User;
 use App\Models\Workspace;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ProactiveAiService
@@ -12,21 +13,16 @@ class ProactiveAiService
     public function analyze(Workspace $workspace): array
     {
         $owner = $workspace->owner;
-        if (! $owner) {
-            return [];
-        }
+        if (! $owner) return [];
 
         $snapshot = app(FinancialIntelligenceService::class)->snapshot($workspace);
-        $candidates = $workspace->type === 'business' || $workspace->type === 'company'
+        $candidates = in_array($workspace->type, ['business', 'company'], true)
             ? $this->businessCandidates($snapshot)
             : $this->personalCandidates($snapshot);
 
         $created = [];
-
         foreach ($candidates as $candidate) {
-            if (! $this->shouldCreate($owner, $workspace, $candidate['dedupe_key'])) {
-                continue;
-            }
+            if (! $this->shouldCreate($owner, $workspace, $candidate['dedupe_key'])) continue;
 
             $insight = AiInsight::create([
                 'user_id' => $owner->id,
@@ -71,30 +67,18 @@ class ProactiveAiService
         $expenseChange = $snapshot['changes']['expenses_percent'] ?? null;
 
         if ($expenseChange !== null && $expenseChange >= 20) {
-            $candidates[] = $this->candidate(
-                'anomaly', 'medium', 'Gastos acima do normal',
-                sprintf('Os teus gastos estão %.1f%% acima do mês anterior.', $expenseChange),
-                'spending', $period, 78, 82, ['hub' => 'expenses']
-            );
+            $candidates[] = $this->candidate('anomaly', 'medium', 'Gastos acima do normal', sprintf('Os teus gastos estão %.1f%% acima do mês anterior.', $expenseChange), 'spending', $period, 78, 82, ['hub' => 'expenses']);
         }
 
         if (($snapshot['savings_rate'] ?? 0) < 10 && ($snapshot['income'] ?? 0) > 0) {
-            $candidates[] = $this->candidate(
-                'risk', 'medium', 'Margem de poupança reduzida',
-                sprintf('A taxa de poupança deste mês está em %.1f%%.', $snapshot['savings_rate']),
-                'savings', $period, 84, 80, ['hub' => 'budget']
-            );
+            $candidates[] = $this->candidate('risk', 'medium', 'Margem de poupança reduzida', sprintf('A taxa de poupança deste mês está em %.1f%%.', $snapshot['savings_rate']), 'savings', $period, 84, 80, ['hub' => 'budget']);
         }
 
         foreach (($snapshot['goals'] ?? []) as $goal) {
             if (($goal['target'] ?? 0) > 0 && ($goal['progress_percent'] ?? 0) < 50 && ! empty($goal['deadline'])) {
-                $deadline = now()->parse($goal['deadline']);
+                $deadline = Carbon::parse($goal['deadline']);
                 if ($deadline->isFuture() && $deadline->diffInDays(now()) <= 60) {
-                    $candidates[] = $this->candidate(
-                        'goal_risk', 'high', 'Objetivo perto do prazo',
-                        sprintf('O objetivo "%s" está a %.1f%% e tem prazo em %s.', $goal['name'], $goal['progress_percent'], $deadline->format('d/m/Y')),
-                        'goals', $period, 92, 88, ['hub' => 'goals']
-                    );
+                    $candidates[] = $this->candidate('goal_risk', 'high', 'Objetivo perto do prazo', sprintf('O objetivo "%s" está a %.1f%% e tem prazo em %s.', $goal['name'], $goal['progress_percent'], $deadline->format('d/m/Y')), 'goals', $period, 92, 88, ['hub' => 'goals']);
                 }
             }
         }
@@ -110,27 +94,15 @@ class ProactiveAiService
         $revenueChange = $snapshot['changes']['revenue_percent'] ?? null;
 
         if ($marginPoints <= -5) {
-            $candidates[] = $this->candidate(
-                'business_risk', 'high', 'Margem em queda',
-                sprintf('A margem caiu %.1f pontos percentuais face ao mês anterior.', abs($marginPoints)),
-                'margin', $period, 94, 92, ['hub' => 'business.pnl']
-            );
+            $candidates[] = $this->candidate('business_risk', 'high', 'Margem em queda', sprintf('A margem caiu %.1f pontos percentuais face ao mês anterior.', abs($marginPoints)), 'margin', $period, 94, 92, ['hub' => 'business.pnl']);
         }
 
         if ($revenueChange !== null && $revenueChange <= -15) {
-            $candidates[] = $this->candidate(
-                'business_risk', 'high', 'Receita em queda',
-                sprintf('A receita recebida caiu %.1f%% face ao mês anterior.', abs($revenueChange)),
-                'revenue', $period, 94, 91, ['hub' => 'business.dashboard']
-            );
+            $candidates[] = $this->candidate('business_risk', 'high', 'Receita em queda', sprintf('A receita recebida caiu %.1f%% face ao mês anterior.', abs($revenueChange)), 'revenue', $period, 94, 91, ['hub' => 'business.dashboard']);
         }
 
         if (($snapshot['metrics']['overdue_receivables'] ?? 0) > 0) {
-            $candidates[] = $this->candidate(
-                'collections', 'medium', 'Existem valores vencidos',
-                sprintf('Existem %s em recebimentos vencidos ou em atraso.', $this->money($snapshot['metrics']['overdue_receivables'], $snapshot['currency'])),
-                'receivables', $period, 97, 86, ['hub' => 'business.invoices']
-            );
+            $candidates[] = $this->candidate('collections', 'medium', 'Existem valores vencidos', sprintf('Existem %s em recebimentos vencidos ou em atraso.', $this->money($snapshot['metrics']['overdue_receivables'], $snapshot['currency'])), 'receivables', $period, 97, 86, ['hub' => 'business.invoices']);
         }
 
         return $candidates;
@@ -165,12 +137,7 @@ class ProactiveAiService
 
     private function shouldCreate(User $user, Workspace $workspace, string $dedupeKey): bool
     {
-        return ! AiInsight::query()
-            ->where('user_id', $user->id)
-            ->where('workspace_id', $workspace->id)
-            ->where('dedupe_key', $dedupeKey)
-            ->where('created_at', '>=', now()->subHours(24))
-            ->exists();
+        return ! AiInsight::query()->where('user_id', $user->id)->where('workspace_id', $workspace->id)->where('dedupe_key', $dedupeKey)->where('created_at', '>=', now()->subHours(24))->exists();
     }
 
     private function money(float $amount, string $currency): string
