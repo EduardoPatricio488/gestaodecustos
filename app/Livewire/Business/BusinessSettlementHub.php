@@ -65,6 +65,6 @@ class BusinessSettlementHub extends Component
     {
         $workspace = app(BusinessAccessService::class)->assertWorkspace();
 
-        return view('livewire.business.business-settlement-hub', ['invoices' => $workspace->invoices()->whereRaw('(amount_paid + amount_credited) < total_amount')->latest()->limit(50)->get(), 'expenses' => $workspace->expenses()->where('is_company', true)->whereColumn('amount_paid', '<', 'amount')->latest('spent_at')->limit(50)->get(), 'bankAccounts' => $workspace->bankAccounts()->where('status', 'active')->where('type','!=','credito')->get(), 'workspaceCurrency' => strtoupper($workspace->currency ?? 'EUR')]);
+        return view('livewire.business.business-settlement-hub', ['invoices' => $workspace->invoices()->whereRaw('(amount_paid + amount_credited) < total_amount')->latest()->limit(50)->get(), 'expenses' => $workspace->expenses()->where('is_company', true)->whereColumn('amount_paid', '<', 'amount')->latest('spent_at')->limit(50)->get(), 'bankAccounts' => $workspace->bankAccounts()->where('status', 'active')->where('type', '!=', 'credito')->get(), 'workspaceCurrency' => strtoupper($workspace->currency ?? 'EUR')]);
     }
 }

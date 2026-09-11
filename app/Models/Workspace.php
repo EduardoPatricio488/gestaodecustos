@@ -183,7 +183,7 @@ class Workspace extends Model
             return round((float) $this->bankAccounts()->where('type', '!=', 'credito')->get()->sum(fn ($account) => (float) $account->current_balance), 2);
         }
 
-return round((float) ($this->initial_capital ?? 0) + (float) $this->paymentAllocations()->whereNotNull('invoice_id')->sum('amount') - (float) $this->paymentAllocations()->whereNotNull('expense_id')->sum('amount'), 2);
+        return round((float) ($this->initial_capital ?? 0) + (float) $this->paymentAllocations()->whereNotNull('invoice_id')->sum('amount') - (float) $this->paymentAllocations()->whereNotNull('expense_id')->sum('amount'), 2);
     }
 
     public function money($amount): string
@@ -218,7 +218,7 @@ return round((float) ($this->initial_capital ?? 0) + (float) $this->paymentAlloc
             return '0 meses';
         }
 
-return number_format($cash / $burn, 1).' meses';
+        return number_format($cash / $burn, 1).' meses';
     }
 
     public function calculateScore(): int
