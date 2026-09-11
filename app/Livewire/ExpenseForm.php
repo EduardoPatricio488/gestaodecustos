@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Category;
 use App\Models\Expense;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -23,10 +24,25 @@ class ExpenseForm extends Component
     {
         $this->spent_at = now()->toDateString();
 
-        // Selecciona a primeira categoria por defeito
-        $firstCategory = auth()->user()->categories()->first();
-        if ($firstCategory) {
-            $this->category_id = $firstCategory->id;
+        // Se vier uma categoria pela página de despesas, pré-seleciona-a com segurança.
+        $requestedCategoryId = request()->integer('category');
+        if ($requestedCategoryId) {
+            $requestedCategory = Category::where('workspace_id', auth()->user()->current_workspace_id)
+                ->where('hidden_from_sidebar', false)
+                ->whereKey($requestedCategoryId)
+                ->first();
+
+            if ($requestedCategory) {
+                $this->category_id = $requestedCategory->id;
+            }
+        }
+
+        // Caso não tenha sido escolhida uma categoria, usa a primeira disponível.
+        if (! $this->category_id) {
+            $firstCategory = auth()->user()->categories()->first();
+            if ($firstCategory) {
+                $this->category_id = $firstCategory->id;
+            }
         }
 
         // Se vier um ID, é edição
