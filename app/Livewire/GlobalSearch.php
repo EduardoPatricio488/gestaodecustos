@@ -17,17 +17,20 @@ class GlobalSearch extends Component
 
     public $isOpen = false;
 
-    public $isBusinessMode = false;
+    /**
+     * O modo de pesquisa é derivado da rota atual e nunca é uma propriedade
+     * pública controlável pelo cliente.
+     */
+    private function isBusinessContext(): bool
+    {
+        return request()->routeIs('hub.business.*') || request()->routeIs('company-expenses');
+    }
 
     #[On('open-global-search')]
     public function openSearch()
     {
         $this->isOpen = true;
         $this->search = '';
-
-        // Deteta se o utilizador estava numa página de empresa quando abriu a busca
-        $url = url()->previous();
-        $this->isBusinessMode = str_contains($url, '/empresa') || str_contains($url, '/company-expenses');
     }
 
     public function render()
@@ -39,8 +42,9 @@ class GlobalSearch extends Component
             $workspaceId = $user->current_workspace_id;
             $term = "%{$this->search}%";
             $results = collect();
+            $isBusiness = $this->isBusinessContext();
 
-            if ($this->isBusinessMode) {
+            if ($isBusiness) {
                 // --- MODO EMPRESARIAL: NAVEGAÇÃO ---
                 $pages = collect([
                     ['title' => 'Dashboard Business', 'type' => 'Navegação', 'icon' => 'chart-pie', 'url' => route('hub.business.dashboard')],
@@ -54,15 +58,29 @@ class GlobalSearch extends Component
                 ]);
 
                 // --- MODO EMPRESARIAL: DADOS ---
-                $results = $results->concat(Project::where('workspace_id', $workspaceId)->where('name', 'like', $term)->limit(3)->get()
-                    ->map(fn ($i) => ['type' => 'Projetos', 'title' => $i->name, 'sub' => 'Dados Business', 'icon' => 'briefcase', 'url' => route('hub.business.projects')]));
+                $results = $results->concat(
+                    Project::where('workspace_id', $workspaceId)
+                        ->where('name', 'like', $term)
+                        ->limit(3)
+                        ->get()
+                        ->map(fn ($i) => ['type' => 'Projetos', 'title' => $i->name, 'sub' => 'Dados Business', 'icon' => 'briefcase', 'url' => route('hub.business.projects')])
+                );
 
-                $results = $results->concat(Client::where('workspace_id', $workspaceId)->where('name', 'like', $term)->limit(3)->get()
-                    ->map(fn ($i) => ['type' => 'Clientes', 'title' => $i->name, 'sub' => 'Dados Business', 'icon' => 'user-group', 'url' => route('hub.business.clients')]));
+                $results = $results->concat(
+                    Client::where('workspace_id', $workspaceId)
+                        ->where('name', 'like', $term)
+                        ->limit(3)
+                        ->get()
+                        ->map(fn ($i) => ['type' => 'Clientes', 'title' => $i->name, 'sub' => 'Dados Business', 'icon' => 'user-group', 'url' => route('hub.business.clients')])
+                );
 
-                $results = $results->concat(Invoice::where('workspace_id', $workspaceId)->where('client_name', 'like', $term)->limit(3)->get()
-                    ->map(fn ($i) => ['type' => 'Faturas', 'title' => $i->client_name, 'sub' => "#$i->invoice_number", 'icon' => 'document-text', 'url' => route('hub.business.invoices')]));
-
+                $results = $results->concat(
+                    Invoice::where('workspace_id', $workspaceId)
+                        ->where('client_name', 'like', $term)
+                        ->limit(3)
+                        ->get()
+                        ->map(fn ($i) => ['type' => 'Faturas', 'title' => $i->client_name, 'sub' => "#$i->invoice_number", 'icon' => 'document-text', 'url' => route('hub.business.invoices')])
+                );
             } else {
                 // --- MODO PESSOAL: NAVEGAÇÃO ---
                 $pages = collect([
@@ -76,16 +94,29 @@ class GlobalSearch extends Component
                 ]);
 
                 // --- MODO PESSOAL: DADOS ---
-                $results = $results->concat(Expense::where('user_id', $user->id)->where('is_company', false)->where('description', 'like', $term)->limit(5)->get()
-                    ->map(fn ($i) => ['type' => 'Despesas', 'title' => $i->description, 'sub' => number_format($i->amount, 2).'€', 'icon' => 'banknotes', 'url' => route('expenses')]));
+                // O workspace é obrigatório: nunca pesquisar dados pessoais de
+                // outro cofre só porque pertencem ao mesmo utilizador.
+                $results = $results->concat(
+                    Expense::where('workspace_id', $workspaceId)
+                        ->where('user_id', $user->id)
+                        ->where('is_company', false)
+                        ->where('description', 'like', $term)
+                        ->limit(5)
+                        ->get()
+                        ->map(fn ($i) => ['type' => 'Despesas', 'title' => $i->description, 'sub' => number_format($i->amount, 2).'€', 'icon' => 'banknotes', 'url' => route('expenses')])
+                );
 
-                $results = $results->concat(Goal::where('user_id', $user->id)->where('name', 'like', $term)->get()
-                    ->map(fn ($i) => ['type' => 'Metas', 'title' => $i->name, 'sub' => 'Objetivo de Poupança', 'icon' => 'trophy', 'url' => route('hub.goals')]));
+                $results = $results->concat(
+                    Goal::where('workspace_id', $workspaceId)
+                        ->where('user_id', $user->id)
+                        ->where('name', 'like', $term)
+                        ->limit(5)
+                        ->get()
+                        ->map(fn ($i) => ['type' => 'Metas', 'title' => $i->name, 'sub' => 'Objetivo de Poupança', 'icon' => 'trophy', 'url' => route('hub.goals')])
+                );
             }
 
-            // Filtrar as páginas de navegação pelo termo
             $matchedPages = $pages->filter(fn ($p) => str_contains(strtolower($p['title']), strtolower($this->search)));
-
             $results = $matchedPages->concat($results);
             $groupedResults = $results->groupBy('type');
         }
