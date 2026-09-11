@@ -39,11 +39,17 @@ jobs:
       - name: Run Pint
         run: composer lint
 
-      # - name: Commit Changes
-      #   uses: stefanzweifel/git-auto-commit-action@v7
-      #   with:
-      #     commit_message: fix code style
-      #     commit_options: '--no-verify'
-      #     file_pattern: |
-      #       **/*
-      #       !.github/workflows/*
+      - name: Commit formatted PHP files
+        if: github.actor != 'github-actions[bot]'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git diff --name-only -z -- '*.php' | xargs -0 -r git add --
+          if git diff --cached --quiet; then
+            echo "No PHP formatting changes to commit."
+            exit 0
+          fi
+          git commit -m "style: apply Laravel Pint formatting"
+          git push
