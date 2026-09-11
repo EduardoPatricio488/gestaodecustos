@@ -18,7 +18,6 @@ class BusinessFinancialMetrics
         $issuedRevenue = (float) (clone $invoices)->whereBetween('created_at', [$month, $end])->whereNotIn('status', ['cancelada', 'anulada'])->sum('amount_excl_vat_converted');
         $operatingExpenses = (float) (clone $expenses)->whereBetween('spent_at', [$month->toDateString(), $end->toDateString()])->sum('amount_converted');
 
-        // Não existe histórico de salários; não aplicamos o salário atual retroativamente.
         $activePayroll = $month->isSameMonth(now())
             ? (float) $workspace->employees()->where('active', true)->where('suspended', false)->whereNull('terminated_at')->sum('salary')
             : 0.0;
@@ -26,11 +25,10 @@ class BusinessFinancialMetrics
         $receivables = (float) (clone $invoices)->whereIn('status', ['pendente', 'vencida'])->sum('total_amount_converted');
         $overdueCutoff = $month->isSameMonth(now()) ? now()->toDateString() : $end->toDateString();
         $overdueReceivables = (float) (clone $invoices)->where(function ($query) use ($overdueCutoff) {
-            $query->where('status', 'vencida')
-                ->orWhere(fn ($q) => $q->where('status', 'pendente')->whereDate('due_date', '<', $overdueCutoff));
+            $query->where('status', 'vencida')->orWhere(fn ($q) => $q->where('status', 'pendente')->whereDate('due_date', '<', $overdueCutoff));
         })->sum('total_amount_converted');
 
-        $cash = (float) $workspace->bankAccounts()->sum('balance');
+        $cash = (float) $workspace->bankAccounts()->where('type', '!=', 'credito')->get()->sum(fn ($account) => (float) $account->current_balance);
         if (! $workspace->bankAccounts()->exists()) {
             $cash = (float) ($workspace->initial_capital ?? 0)
                 + (float) $workspace->invoices()->where('status', 'paga')->sum('total_amount_converted')
