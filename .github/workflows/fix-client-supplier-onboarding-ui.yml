@@ -1,0 +1,101 @@
+name: Fix CRM modals and business NIF validation
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-client-supplier-onboarding-ui.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply fixes
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          client = Path('resources/views/livewire/business/client-hub.blade.php')
+          s = client.read_text(encoding='utf-8')
+
+          # Make the client create/edit modal robustly centered, scrollable and with a native close button.
+          s = s.replace(
+              '<flux:modal name="client-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[650px] !p-0 !max-h-[90vh] overflow-hidden">',
+              '<flux:modal name="client-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[650px] !max-h-[90vh] !p-0 overflow-hidden">'
+          )
+          s = s.replace(
+              '''            <div class="absolute top-6 right-6">\n                <flux:modal.close>\n                    <flux:button variant="ghost" size="sm" icon="x-mark" class="rounded-full" />\n                </flux:modal.close>\n            </div>''',
+              '''            <button type="button" aria-label="Fechar"\n                    @click="window.dispatchEvent(new CustomEvent('modal-close', { detail: { name: 'client-modal' } }))"\n                    class="absolute top-5 right-5 z-50 flex size-10 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-500 shadow-sm backdrop-blur hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-all">\n                <flux:icon name="x-mark" class="size-5" />\n            </button>''',
+              1
+          )
+          # Visible Generate Portal action on every client card, outside the three-dot menu.
+          menu_item = '''                            <button type="button" wire:click="generatePortalLink({{ $client->id }})" @click="optionsOpen = false"\n                                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 transition-all">\n                                <flux:icon name="link" class="size-4 text-zinc-400" />\n                                Gerar Portal\n                            </button>\n\n'''
+          s = s.replace(menu_item, '', 1)
+          marker = '''                <flux:button\n    wire:click="openHistory({{ $client->id }})"'''
+          visible = '''                <div class="flex items-center gap-2">\n                    <flux:button type="button" wire:click="generatePortalLink({{ $client->id }})"\n                        variant="primary" size="xs" icon="link"\n                        class="rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm">\n                        Gerar Portal\n                    </flux:button>\n                    <flux:button\n    wire:click="openHistory({{ $client->id }})"'''
+          s = s.replace(marker, visible, 1)
+          # Format NIF in the portal modal in groups of 3.
+          s = s.replace(
+              '{{ $clientTaxNumber }}',
+              "{{ implode(' ', str_split(preg_replace('/\\D/', '', (string) $clientTaxNumber), 3)) }}",
+              1
+          )
+          # Improve portal modal dimensions and add a reliable X close button.
+          s = s.replace(
+              '<flux:modal name="portal-link-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">',
+              '<flux:modal name="portal-link-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[500px] !max-h-[90vh] !p-0 overflow-hidden">'
+          )
+          portal_close = '''            <div class="absolute top-5 right-5 z-50">\n                <flux:modal.close>\n                    <flux:button variant="ghost" size="sm" icon="x-mark" class="rounded-full" />\n                </flux:modal.close>\n            </div>'''
+          reliable_portal_close = '''            <button type="button" aria-label="Fechar"\n                    @click="window.dispatchEvent(new CustomEvent('modal-close', { detail: { name: 'portal-link-modal' } }))"\n                    class="absolute top-5 right-5 z-50 flex size-10 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-500 shadow-sm backdrop-blur hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-all">\n                <flux:icon name="x-mark" class="size-5" />\n            </button>'''
+          s = s.replace(portal_close, reliable_portal_close, 1)
+          client.write_text(s, encoding='utf-8')
+
+          supplier = Path('resources/views/livewire/business/supplier-hub.blade.php')
+          s = supplier.read_text(encoding='utf-8')
+          s = s.replace(
+              '<flux:modal name="supplier-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[650px] !p-0 !max-h-[90vh] overflow-hidden">',
+              '<flux:modal name="supplier-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[650px] !max-h-[90vh] !p-0 overflow-hidden">'
+          )
+          supplier_close = '''            <div class="absolute top-6 right-6">\n                <flux:modal.close>\n                    <flux:button variant="ghost" size="sm" icon="x-mark" class="rounded-full" />\n                </flux:modal.close>\n            </div>'''
+          reliable_supplier_close = '''            <button type="button" aria-label="Fechar"\n                    @click="window.dispatchEvent(new CustomEvent('modal-close', { detail: { name: 'supplier-modal' } }))"\n                    class="absolute top-5 right-5 z-50 flex size-10 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-500 shadow-sm backdrop-blur hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-all">\n                <flux:icon name="x-mark" class="size-5" />\n            </button>'''
+          s = s.replace(supplier_close, reliable_supplier_close, 1)
+          s = s.replace(
+              '<flux:modal name="supplier-portal-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">',
+              '<flux:modal name="supplier-portal-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[500px] !max-h-[90vh] !p-0 overflow-hidden">'
+          )
+          supplier_portal_close = '''            <div class="absolute top-6 right-6">\n                <flux:modal.close>\n                    <flux:button variant="ghost" size="sm" icon="x-mark" class="rounded-full" />\n                </flux:modal.close>\n            </div>'''
+          # The supplier portal modal currently has no explicit close block, so insert one after its opening inner div.
+          if supplier_portal_close not in s:
+              s = s.replace(
+                  '<div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">',
+                  '''<div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">\n            <button type="button" aria-label="Fechar"\n                    @click="window.dispatchEvent(new CustomEvent('modal-close', { detail: { name: 'supplier-portal-modal' } }))"\n                    class="absolute top-5 right-5 z-50 flex size-10 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-500 shadow-sm backdrop-blur hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-all">\n                <flux:icon name="x-mark" class="size-5" />\n            </button>''',
+                  1
+              )
+          supplier.write_text(s, encoding='utf-8')
+
+          onboarding = Path('app/Livewire/Business/BusinessOnboarding.php')
+          s = onboarding.read_text(encoding='utf-8')
+          s = s.replace("'tax_number' => 'nullable|digits:9',", "'tax_number' => 'required|regex:/^\\d{3} \\d{3} \\d{3}$/',")
+          marker = "    protected $rules = [\n"
+          if 'O NIF deve conter exatamente 9 dígitos' not in s:
+              s = s.replace(marker, "    protected $messages = [\n        'tax_number.required' => 'O NIF é obrigatório.',\n        'tax_number.regex' => 'O NIF deve conter exatamente 9 dígitos, no formato 123 456 789.',\n        'business_email.required' => 'O email da empresa é obrigatório.',\n        'business_email.email' => 'Introduza um endereço de email válido.',\n    ];\n\n" + marker, 1)
+          onboarding.write_text(s, encoding='utf-8')
+
+      - name: Commit changes and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/views/livewire/business/client-hub.blade.php resources/views/livewire/business/supplier-hub.blade.php app/Livewire/Business/BusinessOnboarding.php
+          git diff --cached --quiet || git commit -m "Improve CRM modals and fix business NIF validation"
+          git push
+          git rm .github/workflows/fix-client-supplier-onboarding-ui.yml
+          git commit -m "Remove temporary CRM UI fix workflow"
+          git push
