@@ -1,0 +1,42 @@
+name: Fix Dashboard Bank Accessor Queries
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fix accessor-based bank queries
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/Livewire/Dashboard.php')
+          s = p.read_text(encoding='utf-8')
+          old1 = """        $totalBankBalance = (float) Cache::remember(\n            \"dashboard:bank-balance:{$currentWs->id}\",\n            60,\n            fn () => (float) BankAccount::where('workspace_id', $currentWs->id)->sum('current_balance')\n        );"""
+          new1 = """        $totalBankBalance = (float) Cache::remember(\n            \"dashboard:bank-balance:{$currentWs->id}\",\n            60,\n            function () use ($currentWs): float {\n                $baseBalance = (float) BankAccount::where('workspace_id', $currentWs->id)\n                    ->sum('balance');\n\n                $incomeBalance = (float) Income::where('workspace_id', $currentWs->id)\n                    ->whereNotNull('bank_account_id')\n                    ->sum('amount');\n\n                $expenseBalance = (float) Expense::where('workspace_id', $currentWs->id)\n                    ->whereNotNull('bank_account_id')\n                    ->sum('amount');\n\n                return $baseBalance + $incomeBalance - $expenseBalance;\n            }\n        );"""
+          old2 = """            fn () => BankAccount::where('workspace_id', $currentWs->id)\n                ->orderByDesc('current_balance')\n                ->take(3)\n                ->get()\n                ->map(fn ($account) => [\n                    'name' => $account->name,\n                    'balance' => $account->current_balance,\n                    'icon' => $account->getIcon(),\n                    'color' => $account->color ?? '#6366f1',\n                ])\n                ->values()\n                ->all()"""
+          new2 = """            fn () => BankAccount::where('workspace_id', $currentWs->id)\n                ->get()\n                ->sortByDesc(fn ($account) => $account->current_balance)\n                ->take(3)\n                ->map(fn ($account) => [\n                    'name' => $account->name,\n                    'balance' => $account->current_balance,\n                    'icon' => $account->getIcon(),\n                    'color' => $account->color ?? '#6366f1',\n                ])\n                ->values()\n                ->all()"""
+          if old1 not in s:
+              raise SystemExit('Expected totalBankBalance block not found')
+          if old2 not in s:
+              raise SystemExit('Expected topBankAccounts block not found')
+          s = s.replace(old1, new1, 1).replace(old2, new2, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit fix and remove workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/Livewire/Dashboard.php
+          git rm .github/workflows/fix-dashboard-bank-accessors.yml
+          git commit -m 'Fix dashboard bank balance accessor queries'
+          git push
