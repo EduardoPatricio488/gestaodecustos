@@ -12,33 +12,13 @@ class BusinessSettings extends Component
 {
     use WithFileUploads;
 
-    public $workspace;
-
-    public $name;
-
-    public $legal_name;
-
-    public $tax_number;
-
-    public $industry;
-
-    public $business_email;
-
-    public $address;
-
-    public $currency;
-
-    public $initial_capital;
-
-    public $logo;
+    public $workspace, $name, $legal_name, $tax_number, $industry, $business_email, $address, $currency, $initial_capital, $logo;
 
     public function mount()
     {
         $this->workspace = auth()->user()->currentWorkspace;
-
-        if (! $this->workspace) {
-            return redirect()->route('hub.business.gateway');
-        }
+        if (! $this->workspace) return redirect()->route('hub.business.gateway');
+        if (! auth()->user()->isOwner() && ! auth()->user()->isEditor()) abort(403);
 
         $this->name = $this->workspace->name;
         $this->legal_name = $this->workspace->legal_name;
@@ -50,20 +30,16 @@ class BusinessSettings extends Component
         $this->initial_capital = (float) $this->workspace->initial_capital;
     }
 
-    public function updatedTaxNumber($value)
-    {
-        $this->tax_number = $this->formatTaxNumber($value);
-    }
+    public function updatedTaxNumber($value): void { $this->tax_number = $this->formatTaxNumber($value); }
 
     private function formatTaxNumber($value): string
     {
-        $digits = substr(preg_replace('/\D/', '', (string) $value), 0, 9);
-
-        return implode(' ', str_split($digits, 3));
+        return implode(' ', str_split(substr(preg_replace('/\D/', '', (string) $value), 0, 9), 3));
     }
 
-    public function save()
+    public function save(): void
     {
+        abort_unless(auth()->user()->isOwner() || auth()->user()->isEditor(), 403);
         $this->validate([
             'name' => 'required|string|max:100',
             'legal_name' => 'nullable|string|max:200',
@@ -71,30 +47,28 @@ class BusinessSettings extends Component
             'business_email' => 'required|email:rfc|max:255',
             'logo' => 'nullable|image|max:2048',
             'initial_capital' => 'numeric|min:0',
+            'currency' => 'required|string|size:3|in:EUR,USD,GBP,CHF,BRL,JPY',
         ], [
             'business_email.required' => 'O email da empresa é obrigatório.',
             'business_email.email' => 'Introduz um email empresarial válido.',
         ]);
 
         $data = [
-            'name' => $this->name,
+            'name' => trim($this->name),
             'legal_name' => $this->legal_name,
             'tax_number' => preg_replace('/\D/', '', (string) $this->tax_number),
             'industry' => $this->industry,
             'business_email' => strtolower(trim($this->business_email)),
             'address' => $this->address,
-            'currency' => $this->currency,
-            'initial_capital' => $this->initial_capital,
+            'currency' => strtoupper($this->currency),
+            'initial_capital' => round((float) $this->initial_capital, 2),
         ];
 
         if ($this->logo) {
             if ($this->workspace->logo_path) {
                 $oldLogo = preg_replace('#^/?storage/#', '', $this->workspace->logo_path);
-                if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
-                    Storage::disk('public')->delete($oldLogo);
-                }
+                if ($oldLogo && Storage::disk('public')->exists($oldLogo)) Storage::disk('public')->delete($oldLogo);
             }
-
             $data['logo_path'] = $this->logo->store('logos', 'public');
             $this->logo = null;
         }
@@ -104,33 +78,23 @@ class BusinessSettings extends Component
         $this->dispatch('toast', text: 'Dados da empresa atualizados com sucesso!', variant: 'success');
     }
 
-    public function getLogoUrlAttribute()
-    {
-        return $this->workspace->logo_url ?: asset('images/default-logo.png');
-    }
+    public function getLogoUrlAttribute() { return $this->workspace->logo_url ?: asset('images/default-logo.png'); }
 
     public function leaveCompany()
     {
         $user = auth()->user();
+        if ($user->isOwner()) abort(403, 'O proprietário deve transferir a propriedade antes de sair.');
         $this->workspace->users()->detach($user->id);
         $user->update(['current_workspace_id' => null]);
-        $this->dispatch('toast', variant: 'success', heading: 'Sessão Terminada', message: 'Saíste da equipa com sucesso.');
-
         return redirect()->route('hub.business.gateway');
     }
 
     public function deleteCompany()
     {
-        if (! auth()->user()->isOwner()) {
-            abort(403);
-        }
-
+        abort_unless(auth()->user()->isOwner(), 403);
         $user = auth()->user();
         $user->update(['current_workspace_id' => null]);
-        $this->workspace->employees()->delete();
         $this->workspace->delete();
-        $this->dispatch('toast', variant: 'success', heading: 'Empresa Eliminada', message: 'O teu plano Business continua ativo.');
-
         return redirect()->route('hub.business.gateway');
     }
 
