@@ -7,6 +7,7 @@ use App\Http\Middleware\CheckRegistrationStatus;
 use App\Http\Middleware\EnsureBusinessWorkspaceAccess;
 use App\Http\Middleware\EnsureImpersonationIsValid;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\ThrottleVerificationCode;
 use App\Http\Middleware\UpdateUserActivity;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,11 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-
-        // 1. CONFIAR NO PROXY (NGROK)
         $middleware->trustProxies(at: '*');
 
-        // 2. MIDDLEWARES DA CAMADA WEB
         $middleware->web(append: [
             SetLocale::class,
             CheckMaintenanceMode::class,
@@ -31,21 +29,19 @@ return Application::configure(basePath: dirname(__DIR__))
             UpdateUserActivity::class,
             EnsureImpersonationIsValid::class,
             EnsureBusinessWorkspaceAccess::class,
+            ThrottleVerificationCode::class,
         ]);
 
-        // 🔥 PERMITIR WEBHOOKS DO STRIPE (POST)
         $middleware->validateCsrfTokens(except: [
             'api/whatsapp/webhook',
             'stripe/*',
         ]);
 
-        // 3. ATALHOS DE MIDDLEWARE (ALIAS)
         $middleware->alias([
             'admin' => AdminMiddleware::class,
             'plan' => CheckPlanAccess::class,
             'business.workspace' => EnsureBusinessWorkspaceAccess::class,
         ]);
-
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
