@@ -28,10 +28,10 @@ class AiReviewService
             : app(FinancialHealthScoreService::class)->personal($workspace);
 
         $title = $period === 'weekly' ? 'Revisão semanal Finance Pro AI' : 'Revisão mensal Finance Pro AI';
-        $message = $this->message($snapshot, $health, $period);
         $dedupe = sha1($period.'|'.$workspace->id.'|'.now()->format($period === 'weekly' ? 'o-W' : 'Y-m'));
+        $message = $this->message($snapshot, $health, $period).' [AI-REVIEW:'.$dedupe.']';
 
-        if (DB::table('app_notifications')->where('user_id', $owner->id)->where('workspace_id', $workspace->id)->where('type', 'ai_review')->where('metadata', 'like', '%'.$dedupe.'%')->exists()) {
+        if (DB::table('app_notifications')->where('user_id', $owner->id)->where('workspace_id', $workspace->id)->where('type', 'ai_review')->where('message', 'like', '%[AI-REVIEW:'.$dedupe.']%')->exists()) {
             return;
         }
 
@@ -42,7 +42,6 @@ class AiReviewService
             'message' => $message,
             'type' => 'ai_review',
             'link' => $workspace->type === 'business' ? route('hub.business.ai') : route('ai'),
-            'metadata' => json_encode(['dedupe' => $dedupe, 'source' => 'deterministic_ai_review']),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
