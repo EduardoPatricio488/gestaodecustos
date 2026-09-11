@@ -61,8 +61,13 @@ return new class extends Migration
                 $table->unsignedBigInteger('matched_id')->nullable();
                 $table->timestamp('reconciled_at')->nullable();
                 $table->timestamps();
-                $table->index(['workspace_id', 'bank_account_id', 'transaction_date']);
-                $table->index(['matched_type', 'matched_id']);
+
+                // Explicit short names avoid MySQL's 64-character identifier limit.
+                $table->index(
+                    ['workspace_id', 'bank_account_id', 'transaction_date'],
+                    'bt_ws_account_date_idx'
+                );
+                $table->index(['matched_type', 'matched_id'], 'bt_matched_idx');
             });
         }
 
