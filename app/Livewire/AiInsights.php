@@ -31,7 +31,14 @@ class AiInsights extends Component
 
     private function cacheKey(): string
     {
-        return 'ai-insights:'.auth()->id();
+        $workspaceId = auth()->user()?->current_workspace_id ?? 'none';
+
+        return 'ai-insights:'.auth()->id().':workspace:'.$workspaceId;
+    }
+
+    private function xpKey(int $workspaceId): string
+    {
+        return 'ai-insights:xp:'.auth()->id().':workspace:'.$workspaceId.':'.now()->toDateString();
     }
 
     public function generateInsights(AiBrainService $brain): void
@@ -54,7 +61,9 @@ class AiInsights extends Component
             $this->lastGeneratedAt = now()->toIso8601String();
             Cache::put($this->cacheKey(), ['text' => $this->aiAnalysis, 'at' => $this->lastGeneratedAt], now()->addDays(7));
 
-            if (method_exists($user, 'addXp')) $user->addXp(150);
+            if (method_exists($user, 'addXp') && Cache::add($this->xpKey($workspace->id), true, now()->endOfDay())) {
+                $user->addXp(150);
+            }
 
             if ($user->email) {
                 try {
