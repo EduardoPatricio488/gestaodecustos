@@ -1,0 +1,56 @@
+name: Modal UI audit
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  modal-audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch global modal behaviour
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('resources/js/app.js')
+          text = path.read_text(encoding='utf-8')
+          marker = "// Global modal audit: one working close X, preserve every functional action."
+          if marker not in text:
+              block = r'''\n\n// Global modal audit: one working close X, preserve every functional action.\n(function () {\n    const MODAL_SELECTOR = '[role="dialog"], dialog';\n    const CLOSE_LABELS = /^(fechar|close|close modal|cancelar|cancel|descartar|discard|x|×)$/i;\n\n    const visible = (el) => {\n        if (!el) return false;\n        const style = window.getComputedStyle(el);\n        return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';\n    };\n\n    const isCloseButton = (button) => {\n        const label = (button.getAttribute('aria-label') || button.getAttribute('title') || button.textContent || '')\n            .replace(/\\s+/g, ' ').trim();\n        return CLOSE_LABELS.test(label);\n    };\n\n    const closeModal = (modal) => {\n        if (!modal) return;\n        const alpineRoot = modal.querySelector('[x-data]') || modal;\n        if (alpineRoot._x_dataStack?.length) {\n            const data = Alpine.$data(alpineRoot);\n            if (data && 'show' in data) data.show = false;\n        }\n        modal.dispatchEvent(new CustomEvent('close', { bubbles: true }));\n        const name = modal.getAttribute('data-modal') || modal.getAttribute('data-name') || modal.id;\n        if (name) {\n            window.dispatchEvent(new CustomEvent('close-modal', { detail: name }));\n            window.dispatchEvent(new CustomEvent('modal-close', { detail: { name } }));\n        }\n        if (modal instanceof HTMLDialogElement && modal.open) modal.close();\n    };\n\n    const normalizeModal = (modal) => {\n        if (!(modal instanceof HTMLElement) || !visible(modal)) return;\n        if (modal.dataset.financeModalReady !== '1') {\n            modal.dataset.financeModalReady = '1';\n\n            const buttons = Array.from(modal.querySelectorAll('button, [role="button"]'));\n            const closeButtons = buttons.filter(isCloseButton);\n            const canonical = closeButtons.find((button) => /^(fechar|close|close modal)$/i.test((button.getAttribute('aria-label') || '').trim())) || closeButtons[0];\n\n            closeButtons.forEach((button) => {\n                if (button !== canonical) {\n                    button.setAttribute('data-finance-modal-secondary-close', '1');\n                    button.style.display = 'none';\n                }\n            });\n\n            if (!canonical) {\n                const host = modal.querySelector(':scope > div, .relative') || modal;\n                const close = document.createElement('button');\n                close.type = 'button';\n                close.setAttribute('aria-label', 'Fechar modal');\n                close.setAttribute('title', 'Fechar');\n                close.className = 'finance-pro-modal-close absolute left-4 top-4 z-[999] inline-flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 shadow-sm transition hover:bg-zinc-200 hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700';\n                close.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>';\n                close.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); closeModal(modal); });\n                if (window.getComputedStyle(host).position === 'static') host.style.position = 'relative';\n                host.prepend(close);\n            }\n        }\n    };\n\n    document.addEventListener('click', (event) => {\n        const button = event.target.closest('button, [role="button"]');\n        if (!button || button.disabled) return;\n        const modal = button.closest(MODAL_SELECTOR);\n        if (!modal || !isCloseButton(button)) return;\n        event.preventDefault();\n        event.stopImmediatePropagation();\n        closeModal(modal);\n    }, true);\n\n    const scan = () => document.querySelectorAll(MODAL_SELECTOR).forEach(normalizeModal);\n    const observer = new MutationObserver(scan);\n    const start = () => {\n        scan();\n        if (document.body) observer.observe(document.body, { childList: true, subtree: true });\n    };\n    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });\n    else start();\n    document.addEventListener('livewire:navigated', () => setTimeout(scan, 50));\n})();\n'''
+              path.write_text(text.rstrip() + block, encoding='utf-8')
+          else:
+              print('Modal audit already installed')
+
+      - name: Commit modal audit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/js/app.js
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Improve global modal close behaviour"
+            git push
+          fi
+
+      - name: Remove temporary workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/_modal-audit.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/_modal-audit.yml
+          if git diff --cached --quiet; then
+            echo "Workflow already removed"
+          else
+            git commit -m "Remove temporary modal audit workflow"
+            git push
+          fi
