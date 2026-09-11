@@ -1,0 +1,5 @@
+CI diagnostic generated automatically.
+
+
+  [44;1m INFO [49;22m Unknown option "--without-tty". Most similar options are --no-output, --list-suites, --list-tests, --teamcity, --with-telemetry.
+
