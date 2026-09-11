@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\AiConversation;
+use App\Models\Workspace;
 use App\Services\AI\AiBrainService;
 use App\Services\AI\ContextEngine;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +18,7 @@ class AiCopilot extends Component
     public array $pageContext = [];
     public ?int $conversationId = null;
     public bool $isLoading = false;
+    private ?int $loadedWorkspaceId = null;
 
     public function mount(ContextEngine $contextEngine): void
     {
@@ -31,21 +33,7 @@ class AiCopilot extends Component
             'offline_status' => 'online',
         ];
 
-        if (! $workspace) {
-            return;
-        }
-
-        $conversation = AiConversation::query()
-            ->where('user_id', $user->id)
-            ->where('workspace_id', $workspace->id)
-            ->whereNull('archived_at')
-            ->latest('last_activity_at')
-            ->first();
-
-        if ($conversation) {
-            $this->conversationId = $conversation->id;
-            $this->loadMessages($conversation);
-        }
+        $this->loadWorkspaceConversation($user->id, $workspace);
     }
 
     public function toggle(): void
@@ -76,8 +64,22 @@ class AiCopilot extends Component
         $this->isLoading = true;
 
         try {
-            $conversation = $this->conversation($brain);
-            $result = $brain->chat(Auth::user(), $input, $conversation, $this->pageContext);
+            $user = Auth::user();
+            $workspace = app(ContextEngine::class)->resolveWorkspace($user);
+
+            if (! $workspace) {
+                throw new \RuntimeException('Workspace inválido.');
+            }
+
+            // The Copilot component is persisted across Livewire navigation. Always
+            // re-resolve the workspace before using the conversation so switching
+            // between Personal and Business can never reuse the other side's chat.
+            if ($this->loadedWorkspaceId !== $workspace->id) {
+                $this->loadWorkspaceConversation($user->id, $workspace);
+            }
+
+            $conversation = $this->conversation($brain, $workspace);
+            $result = $brain->chat($user, $input, $conversation, $this->pageContext);
             $this->conversationId = $result['conversation_id'];
             $this->pendingActions = $result['pending_actions'] ?? [];
             $this->loadMessages($conversation->fresh());
@@ -141,15 +143,33 @@ class AiCopilot extends Component
         $this->newConversation();
     }
 
-    private function conversation(AiBrainService $brain): AiConversation
+    private function conversation(AiBrainService $brain, Workspace $workspace): AiConversation
     {
-        $workspace = app(ContextEngine::class)->resolveWorkspace(Auth::user());
+        return $brain->conversation(Auth::user(), $workspace, $this->conversationId);
+    }
+
+    private function loadWorkspaceConversation(int $userId, ?Workspace $workspace): void
+    {
+        $this->conversationId = null;
+        $this->messages = [];
+        $this->pendingActions = [];
+        $this->loadedWorkspaceId = $workspace?->id;
 
         if (! $workspace) {
-            throw new \RuntimeException('Workspace inválido.');
+            return;
         }
 
-        return $brain->conversation(Auth::user(), $workspace, $this->conversationId);
+        $conversation = AiConversation::query()
+            ->where('user_id', $userId)
+            ->where('workspace_id', $workspace->id)
+            ->whereNull('archived_at')
+            ->latest('last_activity_at')
+            ->first();
+
+        if ($conversation) {
+            $this->conversationId = $conversation->id;
+            $this->loadMessages($conversation);
+        }
     }
 
     private function loadMessages(AiConversation $conversation): void
