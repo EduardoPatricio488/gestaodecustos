@@ -3,7 +3,6 @@
 namespace App\Livewire\Public;
 
 use App\Models\Workspace;
-use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 

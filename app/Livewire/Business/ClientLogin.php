@@ -14,13 +14,19 @@ use Livewire\Component;
 class ClientLogin extends Component
 {
     public $tax_number = '';
+
     public $token = '';
 
     public $requesterName = '';
+
     public $requesterEmail = '';
+
     public $requestTaxNumber = '';
+
     public $companySearch = '';
+
     public $selectedCompanyId = null;
+
     public $requestSent = false;
 
     #[Layout('layouts.guest')]
@@ -74,6 +80,7 @@ class ClientLogin extends Component
 
         if (! $workspace || ! filled($workspace->business_email)) {
             $this->addError('selectedCompanyId', 'Esta empresa ainda não tem um email empresarial configurado.');
+
             return;
         }
 
@@ -86,6 +93,7 @@ class ClientLogin extends Component
 
         if ($pending) {
             $this->addError('requesterEmail', 'Já existe um pedido pendente deste email para esta empresa.');
+
             return;
         }
 

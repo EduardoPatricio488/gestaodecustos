@@ -17,19 +17,29 @@ class SupplierPortal extends Component
     use WithFileUploads;
 
     public $tax_number = '';
+
     public $token = '';
+
     public $isLoggedIn = false;
+
     public $supplier = null;
 
     public $requesterName = '';
+
     public $requesterEmail = '';
+
     public $requestTaxNumber = '';
+
     public $companySearch = '';
+
     public $selectedCompanyId = null;
+
     public $requestSent = false;
 
     public $amount;
+
     public $notes;
+
     public $invoice_doc;
 
     #[Layout('layouts.guest')]
@@ -83,6 +93,7 @@ class SupplierPortal extends Component
 
         if (! $workspace || ! filled($workspace->business_email)) {
             $this->addError('selectedCompanyId', 'Esta empresa ainda não tem um email empresarial configurado.');
+
             return;
         }
 
@@ -95,6 +106,7 @@ class SupplierPortal extends Component
 
         if ($pending) {
             $this->addError('requesterEmail', 'Já existe um pedido pendente deste email para esta empresa.');
+
             return;
         }
 

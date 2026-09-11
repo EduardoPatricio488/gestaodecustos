@@ -21,6 +21,7 @@ class Workspace extends Model
     ];
 
     protected $casts = ['audit_token_expires_at' => 'datetime', 'audit_token_revoked_at' => 'datetime'];
+
     protected $attributes = ['type' => 'business', 'currency' => 'EUR'];
 
     public function generateInviteCode()
@@ -31,34 +32,113 @@ class Workspace extends Model
             $this->invite_code = $prefix.'-'.$random;
             $this->save();
         }
+
         return $this->invite_code;
     }
 
     public function getLogoUrlAttribute(): string
     {
-        if (! $this->logo_path) return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=10b981&background=ecfdf5&bold=true';
+        if (! $this->logo_path) {
+            return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=10b981&background=ecfdf5&bold=true';
+        }
+
         return Storage::url(preg_replace('#^/?storage/#', '', $this->logo_path));
     }
 
-    public function owner(): BelongsTo { return $this->belongsTo(User::class, 'owner_id'); }
-    public function users(): BelongsToMany { return $this->belongsToMany(User::class, 'workspace_user')->withPivot('role')->withTimestamps(); }
-    public function expenses(): HasMany { return $this->hasMany(Expense::class); }
-    public function incomes(): HasMany { return $this->hasMany(Income::class); }
-    public function invoices(): HasMany { return $this->hasMany(Invoice::class); }
-    public function employees(): HasMany { return $this->hasMany(Employee::class); }
-    public function categories(): HasMany { return $this->hasMany(Category::class); }
-    public function clients(): HasMany { return $this->hasMany(Client::class); }
-    public function suppliers(): HasMany { return $this->hasMany(Supplier::class); }
-    public function projects(): HasMany { return $this->hasMany(Project::class); }
-    public function products(): HasMany { return $this->hasMany(Product::class); }
-    public function documents(): HasMany { return $this->hasMany(BusinessDocument::class); }
-    public function tasks(): HasMany { return $this->hasMany(Task::class); }
-    public function messages(): HasMany { return $this->hasMany(BusinessMessage::class); }
-    public function proposals(): HasMany { return $this->hasMany(Proposal::class); }
-    public function bankAccounts(): HasMany { return $this->hasMany(BankAccount::class); }
-    public function bankAccessRequests(): HasMany { return $this->hasMany(BankAccessRequest::class); }
-    public function absences(): HasMany { return $this->hasMany(Absence::class); }
-    public function recruitmentJobs(): HasMany { return $this->hasMany(RecruitmentJob::class); }
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'workspace_user')->withPivot('role')->withTimestamps();
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function incomes(): HasMany
+    {
+        return $this->hasMany(Income::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class);
+    }
+
+    public function categories(): HasMany
+    {
+        return $this->hasMany(Category::class);
+    }
+
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class);
+    }
+
+    public function suppliers(): HasMany
+    {
+        return $this->hasMany(Supplier::class);
+    }
+
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(BusinessDocument::class);
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(BusinessMessage::class);
+    }
+
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(Proposal::class);
+    }
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(BankAccount::class);
+    }
+
+    public function bankAccessRequests(): HasMany
+    {
+        return $this->hasMany(BankAccessRequest::class);
+    }
+
+    public function absences(): HasMany
+    {
+        return $this->hasMany(Absence::class);
+    }
+
+    public function recruitmentJobs(): HasMany
+    {
+        return $this->hasMany(RecruitmentJob::class);
+    }
 
     public function getTypeText(): string
     {
@@ -73,15 +153,19 @@ class Workspace extends Model
         $expensesQuery = $this->expenses()->where('is_company', true)->where('spent_at', '>=', $threeMonthsAgo);
         $totalSpent = (float) (clone $expensesQuery)->sum('amount');
         $monthsWithData = (clone $expensesQuery)->pluck('spent_at')->map(fn ($date) => Carbon::parse($date)->format('Y-m'))->unique()->count();
+
         return ($totalSpent / max(1, $monthsWithData)) + (float) $this->employees()->sum('salary');
     }
 
     public function getLiquidezAtual(): float
     {
-        if ($this->bankAccounts()->exists()) return (float) $this->bankAccounts()->sum('balance');
+        if ($this->bankAccounts()->exists()) {
+            return (float) $this->bankAccounts()->sum('balance');
+        }
         $revenue = (float) $this->invoices()->where('status', 'paga')->sum('total_amount');
         $spent = (float) $this->expenses()->where('is_company', true)->sum('amount');
         $payroll = (float) $this->employees()->sum('salary');
+
         return (float) (($this->initial_capital ?? 0) + $revenue - $spent - $payroll);
     }
 
@@ -89,7 +173,10 @@ class Workspace extends Model
     {
         $symbols = ['EUR' => '€', 'USD' => '$', 'BRL' => 'R$', 'GBP' => '£', 'CHF' => 'CHF', 'JPY' => '¥'];
         $symbol = $symbols[$this->currency] ?? $this->currency;
-        if (in_array($this->currency, ['USD', 'BRL'])) return $symbol.' '.number_format($amount, 2, ',', ' ');
+        if (in_array($this->currency, ['USD', 'BRL'])) {
+            return $symbol.' '.number_format($amount, 2, ',', ' ');
+        }
+
         return number_format($amount, 2, ',', ' ').' '.$symbol;
     }
 
@@ -99,17 +186,28 @@ class Workspace extends Model
             $defaults = [
                 ['name' => 'Alimentação', 'icon' => 'shopping-cart', 'color' => '#ef4444'], ['name' => 'Carro', 'icon' => 'truck', 'color' => '#f59e0b'], ['name' => 'Casa', 'icon' => 'home', 'color' => '#3b82f6'], ['name' => 'Educação', 'icon' => 'academic-cap', 'color' => '#6366f1'], ['name' => 'Empréstimos', 'icon' => 'banknotes', 'color' => '#10b981'], ['name' => 'Entretenimento', 'icon' => 'film', 'color' => '#a855f7'], ['name' => 'Saúde', 'icon' => 'heart', 'color' => '#f43f5e'], ['name' => 'Seguros', 'icon' => 'shield-check', 'color' => '#0ea5e9'], ['name' => 'Tecnologia', 'icon' => 'cpu-chip', 'color' => '#06b6d4'], ['name' => 'Transporte', 'icon' => 'bolt', 'color' => '#64748b'],
             ];
-            foreach ($defaults as $index => $data) $workspace->categories()->create($data + ['slug' => str($data['name'])->slug(), 'is_fixed' => true, 'order' => $index, 'user_id' => $workspace->owner_id]);
+            foreach ($defaults as $index => $data) {
+                $workspace->categories()->create($data + ['slug' => str($data['name'])->slug(), 'is_fixed' => true, 'order' => $index, 'user_id' => $workspace->owner_id]);
+            }
         });
     }
 
-    public function recurringIncomes(): HasMany { return $this->hasMany(RecurringIncome::class); }
+    public function recurringIncomes(): HasMany
+    {
+        return $this->hasMany(RecurringIncome::class);
+    }
 
     public function getRunway(): string
     {
-        $burnRate = $this->getBurnRate(); $liquidez = $this->getLiquidezAtual();
-        if ($burnRate <= 0) return '∞';
-        if ($liquidez <= 0) return '0 meses';
+        $burnRate = $this->getBurnRate();
+        $liquidez = $this->getLiquidezAtual();
+        if ($burnRate <= 0) {
+            return '∞';
+        }
+        if ($liquidez <= 0) {
+            return '0 meses';
+        }
+
         return number_format($liquidez / $burnRate, 1).' meses';
     }
 
@@ -122,6 +220,7 @@ class Workspace extends Model
         $net = (float) $earned - (float) $spent;
         $savingsRate = $earned > 0 ? ($net / $earned) * 100 : 0;
         $budgetAdherence = $budget > 0 ? (1 - (min($spent, $budget) / $budget)) * 100 : 100;
+
         return (int) max(0, min(100, ($savingsRate * 0.7) + ($budgetAdherence * 0.3) + 20));
     }
 }

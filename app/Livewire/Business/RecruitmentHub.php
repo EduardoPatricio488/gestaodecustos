@@ -21,7 +21,15 @@ class RecruitmentHub extends Component
 {
     use WithFileUploads;
 
-    public $recActive, $recDesc, $recAnnounce, $recVacancies, $recExtraInfo;
+    public $recActive;
+
+    public $recDesc;
+
+    public $recAnnounce;
+
+    public $recVacancies;
+
+    public $recExtraInfo;
 
     public function mount()
     {
@@ -33,7 +41,10 @@ class RecruitmentHub extends Component
         $this->recVacancies = $workspace->recruitment_vacancies ?? 1;
     }
 
-    public function toggleActive() { $this->recActive = ! $this->recActive; }
+    public function toggleActive()
+    {
+        $this->recActive = ! $this->recActive;
+    }
 
     public function saveSettings()
     {
@@ -67,7 +78,9 @@ class RecruitmentHub extends Component
     {
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
-        if (! $app) return;
+        if (! $app) {
+            return;
+        }
 
         DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->update(['status' => 'rejected', 'updated_at' => now()]);
         if (! empty($app->candidate_id)) {
@@ -86,29 +99,43 @@ class RecruitmentHub extends Component
     {
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
-        if (! $app) return;
+        if (! $app) {
+            return;
+        }
 
         if (! empty($app->candidate_id)) {
             $candidate = Candidate::find($app->candidate_id);
-            if (! $candidate) return;
+            if (! $candidate) {
+                return;
+            }
 
-            try { Mail::to($candidate->email)->send(new HiredNotificationMail($candidate->name, $workspace->name)); }
-            catch (\Throwable $e) { Log::error('Erro ao enviar email de contratação para candidato: '.$e->getMessage()); }
+            try {
+                Mail::to($candidate->email)->send(new HiredNotificationMail($candidate->name, $workspace->name));
+            } catch (\Throwable $e) {
+                Log::error('Erro ao enviar email de contratação para candidato: '.$e->getMessage());
+            }
 
             DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->update(['status' => 'accepted', 'updated_at' => now()]);
             CandidateNotification::create(['candidate_id' => $candidate->id, 'type' => 'application_status', 'title' => 'Candidatura aceite', 'message' => 'Parabéns! '.$workspace->name.' aceitou a tua candidatura.', 'url' => '/carreiras']);
             $this->dispatch('toast', variant: 'success', text: 'Candidato aceite e notificado por email.');
+
             return;
         }
 
         $user = User::find($app->user_id);
-        if (! $user) return;
-        try { Mail::to($user->email)->send(new HiredNotificationMail($user->name, $workspace->name)); }
-        catch (\Throwable $e) { Log::error('Erro ao enviar email de contratação: '.$e->getMessage()); }
+        if (! $user) {
+            return;
+        }
+        try {
+            Mail::to($user->email)->send(new HiredNotificationMail($user->name, $workspace->name));
+        } catch (\Throwable $e) {
+            Log::error('Erro ao enviar email de contratação: '.$e->getMessage());
+        }
 
         Employee::firstOrCreate(['workspace_id' => $app->workspace_id, 'user_id' => $app->user_id], ['name' => $user->name, 'role' => $app->role, 'salary' => 0, 'pay_day' => 25, 'active' => true, 'cv_path' => $app->cv_path]);
         DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->update(['status' => 'accepted', 'updated_at' => now()]);
         $this->dispatch('toast', variant: 'success', text: 'Colaborador contratado e notificado!');
+
         return redirect()->route('hub.business.team');
     }
 
@@ -116,9 +143,13 @@ class RecruitmentHub extends Component
     {
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
-        if (! $app) return;
+        if (! $app) {
+            return;
+        }
         DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->update(['status' => 'pending', 'updated_at' => now()]);
-        if (! empty($app->candidate_id)) CandidateNotification::create(['candidate_id' => $app->candidate_id, 'type' => 'application_status', 'title' => 'Candidatura reaberta', 'message' => 'A empresa '.$workspace->name.' reabriu a tua candidatura.', 'url' => '/carreiras']);
+        if (! empty($app->candidate_id)) {
+            CandidateNotification::create(['candidate_id' => $app->candidate_id, 'type' => 'application_status', 'title' => 'Candidatura reaberta', 'message' => 'A empresa '.$workspace->name.' reabriu a tua candidatura.', 'url' => '/carreiras']);
+        }
         $this->dispatch('toast', text: 'Candidatura reaberta.');
     }
 

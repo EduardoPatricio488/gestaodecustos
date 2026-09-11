@@ -310,24 +310,6 @@
         </div>
     @endif
 
-    {{-- PLANOS --}}
-    @if($activeTab === 'all' && $planProducts->isNotEmpty() && !$search)
-        <section class="space-y-4">
-            <h2 class="text-lg font-black uppercase dark:text-white">Planos PRO</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                @foreach($planProducts as $index => $plan)
-                    <div @class(['border rounded-3xl p-6', $index === 1 ? 'bg-zinc-200 dark:bg-zinc-800 border-zinc-400 dark:border-zinc-600 shadow-lg' : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'])>
-                        <h3 class="font-black uppercase dark:text-white">{{ $plan->title }}</h3>
-                        <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-2">{{ $plan->description }}</p>
-                        <p class="text-2xl font-black mt-4 dark:text-white">{{ number_format($plan->price, 2, ',', '.') }} €/mês</p>
-                        <div class="flex gap-2 mt-4">
-                            <button wire:click="addToCart({{ $plan->id }})" class="flex-1 py-2 bg-white dark:bg-zinc-800 dark:text-white border dark:border-zinc-700 rounded-xl text-[9px] font-black uppercase">+ Carrinho</button>
-                            <button wire:click="buyNow({{ $plan->id }})" class="flex-1 py-2 bg-zinc-900 dark:bg-brand-600 text-white rounded-xl text-[9px] font-black uppercase">Subscrever</button>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </section>
-    @endif
+
 
 </div>

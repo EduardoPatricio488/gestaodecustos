@@ -14,16 +14,27 @@ class SupplierHub extends Component
     use WithPagination;
 
     public $name;
+
     public $legal_name;
+
     public $tax_number;
+
     public $email;
+
     public $phone;
+
     public $payment_terms;
+
     public $address;
+
     public $editingId = null;
+
     public $generatedPasscode = '';
+
     public $supplierTaxNumber = '';
+
     public $generatedPortalUrl = '';
+
     public $search = '';
 
     public function updatedTaxNumber($value): void
