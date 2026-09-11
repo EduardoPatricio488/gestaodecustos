@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\BusinessRolesRedirectController;
 use App\Listeners\StripeWebhookListener;
 use App\Listeners\UpdateLastLogin;
+use App\Livewire\Business\BusinessRolesHub;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Carbon;
@@ -12,75 +14,51 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-// 🔥 NOVOS IMPORTS PARA O STRIPE
 use Illuminate\Validation\Rules\Password;
 use Laravel\Cashier\Events\WebhookReceived;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
-    public function register(): void
-    {
-        //
-    }
+    public function register(): void {}
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         $this->configureDefaults();
         $this->registerViewNamespaces();
 
-        // Listeners de Sistema
         Event::listen(Login::class, UpdateLastLogin::class);
-
-        // 🔥 NOVO: Listener para confirmar pagamentos do Stripe automaticamente
-        Event::listen(
-            WebhookReceived::class,
-            StripeWebhookListener::class
-        );
+        Event::listen(WebhookReceived::class, StripeWebhookListener::class);
 
         App::setLocale('pt');
         Carbon::setLocale('pt');
 
-        // FORÇAR HTTPS SEMPRE QUE ESTIVER NO NGROK
         if (str_contains(request()->getHost(), 'ngrok-free.app') || str_contains(request()->getHost(), 'ngrok-free.dev')) {
             URL::forceScheme('https');
         }
+
+        Route::middleware(['web', 'auth', 'plan:business'])
+            ->get('/empresa/equipa/permissoes', BusinessRolesHub::class)
+            ->name('hub.business.roles');
     }
 
     protected function registerViewNamespaces(): void
     {
         View::addNamespace('pages', resource_path('views/pages'));
-
         Blade::anonymousComponentPath(resource_path('views/layouts'), 'layouts');
         Blade::anonymousComponentPath(resource_path('views/pages'), 'pages');
     }
 
-    /**
-     * Configure default behaviors for production-ready applications.
-     */
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
-
-        DB::prohibitDestructiveCommands(
-            app()->isProduction(),
-        );
+        DB::prohibitDestructiveCommands(app()->isProduction());
 
         Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
+            ? Password::min(12)->mixedCase()->letters()->numbers()->symbols()->uncompromised()
             : null,
         );
     }
