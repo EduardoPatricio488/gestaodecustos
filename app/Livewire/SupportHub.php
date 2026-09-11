@@ -10,36 +10,30 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class SupportHub extends Component
 {
-    // Esta propriedade guarda o estado (Empresa ou Pessoal) entre cliques
-    public $isBusinessMode = false;
-
-    // NOVO TICKET
     public $subject;
-
     public $message;
-
     public $priority = 'normal';
-
-    // CHAT
     public $activeTicket;
-
     public $replyMessage;
 
-    public function mount()
+    /**
+     * O contexto é sempre derivado da rota atual.
+     * Não é uma propriedade pública do Livewire, evitando que o cliente
+     * consiga alterar o contexto durante a hidratação.
+     */
+    private function isBusinessContext(): bool
     {
-        // No carregamento inicial, detetamos se é empresa
-        $this->isBusinessMode = request()->routeIs('hub.business.*');
+        return request()->routeIs('hub.business.*');
     }
 
     /**
-     * Filtro centralizado
+     * Filtro centralizado e obrigatório para todas as operações sobre tickets.
      */
     private function getContextQuery()
     {
         $query = SupportTicket::where('user_id', auth()->id());
 
-        // Usamos a propriedade $this->isBusinessMode que persiste no Livewire
-        if ($this->isBusinessMode) {
+        if ($this->isBusinessContext()) {
             return $query->where('workspace_id', auth()->user()->current_workspace_id);
         }
 
@@ -52,7 +46,6 @@ class SupportHub extends Component
             ->with(['messages.user'])
             ->findOrFail($ticketId);
 
-        // Abre o modal de chat (Alpine ouve este evento via x-on:open-chat-modal.window)
         $this->dispatch('open-chat-modal');
     }
 
@@ -60,16 +53,20 @@ class SupportHub extends Component
     {
         $this->validate(['replyMessage' => 'required|min:2']);
 
+        // Nunca confiar no modelo mantido pelo cliente entre requests Livewire.
+        abort_unless($this->activeTicket?->id, 404);
+        $ticket = $this->getContextQuery()->findOrFail($this->activeTicket->id);
+
         SupportMessage::create([
-            'support_ticket_id' => $this->activeTicket->id,
+            'support_ticket_id' => $ticket->id,
             'user_id' => auth()->id(),
             'message' => $this->replyMessage,
             'is_admin_reply' => false,
         ]);
 
-        $this->activeTicket->update(['status' => 'open']);
+        $ticket->update(['status' => 'open']);
         $this->replyMessage = '';
-        $this->activeTicket->load('messages.user');
+        $this->activeTicket = $ticket->load('messages.user');
 
         $this->dispatch('toast', text: 'Mensagem enviada!');
     }
@@ -81,11 +78,9 @@ class SupportHub extends Component
             'message' => 'required|min:10',
         ]);
 
-        // ATENÇÃO AQUI:
-        // Não usamos request()->routeIs, usamos a nossa variável $this->isBusinessMode
         $ticket = SupportTicket::create([
             'user_id' => auth()->id(),
-            'workspace_id' => $this->isBusinessMode ? auth()->user()->current_workspace_id : null,
+            'workspace_id' => $this->isBusinessContext() ? auth()->user()->current_workspace_id : null,
             'subject' => $this->subject,
             'priority' => $this->priority,
             'status' => 'open',
@@ -99,10 +94,7 @@ class SupportHub extends Component
         ]);
 
         $this->reset(['subject', 'message', 'priority']);
-
-        // Fecha o modal de novo ticket (Alpine ouve via x-on:ticket-created.window)
         $this->dispatch('close-ticket-modal');
-
         $this->dispatch('toast', text: 'Ticket criado com sucesso!');
     }
 
