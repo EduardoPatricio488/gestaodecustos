@@ -1,0 +1,48 @@
+name: Finalize dashboard performance optimization
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fix cached AI insights closure and remove temporary workflows
+        shell: python
+        run: |
+          from pathlib import Path
+
+          dashboard = Path("app/Livewire/Dashboard.php")
+          text = dashboard.read_text(encoding="utf-8")
+          old = "            function () use ($currentWs) {\n\n        // -----------------------------------------\n        // 1) MERCADOS AVANÇADOS"
+          new = "            function () use ($currentWs) {\n                $insights = [];\n\n        // -----------------------------------------\n        // 1) MERCADOS AVANÇADOS"
+          if old not in text:
+              raise SystemExit("Expected aiInsights closure pattern not found")
+          text = text.replace(old, new, 1)
+          dashboard.write_text(text, encoding="utf-8")
+
+          Path(".github/workflows/apply-dashboard-performance.yml").unlink(missing_ok=True)
+          Path(".github/workflows/finalize-dashboard-performance.yml").unlink(missing_ok=True)
+
+      - name: Validate PHP syntax
+        run: php -l app/Livewire/Dashboard.php
+
+      - name: Commit final dashboard optimization
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Livewire/Dashboard.php .github/workflows/apply-dashboard-performance.yml .github/workflows/finalize-dashboard-performance.yml
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Finalize dashboard performance optimization"
+          git push
