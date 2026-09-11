@@ -1,7 +1,7 @@
 name: Fix dashboard bank balance
 
 on:
-  push:
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -13,64 +13,34 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Patch Dashboard
+      - name: Patch dashboard and migration
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          p = Path('app/Livewire/Dashboard.php')
-          s = p.read_text()
-          old = '''$totalBankBalance = (float) Cache::remember(
-            "dashboard:bank-balance:{$currentWs->id}",
-            60,
-            fn () => (float) BankAccount::where('workspace_id', $currentWs->id)->sum('current_balance')
-        );'''
-          new = '''$totalBankBalance = (float) Cache::remember(
-            "dashboard:bank-balance:{$currentWs->id}",
-            60,
-            function () use ($currentWs): float {
-                // current_balance is an Eloquent accessor, not a database column.
-                // Reproduce its calculation with aggregate queries so the dashboard
-                // remains accurate without triggering one query per bank account.
-                $baseBalance = (float) BankAccount::where('workspace_id', $currentWs->id)
-                    ->sum('balance');
 
-                $incomeBalance = (float) Income::where('workspace_id', $currentWs->id)
-                    ->whereNotNull('bank_account_id')
-                    ->sum('amount');
+          dashboard = Path('app/Livewire/Dashboard.php')
+          s = dashboard.read_text()
+          s = s.replace("sum('current_balance')", "sum('balance')")
+          s = s.replace("orderByDesc('current_balance')", "orderByDesc('balance')")
+          s = s.replace("$account->current_balance", "$account->balance")
+          dashboard.write_text(s)
 
-                $expenseBalance = (float) Expense::where('workspace_id', $currentWs->id)
-                    ->whereNotNull('bank_account_id')
-                    ->sum('amount');
-
-                $recurringDue = (float) RecurringIncome::where('workspace_id', $currentWs->id)
-                    ->whereNotNull('bank_account_id')
-                    ->where('is_active', true)
-                    ->where('day_of_month', '<=', now()->day)
-                    ->sum('amount');
-
-                return $baseBalance + $incomeBalance - $expenseBalance + $recurringDue;
-            }
-        );'''
-          if old not in s:
-              raise SystemExit('Expected bank balance block not found')
-          p.write_text(s.replace(old, new, 1))
+          migration = Path('database/migrations/2026_09_11_190000_add_performance_indexes.php')
+          if migration.exists():
+              migration.write_text(migration.read_text().replace("'current_balance'", "'balance'"))
           PY
-      - name: Validate PHP syntax
-        run: php -l app/Livewire/Dashboard.php
+      - name: Validate PHP
+        run: |
+          php -l app/Livewire/Dashboard.php
+          php -l database/migrations/2026_09_11_190000_add_performance_indexes.php
+      - name: Remove temporary workflow
+        run: rm -f .github/workflows/fix-dashboard-bank-balance.yml
       - name: Commit
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/Livewire/Dashboard.php
-          git diff --cached --quiet && exit 0
-          git commit -m "Fix dashboard bank balance query"
+          git add app/Livewire/Dashboard.php database/migrations/2026_09_11_190000_add_performance_indexes.php .github/workflows/fix-dashboard-bank-balance.yml
+          git commit -m "Fix dashboard bank balance column" || exit 0
           git push
-      - name: Remove temporary workflow
-        if: always()
-        shell: bash
-        run: |
-          git rm -f .github/workflows/fix-dashboard-bank-balance.yml || true
-          git commit -m "Remove temporary dashboard fix workflow" || true
-          git push || true
