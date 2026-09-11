@@ -1,0 +1,190 @@
+name: Performance audit once
+
+on:
+  push:
+    branches:
+      - perf-audit-20260911
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    if: github.actor == 'EduardoPatricio488'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Optimize high impact database work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout 88f797db08a882364fe79291a80f596870eefb39 -- app/Livewire/Dashboard.php
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          dashboard = Path('app/Livewire/Dashboard.php')
+          text = dashboard.read_text(encoding='utf-8')
+          pattern = re.compile(r"(?m)^(\s*)\$driver = DB::connection\(\)->getDriverName\(\);\n\s*\$expenseMonth = .*?;\n\s*\$incomeMonth = .*?;")
+          match = pattern.search(text)
+          if not match:
+              raise SystemExit('Dashboard grouping block not found')
+          i = match.group(1)
+          replacement = (i + "$driver = DB::connection()->getDriverName();\n" +
+              i + "$expenseMonth = match ($driver) {\n" +
+              i + "    'pgsql' => \"TO_CHAR(spent_at, 'YYYY-MM')\",\n" +
+              i + "    'sqlite' => \"strftime('%Y-%m', spent_at)\",\n" +
+              i + "    default => \"DATE_FORMAT(spent_at, '%Y-%m')\",\n" +
+              i + "};\n" +
+              i + "$incomeMonth = match ($driver) {\n" +
+              i + "    'pgsql' => \"TO_CHAR(received_at, 'YYYY-MM')\",\n" +
+              i + "    'sqlite' => \"strftime('%Y-%m', received_at)\",\n" +
+              i + "    default => \"DATE_FORMAT(received_at, '%Y-%m')\",\n" +
+              i + "};")
+          dashboard.write_text(text[:match.start()] + replacement + text[match.end():], encoding='utf-8')
+
+          path = Path('app/Services/BancoService.php')
+          text = path.read_text(encoding='utf-8')
+          if 'use Illuminate\\Support\\Facades\\DB;' not in text:
+              text = text.replace('use Illuminate\\Support\\Collection;\n', 'use Illuminate\\Support\\Collection;\nuse Illuminate\\Support\\Facades\\DB;\n', 1)
+
+          flow = re.compile(r"    public function getMonthlyFlow\(int \$months = 12\): array\n    \{.*?\n    \}\n\n    /\* ══════════════════════════════════════════════════════════\n       LIQUIDEZ", re.S)
+          new_flow = '''    public function getMonthlyFlow(int $months = 12): array
+    {
+        $months = max(1, $months);
+        $fixedIncome = $this->getFixedMonthlyIncome();
+        $start = now()->subMonths($months - 1)->startOfMonth();
+        $end = now()->endOfMonth();
+        $driver = DB::connection()->getDriverName();
+
+        $expenseMonth = match ($driver) {
+            'pgsql' => "TO_CHAR(spent_at, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', spent_at)",
+            default => "DATE_FORMAT(spent_at, '%Y-%m')",
+        };
+        $incomeMonth = match ($driver) {
+            'pgsql' => "TO_CHAR(received_at, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', received_at)",
+            default => "DATE_FORMAT(received_at, '%Y-%m')",
+        };
+
+        $incomeByMonth = Income::where('workspace_id', $this->workspaceId)
+            ->whereBetween('received_at', [$start, $end])
+            ->selectRaw("{$incomeMonth} as month, SUM(amount) as total")
+            ->groupByRaw($incomeMonth)
+            ->pluck('total', 'month')
+            ->map(fn ($value) => (float) $value);
+
+        $expenseByMonth = Expense::where('workspace_id', $this->workspaceId)
+            ->whereBetween('spent_at', [$start, $end])
+            ->selectRaw("{$expenseMonth} as month, SUM(amount) as total")
+            ->groupByRaw($expenseMonth)
+            ->pluck('total', 'month')
+            ->map(fn ($value) => (float) $value);
+
+        return collect(range($months - 1, 0))->map(function ($i) use ($incomeByMonth, $expenseByMonth, $fixedIncome) {
+            $date = now()->subMonths($i);
+            $month = $date->format('Y-m');
+            $income = (float) ($incomeByMonth[$month] ?? 0);
+            $expense = (float) ($expenseByMonth[$month] ?? 0);
+
+            return [
+                'month' => $month,
+                'label' => $date->locale('pt')->isoFormat('MMM YY'),
+                'income' => $income + $fixedIncome,
+                'expense' => $expense,
+                'balance' => $income + $fixedIncome - $expense,
+            ];
+        })->all();
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       LIQUIDEZ'''
+          if not flow.search(text):
+              raise SystemExit('BancoService monthly flow block not found')
+          text = flow.sub(new_flow, text, count=1)
+
+          old = """        $allIncomes = Income::where('workspace_id', $this->workspaceId)->pluck('amount');
+        $allExpenses = Expense::where('workspace_id', $this->workspaceId)->pluck('amount');
+
+        $maxIncome = $allIncomes->max() ?? 0;
+        $maxExpense = $allExpenses->max() ?? 0;
+        $totalMoved = $allIncomes->sum() + $allExpenses->sum();"""
+          new = """        $incomeStats = Income::where('workspace_id', $this->workspaceId)
+            ->selectRaw('MAX(amount) as max_amount, SUM(amount) as total_amount')
+            ->first();
+        $expenseStats = Expense::where('workspace_id', $this->workspaceId)
+            ->selectRaw('MAX(amount) as max_amount, SUM(amount) as total_amount')
+            ->first();
+
+        $maxIncome = (float) ($incomeStats->max_amount ?? 0);
+        $maxExpense = (float) ($expenseStats->max_amount ?? 0);
+        $totalMoved = (float) ($incomeStats->total_amount ?? 0) + (float) ($expenseStats->total_amount ?? 0);"""
+          if old not in text:
+              raise SystemExit('BancoService stats block not found')
+          text = text.replace(old, new, 1)
+
+          avg = re.compile(r"        \$total = 0;\n        for \(\$i = 1; \$i <= \$months; \$i\+\+\) \{.*?        return \$months > 0 \? \$total / \$months : 0;", re.S)
+          new_avg = """        if ($months <= 0) {
+            return 0;
+        }
+
+        $end = now()->subMonth()->endOfMonth();
+        $start = now()->subMonths($months)->startOfMonth();
+        $total = (float) Expense::where('workspace_id', $this->workspaceId)
+            ->whereBetween('spent_at', [$start, $end])
+            ->sum('amount');
+
+        return $total / $months;"""
+          if not avg.search(text):
+              raise SystemExit('BancoService average expense block not found')
+          text = avg.sub(new_avg, text, count=1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l app/Livewire/Dashboard.php
+          php -l app/Services/BancoService.php
+          git diff --check
+
+      - name: Write audit report
+        shell: bash
+        run: |
+          cat > PERFORMANCE-AUDIT.md <<'EOF'
+          # Finance Pro AI — Performance Audit
+
+          ## Executive Summary
+          High-impact request-time database bottlenecks were identified in Dashboard and BancoService. PostgreSQL/Neon incompatibility from MySQL `DATE_FORMAT()` was also identified as a production blocker.
+
+          ## P0
+          - Dashboard monthly grouping made PostgreSQL requests fail. Fixed with driver-aware SQL.
+          - BancoService monthly flow reduced from 2 queries per month to 2 grouped queries for the complete period.
+
+          ## P1
+          - BancoService statistics no longer loads every amount into PHP to calculate MAX/SUM.
+          - Average monthly expenses no longer performs one query per month.
+
+          ## Existing performance work
+          Existing workspace/date indexes, market-data cache, AI cache, frontend optimizations and bounded external HTTP timeouts were preserved.
+
+          ## Remaining audit areas
+          Livewire request/render profiling, middleware queries, large-list pagination, Vite bundle splitting, export memory usage and production Lighthouse/Network measurements.
+          EOF
+
+      - name: Commit and remove runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/perf-audit-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/Livewire/Dashboard.php app/Services/BancoService.php PERFORMANCE-AUDIT.md .github/workflows/perf-audit-once.yml
+          git commit -m 'perf: optimize dashboard and banking aggregations'
+          git push origin HEAD:perf-audit-20260911
