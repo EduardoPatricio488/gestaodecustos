@@ -65,7 +65,6 @@ import './offline-expenses';
     }
 
     function setTheme(theme) { applyTheme(theme); }
-
     function setSchedule(light, dark) {
         const schedule = {
             light: /^([01]\d|2[0-3]):[0-5]\d$/.test(light) ? light : DEFAULT_SCHEDULE.light,
@@ -75,7 +74,6 @@ import './offline-expenses';
         applyTheme(getTheme());
         window.dispatchEvent(new CustomEvent('finance-pro-theme-schedule-changed', { detail: schedule }));
     }
-
     function toggleTheme() { setTheme(isDark() ? 'light' : 'dark'); }
 
     window.FinanceProTheme = { getTheme, applyTheme, setTheme, toggleTheme, getSchedule, setSchedule };
@@ -116,18 +114,13 @@ import './offline-expenses';
             console.error('Finance Pro: token CSRF não encontrado.');
             return false;
         }
-
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = url.toString();
         form.style.display = 'none';
-
         const csrf = document.createElement('input');
-        csrf.type = 'hidden';
-        csrf.name = '_token';
-        csrf.value = token;
+        csrf.type = 'hidden'; csrf.name = '_token'; csrf.value = token;
         form.appendChild(csrf);
-
         document.body.appendChild(form);
         form.submit();
         return true;
@@ -135,22 +128,12 @@ import './offline-expenses';
 
     document.addEventListener('click', (event) => {
         if (event.defaultPrevented || event.button !== 0) return;
-
         const anchor = event.target.closest('a[href]');
         if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) return;
-
         let url;
-        try {
-            url = new URL(anchor.href, window.location.origin);
-        } catch {
-            return;
-        }
-
+        try { url = new URL(anchor.href, window.location.origin); } catch { return; }
         if (url.origin !== window.location.origin || !isProtectedPath(url.pathname)) return;
-
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        submitPost(url);
+        event.preventDefault(); event.stopImmediatePropagation(); submitPost(url);
     }, true);
 })();
 
@@ -218,4 +201,58 @@ window.addEventListener('copy-to-clipboard', (event) => {
         event.preventDefault();
         closeModal(button);
     }, true);
+})();
+
+// Portal access: expose the same "send code by email" action in the Client and
+// Supplier portal modals without duplicating the modal markup. The Livewire
+// component owns the actual mail send and authorization checks.
+(function () {
+    const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+
+    const addPortalEmailAction = (root = document) => {
+        const dialogs = root.querySelectorAll?.('[role="dialog"], dialog') || [];
+        dialogs.forEach((dialog) => {
+            if (dialog.dataset.portalEmailReady === '1') return;
+            const text = normalize(dialog.textContent);
+            if (!text.includes('Copiar Link de Login')) return;
+
+            const copyButton = Array.from(dialog.querySelectorAll('button')).find((button) =>
+                normalize(button.textContent).includes('Copiar Link de Login')
+            );
+            if (!copyButton) return;
+
+            const component = dialog.closest('[wire\\:id], [wire\\:id]') || document.querySelector('[wire\\:id]');
+            if (!component) return;
+
+            const emailButton = document.createElement('button');
+            emailButton.type = 'button';
+            emailButton.className = 'flex-[2] h-14 bg-brand-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-brand-500/20 hover:bg-brand-700 transition-all flex items-center justify-center gap-2';
+            emailButton.innerHTML = '<span aria-hidden="true">✉</span><span>Enviar Código por Email</span>';
+            emailButton.addEventListener('click', () => {
+                const wireId = component.getAttribute('wire:id');
+                if (!wireId || !window.Livewire) return;
+                const livewireComponent = window.Livewire.find(wireId);
+                if (!livewireComponent) return;
+                emailButton.disabled = true;
+                emailButton.classList.add('opacity-60', 'cursor-wait');
+                Promise.resolve(livewireComponent.call('sendPortalEmail')).finally(() => {
+                    emailButton.disabled = false;
+                    emailButton.classList.remove('opacity-60', 'cursor-wait');
+                });
+            });
+
+            copyButton.parentElement?.insertBefore(emailButton, copyButton);
+            dialog.dataset.portalEmailReady = '1';
+        });
+    };
+
+    const observer = new MutationObserver(() => addPortalEmailAction());
+    const start = () => {
+        addPortalEmailAction();
+        if (document.body) observer.observe(document.body, { childList: true, subtree: true });
+    };
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+    else start();
+    document.addEventListener('livewire:navigated', () => setTimeout(addPortalEmailAction, 50));
 })();
