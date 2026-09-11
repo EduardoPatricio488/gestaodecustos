@@ -47,7 +47,7 @@ class ClientHub extends Component
     {
         $this->resetForm();
         $this->status = 'ativo';
-        $this->dispatch('client-modal-open');
+        $this->dispatch('modal-show', name: 'client-modal');
     }
 
     public function openHistory($id): void
@@ -56,7 +56,7 @@ class ClientHub extends Component
             ->with(['projects', 'invoices' => fn ($q) => $q->latest()])
             ->findOrFail($id);
 
-        $this->dispatch('history-modal-open');
+        $this->dispatch('modal-show', name: 'history-modal');
     }
 
     public $clientTaxNumber = '';
@@ -84,7 +84,7 @@ class ClientHub extends Component
         );
 
         $this->resetForm();
-        $this->dispatch('client-modal-close');
+        $this->dispatch('modal-close', name: 'client-modal');
         $this->dispatch('toast', text: 'Cliente atualizado no sistema.');
     }
 
@@ -101,7 +101,7 @@ class ClientHub extends Component
         $this->address = $client->address;
         $this->notes = $client->notes;
 
-        $this->dispatch('client-modal-open');
+        $this->dispatch('modal-show', name: 'client-modal');
     }
 
     public function delete($id): void
@@ -126,16 +126,15 @@ class ClientHub extends Component
             } while ($exists);
 
             $client->update(['portal_token' => $passcode]);
+            $client->refresh();
         }
 
         $this->clientTaxNumber = $client->tax_number;
         $this->generatedPasscode = $client->portal_token;
         $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
 
-        // Abrir o Flux no browser depois de a resposta Livewire chegar.
-        // Isto evita depender do controlo de modal no lado PHP e também evita
-        // que problemas de SMTP/Resend impeçam a abertura do modal.
-        $this->dispatch('portal-link-modal-open');
+        // Usar exatamente o mesmo mecanismo da área de Fornecedores.
+        $this->dispatch('modal-show', name: 'portal-link-modal');
     }
 
     public function sendPortalEmail(): void
@@ -165,7 +164,9 @@ class ClientHub extends Component
             ->where('name', 'like', '%'.$this->search.'%')
             ->get();
 
-        return view('livewire.business.client-hub-wrapper', [
+        // Igual ao módulo de Fornecedores: renderizar diretamente a view,
+        // sem wrapper intermédio nem JavaScript a intercetar os cliques.
+        return view('livewire.business.client-hub', [
             'clients' => $clients,
             'totalClients' => $clients->count(),
             'activeLeads' => $clients->where('status', 'lead')->count(),
