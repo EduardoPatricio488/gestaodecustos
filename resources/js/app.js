@@ -8,7 +8,9 @@ import './offline-expenses';
 (function () {
     const STORAGE_KEY = 'flux.appearance';
     const LEGACY_KEY = 'theme';
+    const SCHEDULE_KEY = 'finance-pro-theme-schedule';
     const MEDIA_QUERY = '(prefers-color-scheme: dark)';
+    const DEFAULT_SCHEDULE = { light: '07:00', dark: '19:00' };
 
     function getTheme() {
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -21,7 +23,37 @@ import './offline-expenses';
         }
         return 'system';
     }
-    function isDark(theme = getTheme()) { return theme === 'dark' || (theme === 'system' && window.matchMedia(MEDIA_QUERY).matches); }
+
+    function getSchedule() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(SCHEDULE_KEY) || 'null');
+            if (saved?.light && saved?.dark) return saved;
+        } catch (_) {}
+        return { ...DEFAULT_SCHEDULE };
+    }
+
+    function timeToMinutes(value) {
+        const [hours, minutes] = String(value || '').split(':').map(Number);
+        return Number.isFinite(hours) && Number.isFinite(minutes) ? (hours * 60) + minutes : 0;
+    }
+
+    function scheduledTheme() {
+        const schedule = getSchedule();
+        const now = new Date();
+        const minutes = (now.getHours() * 60) + now.getMinutes();
+        const light = timeToMinutes(schedule.light);
+        const dark = timeToMinutes(schedule.dark);
+
+        if (light < dark) return minutes >= light && minutes < dark ? 'light' : 'dark';
+        return minutes >= dark && minutes < light ? 'dark' : 'light';
+    }
+
+    function isDark(theme = getTheme()) {
+        if (theme === 'dark') return true;
+        if (theme === 'light') return false;
+        return scheduledTheme() === 'dark';
+    }
+
     function applyTheme(theme) {
         if (!['dark', 'light', 'system'].includes(theme)) theme = 'system';
         localStorage.setItem(STORAGE_KEY, theme);
@@ -31,13 +63,29 @@ import './offline-expenses';
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
         window.dispatchEvent(new CustomEvent('finance-pro-theme-changed', { detail: { value: theme, dark } }));
     }
+
     function setTheme(theme) { applyTheme(theme); }
+
+    function setSchedule(light, dark) {
+        const schedule = {
+            light: /^([01]\d|2[0-3]):[0-5]\d$/.test(light) ? light : DEFAULT_SCHEDULE.light,
+            dark: /^([01]\d|2[0-3]):[0-5]\d$/.test(dark) ? dark : DEFAULT_SCHEDULE.dark,
+        };
+        localStorage.setItem(SCHEDULE_KEY, JSON.stringify(schedule));
+        applyTheme(getTheme());
+        window.dispatchEvent(new CustomEvent('finance-pro-theme-schedule-changed', { detail: schedule }));
+    }
+
     function toggleTheme() { setTheme(isDark() ? 'light' : 'dark'); }
-    window.FinanceProTheme = { getTheme, applyTheme, setTheme, toggleTheme };
+
+    window.FinanceProTheme = { getTheme, applyTheme, setTheme, toggleTheme, getSchedule, setSchedule };
     applyTheme(getTheme());
     document.addEventListener('livewire:navigated', () => applyTheme(getTheme()));
+
     const media = window.matchMedia(MEDIA_QUERY);
     media.addEventListener('change', () => { if (getTheme() === 'system') applyTheme('system'); });
+    setInterval(() => { if (getTheme() === 'system') applyTheme('system'); }, 30000);
+
     document.addEventListener('click', (event) => {
         const button = event.target.closest('button');
         if (!button) return;
@@ -45,7 +93,10 @@ import './offline-expenses';
         if (label !== 'Modo Claro' && label !== 'Modo Escuro') return;
         event.preventDefault(); event.stopImmediatePropagation(); toggleTheme();
     }, true);
-    window.addEventListener('storage', (event) => { if (event.key === STORAGE_KEY || event.key === LEGACY_KEY) applyTheme(getTheme()); });
+
+    window.addEventListener('storage', (event) => {
+        if (event.key === STORAGE_KEY || event.key === LEGACY_KEY || event.key === SCHEDULE_KEY) applyTheme(getTheme());
+    });
 })();
 
 // State-changing navigation must use POST + CSRF, even when the UI is rendered as a link.
