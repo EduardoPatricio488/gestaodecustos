@@ -29,6 +29,7 @@ class AiCopilot extends Component
             'route' => request()->route()?->getName(),
             'path' => request()->path(),
             'period' => request()->query('period'),
+            'offline_status' => 'online',
         ];
 
         if (! $workspace) return;
@@ -54,7 +55,7 @@ class AiCopilot extends Component
     public function setPageContext(array $context): void
     {
         $this->pageContext = array_merge($this->pageContext, array_intersect_key($context, array_flip([
-            'module', 'route', 'path', 'entity', 'entity_type', 'action', 'filters', 'period', 'state',
+            'module', 'route', 'path', 'entity', 'entity_type', 'action', 'filters', 'period', 'state', 'offline_status', 'pending_offline_items',
         ])));
     }
 
