@@ -1,0 +1,59 @@
+name: Validate recruitment
+
+on:
+  push:
+    paths:
+      - 'app/Livewire/Public/CareersHub.php'
+      - 'app/Livewire/Business/RecruitmentHub.php'
+      - 'app/Models/Candidate.php'
+      - 'app/Models/Workspace.php'
+      - 'app/Models/RecruitmentJob.php'
+      - 'app/Models/JobApplication.php'
+      - 'app/Models/CandidateNotification.php'
+      - 'resources/views/livewire/public/candidate-portal.blade.php'
+      - 'database/migrations/*candidate*'
+      - 'database/migrations/*recruitment*'
+      - 'database/migrations/*job_to_applications*'
+      - '.github/workflows/validate-recruitment.yml'
+  pull_request:
+    paths:
+      - 'app/Livewire/Public/CareersHub.php'
+      - 'app/Livewire/Business/RecruitmentHub.php'
+      - 'app/Models/Candidate.php'
+      - 'app/Models/Workspace.php'
+      - 'app/Models/RecruitmentJob.php'
+      - 'app/Models/JobApplication.php'
+      - 'app/Models/CandidateNotification.php'
+      - 'resources/views/livewire/public/candidate-portal.blade.php'
+      - 'database/migrations/*candidate*'
+      - 'database/migrations/*recruitment*'
+      - 'database/migrations/*job_to_applications*'
+
+jobs:
+  php-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, dom, fileinfo, sqlite, pdo_sqlite
+      - uses: ramsey/composer-install@v3
+      - name: PHP syntax
+        run: |
+          php -l app/Livewire/Public/CareersHub.php
+          php -l app/Livewire/Business/RecruitmentHub.php
+          php -l app/Models/Candidate.php
+          php -l app/Models/Workspace.php
+          php -l app/Models/RecruitmentJob.php
+          php -l app/Models/JobApplication.php
+          php -l app/Models/CandidateNotification.php
+      - name: Laravel test suite
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: php artisan test --without-tty
