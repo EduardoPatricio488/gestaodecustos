@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Listeners\StripeWebhookListener;
 use App\Listeners\UpdateLastLogin;
 use App\Livewire\Business\BusinessRolesHub;
+use App\Livewire\Business\BusinessSettlementHub;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Carbon;
@@ -23,42 +24,17 @@ use Laravel\Cashier\Events\WebhookReceived;
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void {}
-
     public function boot(): void
     {
-        $this->configureDefaults();
-        $this->registerViewNamespaces();
-
-        Event::listen(Login::class, UpdateLastLogin::class);
-        Event::listen(WebhookReceived::class, StripeWebhookListener::class);
-
-        App::setLocale('pt');
-        Carbon::setLocale('pt');
-
-        if (str_contains(request()->getHost(), 'ngrok-free.app') || str_contains(request()->getHost(), 'ngrok-free.dev')) {
-            URL::forceScheme('https');
-        }
-
-        Route::middleware(['web', 'auth', 'plan:business'])
-            ->get('/empresa/equipa/permissoes', BusinessRolesHub::class)
-            ->name('hub.business.roles');
+        $this->configureDefaults(); $this->registerViewNamespaces();
+        Event::listen(Login::class, UpdateLastLogin::class); Event::listen(WebhookReceived::class, StripeWebhookListener::class);
+        App::setLocale('pt'); Carbon::setLocale('pt');
+        if(str_contains(request()->getHost(),'ngrok-free.app')||str_contains(request()->getHost(),'ngrok-free.dev')) URL::forceScheme('https');
+        Route::middleware(['web','auth','plan:business'])->group(function(){
+            Route::get('/empresa/equipa/permissoes',BusinessRolesHub::class)->name('hub.business.roles');
+            Route::get('/empresa/pagamentos',BusinessSettlementHub::class)->name('hub.business.settlements');
+        });
     }
-
-    protected function registerViewNamespaces(): void
-    {
-        View::addNamespace('pages', resource_path('views/pages'));
-        Blade::anonymousComponentPath(resource_path('views/layouts'), 'layouts');
-        Blade::anonymousComponentPath(resource_path('views/pages'), 'pages');
-    }
-
-    protected function configureDefaults(): void
-    {
-        Date::use(CarbonImmutable::class);
-        DB::prohibitDestructiveCommands(app()->isProduction());
-
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)->mixedCase()->letters()->numbers()->symbols()->uncompromised()
-            : null,
-        );
-    }
+    protected function registerViewNamespaces(): void { View::addNamespace('pages',resource_path('views/pages')); Blade::anonymousComponentPath(resource_path('views/layouts'),'layouts'); Blade::anonymousComponentPath(resource_path('views/pages'),'pages'); }
+    protected function configureDefaults(): void { Date::use(CarbonImmutable::class); DB::prohibitDestructiveCommands(app()->isProduction()); Password::defaults(fn():?Password=>app()->isProduction()?Password::min(12)->mixedCase()->letters()->numbers()->symbols()->uncompromised():null); }
 }
