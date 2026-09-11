@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\DomainException;
 
 class BankReserve extends Model
 {
@@ -31,6 +32,30 @@ class BankReserve extends Model
         'target_date' => 'date',
         'is_business' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (BankReserve $reserve): void {
+            if (! $reserve->workspace_id) {
+                return;
+            }
+
+            if ((float) $reserve->amount < 0 || ($reserve->target_amount !== null && (float) $reserve->target_amount < 0)) {
+                throw new DomainException('Os valores da reserva não podem ser negativos.');
+            }
+
+            if ($reserve->bank_account_id) {
+                $belongsToWorkspace = BankAccount::withoutGlobalScopes()
+                    ->whereKey($reserve->bank_account_id)
+                    ->where('workspace_id', $reserve->workspace_id)
+                    ->exists();
+
+                if (! $belongsToWorkspace) {
+                    throw new DomainException('A conta bancária da reserva tem de pertencer ao workspace atual.');
+                }
+            }
+        });
+    }
 
     public function user(): BelongsTo
     {
