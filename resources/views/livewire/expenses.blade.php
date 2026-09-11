@@ -14,16 +14,27 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4">
-                    <div class="p-3 bg-zinc-950 rounded-2xl border border-zinc-800 shadow-xl">
+                <div class="flex items-center gap-4 min-w-0">
+                    <div class="p-3 bg-zinc-950 rounded-2xl border border-zinc-800 shadow-xl shrink-0">
                         <flux:icon name="banknotes" class="size-6 text-brand-400" />
                     </div>
-                    <div>
-                        <h1 class="text-xl sm:text-2xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Todas as Despesas</h1>
-                        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1 italic">{{ auth()->user()->currentWorkspace->name }}</p>
+                    <div class="min-w-0">
+                        <h1 class="text-xl sm:text-2xl font-black dark:text-white uppercase tracking-tighter italic leading-none truncate">Todas as Despesas</h1>
+                        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1 italic truncate">{{ auth()->user()->currentWorkspace->name }}</p>
                     </div>
                 </div>
             </div>
+
+            @if($canEdit)
+                <flux:button
+                    variant="primary"
+                    icon="plus"
+                    x-on:click="$dispatch('open-expense-category-picker')"
+                    class="shrink-0 rounded-xl font-black uppercase tracking-widest"
+                >
+                    Nova despesa
+                </flux:button>
+            @endif
         </div>
     </div>
 
@@ -80,12 +91,6 @@
             />
 
             <div class="flex flex-col sm:flex-row gap-2">
-                @if($canEdit)
-                    <flux:button variant="primary" icon="plus" x-on:click="$dispatch('open-expense-category-picker')">
-                        Nova despesa
-                    </flux:button>
-                @endif
-
                 <flux:select wire:model.live="filterCategory" class="w-full md:w-64">
                     <option value="">Todos os Hubs</option>
                     @foreach ($categories as $c)
@@ -213,16 +218,11 @@
                 @else
                     <div class="py-12 text-center">
                         <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800"><flux:icon name="tag" class="size-6 text-zinc-400" /></div>
-                        <h3 class="mt-4 text-sm font-black uppercase tracking-tight text-zinc-900 dark:text-white">Sem categorias disponíveis</h3>
-                        <p class="mt-1 text-xs text-zinc-500">Cria primeiro uma categoria para poderes registar despesas.</p>
+                        <h3 class="mt-4 text-base font-black text-zinc-900 dark:text-white">Sem categorias disponíveis</h3>
+                        <p class="mt-1 text-sm text-zinc-500">Cria uma categoria primeiro para registar uma despesa.</p>
                     </div>
                 @endif
             </div>
         </div>
     </div>
-
-    {{-- FOOTER --}}
-    <footer class="pt-10 pb-20 text-center opacity-30">
-        <p class="text-[8px] font-black text-zinc-400 uppercase tracking-[0.4em]">Audit Cloud Protocol • v4.0 • {{ date('Y') }}</p>
-    </footer>
 </div>
