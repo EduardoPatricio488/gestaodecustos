@@ -1,3 +1,5 @@
+import './offline-bunker';
+
 const QUEUE_KEY = 'finance-pro-offline-expenses';
 
 export function getOfflineQueue() {
