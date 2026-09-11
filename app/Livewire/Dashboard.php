@@ -326,48 +326,48 @@ class Dashboard extends Component
 
         return Cache::flexible(
             "dashboard:ai-insights:{$currentWs->id}:".now()->format('Y-m'),
-            [120, 600],
+            [300, 1800],
             function () use ($currentWs) {
                 $insights = [];
                 try {
-                    $indices = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^GSPC,^IXIC,^GDAXI,^FCHI,^FTSE'])->json()['quoteResponse']['result'];
+                    $indices = Http::connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^GSPC,^IXIC,^GDAXI,^FCHI,^FTSE'])->json()['quoteResponse']['result'];
                     foreach ($indices as $i) $insights[] = "ÍNDICE: {$i['shortName']} ".number_format($i['regularMarketPrice'], 2).' ('.number_format($i['regularMarketChangePercent'], 2).'%)';
                 } catch (\Exception $e) {}
                 try {
-                    $metals = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'GC=F,SI=F,PL=F,PA=F'])->json()['quoteResponse']['result'];
+                    $metals = Http::connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'GC=F,SI=F,PL=F,PA=F'])->json()['quoteResponse']['result'];
                     foreach ($metals as $m) $insights[] = "METAIS: {$m['symbol']} ".number_format($m['regularMarketPrice'], 2).' ('.number_format($m['regularMarketChangePercent'], 2).'%)';
                 } catch (\Exception $e) {}
                 try {
-                    $energy = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'CL=F,NG=F,CO1.F'])->json()['quoteResponse']['result'];
+                    $energy = Http::connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'CL=F,NG=F,CO1.F'])->json()['quoteResponse']['result'];
                     foreach ($energy as $e) $insights[] = "ENERGIA: {$e['symbol']} ".number_format($e['regularMarketPrice'], 2).' ('.number_format($e['regularMarketChangePercent'], 2).'%)';
                 } catch (\Exception $e) {}
                 try {
-                    $inflationEU = Http::get('https://api.worldbank.org/v2/country/EU/indicator/FP.CPI.TOTL.ZG?format=json')->json();
+                    $inflationEU = Http::connectTimeout(1)->timeout(2)->get('https://api.worldbank.org/v2/country/EU/indicator/FP.CPI.TOTL.ZG?format=json')->json();
                     if (isset($inflationEU[1][0]['value'])) $insights[] = 'MACRO: Inflação UE '.number_format($inflationEU[1][0]['value'], 1).'%';
                 } catch (\Exception $e) {}
                 try {
-                    $unemploymentPT = Http::get('https://api.worldbank.org/v2/country/PRT/indicator/SL.UEM.TOTL.ZS?format=json')->json();
+                    $unemploymentPT = Http::connectTimeout(1)->timeout(2)->get('https://api.worldbank.org/v2/country/PRT/indicator/SL.UEM.TOTL.ZS?format=json')->json();
                     if (isset($unemploymentPT[1][0]['value'])) $insights[] = 'MACRO: Desemprego PT '.number_format($unemploymentPT[1][0]['value'], 1).'%';
                 } catch (\Exception $e) {}
                 try {
-                    $fx = Http::get('https://api.exchangerate.host/latest?base=EUR')->json();
+                    $fx = Http::connectTimeout(1)->timeout(2)->get('https://api.exchangerate.host/latest?base=EUR')->json();
                     $insights[] = 'FX: EUR/JPY '.number_format($fx['rates']['JPY'], 2);
                     $insights[] = 'FX: EUR/CHF '.number_format($fx['rates']['CHF'], 3);
                     $insights[] = 'FX: EUR/AUD '.number_format($fx['rates']['AUD'], 3);
                     $insights[] = 'FX: EUR/CAD '.number_format($fx['rates']['CAD'], 3);
                 } catch (\Exception $e) {}
                 try {
-                    $weather = Http::get('https://api.open-meteo.com/v1/forecast?latitude=38.7&longitude=-9.1&current_weather=true')->json();
+                    $weather = Http::connectTimeout(1)->timeout(2)->get('https://api.open-meteo.com/v1/forecast?latitude=38.7&longitude=-9.1&current_weather=true')->json();
                     $temp = $weather['current_weather']['temperature'];
                     $wind = $weather['current_weather']['windspeed'];
                     $insights[] = "CLIMA: Lisboa {$temp}ºC • Vento {$wind}km/h";
                 } catch (\Exception $e) {}
                 try {
-                    $vix = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^VIX'])->json()['quoteResponse']['result'][0];
+                    $vix = Http::connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^VIX'])->json()['quoteResponse']['result'][0];
                     $insights[] = 'RISCO: VIX '.number_format($vix['regularMarketPrice'], 2).' ('.number_format($vix['regularMarketChangePercent'], 2).'%)';
                 } catch (\Exception $e) {}
                 try {
-                    $bdi = Http::get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^BDI'])->json()['quoteResponse']['result'][0];
+                    $bdi = Http::connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^BDI'])->json()['quoteResponse']['result'][0];
                     $insights[] = 'LOGÍSTICA: Baltic Dry Index '.number_format($bdi['regularMarketPrice'], 0);
                 } catch (\Exception $e) {}
 
@@ -427,6 +427,10 @@ class Dashboard extends Component
         $endDay = now()->endOfDay();
         $wsId = $currentWs->id;
         if (! $isPremium) return ['is_premium' => false, 'expenses' => collect(), 'incomes' => collect(), 'fitness' => collect(), 'xp_today' => 0];
+        return Cache::remember(
+            "dashboard:daily-report:{$wsId}:".now()->toDateString().":{$user->id}",
+            60,
+            function () use ($user, $currentWs, $today, $endDay, $wsId) {
         $expenses = Expense::where('workspace_id', $wsId)->whereBetween('spent_at', [$today, $endDay])->get();
         $incomes = Income::where('workspace_id', $wsId)->whereBetween('received_at', [$today, $endDay])->get();
         $fitness = FitnessActivity::where('workspace_id', $wsId)->where('user_id', $user->id)->whereBetween('activity_date', [$today, $endDay])->get();
@@ -439,6 +443,8 @@ class Dashboard extends Component
             'spend_total' => $expenses->sum('amount'), 'earn_total' => $incomes->sum('amount'),
             'fitness_min' => $fitness->sum('duration_minutes'), 'fitness_kcal' => $fitness->sum('calories'),
         ];
+            }
+        );
     }
 
     public function render()
