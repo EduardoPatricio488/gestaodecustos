@@ -9,145 +9,79 @@ permissions:
 
 jobs:
   fix-modal:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Fix modal CSS
+      - name: Copy supplier portal modal design to clients
         shell: python
         run: |
           from pathlib import Path
+          import re
+
+          client_path = Path('resources/views/livewire/business/client-hub.blade.php')
+          supplier_path = Path('resources/views/livewire/business/supplier-hub.blade.php')
+          client = client_path.read_text(encoding='utf-8')
+          supplier = supplier_path.read_text(encoding='utf-8')
+
+          match = re.search(r'(<flux:modal name="supplier-portal-modal"[\s\S]*?</flux:modal>)', supplier)
+          if not match:
+              raise SystemExit('Supplier portal modal not found')
+
+          modal = match.group(1)
+          modal = modal.replace('supplier-portal-modal', 'portal-link-modal')
+          modal = modal.replace('Chave de Parceiro', 'Chave de Acesso')
+          modal = modal.replace('Credenciais para o Portal do Fornecedor.', 'Geração de credenciais únicas para o cliente.')
+          modal = modal.replace('Portal do Fornecedor', 'Portal do Cliente')
+          modal = modal.replace('{{ $supplierTaxNumber }}', "{{ $clientTaxNumber ? implode(' ', str_split(preg_replace('/\\D/', '', (string) $clientTaxNumber), 3)) : '---' }}")
+          modal = modal.replace('{{ $generatedPortalUrl }}', "{{ route('client.login') }}")
+          modal = modal.replace('Usar Código:', 'Usar a Chave Única:')
+          modal = modal.replace('Introduzir NIF:', 'Introduzir o NIF:')
+          modal = modal.replace('Aceder a:', 'Aceder ao endereço:')
+
+          start_marker = '    {{-- 5. MODAL: ACESSO AO PORTAL COM CÓDIGO ÚNICO --}}'
+          start = client.find(start_marker)
+          end_marker = '    {{-- 6. MODAL: HISTÓRICO INTEGRADO DO CLIENTE --}}'
+          end = client.find(end_marker, start)
+          if start == -1 or end == -1:
+              raise SystemExit('Client portal modal block not found')
+
+          replacement = '    {{-- 5. MODAL: ACESSO AO PORTAL DO CLIENTE --}}\n' + modal + '\n\n'
+          client_path.write_text(client[:start] + replacement + client[end:], encoding='utf-8')
+
+      - name: Remove old client-specific modal CSS overrides
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
 
           path = Path('resources/css/app.css')
           css = path.read_text(encoding='utf-8')
 
-          marker = '/* ─── CLIENTE: PORTAL COM O MESMO COMPORTAMENTO DO FORNECEDOR ─────── */'
-          start = css.find(marker)
-          if start == -1:
-              raise SystemExit('Portal modal CSS marker not found')
+          css = re.sub(
+              r'\n/\* ─── CLIENTE: PORTAL DE ACESSO — CORREÇÃO DEFINITIVA ─────────────── \*/[\s\S]*?(?=\n/\*|\Z)',
+              '\n', css, count=1
+          )
+          css = re.sub(
+              r'\n/\* ─── CLIENTES: MODAL DE CHAVE DE ACESSO ───────────────────────────── \*/[\s\S]*?(?=\n/\*|\Z)',
+              '\n', css, count=1
+          )
+          path.write_text(css, encoding='utf-8')
 
-          replacement = r'''/* ─── CLIENTE: PORTAL DE ACESSO — DIMENSÃO DESKTOP PROFISSIONAL ───── */
-/* O modal deve ter espaço real para o código, URL e protocolo sem esmagar o conteúdo. */
-dialog[data-modal="portal-link-modal"] {
-    box-sizing: border-box !important;
-    width: min(800px, calc(100vw - 2rem)) !important;
-    max-width: 800px !important;
-    max-height: 90vh !important;
-    margin: auto !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    border-radius: 2rem !important;
-}
-
-dialog[data-modal="portal-link-modal"] > div:first-child {
-    position: relative;
-    box-sizing: border-box;
-    width: 100%;
-    max-width: none !important;
-    max-height: 90vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 2.5rem !important;
-    background: white;
-    border-radius: 2rem;
-}
-
-.dark dialog[data-modal="portal-link-modal"] > div:first-child {
-    background: #09090b;
-}
-
-dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    width: 100%;
-    min-width: 0;
-    padding-right: 3rem;
-}
-
-dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) {
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) h1,
-dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) h2,
-dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child > div:nth-child(2) h3 {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-}
-
-dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child ui-close,
-dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child [data-flux-modal-close] {
-    position: absolute;
-    top: 1.25rem;
-    right: 1.25rem;
-    z-index: 50;
-}
-
-dialog[data-modal="portal-link-modal"] > div:first-child > div:nth-child(2) {
-    width: 100%;
-    max-width: none !important;
-    min-width: 0;
-    margin-top: 1.5rem;
-}
-
-dialog[data-modal="portal-link-modal"] .text-5xl {
-    font-size: 3.75rem !important;
-    line-height: 1 !important;
-    letter-spacing: 0.18em;
-}
-
-dialog[data-modal="portal-link-modal"] a,
-dialog[data-modal="portal-link-modal"] p,
-dialog[data-modal="portal-link-modal"] span,
-dialog[data-modal="portal-link-modal"] code {
-    overflow-wrap: anywhere;
-}
-
-dialog[data-modal="portal-link-modal"] input,
-dialog[data-modal="portal-link-modal"] textarea {
-    width: 100%;
-    max-width: 100%;
-}
-
-@media (max-width: 640px) {
-    dialog[data-modal="portal-link-modal"] {
-        width: calc(100vw - 1rem) !important;
-        max-width: calc(100vw - 1rem) !important;
-        max-height: 94vh !important;
-        border-radius: 1.5rem !important;
-    }
-
-    dialog[data-modal="portal-link-modal"] > div:first-child {
-        max-height: 94vh;
-        padding: 1.25rem !important;
-        border-radius: 1.5rem;
-    }
-
-    dialog[data-modal="portal-link-modal"] > div:first-child > div:first-child {
-        padding-right: 2.75rem;
-    }
-
-    dialog[data-modal="portal-link-modal"] .text-5xl {
-        font-size: 2.5rem !important;
-        letter-spacing: 0.12em !important;
-    }
-}
-'''
-
-          path.write_text(css[:start] + replacement, encoding='utf-8')
-
-      - name: Commit CSS fix and remove one-time workflow
+      - name: Commit and remove temporary workflow
         shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add resources/css/app.css .github/workflows/fix-client-portal-modal.yml
+          git add resources/views/livewire/business/client-hub.blade.php resources/css/app.css
           git rm .github/workflows/fix-client-portal-modal.yml
-          git commit -m "Fix client portal modal sizing"
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "fix: match client portal modal to supplier portal"
           git push
-
-# Trigger modal CSS fix
