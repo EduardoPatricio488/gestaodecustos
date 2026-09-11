@@ -2,72 +2,44 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
 class BusinessDocument extends Model
 {
-    protected $fillable = [
-        'workspace_id',
-        'name',
-        'category',
-        'file_path',
-        'expiry_date',
-        'notes',
-    ];
+    use BelongsToWorkspace;
 
-    protected $casts = [
-        'expiry_date' => 'date',
-    ];
+    protected $fillable = ['workspace_id', 'name', 'category', 'file_path', 'expiry_date', 'notes'];
 
-    /**
-     * RELAÇÃO
-     */
-    public function workspace(): BelongsTo
-    {
-        return $this->belongsTo(Workspace::class);
-    }
+    protected $casts = ['expiry_date' => 'date'];
 
-    /**
-     * INTELIGÊNCIA DE ARQUIVO
-     */
+    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
 
-    // Verifica se o documento já expirou
     public function isExpired(): bool
     {
-        if (! $this->expiry_date) {
-            return false;
-        }
-
-        return $this->expiry_date->isPast();
+        return $this->expiry_date ? $this->expiry_date->isPast() : false;
     }
 
-    // Verifica se expira nos próximos 30 dias (Alerta preventivo)
     public function isExpiringSoon(): bool
     {
-        if (! $this->expiry_date) {
-            return false;
-        }
-
-        return $this->expiry_date->isFuture() && $this->expiry_date->diffInDays(now()) <= 30;
+        return $this->expiry_date ? $this->expiry_date->isFuture() && $this->expiry_date->diffInDays(now()) <= 30 : false;
     }
 
-    // Obtém o ícone baseado na categoria
-    public function getIcon()
+    public function getIcon(): string
     {
         return match ($this->category) {
-            'Legal' => 'document-text',
-            'RH' => 'users',
-            'Seguros' => 'shield-check',
-            'Impostos' => 'receipt-percent',
-            default => 'document'
+            'Legal' => 'document-text', 'RH' => 'users', 'Seguros' => 'shield-check', 'Impostos' => 'receipt-percent', default => 'document',
         };
     }
 
-    // Atalho para URL do ficheiro
-    public function getUrlAttribute()
+    /**
+     * Documentos empresariais ficam no disco privado. Não expor Storage::url()
+     * para evitar que um link público contorne a autorização do workspace.
+     */
+    public function getUrlAttribute(): ?string
     {
-        return Storage::url($this->file_path);
+        return null;
     }
 }
