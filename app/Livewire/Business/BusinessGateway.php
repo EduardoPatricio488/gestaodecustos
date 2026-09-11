@@ -71,15 +71,16 @@ class BusinessGateway extends Component
             $workspace = $employee->workspace;
             abort_unless($workspace && in_array($workspace->type, ['business', 'company'], true), 403);
 
+            // O Employee usa LogsActivity. O utilizador tem de pertencer ao
+            // workspace antes de a alteração do Employee gerar o audit log.
+            $workspace->users()->syncWithoutDetaching([$user->id => ['role' => 'employee']]);
+            $user->update(['current_workspace_id' => $workspace->id]);
+
             $employee->update([
                 'user_id' => $user->id,
                 'invite_used_at' => now(),
                 'portal_token' => null,
             ]);
-
-            // Um convite de colaborador nunca concede privilégios administrativos.
-            $workspace->users()->syncWithoutDetaching([$user->id => ['role' => 'employee']]);
-            $user->update(['current_workspace_id' => $workspace->id]);
 
             return $employee;
         });
