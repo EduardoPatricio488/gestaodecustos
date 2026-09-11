@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Business;
 
+use App\Mail\ClientPortalAccessMail;
 use App\Models\Client;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -128,7 +130,7 @@ class ClientHub extends Component
     {
         $client = auth()->user()->clients()->findOrFail($id);
 
-        // 1. Gerar ou recuperar o token (teu código atual)
+        // 1. Gerar ou recuperar o código de acesso.
         if (! $client->portal_token) {
             do {
                 $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -138,14 +140,26 @@ class ClientHub extends Component
             $client->update(['portal_token' => $passcode]);
         }
 
-        // 2. AGORA CARREGAMOS O NIF CORRETO PARA O MODAL
         $this->clientTaxNumber = $client->tax_number;
-
         $this->generatedPasscode = $client->portal_token;
         $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
 
+        // Envio automático do código para o email do cliente, seguindo o mesmo princípio
+        // das credenciais enviadas automaticamente no acesso bancário empresarial.
+        if ($client->email) {
+            Mail::to($client->email)->send(new ClientPortalAccessMail(
+                $client,
+                auth()->user()->currentWorkspace,
+                $client->portal_token,
+                $this->generatedPortalUrl,
+            ));
+
+            $this->dispatch('toast', text: 'Código de acesso enviado para '.$client->email.'.', variant: 'success');
+        } else {
+            $this->dispatch('toast', text: 'Código gerado, mas este cliente não tem email registado.', variant: 'warning');
+        }
+
         $this->dispatch('modal-show', name: 'portal-link-modal');
-        $this->dispatch('toast', text: 'Chave de Acesso confirmada.');
     }
 
     public function render()
