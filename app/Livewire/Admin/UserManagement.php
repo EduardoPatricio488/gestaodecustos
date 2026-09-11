@@ -105,7 +105,7 @@ class UserManagement extends Component
         $temporaryPassword = bin2hex(random_bytes(16));
         $user->update(['password' => Hash::make($temporaryPassword)]);
         auth()->user()->logActivity("Redefiniu a password de {$user->name}", 'seguranca');
-        $this->dispatch('toast', text: 'Password redefinida. Entrega a credencial temporária através de um canal seguro.');
+        $this->dispatch('toast', text: "Password temporária para {$user->name}: {$temporaryPassword}");
     }
 
     public function forceLogout($userId)
@@ -127,7 +127,7 @@ class UserManagement extends Component
         $name = $user->name;
         $user->delete();
         auth()->user()->logActivity("Eliminou permanentemente a conta de {$name}", 'seguranca');
-        $this->dispatch('toast', text: "Utilizador {$name} removido do sistema.");
+        $this->dispatch('toast', text: "Utilizador {$name} removido do sistema.", variant: 'warning');
         $this->selectedUser = null;
     }
 
