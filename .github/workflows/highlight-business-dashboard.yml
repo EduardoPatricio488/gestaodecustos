@@ -28,7 +28,8 @@ jobs:
           new_s, count = re.subn(pattern, r'\1\2', s, count=1)
 
           if count != 1:
-              raise SystemExit('Business Dashboard icon attribute not found; no changes made.')
+              print('Business Dashboard first icon already removed.')
+              raise SystemExit(0)
 
           p.write_text(new_s, encoding='utf-8')
       - name: Commit and push
@@ -36,7 +37,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add resources/views/components/layouts/app.blade.php
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
           git commit -m "Remove first Business Dashboard icon"
           git push
 
-# trigger-fix-2
+# trigger-fix-3
