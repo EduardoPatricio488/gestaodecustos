@@ -12,10 +12,6 @@ return new class extends Migration
             if (! Schema::hasColumn('job_applications', 'candidate_id')) {
                 $table->foreignId('candidate_id')->nullable()->after('user_id')->constrained('candidates')->nullOnDelete();
             }
-
-            if (Schema::hasColumn('job_applications', 'user_id')) {
-                $table->foreign('candidate_id');
-            }
         });
 
         Schema::table('job_applications', function (Blueprint $table) {
