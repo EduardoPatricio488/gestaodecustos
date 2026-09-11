@@ -1,337 +1,168 @@
-<div class="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white">
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-        <div class="mb-6 flex flex-col gap-4 rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:items-center sm:justify-between">
+<div class="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white">
+    <div class="mx-auto max-w-[1500px] px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
+        <header class="mb-6 flex flex-col gap-4 rounded-[2rem] border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-4">
-                <div class="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-xl font-black text-white shadow-lg shadow-emerald-500/20">
+                <div class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-emerald-600 text-lg font-black text-white shadow-lg shadow-emerald-500/20">
                     {{ strtoupper(substr($candidate->name, 0, 1)) }}
                 </div>
                 <div>
-                    <div class="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
-                        <span class="size-1.5 rounded-full bg-emerald-500"></span>
-                        Portal de Carreira
-                    </div>
-                    <h1 class="mt-1 text-xl font-black tracking-tight sm:text-2xl">Olá, {{ $candidate->name }} 👋</h1>
-                    <p class="text-xs text-zinc-500 dark:text-zinc-400">O teu perfil profissional e as tuas candidaturas num só lugar.</p>
+                    <p class="text-[9px] font-black uppercase tracking-[0.22em] text-emerald-600">Finance Pro Careers</p>
+                    <h1 class="text-lg font-black sm:text-xl">Olá, {{ $candidate->name }} 👋</h1>
                 </div>
             </div>
-            <div class="flex flex-wrap gap-2">
-                <a href="/" class="inline-flex items-center gap-2 rounded-xl bg-zinc-100 px-4 py-2.5 text-xs font-bold text-zinc-700 transition hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
-                    <flux:icon name="home" class="size-4" /> Início
-                </a>
-                <button type="button" wire:click="logout" class="inline-flex items-center gap-2 rounded-xl bg-red-500/10 px-4 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-500/15 dark:text-red-400">
-                    <flux:icon name="arrow-right-start-on-rectangle" class="size-4" /> Terminar sessão
-                </button>
+            <div class="flex items-center gap-2">
+                @if($unreadNotifications > 0)
+                    <button type="button" wire:click="$set('activeSection', 'notifications')" class="relative rounded-xl bg-emerald-500/10 p-3 text-emerald-600">
+                        <flux:icon name="bell" class="size-5" />
+                        <span class="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-red-500 text-[9px] font-black text-white">{{ $unreadNotifications }}</span>
+                    </button>
+                @else
+                    <button type="button" wire:click="$set('activeSection', 'notifications')" class="rounded-xl bg-zinc-100 p-3 text-zinc-500 dark:bg-zinc-800"><flux:icon name="bell" class="size-5" /></button>
+                @endif
+                <a href="/" class="rounded-xl bg-zinc-100 px-4 py-2.5 text-xs font-bold dark:bg-zinc-800">Início</a>
+                <button type="button" wire:click="logout" class="rounded-xl bg-red-500/10 px-4 py-2.5 text-xs font-bold text-red-600">Sair</button>
             </div>
-        </div>
+        </header>
 
-        <div class="grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+        <div class="grid gap-6 lg:grid-cols-[245px_minmax(0,1fr)]">
             <aside class="h-fit rounded-[2rem] border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 lg:sticky lg:top-6">
-                <div class="mb-3 px-3 pt-2 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Área pessoal</div>
+                <div class="mb-3 px-3 pt-2 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Área de candidato</div>
                 @foreach([
-                    'overview' => ['icon' => 'squares-2x2', 'label' => 'Visão geral'],
-                    'profile' => ['icon' => 'user-circle', 'label' => 'Perfil profissional'],
-                    'jobs' => ['icon' => 'briefcase', 'label' => 'Oportunidades'],
-                    'applications' => ['icon' => 'clipboard-document-check', 'label' => 'As minhas candidaturas'],
+                    'overview' => ['squares-2x2','Dashboard'], 'jobs' => ['briefcase','Ofertas'], 'companies' => ['building-office-2','Empresas'],
+                    'applications' => ['clipboard-document-check','Candidaturas'], 'saved' => ['bookmark','Ofertas guardadas'], 'profile' => ['user-circle','Perfil profissional'],
+                    'cv' => ['document-text','CV'], 'notifications' => ['bell','Notificações'], 'settings' => ['cog-6-tooth','Definições'],
                 ] as $section => $item)
-                    <button type="button" wire:click="$set('activeSection', '{{ $section }}')" class="mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold transition {{ $activeSection === $section ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/15' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800' }}">
-                        <flux:icon name="{{ $item['icon'] }}" class="size-5" />
-                        {{ $item['label'] }}
+                    <button type="button" wire:click="$set('activeSection','{{ $section }}')" class="mb-1 flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-bold transition {{ $activeSection === $section ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/15' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800' }}">
+                        <span class="flex items-center gap-3"><flux:icon name="{{ $item[0] }}" class="size-5" />{{ $item[1] }}</span>
+                        @if($section === 'notifications' && $unreadNotifications > 0)<span class="rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-black text-white">{{ $unreadNotifications }}</span>@endif
                     </button>
                 @endforeach
+                <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                    <div class="px-3 text-[9px] font-black uppercase tracking-widest text-zinc-400">Perfil</div>
+                    <div class="mt-3 px-3"><div class="flex items-center justify-between text-[10px] font-bold"><span>Completude</span><span class="text-emerald-600">{{ $completion }}%</span></div><div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"><div class="h-full rounded-full bg-emerald-500" style="width: {{ $completion }}%"></div></div></div>
+                </div>
             </aside>
 
-            <main class="min-w-0">
+            <main class="min-w-0 space-y-6">
                 @if($activeSection === 'overview')
                     <section class="space-y-6">
                         <div class="relative overflow-hidden rounded-[2.25rem] bg-zinc-950 p-7 text-white shadow-xl sm:p-10">
-                            <div class="pointer-events-none absolute -right-20 -top-20 size-72 rounded-full bg-emerald-500/20 blur-3xl"></div>
+                            <div class="absolute -right-24 -top-24 size-80 rounded-full bg-emerald-500/20 blur-3xl"></div>
                             <div class="relative max-w-3xl">
-                                <span class="inline-flex rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-emerald-300">Perfil de recrutamento</span>
-                                <h2 class="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Prepara o teu perfil para as melhores oportunidades.</h2>
-                                <p class="mt-3 max-w-2xl text-sm leading-6 text-zinc-300">Mantém o teu CV, experiência, competências e preferências atualizados. As empresas conseguem receber uma candidatura mais completa e profissional.</p>
-                                <div class="mt-6 flex flex-wrap gap-3">
-                                    <button type="button" wire:click="$set('activeSection', 'profile')" class="rounded-xl bg-emerald-500 px-5 py-3 text-xs font-black text-white transition hover:bg-emerald-400">Completar perfil</button>
-                                    <button type="button" wire:click="$set('activeSection', 'jobs')" class="rounded-xl border border-white/10 bg-white/10 px-5 py-3 text-xs font-black text-white transition hover:bg-white/15">Ver oportunidades</button>
-                                </div>
+                                <span class="rounded-full bg-emerald-500/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-emerald-300">O teu espaço profissional</span>
+                                <h2 class="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Encontra o próximo passo da tua carreira.</h2>
+                                <p class="mt-3 text-sm leading-6 text-zinc-300">Descobre oportunidades, apresenta o teu perfil e acompanha cada candidatura sem sair do teu espaço de carreira.</p>
+                                <div class="mt-6 flex flex-wrap gap-3"><button wire:click="$set('activeSection','jobs')" class="rounded-xl bg-emerald-500 px-5 py-3 text-xs font-black">Explorar ofertas</button><button wire:click="$set('activeSection','profile')" class="rounded-xl bg-white/10 px-5 py-3 text-xs font-black">Melhorar perfil</button></div>
                             </div>
                         </div>
 
                         @php
-                            $profileFields = ['headline','phone','location','preferred_area','employment_type','availability','education','experience','skills','languages','about','cv_path'];
-                            $filled = collect($profileFields)->filter(fn($field) => filled($candidate->{$field}))->count();
-                            $completion = (int) round(($filled / count($profileFields)) * 100);
-                            $pendingApplications = $applications->where('status', 'pending')->count();
-                            $acceptedApplications = $applications->where('status', 'accepted')->count();
+                            $pending = $applications->whereIn('status',['pending','review'])->count();
+                            $interviews = $applications->where('status','interview')->count();
+                            $offers = $applications->where('status','offer')->count();
+                            $accepted = $applications->where('status','accepted')->count();
+                            $rejected = $applications->where('status','rejected')->count();
                         @endphp
-
-                        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                            <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Perfil</p>
-                                <p class="mt-2 text-2xl font-black">{{ $completion }}%</p>
-                                <p class="mt-1 text-xs text-zinc-500">Completude profissional</p>
-                            </div>
-                            <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Oportunidades</p>
-                                <p class="mt-2 text-2xl font-black">{{ $companies->count() }}</p>
-                                <p class="mt-1 text-xs text-zinc-500">Empresas com recrutamento aberto</p>
-                            </div>
-                            <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Em análise</p>
-                                <p class="mt-2 text-2xl font-black">{{ $pendingApplications }}</p>
-                                <p class="mt-1 text-xs text-zinc-500">Candidaturas pendentes</p>
-                            </div>
-                            <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Aceites</p>
-                                <p class="mt-2 text-2xl font-black text-emerald-600 dark:text-emerald-400">{{ $acceptedApplications }}</p>
-                                <p class="mt-1 text-xs text-zinc-500">Processos concluídos</p>
-                            </div>
+                        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+                            @foreach([
+                                ['Candidaturas',$applications->count(),'clipboard-document-check','text-zinc-900'],['Em análise',$pending,'clock','text-amber-600'],['Entrevistas',$interviews,'calendar-days','text-violet-600'],['Ofertas',$offers,'sparkles','text-blue-600'],['Aceites',$accepted,'check-circle','text-emerald-600'],['Rejeitadas',$rejected,'x-circle','text-red-600']
+                            ] as $stat)
+                                <div class="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"><div class="flex items-center justify-between"><span class="text-[9px] font-black uppercase tracking-widest text-zinc-400">{{ $stat[0] }}</span><flux:icon name="{{ $stat[2] }}" class="size-4 {{ $stat[3] }}" /></div><p class="mt-3 text-2xl font-black {{ $stat[3] }}">{{ $stat[1] }}</p></div>
+                            @endforeach
                         </div>
 
-                        <div class="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                            <div class="flex items-center justify-between gap-4">
-                                <div>
-                                    <h3 class="font-black">Próximo passo</h3>
-                                    <p class="mt-1 text-xs text-zinc-500">Um perfil completo aumenta a qualidade da candidatura.</p>
+                        <div class="grid gap-6 xl:grid-cols-[1.35fr_.65fr]">
+                            <section class="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                                <div class="flex items-end justify-between gap-4"><div><p class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">Recomendado</p><h3 class="mt-1 text-xl font-black">Continue a sua procura</h3></div><button wire:click="$set('activeSection','jobs')" class="text-xs font-black text-emerald-600">Ver tudo</button></div>
+                                <div class="mt-5 space-y-3">
+                                    @forelse($jobs->take(3) as $job)
+                                        <div class="flex flex-col gap-4 rounded-2xl border border-zinc-100 p-4 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between"><div class="flex min-w-0 items-center gap-3"><div class="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-500/10 font-black text-emerald-600">{{ strtoupper(substr($job->workspace->name,0,1)) }}</div><div class="min-w-0"><h4 class="truncate font-black">{{ $job->title }}</h4><p class="mt-1 truncate text-xs text-zinc-500">{{ $job->workspace->name }} · {{ $job->location ?: $job->workspace->address ?: 'Localização não indicada' }}</p></div></div><button wire:click="openJob({{ $job->id }})" class="rounded-xl bg-zinc-100 px-4 py-2 text-xs font-black dark:bg-zinc-800">Ver oferta</button></div>
+                                    @empty
+                                        <p class="rounded-2xl bg-zinc-50 p-8 text-center text-sm text-zinc-500 dark:bg-zinc-950">Ainda não existem ofertas publicadas.</p>
+                                    @endforelse
                                 </div>
-                                <span class="text-sm font-black text-emerald-600">{{ $completion }}%</span>
-                            </div>
-                            <div class="mt-4 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                                <div class="h-full rounded-full bg-emerald-500 transition-all" style="width: {{ $completion }}%"></div>
-                            </div>
+                            </section>
+                            <section class="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                                <p class="text-[9px] font-black uppercase tracking-[0.2em] text-violet-600">Acompanhamento</p><h3 class="mt-1 text-xl font-black">Estado das candidaturas</h3>
+                                <div class="mt-6 space-y-5">
+                                    @foreach([['Candidatura enviada',$applications->count()>0,'paper-airplane'],['Em análise',$pending>0,'magnifying-glass'],['Entrevista',$interviews>0,'calendar-days'],['Oferta',$offers>0,'sparkles'],['Concluída',$accepted>0,'check-circle']] as $step)
+                                        <div class="flex items-center gap-3"><span class="flex size-8 items-center justify-center rounded-full {{ $step[1] ? 'bg-emerald-500 text-white' : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800' }}"><flux:icon name="{{ $step[2] }}" class="size-4" /></span><span class="text-xs font-bold {{ $step[1] ? '' : 'text-zinc-400' }}">{{ $step[0] }}</span></div>
+                                    @endforeach
+                                </div>
+                            </section>
                         </div>
-                    </section>
-                @endif
-
-                @if($activeSection === 'profile')
-                    <section class="rounded-[2rem] border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                        <div class="border-b border-zinc-100 p-6 dark:border-zinc-800 sm:p-8">
-                            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">Perfil profissional</span>
-                                    <h2 class="mt-2 text-2xl font-black tracking-tight">O teu perfil de candidato</h2>
-                                    <p class="mt-1 text-sm text-zinc-500">Estes dados acompanham as tuas candidaturas e ajudam o recrutador a conhecer-te.</p>
-                                </div>
-                                @if($profileSaved)<span class="rounded-full bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black text-emerald-600">Guardado</span>@endif
-                            </div>
-                        </div>
-
-                        <form wire:submit="saveProfile" class="space-y-8 p-6 sm:p-8">
-                            <div>
-                                <h3 class="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">Identidade e contacto</h3>
-                                <div class="grid gap-4 md:grid-cols-2">
-                                    <flux:input wire:model="name" label="Nome completo" required />
-                                    <flux:input wire:model="email" type="email" label="Email profissional" required />
-                                    <flux:input wire:model="phone" label="Telefone" placeholder="+351 ..." />
-                                    <flux:input wire:model="location" label="Localização" placeholder="Lisboa, Portugal" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <h3 class="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">Posicionamento profissional</h3>
-                                <div class="grid gap-4 md:grid-cols-2">
-                                    <flux:input wire:model="headline" label="Título profissional" placeholder="Ex.: Junior Web Developer | Laravel & PHP" />
-                                    <flux:input wire:model="preferred_area" label="Área pretendida" placeholder="Desenvolvimento Web" />
-                                    <flux:select wire:model="employment_type" label="Tipo de emprego">
-                                        <option value="">Selecionar</option>
-                                        <option value="full_time">Full-time</option>
-                                        <option value="part_time">Part-time</option>
-                                        <option value="hybrid">Híbrido</option>
-                                        <option value="remote">Remoto</option>
-                                        <option value="internship">Estágio</option>
-                                        <option value="freelance">Freelance</option>
-                                    </flux:select>
-                                    <flux:select wire:model="availability" label="Disponibilidade">
-                                        <option value="">Selecionar</option>
-                                        <option value="immediate">Imediata</option>
-                                        <option value="1_month">Até 1 mês</option>
-                                        <option value="2_months">1–2 meses</option>
-                                        <option value="3_months">Mais de 2 meses</option>
-                                    </flux:select>
-                                    <flux:input wire:model="salary_expectation" type="number" min="0" step="50" label="Expectativa salarial (€ / mês)" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <h3 class="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">Presença profissional</h3>
-                                <div class="grid gap-4 md:grid-cols-2">
-                                    <flux:input wire:model="linkedin_url" type="url" label="LinkedIn" placeholder="https://www.linkedin.com/in/..." />
-                                    <flux:input wire:model="portfolio_url" type="url" label="Portfólio / GitHub" placeholder="https://..." />
-                                </div>
-                            </div>
-
-                            <div class="grid gap-6 lg:grid-cols-2">
-                                <flux:textarea wire:model="about" label="Sobre mim" rows="6" placeholder="Apresenta-te brevemente, objetivos e proposta de valor..." />
-                                <flux:textarea wire:model="experience" label="Experiência profissional" rows="6" placeholder="Empresa, função, período, responsabilidades e resultados..." />
-                                <flux:textarea wire:model="education" label="Formação académica" rows="5" placeholder="Curso, instituição, ano..." />
-                                <flux:textarea wire:model="skills" label="Competências" rows="5" placeholder="Laravel, PHP, SQL, Power BI, Git..." />
-                                <flux:textarea wire:model="languages" label="Idiomas" rows="4" placeholder="Português — nativo; Inglês — B2..." />
-                                <flux:textarea wire:model="certifications" label="Certificações" rows="4" placeholder="Certificações, cursos e formação complementar..." />
-                            </div>
-
-                            <div class="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-5 dark:border-zinc-700 dark:bg-zinc-950">
-                                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <div>
-                                        <h3 class="text-sm font-black">Currículo profissional</h3>
-                                        <p class="mt-1 text-xs text-zinc-500">PDF até 5 MB. É usado nas candidaturas.</p>
-                                        @if($candidate->cv_path)
-                                            <p class="mt-2 text-xs font-bold text-emerald-600">CV carregado ✓</p>
-                                        @endif
-                                    </div>
-                                    <div class="min-w-64">
-                                        <input wire:model="cv" type="file" accept="application/pdf" class="block w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs dark:border-zinc-700 dark:bg-zinc-900" />
-                                        @error('cv')<p class="mt-2 text-xs text-red-500">{{ $message }}</p>@enderror
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-end border-t border-zinc-100 pt-6 dark:border-zinc-800">
-                                <button type="submit" wire:loading.attr="disabled" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-xs font-black text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-500 disabled:opacity-50">
-                                    <flux:icon name="check" class="size-4" /> Guardar perfil
-                                </button>
-                            </div>
-                        </form>
                     </section>
                 @endif
 
                 @if($activeSection === 'jobs')
-                    <section class="space-y-6">
-                        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                            <div>
-                                <span class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">Oportunidades</span>
-                                <h2 class="mt-2 text-2xl font-black tracking-tight">Vagas disponíveis</h2>
-                                <p class="mt-1 text-sm text-zinc-500">As vagas são sincronizadas diretamente com as empresas que têm o recrutamento ativo.</p>
-                            </div>
-                            <span class="rounded-full bg-zinc-100 px-3 py-1.5 text-[10px] font-black text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">{{ $companies->count() }} empresas</span>
+                    <section class="space-y-5">
+                        <div><p class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">Mercado de talento</p><h2 class="mt-1 text-2xl font-black">Ofertas de emprego</h2><p class="mt-1 text-sm text-zinc-500">Pesquisa e filtra as oportunidades publicadas pelas empresas.</p></div>
+                        <div class="grid gap-3 rounded-[2rem] border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:grid-cols-2 xl:grid-cols-5">
+                            <flux:input wire:model.live.debounce.400ms="search" placeholder="Cargo, tecnologia ou palavra-chave" class="xl:col-span-2" />
+                            <flux:input wire:model.live.debounce.400ms="locationFilter" placeholder="Localização" />
+                            <flux:select wire:model.live="workModelFilter"><option value="">Modelo de trabalho</option><option value="remote">Remoto</option><option value="hybrid">Híbrido</option><option value="on_site">Presencial</option></flux:select>
+                            <flux:select wire:model.live="sortBy"><option value="recent">Mais recentes</option><option value="salary">Maior salário</option><option value="company">Empresa</option></flux:select>
                         </div>
-
-                        <div class="grid gap-5 md:grid-cols-2">
-                            @forelse($companies as $company)
-                                @php
-                                    $alreadyApplied = $applications->contains('workspace_id', $company->id);
-                                    $title = trim($company->recruitment_announcement ?: ($company->industry ? 'Oportunidades em '.$company->industry : 'Oportunidade profissional'));
-                                @endphp
-                                <article class="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-                                    <div class="p-6">
-                                        <div class="flex items-start justify-between gap-4">
-                                            <div class="flex items-center gap-4">
-                                                <div class="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-emerald-500/10 text-lg font-black text-emerald-600">
-                                                    @if($company->logo_path)<img src="{{ asset('storage/'.$company->logo_path) }}" class="size-full object-cover">@else{{ strtoupper(substr($company->name, 0, 1)) }}@endif
-                                                </div>
-                                                <div>
-                                                    <h3 class="font-black">{{ $company->name }}</h3>
-                                                    <p class="mt-1 text-xs text-zinc-500">{{ $company->industry ?: 'Empresa' }} @if($company->address) · {{ $company->address }} @endif</p>
-                                                </div>
-                                            </div>
-                                            <span class="shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[9px] font-black text-emerald-600">{{ $company->recruitment_vacancies }} {{ $company->recruitment_vacancies === 1 ? 'vaga' : 'vagas' }}</span>
-                                        </div>
-
-                                        <div class="mt-6 rounded-2xl bg-zinc-50 p-5 dark:bg-zinc-950">
-                                            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Oportunidade</p>
-                                            <h4 class="mt-2 text-lg font-black">{{ $title }}</h4>
-                                            @if($company->recruitment_description)
-                                                <p class="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{{ $company->recruitment_description }}</p>
-                                            @endif
-                                            @if($company->recruitment_extra_info)
-                                                <p class="mt-3 line-clamp-4 whitespace-pre-line text-xs leading-5 text-zinc-500">{{ $company->recruitment_extra_info }}</p>
-                                            @endif
-                                        </div>
-
-                                        <div class="mt-5 flex items-center justify-between gap-3">
-                                            <span class="text-[10px] text-zinc-400">{{ $alreadyApplied ? 'Candidatura já submetida' : 'Recrutamento aberto' }}</span>
-                                            @if($alreadyApplied)
-                                                <span class="rounded-xl bg-zinc-100 px-4 py-2.5 text-xs font-black text-zinc-500 dark:bg-zinc-800">Candidatado ✓</span>
-                                            @else
-                                                <button type="button" wire:click="openApplication({{ $company->id }})" class="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-black text-white shadow-lg shadow-emerald-500/15 transition hover:bg-emerald-500">Candidatar-me</button>
-                                            @endif
-                                        </div>
-                                    </div>
+                        <div class="grid gap-5 xl:grid-cols-2">
+                            @forelse($jobs as $job)
+                                <article class="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+                                    <div class="flex items-start gap-4"><div class="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-emerald-500/10 text-lg font-black text-emerald-600">{{ strtoupper(substr($job->workspace->name,0,1)) }}</div><div class="min-w-0 flex-1"><h3 class="text-lg font-black">{{ $job->title }}</h3><button wire:click="openCompany({{ $job->workspace->id }})" class="mt-1 text-xs font-bold text-emerald-600 hover:underline">{{ $job->workspace->name }}</button><p class="mt-1 text-xs text-zinc-500">{{ $job->location ?: $job->workspace->address ?: 'Localização não indicada' }}</p></div><button wire:click="toggleSavedJob({{ $job->id }})" class="rounded-xl p-2.5 {{ in_array($job->id,$savedJobIds) ? 'bg-amber-500/10 text-amber-500' : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800' }}"><flux:icon name="bookmark" class="size-5" /></button></div>
+                                    <div class="mt-5 flex flex-wrap gap-2">@if($job->work_model)<span class="rounded-full bg-zinc-100 px-2.5 py-1 text-[9px] font-bold dark:bg-zinc-800">{{ ucfirst(str_replace('_',' ',$job->work_model)) }}</span>@endif @if($job->contract_type)<span class="rounded-full bg-zinc-100 px-2.5 py-1 text-[9px] font-bold dark:bg-zinc-800">{{ $job->contract_type }}</span>@endif @if($job->salary_min || $job->salary_max)<span class="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[9px] font-bold text-emerald-600">€{{ number_format((float)$job->salary_min,0,',','.') }}{{ $job->salary_max ? ' – €'.number_format((float)$job->salary_max,0,',','.') : '+' }}</span>@endif</div>
+                                    @if($job->description)<p class="mt-4 line-clamp-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{{ $job->description }}</p>@endif
+                                    <div class="mt-5 flex items-center justify-between gap-3"><span class="text-[10px] text-zinc-400">{{ $job->published_at?->diffForHumans() ?: 'Publicada recentemente' }}</span><button wire:click="openJob({{ $job->id }})" class="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-black text-white">Ver oferta</button></div>
                                 </article>
                             @empty
-                                <div class="md:col-span-2 rounded-[2rem] border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
-                                    <flux:icon name="briefcase" class="mx-auto size-10 text-zinc-300" />
-                                    <h3 class="mt-4 font-black">Não existem vagas publicadas neste momento</h3>
-                                    <p class="mt-2 text-sm text-zinc-500">As oportunidades aparecem aqui automaticamente quando uma empresa ativa o recrutamento e define vagas abertas.</p>
-                                </div>
+                                <div class="xl:col-span-2 rounded-[2rem] border border-dashed border-zinc-300 p-14 text-center dark:border-zinc-700"><flux:icon name="briefcase" class="mx-auto size-10 text-zinc-300" /><h3 class="mt-4 font-black">Nenhuma oferta encontrada</h3><p class="mt-2 text-sm text-zinc-500">Experimenta alterar os filtros ou volta mais tarde.</p></div>
                             @endforelse
                         </div>
                     </section>
                 @endif
 
-                @if($activeSection === 'applications')
-                    <section class="space-y-6">
-                        <div>
-                            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-violet-600">Processos</span>
-                            <h2 class="mt-2 text-2xl font-black tracking-tight">As minhas candidaturas</h2>
-                            <p class="mt-1 text-sm text-zinc-500">Consulta o estado de cada processo de recrutamento.</p>
-                        </div>
-
-                        <div class="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                            @forelse($applications as $application)
-                                <div class="flex flex-col gap-5 border-b border-zinc-100 p-6 last:border-0 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
-                                    <div class="flex items-center gap-4">
-                                        <div class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100 text-sm font-black dark:bg-zinc-800">
-                                            @if($application->company_logo)<img src="{{ asset('storage/'.$application->company_logo) }}" class="size-full object-cover">@else{{ strtoupper(substr($application->company_name ?: 'E', 0, 1)) }}@endif
-                                        </div>
-                                        <div>
-                                            <h3 class="font-black">{{ $application->company_name ?: 'Empresa' }}</h3>
-                                            <p class="mt-1 text-xs font-bold text-emerald-600">{{ $application->role }}</p>
-                                            <p class="mt-1 text-[10px] text-zinc-400">Submetida em {{ \Carbon\Carbon::parse($application->created_at)->format('d/m/Y') }}</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        @switch($application->status)
-                                            @case('accepted')
-                                                <span class="rounded-full bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black text-emerald-600">Aceite</span>
-                                                @break
-                                            @case('rejected')
-                                                <span class="rounded-full bg-red-500/10 px-3 py-1.5 text-[10px] font-black text-red-600">Não selecionado</span>
-                                                @break
-                                            @default
-                                                <span class="rounded-full bg-amber-500/10 px-3 py-1.5 text-[10px] font-black text-amber-600">Em análise</span>
-                                        @endswitch
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="p-12 text-center">
-                                    <flux:icon name="clipboard-document" class="mx-auto size-10 text-zinc-300" />
-                                    <h3 class="mt-4 font-black">Ainda não tens candidaturas</h3>
-                                    <p class="mt-2 text-sm text-zinc-500">Explora as oportunidades e candidata-te às posições que fazem sentido para o teu perfil.</p>
-                                    <button type="button" wire:click="$set('activeSection', 'jobs')" class="mt-5 rounded-xl bg-emerald-600 px-5 py-3 text-xs font-black text-white">Ver oportunidades</button>
-                                </div>
-                            @endforelse
-                        </div>
+                @if($activeSection === 'companies')
+                    <section class="space-y-5"><div><p class="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600">Empregadores</p><h2 class="mt-1 text-2xl font-black">Empresas</h2><p class="mt-1 text-sm text-zinc-500">Conhece as empresas e explora as suas oportunidades.</p></div><flux:input wire:model.live.debounce.400ms="companySearch" placeholder="Pesquisar empresa, setor ou localização" />
+                        <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">@forelse($companies as $company)<article class="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"><div class="flex items-center gap-4"><div class="flex size-14 items-center justify-center overflow-hidden rounded-2xl bg-emerald-500/10 text-lg font-black text-emerald-600">@if($company->logo_path)<img src="{{ asset('storage/'.$company->logo_path) }}" class="size-full object-cover">@else{{ strtoupper(substr($company->name,0,1)) }}@endif</div><div><h3 class="font-black">{{ $company->name }}</h3><p class="text-xs text-zinc-500">{{ $company->industry ?: 'Empresa' }}</p></div></div><p class="mt-5 line-clamp-3 text-sm leading-6 text-zinc-500">{{ $company->recruitment_description ?: 'Empresa com oportunidades profissionais abertas.' }}</p><div class="mt-5 flex items-center justify-between"><span class="text-[10px] font-bold text-emerald-600">{{ $company->recruitment_jobs_count }} {{ $company->recruitment_jobs_count === 1 ? 'oferta' : 'ofertas' }}</span><button wire:click="openCompany({{ $company->id }})" class="rounded-xl bg-zinc-100 px-4 py-2.5 text-xs font-black dark:bg-zinc-800">Ver empresa</button></div></article>@empty<div class="md:col-span-2 xl:col-span-3 rounded-[2rem] border border-dashed border-zinc-300 p-14 text-center dark:border-zinc-700"><h3 class="font-black">Nenhuma empresa disponível</h3><p class="mt-2 text-sm text-zinc-500">As empresas aparecem aqui quando publicam oportunidades.</p></div>@endforelse</div>
                     </section>
+                @endif
+
+                @if($activeSection === 'applications')
+                    <section class="space-y-5"><div><p class="text-[9px] font-black uppercase tracking-[0.2em] text-violet-600">Processos</p><h2 class="mt-1 text-2xl font-black">As minhas candidaturas</h2><p class="mt-1 text-sm text-zinc-500">Acompanha o estado e histórico de cada candidatura.</p></div><div class="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">@forelse($applications as $application)<div class="border-b border-zinc-100 p-6 last:border-0 dark:border-zinc-800"><div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"><div class="flex items-center gap-4"><div class="flex size-12 items-center justify-center rounded-xl bg-zinc-100 font-black dark:bg-zinc-800">{{ strtoupper(substr($application->company_name ?: 'E',0,1)) }}</div><div><h3 class="font-black">{{ $application->job_title ?: $application->role }}</h3><p class="mt-1 text-xs font-bold text-emerald-600">{{ $application->company_name }}</p><p class="mt-1 text-[10px] text-zinc-400">{{ \Carbon\Carbon::parse($application->created_at)->format('d/m/Y H:i') }}</p></div></div><div class="flex items-center gap-3">@switch($application->status)@case('accepted')<span class="rounded-full bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black text-emerald-600">Aceite</span>@break @case('rejected')<span class="rounded-full bg-red-500/10 px-3 py-1.5 text-[10px] font-black text-red-600">Rejeitada</span>@break @case('interview')<span class="rounded-full bg-violet-500/10 px-3 py-1.5 text-[10px] font-black text-violet-600">Entrevista</span>@break @case('offer')<span class="rounded-full bg-blue-500/10 px-3 py-1.5 text-[10px] font-black text-blue-600">Oferta</span>@break @default<span class="rounded-full bg-amber-500/10 px-3 py-1.5 text-[10px] font-black text-amber-600">Em análise</span>@endswitch</div></div><div class="mt-5 grid grid-cols-5 gap-2">@foreach(['Enviada','Análise','Entrevista','Oferta','Concluída'] as $index => $label)<div><div class="h-1.5 rounded-full {{ ($application->status === 'rejected' ? $index < 1 : $index <= match($application->status){'pending'=>1,'interview'=>2,'offer'=>3,'accepted'=>4,default=>0}) ? 'bg-emerald-500' : 'bg-zinc-100 dark:bg-zinc-800' }}"></div><p class="mt-2 text-[8px] font-bold text-zinc-400">{{ $label }}</p></div>@endforeach</div></div>@empty<div class="p-14 text-center"><flux:icon name="clipboard-document" class="mx-auto size-10 text-zinc-300" /><h3 class="mt-4 font-black">Ainda não tens candidaturas</h3><button wire:click="$set('activeSection','jobs')" class="mt-5 rounded-xl bg-emerald-600 px-5 py-3 text-xs font-black text-white">Explorar ofertas</button></div>@endforelse</div></section>
+                @endif
+
+                @if($activeSection === 'saved')
+                    <section class="space-y-5"><div><p class="text-[9px] font-black uppercase tracking-[0.2em] text-amber-600">Favoritos</p><h2 class="mt-1 text-2xl font-black">Ofertas guardadas</h2></div><div class="grid gap-5 xl:grid-cols-2">@forelse($savedJobs as $job)<div class="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"><div class="flex justify-between gap-4"><div><h3 class="font-black">{{ $job->title }}</h3><p class="mt-1 text-xs text-emerald-600">{{ $job->workspace->name }}</p></div><button wire:click="toggleSavedJob({{ $job->id }})" class="text-amber-500"><flux:icon name="bookmark" class="size-5" /></button></div><p class="mt-3 text-xs text-zinc-500">{{ $job->location ?: $job->workspace->address ?: 'Localização não indicada' }}</p><button wire:click="openJob({{ $job->id }})" class="mt-5 rounded-xl bg-zinc-100 px-4 py-2.5 text-xs font-black dark:bg-zinc-800">Ver oferta</button></div>@empty<div class="xl:col-span-2 rounded-[2rem] border border-dashed border-zinc-300 p-14 text-center dark:border-zinc-700"><flux:icon name="bookmark" class="mx-auto size-10 text-zinc-300" /><h3 class="mt-4 font-black">Ainda não guardaste ofertas</h3><button wire:click="$set('activeSection','jobs')" class="mt-5 rounded-xl bg-emerald-600 px-5 py-3 text-xs font-black text-white">Procurar ofertas</button></div>@endforelse</div></section>
+                @endif
+
+                @if($activeSection === 'profile' || $activeSection === 'cv')
+                    <section class="rounded-[2rem] border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"><div class="border-b border-zinc-100 p-6 dark:border-zinc-800"><p class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">Perfil profissional</p><div class="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><h2 class="text-2xl font-black">{{ $activeSection === 'cv' ? 'Currículo' : 'O teu perfil' }}</h2><p class="mt-1 text-sm text-zinc-500">Mantém a tua informação pronta para qualquer candidatura.</p></div><span class="text-lg font-black text-emerald-600">{{ $completion }}% completo</span></div><div class="mt-4 h-2 rounded-full bg-zinc-100 dark:bg-zinc-800"><div class="h-full rounded-full bg-emerald-500" style="width: {{ $completion }}%"></div></div></div>
+                        <form wire:submit="saveProfile" class="space-y-8 p-6 sm:p-8">
+                            @if($activeSection === 'profile')
+                                <div class="grid gap-4 md:grid-cols-2"><flux:input wire:model="name" label="Nome completo" required /><flux:input wire:model="email" label="Email" type="email" required /><flux:input wire:model="phone" label="Telefone" /><flux:input wire:model="city" label="Cidade" /><flux:input wire:model="location" label="Localização" /><flux:input wire:model="headline" label="Título profissional" placeholder="Ex.: Junior Web Developer | Laravel & PHP" /></div>
+                                <div class="grid gap-4 md:grid-cols-2"><flux:input wire:model="linkedin_url" label="LinkedIn" placeholder="https://linkedin.com/in/..." /><flux:input wire:model="github_url" label="GitHub" placeholder="https://github.com/..." /><flux:input wire:model="portfolio_url" label="Portfólio" /><flux:input wire:model="website_url" label="Website" /></div>
+                                <div class="grid gap-6 lg:grid-cols-2"><flux:textarea wire:model="about" label="Resumo profissional" rows="6" /><flux:textarea wire:model="experience" label="Experiência profissional" rows="6" /><flux:textarea wire:model="education" label="Formação académica" rows="5" /><flux:textarea wire:model="skills" label="Competências / tecnologias" rows="5" /><flux:textarea wire:model="languages" label="Idiomas" rows="4" /><flux:textarea wire:model="certifications" label="Certificações" rows="4" /><flux:textarea wire:model="projects" label="Projetos" rows="5" /></div>
+                                <div><h3 class="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">Preferências profissionais</h3><div class="grid gap-4 md:grid-cols-2"><flux:input wire:model="preferred_area" label="Cargo / área pretendida" /><flux:input wire:model="desired_location" label="Localização pretendida" /><flux:select wire:model="employment_type" label="Tipo de contrato"><option value="">Selecionar</option><option value="full_time">Full-time</option><option value="part_time">Part-time</option><option value="internship">Estágio</option><option value="freelance">Freelance</option></flux:select><flux:select wire:model="availability" label="Disponibilidade"><option value="">Selecionar</option><option value="immediate">Imediata</option><option value="1_month">Até 1 mês</option><option value="2_months">1–2 meses</option></flux:select><flux:input wire:model="salary_expectation" type="number" min="0" step="50" label="Salário pretendido (€ / mês)" /></div><div class="mt-4 flex flex-wrap gap-5 text-sm font-bold"><label class="flex items-center gap-2"><input type="checkbox" wire:model="remote_work" class="rounded"> Remoto</label><label class="flex items-center gap-2"><input type="checkbox" wire:model="hybrid_work" class="rounded"> Híbrido</label><label class="flex items-center gap-2"><input type="checkbox" wire:model="on_site_work" class="rounded"> Presencial</label></div></div>
+                            @endif
+                            @if($activeSection === 'cv')
+                                <div class="rounded-[2rem] border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-950"><flux:icon name="document-text" class="mx-auto size-12 text-zinc-300" /><h3 class="mt-4 text-lg font-black">{{ $candidate->cv_path ? 'CV atual disponível' : 'Ainda não tens CV' }}</h3><p class="mt-2 text-sm text-zinc-500">PDF até 5 MB. O CV guardado é usado nas candidaturas.</p><div class="mt-5 flex flex-wrap justify-center gap-3">@if($candidate->cv_path)<button type="button" wire:click="downloadCv" class="rounded-xl bg-zinc-900 px-5 py-3 text-xs font-black text-white dark:bg-white dark:text-zinc-900">Descarregar CV</button><button type="button" wire:click="removeCv" class="rounded-xl bg-red-500/10 px-5 py-3 text-xs font-black text-red-600">Remover</button>@endif</div><div class="mx-auto mt-5 max-w-md"><input wire:model="cv" type="file" accept="application/pdf" class="block w-full rounded-xl border border-zinc-200 bg-white px-3 py-3 text-xs dark:border-zinc-700 dark:bg-zinc-900" /></div></div>
+                            @endif
+                            <div class="flex justify-end border-t border-zinc-100 pt-6 dark:border-zinc-800"><button type="submit" class="rounded-xl bg-emerald-600 px-6 py-3 text-xs font-black text-white">Guardar alterações</button></div>
+                        </form>
+                    </section>
+                @endif
+
+                @if($activeSection === 'notifications')
+                    <section class="space-y-5"><div class="flex items-end justify-between"><div><p class="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600">Centro de atividade</p><h2 class="mt-1 text-2xl font-black">Notificações</h2></div>@if($unreadNotifications)<button wire:click="markAllNotificationsRead" class="text-xs font-black text-emerald-600">Marcar todas como lidas</button>@endif</div><div class="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">@forelse($notifications as $notification)<button type="button" wire:click="markNotificationRead({{ $notification->id }})" class="flex w-full items-start gap-4 border-b border-zinc-100 p-5 text-left last:border-0 dark:border-zinc-800 {{ $notification->read_at ? '' : 'bg-emerald-500/[0.04]' }}"><span class="mt-1 flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600"><flux:icon name="bell" class="size-4" /></span><span class="min-w-0 flex-1"><span class="flex items-center gap-2 font-black">{{ $notification->title }} @if(! $notification->read_at)<span class="size-2 rounded-full bg-emerald-500"></span>@endif</span><span class="mt-1 block text-sm text-zinc-500">{{ $notification->message }}</span><span class="mt-2 block text-[10px] text-zinc-400">{{ $notification->created_at->diffForHumans() }}</span></span></button>@empty<div class="p-14 text-center"><flux:icon name="bell-slash" class="mx-auto size-10 text-zinc-300" /><h3 class="mt-4 font-black">Sem notificações</h3><p class="mt-2 text-sm text-zinc-500">Aqui aparecerão atualizações importantes sobre as tuas candidaturas.</p></div>@endforelse</div></section>
+                @endif
+
+                @if($activeSection === 'settings')
+                    <section class="space-y-5"><div><p class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Conta</p><h2 class="mt-1 text-2xl font-black">Definições</h2></div><div class="rounded-[2rem] border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"><div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><h3 class="font-black">Perfil público</h3><p class="mt-1 max-w-xl text-sm text-zinc-500">Permite que uma empresa veja a tua apresentação profissional sem expor o teu CV ou dados privados.</p></div><button wire:click="togglePublicProfile" class="rounded-xl px-5 py-3 text-xs font-black {{ $profile_public ? 'bg-emerald-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800' }}">{{ $profile_public ? 'Ativo' : 'Inativo' }}</button></div></div><div class="rounded-[2rem] border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"><h3 class="font-black">Privacidade e conta</h3><p class="mt-2 text-sm text-zinc-500">Os teus dados de candidato, candidaturas e CV são associados exclusivamente à tua conta.</p><button wire:click="logout" class="mt-5 rounded-xl bg-red-500/10 px-5 py-3 text-xs font-black text-red-600">Terminar sessão</button></div></section>
                 @endif
             </main>
         </div>
     </div>
 
-    <flux:modal name="candidate-application-modal" class="w-full max-w-xl">
-        <div class="space-y-6">
-            <div>
-                <span class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">Nova candidatura</span>
-                <h2 class="mt-2 text-2xl font-black">Candidatura para {{ $selectedCompanyName }}</h2>
-                <p class="mt-1 text-sm text-zinc-500">Será enviado o teu perfil profissional e o CV guardado no teu perfil.</p>
-            </div>
+    <flux:modal name="job-details-modal" class="w-full max-w-3xl"><div class="space-y-6">@if($selectedJob)<div><p class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">Oferta de emprego</p><h2 class="mt-2 text-2xl font-black">{{ $selectedJob->title }}</h2><button wire:click="openCompany({{ $selectedJob->workspace_id }})" class="mt-1 text-sm font-bold text-emerald-600">{{ $selectedJob->workspace->name }}</button></div><div class="grid gap-3 sm:grid-cols-4">@foreach([['Local',$selectedJob->location ?: 'Não indicada'],['Modelo',$selectedJob->work_model ?: 'Não indicado'],['Contrato',$selectedJob->contract_type ?: 'Não indicado'],['Experiência',$selectedJob->experience_level ?: 'Não indicada']] as $meta)<div class="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-950"><p class="text-[8px] font-black uppercase text-zinc-400">{{ $meta[0] }}</p><p class="mt-1 text-xs font-bold">{{ $meta[1] }}</p></div>@endforeach</div>@foreach([['Descrição',$selectedJob->description],['Responsabilidades',$selectedJob->responsibilities],['Requisitos',$selectedJob->requirements],['Competências',$selectedJob->skills],['Benefícios',$selectedJob->benefits]] as $block)@if($block[1])<div><h3 class="text-sm font-black">{{ $block[0] }}</h3><p class="mt-2 whitespace-pre-line text-sm leading-6 text-zinc-600 dark:text-zinc-400">{{ $block[1] }}</p></div>@endif@endforeach<div class="flex justify-end gap-3 border-t border-zinc-100 pt-5 dark:border-zinc-800"><button wire:click="toggleSavedJob({{ $selectedJob->id }})" class="rounded-xl bg-zinc-100 px-5 py-3 text-xs font-black dark:bg-zinc-800">{{ in_array($selectedJob->id,$savedJobIds) ? 'Remover guardada' : 'Guardar oferta' }}</button><button wire:click="openApplication({{ $selectedJob->id }})" class="rounded-xl bg-emerald-600 px-5 py-3 text-xs font-black text-white">Enviar candidatura</button></div>@endif</div></flux:modal>
 
-            <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-700 dark:bg-zinc-950">
-                <div class="flex items-center justify-between gap-4">
-                    <div>
-                        <p class="text-xs font-black">Perfil a enviar</p>
-                        <p class="mt-1 text-[11px] text-zinc-500">{{ $candidate->headline ?: 'Perfil profissional' }}</p>
-                    </div>
-                    <span class="rounded-full bg-emerald-500/10 px-3 py-1 text-[9px] font-black text-emerald-600">CV disponível ✓</span>
-                </div>
-            </div>
+    <flux:modal name="candidate-application-modal" class="w-full max-w-xl"><div class="space-y-6">@if($selectedJob)<div><p class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">Candidatura</p><h2 class="mt-2 text-2xl font-black">{{ $selectedJob->title }}</h2><p class="mt-1 text-sm text-zinc-500">{{ $selectedJob->workspace->name }}</p></div><div class="rounded-2xl bg-zinc-50 p-5 dark:bg-zinc-950"><p class="text-xs font-black">CV principal</p><p class="mt-1 text-xs text-emerald-600">CV disponível e pronto a enviar ✓</p></div><flux:textarea wire:model="applicationNotes" label="Mensagem ao recrutador" rows="5" placeholder="Mensagem opcional para acompanhar a candidatura..." /><div class="flex justify-end gap-3 border-t border-zinc-100 pt-5 dark:border-zinc-800"><flux:modal.close><button type="button" class="rounded-xl bg-zinc-100 px-5 py-3 text-xs font-bold dark:bg-zinc-800">Cancelar</button></flux:modal.close><button wire:click="submitApplication" class="rounded-xl bg-emerald-600 px-5 py-3 text-xs font-black text-white">Enviar candidatura</button></div>@endif</div></flux:modal>
 
-            <flux:textarea wire:model="applicationNotes" label="Mensagem ao recrutador" rows="5" placeholder="Escreve uma breve mensagem ou informação adicional relevante para esta candidatura..." />
-
-            <div class="flex justify-end gap-3 border-t border-zinc-100 pt-5 dark:border-zinc-800">
-                <flux:modal.close>
-                    <button type="button" class="rounded-xl bg-zinc-100 px-4 py-2.5 text-xs font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">Cancelar</button>
-                </flux:modal.close>
-                <button type="button" wire:click="submitApplication" wire:loading.attr="disabled" class="rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-black text-white shadow-lg shadow-emerald-500/15 disabled:opacity-50">Enviar candidatura</button>
-            </div>
-        </div>
-    </flux:modal>
+    <flux:modal name="company-details-modal" class="w-full max-w-2xl"><div class="space-y-6">@if($selectedCompany)<div class="flex items-center gap-4"><div class="flex size-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-xl font-black text-emerald-600">{{ strtoupper(substr($selectedCompany->name,0,1)) }}</div><div><h2 class="text-2xl font-black">{{ $selectedCompany->name }}</h2><p class="text-sm text-zinc-500">{{ $selectedCompany->industry ?: 'Empresa' }} · {{ $selectedCompany->address ?: 'Localização não indicada' }}</p></div></div><p class="whitespace-pre-line text-sm leading-6 text-zinc-600 dark:text-zinc-400">{{ $selectedCompany->recruitment_description ?: $selectedCompany->recruitment_extra_info ?: 'Esta empresa ainda não adicionou uma descrição pública.' }}</p><div><h3 class="font-black">Ofertas desta empresa</h3><div class="mt-3 space-y-2">@forelse($selectedCompany->recruitmentJobs->where('is_active',true) as $job)<button wire:click="openJob({{ $job->id }})" class="flex w-full items-center justify-between rounded-xl border border-zinc-200 p-4 text-left dark:border-zinc-800"><span><span class="block text-sm font-black">{{ $job->title }}</span><span class="mt-1 block text-[10px] text-zinc-500">{{ $job->location ?: 'Localização não indicada' }}</span></span><flux:icon name="chevron-right" class="size-4 text-zinc-400" /></button>@empty<p class="text-sm text-zinc-500">Sem ofertas ativas.</p>@endforelse</div></div>@endif</div></flux:modal>
 </div>
