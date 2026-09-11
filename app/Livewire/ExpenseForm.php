@@ -11,10 +11,15 @@ use Livewire\Component;
 class ExpenseForm extends Component
 {
     public string $amount = '';
+
     public string $description = '';
+
     public ?int $category_id = null;
+
     public string $spent_at = '';
+
     public ?int $expenseId = null;
+
     public array $fieldValues = [];
 
     public function mount(?int $id = null): void
@@ -136,6 +141,7 @@ class ExpenseForm extends Component
     {
         if (! $this->category_id) {
             $this->fieldValues = [];
+
             return;
         }
 
