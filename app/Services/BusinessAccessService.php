@@ -13,13 +13,9 @@ class BusinessAccessService
     public function workspace(?User $user = null): ?Workspace
     {
         $user ??= auth()->user();
-
-        if (! $user?->current_workspace_id) {
-            return null;
-        }
+        if (! $user?->current_workspace_id) return null;
 
         $workspace = $user->workspaces()->whereKey($user->current_workspace_id)->first();
-
         return $workspace && in_array($workspace->type, ['business', 'company'], true) ? $workspace : null;
     }
 
@@ -27,24 +23,13 @@ class BusinessAccessService
     {
         $user ??= auth()->user();
         $workspace ??= $this->workspace($user);
-
-        if (! $user || ! $workspace) {
-            return 'viewer';
-        }
-
-        if ((int) $workspace->owner_id === (int) $user->id) {
-            return 'owner';
-        }
+        if (! $user || ! $workspace) return 'viewer';
+        if ((int) $workspace->owner_id === (int) $user->id) return 'owner';
 
         $pivotRole = $workspace->users()->whereKey($user->id)->first()?->pivot?->role;
-
         return match (strtolower((string) $pivotRole)) {
-            'admin' => 'admin',
-            'manager', 'editor' => 'manager',
-            'accountant' => 'accountant',
-            'employee', 'member' => 'employee',
-            'viewer' => 'viewer',
-            default => 'viewer',
+            'admin' => 'admin', 'manager', 'editor' => 'manager', 'accountant' => 'accountant',
+            'employee', 'member' => 'employee', 'viewer' => 'viewer', default => 'viewer',
         };
     }
 
@@ -55,6 +40,7 @@ class BusinessAccessService
         return match ($permission) {
             'view_business' => in_array($role, self::ROLES, true),
             'view_financials' => in_array($role, ['owner', 'admin', 'manager', 'accountant', 'viewer'], true),
+            'view_bank_accounts' => in_array($role, ['owner', 'admin', 'accountant'], true),
             'create_expense' => in_array($role, ['owner', 'admin', 'manager', 'accountant', 'employee'], true),
             'manage_financials' => in_array($role, ['owner', 'admin', 'manager', 'accountant'], true),
             'delete_financials' => in_array($role, ['owner', 'admin', 'accountant'], true),
@@ -81,9 +67,7 @@ class BusinessAccessService
     public function assertWorkspace(?User $user = null): Workspace
     {
         $workspace = $this->workspace($user);
-
         abort_unless($workspace, 403, 'Workspace empresarial inválido.');
-
         return $workspace;
     }
 }
