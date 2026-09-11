@@ -13,12 +13,16 @@ class Workspace extends Model
 {
     protected $fillable = [
         'name','type','owner_id','invite_code','legal_name','logo_path','tax_number','industry','currency','initial_capital',
+        'country_code','vat_rate','vat_regime',
         'audit_token','audit_access_code','audit_token_expires_at','audit_token_revoked_at','audit_token_purpose',
         'recruitment_extra_info','business_email','plan','plan_expires_at','address','recruitment_active',
         'recruitment_description','recruitment_announcement','recruitment_vacancies','fiscal_year_start',
     ];
-    protected $casts = ['audit_token_expires_at'=>'datetime','audit_token_revoked_at'=>'datetime','initial_capital'=>'decimal:2'];
-    protected $attributes = ['type'=>'business','currency'=>'EUR'];
+    protected $casts = [
+        'audit_token_expires_at'=>'datetime','audit_token_revoked_at'=>'datetime','initial_capital'=>'decimal:2',
+        'vat_rate'=>'decimal:2','fiscal_year_start'=>'integer',
+    ];
+    protected $attributes = ['type'=>'business','currency'=>'EUR','country_code'=>'PT','vat_rate'=>23,'vat_regime'=>'normal','fiscal_year_start'=>1];
 
     public function generateInviteCode()
     {
