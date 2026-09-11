@@ -14,8 +14,9 @@ class Expense extends Model
 
     protected $fillable = [
         'user_id','category_id','workspace_id','supplier_id','bank_account_id','subcategory','metadata','amount','description','status','spent_at','receipt_path',
-        'is_company','project_id','task_id','currency','amount_converted',
+        'is_company','project_id','task_id','currency','amount_converted','vat_amount',
     ];
+
     protected $casts = [
         'spent_at'=>'date','amount'=>'decimal:2','amount_converted'=>'decimal:2','vat_amount'=>'decimal:2','metadata'=>'array','is_company'=>'boolean',
     ];
