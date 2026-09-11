@@ -83,7 +83,7 @@ class ExpenseForecastHub extends Component
 
         $variance = array_sum(array_map(fn ($v) => pow($v - $mean, 2), $values)) / $n;
         $stdDev = sqrt($variance);
-        $cv = $stdDev / $mean; // coeficiente de variação
+        $cv = $stdDev / $mean;
 
         $score = 100 - min(65, $cv * 100);
 
@@ -98,13 +98,13 @@ class ExpenseForecastHub extends Component
         $end = now()->copy()->startOfMonth();
 
         $expenses = Expense::where('workspace_id', $workspaceId)
+            ->where('is_company', false)
             ->where('spent_at', '>=', $start)
             ->where('spent_at', '<', $end)
             ->get();
 
-        // Fallback para contas recentes sem histórico fechado: usa as despesas já registadas
-        // este mês tal como estão (não são recorrentes, por isso não se extrapola um ritmo diário).
         $currentMonthExpenses = Expense::where('workspace_id', $workspaceId)
+            ->where('is_company', false)
             ->where('spent_at', '>=', $end)
             ->get();
 
@@ -113,8 +113,6 @@ class ExpenseForecastHub extends Component
             $monthKeys->push(now()->copy()->subMonths($i)->format('Y-m'));
         }
 
-        // Assinaturas ativas são custos garantidos todos os meses: contam sempre para a
-        // previsão da categoria a que pertencem, convertidas ao equivalente mensal.
         $subscriptionsByCategory = Subscription::where('workspace_id', $workspaceId)
             ->get(['category_id', 'amount', 'cycle', 'status', 'is_active'])
             ->filter(fn ($sub) => ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')
@@ -140,8 +138,6 @@ class ExpenseForecastHub extends Component
                     return null;
                 }
 
-                // Sem meses fechados: usa a despesa já registada este mês tal como está (é um
-                // registo pontual, não repete todos os meses) e soma as assinaturas garantidas.
                 $projected = round($currentSpend + $subscriptionMonthly, 2);
 
                 return [
@@ -183,8 +179,6 @@ class ExpenseForecastHub extends Component
             ];
         })->filter()->sortByDesc('predicted')->values();
 
-        // A assinatura da própria plataforma (plano Pro/Business) é um custo garantido mas não
-        // existe como registo na tabela de subscriptions, por isso soma-se à parte.
         $user = auth()->user();
         $platformPlanSlug = $user->currentPlanSlug();
         $platformPlanCost = $platformPlanSlug !== 'free'
