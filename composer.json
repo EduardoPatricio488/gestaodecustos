@@ -3,14 +3,7 @@
     "name": "finance-pro-ai/finance-pro-ai",
     "type": "project",
     "description": "Finance Pro AI - personal and business financial management SaaS.",
-    "keywords": [
-        "laravel",
-        "livewire",
-        "finance",
-        "saas",
-        "personal-finance",
-        "business-finance"
-    ],
+    "keywords": ["laravel", "livewire", "finance", "saas", "personal-finance", "business-finance"],
     "license": "MIT",
     "require": {
         "php": "^8.3",
@@ -46,7 +39,7 @@
         "psr-4": {
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
-            "Tests\\": "tests/"
+            "Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {
@@ -67,56 +60,27 @@
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve --no-reload\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"
         ],
-        "lint": [
-            "pint --parallel"
-        ],
-        "lint:check": [
-            "pint --parallel --test"
-        ],
-        "ci:check": [
-            "Composer\\Config::disableProcessTimeout",
-            "@test"
-        ],
-        "test": [
-            "@php artisan config:clear --ansi",
-            "@lint:check",
-            "@php artisan test"
-        ],
-        "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
-        ],
-        "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
-        ],
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-        ],
-        "post-create-project-cmd": [
-            "@php artisan key:generate --ansi",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
-        ],
-        "pre-package-uninstall": [
-            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
-        ]
+        "lint": ["pint --parallel"],
+        "lint:check": ["pint --parallel --test"],
+        "ci:check": ["Composer\\Config::disableProcessTimeout", "@test"],
+        "test": ["@php artisan config:clear --ansi", "@lint:check", "@php artisan test"],
+        "post-autoload-dump": ["Illuminate\\Foundation\\ComposerScripts::postAutoloadDump", "@php artisan package:discover --ansi"],
+        "post-update-cmd": ["@php artisan vendor:publish --tag=laravel-assets --ansi --force"],
+        "post-root-package-install": ["@php -r \"file_exists('.env') || copy('.env.example', '.env');\""],
+        "post-create-project-cmd": ["@php artisan key:generate --ansi", "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"", "@php artisan migrate --graceful --ansi"],
+        "pre-package-uninstall": ["Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"]
     },
     "extra": {
         "laravel": {
             "dont-discover": [],
-            "installer": {
-                "post-create-project": []
-            }
+            "installer": {"post-create-project": []}
         }
     },
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "php-http/discovery": true
-        }
+        "allow-plugins": {"pestphp/pest-plugin": true, "php-http/discovery": true}
     },
     "minimum-stability": "dev",
     "prefer-stable": true
