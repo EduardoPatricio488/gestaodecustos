@@ -9,8 +9,8 @@ return [
     |
     | This file is for storing the credentials for third party services such
     | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
+    | location for this type of information, allowing packages to have a
+    | conventional file to locate various service credentials.
     |
     */
 
@@ -64,6 +64,7 @@ return [
 
     'market_data' => [
         'yahoo_api_key' => env('YAHOO_API_KEY'),
+        'alpha_vantage_api_key' => env('ALPHA_VANTAGE_API_KEY'),
     ],
 
 ];
