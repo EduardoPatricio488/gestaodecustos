@@ -128,7 +128,7 @@ class Dashboard extends Component
 
         $this->privacyMode = session('privacy_mode', false);
         // 1. Verificação de Notificações Automáticas
-        Cache::remember("dashboard:notifications-checked:{$user->id}:".now()->toDateString(), now()->endOfDay(), function () use ($user) {
+        Cache::flexible("dashboard:notifications-checked:{$user->id}:".now()->toDateString(), [3600, 86400], function () use ($user) {
             NotificationService::checkAll($user);
 
             return true;
@@ -145,7 +145,7 @@ class Dashboard extends Component
         $this->exportEnd = now()->endOfMonth()->format('Y-m-d');
 
         // 4. PREÇOS DE MERCADO COM CACHE (atualiza a cada 5 minutos)
-        $this->marketPrices = Cache::remember('market_prices_all', 60, function () {
+        $this->marketPrices = Cache::flexible('market_prices_all', [300, 1800], function () {
             $result = [];
 
             // --- CRYPTO via CoinGecko (gratuito, sem chave) ---
@@ -407,6 +407,11 @@ class Dashboard extends Component
             return [];
         }
 
+        return Cache::flexible(
+            "dashboard:ai-insights:{$currentWs->id}:".now()->format('Y-m'),
+            [120, 600],
+            function () use ($currentWs) {
+
         // -----------------------------------------
         // 1) MERCADOS AVANÇADOS (S&P500, NASDAQ, DAX, CAC40, FTSE100)
         // -----------------------------------------
@@ -574,6 +579,8 @@ class Dashboard extends Component
         shuffle($insights);
 
         return $insights;
+            }
+        );
     }
 
     private function fetchData360($indicator, $country = 'PRT')
@@ -769,7 +776,7 @@ class Dashboard extends Component
         $totalBankBalance = (float) Cache::remember(
             "dashboard:bank-balance:{$currentWs->id}",
             60,
-            fn () => BankAccount::where('workspace_id', $currentWs->id)->get()->sum(fn ($account) => $account->current_balance)
+            fn () => (float) BankAccount::where('workspace_id', $currentWs->id)->sum('current_balance')
         );
 
         $projectedBalance = $totalBankBalance + $projectedIncome - $projectedExpenses;
@@ -781,8 +788,8 @@ class Dashboard extends Component
             60,
             // Guarda um array simples (não uma Collection) para evitar corrupção ao
             // fazer unserialize a partir da cache.
-            fn () => BankAccount::where('workspace_id', $currentWs->id)->get()
-                ->sortByDesc(fn ($account) => $account->current_balance)
+            fn () => BankAccount::where('workspace_id', $currentWs->id)
+                ->orderByDesc('current_balance')
                 ->take(3)
                 ->map(fn ($account) => [
                     'name' => $account->name,
