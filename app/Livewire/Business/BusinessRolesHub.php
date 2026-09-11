@@ -31,7 +31,6 @@ class BusinessRolesHub extends Component
     {
         $workspace = app(BusinessAccessService::class)->assertWorkspace();
         app(BusinessAccessService::class)->assert('manage_team', auth()->user(), $workspace);
-
         $member = $workspace->users()->whereKey($userId)->firstOrFail();
         abort_unless((int) $workspace->owner_id !== (int) $member->id, 403, 'O proprietário não pode ter o papel alterado.');
 
@@ -57,8 +56,8 @@ class BusinessRolesHub extends Component
             abort(403, 'Apenas o proprietário pode atribuir Administrador.');
         }
 
-        if ($actorRole === 'manager' && in_array($this->selectedRole, ['admin', 'manager', 'accountant'], true)) {
-            abort(403, 'Um Manager só pode gerir papéis de colaborador ou leitor.');
+        if (in_array($actorRole, ['manager', 'accountant'], true) && ! in_array($this->selectedRole, ['employee', 'viewer'], true)) {
+            abort(403, 'Este papel só pode atribuir Colaborador ou Leitor.');
         }
 
         DB::transaction(function () use ($workspace, $member): void {
