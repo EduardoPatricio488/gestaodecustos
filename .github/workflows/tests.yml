@@ -58,3 +58,6 @@ jobs:
       # Full CI validation for the production branch.
       - name: Run Tests
         run: ./vendor/bin/pest
+
+      # Keep the workflow itself traceable when CI configuration changes.
+      # The PHP quality gate is enforced separately by the business-integrity workflow.
