@@ -282,12 +282,16 @@
     {{-- 5. MODAL: ACESSO AO PORTAL COM CÓDIGO ÚNICO --}}
     <flux:modal name="portal-link-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[500px] !max-h-[90vh] !p-0 overflow-hidden">
         <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
-            <div class="flex items-center gap-4">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-4">
                 <div class="p-3 bg-zinc-900 dark:bg-brand-600 rounded-2xl text-white shadow-lg"><flux:icon name="shield-check" class="size-6" /></div>
                 <div>
                     <flux:heading size="xl" class="font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white leading-none">Chave de Acesso</flux:heading>
                     <p class="text-xs text-zinc-400 font-medium mt-1">Geração de credenciais únicas para o cliente.</p>
                 </div>
+                <flux:modal.close>
+                    <flux:button type="button" variant="ghost" icon="x-mark" size="sm" class="rounded-full" aria-label="Fechar" />
+                </flux:modal.close>
             </div>
 
             <div class="space-y-6">
@@ -323,7 +327,9 @@
             </div>
 
             <div class="flex gap-4">
-                <flux:modal.close class="flex-1"><flux:button variant="ghost" class="w-full font-black uppercase text-[10px]">Fechar</flux:button></flux:modal.close>
+                <flux:modal.close class="flex-1">
+                    <flux:button type="button" variant="ghost" class="w-full font-black uppercase text-[10px]">Fechar</flux:button>
+                </flux:modal.close>
                 <button type="button" x-data="{ copiedLink: false }" @click="navigator.clipboard.writeText('{{ route('client.login') }}'); copiedLink = true; setTimeout(() => copiedLink = false, 2000)" class="flex-[2] h-14 bg-brand-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-brand-500/20 hover:bg-brand-700 transition-all flex items-center justify-center gap-2">
                     <flux:icon x-show="!copiedLink" name="share" class="size-4" />
                     <flux:icon x-show="copiedLink" name="check" class="size-4" />
@@ -334,8 +340,8 @@
     </flux:modal>
 
     {{-- 6. MODAL: HISTÓRICO INTEGRADO DO CLIENTE --}}
-    <flux:modal name="history-modal" position="center" class="md:w-[800px] !p-0 overflow-visible">
-        <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
+    <flux:modal name="history-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[800px] !max-h-[90vh] !p-0 overflow-hidden">
+        <div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-8 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
             @if($selectedClient)
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div class="flex items-center gap-4">
@@ -345,7 +351,9 @@
                             <p class="text-[10px] font-black text-brand-600 uppercase mt-1 tracking-widest">{{ $selectedClient->name }}</p>
                         </div>
                     </div>
-                    <flux:modal.close><flux:button variant="ghost" icon="x-mark" size="sm" class="rounded-full" /></flux:modal.close>
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost" icon="x-mark" size="sm" class="rounded-full" aria-label="Fechar" />
+                    </flux:modal.close>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
