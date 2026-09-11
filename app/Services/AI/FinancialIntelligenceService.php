@@ -7,17 +7,15 @@ use App\Models\Investment;
 use App\Models\Subscription;
 use App\Models\Workspace;
 use App\Services\BusinessFinancialMetrics;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 
 class FinancialIntelligenceService
 {
     public function snapshot(Workspace $workspace, ?Carbon $period = null): array
     {
-        // Keep the intelligence layer on mutable Carbon instances because
-        // BusinessFinancialMetrics::forMonth() and the snapshot methods use
-        // Carbon in their contracts. Laravel's application date factory may
-        // return CarbonImmutable, which otherwise causes a runtime TypeError.
-        $period = ($period ?: Carbon::now())->copy()->startOfMonth();
+        // Use Laravel's Carbon class consistently with the rest of the
+        // application and BusinessFinancialMetrics service contracts.
+        $period = ($period ?: now())->copy()->startOfMonth();
 
         return in_array($workspace->type, ['business', 'company'], true)
             ? $this->businessSnapshot($workspace, $period)
