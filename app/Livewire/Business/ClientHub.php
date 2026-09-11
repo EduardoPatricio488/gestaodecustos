@@ -47,6 +47,17 @@ class ClientHub extends Component
         'status' => 'required|in:ativo,lead,inativo',
     ];
 
+    /**
+     * Formata o NIF automaticamente em grupos de 3 dígitos.
+     * Exemplo: 123456789 -> 123 456 789
+     */
+    public function updatedTaxNumber($value): void
+    {
+        $digits = preg_replace('/\D/', '', (string) $value);
+        $digits = substr($digits, 0, 9);
+        $this->tax_number = implode(' ', str_split($digits, 3));
+    }
+
     public function openHistory($id)
     {
         // Carregamos o cliente com as relações de faturas e projetos
@@ -63,13 +74,16 @@ class ClientHub extends Component
     {
         $this->validate();
 
+        $taxNumber = preg_replace('/\D/', '', (string) $this->tax_number);
+        $taxNumber = substr($taxNumber, 0, 9);
+
         auth()->user()->clients()->updateOrCreate(
             ['id' => $this->editingId],
             [
                 'workspace_id' => auth()->user()->current_workspace_id,
                 'name' => $this->name,
                 'legal_name' => $this->legal_name,
-                'tax_number' => $this->tax_number,
+                'tax_number' => $taxNumber ?: null,
                 'email' => $this->email,
                 'phone' => $this->phone,
                 'status' => $this->status,
@@ -125,7 +139,7 @@ class ClientHub extends Component
         }
 
         // 2. AGORA CARREGAMOS O NIF CORRETO PARA O MODAL
-        $this->clientTaxNumber = $client->tax_number; // ✅ ADICIONA ESTA LINHA
+        $this->clientTaxNumber = $client->tax_number;
 
         $this->generatedPasscode = $client->portal_token;
         $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
