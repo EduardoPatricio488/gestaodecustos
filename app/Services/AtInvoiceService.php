@@ -15,37 +15,16 @@ class AtInvoiceService
         $lines = preg_split('/\r\n|\r|\n/', trim($content));
         $delimiter = str_contains($lines[0] ?? '', ';') ? ';' : ',';
         $rows = array_map(fn ($l) => str_getcsv($l, $delimiter), array_filter($lines));
-
-        $imported = 0;
-        $skipped = 0;
-        $totalVat = 0;
+        $imported = 0; $skipped = 0; $totalVat = 0;
 
         foreach ($rows as $i => $row) {
-            if ($i === 0 && $this->isHeader($row)) {
-                continue;
-            }
-
+            if ($i === 0 && $this->isHeader($row)) continue;
             $parsed = $this->parseRow($row);
-            if (! $parsed) {
-                $skipped++;
+            if (! $parsed) { $skipped++; continue; }
+            if ($parsed['at_uid'] && AtInvoice::where('workspace_id', $workspace->id)->where('at_uid', $parsed['at_uid'])->exists()) { $skipped++; continue; }
 
-                continue;
-            }
-
-            if ($parsed['at_uid'] && AtInvoice::where('workspace_id', $workspace->id)->where('at_uid', $parsed['at_uid'])->exists()) {
-                $skipped++;
-
-                continue;
-            }
-
-            AtInvoice::create(array_merge($parsed, [
-                'workspace_id' => $workspace->id,
-                'user_id' => $userId,
-                'status' => 'imported',
-            ]));
-
-            $totalVat += $parsed['vat_amount'];
-            $imported++;
+            AtInvoice::create(array_merge($parsed, ['workspace_id' => $workspace->id, 'user_id' => $userId, 'status' => 'imported']));
+            $totalVat += $parsed['vat_amount']; $imported++;
         }
 
         return compact('imported', 'skipped', 'totalVat');
@@ -54,19 +33,12 @@ class AtInvoiceService
     public function validateNif(string $nif): bool
     {
         $nif = preg_replace('/\D/', '', $nif);
-        if (strlen($nif) !== 9 || ! in_array($nif[0], ['1', '2', '3', '5', '6', '8', '9'])) {
-            return false;
-        }
+        if (strlen($nif) !== 9 || ! in_array($nif[0], ['1', '2', '3', '5', '6', '8', '9'])) return false;
 
         $check = 0;
-        for ($i = 0; $i < 8; $i++) {
-            $check += (int) $nif[$i] * (9 - $i);
-        }
+        for ($i = 0; $i < 8; $i++) $check += (int) $nif[$i] * (9 - $i);
         $check = 11 - ($check % 11);
-        if ($check >= 10) {
-            $check = 0;
-        }
-
+        if ($check >= 10) $check = 0;
         return (int) $nif[8] === $check;
     }
 
@@ -74,41 +46,29 @@ class AtInvoiceService
     {
         $start = Carbon::create($year, ($quarter - 1) * 3 + 1, 1)->startOfMonth();
         $end = $start->copy()->addMonths(3)->subDay();
-
-        $invoices = AtInvoice::where('workspace_id', $workspace->id)
-            ->whereBetween('issued_at', [$start, $end])
-            ->get();
+        $invoices = AtInvoice::where('workspace_id', $workspace->id)->whereBetween('issued_at', [$start, $end])->get();
 
         return [
             'quarter' => "T{$quarter} {$year}",
             'count' => $invoices->count(),
             'total' => (float) $invoices->sum('amount'),
             'vat' => (float) $invoices->sum('vat_amount'),
-            'due_date' => $end->copy()->addMonth()->day(20)->format('d/m/Y'),
+            // O prazo oficial depende do enquadramento fiscal e não é inferido pela aplicação.
+            'due_date' => null,
         ];
     }
 
     private function isHeader(array $row): bool
     {
         $joined = strtolower(implode(' ', $row));
-
         return str_contains($joined, 'nif') || str_contains($joined, 'data') || str_contains($joined, 'valor');
     }
 
     private function parseRow(array $row): ?array
     {
-        if (count($row) < 3) {
-            return null;
-        }
+        if (count($row) < 3) return null;
 
-        $nif = null;
-        $name = null;
-        $date = null;
-        $amount = null;
-        $vat = 0;
-        $uid = null;
-        $docType = 'FT';
-
+        $nif = null; $name = null; $date = null; $amount = null; $vat = 0; $uid = null; $docType = 'FT';
         foreach ($row as $cell) {
             $cell = trim($cell);
             if (preg_match('/^\d{9}$/', preg_replace('/\D/', '', $cell)) && ! $nif) {
@@ -124,20 +84,8 @@ class AtInvoiceService
             }
         }
 
-        if (! $date || ! $amount) {
-            return null;
-        }
-
-        return [
-            'at_uid' => $uid,
-            'issuer_nif' => $nif,
-            'issuer_name' => $name,
-            'amount' => $amount,
-            'vat_amount' => $vat,
-            'issued_at' => $date,
-            'document_type' => $docType,
-            'raw_data' => $row,
-        ];
+        if (! $date || ! $amount) return null;
+        return ['at_uid'=>$uid,'issuer_nif'=>$nif,'issuer_name'=>$name,'amount'=>$amount,'vat_amount'=>$vat,'issued_at'=>$date,'document_type'=>$docType,'raw_data'=>$row];
     }
 
     private function parseDate(string $value): ?Carbon
@@ -145,13 +93,9 @@ class AtInvoiceService
         foreach (['Y-m-d', 'd/m/Y', 'd-m-Y'] as $format) {
             try {
                 $d = Carbon::createFromFormat($format, trim($value));
-                if ($d && $d->year > 2000) {
-                    return $d;
-                }
-            } catch (\Throwable) {
-            }
+                if ($d && $d->year > 2000) return $d;
+            } catch (\Throwable) {}
         }
-
         return null;
     }
 
@@ -160,7 +104,6 @@ class AtInvoiceService
         $value = str_replace(['€', ' '], '', $value);
         $value = str_replace('.', '', $value);
         $value = str_replace(',', '.', $value);
-
         return (float) $value;
     }
 }
