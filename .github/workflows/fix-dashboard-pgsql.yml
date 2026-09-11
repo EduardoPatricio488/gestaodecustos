@@ -1,0 +1,56 @@
+name: Fix Dashboard PostgreSQL
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.event.head_commit.message != 'ci: apply Dashboard PostgreSQL fix'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch Dashboard.php
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/Livewire/Dashboard.php')
+          s = p.read_text()
+          old = '''        $driver = DB::connection()->getDriverName();
+        $expenseMonth = $driver === 'sqlite' ? "strftime('%Y-%m', spent_at)" : "DATE_FORMAT(spent_at, '%Y-%m')";
+        $incomeMonth = $driver === 'sqlite' ? "strftime('%Y-%m', received_at)" : "DATE_FORMAT(received_at, '%Y-%m')";'''
+          new = '''        $driver = DB::connection()->getDriverName();
+
+        $expenseMonth = match ($driver) {
+            'sqlite' => "strftime('%Y-%m', spent_at)",
+            'pgsql' => "TO_CHAR(spent_at, 'YYYY-MM')",
+            default => "DATE_FORMAT(spent_at, '%Y-%m')",
+        };
+
+        $incomeMonth = match ($driver) {
+            'sqlite' => "strftime('%Y-%m', received_at)",
+            'pgsql' => "TO_CHAR(received_at, 'YYYY-MM')",
+            default => "DATE_FORMAT(received_at, '%Y-%m')",
+        };'''
+          if old not in s:
+              raise SystemExit('Expected Dashboard date-format block was not found; refusing to modify the file.')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+          php -l app/Livewire/Dashboard.php
+          grep -n -A14 -B2 "expenseMonth" app/Livewire/Dashboard.php
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Livewire/Dashboard.php
+          git commit -m "ci: apply Dashboard PostgreSQL fix"
+          git push
