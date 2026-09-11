@@ -55,5 +55,6 @@ jobs:
       - name: Build Assets
         run: npm run build
 
+      # Full CI validation for the production branch.
       - name: Run Tests
         run: ./vendor/bin/pest
