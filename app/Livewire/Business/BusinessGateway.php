@@ -30,7 +30,6 @@ class BusinessGateway extends Component
 
     public function enterAsOwner()
     {
-        // Agora o CEO vai para o Onboarding em vez de criar logo
         return redirect()->route('hub.business.onboarding');
     }
 
@@ -69,14 +68,17 @@ class BusinessGateway extends Component
                 return null;
             }
 
+            $workspace = $employee->workspace;
+            abort_unless($workspace && in_array($workspace->type, ['business', 'company'], true), 403);
+
             $employee->update([
                 'user_id' => $user->id,
                 'invite_used_at' => now(),
                 'portal_token' => null,
             ]);
 
-            $workspace = $employee->workspace;
-            $workspace->users()->syncWithoutDetaching([$user->id => ['role' => 'editor']]);
+            // Um convite de colaborador nunca concede privilégios administrativos.
+            $workspace->users()->syncWithoutDetaching([$user->id => ['role' => 'employee']]);
             $user->update(['current_workspace_id' => $workspace->id]);
 
             return $employee;
