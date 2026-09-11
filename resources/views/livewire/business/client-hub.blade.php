@@ -279,40 +279,55 @@
         </div>
     </flux:modal>
 
-    {{-- 5. MODAL: ACESSO AO PORTAL COM CÓDIGO ÚNICO --}}
-    <flux:modal name="portal-link-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[500px] !max-h-[90vh] !p-0 overflow-hidden">
-        <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
-            <div class="flex items-start justify-between gap-4">
-                <div class="flex items-center gap-4">
-                <div class="p-3 bg-zinc-900 dark:bg-brand-600 rounded-2xl text-white shadow-lg"><flux:icon name="shield-check" class="size-6" /></div>
+    {{-- 5. MODAL: ACESSO AO PORTAL DO CLIENTE --}}
+<flux:modal name="portal-link-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[500px] !max-h-[90vh] !p-0 overflow-hidden">
+        <div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
+            <button type="button" aria-label="Fechar"
+                    @click="window.dispatchEvent(new CustomEvent('modal-close', { detail: { name: 'portal-link-modal' } }))"
+                    class="absolute top-5 right-5 z-50 flex size-10 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-500 shadow-sm backdrop-blur hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-all">
+                <flux:icon name="x-mark" class="size-5" />
+            </button>
+
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-zinc-900 rounded-2xl text-white shadow-lg">
+                    <flux:icon name="shield-check" class="size-6" />
+                </div>
                 <div>
                     <flux:heading size="xl" class="font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white leading-none">Chave de Acesso</flux:heading>
                     <p class="text-xs text-zinc-400 font-medium mt-1">Geração de credenciais únicas para o cliente.</p>
                 </div>
-                <flux:modal.close>
-                    <flux:button type="button" variant="ghost" icon="x-mark" size="sm" class="rounded-full" aria-label="Fechar" />
-                </flux:modal.close>
             </div>
 
             <div class="space-y-6">
+                {{-- O CÓDIGO (PIN) --}}
                 <div class="p-8 bg-zinc-950 rounded-[2rem] border border-zinc-800 text-center relative overflow-hidden group">
                     <div class="absolute inset-0 bg-brand-500/5 blur-3xl rounded-full"></div>
                     <p class="relative z-10 text-[9px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-4">Código Único de Entrada</p>
+
                     <div class="relative z-10 flex items-center justify-center gap-6">
-                        <span class="text-5xl font-mono font-black text-white tracking-[0.2em] drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">{{ $generatedPasscode }}</span>
-                        <button x-data="{ copiedCode: false }" @click="navigator.clipboard.writeText('{{ $generatedPasscode }}'); copiedCode = true; setTimeout(() => copiedCode = false, 2000)" class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 transition-all border border-white/5">
+                        {{-- AQUI APARECERÁ O CÓDIGO --}}
+                        <span class="text-5xl font-mono font-black text-white tracking-[0.2em]">
+                            {{ $generatedPasscode }}
+                        </span>
+
+                        <button
+                            x-data="{ copiedCode: false }"
+                            @click="navigator.clipboard.writeText('{{ $generatedPasscode }}'); copiedCode = true; setTimeout(() => copiedCode = false, 2000)"
+                            class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 transition-all border border-white/5"
+                        >
                             <flux:icon x-show="!copiedCode" name="clipboard" variant="micro" class="size-5" />
                             <flux:icon x-show="copiedCode" name="check" variant="micro" class="size-5 text-emerald-500" />
                         </button>
                     </div>
                 </div>
 
-                <div class="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-3">
-                    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Protocolo de Acesso para o Cliente:</p>
+                {{-- INSTRUÇÕES DE ACESSO --}}
+                <div class="bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-4">
+                    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Protocolo de Acesso:</p>
                     <div class="space-y-3">
                         <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-start gap-3">
                             <span class="size-4 shrink-0 rounded-full bg-brand-500 text-white flex items-center justify-center text-[8px] mt-0.5">1</span>
-                            <span>Aceder ao endereço: <br> <span class="text-brand-600 dark:text-brand-400 font-mono break-all">http://localhost:8000/portal/login</span></span>
+                            <span>Aceder ao endereço: <br><span class="text-brand-600 dark:text-brand-400 font-mono break-all">{{ route('client.login') }}</span></span>
                         </p>
                         <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-3">
                             <span class="size-4 shrink-0 rounded-full bg-brand-500 text-white flex items-center justify-center text-[8px]">2</span>
@@ -328,9 +343,14 @@
 
             <div class="flex gap-4">
                 <flux:modal.close class="flex-1">
-                    <flux:button type="button" variant="ghost" class="w-full font-black uppercase text-[10px]">Fechar</flux:button>
+                    <flux:button variant="ghost" class="w-full font-black uppercase text-[10px]">Fechar</flux:button>
                 </flux:modal.close>
-                <button type="button" x-data="{ copiedLink: false }" @click="navigator.clipboard.writeText('{{ route('client.login') }}'); copiedLink = true; setTimeout(() => copiedLink = false, 2000)" class="flex-[2] h-14 bg-brand-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-brand-500/20 hover:bg-brand-700 transition-all flex items-center justify-center gap-2">
+
+                <button
+                    x-data="{ copiedLink: false }"
+                    @click="navigator.clipboard.writeText('{{ route('client.login') }}'); copiedLink = true; setTimeout(() => copiedLink = false, 2000)"
+                    class="flex-[2] h-14 bg-brand-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-brand-500/20 hover:bg-brand-700 transition-all flex items-center justify-center gap-2"
+                >
                     <flux:icon x-show="!copiedLink" name="share" class="size-4" />
                     <flux:icon x-show="copiedLink" name="check" class="size-4" />
                     <span x-text="copiedLink ? 'Link Copiado!' : 'Copiar Link de Login'"></span>
