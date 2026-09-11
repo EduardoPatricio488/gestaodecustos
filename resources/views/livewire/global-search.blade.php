@@ -28,8 +28,8 @@
                 >
                 {{-- INDICADOR DE CONTEXTO --}}
                 <div class="absolute right-6 top-7">
-                    <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border {{ $isBusinessMode ? 'bg-zinc-900 text-brand-400 border-brand-500/30' : 'bg-brand-500 text-white border-transparent' }}">
-                        {{ $isBusinessMode ? 'Modo Empresa' : 'Modo Pessoal' }}
+                    <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border {{ ($isBusinessMode ?? false) ? 'bg-zinc-900 text-brand-400 border-brand-500/30' : 'bg-brand-500 text-white border-transparent' }}">
+                        {{ ($isBusinessMode ?? false) ? 'Modo Empresa' : 'Modo Pessoal' }}
                     </span>
                 </div>
             </div>
@@ -63,7 +63,7 @@
                     <div class="py-12 text-center">
                         <flux:icon name="sparkles" class="size-8 text-zinc-200 mx-auto mb-3" />
                         <p class="text-zinc-400 text-[10px] font-black uppercase tracking-[0.3em]">
-                            Pesquisa inteligente em {{ $isBusinessMode ? 'negócios' : 'finanças pessoais' }}
+                            Pesquisa inteligente em {{ ($isBusinessMode ?? false) ? 'negócios' : 'finanças pessoais' }}
                         </p>
                     </div>
                 @endif
