@@ -187,18 +187,16 @@ textarea {
 
 /* Barra de progresso do Livewire no topo */
 .livewire-progress-bar {
-    background-color: #10b981 !important; /* Cor brand-500 */
+    background-color: #10b981 !important;
     height: 3px !important;
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
 }
 
-/* Efeito de transição ao navegar entre páginas */
 [wire\:navigating] {
     opacity: 0.6;
     transition: opacity 0.2s ease-in-out;
 }
 
-/* Animação de entrada suave para o conteúdo */
 .animate-fade-in {
     animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -215,18 +213,9 @@ textarea {
 }
 
 @keyframes xpToastPop {
-    0% {
-        opacity: 0;
-        transform: scale(0.94) translateY(8px);
-    }
-    55% {
-        opacity: 1;
-        transform: scale(1.03) translateY(-2px);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+    0% { opacity: 0; transform: scale(0.94) translateY(8px); }
+    55% { opacity: 1; transform: scale(1.03) translateY(-2px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 [data-flux-toast-dialog][data-xp-toast='true'] {
@@ -270,334 +259,140 @@ textarea {
     animation: app-action-toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.app-action-toast--xp {
-    border-color: #fbbf24;
-    background: #1c1917;
-}
+.app-action-toast--xp { border-color: #fbbf24; background: #1c1917; }
+.app-action-toast__icon { display: grid; flex: 0 0 auto; width: 2.25rem; height: 2.25rem; place-items: center; border-radius: 50%; background: #16a34a; color: white; font-weight: 900; }
+.app-action-toast--xp .app-action-toast__icon { background: #f59e0b; animation: app-action-toast-icon 0.65s ease-out both; }
+.app-action-toast__title, .app-action-toast__text { margin: 0; }
+.app-action-toast__title { font-size: 0.8rem; font-weight: 800; }
+.app-action-toast__text { margin-top: 0.125rem; font-size: 0.875rem; line-height: 1.25rem; }
+.app-action-toast--leaving { animation: app-action-toast-out 0.25s ease-in both; }
+@keyframes app-action-toast-in { from { opacity: 0; transform: translateY(1rem) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes app-action-toast-out { to { opacity: 0; transform: translateY(0.75rem); } }
+@keyframes app-action-toast-icon { 0% { transform: scale(0.5) rotate(-20deg); } 70% { transform: scale(1.15) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
 
-.app-action-toast__icon {
-    display: grid;
-    flex: 0 0 auto;
-    width: 2.25rem;
-    height: 2.25rem;
-    place-items: center;
-    border-radius: 50%;
-    background: #16a34a;
-    color: white;
-    font-weight: 900;
-}
+.privacy-active .privacy-blur { filter: blur(8px); pointer-events: none; user-select: none; }
 
-.app-action-toast--xp .app-action-toast__icon {
-    background: #f59e0b;
-    animation: app-action-toast-icon 0.65s ease-out both;
-}
-
-.app-action-toast__title,
-.app-action-toast__text {
-    margin: 0;
-}
-
-.app-action-toast__title {
-    font-size: 0.8rem;
-    font-weight: 800;
-}
-
-.app-action-toast__text {
-    margin-top: 0.125rem;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-}
-
-.app-action-toast--leaving {
-    animation: app-action-toast-out 0.25s ease-in both;
-}
-
-@keyframes app-action-toast-in {
-    from { opacity: 0; transform: translateY(1rem) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes app-action-toast-out {
-    to { opacity: 0; transform: translateY(0.75rem); }
-}
-
-@keyframes app-action-toast-icon {
-    0% { transform: scale(0.5) rotate(-20deg); }
-    70% { transform: scale(1.15) rotate(8deg); }
-    100% { transform: scale(1) rotate(0); }
-}
-
-/* Modo de Privacidade Ativo */
-.privacy-active .privacy-blur {
-    filter: blur(8px);
-    pointer-events: none;
-    user-select: none;
-}
-/* --- OTIMIZAÇÕES DE TOQUE MOBILE --- */
-
-/* Remove o atraso de 300ms que o iPhone coloca no clique */
-a, button, [role="button"] {
-    touch-action: manipulation;
-}
-
-/* Esconde as scrollbars mas permite o scroll (para as listas de cards) */
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-
-/* Suaviza o scroll no iPhone */
-.app-shell {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-}
-
-/* Impede que o utilizador selecione texto nos menus ao arrastar o dedo */
-flux-sidebar, nav, header {
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-html,
-body {
-    max-width: 100%;
-    overflow-x: hidden;
-}
+a, button, [role="button"] { touch-action: manipulation; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.app-shell { -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+flux-sidebar, nav, header { user-select: none; -webkit-user-select: none; }
+html, body { max-width: 100%; overflow-x: hidden; }
 
 @layer components {
-    .app-shell {
-        @apply relative min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100;
-    }
-
-    .app-shell::before {
-        content: '';
-        @apply pointer-events-none fixed inset-0 -z-10;
-        background:
-            radial-gradient(ellipse 80% 50% at 20% -10%, color-mix(in oklab, var(--color-brand-500) 18%, transparent), transparent),
-            radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in oklab, var(--color-brand-400) 10%, transparent), transparent);
-    }
-
-    .dark .app-shell::before {
-        background:
-            radial-gradient(ellipse 80% 50% at 20% -10%, color-mix(in oklab, var(--color-brand-500) 12%, transparent), transparent),
-            radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in oklab, var(--color-brand-600) 8%, transparent), transparent);
-    }
-
-    .glass-card {
-        @apply rounded-2xl border border-zinc-200/80 bg-white/80 shadow-sm shadow-zinc-900/5 backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:shadow-none;
-    }
-
-    .stat-card {
-        @apply rounded-2xl border border-zinc-200/80 bg-white/80 p-5 shadow-sm shadow-zinc-900/5 backdrop-blur-sm transition hover:border-brand-500/30 hover:shadow-md hover:shadow-brand-500/5 dark:border-zinc-800/80 dark:bg-zinc-900/60;
-    }
-
-    .brand-gradient {
-        @apply bg-gradient-to-br from-brand-500 to-brand-700 text-white;
-    }
-
-    .chart-bar {
-        @apply rounded-t-md bg-gradient-to-t from-brand-600 to-brand-400 transition-all duration-500 ease-out;
-    }
-
-    .category-pill {
-        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
-    }
-
-    .mobile-sidebar-panel {
-        @apply transition-transform duration-200;
-    }
-
+    .app-shell { @apply relative min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100; }
+    .app-shell::before { content: ''; @apply pointer-events-none fixed inset-0 -z-10; background: radial-gradient(ellipse 80% 50% at 20% -10%, color-mix(in oklab, var(--color-brand-500) 18%, transparent), transparent), radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in oklab, var(--color-brand-400) 10%, transparent), transparent); }
+    .dark .app-shell::before { background: radial-gradient(ellipse 80% 50% at 20% -10%, color-mix(in oklab, var(--color-brand-500) 12%, transparent), transparent), radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in oklab, var(--color-brand-600) 8%, transparent), transparent); }
+    .glass-card { @apply rounded-2xl border border-zinc-200/80 bg-white/80 shadow-sm shadow-zinc-900/5 backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:shadow-none; }
+    .stat-card { @apply rounded-2xl border border-zinc-200/80 bg-white/80 p-5 shadow-sm shadow-zinc-900/5 backdrop-blur-sm transition hover:border-brand-500/30 hover:shadow-md hover:shadow-brand-500/5 dark:border-zinc-800/80 dark:bg-zinc-900/60; }
+    .brand-gradient { @apply bg-gradient-to-br from-brand-500 to-brand-700 text-white; }
+    .chart-bar { @apply rounded-t-md bg-gradient-to-t from-brand-600 to-brand-400 transition-all duration-500 ease-out; }
+    .category-pill { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium; }
+    .mobile-sidebar-panel { @apply transition-transform duration-200; }
     @media (max-width: 1023px) {
-        .mobile-sidebar-panel {
-            transform: translateX(-100%);
-        }
-
-        .mobile-sidebar-panel[data-mobile-sidebar-open] {
-            transform: translateX(0);
-        }
+        .mobile-sidebar-panel { transform: translateX(-100%); }
+        .mobile-sidebar-panel[data-mobile-sidebar-open] { transform: translateX(0); }
     }
 }
 
 @layer utilities {
-    .break-anywhere {
-        overflow-wrap: anywhere;
-        word-break: break-word;
-    }
+    .break-anywhere { overflow-wrap: anywhere; word-break: break-word; }
 }
 
 @media (max-width: 640px) {
-    [data-flux-main] {
-        padding-top: 58px !important;
+    [data-flux-main] { padding-top: 58px !important; }
+    [data-flux-main] > div { width: 100%; max-width: 100%; padding-left: 0.875rem !important; padding-right: 0.875rem !important; padding-top: 1.25rem !important; }
+    [data-flux-main] :where(h1, h2, h3, p, span, a, button, label, input, textarea, select) { min-width: 0; }
+    [data-flux-main] :where(h1, h2, h3, p, span, a, button) { overflow-wrap: anywhere; }
+    [data-flux-main] .text-7xl, [data-flux-main] .sm\:text-7xl { font-size: 2.75rem !important; line-height: 0.95 !important; }
+    [data-flux-main] .text-6xl, [data-flux-main] .sm\:text-6xl { font-size: 2.5rem !important; line-height: 0.95 !important; }
+    [data-flux-main] .text-5xl { font-size: 2.25rem !important; line-height: 1 !important; }
+    [data-flux-main] .text-4xl { font-size: 1.875rem !important; line-height: 1.05 !important; }
+    [data-flux-main] .text-3xl { font-size: 1.5rem !important; line-height: 1.1 !important; }
+    [data-flux-main] .p-10, [data-flux-main] .p-8 { padding: 1.25rem !important; }
+    [data-flux-main] .px-10, [data-flux-main] .px-8 { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+    [data-flux-main] .py-10, [data-flux-main] .py-8 { padding-top: 1.25rem !important; padding-bottom: 1.25rem !important; }
+    [data-flux-main] .gap-10, [data-flux-main] .gap-8 { gap: 1.25rem !important; }
+    [data-flux-main] .rounded-\[3rem\], [data-flux-main] .rounded-\[2\.5rem\], [data-flux-main] .rounded-\[2\.2rem\] { border-radius: 1.5rem !important; }
+    [data-flux-main] :where(.tracking-\[0\.5em\], .tracking-\[0\.4em\], .tracking-\[0\.3em\]) { letter-spacing: 0.12em !important; }
+    [data-flux-main] :where(table) { display: block; max-width: 100%; min-width: 44rem; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+    [data-flux-main] :where(.glass-card, .stat-card) { max-width: 100%; }
+    [data-flux-main] :where(.flex.items-center.justify-between, .flex.items-start.justify-between) { min-width: 0; }
+    [data-flux-main] :where(.fixed.inset-0) > :where(.relative, .bg-white, .bg-zinc-950, .dark\:bg-zinc-950) { max-width: calc(100vw - 1rem) !important; }
+}
+
+[data-flux-field]:not(ui-radio, ui-checkbox) { @apply grid gap-2; }
+[data-flux-label] { @apply !mb-0 !leading-tight; }
+input:focus[data-flux-control], textarea:focus[data-flux-control], select:focus[data-flux-control] { @apply outline-hidden ring-2 ring-brand-500/50 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900; }
+
+@layer base {
+    body.layout-fixed { height: 100vh !important; overflow: hidden !important; }
+    body.layout-fixed [data-flux-sidebar] { position: fixed !important; top: 0; left: 0; bottom: 0; width: 16rem !important; height: 100vh !important; z-index: 50; background-color: white; }
+    .dark body.layout-fixed [data-flux-sidebar] { background-color: #09090b; }
+    body.layout-fixed [data-flux-header] { position: fixed !important; top: 0; right: 0; left: 0; z-index: 40; width: 100%; }
+    [x-cloak] { display: none !important; }
+    @media (min-width: 1024px) {
+        body.layout-fixed [data-flux-header], body.layout-fixed [data-flux-main] { padding-left: 16rem !important; }
+    }
+    body.layout-fixed [data-flux-main] { height: 100vh !important; overflow-y: auto !important; overflow-x: hidden !important; padding-top: 64px; display: block; width: 100%; max-width: 100vw; }
+    body.layout-fixed [data-flux-main] > div { min-width: 0; }
+    .finance-connect, .finance-connect > .grid { content-visibility: visible !important; contain: none !important; contain-intrinsic-size: auto !important; }
+}
+
+/* ─── CLIENTES: MODAL DE CHAVE DE ACESSO ───────────────────────────── */
+/* Garante que o diálogo nunca deixa o conteúdo escapar ou ficar por trás do código. */
+[data-flux-modal] {
+    max-height: 90dvh;
+    overflow: hidden;
+}
+
+[data-flux-modal] > div {
+    max-height: 90dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+}
+
+[data-flux-modal] > div > div {
+    box-sizing: border-box;
+}
+
+[data-flux-modal] .flex.items-start.justify-between {
+    align-items: flex-start;
+}
+
+[data-flux-modal] .flex.items-start.justify-between > div:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+[data-flux-modal] .flex.items-start.justify-between > div:first-child > div {
+    min-width: 0;
+}
+
+[data-flux-modal] .flex.items-start.justify-between h1,
+[data-flux-modal] .flex.items-start.justify-between h2,
+[data-flux-modal] .flex.items-start.justify-between h3 {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+    [data-flux-modal] {
+        width: calc(100vw - 1rem) !important;
+        max-width: calc(100vw - 1rem) !important;
+        max-height: 94dvh !important;
     }
 
-    [data-flux-main] > div {
-        width: 100%;
-        max-width: 100%;
-        padding-left: 0.875rem !important;
-        padding-right: 0.875rem !important;
-        padding-top: 1.25rem !important;
-    }
-
-    [data-flux-main] :where(h1, h2, h3, p, span, a, button, label, input, textarea, select) {
-        min-width: 0;
-    }
-
-    [data-flux-main] :where(h1, h2, h3, p, span, a, button) {
-        overflow-wrap: anywhere;
-    }
-
-    [data-flux-main] .text-7xl,
-    [data-flux-main] .sm\:text-7xl {
-        font-size: 2.75rem !important;
-        line-height: 0.95 !important;
-    }
-
-    [data-flux-main] .text-6xl,
-    [data-flux-main] .sm\:text-6xl {
-        font-size: 2.5rem !important;
-        line-height: 0.95 !important;
-    }
-
-    [data-flux-main] .text-5xl {
-        font-size: 2.25rem !important;
-        line-height: 1 !important;
-    }
-
-    [data-flux-main] .text-4xl {
-        font-size: 1.875rem !important;
-        line-height: 1.05 !important;
-    }
-
-    [data-flux-main] .text-3xl {
-        font-size: 1.5rem !important;
-        line-height: 1.1 !important;
-    }
-
-    [data-flux-main] .p-10,
-    [data-flux-main] .p-8 {
+    [data-flux-modal] > div {
+        max-height: 94dvh;
         padding: 1.25rem !important;
     }
 
-    [data-flux-main] .px-10,
-    [data-flux-main] .px-8 {
-        padding-left: 1.25rem !important;
-        padding-right: 1.25rem !important;
-    }
-
-    [data-flux-main] .py-10,
-    [data-flux-main] .py-8 {
-        padding-top: 1.25rem !important;
-        padding-bottom: 1.25rem !important;
-    }
-
-    [data-flux-main] .gap-10,
-    [data-flux-main] .gap-8 {
-        gap: 1.25rem !important;
-    }
-
-    [data-flux-main] .rounded-\[3rem\],
-    [data-flux-main] .rounded-\[2\.5rem\],
-    [data-flux-main] .rounded-\[2\.2rem\] {
-        border-radius: 1.5rem !important;
-    }
-
-    [data-flux-main] :where(.tracking-\[0\.5em\], .tracking-\[0\.4em\], .tracking-\[0\.3em\]) {
+    [data-flux-modal] .text-5xl {
+        font-size: 2rem !important;
         letter-spacing: 0.12em !important;
     }
 
-    [data-flux-main] :where(table) {
-        display: block;
-        max-width: 100%;
-        min-width: 44rem;
-        overflow-x: auto;
-        white-space: nowrap;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    [data-flux-main] :where(.glass-card, .stat-card) {
-        max-width: 100%;
-    }
-
-    [data-flux-main] :where(.flex.items-center.justify-between, .flex.items-start.justify-between) {
-        min-width: 0;
-    }
-
-    [data-flux-main] :where(.fixed.inset-0) > :where(.relative, .bg-white, .bg-zinc-950, .dark\:bg-zinc-950) {
-        max-width: calc(100vw - 1rem) !important;
-    }
-}
-
-[data-flux-field]:not(ui-radio, ui-checkbox) {
-    @apply grid gap-2;
-}
-
-[data-flux-label] {
-    @apply !mb-0 !leading-tight;
-}
-
-input:focus[data-flux-control],
-textarea:focus[data-flux-control],
-select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-brand-500/50 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900;
-}
-
-@layer base {
-    /* 1. Bloqueia o scroll no Body para o ecrã não fugir */
-    body.layout-fixed {
-        height: 100vh !important;
-        overflow: hidden !important;
-    }
-
-    /* 2. Sidebar: Sempre "pregada" à esquerda */
-    body.layout-fixed [data-flux-sidebar] {
-        position: fixed !important;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: 16rem !important; /* Largura padrão da sidebar (64) */
-        height: 100vh !important;
-        z-index: 50;
-        background-color: white;
-    }
-    .dark body.layout-fixed [data-flux-sidebar] { background-color: #09090b; }
-
-    /* 3. Header: Fixo no topo, mas empurrado para a direita no PC */
-    body.layout-fixed [data-flux-header] {
-        position: fixed !important;
-        top: 0;
-        right: 0;
-        left: 0;
-        z-index: 40;
-        width: 100%;
-    }
-    [x-cloak] { display: none !important; }
-
-    /* No PC (ecrãs grandes), o Header e o Main têm de dar espaço à Sidebar */
-    @media (min-width: 1024px) {
-        body.layout-fixed [data-flux-header],
-        body.layout-fixed [data-flux-main] {
-            padding-left: 16rem !important; /* Afasta o conteúdo 64px para a direita */
-        }
-    }
-
-    /* 4. O Main: Única área que faz scroll */
-    body.layout-fixed [data-flux-main] {
-        height: 100vh !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        padding-top: 64px; /* Espaço para o Header não tapar o conteúdo */
-        display: block;
-        width: 100%;
-        max-width: 100vw;
-    }
-
-    body.layout-fixed [data-flux-main] > div {
-        min-width: 0;
-    }
-
-    .finance-connect,
-    .finance-connect > .grid {
-        content-visibility: visible !important;
-        contain: none !important;
-        contain-intrinsic-size: auto !important;
+    [data-flux-modal] .flex.items-center.justify-center.gap-6 {
+        gap: 0.75rem !important;
     }
 }
