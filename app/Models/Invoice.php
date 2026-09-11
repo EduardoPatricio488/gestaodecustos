@@ -7,6 +7,7 @@ use App\Traits\BelongsToWorkspace;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\DomainException;
 
 class Invoice extends Model
 {
@@ -32,6 +33,32 @@ class Invoice extends Model
                 return;
             }
 
+            $workspace = Workspace::withoutGlobalScopes()->find($invoice->workspace_id);
+            $workspaceCurrency = strtoupper((string) ($workspace?->currency ?? 'EUR'));
+            $invoiceCurrency = strtoupper((string) ($invoice->currency ?: $workspaceCurrency));
+
+            $base = round((float) $invoice->amount_excl_vat, 2);
+            $vat = round((float) $invoice->vat_amount, 2);
+            $total = round($base + $vat, 2);
+
+            if ($base <= 0 || $vat < 0) {
+                throw new DomainException('Os valores da fatura são inválidos.');
+            }
+
+            $invoice->forceFill([
+                'amount_excl_vat' => $base,
+                'vat_amount' => $vat,
+                'total_amount' => $total,
+                'currency' => $invoiceCurrency,
+            ]);
+
+            if ($invoice->client_id) {
+                $clientWorkspaceId = Client::withoutGlobalScopes()->whereKey($invoice->client_id)->value('workspace_id');
+                if ((int) $clientWorkspaceId !== (int) $invoice->workspace_id) {
+                    throw new DomainException('O cliente selecionado não pertence à empresa.');
+                }
+            }
+
             if ($invoice->isDirty('status') && $invoice->status === 'paga' && ! $invoice->paid_at) {
                 $invoice->paid_at = now();
             }
@@ -40,13 +67,10 @@ class Invoice extends Model
                 $invoice->paid_at = null;
             }
 
-            $workspaceCurrency = strtoupper((string) (Workspace::withoutGlobalScopes()->find($invoice->workspace_id)?->currency ?? 'EUR'));
-            $invoiceCurrency = strtoupper((string) ($invoice->currency ?: $workspaceCurrency));
-            $invoice->currency = $invoiceCurrency;
             $invoice->forceFill([
-                'amount_excl_vat_converted' => round((float) CurrencyService::convert((float) $invoice->amount_excl_vat, $invoiceCurrency, $workspaceCurrency), 2),
-                'vat_amount_converted' => round((float) CurrencyService::convert((float) $invoice->vat_amount, $invoiceCurrency, $workspaceCurrency), 2),
-                'total_amount_converted' => round((float) CurrencyService::convert((float) $invoice->total_amount, $invoiceCurrency, $workspaceCurrency), 2),
+                'amount_excl_vat_converted' => round((float) CurrencyService::convert($base, $invoiceCurrency, $workspaceCurrency), 2),
+                'vat_amount_converted' => round((float) CurrencyService::convert($vat, $invoiceCurrency, $workspaceCurrency), 2),
+                'total_amount_converted' => round((float) CurrencyService::convert($total, $invoiceCurrency, $workspaceCurrency), 2),
             ]);
         });
     }
