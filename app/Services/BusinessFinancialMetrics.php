@@ -4,13 +4,14 @@ namespace App\Services;
 
 use App\Models\PaymentAllocation;
 use App\Models\Workspace;
+use DateTimeInterface;
 use Illuminate\Support\Carbon;
 
 class BusinessFinancialMetrics
 {
-    public function forMonth(Workspace $workspace, ?Carbon $month = null): array
+    public function forMonth(Workspace $workspace, ?DateTimeInterface $month = null): array
     {
-        $month = ($month ?: now())->copy()->startOfMonth();
+        $month = Carbon::instance($month ?: now())->startOfMonth();
         $end = $month->copy()->endOfMonth();
         $invoices = $workspace->invoices();
         $expenses = $workspace->expenses()->where('is_company', true);
