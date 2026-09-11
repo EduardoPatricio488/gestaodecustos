@@ -31,12 +31,7 @@ class BankPortal extends Component
     #[Layout('layouts.guest')]
     public function login()
     {
-        $this->validate([
-            'company_nif' => 'required',
-            'token' => 'required|string|size:8',
-        ]);
-
-        $cleanNifInput = preg_replace('/[^0-9]/', '', $this->company_nif);
+        $cleanNifInput = preg_replace('/[^0-9]/', '', (string) $this->company_nif);
         $rateLimitKey = 'bank-portal:'.sha1($cleanNifInput.'|'.request()->ip());
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
@@ -46,12 +41,21 @@ class BankPortal extends Component
         }
 
         RateLimiter::hit($rateLimitKey, 60);
-        $cleanTokenInput = strtoupper(trim($this->token));
+
+        $this->validate([
+            'company_nif' => 'required',
+            'token' => 'required|string|min:8|max:255',
+        ]);
+
+        $cleanTokenInput = strtoupper(trim((string) $this->token));
 
         $workspace = Workspace::whereRaw("REPLACE(REPLACE(REPLACE(tax_number, ' ', ''), '.', ''), '-', '') = ?", [$cleanNifInput])
             ->where('audit_token_purpose', 'bank_audit')
             ->whereNull('audit_token_revoked_at')
-            ->where('audit_access_code', $cleanTokenInput)
+            ->where(function ($query) {
+                $query->whereNull('audit_token_expires_at')
+                    ->orWhere('audit_token_expires_at', '>', now());
+            })
             ->whereNotNull('audit_token')
             ->first();
 
