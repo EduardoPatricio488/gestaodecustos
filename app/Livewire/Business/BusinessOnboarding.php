@@ -14,23 +14,13 @@ class BusinessOnboarding extends Component
     use WithFileUploads;
 
     public $step = 1;
-
-    // Dados da Empresa
     public $name;
-
     public $industry;
-
     public $tax_number;
-
     public $business_email;
-
     public $customIndustry;
-
     public $photo;
-
-    // Valores Iniciais
     public $initial_capital = 0;
-
     public $currency = 'EUR';
 
     protected $messages = [
@@ -49,14 +39,13 @@ class BusinessOnboarding extends Component
         ],
         3 => [
             'initial_capital' => 'required|numeric|min:0',
+            'currency' => 'required|string|size:3|in:EUR,USD,GBP,CHF,BRL,JPY',
         ],
     ];
 
     public function updatedTaxNumber($value)
     {
-        $digits = preg_replace('/\D/', '', (string) $value);
-        $digits = substr($digits, 0, 9);
-
+        $digits = substr(preg_replace('/\D/', '', (string) $value), 0, 9);
         $this->tax_number = trim(implode(' ', str_split($digits, 3)));
     }
 
@@ -68,33 +57,34 @@ class BusinessOnboarding extends Component
         $this->step++;
     }
 
-    public function prevStep()
-    {
-        $this->step--;
-    }
+    public function prevStep() { $this->step--; }
 
     public function createCompany()
     {
-        $this->validate($this->rules[2]);
+        $this->validate(array_merge($this->rules[2], $this->rules[3]));
+        if ($this->industry === 'Outro') {
+            $this->validate(['customIndustry' => 'required|string|min:2|max:100']);
+        }
+
         $user = auth()->user();
-
-        $finalIndustry = ($this->industry === 'Outro')
-            ? $this->customIndustry
-            : $this->industry;
-
+        $finalIndustry = $this->industry === 'Outro' ? $this->customIndustry : $this->industry;
         $taxNumber = preg_replace('/\D/', '', (string) $this->tax_number);
 
         $workspace = Workspace::create([
-            'name' => $this->name,
+            'name' => trim($this->name),
             'owner_id' => $user->id,
             'type' => 'business',
             'industry' => $finalIndustry,
             'tax_number' => $taxNumber ?: null,
             'business_email' => strtolower(trim($this->business_email)),
-            'currency' => $this->currency ?? 'EUR',
-            'initial_capital' => (float) ($this->initial_capital ?? 0),
+            'currency' => strtoupper($this->currency ?: 'EUR'),
+            'initial_capital' => round((float) ($this->initial_capital ?? 0), 2),
             'invite_code' => strtoupper(Str::random(8)),
             'plan' => 'business',
+            'country_code' => 'PT',
+            'vat_rate' => 23,
+            'vat_regime' => 'normal',
+            'fiscal_year_start' => 1,
         ]);
 
         if ($this->photo) {
@@ -102,17 +92,16 @@ class BusinessOnboarding extends Component
             $workspace->update(['logo_path' => $path]);
         }
 
-        $user->workspaces()->attach($workspace->id, ['role' => 'admin']);
+        $user->workspaces()->syncWithoutDetaching([$workspace->id => ['role' => 'admin']]);
         $user->update(['current_workspace_id' => $workspace->id]);
 
         try {
             Mail::to($user->email)->send(new WelcomeBusinessMail($workspace));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Erro ao enviar e-mail business: '.$e->getMessage());
         }
 
-        $this->dispatch('toast', text: 'Empresa ativada! Enviamos um guia para o seu e-mail. 🏢');
-
+        $this->dispatch('toast', text: 'Empresa ativada! Enviámos um guia para o teu email. 🏢');
         return redirect()->route('hub.business.dashboard');
     }
 
