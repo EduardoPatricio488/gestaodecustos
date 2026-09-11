@@ -5,6 +5,7 @@ namespace App\Services\AI;
 use App\Models\AiActionLog;
 use App\Models\AiConversation;
 use App\Models\AiMemory;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Arr;
@@ -28,6 +29,7 @@ class AiBrainService
             throw new RuntimeException('Não existe um workspace ativo para esta conta.');
         }
 
+        $this->assertAiAccess($user);
         $conversation ??= $this->conversation($user, $workspace);
         $startedAt = microtime(true);
 
@@ -102,25 +104,26 @@ class AiBrainService
                             'details' => $preview['details'],
                         ];
 
-                        $toolResult = [
-                            'confirmation_required' => true,
-                            'action_id' => $log->id,
-                            'message' => 'A ação está preparada, mas NÃO foi executada. É obrigatória confirmação explícita do utilizador.',
-                            'preview' => $preview,
-                        ];
-                    } else {
-                        $toolResult = $this->tools->execute($user, $workspace, $toolName, $args);
+                        // Do not ask the model to continue after a write preview. This prevents
+                        // repeated tool calls and guarantees that the user remains in control.
+                        continue;
                     }
 
+                    $toolResult = $this->tools->execute($user, $workspace, $toolName, $args);
                     $messages[] = [
                         'role' => 'tool',
                         'tool_call_id' => $call['id'] ?? '',
                         'content' => json_encode($toolResult, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                     ];
                 }
+
+                if ($pendingActions) {
+                    $final = 'Preparei a ação. Revê os detalhes e confirma quando estiveres pronto.';
+                    break;
+                }
             }
 
-            $final = $final ?: ($pendingActions ? 'Preparei a ação. Revê os detalhes e confirma quando estiveres pronto.' : 'Não consegui concluir a análise com os dados disponíveis.');
+            $final = $final ?: 'Não consegui concluir a análise com os dados disponíveis.';
 
             $assistantMessage = $conversation->messages()->create([
                 'user_id' => $user->id,
@@ -175,6 +178,8 @@ class AiBrainService
             throw new RuntimeException('Workspace inválido.');
         }
 
+        $this->assertAiAccess($user);
+
         $action = AiActionLog::query()
             ->whereKey($actionId)
             ->where('user_id', $user->id)
@@ -183,17 +188,29 @@ class AiBrainService
             ->firstOrFail();
 
         $startedAt = microtime(true);
-        $result = $this->tools->execute($user, $workspace, $action->tool_name, (array) $action->request_payload);
 
-        $action->update([
-            'status' => 'completed',
-            'confirmed_at' => now(),
-            'completed_at' => now(),
-            'result_payload' => $result,
-            'latency_ms' => (int) round((microtime(true) - $startedAt) * 1000),
-        ]);
+        try {
+            $result = $this->tools->execute($user, $workspace, $action->tool_name, (array) $action->request_payload);
 
-        return $result + ['action_id' => $action->id];
+            $action->update([
+                'status' => 'completed',
+                'confirmed_at' => now(),
+                'completed_at' => now(),
+                'result_payload' => $result,
+                'latency_ms' => (int) round((microtime(true) - $startedAt) * 1000),
+            ]);
+
+            return $result + ['action_id' => $action->id];
+        } catch (\Throwable $e) {
+            $action->update([
+                'status' => 'failed',
+                'completed_at' => now(),
+                'error_message' => $e->getMessage(),
+                'latency_ms' => (int) round((microtime(true) - $startedAt) * 1000),
+            ]);
+
+            throw $e;
+        }
     }
 
     public function conversation(User $user, Workspace $workspace, ?int $id = null): AiConversation
@@ -230,6 +247,26 @@ class AiBrainService
                 'value' => $memory->value,
                 'importance' => $memory->importance,
             ])->all();
+    }
+
+    private function assertAiAccess(User $user): void
+    {
+        if (method_exists($user, 'isAdminRole') && $user->isAdminRole()) {
+            return;
+        }
+
+        if (method_exists($user, 'isPaidPlan') && $user->isPaidPlan()) {
+            return;
+        }
+
+        $plan = SubscriptionPlan::query()
+            ->where('slug', $user->currentPlanSlug())
+            ->where('is_active', true)
+            ->first();
+
+        if (! $plan || ! $plan->hasFeature('ia_access')) {
+            throw new RuntimeException('O teu plano atual não inclui acesso ao AI Copilot.');
+        }
     }
 
     private function provider(array $messages): array
