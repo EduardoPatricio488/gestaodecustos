@@ -2,38 +2,22 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToWorkspace;
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Supplier extends Model
 {
+    use BelongsToWorkspace, LogsActivity;
+
     protected $fillable = [
-        'user_id',
-        'workspace_id',
-        'name',
-        'legal_name',
-        'tax_number',
-        'email',
-        'phone',
-        'website',
-        'address',
-        'portal_token',
-        'payment_terms',
+        'user_id', 'workspace_id', 'name', 'legal_name', 'tax_number', 'email', 'phone',
+        'website', 'address', 'portal_token', 'payment_terms',
     ];
 
-    public function workspace(): BelongsTo
-    {
-        return $this->belongsTo(Workspace::class);
-    }
-
-    public function expenses(): HasMany
-    {
-        return $this->hasMany(Expense::class);
-    }
-
-    public function supportTickets(): HasMany
-    {
-        return $this->hasMany(SupportTicket::class);
-    }
+    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
+    public function expenses(): HasMany { return $this->hasMany(Expense::class); }
+    public function supportTickets(): HasMany { return $this->hasMany(SupportTicket::class); }
 }
