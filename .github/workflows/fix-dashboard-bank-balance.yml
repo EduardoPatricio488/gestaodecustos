@@ -1,0 +1,74 @@
+name: Fix dashboard bank balance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch Dashboard
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/Livewire/Dashboard.php')
+          s = p.read_text()
+          old = '''$totalBankBalance = (float) Cache::remember(
+            "dashboard:bank-balance:{$currentWs->id}",
+            60,
+            fn () => (float) BankAccount::where('workspace_id', $currentWs->id)->sum('current_balance')
+        );'''
+          new = '''$totalBankBalance = (float) Cache::remember(
+            "dashboard:bank-balance:{$currentWs->id}",
+            60,
+            function () use ($currentWs): float {
+                // current_balance is an Eloquent accessor, not a database column.
+                // Reproduce its calculation with aggregate queries so the dashboard
+                // remains accurate without triggering one query per bank account.
+                $baseBalance = (float) BankAccount::where('workspace_id', $currentWs->id)
+                    ->sum('balance');
+
+                $incomeBalance = (float) Income::where('workspace_id', $currentWs->id)
+                    ->whereNotNull('bank_account_id')
+                    ->sum('amount');
+
+                $expenseBalance = (float) Expense::where('workspace_id', $currentWs->id)
+                    ->whereNotNull('bank_account_id')
+                    ->sum('amount');
+
+                $recurringDue = (float) RecurringIncome::where('workspace_id', $currentWs->id)
+                    ->whereNotNull('bank_account_id')
+                    ->where('is_active', true)
+                    ->where('day_of_month', '<=', now()->day)
+                    ->sum('amount');
+
+                return $baseBalance + $incomeBalance - $expenseBalance + $recurringDue;
+            }
+        );'''
+          if old not in s:
+              raise SystemExit('Expected bank balance block not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Livewire/Dashboard.php
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix dashboard bank balance query"
+          git push
+      - name: Remove temporary workflow
+        if: always()
+        shell: bash
+        run: |
+          git rm -f .github/workflows/fix-dashboard-bank-balance.yml || true
+          git commit -m "Remove temporary dashboard fix workflow" || true
+          git push || true
