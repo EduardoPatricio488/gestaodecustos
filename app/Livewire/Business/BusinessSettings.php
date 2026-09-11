@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Business;
 
+use App\Services\BusinessAccessService;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -13,12 +14,12 @@ class BusinessSettings extends Component
     use WithFileUploads;
 
     public $workspace, $name, $legal_name, $tax_number, $industry, $business_email, $address, $currency, $initial_capital, $logo;
+    public $country_code = 'PT', $vat_rate = 23, $vat_regime = 'normal', $fiscal_year_start = 1;
 
     public function mount()
     {
-        $this->workspace = auth()->user()->currentWorkspace;
-        if (! $this->workspace) return redirect()->route('hub.business.gateway');
-        if (! auth()->user()->isOwner() && ! auth()->user()->isEditor()) abort(403);
+        $this->workspace = app(BusinessAccessService::class)->assertWorkspace();
+        app(BusinessAccessService::class)->assert('manage_settings', auth()->user(), $this->workspace);
 
         $this->name = $this->workspace->name;
         $this->legal_name = $this->workspace->legal_name;
@@ -28,6 +29,10 @@ class BusinessSettings extends Component
         $this->address = $this->workspace->address;
         $this->currency = $this->workspace->currency ?? 'EUR';
         $this->initial_capital = (float) $this->workspace->initial_capital;
+        $this->country_code = strtoupper((string) ($this->workspace->country_code ?? 'PT'));
+        $this->vat_rate = (float) ($this->workspace->vat_rate ?? 23);
+        $this->vat_regime = (string) ($this->workspace->vat_regime ?? 'normal');
+        $this->fiscal_year_start = (int) ($this->workspace->fiscal_year_start ?? 1);
     }
 
     public function updatedTaxNumber($value): void { $this->tax_number = $this->formatTaxNumber($value); }
@@ -39,7 +44,8 @@ class BusinessSettings extends Component
 
     public function save(): void
     {
-        abort_unless(auth()->user()->isOwner() || auth()->user()->isEditor(), 403);
+        app(BusinessAccessService::class)->assert('manage_settings', auth()->user(), $this->workspace);
+
         $this->validate([
             'name' => 'required|string|max:100',
             'legal_name' => 'nullable|string|max:200',
@@ -48,9 +54,14 @@ class BusinessSettings extends Component
             'logo' => 'nullable|image|max:2048',
             'initial_capital' => 'numeric|min:0',
             'currency' => 'required|string|size:3|in:EUR,USD,GBP,CHF,BRL,JPY',
+            'country_code' => 'required|string|size:2|alpha',
+            'vat_rate' => 'required|numeric|min:0|max:100',
+            'vat_regime' => 'required|string|in:normal,isento,caixa',
+            'fiscal_year_start' => 'required|integer|between:1,12',
         ], [
             'business_email.required' => 'O email da empresa é obrigatório.',
             'business_email.email' => 'Introduz um email empresarial válido.',
+            'country_code.size' => 'O país deve usar o código ISO de 2 letras.',
         ]);
 
         $data = [
@@ -62,6 +73,10 @@ class BusinessSettings extends Component
             'address' => $this->address,
             'currency' => strtoupper($this->currency),
             'initial_capital' => round((float) $this->initial_capital, 2),
+            'country_code' => strtoupper($this->country_code),
+            'vat_rate' => round((float) $this->vat_rate, 2),
+            'vat_regime' => $this->vat_regime,
+            'fiscal_year_start' => (int) $this->fiscal_year_start,
         ];
 
         if ($this->logo) {
@@ -83,7 +98,7 @@ class BusinessSettings extends Component
     public function leaveCompany()
     {
         $user = auth()->user();
-        if ($user->isOwner()) abort(403, 'O proprietário deve transferir a propriedade antes de sair.');
+        if ((int) $this->workspace->owner_id === (int) $user->id) abort(403, 'O proprietário deve transferir a propriedade antes de sair.');
         $this->workspace->users()->detach($user->id);
         $user->update(['current_workspace_id' => null]);
         return redirect()->route('hub.business.gateway');
@@ -91,7 +106,9 @@ class BusinessSettings extends Component
 
     public function deleteCompany()
     {
-        abort_unless(auth()->user()->isOwner(), 403);
+        app(BusinessAccessService::class)->assert('manage_settings', auth()->user(), $this->workspace);
+        abort_unless((int) $this->workspace->owner_id === (int) auth()->id(), 403);
+
         $user = auth()->user();
         $user->update(['current_workspace_id' => null]);
         $this->workspace->delete();
