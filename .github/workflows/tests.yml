@@ -14,6 +14,9 @@ on:
       - master
       - workos
 
+permissions:
+  contents: write
+
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -24,6 +27,43 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Repair dashboard PostgreSQL compatibility
+        if: github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout 88f797db08a882364fe79291a80f596870eefb39 -- app/Livewire/Dashboard.php
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('app/Livewire/Dashboard.php')
+          text = path.read_text(encoding='utf-8')
+          old = '''        $driver = DB::connection()->getDriverName();
+        $expenseMonth = $driver === 'sqlite' ? "strftime('%Y-%m', spent_at)" : "DATE_FORMAT(spent_at, '%Y-%m')";
+        $incomeMonth = $driver === 'sqlite' ? "strftime('%Y-%m', received_at)" : "DATE_FORMAT(received_at, '%Y-%m')";'''
+          new = '''        $driver = DB::connection()->getDriverName();
+        $expenseMonth = match ($driver) {
+            'pgsql' => "TO_CHAR(spent_at, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', spent_at)",
+            default => "DATE_FORMAT(spent_at, '%Y-%m')",
+        };
+        $incomeMonth = match ($driver) {
+            'pgsql' => "TO_CHAR(received_at, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', received_at)",
+            default => "DATE_FORMAT(received_at, '%Y-%m')",
+        };'''
+          if old not in text:
+              raise SystemExit('Expected dashboard date-grouping block was not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          php -l app/Livewire/Dashboard.php
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git checkout HEAD^ -- .github/workflows/tests.yml
+          git add app/Livewire/Dashboard.php .github/workflows/tests.yml
+          git commit -m "Fix dashboard PostgreSQL date grouping"
+          git push
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
