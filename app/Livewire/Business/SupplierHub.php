@@ -4,6 +4,7 @@ namespace App\Livewire\Business;
 
 use App\Mail\SupplierPortalAccessMail;
 use App\Models\Expense;
+use App\Models\PortalAccessRequest;
 use App\Models\Supplier;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Layout;
@@ -87,6 +88,109 @@ class SupplierHub extends Component
         ));
 
         $this->dispatch('toast', text: 'Código de acesso enviado para '.$supplier->email.'.', variant: 'success');
+    }
+
+    public function getPendingAccessRequests(): array
+    {
+        return $this->pendingAccessRequestsQuery()
+            ->latest('requested_at')
+            ->limit(50)
+            ->get()
+            ->map(fn (PortalAccessRequest $request) => [
+                'id' => $request->id,
+                'name' => $request->requester_name,
+                'email' => $request->requester_email,
+                'tax_number' => $request->tax_number,
+                'requested_at' => optional($request->requested_at)->format('d/m/Y H:i'),
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function approveAccessRequest($id): void
+    {
+        $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
+
+        $taxNumber = preg_replace('/\D/', '', (string) $request->tax_number);
+        $taxNumber = substr($taxNumber, 0, 9);
+
+        $supplierQuery = auth()->user()->suppliers();
+
+        $supplier = null;
+        if ($request->requester_email) {
+            $supplier = (clone $supplierQuery)->where('email', $request->requester_email)->first();
+        }
+
+        if (! $supplier && $taxNumber) {
+            $supplier = (clone $supplierQuery)->where('tax_number', $taxNumber)->first();
+        }
+
+        if (! $supplier) {
+            $supplier = Supplier::create([
+                'user_id' => auth()->id(),
+                'workspace_id' => auth()->user()->current_workspace_id,
+                'name' => $request->requester_name,
+                'legal_name' => $request->requester_name,
+                'tax_number' => $taxNumber ?: null,
+                'email' => $request->requester_email,
+                'portal_token' => $this->generateUniquePortalToken(),
+            ]);
+        } else {
+            $supplier->update([
+                'name' => $supplier->name ?: $request->requester_name,
+                'email' => $supplier->email ?: $request->requester_email,
+                'tax_number' => $supplier->tax_number ?: ($taxNumber ?: null),
+                'portal_token' => $supplier->portal_token ?: $this->generateUniquePortalToken(),
+            ]);
+            $supplier->refresh();
+        }
+
+        $portalUrl = route('supplier.portal');
+
+        Mail::to($supplier->email)->send(new SupplierPortalAccessMail(
+            $supplier,
+            auth()->user()->currentWorkspace,
+            $supplier->portal_token,
+            $portalUrl,
+        ));
+
+        $request->update([
+            'status' => 'approved',
+            'responded_at' => now(),
+        ]);
+
+        $this->dispatch('toast', text: 'Pedido aprovado. Fornecedor criado e credenciais enviadas por email.', variant: 'success');
+        $this->dispatch('supplier-access-request-updated');
+    }
+
+    public function rejectAccessRequest($id): void
+    {
+        $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
+
+        $request->update([
+            'status' => 'rejected',
+            'responded_at' => now(),
+        ]);
+
+        $this->dispatch('toast', text: 'Pedido de acesso rejeitado.', variant: 'warning');
+        $this->dispatch('supplier-access-request-updated');
+    }
+
+    private function pendingAccessRequestsQuery()
+    {
+        return PortalAccessRequest::query()
+            ->where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('portal_type', 'supplier')
+            ->where('status', 'pending');
+    }
+
+    private function generateUniquePortalToken(): string
+    {
+        do {
+            $token = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        } while (Supplier::where('portal_token', $token)->exists());
+
+        return $token;
     }
 
     public $viewMode = 'grid';
