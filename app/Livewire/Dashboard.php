@@ -792,6 +792,7 @@ class Dashboard extends Component
             fn () => BankAccount::where('workspace_id', $currentWs->id)
                 ->orderByDesc('current_balance')
                 ->take(3)
+                ->get()
                 ->map(fn ($account) => [
                     'name' => $account->name,
                     'balance' => $account->current_balance,
