@@ -43,14 +43,14 @@ class FinancialHealthScoreService
         $costs = (float) data_get($metrics, 'total_costs', 0);
         $margin = (float) data_get($metrics, 'margin', 0);
         $runway = (float) data_get($snapshot, 'runway', 0);
-        $overdue = (int) data_get($metrics, 'overdue_invoices', 0);
+        $overdue = (float) data_get($metrics, 'overdue_receivables', 0);
 
         $score = 0;
         if ($revenue > 0) {
             $score += max(0, min(45, $margin * 1.2));
             $score += $revenue >= $costs ? 20 : 0;
             $score += $runway >= 6 ? 20 : ($runway >= 3 ? 10 : 0);
-            $score += $overdue === 0 ? 15 : 0;
+            $score += $overdue <= 0 ? 15 : 0;
         }
 
         return [
