@@ -46,6 +46,60 @@
     .dark [data-flux-sidebar] a[href="/empresa/dashboard"] svg {
         color: #34d399 !important;
     }
+
+    /* Finance Pro AI: substitui o antigo botão de modo claro/escuro no fundo da sidebar. */
+    [data-flux-sidebar] button[x-data*="darkMode"] {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        min-height: 3.75rem !important;
+        cursor: default !important;
+        pointer-events: none !important;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(255, 255, 255, 0.96)) !important;
+        border-color: rgba(16, 185, 129, 0.22) !important;
+    }
+
+    .dark [data-flux-sidebar] button[x-data*="darkMode"] {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(24, 24, 27, 0.96)) !important;
+        border-color: rgba(16, 185, 129, 0.22) !important;
+    }
+
+    [data-flux-sidebar] button[x-data*="darkMode"] > * {
+        display: none !important;
+    }
+
+    [data-flux-sidebar] button[x-data*="darkMode"]::before {
+        content: 'F';
+        display: flex;
+        width: 2.25rem;
+        height: 2.25rem;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        font-size: 1rem;
+        font-weight: 900;
+        font-style: italic;
+        box-shadow: 0 8px 18px rgba(16, 185, 129, 0.22);
+    }
+
+    [data-flux-sidebar] button[x-data*="darkMode"]::after {
+        content: 'Finance Pro AI\A Gestão financeira inteligente';
+        white-space: pre-line;
+        display: block;
+        color: #18181b;
+        font-size: 0.7rem;
+        font-weight: 900;
+        line-height: 1.45;
+        letter-spacing: 0.04em;
+        text-align: left;
+    }
+
+    .dark [data-flux-sidebar] button[x-data*="darkMode"]::after {
+        color: #ffffff;
+    }
 </style>
 
 @fluxAppearance
