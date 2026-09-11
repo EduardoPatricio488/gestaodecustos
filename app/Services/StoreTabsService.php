@@ -22,9 +22,14 @@ class StoreTabsService
     public function all(): array
     {
         $raw = SiteSetting::get('store_tabs');
-        if (! $raw) return self::DEFAULT_TABS;
+        if (! $raw) {
+            return self::DEFAULT_TABS;
+        }
         $tabs = json_decode($raw, true);
-        if (! is_array($tabs) || $tabs === []) return self::DEFAULT_TABS;
+        if (! is_array($tabs) || $tabs === []) {
+            return self::DEFAULT_TABS;
+        }
+
         return collect($tabs)->sortBy('order')->values()->all();
     }
 

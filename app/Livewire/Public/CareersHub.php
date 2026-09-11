@@ -351,6 +351,6 @@ class CareersHub extends Component
         $notifications = CandidateNotification::where('candidate_id', $candidate->id)->latest()->limit(30)->get();
         $unreadNotifications = $notifications->whereNull('read_at')->count();
 
-        return view('livewire.public.candidate-portal', compact('candidate','jobs','companies','applications','savedJobs','savedJobIds','notifications','unreadNotifications','completion'));
+        return view('livewire.public.candidate-portal', compact('candidate', 'jobs', 'companies', 'applications', 'savedJobs', 'savedJobIds', 'notifications', 'unreadNotifications', 'completion'));
     }
 }

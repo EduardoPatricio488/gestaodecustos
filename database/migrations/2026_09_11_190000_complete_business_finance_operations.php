@@ -112,10 +112,18 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (Schema::hasTable('invoices') && Schema::hasColumn('invoices', 'cost_center_id')) Schema::table('invoices', fn (Blueprint $t) => $t->dropConstrainedForeignId('cost_center_id'));
-        if (Schema::hasTable('expenses') && Schema::hasColumn('expenses', 'cost_center_id')) Schema::table('expenses', fn (Blueprint $t) => $t->dropConstrainedForeignId('cost_center_id'));
-        if (Schema::hasTable('expenses') && Schema::hasColumn('amount_paid')) Schema::table('expenses', fn (Blueprint $t) => $t->dropColumn('amount_paid'));
-        if (Schema::hasTable('invoices') && Schema::hasColumn('amount_credited')) Schema::table('invoices', fn (Blueprint $t) => $t->dropColumn(['amount_paid', 'amount_credited']));
+        if (Schema::hasTable('invoices') && Schema::hasColumn('invoices', 'cost_center_id')) {
+            Schema::table('invoices', fn (Blueprint $t) => $t->dropConstrainedForeignId('cost_center_id'));
+        }
+        if (Schema::hasTable('expenses') && Schema::hasColumn('expenses', 'cost_center_id')) {
+            Schema::table('expenses', fn (Blueprint $t) => $t->dropConstrainedForeignId('cost_center_id'));
+        }
+        if (Schema::hasTable('expenses') && Schema::hasColumn('amount_paid')) {
+            Schema::table('expenses', fn (Blueprint $t) => $t->dropColumn('amount_paid'));
+        }
+        if (Schema::hasTable('invoices') && Schema::hasColumn('amount_credited')) {
+            Schema::table('invoices', fn (Blueprint $t) => $t->dropColumn(['amount_paid', 'amount_credited']));
+        }
         Schema::dropIfExists('cost_centers');
         Schema::dropIfExists('bank_transactions');
         Schema::dropIfExists('credit_notes');

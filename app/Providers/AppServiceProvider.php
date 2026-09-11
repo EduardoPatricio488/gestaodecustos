@@ -1,10 +1,61 @@
 <?php
+
 namespace App\Providers;
-use App\Listeners\StripeWebhookListener; use App\Listeners\UpdateLastLogin; use App\Livewire\Business\BusinessRolesHub; use App\Livewire\Business\BusinessSettlementHub; use App\Livewire\Business\BusinessReconciliationHub; use App\Livewire\Business\CostCenterHub; use Carbon\CarbonImmutable; use Illuminate\Auth\Events\Login; use Illuminate\Support\Carbon; use Illuminate\Support\Facades\App; use Illuminate\Support\Facades\Blade; use Illuminate\Support\Facades\Date; use Illuminate\Support\Facades\DB; use Illuminate\Support\Facades\Event; use Illuminate\Support\Facades\Route; use Illuminate\Support\Facades\URL; use Illuminate\Support\Facades\View; use Illuminate\Support\ServiceProvider; use Illuminate\Validation\Rules\Password; use Laravel\Cashier\Events\WebhookReceived;
+
+use App\Listeners\StripeWebhookListener;
+use App\Listeners\UpdateLastLogin;
+use App\Livewire\Business\BusinessReconciliationHub;
+use App\Livewire\Business\BusinessRolesHub;
+use App\Livewire\Business\BusinessSettlementHub;
+use App\Livewire\Business\CostCenterHub;
+use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
+use Laravel\Cashier\Events\WebhookReceived;
+
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void {}
-    public function boot(): void { $this->configureDefaults(); $this->registerViewNamespaces(); Event::listen(Login::class,UpdateLastLogin::class); Event::listen(WebhookReceived::class,StripeWebhookListener::class); App::setLocale('pt'); Carbon::setLocale('pt'); if(str_contains(request()->getHost(),'ngrok-free.app')||str_contains(request()->getHost(),'ngrok-free.dev')) URL::forceScheme('https'); Route::middleware(['web','auth','plan:business'])->group(function(){ Route::get('/empresa/equipa/permissoes',BusinessRolesHub::class)->name('hub.business.roles'); Route::get('/empresa/pagamentos',BusinessSettlementHub::class)->name('hub.business.settlements'); Route::get('/empresa/reconciliacao',BusinessReconciliationHub::class)->name('hub.business.reconciliation'); Route::get('/empresa/centros-custo',CostCenterHub::class)->name('hub.business.cost-centers'); }); }
-    protected function registerViewNamespaces(): void { View::addNamespace('pages',resource_path('views/pages')); Blade::anonymousComponentPath(resource_path('views/layouts'),'layouts'); Blade::anonymousComponentPath(resource_path('views/pages'),'pages'); }
-    protected function configureDefaults(): void { Date::use(CarbonImmutable::class); DB::prohibitDestructiveCommands(app()->isProduction()); Password::defaults(fn():?Password=>app()->isProduction()?Password::min(12)->mixedCase()->letters()->numbers()->symbols()->uncompromised():null); }
+
+    public function boot(): void
+    {
+        $this->configureDefaults();
+        $this->registerViewNamespaces();
+        Event::listen(Login::class, UpdateLastLogin::class);
+        Event::listen(WebhookReceived::class, StripeWebhookListener::class);
+        App::setLocale('pt');
+        Carbon::setLocale('pt');
+        if (str_contains(request()->getHost(), 'ngrok-free.app') || str_contains(request()->getHost(), 'ngrok-free.dev')) {
+            URL::forceScheme('https');
+        } Route::middleware(['web', 'auth', 'plan:business'])->group(function () {
+            Route::get('/empresa/equipa/permissoes', BusinessRolesHub::class)->name('hub.business.roles');
+            Route::get('/empresa/pagamentos', BusinessSettlementHub::class)->name('hub.business.settlements');
+            Route::get('/empresa/reconciliacao', BusinessReconciliationHub::class)->name('hub.business.reconciliation');
+            Route::get('/empresa/centros-custo', CostCenterHub::class)->name('hub.business.cost-centers');
+        });
+    }
+
+    protected function registerViewNamespaces(): void
+    {
+        View::addNamespace('pages', resource_path('views/pages'));
+        Blade::anonymousComponentPath(resource_path('views/layouts'), 'layouts');
+        Blade::anonymousComponentPath(resource_path('views/pages'), 'pages');
+    }
+
+    protected function configureDefaults(): void
+    {
+        Date::use(CarbonImmutable::class);
+        DB::prohibitDestructiveCommands(app()->isProduction());
+        Password::defaults(fn (): ?Password => app()->isProduction() ? Password::min(12)->mixedCase()->letters()->numbers()->symbols()->uncompromised() : null);
+    }
 }

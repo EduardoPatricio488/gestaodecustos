@@ -20,7 +20,9 @@ class ActivityLog extends Model
     {
         static::creating(function (ActivityLog $log): void {
             $user = auth()->user();
-            if (! $user) return;
+            if (! $user) {
+                return;
+            }
 
             if (! $log->workspace_id) {
                 $log->workspace_id = $user->current_workspace_id;
@@ -42,6 +44,13 @@ class ActivityLog extends Model
         });
     }
 
-    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

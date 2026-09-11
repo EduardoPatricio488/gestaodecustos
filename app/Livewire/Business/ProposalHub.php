@@ -2,9 +2,7 @@
 
 namespace App\Livewire\Business;
 
-use App\Models\Client;
 use App\Models\Invoice;
-use App\Models\Proposal;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -15,14 +13,23 @@ class ProposalHub extends Component
     use WithPagination;
 
     public $search = '';
+
     public $clientFilter = '';
+
     public $title;
+
     public $proposal_number;
+
     public $client_id;
+
     public $amount;
+
     public $valid_until;
+
     public $notes;
+
     public $status = 'rascunho';
+
     public $editingId = null;
 
     protected $rules = [
@@ -36,7 +43,8 @@ class ProposalHub extends Component
     private function workspace()
     {
         $workspace = auth()->user()->currentWorkspace;
-        abort_unless($workspace && in_array($workspace->type, ['business','company'], true), 403);
+        abort_unless($workspace && in_array($workspace->type, ['business', 'company'], true), 403);
+
         return $workspace;
     }
 
@@ -68,6 +76,7 @@ class ProposalHub extends Component
 
         if ($proposal->status === 'convertida') {
             $this->dispatch('toast', text: 'Esta proposta já foi faturada.', variant: 'warning');
+
             return;
         }
 
@@ -89,7 +98,7 @@ class ProposalHub extends Component
 
     public function updateStatus(int $id, string $newStatus)
     {
-        abort_unless(in_array($newStatus, ['rascunho','enviada','aceite','recusada','convertida'], true), 422);
+        abort_unless(in_array($newStatus, ['rascunho', 'enviada', 'aceite', 'recusada', 'convertida'], true), 422);
         $this->workspace()->proposals()->whereKey($id)->firstOrFail()->update(['status' => $newStatus]);
         $this->dispatch('toast', text: 'Estado da proposta atualizado.');
     }
@@ -97,9 +106,14 @@ class ProposalHub extends Component
     public function edit(int $id)
     {
         $proposal = $this->workspace()->proposals()->findOrFail($id);
-        $this->editingId = $proposal->id; $this->title = $proposal->title; $this->proposal_number = $proposal->proposal_number;
-        $this->client_id = $proposal->client_id; $this->amount = $proposal->amount; $this->status = $proposal->status;
-        $this->valid_until = $proposal->valid_until?->format('Y-m-d'); $this->notes = $proposal->notes;
+        $this->editingId = $proposal->id;
+        $this->title = $proposal->title;
+        $this->proposal_number = $proposal->proposal_number;
+        $this->client_id = $proposal->client_id;
+        $this->amount = $proposal->amount;
+        $this->status = $proposal->status;
+        $this->valid_until = $proposal->valid_until?->format('Y-m-d');
+        $this->notes = $proposal->notes;
         $this->dispatch('modal-show', name: 'proposal-modal');
     }
 
@@ -111,24 +125,24 @@ class ProposalHub extends Component
 
     public function resetForm()
     {
-        $this->reset(['title','proposal_number','client_id','amount','valid_until','notes','status','editingId']);
+        $this->reset(['title', 'proposal_number', 'client_id', 'amount', 'valid_until', 'notes', 'status', 'editingId']);
         $this->status = 'rascunho';
     }
 
     public function render()
     {
         $workspace = $this->workspace();
-        $query = $workspace->proposals()->with('client')->where('title','like','%'.$this->search.'%')
-            ->when($this->clientFilter, fn($q)=>$q->where('client_id',$this->clientFilter))
+        $query = $workspace->proposals()->with('client')->where('title', 'like', '%'.$this->search.'%')
+            ->when($this->clientFilter, fn ($q) => $q->where('client_id', $this->clientFilter))
             ->orderByRaw("CASE WHEN status = 'aceite' THEN 1 WHEN status = 'enviada' THEN 2 WHEN status = 'rascunho' THEN 3 WHEN status = 'recusada' THEN 4 WHEN status = 'convertida' THEN 5 ELSE 6 END")
             ->latest();
         $proposals = $query->get();
 
         return view('livewire.business.proposal-hub', [
-            'proposals'=>$proposals,
-            'clients'=>$workspace->clients()->orderBy('name')->get(),
-            'totalValue'=>$proposals->where('status','!=','recusada')->sum('amount'),
-            'conversionRate'=>$proposals->count()>0 ? ($proposals->where('status','convertida')->count()/$proposals->count())*100 : 0,
+            'proposals' => $proposals,
+            'clients' => $workspace->clients()->orderBy('name')->get(),
+            'totalValue' => $proposals->where('status', '!=', 'recusada')->sum('amount'),
+            'conversionRate' => $proposals->count() > 0 ? ($proposals->where('status', 'convertida')->count() / $proposals->count()) * 100 : 0,
         ]);
     }
 }

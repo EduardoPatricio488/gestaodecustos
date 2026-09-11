@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Mail\CfoReportMail;
 use App\Services\AI\AiBrainService;
+use App\Services\AI\ContextEngine;
 use App\Services\AI\FinancialHealthScoreService;
 use App\Services\AI\FinancialIntelligenceService;
 use App\Services\FinanceScoreService;
@@ -18,7 +19,9 @@ use Livewire\Component;
 class AiInsights extends Component
 {
     public bool $isAnalyzing = false;
+
     public string $aiAnalysis = '';
+
     public ?string $lastGeneratedAt = null;
 
     public function mount(): void
@@ -47,11 +50,12 @@ class AiInsights extends Component
         set_time_limit(120);
         $this->isAnalyzing = true;
         $user = auth()->user();
-        $workspace = app(\App\Services\AI\ContextEngine::class)->resolveWorkspace($user);
+        $workspace = app(ContextEngine::class)->resolveWorkspace($user);
 
         if (! $workspace) {
             $this->aiAnalysis = 'Não existe um workspace ativo para analisar.';
             $this->isAnalyzing = false;
+
             return;
         }
 
@@ -88,7 +92,7 @@ class AiInsights extends Component
     public function render()
     {
         $user = auth()->user();
-        $workspace = app(\App\Services\AI\ContextEngine::class)->resolveWorkspace($user);
+        $workspace = app(ContextEngine::class)->resolveWorkspace($user);
         $snapshot = $workspace ? app(FinancialIntelligenceService::class)->snapshot($workspace) : [];
         $earned = (float) data_get($snapshot, 'income', 0);
         $spent = (float) data_get($snapshot, 'expenses', 0);
@@ -106,8 +110,12 @@ class AiInsights extends Component
         }
 
         $manualInsights = [];
-        if ($earned > 0 && $spent > $earned) $manualInsights[] = ['type' => 'danger', 'icon' => 'arrow-trending-down', 'title' => 'Saldo Negativo', 'text' => 'Estás a gastar mais do que o rendimento registado neste período.'];
-        if ($earned > 0 && ($spent / $earned) > 0.9) $manualInsights[] = ['type' => 'warning', 'icon' => 'bell', 'title' => 'Margem Crítica', 'text' => 'Mais de 90% do rendimento registado está comprometido com gastos.'];
+        if ($earned > 0 && $spent > $earned) {
+            $manualInsights[] = ['type' => 'danger', 'icon' => 'arrow-trending-down', 'title' => 'Saldo Negativo', 'text' => 'Estás a gastar mais do que o rendimento registado neste período.'];
+        }
+        if ($earned > 0 && ($spent / $earned) > 0.9) {
+            $manualInsights[] = ['type' => 'warning', 'icon' => 'bell', 'title' => 'Margem Crítica', 'text' => 'Mais de 90% do rendimento registado está comprometido com gastos.'];
+        }
 
         return view('livewire.ai-intelligence-page', [
             'totalEarned' => $earned,

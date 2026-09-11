@@ -14,17 +14,29 @@ class BusinessOnboarding extends Component
     use WithFileUploads;
 
     public $step = 1;
+
     public $name;
+
     public $industry;
+
     public $tax_number;
+
     public $business_email;
+
     public $customIndustry;
+
     public $photo;
+
     public $initial_capital = 0;
+
     public $currency = 'EUR';
+
     public $country_code = 'PT';
+
     public $vat_rate = 23;
+
     public $vat_regime = 'normal';
+
     public $fiscal_year_start = 1;
 
     protected $messages = [
@@ -59,16 +71,23 @@ class BusinessOnboarding extends Component
 
     public function nextStep()
     {
-        if (isset($this->rules[$this->step])) $this->validate($this->rules[$this->step]);
+        if (isset($this->rules[$this->step])) {
+            $this->validate($this->rules[$this->step]);
+        }
         $this->step++;
     }
 
-    public function prevStep() { $this->step--; }
+    public function prevStep()
+    {
+        $this->step--;
+    }
 
     public function createCompany()
     {
         $this->validate(array_merge($this->rules[2], $this->rules[3]));
-        if ($this->industry === 'Outro') $this->validate(['customIndustry' => 'required|string|min:2|max:100']);
+        if ($this->industry === 'Outro') {
+            $this->validate(['customIndustry' => 'required|string|min:2|max:100']);
+        }
 
         $user = auth()->user();
         $finalIndustry = $this->industry === 'Outro' ? $this->customIndustry : $this->industry;
@@ -106,6 +125,7 @@ class BusinessOnboarding extends Component
         }
 
         $this->dispatch('toast', text: 'Empresa ativada! Enviámos um guia para o teu email. 🏢');
+
         return redirect()->route('hub.business.dashboard');
     }
 

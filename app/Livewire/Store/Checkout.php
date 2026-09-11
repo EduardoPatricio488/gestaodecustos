@@ -17,58 +17,139 @@ use Livewire\Component;
 class Checkout extends Component
 {
     use InteractsWithStore;
-    public int $step = 1; public string $couponCode = ''; public string $paymentMethod = 'stripe'; public bool $addExpenseToEducation = true; public ?float $discount = null;
+
+    public int $step = 1;
+
+    public string $couponCode = '';
+
+    public string $paymentMethod = 'stripe';
+
+    public bool $addExpenseToEducation = true;
+
+    public ?float $discount = null;
 
     public function mount(): void
     {
         $cart = app(StoreCartService::class);
-        if ($cart->count() === 0) { $this->redirect(route('store.cart'), navigate: true); return; }
-        if (! $this->validateStoreCart()) { $cart->clear(); $this->redirect(route('hub.store'), navigate: true); return; }
+        if ($cart->count() === 0) {
+            $this->redirect(route('store.cart'), navigate: true);
+
+            return;
+        }
+        if (! $this->validateStoreCart()) {
+            $cart->clear();
+            $this->redirect(route('hub.store'), navigate: true);
+
+            return;
+        }
         $this->discount = app(StoreCouponService::class)->calculateDiscount($cart->total());
     }
 
-    public function nextStep(): void { if ($this->step < 3) $this->step++; }
-    public function prevStep(): void { if ($this->step > 1) $this->step--; }
+    public function nextStep(): void
+    {
+        if ($this->step < 3) {
+            $this->step++;
+        }
+    }
+
+    public function prevStep(): void
+    {
+        if ($this->step > 1) {
+            $this->step--;
+        }
+    }
 
     public function applyCoupon(): void
     {
         $result = app(StoreCouponService::class)->apply($this->couponCode);
-        if (! $result['success']) { $this->dispatch('toast', text: $result['message']); return; }
+        if (! $result['success']) {
+            $this->dispatch('toast', text: $result['message']);
+
+            return;
+        }
         $this->discount = app(StoreCouponService::class)->calculateDiscount(app(StoreCartService::class)->total());
         $this->dispatch('toast', text: $result['message']);
     }
 
-    public function removeCoupon(): void { app(StoreCouponService::class)->clear(); $this->couponCode = ''; $this->discount = 0; $this->dispatch('toast', text: 'Cupão removido.'); }
+    public function removeCoupon(): void
+    {
+        app(StoreCouponService::class)->clear();
+        $this->couponCode = '';
+        $this->discount = 0;
+        $this->dispatch('toast', text: 'Cupão removido.');
+    }
 
     public function confirmPurchase()
     {
-        if (! $this->validateStoreCart()) { $this->dispatch('toast', text: 'Um ou mais produtos já não estão disponíveis para compra.'); return redirect()->route('hub.store'); }
-        if ($this->paymentMethod === 'stripe') return $this->payWithStripe();
+        if (! $this->validateStoreCart()) {
+            $this->dispatch('toast', text: 'Um ou mais produtos já não estão disponíveis para compra.');
 
-        $cart = app(StoreCartService::class); $couponService = app(StoreCouponService::class); $purchaseService = app(StorePurchaseService::class); $items = $cart->items();
-        if ($items->isEmpty()) { $this->dispatch('toast', text: 'O carrinho está vazio.'); return; }
-        $subtotal = $cart->total(); $coupon = $couponService->getApplied(); $discount = $couponService->calculateDiscount($subtotal, $coupon); $purchased = 0; $couponUsed = false;
+            return redirect()->route('hub.store');
+        }
+        if ($this->paymentMethod === 'stripe') {
+            return $this->payWithStripe();
+        }
+
+        $cart = app(StoreCartService::class);
+        $couponService = app(StoreCouponService::class);
+        $purchaseService = app(StorePurchaseService::class);
+        $items = $cart->items();
+        if ($items->isEmpty()) {
+            $this->dispatch('toast', text: 'O carrinho está vazio.');
+
+            return;
+        }
+        $subtotal = $cart->total();
+        $coupon = $couponService->getApplied();
+        $discount = $couponService->calculateDiscount($subtotal, $coupon);
+        $purchased = 0;
+        $couponUsed = false;
         foreach ($items as $item) {
             $itemDiscount = $subtotal > 0 ? round($discount * ($item['subtotal'] / $subtotal), 2) : 0;
             $amountPaid = max(0, $item['subtotal'] - $itemDiscount);
             $purchaseService->completePurchase($item['product'], $amountPaid, $this->paymentMethod, coupon: $couponUsed ? null : $coupon, discount: $itemDiscount);
-            if ($this->addExpenseToEducation) $purchaseService->recordEducationExpense($item['product'], $amountPaid);
-            $couponUsed = $coupon !== null; $purchased++;
+            if ($this->addExpenseToEducation) {
+                $purchaseService->recordEducationExpense($item['product'], $amountPaid);
+            }
+            $couponUsed = $coupon !== null;
+            $purchased++;
         }
-        $cart->clear(); $couponService->clear(); $this->dispatch('cart-updated');
+        $cart->clear();
+        $couponService->clear();
+        $this->dispatch('cart-updated');
         $toast = $purchased === 1 ? 'Compra concluída! Recurso ativado no inventário.' : "{$purchased} recursos ativados no inventário.";
-        if ($this->addExpenseToEducation) $toast .= ' Despesa registada em Educação.';
-        $this->dispatch('toast', text: $toast); return redirect()->route('hub.inventory');
+        if ($this->addExpenseToEducation) {
+            $toast .= ' Despesa registada em Educação.';
+        }
+        $this->dispatch('toast', text: $toast);
+
+        return redirect()->route('hub.inventory');
     }
 
     public function payWithStripe()
     {
-        if (! $this->validateStoreCart()) { $this->dispatch('toast', text: 'Um ou mais produtos já não estão disponíveis para compra.'); return redirect()->route('hub.store'); }
-        $cart = app(StoreCartService::class); $couponService = app(StoreCouponService::class); $items = $cart->items();
-        if ($items->isEmpty()) { $this->dispatch('toast', text: 'O carrinho está vazio.'); return; }
-        $subtotal = $cart->total(); $coupon = $couponService->getApplied(); $discount = $couponService->calculateDiscount($subtotal, $coupon); $lineItems = []; $pendingItems = [];
+        if (! $this->validateStoreCart()) {
+            $this->dispatch('toast', text: 'Um ou mais produtos já não estão disponíveis para compra.');
+
+            return redirect()->route('hub.store');
+        }
+        $cart = app(StoreCartService::class);
+        $couponService = app(StoreCouponService::class);
+        $items = $cart->items();
+        if ($items->isEmpty()) {
+            $this->dispatch('toast', text: 'O carrinho está vazio.');
+
+            return;
+        }
+        $subtotal = $cart->total();
+        $coupon = $couponService->getApplied();
+        $discount = $couponService->calculateDiscount($subtotal, $coupon);
+        $lineItems = [];
+        $pendingItems = [];
         foreach ($items as $item) {
-            $product = $item['product']; $itemDiscount = $subtotal > 0 ? round($discount * ($item['subtotal'] / $subtotal), 2) : 0; $amountPaid = max(0, $item['subtotal'] - $itemDiscount);
+            $product = $item['product'];
+            $itemDiscount = $subtotal > 0 ? round($discount * ($item['subtotal'] / $subtotal), 2) : 0;
+            $amountPaid = max(0, $item['subtotal'] - $itemDiscount);
             $lineItems[] = ['price_data' => ['currency' => Auth::user()->preferredCurrency(), 'product_data' => ['name' => $product->title], 'unit_amount' => (int) round($amountPaid * 100)], 'quantity' => 1];
             $pendingItems[] = ['product_id' => $product->id, 'quantity' => 1, 'amount_paid' => $amountPaid];
         }
@@ -76,15 +157,26 @@ class Checkout extends Component
         try {
             $checkout = Auth::user()->checkout($lineItems, ['success_url' => route('store.checkout.stripe.success', $pending->id).'?session_id={CHECKOUT_SESSION_ID}', 'cancel_url' => route('store.checkout.stripe.cancel', $pending->id), 'metadata' => ['type' => 'store_purchase', 'pending_id' => $pending->id]]);
         } catch (\Exception $e) {
-            Log::error('Erro no Stripe Checkout da loja: '.$e->getMessage()); $pending->delete(); $this->dispatch('toast', text: 'Não foi possível contactar o Stripe. Tenta novamente.'); return;
+            Log::error('Erro no Stripe Checkout da loja: '.$e->getMessage());
+            $pending->delete();
+            $this->dispatch('toast', text: 'Não foi possível contactar o Stripe. Tenta novamente.');
+
+            return;
         }
-        $pending->update(['stripe_session_id' => $checkout->asStripeCheckoutSession()->id]); return redirect($checkout->url);
+        $pending->update(['stripe_session_id' => $checkout->asStripeCheckoutSession()->id]);
+
+        return redirect($checkout->url);
     }
 
     public function render()
     {
-        $cart = app(StoreCartService::class); $couponService = app(StoreCouponService::class); $subtotal = $cart->total(); $discount = $couponService->calculateDiscount($subtotal);
-        $cartProducts = $cart->items()->pluck('product'); $recommendations = app(StoreRecommendationService::class);
+        $cart = app(StoreCartService::class);
+        $couponService = app(StoreCouponService::class);
+        $subtotal = $cart->total();
+        $discount = $couponService->calculateDiscount($subtotal);
+        $cartProducts = $cart->items()->pluck('product');
+        $recommendations = app(StoreRecommendationService::class);
+
         return view('livewire.store.checkout', ['items' => $cart->items(), 'subtotal' => $subtotal, 'discount' => $discount, 'total' => max(0, $subtotal - $discount), 'appliedCoupon' => $couponService->getApplied(), 'crossSell' => $recommendations->crossSell($cartProducts), 'upsell' => $recommendations->upsell($cartProducts)]);
     }
 }

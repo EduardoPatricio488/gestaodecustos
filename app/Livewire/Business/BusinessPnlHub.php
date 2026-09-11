@@ -13,8 +13,15 @@ class BusinessPnlHub extends Component
 {
     public $year;
 
-    public function mount(): void { $this->year = now()->year; }
-    public function setYear($year): void { $this->year = (int) $year; }
+    public function mount(): void
+    {
+        $this->year = now()->year;
+    }
+
+    public function setYear($year): void
+    {
+        $this->year = (int) $year;
+    }
 
     public function render()
     {
@@ -23,6 +30,7 @@ class BusinessPnlHub extends Component
         $monthlyData = collect(app(BusinessFinancialMetrics::class)->forYear($workspace, (int) $this->year))
             ->map(function (array $row, int $index) {
                 $month = $index + 1;
+
                 return [
                     'month_name' => mb_convert_case(Carbon::create((int) $this->year, $month, 1)->translatedFormat('F'), MB_CASE_TITLE),
                     'revenue' => $row['revenue_cash'],

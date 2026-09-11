@@ -17,13 +17,21 @@ class CompanyExpenses extends Component
     use WithPagination;
 
     public $search = '';
+
     public $editingId = null;
+
     public $categoryFilter = '';
+
     public $title;
+
     public $amount;
+
     public $category_id;
+
     public $description;
+
     public $spent_at;
+
     public $vat_amount = 0;
 
     protected $rules = [
@@ -33,8 +41,15 @@ class CompanyExpenses extends Component
         'spent_at' => 'required|date',
     ];
 
-    public function updatingSearch() { $this->resetPage(); }
-    public function updatingCategoryFilter() { $this->resetPage(); }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingCategoryFilter()
+    {
+        $this->resetPage();
+    }
 
     public function openModal(): void
     {
@@ -100,7 +115,7 @@ class CompanyExpenses extends Component
             $ownerUserId = $expense->user_id;
         } else {
             $access->assert('create_expense', auth()->user(), $workspace);
-            $expense = new Expense();
+            $expense = new Expense;
             $ownerUserId = Auth::id();
         }
 

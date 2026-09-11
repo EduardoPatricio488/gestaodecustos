@@ -13,7 +13,9 @@ class ProactiveAiService
     public function analyze(Workspace $workspace): array
     {
         $owner = $workspace->owner;
-        if (! $owner) return [];
+        if (! $owner) {
+            return [];
+        }
 
         $snapshot = app(FinancialIntelligenceService::class)->snapshot($workspace);
         $candidates = in_array($workspace->type, ['business', 'company'], true)
@@ -25,7 +27,9 @@ class ProactiveAiService
 
         foreach ($candidates as $candidate) {
             $decision = $decisionEngine->decide($candidate);
-            if (! $decision['should_notify'] || ! $this->shouldCreate($owner, $workspace, $candidate['dedupe_key'])) continue;
+            if (! $decision['should_notify'] || ! $this->shouldCreate($owner, $workspace, $candidate['dedupe_key'])) {
+                continue;
+            }
 
             $candidate['priority'] = $decision['priority'];
             $candidate['score'] = $decision['score'];
@@ -156,6 +160,7 @@ class ProactiveAiService
     {
         $symbols = ['EUR' => '€', 'USD' => '$', 'GBP' => '£', 'CHF' => 'CHF'];
         $symbol = $symbols[strtoupper($currency)] ?? strtoupper($currency);
+
         return number_format($amount, 2, ',', ' ').' '.$symbol;
     }
 }

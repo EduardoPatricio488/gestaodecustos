@@ -13,13 +13,21 @@ use Livewire\Component;
 class AiCopilot extends Component
 {
     public bool $isOpen = false;
+
     public string $input = '';
+
     public array $messages = [];
+
     public array $pendingActions = [];
+
     public array $conversations = [];
+
     public array $pageContext = [];
+
     public ?int $conversationId = null;
+
     public bool $isLoading = false;
+
     private ?int $loadedWorkspaceId = null;
 
     public function mount(ContextEngine $contextEngine): void
@@ -59,14 +67,18 @@ class AiCopilot extends Component
     public function sendMessage(AiBrainService $brain): void
     {
         $input = trim($this->input);
-        if ($input === '' || $this->isLoading) return;
+        if ($input === '' || $this->isLoading) {
+            return;
+        }
 
         $this->isLoading = true;
 
         try {
             $user = Auth::user();
             $workspace = app(ContextEngine::class)->resolveWorkspace($user);
-            if (! $workspace) throw new \RuntimeException('Workspace inválido.');
+            if (! $workspace) {
+                throw new \RuntimeException('Workspace inválido.');
+            }
 
             if ($this->loadedWorkspaceId !== $workspace->id) {
                 $this->loadWorkspaceConversation($user->id, $workspace);
@@ -92,7 +104,9 @@ class AiCopilot extends Component
 
     public function confirmAction(int $actionId, AiBrainService $brain): void
     {
-        if ($this->isLoading) return;
+        if ($this->isLoading) {
+            return;
+        }
 
         $this->isLoading = true;
 
@@ -139,7 +153,9 @@ class AiCopilot extends Component
             ->where('workspace_id', $this->loadedWorkspaceId)
             ->first();
 
-        if (! $conversation) return;
+        if (! $conversation) {
+            return;
+        }
 
         $this->conversationId = $conversation->id;
         $this->loadMessages($conversation);
@@ -148,7 +164,9 @@ class AiCopilot extends Component
 
     public function archiveConversation(): void
     {
-        if (! $this->conversationId) return;
+        if (! $this->conversationId) {
+            return;
+        }
 
         AiConversation::query()
             ->whereKey($this->conversationId)
@@ -173,7 +191,9 @@ class AiCopilot extends Component
         $this->conversations = [];
         $this->loadedWorkspaceId = $workspace?->id;
 
-        if (! $workspace) return;
+        if (! $workspace) {
+            return;
+        }
 
         $conversation = AiConversation::query()
             ->where('user_id', $userId)
@@ -194,6 +214,7 @@ class AiCopilot extends Component
     {
         if (! $this->loadedWorkspaceId) {
             $this->conversations = [];
+
             return;
         }
 

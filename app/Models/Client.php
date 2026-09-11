@@ -17,11 +17,30 @@ class Client extends Model
         'status', 'address', 'notes', 'portal_token',
     ];
 
-    public function projects(): HasMany { return $this->hasMany(Project::class); }
-    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
-    public function invoices(): HasMany { return $this->hasMany(Invoice::class); }
-    public function proposals(): HasMany { return $this->hasMany(Proposal::class); }
-    public function supportTickets(): HasMany { return $this->hasMany(SupportTicket::class); }
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(Proposal::class);
+    }
+
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
 
     public function getTotalRevenueAttribute(): float
     {

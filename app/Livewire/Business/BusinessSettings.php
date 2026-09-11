@@ -13,8 +13,33 @@ class BusinessSettings extends Component
 {
     use WithFileUploads;
 
-    public $workspace, $name, $legal_name, $tax_number, $industry, $business_email, $address, $currency, $initial_capital, $logo;
-    public $country_code = 'PT', $vat_rate = 23, $vat_regime = 'normal', $fiscal_year_start = 1;
+    public $workspace;
+
+    public $name;
+
+    public $legal_name;
+
+    public $tax_number;
+
+    public $industry;
+
+    public $business_email;
+
+    public $address;
+
+    public $currency;
+
+    public $initial_capital;
+
+    public $logo;
+
+    public $country_code = 'PT';
+
+    public $vat_rate = 23;
+
+    public $vat_regime = 'normal';
+
+    public $fiscal_year_start = 1;
 
     public function mount()
     {
@@ -35,7 +60,10 @@ class BusinessSettings extends Component
         $this->fiscal_year_start = (int) ($this->workspace->fiscal_year_start ?? 1);
     }
 
-    public function updatedTaxNumber($value): void { $this->tax_number = $this->formatTaxNumber($value); }
+    public function updatedTaxNumber($value): void
+    {
+        $this->tax_number = $this->formatTaxNumber($value);
+    }
 
     private function formatTaxNumber($value): string
     {
@@ -82,7 +110,9 @@ class BusinessSettings extends Component
         if ($this->logo) {
             if ($this->workspace->logo_path) {
                 $oldLogo = preg_replace('#^/?storage/#', '', $this->workspace->logo_path);
-                if ($oldLogo && Storage::disk('public')->exists($oldLogo)) Storage::disk('public')->delete($oldLogo);
+                if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
+                    Storage::disk('public')->delete($oldLogo);
+                }
             }
             $data['logo_path'] = $this->logo->store('logos', 'public');
             $this->logo = null;
@@ -93,14 +123,20 @@ class BusinessSettings extends Component
         $this->dispatch('toast', text: 'Dados da empresa atualizados com sucesso!', variant: 'success');
     }
 
-    public function getLogoUrlAttribute() { return $this->workspace->logo_url ?: asset('images/default-logo.png'); }
+    public function getLogoUrlAttribute()
+    {
+        return $this->workspace->logo_url ?: asset('images/default-logo.png');
+    }
 
     public function leaveCompany()
     {
         $user = auth()->user();
-        if ((int) $this->workspace->owner_id === (int) $user->id) abort(403, 'O proprietário deve transferir a propriedade antes de sair.');
+        if ((int) $this->workspace->owner_id === (int) $user->id) {
+            abort(403, 'O proprietário deve transferir a propriedade antes de sair.');
+        }
         $this->workspace->users()->detach($user->id);
         $user->update(['current_workspace_id' => null]);
+
         return redirect()->route('hub.business.gateway');
     }
 
@@ -112,6 +148,7 @@ class BusinessSettings extends Component
         $user = auth()->user();
         $user->update(['current_workspace_id' => null]);
         $this->workspace->delete();
+
         return redirect()->route('hub.business.gateway');
     }
 

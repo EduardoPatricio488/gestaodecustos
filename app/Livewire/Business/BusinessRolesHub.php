@@ -11,6 +11,7 @@ use Livewire\Component;
 class BusinessRolesHub extends Component
 {
     public $selectedUserId;
+
     public $selectedRole = 'employee';
 
     public array $roles = [
@@ -36,7 +37,9 @@ class BusinessRolesHub extends Component
 
         $this->selectedUserId = $member->id;
         $this->selectedRole = app(BusinessAccessService::class)->role($member, $workspace);
-        if ($this->selectedRole === 'owner') $this->selectedRole = 'admin';
+        if ($this->selectedRole === 'owner') {
+            $this->selectedRole = 'admin';
+        }
     }
 
     public function updateRole(): void

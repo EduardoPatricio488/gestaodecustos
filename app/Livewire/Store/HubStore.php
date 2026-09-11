@@ -20,18 +20,36 @@ class HubStore extends Component
 {
     use InteractsWithStore;
 
-    #[Url(as: 'tab')] public string $activeTab = 'all';
-    #[Url(as: 'q')] public string $search = '';
-    #[Url(as: 'min')] public ?string $priceMin = null;
-    #[Url(as: 'max')] public ?string $priceMax = null;
-    #[Url(as: 'sort')] public string $sortBy = 'popular';
+    #[Url(as: 'tab')]
+    public string $activeTab = 'all';
+
+    #[Url(as: 'q')]
+    public string $search = '';
+
+    #[Url(as: 'min')]
+    public ?string $priceMin = null;
+
+    #[Url(as: 'max')]
+    public ?string $priceMax = null;
+
+    #[Url(as: 'sort')]
+    public string $sortBy = 'popular';
+
     public bool $onlyFeatured = false;
 
-    public function setTab(string $tab): void { $this->activeTab = $tab; }
+    public function setTab(string $tab): void
+    {
+        $this->activeTab = $tab;
+    }
+
     public function updatedSearch(): void {}
+
     public function updatedPriceMin(): void {}
+
     public function updatedPriceMax(): void {}
+
     public function updatedSortBy(): void {}
+
     public function updatedOnlyFeatured(): void {}
 
     public function clearFilters(): void

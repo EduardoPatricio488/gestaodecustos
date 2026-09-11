@@ -40,7 +40,9 @@ class StoreEntitlementService
     {
         $key = self::LEGACY_WIDGET_SLUGS[$key] ?? $key;
 
-        if ($this->userOwns($user, $key)) return true;
+        if ($this->userOwns($user, $key)) {
+            return true;
+        }
 
         return StorePurchase::query()
             ->where('user_id', $user->id)

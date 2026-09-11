@@ -94,7 +94,9 @@ class ContextEngine
 
     private function moduleFromRoute(?string $routeName): ?string
     {
-        if (! $routeName) return null;
+        if (! $routeName) {
+            return null;
+        }
 
         return match (true) {
             str_contains($routeName, 'business') => 'business',

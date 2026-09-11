@@ -11,9 +11,13 @@ use Livewire\Component;
 class SupportHub extends Component
 {
     public $subject;
+
     public $message;
+
     public $priority = 'normal';
+
     public $activeTicket;
+
     public $replyMessage;
 
     /**

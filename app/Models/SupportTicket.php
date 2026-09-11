@@ -11,9 +11,20 @@ class SupportTicket extends Model
 {
     use BelongsToWorkspace;
 
-    protected $fillable = ['user_id','workspace_id','client_id','supplier_id','subject','message','status','priority'];
+    protected $fillable = ['user_id', 'workspace_id', 'client_id', 'supplier_id', 'subject', 'message', 'status', 'priority'];
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
-    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
-    public function messages(): HasMany { return $this->hasMany(SupportMessage::class, 'support_ticket_id'); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(SupportMessage::class, 'support_ticket_id');
+    }
 }

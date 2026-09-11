@@ -3,7 +3,6 @@
 namespace App\Services\AI;
 
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Throwable;
 
 final class AiHealthService
@@ -26,6 +25,7 @@ final class AiHealthService
                 ];
             } catch (Throwable $e) {
                 report($e);
+
                 return ['status' => 'degraded', 'provider' => $provider, 'reason' => 'health_check_failed'];
             }
         });

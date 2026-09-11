@@ -16,9 +16,7 @@ use Livewire\Livewire;
 
 class AiBrainServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-    }
+    public function register(): void {}
 
     public function boot(): void
     {
@@ -37,7 +35,9 @@ class AiBrainServiceProvider extends ServiceProvider
 
     private function queueAnalysis(?int $workspaceId): void
     {
-        if (! $workspaceId) return;
+        if (! $workspaceId) {
+            return;
+        }
         AnalyzeWorkspaceForAiInsights::dispatch($workspaceId)->afterCommit();
     }
 }

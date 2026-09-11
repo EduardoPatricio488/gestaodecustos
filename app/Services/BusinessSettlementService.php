@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\BankAccount;
 use App\Models\BankTransaction;
 use App\Models\CreditNote;
 use App\Models\Expense;
@@ -178,7 +179,7 @@ class BusinessSettlementService
 
     private function assertBankAccount(?int $id, int $workspaceId): void
     {
-        if ($id && ! \App\Models\BankAccount::where('workspace_id', $workspaceId)->whereKey($id)->exists()) {
+        if ($id && ! BankAccount::where('workspace_id', $workspaceId)->whereKey($id)->exists()) {
             abort(404);
         }
     }

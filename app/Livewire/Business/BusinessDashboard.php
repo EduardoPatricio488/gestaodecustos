@@ -15,7 +15,9 @@ class BusinessDashboard extends Component
 {
     public function mount(): void
     {
-        if (Auth::check()) NotificationService::checkAll(Auth::user());
+        if (Auth::check()) {
+            NotificationService::checkAll(Auth::user());
+        }
     }
 
     public function switchBusinessWorkspace(int $workspaceId): void
@@ -48,6 +50,7 @@ class BusinessDashboard extends Component
             $user->update(['current_workspace_id' => $personalWs->id]);
             session()->forget('viewing_as_collaborator_id');
         }
+
         return redirect()->route('dashboard');
     }
 
@@ -58,6 +61,7 @@ class BusinessDashboard extends Component
         app(BusinessAccessService::class)->assert('manage_team', $user, $workspace);
 
         session()->forget('viewing_as_collaborator_id');
+
         return redirect()->route('hub.business.dashboard');
     }
 

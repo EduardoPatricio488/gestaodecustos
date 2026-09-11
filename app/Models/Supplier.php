@@ -17,7 +17,18 @@ class Supplier extends Model
         'website', 'address', 'portal_token', 'payment_terms',
     ];
 
-    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
-    public function expenses(): HasMany { return $this->hasMany(Expense::class); }
-    public function supportTickets(): HasMany { return $this->hasMany(SupportTicket::class); }
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
 }

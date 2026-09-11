@@ -12,7 +12,9 @@ use Livewire\Component;
 class CostCenterHub extends Component
 {
     public string $code = '';
+
     public string $name = '';
+
     public string $description = '';
 
     public function mount(): void

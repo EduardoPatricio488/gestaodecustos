@@ -7,23 +7,41 @@ use Illuminate\Support\Str;
 final class AiIntentDetector
 {
     public const FINANCIAL_SUMMARY = 'FINANCIAL_SUMMARY';
+
     public const EXPENSE_ANALYSIS = 'EXPENSE_ANALYSIS';
+
     public const INCOME_ANALYSIS = 'INCOME_ANALYSIS';
+
     public const CATEGORY_ANALYSIS = 'CATEGORY_ANALYSIS';
+
     public const BUDGET_ANALYSIS = 'BUDGET_ANALYSIS';
+
     public const SAVING_ADVICE = 'SAVING_ADVICE';
+
     public const TRANSACTION_SEARCH = 'TRANSACTION_SEARCH';
+
     public const TRANSACTION_CREATION = 'TRANSACTION_CREATION';
+
     public const TRANSACTION_UPDATE = 'TRANSACTION_UPDATE';
+
     public const TRANSACTION_DELETE = 'TRANSACTION_DELETE';
+
     public const SUBSCRIPTION_ANALYSIS = 'SUBSCRIPTION_ANALYSIS';
+
     public const INVESTMENT_ANALYSIS = 'INVESTMENT_ANALYSIS';
+
     public const FORECAST = 'FORECAST';
+
     public const COMPARISON = 'COMPARISON';
+
     public const BUSINESS_ANALYSIS = 'BUSINESS_ANALYSIS';
+
     public const GENERAL_FINANCE = 'GENERAL_FINANCE';
+
     public const GENERAL_CHAT = 'GENERAL_CHAT';
+
     public const HELP = 'HELP';
+
     public const UNKNOWN = 'UNKNOWN';
 
     public function detect(string $input): array

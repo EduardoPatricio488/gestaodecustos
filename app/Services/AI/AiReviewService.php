@@ -20,7 +20,9 @@ class AiReviewService
     private function publish(Workspace $workspace, string $period): void
     {
         $owner = $workspace->owner;
-        if (! $owner) return;
+        if (! $owner) {
+            return;
+        }
 
         $snapshot = app(FinancialIntelligenceService::class)->snapshot($workspace);
         $health = $workspace->type === 'business'
@@ -51,6 +53,7 @@ class AiReviewService
     {
         if (($snapshot['kind'] ?? 'personal') === 'business') {
             $metrics = $snapshot['metrics'] ?? [];
+
             return sprintf('%s: saúde %d/100. Receita recebida %s, custos %s, margem %s%% e valores vencidos %s. Dados calculados pelo backend.',
                 $period === 'weekly' ? 'Resumo da semana' : 'Resumo do mês',
                 $health['score'],
@@ -74,6 +77,7 @@ class AiReviewService
     private function money(float $amount, string $currency): string
     {
         $symbols = ['EUR' => '€', 'USD' => '$', 'GBP' => '£', 'CHF' => 'CHF'];
+
         return number_format($amount, 2, ',', ' ').' '.($symbols[strtoupper($currency)] ?? strtoupper($currency));
     }
 }

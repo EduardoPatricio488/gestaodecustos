@@ -27,10 +27,14 @@ trait LogsActivity
 
     protected static function log($model, string $action, string $description, ?array $changes = null): void
     {
-        if (! Auth::check()) return;
+        if (! Auth::check()) {
+            return;
+        }
 
         $workspaceId = $model->workspace_id ?? Auth::user()->current_workspace_id;
-        if (! $workspaceId) return;
+        if (! $workspaceId) {
+            return;
+        }
 
         ActivityLog::create([
             'workspace_id' => $workspaceId,
@@ -51,7 +55,9 @@ trait LogsActivity
     protected static function redact(array $values): array
     {
         foreach (['password', 'remember_token', 'portal_token', 'invite_token', 'verification_code', 'two_factor_secret', 'two_factor_recovery_codes'] as $field) {
-            if (array_key_exists($field, $values)) $values[$field] = '[REDACTED]';
+            if (array_key_exists($field, $values)) {
+                $values[$field] = '[REDACTED]';
+            }
         }
 
         return $values;

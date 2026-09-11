@@ -12,22 +12,53 @@ class BankAccount extends Model
     use BelongsToWorkspace;
 
     protected $fillable = [
-        'workspace_id','user_id','name','type','is_business','color','icon','status','description','opened_at','include_in_total','alert_below',
-        'bank_name','country','iban','swift','holder_name','currency','balance','credit_limit','forecast_balance','risk_score','tags','notes',
+        'workspace_id', 'user_id', 'name', 'type', 'is_business', 'color', 'icon', 'status', 'description', 'opened_at', 'include_in_total', 'alert_below',
+        'bank_name', 'country', 'iban', 'swift', 'holder_name', 'currency', 'balance', 'credit_limit', 'forecast_balance', 'risk_score', 'tags', 'notes',
     ];
 
     protected $casts = [
-        'tags'=>'array','is_business'=>'boolean','include_in_total'=>'boolean','balance'=>'float','credit_limit'=>'float','forecast_balance'=>'float','alert_below'=>'float','risk_score'=>'integer','opened_at'=>'date',
+        'tags' => 'array', 'is_business' => 'boolean', 'include_in_total' => 'boolean', 'balance' => 'float', 'credit_limit' => 'float', 'forecast_balance' => 'float', 'alert_below' => 'float', 'risk_score' => 'integer', 'opened_at' => 'date',
     ];
 
-    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
-    public function expenses(): HasMany { return $this->hasMany(Expense::class); }
-    public function incomes(): HasMany { return $this->hasMany(Income::class); }
-    public function recurringIncomes(): HasMany { return $this->hasMany(RecurringIncome::class); }
-    public function reserves(): HasMany { return $this->hasMany(BankReserve::class); }
-    public function transfersOut(): HasMany { return $this->hasMany(BankTransfer::class, 'from_account_id'); }
-    public function transfersIn(): HasMany { return $this->hasMany(BankTransfer::class, 'to_account_id'); }
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function incomes(): HasMany
+    {
+        return $this->hasMany(Income::class);
+    }
+
+    public function recurringIncomes(): HasMany
+    {
+        return $this->hasMany(RecurringIncome::class);
+    }
+
+    public function reserves(): HasMany
+    {
+        return $this->hasMany(BankReserve::class);
+    }
+
+    public function transfersOut(): HasMany
+    {
+        return $this->hasMany(BankTransfer::class, 'from_account_id');
+    }
+
+    public function transfersIn(): HasMany
+    {
+        return $this->hasMany(BankTransfer::class, 'to_account_id');
+    }
 
     public function getCurrentBalanceAttribute(): float
     {
@@ -64,13 +95,19 @@ class BankAccount extends Model
 
     public function getCreditUsedAttribute(): float
     {
-        if ($this->type !== 'credito' || ! $this->credit_limit) return 0;
+        if ($this->type !== 'credito' || ! $this->credit_limit) {
+            return 0;
+        }
+
         return abs($this->current_balance);
     }
 
     public function getCreditUsagePercentAttribute(): float
     {
-        if ($this->type !== 'credito' || ! $this->credit_limit) return 0;
+        if ($this->type !== 'credito' || ! $this->credit_limit) {
+            return 0;
+        }
+
         return round(($this->credit_used / $this->credit_limit) * 100, 2);
     }
 
@@ -82,7 +119,7 @@ class BankAccount extends Model
     public function getIcon(): string
     {
         return match ($this->type) {
-            'poupanca'=>'wallet','cash'=>'banknotes','credito'=>'credit-card','tesouraria'=>'building-office','operacoes'=>'cog','salarios'=>'users','impostos'=>'document-currency-euro',default=>'building-library',
+            'poupanca' => 'wallet','cash' => 'banknotes','credito' => 'credit-card','tesouraria' => 'building-office','operacoes' => 'cog','salarios' => 'users','impostos' => 'document-currency-euro',default => 'building-library',
         };
     }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Services\AI;
 
-use App\Services\FinanceScoreService;
 use App\Models\Workspace;
+use App\Services\FinanceScoreService;
 
 class FinancialHealthScoreService
 {

@@ -17,14 +17,23 @@ class InvoicingHub extends Component
     use WithPagination;
 
     public $client_name;
+
     public $invoice_number;
+
     public $amount_excl_vat;
+
     public $vat_amount;
+
     public $total_amount;
+
     public string $currency = 'EUR';
+
     public $due_date;
+
     public $status = 'pendente';
+
     public $statusFilter = '';
+
     public array $currencyOptions = [];
 
     public function mount(): void

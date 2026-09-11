@@ -15,11 +15,15 @@ class EnsureBusinessWorkspaceAccess
         $access = app(BusinessAccessService::class);
 
         if ($request->user()?->current_workspace_id && $access->workspace($request->user())) {
-            if ($path === 'receitas') return redirect()->route('hub.business.invoices');
+            if ($path === 'receitas') {
+                return redirect()->route('hub.business.invoices');
+            }
         }
 
         if (str_starts_with($path, 'empresa/')) {
-            if (in_array($path, ['empresa/acesso', 'empresa/onboarding'], true)) return $next($request);
+            if (in_array($path, ['empresa/acesso', 'empresa/onboarding'], true)) {
+                return $next($request);
+            }
 
             $workspace = $access->assertWorkspace($request->user());
             $routePermission = match (true) {
@@ -31,18 +35,25 @@ class EnsureBusinessWorkspaceAccess
                 default => 'view_business',
             };
             $access->assert($routePermission, $request->user(), $workspace);
+
             return $next($request);
         }
 
         if ($request->is('livewire/update')) {
             foreach ((array) $request->input('components', []) as $component) {
                 $snapshot = $component['snapshot'] ?? null;
-                if (! is_string($snapshot)) continue;
+                if (! is_string($snapshot)) {
+                    continue;
+                }
 
                 $decoded = json_decode($snapshot, true);
                 $name = (string) data_get($decoded, 'memo.name', '');
-                if (! str_starts_with($name, 'business.')) continue;
-                if (in_array($name, ['business.business-gateway', 'business.business-onboarding'], true)) continue;
+                if (! str_starts_with($name, 'business.')) {
+                    continue;
+                }
+                if (in_array($name, ['business.business-gateway', 'business.business-onboarding'], true)) {
+                    continue;
+                }
 
                 $workspace = $access->assertWorkspace($request->user());
                 $permission = match ($name) {

@@ -12,6 +12,7 @@ class StoreAdminService
     public function overviewStats(): array
     {
         $completed = StorePurchase::query()->where('payment_status', 'completed');
+
         return [
             'total_revenue' => (float) (clone $completed)->sum('amount_paid'), 'total_purchases' => (clone $completed)->count(),
             'purchases_today' => (clone $completed)->whereDate('created_at', today())->count(),
@@ -36,7 +37,12 @@ class StoreAdminService
     {
         $from = now()->subDays($days - 1)->startOfDay();
         $rows = StorePurchase::query()->where('payment_status', 'completed')->where('created_at', '>=', $from)->selectRaw('DATE(created_at) as day, COUNT(*) as count, SUM(amount_paid) as revenue')->groupBy('day')->orderBy('day')->get()->keyBy('day');
-        return collect(range(0, $days - 1))->map(function (int $offset) use ($from, $rows) { $day = $from->copy()->addDays($offset)->toDateString(); return ['day' => $day, 'label' => $from->copy()->addDays($offset)->format('d/m'), 'count' => (int) ($rows[$day]->count ?? 0), 'revenue' => (float) ($rows[$day]->revenue ?? 0)]; });
+
+        return collect(range(0, $days - 1))->map(function (int $offset) use ($from, $rows) {
+            $day = $from->copy()->addDays($offset)->toDateString();
+
+            return ['day' => $day, 'label' => $from->copy()->addDays($offset)->format('d/m'), 'count' => (int) ($rows[$day]->count ?? 0), 'revenue' => (float) ($rows[$day]->revenue ?? 0)];
+        });
     }
 
     public function productTypes(): array

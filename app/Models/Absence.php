@@ -23,7 +23,9 @@ class Absence extends Model
     protected static function booted(): void
     {
         static::saving(function (Absence $absence): void {
-            if (! $absence->employee_id || ! $absence->workspace_id) return;
+            if (! $absence->employee_id || ! $absence->workspace_id) {
+                return;
+            }
 
             $employee = Employee::withoutGlobalScopes()->find($absence->employee_id);
             if (! $employee || (int) $employee->workspace_id !== (int) $absence->workspace_id) {
@@ -36,12 +38,22 @@ class Absence extends Model
         });
     }
 
-    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
-    public function employee(): BelongsTo { return $this->belongsTo(Employee::class); }
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
+    }
 
     public function getBusinessDaysAttribute(): int
     {
-        if (! $this->start_date || ! $this->end_date) return 0;
+        if (! $this->start_date || ! $this->end_date) {
+            return 0;
+        }
+
         return $this->start_date->diffInDaysFiltered(function (CarbonInterface $date) {
             return ! $date->isWeekend();
         }, $this->end_date) + 1;

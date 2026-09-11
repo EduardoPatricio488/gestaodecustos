@@ -27,7 +27,9 @@ class AiBrainService
     public function chat(User $user, string $input, ?AiConversation $conversation = null, array $pageContext = []): array
     {
         $workspace = $this->contextEngine->resolveWorkspace($user);
-        if (! $workspace) throw new RuntimeException('Não existe um workspace ativo para esta conta.');
+        if (! $workspace) {
+            throw new RuntimeException('Não existe um workspace ativo para esta conta.');
+        }
         $this->assertAiAccess($user);
 
         $rateKey = 'ai-copilot:'.$user->id.':'.$workspace->id;
@@ -58,7 +60,9 @@ class AiBrainService
         $messages = [['role' => 'system', 'content' => $this->systemPrompt($context, $snapshot, $memories, $intent)]];
 
         foreach ($conversation->messages()->latest('id')->limit(16)->get()->sortBy('id') as $message) {
-            if (in_array($message->role, ['user', 'assistant'], true)) $messages[] = ['role' => $message->role, 'content' => $message->content];
+            if (in_array($message->role, ['user', 'assistant'], true)) {
+                $messages[] = ['role' => $message->role, 'content' => $message->content];
+            }
         }
 
         $final = null;
@@ -71,7 +75,9 @@ class AiBrainService
                 $forcedTool = $round === 0 ? ($forcedWriteTool ?: $forcedReadTool) : null;
                 $response = $this->provider($messages, $forcedTool);
                 $assistant = $response['choices'][0]['message'] ?? null;
-                if (! $assistant) throw new RuntimeException('O provider de IA devolveu uma resposta inválida.');
+                if (! $assistant) {
+                    throw new RuntimeException('O provider de IA devolveu uma resposta inválida.');
+                }
 
                 $toolCalls = $assistant['tool_calls'] ?? [];
                 if (! $toolCalls) {
@@ -99,6 +105,7 @@ class AiBrainService
                             'confirmation_token' => $token,
                         ]);
                         $pendingActions[] = ['id' => $log->id, 'token' => $token, 'tool' => $toolName, 'title' => $preview['title'], 'summary' => $preview['summary'], 'details' => $preview['details']];
+
                         continue;
                     }
 
@@ -155,7 +162,9 @@ class AiBrainService
     public function confirm(User $user, int $actionId): array
     {
         $workspace = $this->contextEngine->resolveWorkspace($user);
-        if (! $workspace) throw new RuntimeException('Workspace inválido.');
+        if (! $workspace) {
+            throw new RuntimeException('Workspace inválido.');
+        }
         $this->assertAiAccess($user);
 
         $action = AiActionLog::query()->whereKey($actionId)->where('user_id', $user->id)->where('workspace_id', $workspace->id)->where('status', 'awaiting_confirmation')->firstOrFail();
@@ -164,6 +173,7 @@ class AiBrainService
         try {
             $result = $this->tools->execute($user, $workspace, $action->tool_name, (array) $action->request_payload);
             $action->update(['status' => 'completed', 'confirmed_at' => now(), 'completed_at' => now(), 'result_payload' => $result, 'latency_ms' => (int) round((microtime(true) - $startedAt) * 1000)]);
+
             return $result + ['action_id' => $action->id];
         } catch (\Throwable $e) {
             $action->update(['status' => 'failed', 'completed_at' => now(), 'error_message' => Str::limit($e->getMessage(), 500), 'latency_ms' => (int) round((microtime(true) - $startedAt) * 1000)]);
@@ -173,7 +183,10 @@ class AiBrainService
 
     public function conversation(User $user, Workspace $workspace, ?int $id = null): AiConversation
     {
-        if ($id) return AiConversation::query()->whereKey($id)->where('user_id', $user->id)->where('workspace_id', $workspace->id)->firstOrFail();
+        if ($id) {
+            return AiConversation::query()->whereKey($id)->where('user_id', $user->id)->where('workspace_id', $workspace->id)->firstOrFail();
+        }
+
         return AiConversation::create(['user_id' => $user->id, 'workspace_id' => $workspace->id, 'last_activity_at' => now()]);
     }
 
@@ -186,7 +199,9 @@ class AiBrainService
     {
         $text = Str::lower(Str::ascii($input));
         $writeVerbs = '(adiciona|adicionar|regista|registar|cria|criar|insere|inserir|lanca|lancar|introduz|introduzir|guarda|guardar|anota|anotar)';
-        if (! preg_match('/\\b'.$writeVerbs.'\\b/u', $text)) return null;
+        if (! preg_match('/\\b'.$writeVerbs.'\\b/u', $text)) {
+            return null;
+        }
         $map = [
             'create_expense' => ['despesa', 'gasto', 'gastei', 'pagamento', 'compra'],
             'create_income' => ['receita', 'rendimento', 'salario', 'ordenado', 'recebi', 'entrada'],
@@ -195,14 +210,23 @@ class AiBrainService
             'create_investment' => ['investimento', 'acoes', 'ações', 'etf', 'cripto', 'crypto'],
             'create_reminder' => ['lembrete', 'lembrar', 'aviso'],
         ];
-        foreach ($map as $tool => $keywords) foreach ($keywords as $keyword) if (Str::contains($text, Str::ascii($keyword))) return $tool;
+        foreach ($map as $tool => $keywords) {
+            foreach ($keywords as $keyword) {
+                if (Str::contains($text, Str::ascii($keyword))) {
+                    return $tool;
+                }
+            }
+        }
+
         return null;
     }
 
     private function provider(array $messages, ?string $forcedTool = null): array
     {
         $apiKey = config('services.openrouter.api_key');
-        if (blank($apiKey)) throw new RuntimeException('O serviço de IA não está configurado.');
+        if (blank($apiKey)) {
+            throw new RuntimeException('O serviço de IA não está configurado.');
+        }
         $payload = [
             'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
             'messages' => $messages,
@@ -211,18 +235,29 @@ class AiBrainService
             'max_tokens' => 1600,
         ];
         $response = Http::withHeaders(['Authorization' => 'Bearer '.$apiKey, 'Content-Type' => 'application/json', 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')])->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', $payload);
-        if (! $response->successful()) throw new RuntimeException('Provider indisponível (HTTP '.$response->status().').');
+        if (! $response->successful()) {
+            throw new RuntimeException('Provider indisponível (HTTP '.$response->status().').');
+        }
         $json = $response->json();
-        if (! is_array($json) || ! isset($json['choices'][0]['message'])) throw new RuntimeException('O provider de IA devolveu uma resposta inválida.');
+        if (! is_array($json) || ! isset($json['choices'][0]['message'])) {
+            throw new RuntimeException('O provider de IA devolveu uma resposta inválida.');
+        }
+
         return $json;
     }
 
     private function assertAiAccess(User $user): void
     {
-        if (method_exists($user, 'isAdminRole') && $user->isAdminRole()) return;
-        if (method_exists($user, 'isPaidPlan') && $user->isPaidPlan()) return;
+        if (method_exists($user, 'isAdminRole') && $user->isAdminRole()) {
+            return;
+        }
+        if (method_exists($user, 'isPaidPlan') && $user->isPaidPlan()) {
+            return;
+        }
         $plan = SubscriptionPlan::query()->where('slug', $user->currentPlanSlug())->where('is_active', true)->first();
-        if (! $plan || ! $plan->hasFeature('ia_access')) throw new RuntimeException('O teu plano atual não inclui acesso ao AI Copilot.');
+        if (! $plan || ! $plan->hasFeature('ia_access')) {
+            throw new RuntimeException('O teu plano atual não inclui acesso ao AI Copilot.');
+        }
     }
 
     private function systemPrompt(array $context, array $snapshot, array $memories, array $intent): string
@@ -238,6 +273,7 @@ class AiBrainService
             'business', 'company' => 'EMPRESARIAL',
             default => 'DESCONHECIDO',
         };
+
         return <<<PROMPT
 És o Finance Pro AI — Financial Copilot. Fala sempre em Português de Portugal.
 

@@ -145,6 +145,7 @@ Route::middleware('auth')->group(function () {
         if (Auth::user()->hasVerifiedEmail()) {
             return redirect()->route('dashboard');
         }
+
         return view('auth.verify-email');
     })->name('verificar.conta');
 
@@ -152,6 +153,7 @@ Route::middleware('auth')->group(function () {
         if (Auth::user()->hasVerifiedEmail()) {
             return redirect()->route('dashboard');
         }
+
         return view('auth.verify-email');
     })->name('verification.notice');
 
@@ -161,13 +163,16 @@ Route::middleware('auth')->group(function () {
         if ($request->code == $user->verification_code) {
             $user->markEmailAsVerified();
             $user->update(['verification_code' => null]);
+
             return redirect()->route('dashboard')->with('ok', 'Conta ativada!');
         }
+
         return back()->withErrors(['code' => 'Código incorreto.']);
     })->name('verification.verify-code');
 
     Route::post('/logout', function () {
         Auth::logout();
+
         return redirect('/');
     })->name('logout');
 });
@@ -264,6 +269,7 @@ Route::middleware(['auth', 'verified', 'plan:business'])->group(function () {
             if (! ($user->isOwner() || $user->isAdminRole())) {
                 return app()->make(CollaboratorDashboard::class)();
             }
+
             return app()->make(BusinessDashboard::class)();
         })->name('hub.business.dashboard');
 
@@ -308,6 +314,7 @@ Route::delete('/empresa/sair-modo-colaborador', [ImpersonationController::class,
 
 Route::post('/empresa/sair-vista-colaborador', function () {
     session()->forget('viewing_as_collaborator_id');
+
     return redirect()->route('hub.business.dashboard');
 })->name('hub.business.stop-viewing-collaborator');
 
@@ -360,6 +367,7 @@ Route::post('/email/verification-notification', function (Request $request) {
     $user->update(['verification_code' => $newCode]);
     try {
         Mail::to($user->email)->send(new VerifyAccountMail($newCode));
+
         return back()->with('status', 'verification-link-sent');
     } catch (Exception $e) {
         return back()->withErrors(['code' => 'Erro de conexão ao servidor de e-mail.']);

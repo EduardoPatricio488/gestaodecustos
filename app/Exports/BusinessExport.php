@@ -10,7 +10,9 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 class BusinessExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $workspace;
+
     protected int $month;
+
     protected int $year;
 
     public function __construct($user, int $month, ?int $year = null)
@@ -22,7 +24,9 @@ class BusinessExport implements FromCollection, WithHeadings, WithMapping
 
     public function collection()
     {
-        if (! $this->workspace) return collect();
+        if (! $this->workspace) {
+            return collect();
+        }
 
         $start = Carbon::create($this->year, $this->month, 1)->startOfMonth();
         $end = $start->copy()->endOfMonth();
@@ -43,6 +47,7 @@ class BusinessExport implements FromCollection, WithHeadings, WithMapping
     public function headings(): array
     {
         $currency = strtoupper((string) ($this->workspace?->currency ?? 'EUR'));
+
         return ['Data', 'Tipo', 'Entidade/Cliente', 'Documento', "Base ({$currency})", "IVA ({$currency})", "Total ({$currency})", 'Estado'];
     }
 

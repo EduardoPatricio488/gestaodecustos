@@ -24,9 +24,20 @@ class Employee extends Model
         'invite_revoked_at' => 'datetime',
     ];
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
-    public function workspace(): BelongsTo { return $this->belongsTo(Workspace::class); }
-    public function absences(): HasMany { return $this->hasMany(Absence::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    public function absences(): HasMany
+    {
+        return $this->hasMany(Absence::class);
+    }
 
     public function getVacationDaysUsedAttribute(): int
     {
@@ -45,11 +56,22 @@ class Employee extends Model
 
     public function getCurrentStatusText(): string
     {
-        if ($this->terminated_at) return 'Vínculo Terminado';
-        if ($this->resignation_status === 'pending') return 'Rescisão Pendente';
-        if ($this->suspended) return 'Suspenso';
-        if (! $this->active) return 'Inativo';
-        if ($this->is_absent_today) return 'Ausente';
+        if ($this->terminated_at) {
+            return 'Vínculo Terminado';
+        }
+        if ($this->resignation_status === 'pending') {
+            return 'Rescisão Pendente';
+        }
+        if ($this->suspended) {
+            return 'Suspenso';
+        }
+        if (! $this->active) {
+            return 'Inativo';
+        }
+        if ($this->is_absent_today) {
+            return 'Ausente';
+        }
+
         return 'Em funções';
     }
 }

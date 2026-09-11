@@ -7,8 +7,10 @@ use App\Models\StoreProduct;
 use App\Models\StorePurchase;
 use App\Models\StoreReview;
 use App\Services\StoreCartService;
+use App\Services\StoreCompareService;
 use App\Services\StorePurchaseService;
 use App\Services\StoreRecommendationService;
+use App\Services\StoreWishlistService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -19,8 +21,11 @@ class ProductShow extends Component
     use InteractsWithStore;
 
     public StoreProduct $product;
+
     public bool $alreadyOwned = false;
+
     public int $reviewRating = 5;
+
     public string $reviewComment = '';
 
     public function mount(StoreProduct $product): void
@@ -39,6 +44,7 @@ class ProductShow extends Component
     {
         if (! $this->alreadyOwned) {
             $this->dispatch('toast', text: 'Só quem comprou pode avaliar.');
+
             return;
         }
 
@@ -63,8 +69,8 @@ class ProductShow extends Component
 
         return view('livewire.store.product-show', [
             'cartCount' => app(StoreCartService::class)->count(),
-            'inWishlist' => app(\App\Services\StoreWishlistService::class)->has($this->product->id),
-            'compareCount' => app(\App\Services\StoreCompareService::class)->count(),
+            'inWishlist' => app(StoreWishlistService::class)->has($this->product->id),
+            'compareCount' => app(StoreCompareService::class)->count(),
             'ownedPurchase' => $this->alreadyOwned
                 ? StorePurchase::where('user_id', Auth::id())->where('product_id', $this->product->id)->where('payment_status', 'completed')->latest()->first()
                 : null,

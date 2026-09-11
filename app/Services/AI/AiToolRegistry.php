@@ -2,7 +2,6 @@
 
 namespace App\Services\AI;
 
-use App\Models\BankAccount;
 use App\Models\Category;
 use App\Models\Client;
 use App\Models\Expense;
@@ -15,10 +14,8 @@ use App\Models\Subscription;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\BusinessFinancialMetrics;
 use App\Services\SubscriptionCycleService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class AiToolRegistry
@@ -197,6 +194,7 @@ class AiToolRegistry
     private function snapshot(Workspace $workspace, array $args): array
     {
         $period = ! empty($args['period']) ? Carbon::createFromFormat('Y-m', $args['period'])->startOfMonth() : now()->startOfMonth();
+
         return app(FinancialIntelligenceService::class)->snapshot($workspace, $period);
     }
 
@@ -209,6 +207,7 @@ class AiToolRegistry
             $query->whereHas('category', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ["%{$needle}%"]));
         }
         $items = $query->orderByDesc('spent_at')->limit(100)->get();
+
         return [
             'period_days' => $days,
             'count' => $items->count(),
@@ -227,6 +226,7 @@ class AiToolRegistry
     {
         $days = min(3660, max(1, (int) ($args['days'] ?? 30)));
         $items = $workspace->incomes()->where('received_at', '>=', now()->subDays($days))->orderByDesc('received_at')->limit(100)->get();
+
         return [
             'period_days' => $days,
             'count' => $items->count(),
@@ -243,6 +243,7 @@ class AiToolRegistry
     private function goals(Workspace $workspace): array
     {
         $items = Goal::where('workspace_id', $workspace->id)->get();
+
         return ['count' => $items->count(), 'items' => $items->map(fn ($goal) => [
             'id' => $goal->id,
             'name' => $goal->name,
@@ -256,6 +257,7 @@ class AiToolRegistry
     private function subscriptions(Workspace $workspace): array
     {
         $items = Subscription::where('workspace_id', $workspace->id)->where('is_active', true)->get();
+
         return [
             'count' => $items->count(),
             'monthly_cost' => round((float) $items->sum(fn ($item) => SubscriptionCycleService::toMonthly((float) $item->amount, $item->cycle)), 2),
@@ -272,6 +274,7 @@ class AiToolRegistry
     private function investments(Workspace $workspace): array
     {
         $items = Investment::where('workspace_id', $workspace->id)->get();
+
         return [
             'count' => $items->count(),
             'total_value' => round((float) $items->sum(fn ($item) => (float) $item->quantity * (float) $item->current_price), 2),
@@ -290,6 +293,7 @@ class AiToolRegistry
     private function categories(Workspace $workspace): array
     {
         $items = Category::where('workspace_id', $workspace->id)->orderBy('name')->pluck('name');
+
         return ['count' => $items->count(), 'items' => $items->values()->all()];
     }
 
@@ -297,6 +301,7 @@ class AiToolRegistry
     {
         $this->assertBusiness($workspace);
         $items = Client::where('workspace_id', $workspace->id)->get();
+
         return ['count' => $items->count(), 'items' => $items->map(fn ($client) => [
             'id' => $client->id,
             'name' => $client->name,
@@ -310,6 +315,7 @@ class AiToolRegistry
     {
         $this->assertBusiness($workspace);
         $items = Invoice::where('workspace_id', $workspace->id)->orderByDesc('created_at')->limit(100)->get();
+
         return ['count' => $items->count(), 'items' => $items->map(fn ($invoice) => [
             'id' => $invoice->id,
             'number' => $invoice->invoice_number,
@@ -325,13 +331,16 @@ class AiToolRegistry
     {
         $this->assertBusiness($workspace);
         $items = Supplier::where('workspace_id', $workspace->id)->get(['id', 'name', 'email', 'phone', 'status']);
+
         return ['count' => $items->count(), 'items' => $items->toArray()];
     }
 
     private function createExpense(User $user, Workspace $workspace, array $args): array
     {
         $amount = (float) ($args['amount'] ?? 0);
-        if ($amount <= 0 || empty($args['description'])) throw new RuntimeException('Valor e descrição são obrigatórios.');
+        if ($amount <= 0 || empty($args['description'])) {
+            throw new RuntimeException('Valor e descrição são obrigatórios.');
+        }
         $category = $this->resolveCategory($user, $workspace, $args['category_name'] ?? null);
         $expense = Expense::create([
             'user_id' => $user->id,
@@ -342,13 +351,16 @@ class AiToolRegistry
             'spent_at' => $this->resolveDate($args['date'] ?? null),
             'is_company' => in_array($workspace->type, ['business', 'company'], true),
         ]);
+
         return ['success' => true, 'id' => $expense->id, 'amount' => (float) $expense->amount, 'description' => $expense->description];
     }
 
     private function createIncome(User $user, Workspace $workspace, array $args): array
     {
         $amount = (float) ($args['amount'] ?? 0);
-        if ($amount <= 0 || empty($args['description'])) throw new RuntimeException('Valor e descrição são obrigatórios.');
+        if ($amount <= 0 || empty($args['description'])) {
+            throw new RuntimeException('Valor e descrição são obrigatórios.');
+        }
         $income = Income::create([
             'user_id' => $user->id,
             'workspace_id' => $workspace->id,
@@ -356,13 +368,16 @@ class AiToolRegistry
             'amount' => $amount,
             'received_at' => $this->resolveDate($args['date'] ?? null),
         ]);
+
         return ['success' => true, 'id' => $income->id, 'amount' => (float) $income->amount, 'description' => $income->description];
     }
 
     private function createGoal(User $user, Workspace $workspace, array $args): array
     {
         $target = (float) ($args['target_amount'] ?? 0);
-        if ($target <= 0 || empty($args['name'])) throw new RuntimeException('Nome e valor objetivo são obrigatórios.');
+        if ($target <= 0 || empty($args['name'])) {
+            throw new RuntimeException('Nome e valor objetivo são obrigatórios.');
+        }
         $goal = Goal::create([
             'user_id' => $user->id,
             'workspace_id' => $workspace->id,
@@ -371,13 +386,16 @@ class AiToolRegistry
             'current_amount' => 0,
             'deadline' => ! empty($args['deadline']) ? $this->resolveDate($args['deadline']) : null,
         ]);
+
         return ['success' => true, 'id' => $goal->id, 'name' => $goal->name, 'target' => (float) $goal->target_amount];
     }
 
     private function createSubscription(User $user, Workspace $workspace, array $args): array
     {
         $amount = (float) ($args['amount'] ?? 0);
-        if ($amount <= 0 || empty($args['name'])) throw new RuntimeException('Nome e valor são obrigatórios.');
+        if ($amount <= 0 || empty($args['name'])) {
+            throw new RuntimeException('Nome e valor são obrigatórios.');
+        }
         $subscription = Subscription::create([
             'user_id' => $user->id,
             'workspace_id' => $workspace->id,
@@ -389,13 +407,16 @@ class AiToolRegistry
             'status' => 'active',
             'started_at' => now(),
         ]);
+
         return ['success' => true, 'id' => $subscription->id, 'name' => $subscription->name];
     }
 
     private function createInvestment(User $user, Workspace $workspace, array $args): array
     {
         $amount = (float) ($args['amount'] ?? 0);
-        if ($amount <= 0 || empty($args['name'])) throw new RuntimeException('Nome e valor são obrigatórios.');
+        if ($amount <= 0 || empty($args['name'])) {
+            throw new RuntimeException('Nome e valor são obrigatórios.');
+        }
         $investment = Investment::create([
             'user_id' => $user->id,
             'workspace_id' => $workspace->id,
@@ -407,12 +428,15 @@ class AiToolRegistry
             'current_price' => $amount,
             'operation_date' => now(),
         ]);
+
         return ['success' => true, 'id' => $investment->id, 'name' => $investment->name];
     }
 
     private function createReminder(User $user, Workspace $workspace, array $args): array
     {
-        if (empty($args['title'])) throw new RuntimeException('Título obrigatório.');
+        if (empty($args['title'])) {
+            throw new RuntimeException('Título obrigatório.');
+        }
         $reminder = Reminder::create([
             'user_id' => $user->id,
             'workspace_id' => $workspace->id,
@@ -420,32 +444,42 @@ class AiToolRegistry
             'remind_at' => $this->resolveDate($args['date'] ?? null),
             'priority' => in_array($args['priority'] ?? '', ['low', 'medium', 'high'], true) ? $args['priority'] : 'medium',
         ]);
+
         return ['success' => true, 'id' => $reminder->id, 'title' => $reminder->title];
     }
 
     private function completeReminder(Workspace $workspace, array $args): array
     {
         $reminder = Reminder::where('workspace_id', $workspace->id)->find($args['reminder_id'] ?? null);
-        if (! $reminder) throw new RuntimeException('Lembrete não encontrado.');
+        if (! $reminder) {
+            throw new RuntimeException('Lembrete não encontrado.');
+        }
         $reminder->update(['is_completed' => true, 'completed_at' => now()]);
+
         return ['success' => true, 'id' => $reminder->id];
     }
 
     private function deleteReminder(Workspace $workspace, array $args): array
     {
         $reminder = Reminder::where('workspace_id', $workspace->id)->find($args['reminder_id'] ?? null);
-        if (! $reminder) throw new RuntimeException('Lembrete não encontrado.');
+        if (! $reminder) {
+            throw new RuntimeException('Lembrete não encontrado.');
+        }
         $id = $reminder->id;
         $reminder->delete();
+
         return ['success' => true, 'id' => $id];
     }
 
     private function deleteExpense(Workspace $workspace, array $args): array
     {
         $expense = Expense::where('workspace_id', $workspace->id)->find($args['expense_id'] ?? null);
-        if (! $expense) throw new RuntimeException('Despesa não encontrada.');
+        if (! $expense) {
+            throw new RuntimeException('Despesa não encontrada.');
+        }
         $id = $expense->id;
         $expense->delete();
+
         return ['success' => true, 'id' => $id];
     }
 
@@ -453,18 +487,27 @@ class AiToolRegistry
     {
         if ($tool === 'delete_expense') {
             $record = Expense::where('workspace_id', $workspace->id)->find($args['expense_id'] ?? null);
-            if (! $record) throw new RuntimeException('Despesa não encontrada.');
+            if (! $record) {
+                throw new RuntimeException('Despesa não encontrada.');
+            }
+
             return ['action' => $tool, 'title' => 'Apagar despesa', 'summary' => $record->description.' — '.$this->money($workspace, (float) $record->amount), 'details' => ['id' => $record->id, 'descrição' => $record->description, 'valor' => $this->money($workspace, (float) $record->amount), 'data' => $record->spent_at?->toDateString()]];
         }
         $record = Reminder::where('workspace_id', $workspace->id)->find($args['reminder_id'] ?? null);
-        if (! $record) throw new RuntimeException('Lembrete não encontrado.');
+        if (! $record) {
+            throw new RuntimeException('Lembrete não encontrado.');
+        }
+
         return ['action' => $tool, 'title' => $tool === 'delete_reminder' ? 'Apagar lembrete' : 'Concluir lembrete', 'summary' => $record->title, 'details' => ['id' => $record->id, 'título' => $record->title, 'data' => $record->remind_at?->toDateString()]];
     }
 
     private function resolveCategory(User $user, Workspace $workspace, ?string $name): ?Category
     {
         $name = trim((string) $name);
-        if ($name === '') return null;
+        if ($name === '') {
+            return null;
+        }
+
         return Category::where('workspace_id', $workspace->id)->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first()
             ?? Category::create(['user_id' => $user->id, 'workspace_id' => $workspace->id, 'name' => ucfirst($name)]);
     }
@@ -472,12 +515,23 @@ class AiToolRegistry
     private function resolveDate(?string $value): Carbon
     {
         $value = trim((string) $value);
-        if ($value === '') return now();
-        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $value)) return Carbon::parse($value);
+        if ($value === '') {
+            return now();
+        }
+        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $value)) {
+            return Carbon::parse($value);
+        }
         $lower = mb_strtolower($value);
-        if (str_contains($lower, 'ontem')) return now()->subDay();
-        if (str_contains($lower, 'anteontem')) return now()->subDays(2);
-        if (preg_match('/há\s+(\d+)\s+dias/', $lower, $match)) return now()->subDays((int) $match[1]);
+        if (str_contains($lower, 'ontem')) {
+            return now()->subDay();
+        }
+        if (str_contains($lower, 'anteontem')) {
+            return now()->subDays(2);
+        }
+        if (preg_match('/há\s+(\d+)\s+dias/', $lower, $match)) {
+            return now()->subDays((int) $match[1]);
+        }
+
         return now();
     }
 
@@ -488,7 +542,9 @@ class AiToolRegistry
 
     private function assertBusiness(Workspace $workspace): void
     {
-        if (! in_array($workspace->type, ['business', 'company'], true)) throw new RuntimeException('Esta ferramenta só está disponível num workspace empresarial.');
+        if (! in_array($workspace->type, ['business', 'company'], true)) {
+            throw new RuntimeException('Esta ferramenta só está disponível num workspace empresarial.');
+        }
     }
 
     private function tool(string $name, string $description, array $properties = [], array $required = []): array
@@ -500,7 +556,7 @@ class AiToolRegistry
                 'description' => $description,
                 'parameters' => [
                     'type' => 'object',
-                    'properties' => $properties ?: new \stdClass(),
+                    'properties' => $properties ?: new \stdClass,
                     'required' => $required,
                     'additionalProperties' => false,
                 ],

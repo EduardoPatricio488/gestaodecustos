@@ -10,15 +10,20 @@ use Illuminate\Support\Facades\Cache;
 class StoreCatalogService
 {
     private const CACHE_KEY = 'store.catalog.products';
+
     private const CACHE_TTL = 3600;
 
-    public function clearCache(): void { Cache::forget(self::CACHE_KEY); }
+    public function clearCache(): void
+    {
+        Cache::forget(self::CACHE_KEY);
+    }
 
     public function allProducts(): Collection
     {
         $rows = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
             return StoreProduct::where('is_active', true)->orderBy('sort_order')->orderBy('title')->get()->map->getAttributes()->all();
         });
+
         return StoreProduct::hydrate($rows);
     }
 
@@ -26,6 +31,7 @@ class StoreCatalogService
     {
         $query = StoreProduct::query();
         $this->applyFilters($query, $filters);
+
         return $query->get();
     }
 
@@ -58,9 +64,15 @@ class StoreCatalogService
             });
         }
 
-        if ($priceMin !== null && $priceMin !== '') $query->where('price', '>=', (float) $priceMin);
-        if ($priceMax !== null && $priceMax !== '') $query->where('price', '<=', (float) $priceMax);
-        if ($onlyFeatured) $query->where('is_featured', true);
+        if ($priceMin !== null && $priceMin !== '') {
+            $query->where('price', '>=', (float) $priceMin);
+        }
+        if ($priceMax !== null && $priceMax !== '') {
+            $query->where('price', '<=', (float) $priceMax);
+        }
+        if ($onlyFeatured) {
+            $query->where('is_featured', true);
+        }
 
         match ($sortBy) {
             'price_asc' => $query->orderBy('price'),

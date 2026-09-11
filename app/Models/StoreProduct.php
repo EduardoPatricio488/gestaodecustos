@@ -23,11 +23,30 @@ class StoreProduct extends Model
         'is_featured' => 'boolean', 'requires_business_plan' => 'boolean',
     ];
 
-    public function purchases(): HasMany { return $this->hasMany(StorePurchase::class, 'product_id'); }
-    public function reviews(): HasMany { return $this->hasMany(StoreReview::class, 'product_id'); }
-    public function entitlements(): HasMany { return $this->hasMany(StoreProductEntitlement::class, 'product_id'); }
-    public function wishlistedBy(): BelongsToMany { return $this->belongsToMany(User::class, 'store_wishlists')->withTimestamps(); }
-    public function bundles(): BelongsToMany { return $this->belongsToMany(StoreBundle::class, 'store_bundle_products', 'product_id', 'bundle_id'); }
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(StorePurchase::class, 'product_id');
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(StoreReview::class, 'product_id');
+    }
+
+    public function entitlements(): HasMany
+    {
+        return $this->hasMany(StoreProductEntitlement::class, 'product_id');
+    }
+
+    public function wishlistedBy(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'store_wishlists')->withTimestamps();
+    }
+
+    public function bundles(): BelongsToMany
+    {
+        return $this->belongsToMany(StoreBundle::class, 'store_bundle_products', 'product_id', 'bundle_id');
+    }
 
     public function getCategoryLabelAttribute(): string
     {
@@ -67,7 +86,10 @@ class StoreProduct extends Model
 
     public function relatedProductsList()
     {
-        if (empty($this->related_products)) return collect();
+        if (empty($this->related_products)) {
+            return collect();
+        }
+
         return static::whereIn('id', $this->related_products)->get();
     }
 }

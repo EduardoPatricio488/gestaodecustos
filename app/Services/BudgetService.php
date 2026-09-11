@@ -103,7 +103,9 @@ class BudgetService
         $alerts = collect();
 
         foreach ($this->getCategoryBreakdown($workspace, $month) as $cat) {
-            if ($cat['budget'] <= 0) continue;
+            if ($cat['budget'] <= 0) {
+                continue;
+            }
             if ($cat['percentage'] >= 100) {
                 $alerts->push(['type' => 'danger', 'category' => $cat['name'], 'message' => "Ultrapassaste o orçamento de {$cat['name']} ({$cat['percentage']}%)", 'icon' => 'exclamation-circle']);
             } elseif ($cat['percentage'] >= 80) {
@@ -121,9 +123,16 @@ class BudgetService
 
     private function alertLevel(float $pct, bool $hasBudget): string
     {
-        if (! $hasBudget) return 'none';
-        if ($pct >= 100) return 'danger';
-        if ($pct >= 80) return 'warning';
+        if (! $hasBudget) {
+            return 'none';
+        }
+        if ($pct >= 100) {
+            return 'danger';
+        }
+        if ($pct >= 80) {
+            return 'warning';
+        }
+
         return 'ok';
     }
 }

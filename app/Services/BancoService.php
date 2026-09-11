@@ -19,9 +19,13 @@ use Illuminate\Support\Collection;
 class BancoService
 {
     private int $workspaceId;
+
     private ?Collection $accountsCache = null;
+
     private ?Collection $reservesCache = null;
+
     private ?Collection $investmentsCache = null;
+
     private ?Collection $patrimonyCache = null;
 
     public function __construct(int $workspaceId)

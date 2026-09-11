@@ -16,6 +16,7 @@ class RunAiObserver implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
+
     public int $timeout = 90;
 
     public function __construct(public int $workspaceId) {}
