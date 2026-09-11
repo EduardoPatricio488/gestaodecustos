@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Business;
 
-use App\Mail\ClientPortalAccessMail;
 use App\Models\Client;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\ClientPortalAccessMail;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -43,9 +43,6 @@ class ClientHub extends Component
         $this->tax_number = implode(' ', str_split($digits, 3));
     }
 
-    /**
-     * Abre o formulário de cliente através da API nativa do Flux.
-     */
     public function openClientModal(): void
     {
         $this->resetForm();
@@ -124,7 +121,7 @@ class ClientHub extends Component
 
         if (! $client->portal_token) {
             do {
-                $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+                $passcode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
                 $exists = Client::where('portal_token', $passcode)->exists();
             } while ($exists);
 
@@ -135,23 +132,32 @@ class ClientHub extends Component
         $this->generatedPasscode = $client->portal_token;
         $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
 
-        if ($client->email) {
-            Mail::to($client->email)->send(new ClientPortalAccessMail(
-                $client,
-                auth()->user()->currentWorkspace,
-                $client->portal_token,
-                $this->generatedPortalUrl,
-            ));
+        // IMPORTANTE: não enviar o email nesta mesma request.
+        // O envio síncrono pode bloquear o Livewire (SMTP/Resend) e impedir
+        // que a resposta chegue ao browser, fazendo parecer que o modal não abre.
+        // O modal deve abrir imediatamente; o envio de email será uma ação separada.
+        $this->modal('portal-link-modal')->show();
+    }
 
-            $this->dispatch('toast', text: 'Código de acesso enviado para '.$client->email.'.', variant: 'success');
-        } else {
-            $this->dispatch('toast', text: 'Código gerado, mas este cliente não tem email registado.', variant: 'warning');
+    public function sendPortalEmail(): void
+    {
+        $client = auth()->user()->clients()
+            ->where('portal_token', $this->generatedPasscode)
+            ->firstOrFail();
+
+        if (! $client->email) {
+            $this->dispatch('toast', text: 'Este cliente não tem email registado.', variant: 'warning');
+            return;
         }
 
-        // O evento modal-show não é a API correta do Flux 2. Abrimos o modal
-        // diretamente através da API Livewire do Flux para garantir que funciona
-        // mesmo quando a página é renderizada através do wrapper.
-        $this->modal('portal-link-modal')->show();
+        Mail::to($client->email)->send(new ClientPortalAccessMail(
+            $client,
+            auth()->user()->currentWorkspace,
+            $client->portal_token,
+            $this->generatedPortalUrl,
+        ));
+
+        $this->dispatch('toast', text: 'Código de acesso enviado para '.$client->email.'.', variant: 'success');
     }
 
     public function render()
