@@ -33,11 +33,18 @@ class BusinessOnboarding extends Component
 
     public $currency = 'EUR';
 
+    protected $messages = [
+        'tax_number.required' => 'O NIF é obrigatório.',
+        'tax_number.regex' => 'O NIF deve conter exatamente 9 dígitos, no formato 123 456 789.',
+        'business_email.required' => 'O email da empresa é obrigatório.',
+        'business_email.email' => 'Introduza um endereço de email válido.',
+    ];
+
     protected $rules = [
         2 => [
             'name' => 'required|min:3|max:50',
             'industry' => 'required',
-            'tax_number' => 'nullable|digits:9',
+            'tax_number' => 'required|regex:/^\d{3} \d{3} \d{3}$/',
             'business_email' => 'required|email:rfc|max:255',
         ],
         3 => [

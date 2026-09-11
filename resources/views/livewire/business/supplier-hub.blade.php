@@ -244,15 +244,15 @@
 
 
     {{-- 4. MODAL: FICHA EXECUTIVA DE FORNECEDOR (DESIGN SaaS PRO) --}}
-    <flux:modal name="supplier-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[650px] !p-0 !max-h-[90vh] overflow-hidden">
+    <flux:modal name="supplier-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[650px] !max-h-[90vh] !p-0 overflow-hidden">
         <div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent">
 
             {{-- Botão Fechar --}}
-            <div class="absolute top-6 right-6">
-                <flux:modal.close>
-                    <flux:button variant="ghost" size="sm" icon="x-mark" class="rounded-full" />
-                </flux:modal.close>
-            </div>
+            <button type="button" aria-label="Fechar"
+                    @click="window.dispatchEvent(new CustomEvent('modal-close', { detail: { name: 'supplier-modal' } }))"
+                    class="absolute top-5 right-5 z-50 flex size-10 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-500 shadow-sm backdrop-blur hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-all">
+                <flux:icon name="x-mark" class="size-5" />
+            </button>
 
             {{-- Cabeçalho do Modal --}}
             <div class="flex items-center gap-4">
@@ -354,8 +354,13 @@
     </flux:modal>
 {{-- MODAL: ACESSO AO PORTAL DO FORNECEDOR --}}
    {{-- 5. MODAL: ACESSO AO PORTAL DO FORNECEDOR --}}
-    <flux:modal name="supplier-portal-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">
+    <flux:modal name="supplier-portal-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[500px] !max-h-[90vh] !p-0 overflow-hidden">
         <div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
+            <button type="button" aria-label="Fechar"
+                    @click="window.dispatchEvent(new CustomEvent('modal-close', { detail: { name: 'supplier-portal-modal' } }))"
+                    class="absolute top-5 right-5 z-50 flex size-10 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-500 shadow-sm backdrop-blur hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-all">
+                <flux:icon name="x-mark" class="size-5" />
+            </button>
 
             <div class="flex items-center gap-4">
                 <div class="p-3 bg-zinc-900 rounded-2xl text-white shadow-lg">

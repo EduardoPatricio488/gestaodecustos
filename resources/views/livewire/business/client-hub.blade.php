@@ -149,12 +149,6 @@
                                 Editar Ficha
                             </button>
 
-                            <button type="button" wire:click="generatePortalLink({{ $client->id }})" @click="optionsOpen = false"
-                                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 transition-all">
-                                <flux:icon name="link" class="size-4 text-zinc-400" />
-                                Gerar Portal
-                            </button>
-
                             <div class="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
 
                             <button type="button" wire:click="delete({{ $client->id }})" @click="optionsOpen = false"
@@ -204,7 +198,13 @@
                         </div>
                     @endif
                 </div>
-                <flux:button
+                <div class="flex items-center gap-2">
+                    <flux:button type="button" wire:click="generatePortalLink({{ $client->id }})"
+                        variant="primary" size="xs" icon="link"
+                        class="rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm">
+                        Gerar Portal
+                    </flux:button>
+                    <flux:button
     wire:click="openHistory({{ $client->id }})"
     variant="ghost" size="xs"
     class="rounded-lg text-[9px] font-black uppercase tracking-widest text-brand-600"
@@ -229,15 +229,15 @@
     </div>
 
     {{-- 4. MODAL: FICHA EXECUTIVA DE CLIENTE (DESIGN CRM PRO) --}}
-    <flux:modal name="client-modal" position="center" class="w-[calc(100vw-2rem)] md:w-[650px] !p-0 !max-h-[90vh] overflow-hidden">
+    <flux:modal name="client-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[650px] !max-h-[90vh] !p-0 overflow-hidden">
         <div class="relative max-h-[90vh] overflow-y-auto overscroll-contain p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800">
 
             {{-- Botão Fechar --}}
-            <div class="absolute top-6 right-6">
-                <flux:modal.close>
-                    <flux:button variant="ghost" size="sm" icon="x-mark" class="rounded-full" />
-                </flux:modal.close>
-            </div>
+            <button type="button" aria-label="Fechar"
+                    @click="window.dispatchEvent(new CustomEvent('modal-close', { detail: { name: 'client-modal' } }))"
+                    class="absolute top-5 right-5 z-50 flex size-10 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-500 shadow-sm backdrop-blur hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-all">
+                <flux:icon name="x-mark" class="size-5" />
+            </button>
 
             {{-- Cabeçalho do Modal --}}
             <div class="flex items-center gap-4">
@@ -336,7 +336,7 @@
         </div>
     </flux:modal>
 {{-- MODAL: ACESSO AO PORTAL COM CÓDIGO ÚNICO --}}
-    <flux:modal name="portal-link-modal" position="center" class="md:w-[500px] !p-0 overflow-visible">
+    <flux:modal name="portal-link-modal" position="center" class="!fixed !inset-0 !m-auto w-[calc(100vw-2rem)] max-w-[500px] !max-h-[90vh] !p-0 overflow-hidden">
         <div class="relative p-10 bg-white dark:bg-zinc-950 rounded-[2.5rem] space-y-10 shadow-2xl border border-zinc-200 dark:border-zinc-800 text-left">
 
             <div class="flex items-center gap-4">
@@ -387,7 +387,7 @@
         {{-- PASSO 2 (NOVO) --}}
         <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-3">
             <span class="size-4 shrink-0 rounded-full bg-brand-500 text-white flex items-center justify-center text-[8px]">2</span>
-           <span>Introduzir o NIF: <span class="font-black text-zinc-900 dark:text-white">{{ $clientTaxNumber }}</span></span>
+           <span>Introduzir o NIF: <span class="font-black text-zinc-900 dark:text-white">{{ implode(' ', str_split(preg_replace('/\D/', '', (string) $clientTaxNumber), 3)) }}</span></span>
         </p>
 
         {{-- PASSO 3 --}}
