@@ -200,21 +200,31 @@ window.addEventListener('copy-to-clipboard', (event) => {
     document.addEventListener('livewire:navigated', () => setTimeout(addPortalEmailAction, 50));
 })();
 
-// Show pending public client portal access requests inside /empresa/clientes.
+// Show and manage pending public client portal access requests inside /empresa/clientes.
 (function () {
     const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
     const findComponent = () => {
         const heading = Array.from(document.querySelectorAll('h1')).find((el) => normalize(el.textContent).toLowerCase().includes('gestão de clientes'));
         if (!heading || !window.Livewire) return null;
-        const root = heading.closest('[wire\\:id]'); if (!root) return null;
-        const wireId = root.getAttribute('wire:id'); return wireId ? window.Livewire.find(wireId) : null;
+        const root = heading.closest('[wire\\:id]');
+        if (!root) return null;
+        const wireId = root.getAttribute('wire:id');
+        return wireId ? window.Livewire.find(wireId) : null;
     };
     const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
-    const render = (requests) => {
+    const callAction = (component, method, id, button) => {
+        if (!component || !id || !window.Livewire || button?.disabled) return;
+        if (button) { button.disabled = true; button.classList.add('opacity-60', 'cursor-wait'); }
+        Promise.resolve(component.call(method, id)).then(() => refresh()).catch(() => {}).finally(() => {
+            if (button) { button.disabled = false; button.classList.remove('opacity-60', 'cursor-wait'); }
+        });
+    };
+    const render = (component, requests) => {
         let panel = document.getElementById('finance-pro-client-access-requests');
         if (!requests.length) { panel?.remove(); return; }
         if (!panel) {
-            panel = document.createElement('section'); panel.id = 'finance-pro-client-access-requests';
+            panel = document.createElement('section');
+            panel.id = 'finance-pro-client-access-requests';
             panel.className = 'mb-8 rounded-[2rem] border border-brand-200 dark:border-brand-900/50 bg-brand-50/70 dark:bg-brand-950/20 shadow-sm overflow-hidden';
             const heading = Array.from(document.querySelectorAll('h1')).find((el) => normalize(el.textContent).toLowerCase().includes('gestão de clientes'));
             const header = heading?.closest('.relative')?.parentElement || heading?.closest('.relative') || heading?.parentElement;
@@ -230,20 +240,37 @@ window.addEventListener('copy-to-clipboard', (event) => {
             </div>
             <div class="divide-y divide-brand-200/70 dark:divide-brand-900/40">
                 ${requests.map((request) => `
-                    <div class="px-6 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div class="min-w-0"><p class="font-black text-sm text-zinc-900 dark:text-white">${escapeHtml(request.name)}</p><p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">${escapeHtml(request.email)}${request.tax_number ? ` · NIF ${escapeHtml(request.tax_number)}` : ''}</p></div>
-                        <div class="text-[10px] font-bold uppercase tracking-widest text-zinc-400 whitespace-nowrap">${escapeHtml(request.requested_at || '')}</div>
+                    <div class="px-6 py-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4" data-access-request-id="${escapeHtml(request.id)}">
+                        <div class="min-w-0">
+                            <p class="font-black text-sm text-zinc-900 dark:text-white">${escapeHtml(request.name)}</p>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">${escapeHtml(request.email)}${request.tax_number ? ` · NIF ${escapeHtml(request.tax_number)}` : ''}</p>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-2">Pedido em ${escapeHtml(request.requested_at || '')}</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" data-request-action="approve" data-request-id="${escapeHtml(request.id)}" class="inline-flex items-center justify-center h-10 px-4 rounded-xl bg-brand-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-brand-700 transition">Aprovar e enviar acesso</button>
+                            <button type="button" data-request-action="reject" data-request-id="${escapeHtml(request.id)}" class="inline-flex items-center justify-center h-10 px-4 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 text-[10px] font-black uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">Rejeitar</button>
+                        </div>
                     </div>
                 `).join('')}
             </div>`;
+        panel.querySelectorAll('[data-request-action]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const method = button.dataset.requestAction === 'approve' ? 'approveAccessRequest' : 'rejectAccessRequest';
+                callAction(component, method, button.dataset.requestId, button);
+            });
+        });
     };
     const refresh = () => {
-        const component = findComponent(); if (!component) return;
-        Promise.resolve(component.call('getPendingAccessRequests')).then((requests) => render(Array.isArray(requests) ? requests : [])).catch(() => {});
+        const component = findComponent();
+        if (!component) return;
+        Promise.resolve(component.call('getPendingAccessRequests'))
+            .then((requests) => render(component, Array.isArray(requests) ? requests : []))
+            .catch(() => {});
     };
     let timer = null;
     const schedule = () => { clearTimeout(timer); timer = setTimeout(refresh, 200); };
     document.addEventListener('livewire:navigated', schedule);
     document.addEventListener('livewire:initialized', schedule, { once: true });
+    document.addEventListener('client-access-request-updated', schedule);
     schedule();
 })();
