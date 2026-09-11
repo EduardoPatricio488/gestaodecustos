@@ -32,7 +32,17 @@
                 @forelse($messages as $message)
                     <div class="flex {{ $message['role'] === 'user' ? 'justify-end' : 'justify-start' }}"><div class="max-w-[88%] rounded-2xl px-4 py-3 {{ $message['role'] === 'user' ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950' : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-100' }}"><div class="whitespace-pre-wrap text-sm leading-6">{{ $message['content'] }}</div></div></div>
                 @empty
-                    <div class="flex h-full min-h-64 flex-col items-center justify-center px-8 text-center"><div class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-2xl dark:bg-zinc-900">✦</div><h3 class="text-base font-black text-zinc-950 dark:text-white">O teu copiloto financeiro</h3><p class="mt-2 text-xs leading-5 text-zinc-500">Começa uma nova conversa ou escolhe uma conversa guardada. O histórico fica associado ao workspace atual.</p></div>
+                    <div class="flex h-full min-h-64 flex-col items-center justify-center px-6 text-center">
+                        <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-2xl dark:bg-zinc-900">✦</div>
+                        <h3 class="text-base font-black text-zinc-950 dark:text-white">O teu copiloto financeiro</h3>
+                        <p class="mt-2 text-xs leading-5 text-zinc-500">Analisa as tuas finanças, compara meses, procura despesas ou prepara novos registos com confirmação.</p>
+                        <div class="mt-5 grid w-full max-w-sm grid-cols-2 gap-2 text-left">
+                            <button type="button" wire:click="$set('input', 'Faz um resumo da minha situação financeira')" class="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-[10px] font-bold text-zinc-600 transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-emerald-950/20">📊 Resumo financeiro</button>
+                            <button type="button" wire:click="$set('input', 'Compara este mês com o mês passado')" class="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-[10px] font-bold text-zinc-600 transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-emerald-950/20">📈 Comparar meses</button>
+                            <button type="button" wire:click="$set('input', 'Onde estou a gastar mais este mês?')" class="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-[10px] font-bold text-zinc-600 transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-emerald-950/20">💳 Ver despesas</button>
+                            <button type="button" wire:click="$set('input', 'Como posso poupar mais este mês?')" class="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-[10px] font-bold text-zinc-600 transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-emerald-950/20">💡 Ideias para poupar</button>
+                        </div>
+                    </div>
                 @endforelse
                 @if($isLoading)<div class="flex justify-start"><div class="rounded-2xl bg-zinc-100 px-4 py-3 text-xs font-bold text-zinc-500 dark:bg-zinc-900">A analisar os teus dados…</div></div>@endif
             </div>
@@ -47,9 +57,10 @@
 
             <form wire:submit="sendMessage" class="border-t border-zinc-200 p-3 dark:border-zinc-800">
                 <div class="flex items-end gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-900">
-                    <textarea wire:model.live="input" rows="1" placeholder="Pergunta ao teu copiloto…" autocomplete="off" class="min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-400 focus:border-0 focus:ring-0 dark:text-white" @keydown.enter.prevent.stop="$wire.sendMessage()"></textarea>
+                    <textarea wire:model.live="input" rows="1" placeholder="Pergunta ao teu copiloto…" autocomplete="off" class="min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-400 focus:border-0 focus:ring-0 dark:text-white" @keydown.enter="if (!event.shiftKey) { event.preventDefault(); event.stopPropagation(); $wire.sendMessage(); }"></textarea>
                     <button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white transition hover:scale-105 hover:bg-emerald-600" wire:loading.attr="disabled">↑</button>
                 </div>
+                <p class="px-2 pt-1.5 text-[9px] text-zinc-400">Enter envia · Shift+Enter cria uma nova linha</p>
             </form>
         </section>
     @endif
