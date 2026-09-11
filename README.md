@@ -64,3 +64,5 @@ Funcionalidades externas, como dados de mercado, devem ser tratadas como dados a
 ## Agendamento
 
 O AI Observer pode analisar workspaces através da fila existente. Existem também revisões semanais e mensais calculadas deterministicamente sem consumir tokens de um modelo generativo.
+
+<!-- trigger -->
