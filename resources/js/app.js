@@ -1,10 +1,6 @@
 import './push-notifications';
 import './offline-expenses';
 
-/**
- * Finance Pro theme manager.
- * Single source of truth for the sidebar and profile theme selectors.
- */
 (function () {
     const STORAGE_KEY = 'flux.appearance';
     const LEGACY_KEY = 'theme';
@@ -43,7 +39,6 @@ import './offline-expenses';
         const minutes = (now.getHours() * 60) + now.getMinutes();
         const light = timeToMinutes(schedule.light);
         const dark = timeToMinutes(schedule.dark);
-
         if (light < dark) return minutes >= light && minutes < dark ? 'light' : 'dark';
         return minutes >= dark && minutes < light ? 'dark' : 'light';
     }
@@ -79,11 +74,9 @@ import './offline-expenses';
     window.FinanceProTheme = { getTheme, applyTheme, setTheme, toggleTheme, getSchedule, setSchedule };
     applyTheme(getTheme());
     document.addEventListener('livewire:navigated', () => applyTheme(getTheme()));
-
     const media = window.matchMedia(MEDIA_QUERY);
     media.addEventListener('change', () => { if (getTheme() === 'system') applyTheme('system'); });
     setInterval(() => { if (getTheme() === 'system') applyTheme('system'); }, 30000);
-
     document.addEventListener('click', (event) => {
         const button = event.target.closest('button');
         if (!button) return;
@@ -91,47 +84,27 @@ import './offline-expenses';
         if (label !== 'Modo Claro' && label !== 'Modo Escuro') return;
         event.preventDefault(); event.stopImmediatePropagation(); toggleTheme();
     }, true);
-
     window.addEventListener('storage', (event) => {
         if (event.key === STORAGE_KEY || event.key === LEGACY_KEY || event.key === SCHEDULE_KEY) applyTheme(getTheme());
     });
 })();
 
-// State-changing navigation must use POST + CSRF, even when the UI is rendered as a link.
 (function () {
-    const protectedPaths = [
-        /^\/trocar-espaco\/\d+$/,
-        /^\/trocar-contexto\/\d+$/,
-        /^\/sair-empresa$/,
-        /^\/fitness\/strava\/disconnect$/,
-    ];
-
+    const protectedPaths = [/^\/trocar-espaco\/\d+$/, /^\/trocar-contexto\/\d+$/, /^\/sair-empresa$/, /^\/fitness\/strava\/disconnect$/];
     const isProtectedPath = (pathname) => protectedPaths.some((pattern) => pattern.test(pathname));
-
     const submitPost = (url) => {
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        if (!token) {
-            console.error('Finance Pro: token CSRF não encontrado.');
-            return false;
-        }
+        if (!token) return false;
         const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = url.toString();
-        form.style.display = 'none';
-        const csrf = document.createElement('input');
-        csrf.type = 'hidden'; csrf.name = '_token'; csrf.value = token;
-        form.appendChild(csrf);
-        document.body.appendChild(form);
-        form.submit();
-        return true;
+        form.method = 'POST'; form.action = url.toString(); form.style.display = 'none';
+        const csrf = document.createElement('input'); csrf.type = 'hidden'; csrf.name = '_token'; csrf.value = token;
+        form.appendChild(csrf); document.body.appendChild(form); form.submit(); return true;
     };
-
     document.addEventListener('click', (event) => {
         if (event.defaultPrevented || event.button !== 0) return;
         const anchor = event.target.closest('a[href]');
         if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) return;
-        let url;
-        try { url = new URL(anchor.href, window.location.origin); } catch { return; }
+        let url; try { url = new URL(anchor.href, window.location.origin); } catch { return; }
         if (url.origin !== window.location.origin || !isProtectedPath(url.pathname)) return;
         event.preventDefault(); event.stopImmediatePropagation(); submitPost(url);
     }, true);
@@ -146,8 +119,6 @@ window.addEventListener('copy-to-clipboard', (event) => {
     document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); textArea.remove();
 });
 
-// Global business field formatting. Field classification is cached per input so
-// typing does not repeatedly traverse the DOM and read innerText on every keystroke.
 (function () {
     const digits = (v) => (v || '').replace(/\D/g, '');
     const groups = (v, sizes) => {
@@ -165,13 +136,11 @@ window.addEventListener('copy-to-clipboard', (event) => {
         else if (/\b(iban)\b/.test(text)) type = [4,4,4,4,4,3];
         else if (/\b(telem[oó]vel|telefone|phone|contacto telef[oó]nico|mobile)\b/.test(text)) type = [3,3,3];
         else if (/\b(c[oó]digo postal|postal code|zip)\b/.test(text)) type = [4,3];
-        fieldTypes.set(input, type);
-        return type;
+        fieldTypes.set(input, type); return type;
     };
     const apply = (input) => {
         if (!(input instanceof HTMLInputElement) || ['password','email','hidden','number'].includes(input.type)) return;
-        const sizes = getFieldType(input);
-        if (!sizes) return;
+        const sizes = getFieldType(input); if (!sizes) return;
         const value = groups(input.value, sizes);
         if (value !== input.value) { input.value = value; input.dispatchEvent(new Event('input',{bubbles:true})); }
     };
@@ -180,16 +149,13 @@ window.addEventListener('copy-to-clipboard', (event) => {
     document.addEventListener('livewire:navigated', () => document.querySelectorAll('input').forEach(apply));
 })();
 
-// Global fallback for business modal controls.
 (function () {
     const closeModal = (button) => {
-        const dialog = button.closest('[role="dialog"], dialog');
-        if (!dialog) return false;
+        const dialog = button.closest('[role="dialog"], dialog'); if (!dialog) return false;
         const modalName = dialog.getAttribute('data-modal') || dialog.getAttribute('data-name') || dialog.getAttribute('data-modal-name') || dialog.id || '';
         if (modalName) window.dispatchEvent(new CustomEvent('modal-close', { detail: { name: modalName } }));
         if (typeof dialog.close === 'function' && !dialog.hasAttribute('open')) return true;
-        if (typeof dialog.close === 'function' && dialog.open) dialog.close();
-        return true;
+        if (typeof dialog.close === 'function' && dialog.open) dialog.close(); return true;
     };
     document.addEventListener('click', (event) => {
         const button = event.target.closest('button, [role="button"]');
@@ -198,61 +164,86 @@ window.addEventListener('copy-to-clipboard', (event) => {
         const isCloseIcon = !!button.querySelector('svg') && /^(fechar|close|close modal|cancelar|descartar|cancel|discard)/.test(label);
         const isCloseText = ['fechar', 'cancelar', 'descartar', 'close', 'close modal', 'cancel', 'discard'].includes(label);
         if ((!isCloseIcon && !isCloseText) || !button.closest('[role="dialog"], dialog')) return;
-        event.preventDefault();
-        closeModal(button);
+        event.preventDefault(); closeModal(button);
     }, true);
 })();
 
-// Portal access: expose the same "send code by email" action in the Client and
-// Supplier portal modals without duplicating the modal markup. The Livewire
-// component owns the actual mail send and authorization checks.
 (function () {
     const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
-
     const addPortalEmailAction = (root = document) => {
         const dialogs = root.querySelectorAll?.('[role="dialog"], dialog') || [];
         dialogs.forEach((dialog) => {
             if (dialog.dataset.portalEmailReady === '1') return;
-            const text = normalize(dialog.textContent);
-            if (!text.includes('Copiar Link de Login')) return;
-
-            const copyButton = Array.from(dialog.querySelectorAll('button')).find((button) =>
-                normalize(button.textContent).includes('Copiar Link de Login')
-            );
+            if (!normalize(dialog.textContent).includes('Copiar Link de Login')) return;
+            const copyButton = Array.from(dialog.querySelectorAll('button')).find((button) => normalize(button.textContent).includes('Copiar Link de Login'));
             if (!copyButton) return;
-
             const component = dialog.closest('[wire\\:id], [wire\\:id]') || document.querySelector('[wire\\:id]');
             if (!component) return;
-
             const emailButton = document.createElement('button');
             emailButton.type = 'button';
             emailButton.className = 'flex-[2] h-14 bg-brand-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-brand-500/20 hover:bg-brand-700 transition-all flex items-center justify-center gap-2';
             emailButton.innerHTML = '<span aria-hidden="true">✉</span><span>Enviar Código por Email</span>';
             emailButton.addEventListener('click', () => {
-                const wireId = component.getAttribute('wire:id');
-                if (!wireId || !window.Livewire) return;
-                const livewireComponent = window.Livewire.find(wireId);
-                if (!livewireComponent) return;
-                emailButton.disabled = true;
-                emailButton.classList.add('opacity-60', 'cursor-wait');
+                const wireId = component.getAttribute('wire:id'); if (!wireId || !window.Livewire) return;
+                const livewireComponent = window.Livewire.find(wireId); if (!livewireComponent) return;
+                emailButton.disabled = true; emailButton.classList.add('opacity-60', 'cursor-wait');
                 Promise.resolve(livewireComponent.call('sendPortalEmail')).finally(() => {
-                    emailButton.disabled = false;
-                    emailButton.classList.remove('opacity-60', 'cursor-wait');
+                    emailButton.disabled = false; emailButton.classList.remove('opacity-60', 'cursor-wait');
                 });
             });
-
-            copyButton.parentElement?.insertBefore(emailButton, copyButton);
-            dialog.dataset.portalEmailReady = '1';
+            copyButton.parentElement?.insertBefore(emailButton, copyButton); dialog.dataset.portalEmailReady = '1';
         });
     };
-
     const observer = new MutationObserver(() => addPortalEmailAction());
-    const start = () => {
-        addPortalEmailAction();
-        if (document.body) observer.observe(document.body, { childList: true, subtree: true });
-    };
-
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
-    else start();
+    const start = () => { addPortalEmailAction(); if (document.body) observer.observe(document.body, { childList: true, subtree: true }); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true }); else start();
     document.addEventListener('livewire:navigated', () => setTimeout(addPortalEmailAction, 50));
+})();
+
+// Show pending public client portal access requests inside /empresa/clientes.
+(function () {
+    const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+    const findComponent = () => {
+        const heading = Array.from(document.querySelectorAll('h1')).find((el) => normalize(el.textContent).toLowerCase().includes('gestão de clientes'));
+        if (!heading || !window.Livewire) return null;
+        const root = heading.closest('[wire\\:id]'); if (!root) return null;
+        const wireId = root.getAttribute('wire:id'); return wireId ? window.Livewire.find(wireId) : null;
+    };
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
+    const render = (requests) => {
+        let panel = document.getElementById('finance-pro-client-access-requests');
+        if (!requests.length) { panel?.remove(); return; }
+        if (!panel) {
+            panel = document.createElement('section'); panel.id = 'finance-pro-client-access-requests';
+            panel.className = 'mb-8 rounded-[2rem] border border-brand-200 dark:border-brand-900/50 bg-brand-50/70 dark:bg-brand-950/20 shadow-sm overflow-hidden';
+            const heading = Array.from(document.querySelectorAll('h1')).find((el) => normalize(el.textContent).toLowerCase().includes('gestão de clientes'));
+            const header = heading?.closest('.relative')?.parentElement || heading?.closest('.relative') || heading?.parentElement;
+            if (header?.parentElement) header.parentElement.insertBefore(panel, header.nextSibling);
+        }
+        panel.innerHTML = `
+            <div class="px-6 py-5 border-b border-brand-200/70 dark:border-brand-900/40">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center min-w-7 h-7 px-2 rounded-full bg-brand-600 text-white text-[10px] font-black">${requests.length}</span>
+                    <h2 class="text-sm font-black uppercase tracking-widest text-brand-700 dark:text-brand-300">Pedidos de acesso ao portal</h2>
+                </div>
+                <p class="text-xs text-brand-700/70 dark:text-brand-300/70 mt-1">Clientes que solicitaram acesso através do portal público.</p>
+            </div>
+            <div class="divide-y divide-brand-200/70 dark:divide-brand-900/40">
+                ${requests.map((request) => `
+                    <div class="px-6 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div class="min-w-0"><p class="font-black text-sm text-zinc-900 dark:text-white">${escapeHtml(request.name)}</p><p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">${escapeHtml(request.email)}${request.tax_number ? ` · NIF ${escapeHtml(request.tax_number)}` : ''}</p></div>
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-zinc-400 whitespace-nowrap">${escapeHtml(request.requested_at || '')}</div>
+                    </div>
+                `).join('')}
+            </div>`;
+    };
+    const refresh = () => {
+        const component = findComponent(); if (!component) return;
+        Promise.resolve(component.call('getPendingAccessRequests')).then((requests) => render(Array.isArray(requests) ? requests : [])).catch(() => {});
+    };
+    let timer = null;
+    const schedule = () => { clearTimeout(timer); timer = setTimeout(refresh, 200); };
+    document.addEventListener('livewire:navigated', schedule);
+    document.addEventListener('livewire:initialized', schedule, { once: true });
+    schedule();
 })();
