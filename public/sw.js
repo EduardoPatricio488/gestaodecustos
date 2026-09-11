@@ -1,60 +1,44 @@
 /**
- * Service Worker: Finance Pro v3
- * Gestão de Cache, Modo Offline e Push Notifications
+ * Service Worker: Finance Pro v4
+ * Cache offline, Bunker fallback e sincronização em segundo plano.
  */
 
-const cacheName = 'finance-pro-v3'; // Incrementar para v3 para forçar atualização
+const cacheName = 'finance-pro-v4';
 const OFFLINE_URL = '/offline.html';
-const OFFLINE_QUEUE_KEY = 'finance-pro-offline-expenses';
 
 const staticAssets = [
     OFFLINE_URL,
     '/manifest.json',
     '/icon-192x192.png',
     '/icon-512x512.png',
-    'https://cdn.tailwindcss.com' // Opcional: faz cache do Tailwind para a página offline ficar bonita
 ];
 
-// --- 1. INSTALAÇÃO ---
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(cacheName).then(cache => {
-            return cache.addAll(staticAssets);
-        })
+        caches.open(cacheName)
+            .then(cache => cache.addAll(staticAssets))
+            .then(() => self.skipWaiting())
     );
-    self.skipWaiting();
 });
 
-// --- 2. ATIVAÇÃO ---
 self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(keys => {
-            return Promise.all(
-                keys.filter(key => key !== cacheName)
-                    .map(key => caches.delete(key))
-            );
-        })
+        caches.keys().then(keys => Promise.all(
+            keys.filter(key => key !== cacheName).map(key => caches.delete(key))
+        )).then(() => self.clients.claim())
     );
-    self.clients.claim();
 });
 
-// --- 3. GESTÃO DE REDE (FETCH) ---
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
-    // ESTRATÉGIA DE FALLBACK PARA NAVEGAÇÃO
-    // Se o utilizador tentar mudar de página e não houver internet...
     if (event.request.mode === 'navigate') {
         event.respondWith(
-            fetch(event.request).catch(() => {
-                // ... mostramos o "Bunker Offline" que está na cache
-                return caches.match(OFFLINE_URL);
-            })
+            fetch(event.request).catch(() => caches.match(OFFLINE_URL))
         );
         return;
     }
 
-    // EXCEPÇÕES: Nunca guardar em cache
     if (
         event.request.method !== 'GET' ||
         url.pathname.startsWith('/livewire') ||
@@ -65,52 +49,43 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // GESTÃO DE ASSETS ESTÁTICOS (Imagens e Manifest)
-    if (staticAssets.some(asset => url.pathname === asset)) {
+    if (url.origin === self.location.origin && staticAssets.includes(url.pathname)) {
         event.respondWith(
             caches.match(event.request).then(cached => cached || fetch(event.request))
         );
         return;
     }
 
-    // PADRÃO: Rede primeiro
     event.respondWith(fetch(event.request));
 });
 
-// --- 4. SINCRONIZAÇÃO EM SEGUNDO PLANO ---
 self.addEventListener('sync', event => {
     if (event.tag === 'sync-expenses') {
-        event.waitUntil(syncOfflineExpenses());
+        event.waitUntil(notifyClientsToSync());
     }
 });
 
-async function syncOfflineExpenses() {
-    const clients = await self.clients.matchAll();
-    for (const client of clients) {
-        // Envia mensagem para o Layout da App (Blade) tratar da sincronização
-        client.postMessage({ type: 'SYNC_OFFLINE_EXPENSES' });
-    }
+async function notifyClientsToSync() {
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    clients.forEach(client => client.postMessage({ type: 'SYNC_OFFLINE_EXPENSES' }));
 }
 
-// --- 5. NOTIFICAÇÕES PUSH ---
-self.addEventListener('push', function(event) {
+self.addEventListener('push', event => {
     const data = event.data ? event.data.json() : { title: 'Finance Pro', body: 'Nova atualização!' };
-    const options = {
+    event.waitUntil(self.registration.showNotification(data.title, {
         body: data.body,
         icon: '/icon-192x192.png',
         badge: '/icon-192x192.png',
         vibrate: [100, 50, 100],
-        data: { url: data.action_url || '/' }
-    };
-    event.waitUntil(self.registration.showNotification(data.title, options));
+        data: { url: data.action_url || '/' },
+    }));
 });
 
-self.addEventListener('notificationclick', function(event) {
+self.addEventListener('notificationclick', event => {
     event.notification.close();
     event.waitUntil(clients.openWindow(event.notification.data.url));
 });
 
-// Força a atualização do Service Worker através de mensagem se necessário
 self.addEventListener('message', event => {
     if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
