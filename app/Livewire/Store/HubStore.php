@@ -47,9 +47,7 @@ class HubStore extends Component
     {
         $catalog = app(StoreCatalogService::class);
         $cart = app(StoreCartService::class);
-        $query = StoreProduct::query()->where(function ($q) {
-            $q->whereNull('is_active')->orWhere('is_active', true);
-        });
+        $query = StoreProduct::query();
 
         $catalog->applyFilters($query, [
             'tab' => $this->activeTab,
@@ -60,13 +58,11 @@ class HubStore extends Component
             'onlyFeatured' => $this->onlyFeatured,
         ]);
 
-        $cartItems = $cart->items();
-
         return view('livewire.store.hub-store', [
             'products' => $query->get(),
-            'planProducts' => StoreProduct::where('type', 'plan')->orderBy('price')->get(),
+            'planProducts' => StoreProduct::where('is_active', true)->where('type', 'plan')->orderBy('price')->get(),
             'bundles' => StoreBundle::where('is_active', true)->with('products')->get(),
-            'cartItems' => $cartItems,
+            'cartItems' => $cart->items(),
             'cartTotal' => $cart->total(),
             'cartCount' => $cart->count(),
             'wishlistIds' => app(StoreWishlistService::class)->ids(),
