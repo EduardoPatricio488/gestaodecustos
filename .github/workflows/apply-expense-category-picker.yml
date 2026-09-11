@@ -1,0 +1,63 @@
+name: Apply Expense Category Picker
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.head_commit.message != 'feat: add expense category picker'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply feature
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('app/Livewire/Expenses.php')
+          s = p.read_text()
+          marker = "    /**\n     * Redireciona para a página de edição."
+          method = '''    /**\n     * Abre o formulário de nova despesa com a categoria escolhida.\n     */\n    public function selectCategory(int $categoryId): void\n    {\n        if (auth()->user()->isViewer()) {\n            $this->dispatch('toast', variant: 'error', text: 'Apenas leitura: não tens permissão para criar registos.');\n\n            return;\n        }\n\n        $category = Category::where('workspace_id', auth()->user()->current_workspace_id)\n            ->where('hidden_from_sidebar', false)\n            ->whereKey($categoryId)\n            ->firstOrFail();\n\n        $this->redirect(route('expenses.create', ['category' => $category->id]), navigate: true);\n    }\n\n'''
+          if 'public function selectCategory(int $categoryId)' not in s:
+              if marker not in s: raise SystemExit('Expenses.php marker not found')
+              s = s.replace(marker, method + marker, 1)
+              p.write_text(s)
+
+          p = Path('resources/views/livewire/expenses.blade.php')
+          s = p.read_text()
+          old = '''        <div class="flex gap-2">\n                <flux:select wire:model.live="filterCategory" class="w-full md:w-64">'''
+          new = '''        <div class="flex flex-col sm:flex-row gap-2">\n                @if($canEdit)\n                    <flux:button variant="primary" icon="plus" x-on:click="$dispatch('open-expense-category-picker')">\n                        Nova despesa\n                    </flux:button>\n                @endif\n\n                <flux:select wire:model.live="filterCategory" class="w-full md:w-64">'''
+          if 'open-expense-category-picker' not in s:
+              if old not in s: raise SystemExit('Expense filter marker not found')
+              s = s.replace(old, new, 1)
+
+          if 'SELETOR DE CATEGORIA PARA NOVA DESPESA' not in s:
+              modal = '''\n    {{-- SELETOR DE CATEGORIA PARA NOVA DESPESA --}}\n    <div x-data="{ open: false }" x-on:open-expense-category-picker.window="open = true" x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" aria-modal="true" role="dialog">\n        <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60 backdrop-blur-sm" x-on:click="open = false"></div>\n        <div x-show="open" x-transition class="relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">\n            <div class="flex items-center justify-between px-6 py-5 border-b border-zinc-100 dark:border-zinc-800">\n                <div>\n                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-brand-500">Novo movimento</p>\n                    <h2 class="mt-1 text-xl font-black italic tracking-tight text-zinc-900 dark:text-white">Escolhe uma categoria</h2>\n                    <p class="mt-1 text-xs font-medium text-zinc-500">Seleciona onde queres registar a nova despesa.</p>\n                </div>\n                <button type="button" x-on:click="open = false" class="p-2 rounded-xl text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-700 dark:hover:text-white transition">\n                    <flux:icon name="x-mark" class="size-5" />\n                </button>\n            </div>\n            <div class="max-h-[60vh] overflow-y-auto p-6">\n                @if($categories->isNotEmpty())\n                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">\n                        @foreach($categories as $category)\n                            <button type="button" wire:click="selectCategory({{ $category->id }})" wire:loading.attr="disabled" x-on:click="open = false" class="group flex min-h-28 flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 text-center transition-all hover:-translate-y-0.5 hover:border-brand-500/50 hover:bg-brand-500/5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand-500/40">\n                                <span class="flex size-12 items-center justify-center rounded-2xl text-white shadow-md transition-transform group-hover:scale-110" style="background: {{ $category->color ?? '#71717a' }};">\n                                    <flux:icon name="{{ $category->icon ?? 'tag' }}" class="size-5" />\n                                </span>\n                                <span class="text-xs font-black uppercase tracking-tight text-zinc-800 dark:text-zinc-100">{{ $category->name }}</span>\n                            </button>\n                        @endforeach\n                    </div>\n                @else\n                    <div class="py-12 text-center">\n                        <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800"><flux:icon name="tag" class="size-6 text-zinc-400" /></div>\n                        <h3 class="mt-4 text-sm font-black uppercase tracking-tight text-zinc-900 dark:text-white">Sem categorias disponíveis</h3>\n                        <p class="mt-1 text-xs text-zinc-500">Cria primeiro uma categoria para poderes registar despesas.</p>\n                    </div>\n                @endif\n            </div>\n        </div>\n    </div>\n\n'''
+              footer = '    {{-- FOOTER --}}'
+              if footer not in s: raise SystemExit('Expenses footer marker not found')
+              s = s.replace(footer, modal + footer, 1)
+          p.write_text(s)
+          PY
+
+      - name: Validate PHP
+        run: |
+          php -l app/Livewire/Expenses.php
+          php -l resources/views/livewire/expenses.blade.php
+          grep -n "selectCategory\|open-expense-category-picker\|Nova despesa" app/Livewire/Expenses.php resources/views/livewire/expenses.blade.php
+
+      - name: Commit and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Livewire/Expenses.php resources/views/livewire/expenses.blade.php
+          git rm .github/workflows/apply-expense-category-picker.yml .github/workflows/feature-expense-category-modal.yml
+          git commit -m "feat: add expense category picker"
+          git push
