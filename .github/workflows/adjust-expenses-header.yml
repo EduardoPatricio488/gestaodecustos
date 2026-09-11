@@ -1,0 +1,54 @@
+name: Adjust Expenses Header
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  adjust:
+    if: github.event.head_commit.message != 'ui: move new expense button to header'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Move new expense button
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('resources/views/livewire/expenses.blade.php')
+          s = p.read_text()
+
+          old_header = '''                <div class="flex items-center gap-4">\n                    <div class="p-3 bg-zinc-950 rounded-2xl border border-zinc-800 shadow-xl">\n                        <flux:icon name="banknotes" class="size-6 text-brand-400" />\n                    </div>\n                    <div>\n                        <h1 class="text-xl sm:text-2xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Todas as Despesas</h1>\n                        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1 italic">{{ auth()->user()->currentWorkspace->name }}</p>\n                    </div>\n                </div>'''
+
+          new_header = '''                <div class="flex items-center gap-4 min-w-0">\n                    <div class="p-3 bg-zinc-950 rounded-2xl border border-zinc-800 shadow-xl shrink-0">\n                        <flux:icon name="banknotes" class="size-6 text-brand-400" />\n                    </div>\n                    <div class="min-w-0">\n                        <h1 class="text-xl sm:text-2xl font-black dark:text-white uppercase tracking-tighter italic leading-none truncate">Todas as Despesas</h1>\n                        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1 italic truncate">{{ auth()->user()->currentWorkspace->name }}</p>\n                    </div>\n                </div>\n\n                @if($canEdit)\n                    <flux:button\n                        variant="primary"\n                        icon="plus"\n                        x-on:click="$dispatch('open-expense-category-picker')"\n                        class="shrink-0 rounded-xl font-black uppercase tracking-widest"\n                    >\n                        Nova despesa\n                    </flux:button>\n                @endif'''
+
+          if old_header not in s:
+              raise SystemExit('Header block not found; refusing to modify file.')
+          s = s.replace(old_header, new_header, 1)
+
+          old_filter_button = '''                @if($canEdit)\n                    <flux:button variant="primary" icon="plus" x-on:click="$dispatch('open-expense-category-picker')">\n                        Nova despesa\n                    </flux:button>\n                @endif\n\n'''
+
+          if old_filter_button not in s:
+              raise SystemExit('Filter button block not found; refusing to modify file.')
+          s = s.replace(old_filter_button, '', 1)
+
+          p.write_text(s)
+          PY
+
+          php -r '$s=file_get_contents("resources/views/livewire/expenses.blade.php"); if (substr_count($s, "open-expense-category-picker") !== 1) { fwrite(STDERR, "Unexpected picker button count\n"); exit(1); }'
+          grep -n -A18 -B4 "Todas as Despesas" resources/views/livewire/expenses.blade.php
+          grep -n -A6 -B4 "filterCategory" resources/views/livewire/expenses.blade.php
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/views/livewire/expenses.blade.php
+          git commit -m "ui: move new expense button to header"
+          git push
