@@ -31,7 +31,19 @@
                 </div>
             @endif
 
-            <form wire:submit="sendMessage" class="border-t border-zinc-200 p-3 dark:border-zinc-800"><div class="flex items-end gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-900"><textarea wire:model="input" rows="1" placeholder="Pergunta ao teu copiloto…" class="min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-400 focus:border-0 focus:ring-0 dark:text-white" @keydown.enter.exact.prevent="$wire.sendMessage()"></textarea><button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-950 text-white transition hover:scale-105 dark:bg-white dark:text-zinc-950" wire:loading.attr="disabled">↑</button></div></form>
+            <form wire:submit="sendMessage" class="border-t border-zinc-200 p-3 dark:border-zinc-800">
+                <div class="flex items-end gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-900">
+                    <textarea
+                        wire:model.live="input"
+                        rows="1"
+                        placeholder="Pergunta ao teu copiloto…"
+                        autocomplete="off"
+                        class="min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-400 focus:border-0 focus:ring-0 dark:text-white"
+                        @keydown.enter.prevent.stop="$wire.sendMessage()"
+                    ></textarea>
+                    <button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-950 text-white transition hover:scale-105 dark:bg-white dark:text-zinc-950" wire:loading.attr="disabled">↑</button>
+                </div>
+            </form>
         </section>
     @endif
 
