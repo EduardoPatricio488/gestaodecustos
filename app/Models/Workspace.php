@@ -54,10 +54,7 @@ class Workspace extends Model
     public function recruitmentJobs(): HasMany { return $this->hasMany(RecruitmentJob::class); }
     public function recurringIncomes(): HasMany { return $this->hasMany(RecurringIncome::class); }
 
-    public function getTypeText(): string
-    {
-        return match ($this->type) {'personal'=>'Conta Individual','couple'=>'Conta Partilhada (Casal)','family'=>'Conta Familiar','business','company'=>'Gestão Empresarial',default=>'Outro'};
-    }
+    public function getTypeText(): string { return match ($this->type) {'personal'=>'Conta Individual','couple'=>'Conta Partilhada (Casal)','family'=>'Conta Familiar','business','company'=>'Gestão Empresarial',default=>'Outro'}; }
 
     public function getBurnRate(): float
     {
@@ -72,7 +69,7 @@ class Workspace extends Model
     public function getLiquidezAtual(): float
     {
         if ($this->bankAccounts()->exists()) {
-            return round((float) $this->bankAccounts()->where('type', '!=', 'credito')->sum('balance'), 2);
+            return round((float) $this->bankAccounts()->where('type', '!=', 'credito')->get()->sum(fn ($account) => (float) $account->current_balance), 2);
         }
         $revenue = (float)$this->invoices()->where('status','paga')->sum('total_amount_converted');
         $spent = (float)$this->expenses()->where('is_company',true)->sum('amount_converted');
