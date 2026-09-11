@@ -1,0 +1,69 @@
+name: Update Sidebar Branding
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update-sidebar:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Replace theme toggle
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('resources/views/components/layouts/app.blade.php')
+          text = path.read_text(encoding='utf-8')
+          old = '''        <div class="px-3 mb-6">
+            <button
+                x-data="{ darkMode: document.documentElement.classList.contains('dark') }"
+                x-on:click="
+                    darkMode = !darkMode;
+                    document.documentElement.classList.add('theme-switching');
+                    window.Flux.applyAppearance(darkMode ? 'dark' : 'light');
+                    setTimeout(() => document.documentElement.classList.remove('theme-switching'), 200);
+                "
+                class="w-full glass-card flex items-center gap-3 px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
+            >
+                <flux:icon.sun x-show="darkMode" variant="outline" class="w-5 h-5 text-brand-400" />
+                <flux:icon.moon x-show="!darkMode" variant="outline" class="w-5 h-5 text-zinc-500" />
+                <span x-text="darkMode ? 'Modo Claro' : 'Modo Escuro'"></span>
+            </button>
+        </div>'''
+          new = '''        <div class="px-3 mb-6">
+            <a
+                href="{{ route('dashboard') }}"
+                wire:navigate
+                class="group relative block overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-white to-zinc-50 p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-500/40 hover:shadow-md dark:from-emerald-500/10 dark:via-zinc-900 dark:to-zinc-950"
+            >
+                <div class="absolute -right-6 -top-6 size-20 rounded-full bg-emerald-500/10 blur-2xl transition-all duration-300 group-hover:bg-emerald-500/20"></div>
+                <div class="relative flex items-center gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 transition-transform duration-300 group-hover:scale-105">
+                        <span class="text-lg font-black italic">F</span>
+                    </div>
+                    <div class="min-w-0 text-left">
+                        <p class="truncate text-[12px] font-black uppercase tracking-tight text-zinc-900 dark:text-white">Finance Pro AI</p>
+                        <p class="mt-1 text-[8px] font-black uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">Gestão financeira inteligente</p>
+                    </div>
+                </div>
+            </a>
+        </div>'''
+          if old not in text:
+              raise SystemExit('Sidebar theme toggle block not found; no changes made.')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/views/components/layouts/app.blade.php
+          git rm .github/workflows/update-sidebar-branding.yml
+          git commit -m "feat: brand sidebar as Finance Pro AI"
+          git push
