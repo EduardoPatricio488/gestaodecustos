@@ -1,0 +1,16 @@
+name: Trigger dashboard fix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger fix workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run fix-dashboard-bank-balance.yml --repo "${{ github.repository }}"
