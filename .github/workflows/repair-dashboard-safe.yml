@@ -60,3 +60,5 @@ jobs:
           git add app/Livewire/Dashboard.php
           git commit -m "fix: support PostgreSQL dashboard month aggregation"
           git push origin main
+
+# Safe one-time PostgreSQL dashboard repair trigger.
