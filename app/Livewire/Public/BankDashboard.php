@@ -3,12 +3,15 @@
 namespace App\Livewire\Public;
 
 use App\Models\Workspace;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 class BankDashboard extends Component
 {
     public $workspace;
+
+    public string $period = '12';
 
     #[Layout('layouts.guest')]
     public function mount()
@@ -35,34 +38,150 @@ class BankDashboard extends Component
         return $workspace;
     }
 
+    public function updatedPeriod(): void
+    {
+        if (! in_array($this->period, ['3', '6', '12'], true)) {
+            $this->period = '12';
+        }
+    }
+
     public function render()
     {
         $this->workspace = $this->authenticatedWorkspace();
+        $workspace = $this->workspace;
 
-        // 1. Cálculos de Liquidez Real
-        $accounts = $this->workspace->bankAccounts()->get();
-        $totalLiquidez = $accounts->where('type', '!=', 'credito')->sum('current_balance');
-        $totalPassivo = $accounts->where('type', 'credito')->sum(fn ($a) => abs($a->current_balance));
+        $accounts = $workspace->bankAccounts()->orderBy('bank_name')->orderBy('name')->get();
+        $liquidez = (float) $accounts->where('type', '!=', 'credito')->sum('current_balance');
+        $passivo = (float) $accounts->where('type', 'credito')->sum(fn ($account) => abs((float) $account->current_balance));
 
-        // 2. Rácios Financeiros (Fórmulas Reais)
-        $ratioLiquidez = $totalPassivo > 0 ? ($totalLiquidez / $totalPassivo) : 10;
+        $periodMonths = (int) $this->period;
+        $periodStart = now()->subMonths($periodMonths - 1)->startOfMonth();
+        $monthStart = now()->startOfMonth();
+        $monthEnd = now()->endOfMonth();
 
-        // Determinar Rating baseado no rácio
-        $rating = 'C';
-        if ($ratioLiquidez > 5) {
+        $revenue = (float) $workspace->invoices()
+            ->where('status', 'paga')
+            ->whereBetween('created_at', [$periodStart, now()])
+            ->sum('total_amount');
+
+        $expenses = (float) $workspace->expenses()
+            ->where('is_company', true)
+            ->where('spent_at', '>=', $periodStart->toDateString())
+            ->sum('amount');
+
+        $receivables = (float) $workspace->invoices()
+            ->where('status', 'pendente')
+            ->sum('total_amount');
+
+        $overdueReceivables = (float) $workspace->invoices()
+            ->where('status', 'pendente')
+            ->whereNotNull('due_date')
+            ->whereDate('due_date', '<', today())
+            ->sum('total_amount');
+
+        $payroll = (float) $workspace->employees()->sum('salary');
+        $employeeCount = $workspace->employees()->count();
+        $clientCount = $workspace->clients()->count();
+        $supplierCount = $workspace->suppliers()->count();
+        $projectCount = $workspace->projects()->count();
+
+        $monthRevenue = (float) $workspace->invoices()
+            ->where('status', 'paga')
+            ->whereBetween('created_at', [$monthStart, $monthEnd])
+            ->sum('total_amount');
+
+        $monthExpenses = (float) $workspace->expenses()
+            ->where('is_company', true)
+            ->whereBetween('spent_at', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->sum('amount');
+
+        $netPosition = $monthRevenue - $monthExpenses;
+        $currentRatio = $passivo > 0 ? $liquidez / $passivo : ($liquidez > 0 ? 10 : 0);
+        $debtRatio = ($liquidez + $passivo) > 0 ? ($passivo / ($liquidez + $passivo)) * 100 : 0;
+        $collectionRisk = $receivables > 0 ? ($overdueReceivables / $receivables) * 100 : 0;
+
+        if ($currentRatio >= 3 && $collectionRisk <= 15) {
             $rating = 'A+';
-        } elseif ($ratioLiquidez > 3) {
+        } elseif ($currentRatio >= 2 && $collectionRisk <= 25) {
             $rating = 'A';
-        } elseif ($ratioLiquidez > 1.5) {
+        } elseif ($currentRatio >= 1.25 && $collectionRisk <= 40) {
             $rating = 'B';
+        } elseif ($currentRatio >= 0.8) {
+            $rating = 'C';
+        } else {
+            $rating = 'D';
         }
+
+        $monthlyTrend = collect(range($periodMonths - 1, 0))->map(function (int $monthsAgo) use ($workspace) {
+            $date = now()->subMonths($monthsAgo);
+            $start = $date->copy()->startOfMonth();
+            $end = $date->copy()->endOfMonth();
+
+            $revenue = (float) $workspace->invoices()
+                ->where('status', 'paga')
+                ->whereBetween('created_at', [$start, $end])
+                ->sum('total_amount');
+
+            $expenses = (float) $workspace->expenses()
+                ->where('is_company', true)
+                ->whereBetween('spent_at', [$start->toDateString(), $end->toDateString()])
+                ->sum('amount');
+
+            return [
+                'label' => $date->format('M'),
+                'revenue' => $revenue,
+                'expenses' => $expenses,
+                'net' => $revenue - $expenses,
+            ];
+        });
+
+        $trendMax = max(1, $monthlyTrend->max(fn ($month) => max($month['revenue'], $month['expenses'])));
+
+        $recentInvoices = $workspace->invoices()
+            ->orderByDesc('created_at')
+            ->limit(8)
+            ->get();
+
+        $recentExpenses = $workspace->expenses()
+            ->where('is_company', true)
+            ->orderByDesc('spent_at')
+            ->limit(8)
+            ->get();
+
+        $pendingBankRequests = $workspace->bankAccessRequests()
+            ->where('status', 'pending')
+            ->count();
+
+        $lastBankAccessRequest = $workspace->bankAccessRequests()
+            ->latest('requested_at')
+            ->first();
 
         return view('livewire.public.bank-dashboard', [
             'accounts' => $accounts,
-            'liquidez' => $totalLiquidez,
-            'passivo' => $totalPassivo,
+            'liquidez' => $liquidez,
+            'passivo' => $passivo,
             'rating' => $rating,
-            'solvencia' => $ratioLiquidez * 10,
+            'currentRatio' => $currentRatio,
+            'debtRatio' => $debtRatio,
+            'collectionRisk' => $collectionRisk,
+            'revenue' => $revenue,
+            'expenses' => $expenses,
+            'receivables' => $receivables,
+            'overdueReceivables' => $overdueReceivables,
+            'payroll' => $payroll,
+            'employeeCount' => $employeeCount,
+            'clientCount' => $clientCount,
+            'supplierCount' => $supplierCount,
+            'projectCount' => $projectCount,
+            'monthRevenue' => $monthRevenue,
+            'monthExpenses' => $monthExpenses,
+            'netPosition' => $netPosition,
+            'monthlyTrend' => $monthlyTrend,
+            'trendMax' => $trendMax,
+            'recentInvoices' => $recentInvoices,
+            'recentExpenses' => $recentExpenses,
+            'pendingBankRequests' => $pendingBankRequests,
+            'lastBankAccessRequest' => $lastBankAccessRequest,
         ]);
     }
 }
