@@ -4,6 +4,7 @@ use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\CheckPlanAccess;
 use App\Http\Middleware\CheckRegistrationStatus;
+use App\Http\Middleware\EnsureBusinessWorkspaceAccess;
 use App\Http\Middleware\EnsureImpersonationIsValid;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\UpdateUserActivity;
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => AdminMiddleware::class,
             'plan' => CheckPlanAccess::class,
+            'business.workspace' => EnsureBusinessWorkspaceAccess::class,
         ]);
 
     })
