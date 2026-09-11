@@ -49,29 +49,17 @@ class AiInsights extends Component
 
         try {
             $conversation = $brain->conversation($user, $workspace);
-            $result = $brain->chat(
-                $user,
-                'Gera um diagnóstico financeiro mensal executivo. Usa exclusivamente os dados determinísticos do backend. Identifica a principal pressão financeira, explica a evolução face ao período anterior e dá 3 ações práticas. Distingue FACTOS, INFERÊNCIAS e RECOMENDAÇÕES. Não inventes valores nem funcionalidades.',
-                $conversation,
-                ['module' => 'ai-insights', 'route' => 'ai', 'path' => request()->path(), 'period' => now()->format('Y-m')],
-            );
-
+            $result = $brain->chat($user, 'Gera um diagnóstico financeiro mensal executivo. Usa exclusivamente os dados determinísticos do backend. Identifica a principal pressão financeira, explica a evolução face ao período anterior e dá 3 ações práticas. Distingue FACTOS, INFERÊNCIAS e RECOMENDAÇÕES. Não inventes valores nem funcionalidades.', $conversation, ['module' => 'ai-insights', 'route' => 'ai', 'path' => request()->path(), 'period' => now()->format('Y-m')]);
             $this->aiAnalysis = $result['content'] ?? 'Não foi possível gerar o diagnóstico.';
             $this->lastGeneratedAt = now()->toIso8601String();
             Cache::put($this->cacheKey(), ['text' => $this->aiAnalysis, 'at' => $this->lastGeneratedAt], now()->addDays(7));
 
-            if (method_exists($user, 'addXp')) {
-                $user->addXp(150);
-            }
+            if (method_exists($user, 'addXp')) $user->addXp(150);
 
             if ($user->email) {
                 try {
                     $snapshot = app(FinancialIntelligenceService::class)->snapshot($workspace);
-                    Mail::to($user->email)->send(new CfoReportMail($user, $this->aiAnalysis, [
-                        'earned' => (float) data_get($snapshot, 'income', 0),
-                        'spent' => (float) data_get($snapshot, 'expenses', 0),
-                        'healthScore' => app(FinancialHealthScoreService::class)->personal($workspace)['score'],
-                    ]));
+                    Mail::to($user->email)->send(new CfoReportMail($user, $this->aiAnalysis, ['earned' => (float) data_get($snapshot, 'income', 0), 'spent' => (float) data_get($snapshot, 'expenses', 0), 'healthScore' => app(FinancialHealthScoreService::class)->personal($workspace)['score']]));
                     $this->dispatch('toast', variant: 'success', text: 'Relatório gerado e enviado para o teu email! 📧');
                 } catch (\Throwable $mailException) {
                     Log::warning('CfoReportMail failed', ['message' => $mailException->getMessage()]);
@@ -103,7 +91,7 @@ class AiInsights extends Component
         if ($earned > 0 && $spent > $earned) $manualInsights[] = ['type' => 'danger', 'icon' => 'arrow-trending-down', 'title' => 'Saldo Negativo', 'text' => 'Estás a gastar mais do que o rendimento registado neste período.'];
         if ($earned > 0 && ($spent / $earned) > 0.9) $manualInsights[] = ['type' => 'warning', 'icon' => 'bell', 'title' => 'Margem Crítica', 'text' => 'Mais de 90% do rendimento registado está comprometido com gastos.'];
 
-        return view('livewire.ai-insights', [
+        return view('livewire.ai-intelligence-page', [
             'totalEarned' => $earned,
             'totalSpent' => $spent,
             'netWorth' => $netWorth,
