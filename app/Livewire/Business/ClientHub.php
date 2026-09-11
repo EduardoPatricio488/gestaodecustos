@@ -6,7 +6,6 @@ use App\Mail\ClientPortalAccessMail;
 use App\Models\Client;
 use App\Models\PortalAccessRequest;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -57,7 +56,6 @@ class ClientHub extends Component
         $this->selectedClient = auth()->user()->clients()
             ->with(['projects', 'invoices' => fn ($q) => $q->latest()])
             ->findOrFail($id);
-
         $this->dispatch('modal-show', name: 'history-modal');
     }
 
@@ -66,7 +64,6 @@ class ClientHub extends Component
     public function save(): void
     {
         $this->validate();
-
         $taxNumber = preg_replace('/\D/', '', (string) $this->tax_number);
         $taxNumber = substr($taxNumber, 0, 9);
 
@@ -119,9 +116,6 @@ class ClientHub extends Component
     public function generatePortalLink($id): void
     {
         $client = auth()->user()->clients()->findOrFail($id);
-
-        // Portal credentials must have enough entropy to be unguessable online.
-        // Rotate legacy 6-digit tokens when the business user opens the credential modal.
         if (! $client->portal_token || strlen((string) $client->portal_token) < 64) {
             $client->update(['portal_token' => $this->generateUniquePortalToken()]);
             $client->refresh();
@@ -135,10 +129,7 @@ class ClientHub extends Component
 
     public function sendPortalEmail(): void
     {
-        $client = auth()->user()->clients()
-            ->where('portal_token', $this->generatedPasscode)
-            ->firstOrFail();
-
+        $client = auth()->user()->clients()->where('portal_token', $this->generatedPasscode)->firstOrFail();
         if (! $client->email) {
             $this->dispatch('toast', text: 'Este cliente não tem email registado.', variant: 'warning');
             return;
@@ -150,40 +141,34 @@ class ClientHub extends Component
             $client->portal_token,
             $this->generatedPortalUrl,
         ));
-
         $this->dispatch('toast', text: 'Código de acesso enviado para '.$client->email.'.', variant: 'success');
     }
 
     public function getPendingAccessRequests(): array
     {
-        return $this->pendingAccessRequestsQuery()
-            ->latest('requested_at')
-            ->limit(50)
-            ->get()
+        return $this->pendingAccessRequestsQuery()->latest('requested_at')->limit(50)->get()
             ->map(fn (PortalAccessRequest $request) => [
                 'id' => $request->id,
                 'name' => $request->requester_name,
                 'email' => $request->requester_email,
                 'tax_number' => $request->tax_number,
                 'requested_at' => optional($request->requested_at)->format('d/m/Y H:i'),
-            ])
-            ->values()
-            ->all();
+            ])->values()->all();
     }
 
     public function approveAccessRequest($id): void
     {
         $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
-        $taxNumber = preg_replace('/\D/', '', (string) $request->tax_number);
-        $taxNumber = substr($taxNumber, 0, 9);
+        $taxNumber = substr(preg_replace('/\D/', '', (string) $request->tax_number), 0, 9);
         $clientQuery = auth()->user()->clients();
-        $client = null;
-
-        if ($request->requester_email) {
-            $client = (clone $clientQuery)->where('email', $request->requester_email)->first();
-        }
+        $client = $request->requester_email ? (clone $clientQuery)->where('email', $request->requester_email)->first() : null;
         if (! $client && $taxNumber) {
             $client = (clone $clientQuery)->where('tax_number', $taxNumber)->first();
+        }
+
+        $token = $client?->portal_token;
+        if (! $token || strlen((string) $token) < 64) {
+            $token = $this->generateUniquePortalToken();
         }
 
         if (! $client) {
@@ -195,7 +180,7 @@ class ClientHub extends Component
                 'tax_number' => $taxNumber ?: null,
                 'email' => $request->requester_email,
                 'status' => 'ativo',
-                'portal_token' => $this->generateUniquePortalToken(),
+                'portal_token' => $token,
             ]);
         } else {
             $client->update([
@@ -203,7 +188,7 @@ class ClientHub extends Component
                 'email' => $client->email ?: $request->requester_email,
                 'tax_number' => $client->tax_number ?: ($taxNumber ?: null),
                 'status' => 'ativo',
-                'portal_token' => $client->portal_token ?: $this->generateUniquePortalToken(),
+                'portal_token' => $token,
             ]);
             $client->refresh();
         }
@@ -242,16 +227,12 @@ class ClientHub extends Component
         do {
             $token = Str::random(64);
         } while (Client::where('portal_token', $token)->exists());
-
         return $token;
     }
 
     public function render()
     {
-        $clients = auth()->user()->clients()
-            ->where('name', 'like', '%'.$this->search.'%')
-            ->get();
-
+        $clients = auth()->user()->clients()->where('name', 'like', '%'.$this->search.'%')->get();
         return view('livewire.business.client-hub', [
             'clients' => $clients,
             'totalClients' => $clients->count(),
