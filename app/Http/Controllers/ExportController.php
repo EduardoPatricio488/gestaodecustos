@@ -12,79 +12,58 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ExportController extends Controller
 {
-    /**
-     * MÉTODO ADICIONADO: Exportação de Auditoria do Dashboard
-     */
-    public function dashboardPdf(Request $request)
+    private function businessUser()
     {
         $user = auth()->user();
-        $workspaceId = $user->current_workspace_id;
+        abort_unless($user && $user->current_workspace_id, 403);
+        abort_unless($user->workspaces()->whereKey($user->current_workspace_id)->exists(), 403);
+        return $user;
+    }
 
-        // 1. Capturar filtros da URL
-        $start = $request->query('start', now()->startOfMonth()->format('Y-m-d'));
-        $end = $request->query('end', now()->endOfMonth()->format('Y-m-d'));
-        $includeExpenses = $request->query('expenses') === '1';
-        $includeIncomes = $request->query('incomes') === '1';
+    public function dashboardPdf(Request $request)
+    {
+        $user = $this->businessUser();
+        $workspace = $user->currentWorkspace;
+        abort_unless($workspace && $workspace->type !== 'personal', 403);
 
-        // 2. Procurar Dados
-        $expenses = collect();
-        $incomes = collect();
+        $start = Carbon::parse($request->query('start', now()->startOfMonth()->format('Y-m-d')))->startOfDay();
+        $end = Carbon::parse($request->query('end', now()->endOfMonth()->format('Y-m-d')))->endOfDay();
+        abort_if($end->lt($start) || $start->diffInDays($end) > 366, 422, 'Período de exportação inválido.');
 
-        if ($includeExpenses) {
-            $expenses = Expense::where('workspace_id', $workspaceId)
-                ->whereBetween('spent_at', [$start, $end])
-                ->with('category')
-                ->latest('spent_at')
-                ->get();
-        }
+        $expenses = $request->query('expenses') === '1'
+            ? $workspace->expenses()->where('is_company', true)->whereBetween('spent_at', [$start->toDateString(), $end->toDateString()])->with(['category', 'supplier'])->latest('spent_at')->get()
+            : collect();
+        $incomes = $request->query('incomes') === '1'
+            ? $workspace->incomes()->whereBetween('received_at', [$start->toDateString(), $end->toDateString()])->latest('received_at')->get()
+            : collect();
 
-        if ($includeIncomes) {
-            $incomes = Income::where('workspace_id', $workspaceId)
-                ->whereBetween('received_at', [$start, $end]) // Ajusta se a coluna for 'date'
-                ->latest('received_at')
-                ->get();
-        }
-
-        // 3. Preparar dados para a view
         $data = [
-            'workspaceName' => $user->currentWorkspace->name,
-            'start' => Carbon::parse($start)->format('d/m/Y'),
-            'end' => Carbon::parse($end)->format('d/m/Y'),
-            'expenses' => $expenses,
-            'incomes' => $incomes,
-            'totalExpenses' => $expenses->sum('amount'),
-            'totalIncomes' => $incomes->sum('amount'),
+            'workspaceName' => $workspace->name,
+            'start' => $start->format('d/m/Y'), 'end' => $end->format('d/m/Y'),
+            'expenses' => $expenses, 'incomes' => $incomes,
+            'totalExpenses' => round((float) $expenses->sum('amount'), 2),
+            'totalIncomes' => round((float) $incomes->sum('amount'), 2),
             'generatedAt' => now()->format('d/m/Y H:i'),
         ];
 
-        // 4. Gerar PDF (Cria este ficheiro em resources/views/pdf/financial-report.blade.php)
-        $pdf = Pdf::loadView('pdf.financial-report', $data);
-
-        return $pdf->download('Relatorio_Financeiro_'.now()->format('dmY_Hi').'.pdf');
+        return Pdf::loadView('pdf.financial-report', $data)
+            ->download('Relatorio_Financeiro_'.$start->format('Ymd').'-'.$end->format('Ymd').'.pdf');
     }
 
-    /**
-     * Métodos que já tinhas (Mantidos)
-     */
     public function expensesPdf()
     {
         $user = auth()->user();
         $expenses = $user->expenses()->with('category')->latest()->get();
-        $pdf = Pdf::loadView('pdf.expenses', compact('expenses'));
-
-        return $pdf->download('despesas_pessoais.pdf');
+        return Pdf::loadView('pdf.expenses', compact('expenses'))->download('despesas_pessoais.pdf');
     }
 
     public function businessExport(Request $request)
     {
-        $user = auth()->user();
-        $monthNumber = (int) $request->get('month', date('n'));
-        $date = Carbon::create(date('Y'), $monthNumber, 1);
-        $monthName = $date->translatedFormat('F');
-
-        return Excel::download(
-            new BusinessExport($user, $monthNumber),
-            'Contabilidade_'.ucfirst($monthName).'_'.date('Y').'.xlsx'
-        );
+        $user = $this->businessUser();
+        abort_unless($user->currentWorkspace && $user->currentWorkspace->type !== 'personal', 403);
+        $monthNumber = (int) $request->get('month', now()->month);
+        abort_unless($monthNumber >= 1 && $monthNumber <= 12, 422, 'Mês inválido.');
+        $date = Carbon::create(now()->year, $monthNumber, 1);
+        return Excel::download(new BusinessExport($user, $monthNumber, $date->year), 'Contabilidade_'.$date->translatedFormat('F').'_'.$date->year.'.xlsx');
     }
 }
