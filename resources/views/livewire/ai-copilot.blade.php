@@ -9,8 +9,22 @@
         <section class="fixed bottom-5 right-5 z-[190] flex h-[min(760px,calc(100vh-40px))] w-[min(430px,calc(100vw-40px))] flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950" aria-label="Finance Pro AI Copilot">
             <header class="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
                 <div class="min-w-0"><div class="flex items-center gap-2"><span class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500 text-white">✦</span><div><h2 class="text-sm font-black tracking-tight text-zinc-950 dark:text-white">Finance Pro AI</h2><p class="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">Financial Copilot</p></div></div></div>
-                <div class="flex items-center gap-1"><button wire:click="newConversation" type="button" class="rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900">Novo</button><button wire:click="archiveConversation" type="button" class="rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900">Arquivar</button><button wire:click="toggle" type="button" class="rounded-lg px-2 py-1.5 text-lg text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900">×</button></div>
+                <div class="flex items-center gap-1"><button wire:click="newConversation" type="button" class="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300">+ Nova</button><button wire:click="archiveConversation" type="button" class="rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900">Arquivar</button><button wire:click="toggle" type="button" class="rounded-lg px-2 py-1.5 text-lg text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900">×</button></div>
             </header>
+
+            @if($conversations)
+                <div class="border-b border-zinc-100 bg-zinc-50 px-4 py-2.5 dark:border-zinc-900 dark:bg-zinc-900/60">
+                    <div class="mb-1.5 flex items-center justify-between"><p class="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">Conversas guardadas</p><span class="text-[9px] font-bold text-zinc-400">{{ count($conversations) }}</span></div>
+                    <div class="flex max-h-24 gap-2 overflow-x-auto pb-1">
+                        @foreach($conversations as $conversation)
+                            <button type="button" wire:click="selectConversation({{ $conversation['id'] }})" class="min-w-[155px] max-w-[190px] rounded-xl border px-3 py-2 text-left transition {{ (int) $conversation['id'] === (int) $conversationId ? 'border-emerald-400 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/30' : 'border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950' }}">
+                                <p class="truncate text-[11px] font-black text-zinc-800 dark:text-zinc-100">{{ $conversation['title'] }}</p>
+                                <p class="mt-0.5 text-[9px] text-zinc-400">{{ $conversation['messages_count'] }} mensagens · {{ $conversation['last_activity_at'] }}</p>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
             <div class="border-b border-zinc-100 bg-zinc-50 px-5 py-3 dark:border-zinc-900 dark:bg-zinc-900/60"><div class="flex items-center justify-between gap-3"><div class="min-w-0"><p class="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">Contexto</p><p class="truncate text-xs font-bold text-zinc-700 dark:text-zinc-200">{{ $pageContext['module'] ?? 'Finance Pro AI' }}</p></div><span class="rounded-full border border-zinc-200 bg-white px-2 py-1 text-[9px] font-black uppercase text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950">{{ in_array(auth()->user()?->currentWorkspace?->type, ['business', 'company'], true) ? 'Business' : 'Personal' }}</span></div></div>
 
@@ -18,7 +32,7 @@
                 @forelse($messages as $message)
                     <div class="flex {{ $message['role'] === 'user' ? 'justify-end' : 'justify-start' }}"><div class="max-w-[88%] rounded-2xl px-4 py-3 {{ $message['role'] === 'user' ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950' : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-100' }}"><div class="whitespace-pre-wrap text-sm leading-6">{{ $message['content'] }}</div></div></div>
                 @empty
-                    <div class="flex h-full min-h-64 flex-col items-center justify-center px-8 text-center"><div class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-2xl dark:bg-zinc-900">✦</div><h3 class="text-base font-black text-zinc-950 dark:text-white">O teu copiloto financeiro</h3><p class="mt-2 text-xs leading-5 text-zinc-500">Pergunta-me sobre as tuas despesas, objetivos, investimentos ou, no workspace empresarial, sobre a performance da empresa.</p></div>
+                    <div class="flex h-full min-h-64 flex-col items-center justify-center px-8 text-center"><div class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-2xl dark:bg-zinc-900">✦</div><h3 class="text-base font-black text-zinc-950 dark:text-white">O teu copiloto financeiro</h3><p class="mt-2 text-xs leading-5 text-zinc-500">Começa uma nova conversa ou escolhe uma conversa guardada. O histórico fica associado ao workspace atual.</p></div>
                 @endforelse
                 @if($isLoading)<div class="flex justify-start"><div class="rounded-2xl bg-zinc-100 px-4 py-3 text-xs font-bold text-zinc-500 dark:bg-zinc-900">A analisar os teus dados…</div></div>@endif
             </div>
