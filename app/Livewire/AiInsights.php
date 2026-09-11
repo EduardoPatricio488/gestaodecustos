@@ -3,11 +3,11 @@
 namespace App\Livewire;
 
 use App\Mail\CfoReportMail;
-use App\Models\Expense;
-use App\Models\Income;
+use App\Services\AI\AiBrainService;
+use App\Services\AI\FinancialHealthScoreService;
+use App\Services\AI\FinancialIntelligenceService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Layout;
@@ -17,17 +17,15 @@ use Livewire\Component;
 class AiInsights extends Component
 {
     public bool $isAnalyzing = false;
-
     public string $aiAnalysis = '';
-
     public ?string $lastGeneratedAt = null;
 
-    public function mount()
+    public function mount(): void
     {
         $cached = Cache::get($this->cacheKey());
         if ($cached) {
-            $this->aiAnalysis = $cached['text'];
-            $this->lastGeneratedAt = $cached['at'];
+            $this->aiAnalysis = $cached['text'] ?? '';
+            $this->lastGeneratedAt = $cached['at'] ?? null;
         }
     }
 
@@ -36,211 +34,86 @@ class AiInsights extends Component
         return 'ai-insights:'.auth()->id();
     }
 
-    /**
-     * Ganhos e gastos de um mês específico (reutilizável para mês atual e anterior).
-     * O 3º valor (hasRealData) indica se há registos DATADOS reais nesse mês — o rendimento
-     * fixo (recorrente) é sempre somado ao total porque reflete a situação atual, mas não deve
-     * por si só fazer parecer que existem dados históricos desse mês específico.
-     */
-    private function getMonthlyTotals(int $month, int $year): array
-    {
-        $user = auth()->user();
-
-        $datedEarned = (float) Income::where('user_id', $user->id)
-            ->whereMonth('received_at', $month)
-            ->whereYear('received_at', $year)
-            ->sum('amount');
-
-        $fixedIncome = (float) $user->recurringIncomes()->where('is_active', true)->sum('amount');
-
-        $spent = (float) Expense::where('user_id', $user->id)
-            ->where('is_company', false)
-            ->whereMonth('spent_at', $month)
-            ->whereYear('spent_at', $year)
-            ->sum('amount');
-
-        $hasRealData = $datedEarned > 0 || $spent > 0;
-
-        return [$datedEarned + $fixedIncome, $spent, $hasRealData];
-    }
-
-    /**
-     * Variação percentual entre dois valores. Devolve null se não houver
-     * base de comparação válida (evita divisão por zero / % absurdas).
-     */
-    private function percentDelta(float $current, float $previous): ?float
-    {
-        if ($previous == 0) {
-            return null;
-        }
-
-        return round((($current - $previous) / $previous) * 100, 1);
-    }
-
-    /**
-     * Guarda um snapshot do património no início do mês (cache, sem migração nova)
-     * e devolve a variação % vs o snapshot do mês anterior, se existir.
-     */
-    private function trackNetWorthSnapshot(float $currentNetWorth, int $year, int $month): ?float
-    {
-        $userId = auth()->id();
-        $key = "networth-snapshot:{$userId}:{$year}-{$month}";
-
-        if (! Cache::has($key)) {
-            Cache::put($key, $currentNetWorth, now()->addMonths(13));
-        }
-
-        $prevDate = Carbon::createFromDate($year, $month, 1)->subMonth();
-        $prevKey = "networth-snapshot:{$userId}:{$prevDate->year}-{$prevDate->month}";
-        $prevNetWorth = Cache::get($prevKey);
-
-        if ($prevNetWorth === null || $prevNetWorth == 0) {
-            return null; // sem dados do mês anterior — não inventamos comparação
-        }
-
-        return round((($currentNetWorth - $prevNetWorth) / $prevNetWorth) * 100, 1);
-    }
-
-    public function generateInsights()
+    public function generateInsights(AiBrainService $brain): void
     {
         set_time_limit(120);
         $this->isAnalyzing = true;
-        $this->aiAnalysis = '';
-
         $user = auth()->user();
-        $month = now()->month;
-        $year = now()->year;
+        $workspace = app(\App\Services\AI\ContextEngine::class)->resolveWorkspace($user);
 
-        [$totalEarned, $totalSpent] = $this->getMonthlyTotals($month, $year);
-
-        $expensesByCategory = Expense::selectRaw('categories.name as category, sum(expenses.amount) as total')
-            ->join('categories', 'expenses.category_id', '=', 'categories.id')
-            ->where('expenses.user_id', $user->id)
-            ->where('expenses.is_company', false)
-            ->whereMonth('expenses.spent_at', $month)
-            ->whereYear('expenses.spent_at', $year)
-            ->groupBy('categories.name')->get()->pluck('total', 'category')->toArray();
-
-        $invValue = (float) $user->investments->sum(fn ($i) => $i->quantity * $i->current_price);
-        $savings = $totalEarned - $totalSpent;
-        $savingsRate = $totalEarned > 0 ? ($savings / $totalEarned) * 100 : 0;
-
-        $prompt = "Age como um Diretor Financeiro Pessoal (CFO). Analisa os meus dados deste mês:
-        - Rendimento Total: {$totalEarned}€
-        - Gasto Total: {$totalSpent}€
-        - Taxa de Poupança: ".round($savingsRate, 1).'%
-        - Distribuição por Categoria: '.json_encode($expensesByCategory)."
-        - Valor em Ativos/Investimentos: {$invValue}€
-
-        Tarefa:
-        1. Dá um diagnóstico sincero sobre a minha saúde financeira.
-        2. Identifica a categoria mais problemática.
-        3. Dá 3 dicas práticas para aumentar a taxa de poupança.
-        Responde em Português de Portugal, usa Markdown e emojis.";
-
-        try {
-            $apiKey = env('OPENROUTER_API_KEY');
-
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$apiKey,
-                'Content-Type' => 'application/json',
-                'HTTP-Referer' => config('app.url'),
-                'X-Title' => config('app.name'),
-            ])->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => 'google/gemini-2.5-flash',
-                'max_tokens' => 2000,
-                'messages' => [
-                    ['role' => 'user', 'content' => $prompt],
-                ],
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                $this->aiAnalysis = $data['choices'][0]['message']['content'] ?? 'Resposta vazia da IA.';
-                $this->lastGeneratedAt = now()->toIso8601String();
-
-                Cache::put($this->cacheKey(), [
-                    'text' => $this->aiAnalysis,
-                    'at' => $this->lastGeneratedAt,
-                ], now()->addDays(7));
-
-                if (method_exists($user, 'addXp')) {
-                    $user->addXp(150);
-                }
-
-                // Avisa o utilizador e envia o relatório para o email assim que fica pronto.
-                if ($user->email) {
-                    try {
-                        Mail::to($user->email)->send(new CfoReportMail($user, $this->aiAnalysis, [
-                            'earned' => $totalEarned,
-                            'spent' => $totalSpent,
-                            'healthScore' => $this->calculateHealthScore($totalEarned, $totalSpent),
-                        ]));
-                        $this->dispatch('toast', variant: 'success', text: 'Relatório gerado e enviado para o teu email! 📧');
-                    } catch (\Throwable $mailException) {
-                        Log::error('CfoReportMail: '.$mailException->getMessage());
-                        $this->dispatch('toast', variant: 'success', text: 'Relatório gerado! (não foi possível enviar o email)');
-                    }
-                } else {
-                    $this->dispatch('toast', variant: 'success', text: 'Relatório gerado! ✨');
-                }
-            } else {
-                $this->aiAnalysis = 'Erro HTTP '.$response->status().': '.$response->body();
-            }
-        } catch (\Throwable $e) {
-            $this->aiAnalysis = 'Erro: '.$e->getMessage();
+        if (! $workspace) {
+            $this->aiAnalysis = 'Não existe um workspace ativo para analisar.';
+            $this->isAnalyzing = false;
+            return;
         }
 
-        $this->isAnalyzing = false;
+        try {
+            $conversation = $brain->conversation($user, $workspace);
+            $result = $brain->chat(
+                $user,
+                'Gera um diagnóstico financeiro mensal executivo. Usa exclusivamente os dados determinísticos do backend. Identifica a principal pressão financeira, explica a evolução face ao período anterior e dá 3 ações práticas. Distingue FACTOS, INFERÊNCIAS e RECOMENDAÇÕES. Não inventes valores nem funcionalidades.',
+                $conversation,
+                ['module' => 'ai-insights', 'route' => 'ai', 'path' => request()->path(), 'period' => now()->format('Y-m')],
+            );
+
+            $this->aiAnalysis = $result['content'] ?? 'Não foi possível gerar o diagnóstico.';
+            $this->lastGeneratedAt = now()->toIso8601String();
+            Cache::put($this->cacheKey(), ['text' => $this->aiAnalysis, 'at' => $this->lastGeneratedAt], now()->addDays(7));
+
+            if (method_exists($user, 'addXp')) {
+                $user->addXp(150);
+            }
+
+            if ($user->email) {
+                try {
+                    $snapshot = app(FinancialIntelligenceService::class)->snapshot($workspace);
+                    Mail::to($user->email)->send(new CfoReportMail($user, $this->aiAnalysis, [
+                        'earned' => (float) data_get($snapshot, 'income', 0),
+                        'spent' => (float) data_get($snapshot, 'expenses', 0),
+                        'healthScore' => app(FinancialHealthScoreService::class)->personal($workspace)['score'],
+                    ]));
+                    $this->dispatch('toast', variant: 'success', text: 'Relatório gerado e enviado para o teu email! 📧');
+                } catch (\Throwable $mailException) {
+                    Log::warning('CfoReportMail failed', ['message' => $mailException->getMessage()]);
+                    $this->dispatch('toast', variant: 'success', text: 'Relatório gerado! O email não ficou disponível.');
+                }
+            }
+        } catch (\Throwable $e) {
+            report($e);
+            $this->aiAnalysis = 'Não consegui concluir esta análise neste momento. Os teus dados não foram inventados nem alterados.';
+            $this->dispatch('toast', variant: 'error', text: 'O AI Brain não está disponível neste momento.');
+        } finally {
+            $this->isAnalyzing = false;
+        }
     }
 
     public function render()
     {
         $user = auth()->user();
-        $month = now()->month;
-        $year = now()->year;
-
-        [$earned, $spent] = $this->getMonthlyTotals($month, $year);
-
-        $prevDate = now()->subMonth();
-        [$prevEarned, $prevSpent, $hasPrevData] = $this->getMonthlyTotals($prevDate->month, $prevDate->year);
-
-        $netWorth = (float) $user->currentWorkspace->getLiquidezAtual()
-                  + (float) $user->investments->sum(fn ($i) => $i->quantity * $i->current_price);
-
-        $healthScore = $this->calculateHealthScore($earned, $spent);
-        $prevHealthScore = $this->calculateHealthScore($prevEarned, $prevSpent);
+        $workspace = app(\App\Services\AI\ContextEngine::class)->resolveWorkspace($user);
+        $snapshot = $workspace ? app(FinancialIntelligenceService::class)->snapshot($workspace) : [];
+        $earned = (float) data_get($snapshot, 'income', 0);
+        $spent = (float) data_get($snapshot, 'expenses', 0);
+        $previous = (array) data_get($snapshot, 'previous', []);
+        $changes = (array) data_get($snapshot, 'changes', []);
+        $netWorth = $workspace ? (float) $workspace->getLiquidezAtual() + (float) data_get($snapshot, 'investment_value', 0) : 0;
+        $healthScore = $workspace ? app(FinancialHealthScoreService::class)->personal($workspace)['score'] : 0;
 
         $manualInsights = [];
-        if ($spent > $earned && $earned > 0) {
-            $manualInsights[] = ['type' => 'danger', 'icon' => 'arrow-trending-down', 'title' => 'Saldo Negativo', 'text' => 'Estás a gastar mais do que ganhas este mês.'];
-        }
-        if ($earned > 0 && ($spent / $earned) > 0.9) {
-            $manualInsights[] = ['type' => 'warning', 'icon' => 'bell', 'title' => 'Margem Crítica', 'text' => 'Resta-te menos de 10% do teu rendimento livre.'];
-        }
+        if ($earned > 0 && $spent > $earned) $manualInsights[] = ['type' => 'danger', 'icon' => 'arrow-trending-down', 'title' => 'Saldo Negativo', 'text' => 'Estás a gastar mais do que o rendimento registado neste período.'];
+        if ($earned > 0 && ($spent / $earned) > 0.9) $manualInsights[] = ['type' => 'warning', 'icon' => 'bell', 'title' => 'Margem Crítica', 'text' => 'Mais de 90% do rendimento registado está comprometido com gastos.'];
 
         return view('livewire.ai-insights', [
             'totalEarned' => $earned,
             'totalSpent' => $spent,
             'netWorth' => $netWorth,
             'healthScore' => $healthScore,
-            'healthScoreDelta' => $hasPrevData ? ($healthScore - $prevHealthScore) : null,
-            'earnedDelta' => $hasPrevData ? $this->percentDelta($earned, $prevEarned) : null,
-            'spentDelta' => $hasPrevData ? $this->percentDelta($spent, $prevSpent) : null,
-            'netWorthDelta' => $this->trackNetWorthSnapshot($netWorth, $year, $month),
+            'healthScoreDelta' => isset($previous['income']) ? $healthScore - (int) max(0, min(100, 100 - (($previous['expenses'] ?? 0) / max(0.01, $previous['income'] ?? 0)) * 100 + 20)) : null,
+            'earnedDelta' => data_get($changes, 'income_percent'),
+            'spentDelta' => data_get($changes, 'expenses_percent'),
+            'netWorthDelta' => null,
             'insights' => $manualInsights,
-            'reportGeneratedAt' => $this->lastGeneratedAt ? Carbon::parse($this->lastGeneratedAt) : null,  // 👈 nome novo
+            'reportGeneratedAt' => $this->lastGeneratedAt ? Carbon::parse($this->lastGeneratedAt) : null,
         ]);
-    }
-
-    private function calculateHealthScore($earned, $spent)
-    {
-        if ($earned <= 0) {
-            return 0;
-        }
-        $ratio = ($spent / $earned) * 100;
-        $score = 100 - $ratio;
-
-        return (int) max(0, min(100, $score + 20));
     }
 }
