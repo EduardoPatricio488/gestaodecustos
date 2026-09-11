@@ -13,39 +13,30 @@ class SupplierHub extends Component
 {
     use WithPagination;
 
-    // Propriedades do Formulário
     public $name;
-
     public $legal_name;
-
     public $tax_number;
-
     public $email;
-
     public $phone;
-
     public $payment_terms;
-
     public $address;
-
     public $editingId = null;
-
     public $generatedPasscode = '';
-
     public $supplierTaxNumber = '';
-
     public $generatedPortalUrl = '';
-
     public $search = '';
 
-    // No topo da classe, garante que tens estas 3 variáveis públicas
+    public function updatedTaxNumber($value): void
+    {
+        $digits = preg_replace('/\D/', '', (string) $value);
+        $digits = substr($digits, 0, 9);
+        $this->tax_number = implode(' ', str_split($digits, 3));
+    }
 
     public function generatePortalLink($id)
     {
-        // 1. Procurar o fornecedor
         $supplier = auth()->user()->suppliers()->findOrFail($id);
 
-        // 2. Se o fornecedor ainda não tiver código, gerar um agora
         if (! $supplier->portal_token) {
             do {
                 $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -53,35 +44,30 @@ class SupplierHub extends Component
             } while ($exists);
 
             $supplier->update(['portal_token' => $passcode]);
-            // Atualiza a instância local para ter o código novo
             $supplier->refresh();
         }
 
-        // 3. ATRIBUIR OS VALORES ÀS VARIÁVEIS PÚBLICAS (Obrigatório para o Blade ver)
         $this->generatedPasscode = $supplier->portal_token;
         $this->supplierTaxNumber = $supplier->tax_number;
         $this->generatedPortalUrl = route('supplier.portal');
 
-        // 4. Abrir o modal
         $this->dispatch('modal-show', name: 'supplier-portal-modal');
     }
 
-    // Filtros de Visualização
-    public $viewMode = 'grid'; // 'grid' ou 'list'
+    public $viewMode = 'grid';
 
     protected $rules = [
         'name' => 'required|string|max:100',
-        'tax_number' => 'nullable|string|max:20',
+        'tax_number' => 'nullable|string|max:11',
         'email' => 'nullable|email',
         'payment_terms' => 'nullable|string',
     ];
 
-    /**
-     * Guardar ou Atualizar Fornecedor
-     */
     public function save()
     {
         $this->validate();
+
+        $taxNumber = preg_replace('/\D/', '', (string) $this->tax_number);
 
         auth()->user()->suppliers()->updateOrCreate(
             ['id' => $this->editingId],
@@ -89,7 +75,7 @@ class SupplierHub extends Component
                 'workspace_id' => auth()->user()->current_workspace_id,
                 'name' => $this->name,
                 'legal_name' => $this->legal_name,
-                'tax_number' => $this->tax_number,
+                'tax_number' => $taxNumber !== '' ? $taxNumber : null,
                 'email' => $this->email,
                 'phone' => $this->phone,
                 'payment_terms' => $this->payment_terms,
@@ -108,7 +94,7 @@ class SupplierHub extends Component
         $this->editingId = $supplier->id;
         $this->name = $supplier->name;
         $this->legal_name = $supplier->legal_name;
-        $this->tax_number = $supplier->tax_number;
+        $this->tax_number = $supplier->tax_number ? implode(' ', str_split(preg_replace('/\D/', '', (string) $supplier->tax_number), 3)) : null;
         $this->email = $supplier->email;
         $this->phone = $supplier->phone;
         $this->payment_terms = $supplier->payment_terms;
@@ -133,12 +119,10 @@ class SupplierHub extends Component
         $user = auth()->user();
         $workspaceId = $user->current_workspace_id;
 
-        // Query principal de fornecedores
         $suppliers = Supplier::where('workspace_id', $workspaceId)
             ->where('name', 'like', '%'.$this->search.'%')
             ->get()
             ->map(function ($supplier) {
-                // Inteligência: Calcula quanto já gastámos com este fornecedor
                 $supplier->total_spent = Expense::where('supplier_id', $supplier->id)->sum('amount');
                 $supplier->bills_count = Expense::where('supplier_id', $supplier->id)->count();
 
