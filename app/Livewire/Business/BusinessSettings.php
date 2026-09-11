@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Business;
 
-use App\Models\Workspace;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -14,14 +13,23 @@ class BusinessSettings extends Component
     use WithFileUploads;
 
     public $workspace;
+
     public $name;
+
     public $legal_name;
+
     public $tax_number;
+
     public $industry;
+
     public $business_email;
+
     public $address;
+
     public $currency;
+
     public $initial_capital;
+
     public $logo;
 
     public function mount()
@@ -50,6 +58,7 @@ class BusinessSettings extends Component
     private function formatTaxNumber($value): string
     {
         $digits = substr(preg_replace('/\D/', '', (string) $value), 0, 9);
+
         return implode(' ', str_split($digits, 3));
     }
 
@@ -106,6 +115,7 @@ class BusinessSettings extends Component
         $this->workspace->users()->detach($user->id);
         $user->update(['current_workspace_id' => null]);
         $this->dispatch('toast', variant: 'success', heading: 'Sessão Terminada', message: 'Saíste da equipa com sucesso.');
+
         return redirect()->route('hub.business.gateway');
     }
 
@@ -120,6 +130,7 @@ class BusinessSettings extends Component
         $this->workspace->employees()->delete();
         $this->workspace->delete();
         $this->dispatch('toast', variant: 'success', heading: 'Empresa Eliminada', message: 'O teu plano Business continua ativo.');
+
         return redirect()->route('hub.business.gateway');
     }
 

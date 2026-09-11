@@ -16,12 +16,19 @@ class SupplierDashboard extends Component
     use WithFileUploads;
 
     public $supplier;
+
     public $subject = '';
+
     public $message = '';
+
     public $activeTicketId = null;
+
     public $replyMessage = '';
+
     public $invoice_amount;
+
     public $invoice_doc;
+
     public $invoice_notes;
 
     public function mount($token)
