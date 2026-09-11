@@ -11,9 +11,12 @@ class WhatsappWebhookController extends Controller
 {
     public function verify(Request $request)
     {
-        $token = config('services.whatsapp.verify_token');
-        if ($request->get('hub_verify_token') === $token) {
-            return response($request->get('hub_challenge'));
+        $configuredToken = (string) config('services.whatsapp.verify_token');
+        $providedToken = (string) $request->get('hub_verify_token', '');
+
+        // Never accept verification when the secret is missing or empty.
+        if ($configuredToken !== '' && $providedToken !== '' && hash_equals($configuredToken, $providedToken)) {
+            return response((string) $request->get('hub_challenge', ''));
         }
 
         abort(403);
@@ -29,7 +32,13 @@ class WhatsappWebhookController extends Controller
         $from = $entry['from'] ?? null;
         $text = $entry['text']['body'] ?? '';
 
-        Log::info('WhatsApp message', ['from' => $from, 'text' => $text]);
+        // Do not persist phone numbers or message contents in application logs.
+        // They are user-provided personal data and are not required for this
+        // webhook's current no-op processing path.
+        Log::info('WhatsApp webhook message received', [
+            'has_sender' => filled($from),
+            'has_text' => filled($text),
+        ]);
 
         // Mapear número → user requer configuração; por agora log apenas
         // Quando WHATSAPP_USER_MAP estiver configurado, processar comando
