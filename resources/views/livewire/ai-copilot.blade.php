@@ -1,5 +1,5 @@
 <div x-data x-on:ai-page-context.window="$wire.setPageContext($event.detail)" class="contents">
-    <button type="button" wire:click="toggle" aria-label="Abrir Finance Pro AI Copilot" class="fixed bottom-5 right-5 z-[180] flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-zinc-950 text-white shadow-2xl shadow-black/30 transition hover:-translate-y-0.5 hover:bg-zinc-900 dark:bg-white dark:text-zinc-950">
+    <button type="button" wire:click="toggle" aria-label="Abrir Finance Pro AI Copilot" class="fixed bottom-5 right-5 z-[180] flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500 text-white shadow-2xl shadow-emerald-500/25 transition hover:-translate-y-0.5 hover:bg-emerald-600">
         <span class="text-xl">✦</span>
         @if($pendingActions)<span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-black text-white">{{ count($pendingActions) }}</span>@endif
     </button>
@@ -8,7 +8,7 @@
         <div class="fixed inset-0 z-[170] bg-zinc-950/20 backdrop-blur-[2px]" wire:click="toggle"></div>
         <section class="fixed bottom-5 right-5 z-[190] flex h-[min(760px,calc(100vh-40px))] w-[min(430px,calc(100vw-40px))] flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950" aria-label="Finance Pro AI Copilot">
             <header class="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
-                <div class="min-w-0"><div class="flex items-center gap-2"><span class="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-950 text-white dark:bg-white dark:text-zinc-950">✦</span><div><h2 class="text-sm font-black tracking-tight text-zinc-950 dark:text-white">Finance Pro AI</h2><p class="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">Financial Copilot</p></div></div></div>
+                <div class="min-w-0"><div class="flex items-center gap-2"><span class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500 text-white">✦</span><div><h2 class="text-sm font-black tracking-tight text-zinc-950 dark:text-white">Finance Pro AI</h2><p class="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">Financial Copilot</p></div></div></div>
                 <div class="flex items-center gap-1"><button wire:click="newConversation" type="button" class="rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900">Novo</button><button wire:click="archiveConversation" type="button" class="rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900">Arquivar</button><button wire:click="toggle" type="button" class="rounded-lg px-2 py-1.5 text-lg text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900">×</button></div>
             </header>
 
@@ -41,7 +41,7 @@
                         class="min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-400 focus:border-0 focus:ring-0 dark:text-white"
                         @keydown.enter.prevent.stop="$wire.sendMessage()"
                     ></textarea>
-                    <button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-950 text-white transition hover:scale-105 dark:bg-white dark:text-zinc-950" wire:loading.attr="disabled">↑</button>
+                    <button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white transition hover:scale-105 hover:bg-emerald-600" wire:loading.attr="disabled">↑</button>
                 </div>
             </form>
         </section>
