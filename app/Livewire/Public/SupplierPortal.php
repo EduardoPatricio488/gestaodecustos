@@ -7,6 +7,7 @@ use App\Models\PortalAccessRequest;
 use App\Models\Supplier;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -17,29 +18,17 @@ class SupplierPortal extends Component
     use WithFileUploads;
 
     public $tax_number = '';
-
     public $token = '';
-
     public $isLoggedIn = false;
-
     public $supplier = null;
-
     public $requesterName = '';
-
     public $requesterEmail = '';
-
     public $requestTaxNumber = '';
-
     public $companySearch = '';
-
     public $selectedCompanyId = null;
-
     public $requestSent = false;
-
     public $amount;
-
     public $notes;
-
     public $invoice_doc;
 
     #[Layout('layouts.guest')]
@@ -47,17 +36,26 @@ class SupplierPortal extends Component
     {
         $this->validate([
             'tax_number' => 'required|string',
-            'token' => 'required|string|size:6',
+            'token' => 'required|string|min:32|max:255',
         ]);
 
         $cleanNifInput = preg_replace('/\s+/', '', $this->tax_number);
         $cleanTokenInput = preg_replace('/\s+/', '', $this->token);
+        $rateLimitKey = 'supplier-portal-login:'.sha1($cleanNifInput.'|'.request()->ip());
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            session()->flash('error', 'Demasiadas tentativas. Tenta novamente mais tarde.');
+            return;
+        }
+        RateLimiter::hit($rateLimitKey, 60);
 
         $supplier = Supplier::whereRaw("REPLACE(tax_number, ' ', '') = ?", [$cleanNifInput])
             ->where('portal_token', $cleanTokenInput)
             ->first();
 
         if ($supplier) {
+            RateLimiter::clear($rateLimitKey);
+            session()->regenerate();
             return redirect()->route('supplier.dashboard', ['token' => $supplier->portal_token]);
         }
 
@@ -87,17 +85,23 @@ class SupplierPortal extends Component
             'requesterEmail.required' => 'Indica o teu email.',
         ]);
 
+        $email = strtolower(trim($this->requesterEmail));
+        $rateLimitKey = 'supplier-portal-request:'.sha1($email.'|'.request()->ip());
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $this->addError('requesterEmail', 'Demasiados pedidos. Tenta novamente mais tarde.');
+            return;
+        }
+        RateLimiter::hit($rateLimitKey, 300);
+
         $workspace = Workspace::whereKey($this->selectedCompanyId)
             ->whereIn('type', ['business', 'company', 'bussiness'])
             ->first();
 
         if (! $workspace || ! filled($workspace->business_email)) {
             $this->addError('selectedCompanyId', 'Esta empresa ainda não tem um email empresarial configurado.');
-
             return;
         }
 
-        $email = strtolower(trim($this->requesterEmail));
         $pending = PortalAccessRequest::where('workspace_id', $workspace->id)
             ->where('portal_type', 'supplier')
             ->where('requester_email', $email)
@@ -106,7 +110,6 @@ class SupplierPortal extends Component
 
         if ($pending) {
             $this->addError('requesterEmail', 'Já existe um pedido pendente deste email para esta empresa.');
-
             return;
         }
 
@@ -121,7 +124,6 @@ class SupplierPortal extends Component
         ]);
 
         Mail::to($workspace->business_email)->send(new PortalAccessRequestMail($workspace, $request));
-
         $this->requestSent = true;
         $this->requesterName = '';
         $this->requesterEmail = '';
@@ -139,7 +141,7 @@ class SupplierPortal extends Component
             })
             ->orderBy('name')
             ->limit(100)
-            ->get(['id', 'name', 'legal_name', 'business_email']);
+            ->get(['id', 'name', 'legal_name']);
     }
 
     public function submitInvoice()
