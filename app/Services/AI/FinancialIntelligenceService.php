@@ -2,6 +2,9 @@
 
 namespace App\Services\AI;
 
+use App\Models\Goal;
+use App\Models\Investment;
+use App\Models\Subscription;
 use App\Models\Workspace;
 use App\Services\BusinessFinancialMetrics;
 use Carbon\Carbon;
@@ -12,7 +15,7 @@ class FinancialIntelligenceService
     {
         $period = ($period ?: now())->copy()->startOfMonth();
 
-        return $workspace->type === 'business' || $workspace->type === 'company'
+        return in_array($workspace->type, ['business', 'company'], true)
             ? $this->businessSnapshot($workspace, $period)
             : $this->personalSnapshot($workspace, $period);
     }
@@ -60,7 +63,8 @@ class FinancialIntelligenceService
         $savings = $earned + $recurring - $spent;
         $previousSavings = $previousEarned + $recurring - $previousSpent;
 
-        $goals = $workspace->hasMany(\App\Models\Goal::class)
+        $goals = Goal::query()
+            ->where('workspace_id', $workspace->id)
             ->select(['id', 'name', 'target_amount', 'current_amount', 'deadline'])
             ->get()
             ->map(fn ($goal) => [
@@ -72,12 +76,15 @@ class FinancialIntelligenceService
                 'deadline' => optional($goal->deadline)->toDateString(),
             ])->values()->all();
 
-        $subscriptions = $workspace->getRelationValue('subscriptions');
-        if ($subscriptions === null && method_exists($workspace, 'subscriptions')) {
-            $subscriptions = $workspace->subscriptions()->where('is_active', true)->get();
-        }
+        $subscriptions = Subscription::query()
+            ->where('workspace_id', $workspace->id)
+            ->where('is_active', true)
+            ->get(['id', 'name', 'amount', 'cycle', 'renewal_date']);
 
-        $investmentValue = $workspace->investments()->get()->sum(fn ($investment) => (float) $investment->quantity * (float) $investment->current_price);
+        $investmentValue = Investment::query()
+            ->where('workspace_id', $workspace->id)
+            ->get(['quantity', 'current_price'])
+            ->sum(fn ($investment) => (float) $investment->quantity * (float) $investment->current_price);
 
         return [
             'kind' => 'personal',
@@ -101,8 +108,8 @@ class FinancialIntelligenceService
             ],
             'top_categories' => $categories,
             'goals' => $goals,
-            'active_subscriptions' => $subscriptions ? $subscriptions->count() : 0,
-            'active_subscription_cost' => $subscriptions ? round((float) $subscriptions->sum('amount'), 2) : null,
+            'active_subscriptions' => $subscriptions->count(),
+            'active_subscription_cost' => round((float) $subscriptions->sum('amount'), 2),
             'investment_value' => round((float) $investmentValue, 2),
             'source' => 'Finance Pro AI database',
             'data_quality' => 'deterministic_backend_calculation',
