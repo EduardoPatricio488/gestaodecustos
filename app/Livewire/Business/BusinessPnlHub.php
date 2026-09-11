@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Business;
 
+use App\Services\BusinessAccessService;
 use App\Services\BusinessFinancialMetrics;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Layout;
@@ -13,17 +14,11 @@ class BusinessPnlHub extends Component
     public $year;
 
     public function mount(): void { $this->year = now()->year; }
-
     public function setYear($year): void { $this->year = (int) $year; }
 
     public function render()
     {
-        $workspace = auth()->user()->currentWorkspace;
-        if (! $workspace) {
-            return <<<'HTML'
-                <div class="p-10 text-center italic text-zinc-500">Nenhum workspace empresarial selecionado.</div>
-            HTML;
-        }
+        $workspace = app(BusinessAccessService::class)->assertWorkspace();
 
         $monthlyData = collect(app(BusinessFinancialMetrics::class)->forYear($workspace, (int) $this->year))
             ->map(function (array $row, int $index) {
@@ -35,6 +30,7 @@ class BusinessPnlHub extends Component
                     'vat' => 0,
                     'profit' => $row['net_result'],
                     'margin' => $row['margin'],
+                    'payroll_is_current_run_rate' => $row['payroll_is_current_run_rate'],
                 ];
             });
 
@@ -44,7 +40,8 @@ class BusinessPnlHub extends Component
             'yearlyProfit' => round($monthlyData->sum('profit'), 2),
             'avgMargin' => round($monthlyData->where('revenue', '>', 0)->avg('margin') ?? 0, 2),
             'chartMax' => max($monthlyData->max('revenue'), $monthlyData->max('costs'), 1),
-            'fiscalDisclaimer' => 'Resultado operacional baseado nos dados registados e em base de caixa. Não substitui a contabilidade oficial nem representa um cálculo fiscal definitivo.',
+            'fiscalDisclaimer' => 'Resultado operacional em base de caixa. O histórico de salários não existe atualmente como série temporal; por isso, o salário apresentado só entra no mês corrente como custo mensal atual. Os meses anteriores não são preenchidos artificialmente. Não substitui a contabilidade oficial.',
+            'workspaceCurrency' => strtoupper((string) ($workspace->currency ?? 'EUR')),
         ]);
     }
 }
