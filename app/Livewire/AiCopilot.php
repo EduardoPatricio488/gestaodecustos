@@ -233,7 +233,6 @@ class AiCopilot extends Component
             ->where('user_id', Auth::id())
             ->where('workspace_id', $this->loadedWorkspaceId)
             ->where('status', 'awaiting_confirmation')
-            ->where('conversation_id', $conversation->id)
             ->latest('id')
             ->limit(20)
             ->get()
