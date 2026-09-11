@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Controllers\BusinessRolesRedirectController;
 use App\Listeners\StripeWebhookListener;
 use App\Listeners\UpdateLastLogin;
 use App\Livewire\Business\BusinessRolesHub;
