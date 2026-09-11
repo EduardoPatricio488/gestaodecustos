@@ -57,23 +57,15 @@ class AiCopilot extends Component
     public function sendMessage(AiBrainService $brain): void
     {
         $input = trim($this->input);
-        if ($input === '' || $this->isLoading) {
-            return;
-        }
+        if ($input === '' || $this->isLoading) return;
 
         $this->isLoading = true;
 
         try {
             $user = Auth::user();
             $workspace = app(ContextEngine::class)->resolveWorkspace($user);
+            if (! $workspace) throw new \RuntimeException('Workspace inválido.');
 
-            if (! $workspace) {
-                throw new \RuntimeException('Workspace inválido.');
-            }
-
-            // The Copilot component is persisted across Livewire navigation. Always
-            // re-resolve the workspace before using the conversation so switching
-            // between Personal and Business can never reuse the other side's chat.
             if ($this->loadedWorkspaceId !== $workspace->id) {
                 $this->loadWorkspaceConversation($user->id, $workspace);
             }
@@ -97,25 +89,32 @@ class AiCopilot extends Component
 
     public function confirmAction(int $actionId, AiBrainService $brain): void
     {
+        if ($this->isLoading) return;
+
         $this->isLoading = true;
 
         try {
             $result = $brain->confirm(Auth::user(), $actionId);
+            $message = (string) ($result['message'] ?? 'Registo criado e guardado com sucesso na aplicação.');
+
             $this->messages[] = [
                 'role' => 'assistant',
-                'content' => ! empty($result['success'])
-                    ? 'Ação executada com sucesso. Os dados foram atualizados. ✅'
-                    : 'A ação terminou sem confirmação de sucesso.',
+                'content' => '✅ '.$message,
             ];
+
             $this->pendingActions = array_values(array_filter(
                 $this->pendingActions,
                 fn (array $action) => (int) ($action['id'] ?? 0) !== $actionId
             ));
+
+            // Force the current page/components to refresh their server-side data
+            // after the AI writes to the database.
+            $this->dispatch('finance-pro-data-changed', actionId: $actionId);
         } catch (\Throwable $e) {
             report($e);
             $this->messages[] = [
                 'role' => 'assistant',
-                'content' => 'Não consegui executar esta ação. O estado dos teus dados foi mantido.',
+                'content' => '❌ Não consegui executar o registo: '.$e->getMessage(),
             ];
         } finally {
             $this->isLoading = false;
@@ -131,13 +130,12 @@ class AiCopilot extends Component
 
     public function archiveConversation(): void
     {
-        if (! $this->conversationId) {
-            return;
-        }
+        if (! $this->conversationId) return;
 
         AiConversation::query()
             ->whereKey($this->conversationId)
             ->where('user_id', Auth::id())
+            ->where('workspace_id', $this->loadedWorkspaceId)
             ->update(['archived_at' => now()]);
 
         $this->newConversation();
@@ -155,9 +153,7 @@ class AiCopilot extends Component
         $this->pendingActions = [];
         $this->loadedWorkspaceId = $workspace?->id;
 
-        if (! $workspace) {
-            return;
-        }
+        if (! $workspace) return;
 
         $conversation = AiConversation::query()
             ->where('user_id', $userId)
