@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BankAccount;
 use App\Models\BankTransaction;
 use App\Models\Invoice;
 use App\Models\User;
@@ -83,8 +84,19 @@ class BusinessSettlementTest extends TestCase
             'due_date' => now()->toDateString(),
         ]);
 
+        $account = BankAccount::create([
+            'workspace_id' => $workspace->id,
+            'user_id' => $user->id,
+            'name' => 'Conta de reconciliação',
+            'type' => 'corrente',
+            'bank_name' => 'Banco de Teste',
+            'balance' => 0,
+            'currency' => 'EUR',
+        ]);
+
         $transaction = BankTransaction::create([
             'workspace_id' => $workspace->id,
+            'bank_account_id' => $account->id,
             'user_id' => $user->id,
             'transaction_date' => now()->toDateString(),
             'amount' => 50,
