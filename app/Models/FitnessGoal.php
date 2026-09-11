@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Auth;
 
 class FitnessGoal extends Model
 {
@@ -20,6 +22,18 @@ class FitnessGoal extends Model
         'deadline' => 'date',
         'target' => 'float',
     ];
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('workspace', function (Builder $builder): void {
+            if (Auth::check() && Auth::user()->current_workspace_id) {
+                $builder->where(
+                    $builder->getModel()->getTable().'.workspace_id',
+                    Auth::user()->current_workspace_id
+                );
+            }
+        });
+    }
 
     public function user(): BelongsTo
     {
