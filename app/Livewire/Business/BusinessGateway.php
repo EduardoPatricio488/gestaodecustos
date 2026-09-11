@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Business;
 
+use App\Models\ActivityLog;
 use App\Models\Employee;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\Auth;
@@ -50,9 +51,8 @@ class BusinessGateway extends Component
         RateLimiter::hit($rateLimitKey, 60);
 
         $employee = DB::transaction(function () use ($code, $user) {
-            // Este fluxo começa sem workspace ativo. O scope global de
-            // Employee não pode esconder convites que o utilizador está a
-            // tentar aceitar; o token é a credencial que identifica o convite.
+            // O convite é uma credencial independente do workspace atualmente
+            // ativo. Por isso, a procura tem de ignorar o scope de workspace.
             $candidates = Employee::withoutGlobalScopes()
                 ->whereNull('user_id')
                 ->where('active', true)
@@ -68,7 +68,9 @@ class BusinessGateway extends Component
                 ->lockForUpdate()
                 ->get();
 
-            $employee = $candidates->first(fn (Employee $candidate) => Hash::check($code, $candidate->portal_token));
+            $employee = $candidates->first(
+                fn (Employee $candidate) => Hash::check($code, (string) $candidate->portal_token)
+            );
 
             if (! $employee) {
                 return null;
@@ -78,17 +80,60 @@ class BusinessGateway extends Component
                 ->whereKey($employee->workspace_id)
                 ->first();
 
-            abort_unless($workspace && in_array($workspace->type, ['business', 'company'], true), 403);
+            if (! $workspace || ! in_array($workspace->type, ['business', 'company'], true)) {
+                return null;
+            }
 
-            // O Employee usa LogsActivity. O utilizador tem de pertencer ao
-            // workspace antes de a alteração do Employee gerar o audit log.
-            $workspace->users()->syncWithoutDetaching([$user->id => ['role' => 'employee']]);
-            $user->update(['current_workspace_id' => $workspace->id]);
+            // Primeiro cria a relação de acesso. Isto é necessário para que o
+            // audit log possa validar que o utilizador pertence ao workspace.
+            $workspace->users()->syncWithoutDetaching([
+                $user->id => ['role' => 'employee'],
+            ]);
 
-            $employee->update([
+            $user->update([
+                'current_workspace_id' => $workspace->id,
+            ]);
+
+            // A aceitação de um convite é uma operação de onboarding especial:
+            // depois de o utilizador entrar como employee, o permissionamento
+            // normal de Employee::saving() não lhe permite alterar o próprio
+            // registo Employee. Fazemos a transição atómica diretamente na BD,
+            // mantendo todas as condições de consumo do convite.
+            $updated = DB::table('employees')
+                ->where('id', $employee->id)
+                ->whereNull('user_id')
+                ->whereNull('invite_used_at')
+                ->whereNotNull('portal_token')
+                ->update([
+                    'user_id' => $user->id,
+                    'invite_used_at' => now(),
+                    'portal_token' => null,
+                    'updated_at' => now(),
+                ]);
+
+            if ($updated !== 1) {
+                throw new \RuntimeException('O convite já foi utilizado ou deixou de estar disponível.');
+            }
+
+            ActivityLog::create([
+                'workspace_id' => $workspace->id,
                 'user_id' => $user->id,
-                'invite_used_at' => now(),
-                'portal_token' => null,
+                'action' => 'updated',
+                'description' => 'Aceitou o convite de colaborador.',
+                'model_type' => 'Employee',
+                'model_id' => $employee->id,
+                'properties' => [
+                    'new' => [
+                        'user_id' => $user->id,
+                        'invite_used_at' => now()->toDateTimeString(),
+                        'portal_token' => '[REDACTED]',
+                    ],
+                ],
+                'metadata' => [
+                    'workspace_id' => $workspace->id,
+                    'ip' => request()?->ip(),
+                    'user_agent' => request()?->userAgent(),
+                ],
             ]);
 
             return $employee;
@@ -100,7 +145,7 @@ class BusinessGateway extends Component
             return redirect()->route('hub.business.dashboard');
         }
 
-        $this->addError('accessCode', 'Código inválido.');
+        $this->addError('accessCode', 'Código inválido ou convite já utilizado.');
     }
 
     public function render()
