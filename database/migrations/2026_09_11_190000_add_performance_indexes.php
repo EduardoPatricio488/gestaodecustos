@@ -10,6 +10,7 @@ return new class extends Migration
     {
         $indexes = [
             ['expenses', ['workspace_id', 'spent_at'], 'expenses_workspace_spent_at_index'],
+            ['expenses', ['workspace_id', 'category_id', 'spent_at'], 'expenses_workspace_category_spent_at_index'],
             ['incomes', ['workspace_id', 'received_at'], 'incomes_workspace_received_at_index'],
             ['categories', ['workspace_id', 'budget_limit'], 'categories_workspace_budget_index'],
             ['bank_accounts', ['workspace_id', 'balance'], 'bank_accounts_workspace_balance_index'],
@@ -23,11 +24,20 @@ return new class extends Migration
         ];
 
         foreach ($indexes as [$table, $columns, $name]) {
-            if (! Schema::hasTable($table)) continue;
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+
             $missingColumn = collect($columns)->first(fn (string $column) => ! Schema::hasColumn($table, $column));
-            if ($missingColumn !== null) continue;
+            if ($missingColumn !== null) {
+                continue;
+            }
+
             $existingIndexes = collect(Schema::getIndexes($table))->pluck('name');
-            if ($existingIndexes->contains($name)) continue;
+            if ($existingIndexes->contains($name)) {
+                continue;
+            }
+
             Schema::table($table, function (Blueprint $blueprint) use ($columns, $name) {
                 $blueprint->index($columns, $name);
             });
@@ -38,6 +48,7 @@ return new class extends Migration
     {
         $indexes = [
             ['expenses', 'expenses_workspace_spent_at_index'],
+            ['expenses', 'expenses_workspace_category_spent_at_index'],
             ['incomes', 'incomes_workspace_received_at_index'],
             ['categories', 'categories_workspace_budget_index'],
             ['bank_accounts', 'bank_accounts_workspace_balance_index'],
@@ -51,9 +62,15 @@ return new class extends Migration
         ];
 
         foreach ($indexes as [$table, $name]) {
-            if (! Schema::hasTable($table)) continue;
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+
             $existingIndexes = collect(Schema::getIndexes($table))->pluck('name');
-            if (! $existingIndexes->contains($name)) continue;
+            if (! $existingIndexes->contains($name)) {
+                continue;
+            }
+
             Schema::table($table, function (Blueprint $blueprint) use ($name) {
                 $blueprint->dropIndex($name);
             });
