@@ -30,11 +30,14 @@ final class AiIntentDetector
     {
         $text = Str::lower(Str::ascii(trim($input)));
 
-        if ($text === '') return $this->result(self::UNKNOWN, 100);
+        if ($text === '') {
+            return $this->result(self::UNKNOWN, 100);
+        }
 
         $rules = [
             self::TRANSACTION_DELETE => ['apaga', 'apagar', 'elimina', 'eliminar', 'remove', 'remover'],
             self::TRANSACTION_CREATION => ['adiciona', 'adicionar', 'regista', 'registar', 'cria', 'criar', 'insere', 'inserir', 'lanca', 'lancar', 'introduz', 'introduzir', 'guarda', 'guardar', 'anota', 'anotar'],
+            self::TRANSACTION_UPDATE => ['altera', 'alterar', 'atualiza', 'atualizar', 'corrige', 'corrigir', 'muda', 'mudar', 'edita', 'editar'],
             self::COMPARISON => ['compara', 'comparar', 'comparacao', 'face ao mes passado', 'vs mes passado', 'versus', 'diferenca entre'],
             self::FORECAST => ['preve', 'prever', 'previsao', 'se continuar', 'ate ao fim do mes', 'final do mes', 'quanto vou gastar'],
             self::CATEGORY_ANALYSIS => ['categoria', 'alimentacao', 'restaurantes', 'casa', 'transporte', 'saude', 'educacao'],
@@ -53,7 +56,9 @@ final class AiIntentDetector
 
         foreach ($rules as $intent => $keywords) {
             foreach ($keywords as $keyword) {
-                if (Str::contains($text, $keyword)) return $this->result($intent, $this->confidence($intent, $text, $keyword));
+                if (Str::contains($text, $keyword)) {
+                    return $this->result($intent, $this->confidence($intent, $text, $keyword));
+                }
             }
         }
 
@@ -63,8 +68,16 @@ final class AiIntentDetector
     public function toolFor(array $intent): ?string
     {
         return match ($intent['intent'] ?? self::UNKNOWN) {
-            self::FINANCIAL_SUMMARY, self::CATEGORY_ANALYSIS, self::COMPARISON, self::BUSINESS_ANALYSIS => 'get_financial_snapshot',
-            self::EXPENSE_ANALYSIS, self::TRANSACTION_SEARCH => 'list_expenses',
+            self::FINANCIAL_SUMMARY,
+            self::CATEGORY_ANALYSIS,
+            self::BUDGET_ANALYSIS,
+            self::SAVING_ADVICE,
+            self::FORECAST,
+            self::COMPARISON,
+            self::BUSINESS_ANALYSIS => 'get_financial_snapshot',
+            self::EXPENSE_ANALYSIS,
+            self::TRANSACTION_SEARCH,
+            self::TRANSACTION_UPDATE => 'list_expenses',
             self::INCOME_ANALYSIS => 'list_incomes',
             self::SUBSCRIPTION_ANALYSIS => 'list_subscriptions',
             self::INVESTMENT_ANALYSIS => 'list_investments',
@@ -74,7 +87,11 @@ final class AiIntentDetector
 
     private function result(string $intent, int $confidence): array
     {
-        return ['intent' => $intent, 'confidence' => max(0, min(100, $confidence)), 'source' => 'deterministic_intent_detector'];
+        return [
+            'intent' => $intent,
+            'confidence' => max(0, min(100, $confidence)),
+            'source' => 'deterministic_intent_detector',
+        ];
     }
 
     private function confidence(string $intent, string $text, string $keyword): int
