@@ -12,7 +12,7 @@ class ContextEngine
 {
     /**
      * Builds the minimum safe context required by the AI Brain.
-     * The AI never receives the whole request, session or database.
+     * Frontend page context is treated as UX metadata only and never as an authorization source.
      */
     public function build(User $user, array $pageContext = []): array
     {
@@ -23,7 +23,9 @@ class ContextEngine
             : null;
 
         $route = Route::current();
-        $routeName = $route?->getName();
+        $serverRouteName = $route?->getName();
+        $routeName = $pageContext['route'] ?? $serverRouteName;
+        $path = $pageContext['path'] ?? $route?->uri();
 
         return [
             'user' => [
@@ -46,11 +48,11 @@ class ContextEngine
             ],
             'page' => [
                 'route' => $routeName,
-                'url' => $route?->uri(),
-                'module' => $this->moduleFromRoute($routeName),
+                'url' => $path,
+                'module' => $pageContext['module'] ?? $this->moduleFromRoute($routeName),
                 'params' => $this->safeRouteParams($route?->parameters() ?? []),
                 'context' => Arr::only($pageContext, [
-                    'module', 'entity', 'entity_type', 'action', 'filters', 'period', 'state',
+                    'module', 'route', 'path', 'entity', 'entity_type', 'action', 'filters', 'period', 'state',
                 ]),
             ],
             'time' => [
@@ -92,9 +94,7 @@ class ContextEngine
 
     private function moduleFromRoute(?string $routeName): ?string
     {
-        if (! $routeName) {
-            return null;
-        }
+        if (! $routeName) return null;
 
         return match (true) {
             str_contains($routeName, 'business') => 'business',
