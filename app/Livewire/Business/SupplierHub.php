@@ -7,6 +7,7 @@ use App\Models\Expense;
 use App\Models\PortalAccessRequest;
 use App\Models\Supplier;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -17,27 +18,16 @@ class SupplierHub extends Component
     use WithPagination;
 
     public $name;
-
     public $legal_name;
-
     public $tax_number;
-
     public $email;
-
     public $phone;
-
     public $payment_terms;
-
     public $address;
-
     public $editingId = null;
-
     public $generatedPasscode = '';
-
     public $supplierTaxNumber = '';
-
     public $generatedPortalUrl = '';
-
     public $search = '';
 
     public function updatedTaxNumber($value): void
@@ -51,20 +41,16 @@ class SupplierHub extends Component
     {
         $supplier = auth()->user()->suppliers()->findOrFail($id);
 
-        if (! $supplier->portal_token) {
-            do {
-                $passcode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-                $exists = Supplier::where('portal_token', $passcode)->exists();
-            } while ($exists);
-
-            $supplier->update(['portal_token' => $passcode]);
+        // Legacy 6-digit portal codes are too easy to enumerate. Rotate them to
+        // a 64-character cryptographically secure token before displaying access.
+        if (! $supplier->portal_token || strlen((string) $supplier->portal_token) < 64) {
+            $supplier->update(['portal_token' => $this->generateUniquePortalToken()]);
             $supplier->refresh();
         }
 
         $this->generatedPasscode = $supplier->portal_token;
         $this->supplierTaxNumber = $supplier->tax_number;
         $this->generatedPortalUrl = route('supplier.portal');
-
         $this->dispatch('modal-show', name: 'supplier-portal-modal');
     }
 
@@ -76,7 +62,6 @@ class SupplierHub extends Component
 
         if (! $supplier->email) {
             $this->dispatch('toast', text: 'Este fornecedor não tem email registado.', variant: 'warning');
-
             return;
         }
 
@@ -110,17 +95,14 @@ class SupplierHub extends Component
     public function approveAccessRequest($id): void
     {
         $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
-
         $taxNumber = preg_replace('/\D/', '', (string) $request->tax_number);
         $taxNumber = substr($taxNumber, 0, 9);
-
         $supplierQuery = auth()->user()->suppliers();
-
         $supplier = null;
+
         if ($request->requester_email) {
             $supplier = (clone $supplierQuery)->where('email', $request->requester_email)->first();
         }
-
         if (! $supplier && $taxNumber) {
             $supplier = (clone $supplierQuery)->where('tax_number', $taxNumber)->first();
         }
@@ -140,13 +122,14 @@ class SupplierHub extends Component
                 'name' => $supplier->name ?: $request->requester_name,
                 'email' => $supplier->email ?: $request->requester_email,
                 'tax_number' => $supplier->tax_number ?: ($taxNumber ?: null),
-                'portal_token' => $supplier->portal_token ?: $this->generateUniquePortalToken(),
+                'portal_token' => (! $supplier->portal_token || strlen((string) $supplier->portal_token) < 64)
+                    ? $this->generateUniquePortalToken()
+                    : $supplier->portal_token,
             ]);
             $supplier->refresh();
         }
 
         $portalUrl = route('supplier.portal');
-
         Mail::to($supplier->email)->send(new SupplierPortalAccessMail(
             $supplier,
             auth()->user()->currentWorkspace,
@@ -154,11 +137,7 @@ class SupplierHub extends Component
             $portalUrl,
         ));
 
-        $request->update([
-            'status' => 'approved',
-            'responded_at' => now(),
-        ]);
-
+        $request->update(['status' => 'approved', 'responded_at' => now()]);
         $this->dispatch('toast', text: 'Pedido aprovado. Fornecedor criado e credenciais enviadas por email.', variant: 'success');
         $this->dispatch('supplier-access-request-updated');
     }
@@ -166,12 +145,7 @@ class SupplierHub extends Component
     public function rejectAccessRequest($id): void
     {
         $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
-
-        $request->update([
-            'status' => 'rejected',
-            'responded_at' => now(),
-        ]);
-
+        $request->update(['status' => 'rejected', 'responded_at' => now()]);
         $this->dispatch('toast', text: 'Pedido de acesso rejeitado.', variant: 'warning');
         $this->dispatch('supplier-access-request-updated');
     }
@@ -187,7 +161,7 @@ class SupplierHub extends Component
     private function generateUniquePortalToken(): string
     {
         do {
-            $token = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $token = Str::random(64);
         } while (Supplier::where('portal_token', $token)->exists());
 
         return $token;
@@ -205,7 +179,6 @@ class SupplierHub extends Component
     public function save()
     {
         $this->validate();
-
         $taxNumber = preg_replace('/\D/', '', (string) $this->tax_number);
 
         auth()->user()->suppliers()->updateOrCreate(
@@ -238,7 +211,6 @@ class SupplierHub extends Component
         $this->phone = $supplier->phone;
         $this->payment_terms = $supplier->payment_terms;
         $this->address = $supplier->address;
-
         $this->dispatch('modal-show', name: 'supplier-modal');
     }
 
@@ -255,18 +227,22 @@ class SupplierHub extends Component
 
     public function render()
     {
-        $user = auth()->user();
-        $workspaceId = $user->current_workspace_id;
+        $workspaceId = auth()->user()->current_workspace_id;
 
+        // Replace the previous 2N aggregate queries with two correlated SQL
+        // aggregates generated by Eloquent. This also keeps workspace scoping
+        // on the parent supplier query.
         $suppliers = Supplier::where('workspace_id', $workspaceId)
             ->where('name', 'like', '%'.$this->search.'%')
+            ->withSum('expenses', 'amount')
+            ->withCount('expenses')
             ->get()
-            ->map(function ($supplier) {
-                $supplier->total_spent = Expense::where('supplier_id', $supplier->id)->sum('amount');
-                $supplier->bills_count = Expense::where('supplier_id', $supplier->id)->count();
-
-                return $supplier;
-            })->sortByDesc('total_spent');
+            ->each(function (Supplier $supplier) {
+                $supplier->total_spent = (float) ($supplier->expenses_sum_amount ?? 0);
+                $supplier->bills_count = (int) ($supplier->expenses_count ?? 0);
+            })
+            ->sortByDesc('total_spent')
+            ->values();
 
         return view('livewire.business.supplier-hub', [
             'suppliers' => $suppliers,
