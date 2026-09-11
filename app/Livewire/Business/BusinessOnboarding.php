@@ -22,6 +22,10 @@ class BusinessOnboarding extends Component
     public $photo;
     public $initial_capital = 0;
     public $currency = 'EUR';
+    public $country_code = 'PT';
+    public $vat_rate = 23;
+    public $vat_regime = 'normal';
+    public $fiscal_year_start = 1;
 
     protected $messages = [
         'tax_number.required' => 'O NIF é obrigatório.',
@@ -40,6 +44,10 @@ class BusinessOnboarding extends Component
         3 => [
             'initial_capital' => 'required|numeric|min:0',
             'currency' => 'required|string|size:3|in:EUR,USD,GBP,CHF,BRL,JPY',
+            'country_code' => 'required|string|size:2|alpha',
+            'vat_rate' => 'required|numeric|min:0|max:100',
+            'vat_regime' => 'required|string|in:normal,isento,caixa',
+            'fiscal_year_start' => 'required|integer|between:1,12',
         ],
     ];
 
@@ -51,9 +59,7 @@ class BusinessOnboarding extends Component
 
     public function nextStep()
     {
-        if (isset($this->rules[$this->step])) {
-            $this->validate($this->rules[$this->step]);
-        }
+        if (isset($this->rules[$this->step])) $this->validate($this->rules[$this->step]);
         $this->step++;
     }
 
@@ -62,9 +68,7 @@ class BusinessOnboarding extends Component
     public function createCompany()
     {
         $this->validate(array_merge($this->rules[2], $this->rules[3]));
-        if ($this->industry === 'Outro') {
-            $this->validate(['customIndustry' => 'required|string|min:2|max:100']);
-        }
+        if ($this->industry === 'Outro') $this->validate(['customIndustry' => 'required|string|min:2|max:100']);
 
         $user = auth()->user();
         $finalIndustry = $this->industry === 'Outro' ? $this->customIndustry : $this->industry;
@@ -81,10 +85,10 @@ class BusinessOnboarding extends Component
             'initial_capital' => round((float) ($this->initial_capital ?? 0), 2),
             'invite_code' => strtoupper(Str::random(8)),
             'plan' => 'business',
-            'country_code' => 'PT',
-            'vat_rate' => 23,
-            'vat_regime' => 'normal',
-            'fiscal_year_start' => 1,
+            'country_code' => strtoupper($this->country_code),
+            'vat_rate' => round((float) $this->vat_rate, 2),
+            'vat_regime' => $this->vat_regime,
+            'fiscal_year_start' => (int) $this->fiscal_year_start,
         ]);
 
         if ($this->photo) {
