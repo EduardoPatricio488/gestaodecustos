@@ -7,6 +7,7 @@ use App\Traits\BelongsToWorkspace;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\DomainException;
 
 class Expense extends Model
 {
@@ -14,7 +15,7 @@ class Expense extends Model
 
     protected $fillable = [
         'user_id','category_id','workspace_id','supplier_id','bank_account_id','subcategory','metadata','amount','description','status','spent_at','receipt_path',
-        'is_company','project_id','task_id','currency','amount_converted','vat_amount',
+        'is_company','project_id','task_id','currency','amount_converted','vat_amount','title',
     ];
 
     protected $casts = [
@@ -25,10 +26,37 @@ class Expense extends Model
     {
         static::saving(function (Expense $expense): void {
             if (! $expense->workspace_id || ! is_numeric($expense->amount)) return;
-            $workspaceCurrency = strtoupper((string) (Workspace::withoutGlobalScopes()->find($expense->workspace_id)?->currency ?? 'EUR'));
+
+            $workspace = Workspace::withoutGlobalScopes()->find($expense->workspace_id);
+            $workspaceCurrency = strtoupper((string) ($workspace?->currency ?? 'EUR'));
             $transactionCurrency = strtoupper((string) ($expense->currency ?: $workspaceCurrency));
-            $expense->currency = $transactionCurrency;
-            $expense->forceFill(['amount_converted'=>round((float) CurrencyService::convert((float)$expense->amount,$transactionCurrency,$workspaceCurrency),2)]);
+            $amount = round((float) $expense->amount, 2);
+            $vat = round((float) ($expense->vat_amount ?? 0), 2);
+
+            if ($amount <= 0 || $vat < 0 || $vat > $amount) {
+                throw new DomainException('Os valores da despesa são inválidos.');
+            }
+
+            if ($expense->category_id) {
+                $categoryWorkspaceId = Category::withoutGlobalScopes()->whereKey($expense->category_id)->value('workspace_id');
+                if ((int) $categoryWorkspaceId !== (int) $expense->workspace_id) {
+                    throw new DomainException('A categoria selecionada não pertence à empresa.');
+                }
+            }
+
+            if ($expense->supplier_id) {
+                $supplierWorkspaceId = Supplier::withoutGlobalScopes()->whereKey($expense->supplier_id)->value('workspace_id');
+                if ((int) $supplierWorkspaceId !== (int) $expense->workspace_id) {
+                    throw new DomainException('O fornecedor selecionado não pertence à empresa.');
+                }
+            }
+
+            $expense->forceFill([
+                'amount' => $amount,
+                'vat_amount' => $vat,
+                'currency' => $transactionCurrency,
+                'amount_converted' => round((float) CurrencyService::convert($amount, $transactionCurrency, $workspaceCurrency), 2),
+            ]);
         });
     }
 
