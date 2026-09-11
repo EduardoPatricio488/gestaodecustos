@@ -41,7 +41,7 @@ class Expenses extends Component
     }
 
     /**
-     * Abre o formulário de nova despesa com a categoria escolhida.
+     * Abre a página da categoria escolhida.
      */
     public function selectCategory(int $categoryId): void
     {
@@ -56,7 +56,7 @@ class Expenses extends Component
             ->whereKey($categoryId)
             ->firstOrFail();
 
-        $this->redirect(route('expenses.create', ['category' => $category->id]), navigate: true);
+        $this->redirect(route('hub.category', ['slug' => $category->slug]), navigate: true);
     }
 
     /**
