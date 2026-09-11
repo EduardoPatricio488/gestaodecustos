@@ -777,7 +777,20 @@ class Dashboard extends Component
         $totalBankBalance = (float) Cache::remember(
             "dashboard:bank-balance:{$currentWs->id}",
             60,
-            fn () => (float) BankAccount::where('workspace_id', $currentWs->id)->sum('current_balance')
+            function () use ($currentWs): float {
+                $baseBalance = (float) BankAccount::where('workspace_id', $currentWs->id)
+                    ->sum('balance');
+
+                $incomeBalance = (float) Income::where('workspace_id', $currentWs->id)
+                    ->whereNotNull('bank_account_id')
+                    ->sum('amount');
+
+                $expenseBalance = (float) Expense::where('workspace_id', $currentWs->id)
+                    ->whereNotNull('bank_account_id')
+                    ->sum('amount');
+
+                return $baseBalance + $incomeBalance - $expenseBalance;
+            }
         );
 
         $projectedBalance = $totalBankBalance + $projectedIncome - $projectedExpenses;
@@ -790,9 +803,9 @@ class Dashboard extends Component
             // Guarda um array simples (não uma Collection) para evitar corrupção ao
             // fazer unserialize a partir da cache.
             fn () => BankAccount::where('workspace_id', $currentWs->id)
-                ->orderByDesc('current_balance')
-                ->take(3)
                 ->get()
+                ->sortByDesc(fn ($account) => $account->current_balance)
+                ->take(3)
                 ->map(fn ($account) => [
                     'name' => $account->name,
                     'balance' => $account->current_balance,
