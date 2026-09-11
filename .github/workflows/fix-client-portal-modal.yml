@@ -150,4 +150,4 @@ dialog[data-modal="portal-link-modal"] textarea {
           git commit -m "Fix client portal modal sizing"
           git push
 
-# Trigger run
+# Trigger modal CSS fix
