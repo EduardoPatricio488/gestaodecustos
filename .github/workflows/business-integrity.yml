@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, master, develop]
 
+permissions:
+  contents: write
+
 jobs:
   php-syntax:
     runs-on: ubuntu-latest
@@ -59,4 +62,19 @@ jobs:
       - name: Run Pint check
         run: ./vendor/bin/pint --parallel --test
       - name: Run full Laravel test suite
-        run: ./vendor/bin/pest
+        id: pest
+        shell: bash
+        run: |
+          set +e
+          ./vendor/bin/pest 2>&1 | tee ci-pest-failure.log
+          status=${PIPESTATUS[0]}
+          exit "$status"
+      - name: Preserve Pest failure log
+        if: failure() && steps.pest.outcome == 'failure' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ci-pest-failure.log
+          git commit -m "CI: preserve Pest failure log" || true
+          git push || true
