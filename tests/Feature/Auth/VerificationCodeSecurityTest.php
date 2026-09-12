@@ -24,7 +24,7 @@ it('stores registration verification codes only as hashes', function () {
         ->and($user->verification_code_expires_at)->not->toBeNull()
         ->and($user->verification_code_attempts)->toBe(0);
 
-    Mail::assertSent(VerifyAccountMail::class);
+    Mail::assertQueued(VerifyAccountMail::class);
 });
 
 it('rejects expired verification codes', function () {
