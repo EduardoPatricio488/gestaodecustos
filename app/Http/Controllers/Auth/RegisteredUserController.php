@@ -21,13 +21,16 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $verificationCode = random_int(100000, 999999);
+        $verificationCode = (string) random_int(100000, 999999);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'verification_code' => $verificationCode,
+            'verification_code' => null,
+            'verification_code_hash' => hash('sha256', $verificationCode),
+            'verification_code_expires_at' => now()->addMinutes(10),
+            'verification_code_attempts' => 0,
         ]);
 
         Auth::login($user);
@@ -36,6 +39,12 @@ class RegisteredUserController extends Controller
             Mail::to($user->email)->send(new VerifyAccountMail($verificationCode));
         } catch (\Throwable $e) {
             report($e);
+            $user->update([
+                'verification_code_hash' => null,
+                'verification_code_expires_at' => null,
+                'verification_code_attempts' => 0,
+            ]);
+
             return redirect()->back()->withErrors([
                 'email' => 'Não foi possível enviar a verificação. Tenta novamente.',
             ]);
