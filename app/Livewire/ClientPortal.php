@@ -27,7 +27,9 @@ class ClientPortal extends Component
 
     public function mount($token)
     {
-        $this->client = Client::where('portal_token', $token)->with('workspace')->firstOrFail();
+        $this->client = Client::findByPortalToken($token);
+
+        abort_unless($this->client, 404);
     }
 
     public function sendTicket()
