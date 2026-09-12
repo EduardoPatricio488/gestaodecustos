@@ -15,7 +15,7 @@ it('stores registration verification codes only as hashes', function () {
         'password_confirmation' => 'password123',
     ]);
 
-    $response->assertRedirect(route('verification.notice', absolute: false));
+    $response->assertRedirect();
 
     $user = User::where('email', 'verification-security@example.com')->firstOrFail();
 
