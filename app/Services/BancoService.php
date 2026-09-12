@@ -15,6 +15,7 @@ use App\Models\Income;
 use App\Models\Investment;
 use App\Models\RecurringIncome;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class BancoService
 {
@@ -33,10 +34,6 @@ class BancoService
         $this->workspaceId = $workspaceId;
     }
 
-    /* ══════════════════════════════════════════════════════════
-       DADOS GLOBAIS PARA O HUB
-    ══════════════════════════════════════════════════════════ */
-
     public function getSummary(): array
     {
         $accounts = $this->getAccounts();
@@ -51,7 +48,6 @@ class BancoService
         $totalTransitOut = $transitItems->where('direction', 'out')->where('status', 'pending')->sum('amount');
         $totalInvestments = $investments->sum(fn ($i) => $i->quantity * $i->current_price);
 
-        // Património não-financeiro
         $totalRealEstate = $patrimony->where('type', 'real_estate')->sum('value');
         $totalVehicles = $patrimony->where('type', 'vehicle')->sum('value');
         $totalGold = $patrimony->where('type', 'gold')->sum('value');
@@ -59,12 +55,10 @@ class BancoService
         $totalOtherAssets = $patrimony->where('type', 'other_asset')->sum('value');
         $totalLiabilities = $patrimony->where('type', 'liability')->sum('value');
 
-        // Despesas pendentes do mês
         $pendingExpenses = Expense::where('workspace_id', $this->workspaceId)
             ->where('status', 'pending')
             ->sum('amount');
 
-        // Impostos reservados (reservas com nome relacionado a impostos)
         $taxReserves = $reserves
             ->filter(fn ($r) => str_contains(strtolower($r->name), 'irs') ||
                                str_contains(strtolower($r->name), 'imposto') ||
@@ -72,24 +66,17 @@ class BancoService
                                str_contains(strtolower($r->name), 'tax'))
             ->sum('amount');
 
-        // Dinheiro disponível real
         $availableCash = $totalBankBalance - $totalReserves - $pendingExpenses;
-
-        // Património Total
         $totalPatrimony = $totalBankBalance + $totalInvestments + $totalRealEstate
                         + $totalVehicles + $totalGold + $totalCrypto + $totalOtherAssets
                         - $totalLiabilities;
 
-        // Dívidas
         $totalDebts = Debt::where('workspace_id', $this->workspaceId)
             ->where('type', 'owe')
             ->where('is_paid', false)
             ->sum('amount');
 
-        // Património Líquido
         $netWorth = $totalPatrimony - $totalDebts;
-
-        // Comparação mês anterior
         $prevMonthIncome = $this->getPrevMonthIncome();
         $prevMonthExpense = $this->getPrevMonthExpense();
         $currMonthIncome = $this->getCurrentMonthIncome();
@@ -128,10 +115,6 @@ class BancoService
         ];
     }
 
-    /* ══════════════════════════════════════════════════════════
-       CONTAS BANCÁRIAS
-    ══════════════════════════════════════════════════════════ */
-
     public function getAccounts(): Collection
     {
         if ($this->accountsCache !== null) {
@@ -161,10 +144,6 @@ class BancoService
         return $this->getAccounts()->where('is_business', true);
     }
 
-    /* ══════════════════════════════════════════════════════════
-       RESERVAS
-    ══════════════════════════════════════════════════════════ */
-
     public function getReserves(): Collection
     {
         if ($this->reservesCache !== null) {
@@ -176,10 +155,6 @@ class BancoService
             ->get();
     }
 
-    /* ══════════════════════════════════════════════════════════
-       DINHEIRO EM TRÂNSITO
-    ══════════════════════════════════════════════════════════ */
-
     public function getTransitItems(): Collection
     {
         return BankTransitItem::where('workspace_id', $this->workspaceId)
@@ -188,10 +163,6 @@ class BancoService
             ->get();
     }
 
-    /* ══════════════════════════════════════════════════════════
-       CRÉDITOS
-    ══════════════════════════════════════════════════════════ */
-
     public function getCredits(): Collection
     {
         return BankCredit::where('workspace_id', $this->workspaceId)
@@ -199,10 +170,6 @@ class BancoService
             ->orderBy('due_date')
             ->get();
     }
-
-    /* ══════════════════════════════════════════════════════════
-       TRANSFERÊNCIAS
-    ══════════════════════════════════════════════════════════ */
 
     public function getTransfers(int $limit = 20): Collection
     {
@@ -213,10 +180,6 @@ class BancoService
             ->get();
     }
 
-    /* ══════════════════════════════════════════════════════════
-       INVESTIMENTOS
-    ══════════════════════════════════════════════════════════ */
-
     public function getInvestments(): Collection
     {
         if ($this->investmentsCache !== null) {
@@ -225,10 +188,6 @@ class BancoService
 
         return $this->investmentsCache = Investment::where('workspace_id', $this->workspaceId)->get();
     }
-
-    /* ══════════════════════════════════════════════════════════
-       PATRIMÓNIO
-    ══════════════════════════════════════════════════════════ */
 
     public function getPatrimony(): Collection
     {
@@ -241,10 +200,6 @@ class BancoService
             ->orderBy('type')
             ->get();
     }
-
-    /* ══════════════════════════════════════════════════════════
-       OBJETIVOS
-    ══════════════════════════════════════════════════════════ */
 
     public function getGoals(): Collection
     {
@@ -265,10 +220,6 @@ class BancoService
             });
     }
 
-    /* ══════════════════════════════════════════════════════════
-       DÍVIDAS
-    ══════════════════════════════════════════════════════════ */
-
     public function getDebts(): Collection
     {
         return Debt::where('workspace_id', $this->workspaceId)
@@ -277,10 +228,6 @@ class BancoService
             ->get();
     }
 
-    /* ══════════════════════════════════════════════════════════
-       FLUXO FINANCEIRO (12 MESES)
-    ══════════════════════════════════════════════════════════ */
-
     public function getMonthlyFlow(int $months = 12): array
     {
         $months = max(1, min($months, 60));
@@ -288,19 +235,22 @@ class BancoService
         $end = now()->endOfMonth();
         $fixedIncome = $this->getFixedMonthlyIncome();
 
+        $incomeMonthExpression = $this->monthKeyExpression('received_at');
+        $expenseMonthExpression = $this->monthKeyExpression('spent_at');
+
         $incomes = Income::where('workspace_id', $this->workspaceId)
             ->whereBetween('received_at', [$start, $end])
-            ->selectRaw('YEAR(received_at) as year, MONTH(received_at) as month, SUM(amount) as total')
-            ->groupByRaw('YEAR(received_at), MONTH(received_at)')
+            ->selectRaw("{$incomeMonthExpression} as month_key, SUM(amount) as total")
+            ->groupByRaw($incomeMonthExpression)
             ->get()
-            ->keyBy(fn ($row) => sprintf('%04d-%02d', $row->year, $row->month));
+            ->keyBy('month_key');
 
         $expenses = Expense::where('workspace_id', $this->workspaceId)
             ->whereBetween('spent_at', [$start, $end])
-            ->selectRaw('YEAR(spent_at) as year, MONTH(spent_at) as month, SUM(amount) as total')
-            ->groupByRaw('YEAR(spent_at), MONTH(spent_at)')
+            ->selectRaw("{$expenseMonthExpression} as month_key, SUM(amount) as total")
+            ->groupByRaw($expenseMonthExpression)
             ->get()
-            ->keyBy(fn ($row) => sprintf('%04d-%02d', $row->year, $row->month));
+            ->keyBy('month_key');
 
         $data = [];
         for ($i = $months - 1; $i >= 0; $i--) {
@@ -321,10 +271,6 @@ class BancoService
         return $data;
     }
 
-    /* ══════════════════════════════════════════════════════════
-       LIQUIDEZ
-    ══════════════════════════════════════════════════════════ */
-
     public function getLiquidity(): array
     {
         $accounts = $this->getAccounts()->where('status', '!=', 'archived');
@@ -335,7 +281,6 @@ class BancoService
         $totalReserved = $reserves->sum('amount');
         $totalInvested = $investments->sum(fn ($i) => $i->quantity * $i->current_price);
 
-        $currentMonthExpense = $this->getCurrentMonthExpense();
         $avgMonthlyExpense = $this->getAvgMonthlyExpense(6);
         $availableForExpenses = max(0, $immediateCash - $totalReserved);
 
@@ -354,10 +299,6 @@ class BancoService
             'low_liquidity_warning' => $monthsCoverage < 3,
         ];
     }
-
-    /* ══════════════════════════════════════════════════════════
-       ESTATÍSTICAS
-    ══════════════════════════════════════════════════════════ */
 
     public function getStats(): array
     {
@@ -381,7 +322,6 @@ class BancoService
             ? collect($monthlyFlows)->avg('balance')
             : 0;
 
-        // Retorno dos investimentos
         $investments = $this->getInvestments();
         $investmentCost = $investments->sum(fn ($i) => $i->quantity * $i->average_price);
         $investmentValue = $investments->sum(fn ($i) => $i->quantity * $i->current_price);
@@ -401,16 +341,11 @@ class BancoService
         ];
     }
 
-    /* ══════════════════════════════════════════════════════════
-       ALERTAS AUTOMÁTICOS
-    ══════════════════════════════════════════════════════════ */
-
     public function getAlerts(): array
     {
         $alerts = [];
         $accounts = $this->getAccounts();
 
-        // Conta abaixo do limite
         foreach ($accounts as $account) {
             if ($account->alert_below !== null && $account->balance < $account->alert_below) {
                 $alerts[] = [
@@ -421,7 +356,6 @@ class BancoService
                 ];
             }
 
-            // Saldo negativo
             if ($account->balance < 0) {
                 $alerts[] = [
                     'type' => 'danger',
@@ -432,7 +366,6 @@ class BancoService
             }
         }
 
-        // Créditos em atraso
         $overdueCredits = BankCredit::where('workspace_id', $this->workspaceId)
             ->whereIn('status', ['pending', 'partial'])
             ->where('due_date', '<', now())
@@ -447,7 +380,6 @@ class BancoService
             ];
         }
 
-        // Reserva de emergência insuficiente (menos de 3 meses de despesas)
         $liquidity = $this->getLiquidity();
         if ($liquidity['months_coverage'] < 3 && $liquidity['months_coverage'] > 0) {
             $alerts[] = [
@@ -458,7 +390,6 @@ class BancoService
             ];
         }
 
-        // Dívidas urgentes (vencem nos próximos 7 dias)
         $urgentDebts = Debt::where('workspace_id', $this->workspaceId)
             ->where('is_paid', false)
             ->where('type', 'owe')
@@ -477,22 +408,18 @@ class BancoService
         return $alerts;
     }
 
-    /* ══════════════════════════════════════════════════════════
-       DISTRIBUIÇÃO DO PATRIMÓNIO (para gráfico)
-    ══════════════════════════════════════════════════════════ */
-
     public function getPatrimonyDistribution(): array
     {
         $summary = $this->getSummary();
 
         $items = [
-            ['label' => 'Dinheiro',       'value' => $summary['total_bank_balance'],  'color' => '#10b981'],
-            ['label' => 'Investimentos',  'value' => $summary['total_investments'],   'color' => '#3b82f6'],
-            ['label' => 'Imóveis',        'value' => $summary['total_real_estate'],   'color' => '#f59e0b'],
-            ['label' => 'Veículos',       'value' => $summary['total_vehicles'],      'color' => '#8b5cf6'],
-            ['label' => 'Ouro',           'value' => $summary['total_gold'],          'color' => '#eab308'],
-            ['label' => 'Criptomoedas',   'value' => $summary['total_crypto'],        'color' => '#f97316'],
-            ['label' => 'Outros Ativos',  'value' => $summary['total_other_assets'],  'color' => '#6b7280'],
+            ['label' => 'Dinheiro', 'value' => $summary['total_bank_balance'], 'color' => '#10b981'],
+            ['label' => 'Investimentos', 'value' => $summary['total_investments'], 'color' => '#3b82f6'],
+            ['label' => 'Imóveis', 'value' => $summary['total_real_estate'], 'color' => '#f59e0b'],
+            ['label' => 'Veículos', 'value' => $summary['total_vehicles'], 'color' => '#8b5cf6'],
+            ['label' => 'Ouro', 'value' => $summary['total_gold'], 'color' => '#eab308'],
+            ['label' => 'Criptomoedas', 'value' => $summary['total_crypto'], 'color' => '#f97316'],
+            ['label' => 'Outros Ativos', 'value' => $summary['total_other_assets'], 'color' => '#6b7280'],
         ];
 
         $total = collect($items)->sum('value');
@@ -505,10 +432,6 @@ class BancoService
             ->values()
             ->toArray();
     }
-
-    /* ══════════════════════════════════════════════════════════
-       HELPERS PRIVADOS
-    ══════════════════════════════════════════════════════════ */
 
     private function getCurrentMonthIncome(): float
     {
@@ -546,9 +469,6 @@ class BancoService
             ->sum('amount');
     }
 
-    /**
-     * Soma dos rendimentos fixos/recorrentes ativos, convertidos para o equivalente mensal.
-     */
     private function getFixedMonthlyIncome(): float
     {
         return (float) RecurringIncome::where('workspace_id', $this->workspaceId)
@@ -574,5 +494,14 @@ class BancoService
             ->sum('amount');
 
         return $total / $months;
+    }
+
+    private function monthKeyExpression(string $column): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'pgsql' => "TO_CHAR({$column}, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', {$column})",
+            default => "DATE_FORMAT({$column}, '%Y-%m')",
+        };
     }
 }
