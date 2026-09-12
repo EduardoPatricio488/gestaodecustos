@@ -1,6 +1,9 @@
 (function () {
     'use strict';
 
+    if (window.__financeProModalControlsLoaded) return;
+    window.__financeProModalControlsLoaded = true;
+
     const CLOSE_TEXT = /^(fechar|close|close modal|dismiss|descartar|discard)$/i;
     const CLOSE_LABEL = /^(fechar|close|close modal|dismiss)$/i;
     const MODAL_SELECTOR = '[role="dialog"], dialog, [data-flux-modal]';
@@ -24,8 +27,6 @@
         if (!(element instanceof HTMLElement)) return false;
         return element.matches(MODAL_SELECTOR) || !!element.querySelector?.('[data-flux-modal-close]');
     };
-
-    const getModal = (button) => button.closest(MODAL_SELECTOR);
 
     const isCloseControl = (button) => {
         if (!(button instanceof HTMLButtonElement)) return false;
