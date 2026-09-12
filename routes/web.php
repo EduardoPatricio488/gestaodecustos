@@ -158,17 +158,43 @@ Route::middleware('auth')->group(function () {
     })->name('verification.notice');
 
     Route::post('/verificar-codigo', function (Request $request) {
-        $request->validate(['code' => 'required|size:6']);
+        $request->validate(['code' => 'required|digits:6']);
         $user = Auth::user();
-        if ($request->code == $user->verification_code) {
+
+        if ($user->verification_code_expires_at && now()->greaterThan($user->verification_code_expires_at)) {
+            $user->update([
+                'verification_code' => null,
+                'verification_code_hash' => null,
+                'verification_code_expires_at' => null,
+                'verification_code_attempts' => 0,
+            ]);
+
+            return back()->withErrors(['code' => 'O código expirou. Solicita um novo código.']);
+        }
+
+        if (($user->verification_code_attempts ?? 0) >= 5) {
+            return back()->withErrors(['code' => 'Limite de tentativas atingido. Solicita um novo código.']);
+        }
+
+        $valid = $user->verification_code_hash
+            && hash_equals($user->verification_code_hash, hash('sha256', (string) $request->code));
+
+        if ($valid) {
             $user->markEmailAsVerified();
-            $user->update(['verification_code' => null]);
+            $user->update([
+                'verification_code' => null,
+                'verification_code_hash' => null,
+                'verification_code_expires_at' => null,
+                'verification_code_attempts' => 0,
+            ]);
 
             return redirect()->route('dashboard')->with('ok', 'Conta ativada!');
         }
 
+        $user->increment('verification_code_attempts');
+
         return back()->withErrors(['code' => 'Código incorreto.']);
-    })->name('verification.verify-code');
+    })->middleware('throttle:10,1')->name('verification.verify-code');
 
     Route::post('/logout', function () {
         Auth::logout();
@@ -363,13 +389,24 @@ Route::middleware(['auth'])->group(function () {
 // ══════════════════════════════════════════════════════════════════
 Route::post('/email/verification-notification', function (Request $request) {
     $user = $request->user();
-    $newCode = rand(100000, 999999);
-    $user->update(['verification_code' => $newCode]);
+    $newCode = (string) random_int(100000, 999999);
+    $user->update([
+        'verification_code' => null,
+        'verification_code_hash' => hash('sha256', $newCode),
+        'verification_code_expires_at' => now()->addMinutes(10),
+        'verification_code_attempts' => 0,
+    ]);
     try {
         Mail::to($user->email)->send(new VerifyAccountMail($newCode));
 
         return back()->with('status', 'verification-link-sent');
     } catch (Exception $e) {
+        $user->update([
+            'verification_code_hash' => null,
+            'verification_code_expires_at' => null,
+            'verification_code_attempts' => 0,
+        ]);
+
         return back()->withErrors(['code' => 'Erro de conexão ao servidor de e-mail.']);
     }
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');

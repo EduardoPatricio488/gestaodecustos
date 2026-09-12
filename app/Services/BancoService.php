@@ -283,30 +283,38 @@ class BancoService
 
     public function getMonthlyFlow(int $months = 12): array
     {
-        $data = [];
+        $months = max(1, min($months, 60));
+        $start = now()->startOfMonth()->subMonths($months - 1);
+        $end = now()->endOfMonth();
         $fixedIncome = $this->getFixedMonthlyIncome();
 
+        $incomes = Income::where('workspace_id', $this->workspaceId)
+            ->whereBetween('received_at', [$start, $end])
+            ->selectRaw('YEAR(received_at) as year, MONTH(received_at) as month, SUM(amount) as total')
+            ->groupByRaw('YEAR(received_at), MONTH(received_at)')
+            ->get()
+            ->keyBy(fn ($row) => sprintf('%04d-%02d', $row->year, $row->month));
+
+        $expenses = Expense::where('workspace_id', $this->workspaceId)
+            ->whereBetween('spent_at', [$start, $end])
+            ->selectRaw('YEAR(spent_at) as year, MONTH(spent_at) as month, SUM(amount) as total')
+            ->groupByRaw('YEAR(spent_at), MONTH(spent_at)')
+            ->get()
+            ->keyBy(fn ($row) => sprintf('%04d-%02d', $row->year, $row->month));
+
+        $data = [];
         for ($i = $months - 1; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
+            $date = now()->startOfMonth()->subMonths($i);
             $month = $date->format('Y-m');
-            $label = $date->locale('pt')->isoFormat('MMM YY');
-
-            $income = Income::where('workspace_id', $this->workspaceId)
-                ->whereYear('received_at', $date->year)
-                ->whereMonth('received_at', $date->month)
-                ->sum('amount');
-
-            $expense = Expense::where('workspace_id', $this->workspaceId)
-                ->whereYear('spent_at', $date->year)
-                ->whereMonth('spent_at', $date->month)
-                ->sum('amount');
+            $income = (float) ($incomes->get($month)?->total ?? 0);
+            $expense = (float) ($expenses->get($month)?->total ?? 0);
 
             $data[] = [
                 'month' => $month,
-                'label' => $label,
-                'income' => (float) $income + $fixedIncome,
-                'expense' => (float) $expense,
-                'balance' => (float) ($income + $fixedIncome - $expense),
+                'label' => $date->locale('pt')->isoFormat('MMM YY'),
+                'income' => $income + $fixedIncome,
+                'expense' => $expense,
+                'balance' => $income + $fixedIncome - $expense,
             ];
         }
 
@@ -357,12 +365,16 @@ class BancoService
         $transfers = BankTransfer::where('workspace_id', $this->workspaceId)->count();
         $reserves = $this->getReserves()->count();
 
-        $allIncomes = Income::where('workspace_id', $this->workspaceId)->pluck('amount');
-        $allExpenses = Expense::where('workspace_id', $this->workspaceId)->pluck('amount');
+        $incomeStats = Income::where('workspace_id', $this->workspaceId)
+            ->selectRaw('COALESCE(MAX(amount), 0) as max_amount, COALESCE(SUM(amount), 0) as total_amount')
+            ->first();
+        $expenseStats = Expense::where('workspace_id', $this->workspaceId)
+            ->selectRaw('COALESCE(MAX(amount), 0) as max_amount, COALESCE(SUM(amount), 0) as total_amount')
+            ->first();
 
-        $maxIncome = $allIncomes->max() ?? 0;
-        $maxExpense = $allExpenses->max() ?? 0;
-        $totalMoved = $allIncomes->sum() + $allExpenses->sum();
+        $maxIncome = (float) ($incomeStats->max_amount ?? 0);
+        $maxExpense = (float) ($expenseStats->max_amount ?? 0);
+        $totalMoved = (float) ($incomeStats->total_amount ?? 0) + (float) ($expenseStats->total_amount ?? 0);
 
         $monthlyFlows = $this->getMonthlyFlow(12);
         $avgMonthly = count($monthlyFlows) > 0
@@ -551,15 +563,16 @@ class BancoService
 
     private function getAvgMonthlyExpense(int $months = 6): float
     {
-        $total = 0;
-        for ($i = 1; $i <= $months; $i++) {
-            $date = now()->subMonths($i);
-            $total += (float) Expense::where('workspace_id', $this->workspaceId)
-                ->whereYear('spent_at', $date->year)
-                ->whereMonth('spent_at', $date->month)
-                ->sum('amount');
+        if ($months <= 0) {
+            return 0;
         }
 
-        return $months > 0 ? $total / $months : 0;
+        $end = now()->startOfMonth()->subMonth()->endOfMonth();
+        $start = $end->copy()->startOfMonth()->subMonths($months - 1);
+        $total = (float) Expense::where('workspace_id', $this->workspaceId)
+            ->whereBetween('spent_at', [$start, $end])
+            ->sum('amount');
+
+        return $total / $months;
     }
 }
