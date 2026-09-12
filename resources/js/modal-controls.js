@@ -1,30 +1,39 @@
 (function () {
     'use strict';
 
-    const CLOSE_TEXT = /^(fechar|close|descartar|discard)$/i;
+    const CLOSE_TEXT = /^(fechar|close|close modal|dismiss|descartar|discard)$/i;
     const CLOSE_LABEL = /^(fechar|close|close modal|dismiss)$/i;
+    const MODAL_SELECTOR = '[role="dialog"], dialog, [data-flux-modal]';
+
+    // app.js historically registered a generic capture listener that treated
+    // Cancel/Discard buttons as modal close controls. Prevent that legacy
+    // listener from being registered; modal actions remain available to their
+    // own Livewire/Flux handlers.
+    const originalAddEventListener = document.addEventListener.bind(document);
+    document.addEventListener = function (type, listener, options) {
+        if (type === 'click' && typeof listener === 'function') {
+            const source = Function.prototype.toString.call(listener);
+            if (source.includes('cancelar') && source.includes('closeModal') && source.includes('[role="dialog"], dialog')) {
+                return;
+            }
+        }
+        return originalAddEventListener(type, listener, options);
+    };
 
     const isModal = (element) => {
         if (!(element instanceof HTMLElement)) return false;
-        return element.matches('[role="dialog"], dialog, [data-flux-modal]') || !!element.querySelector?.('[data-flux-modal-close]');
+        return element.matches(MODAL_SELECTOR) || !!element.querySelector?.('[data-flux-modal-close]');
     };
 
-    const getModal = (button) => button.closest('[role="dialog"], dialog, [data-flux-modal]');
+    const getModal = (button) => button.closest(MODAL_SELECTOR);
 
     const isCloseControl = (button) => {
         if (!(button instanceof HTMLButtonElement)) return false;
+        if (button.classList.contains('finance-pro-modal-close')) return true;
         if (button.matches('[data-flux-modal-close], [aria-label="Fechar modal"], [aria-label="Close modal"], [title="Fechar"], [title="Close"]')) return true;
         const label = (button.getAttribute('aria-label') || '').trim();
         const text = (button.textContent || '').replace(/\s+/g, ' ').trim();
         return CLOSE_LABEL.test(label) || CLOSE_TEXT.test(text);
-    };
-
-    const hideExtraCloseControls = (modal, keep) => {
-        modal.querySelectorAll('button').forEach((button) => {
-            if (button === keep || !isCloseControl(button)) return;
-            button.setAttribute('data-finance-pro-hidden-close', '1');
-            button.style.display = 'none';
-        });
     };
 
     const positionCloseControl = (button) => {
@@ -41,6 +50,15 @@
         button.setAttribute('title', 'Fechar');
     };
 
+    const hideExtraCloseControls = (modal, keep) => {
+        modal.querySelectorAll('button').forEach((button) => {
+            if (button === keep) return;
+            if (!isCloseControl(button)) return;
+            button.setAttribute('data-finance-pro-hidden-close', '1');
+            button.style.display = 'none';
+        });
+    };
+
     const makeFallbackClose = (modal) => {
         const button = document.createElement('button');
         button.type = 'button';
@@ -51,12 +69,19 @@
         button.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
+
             const nativeDialog = modal instanceof HTMLDialogElement ? modal : null;
             if (nativeDialog?.open) nativeDialog.close();
-            modal.querySelector('[data-flux-modal-close]')?.click();
-            if (modal.getAttribute('data-modal')) {
-                window.dispatchEvent(new CustomEvent('close-modal', { detail: modal.getAttribute('data-modal') }));
+
+            const fluxClose = modal.querySelector('[data-flux-modal-close]');
+            if (fluxClose && fluxClose !== button) fluxClose.click();
+
+            const modalName = modal.getAttribute('data-modal') || modal.getAttribute('data-name') || modal.getAttribute('data-modal-name') || modal.id || '';
+            if (modalName) {
+                window.dispatchEvent(new CustomEvent('close-modal', { detail: modalName }));
+                window.dispatchEvent(new CustomEvent('modal-close', { detail: { name: modalName } }));
             }
+
             if (window.Alpine) {
                 modal.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
             }
@@ -65,27 +90,24 @@
     };
 
     const normalizeModal = (modal) => {
-        if (!isModal(modal)) return;
-        const existing = Array.from(modal.querySelectorAll('button')).find(isCloseControl);
+        if (!isModal(modal) || modal.getAttribute('data-finance-pro-modal-normalized') === '1') return;
+
+        const existing = Array.from(modal.querySelectorAll('button')).find((button) => {
+            if (button.matches('[data-flux-modal-close], [aria-label="Fechar modal"], [aria-label="Close modal"], [title="Fechar"], [title="Close"]')) return true;
+            const label = (button.getAttribute('aria-label') || '').trim();
+            const text = (button.textContent || '').replace(/\s+/g, ' ').trim();
+            return CLOSE_LABEL.test(label) || CLOSE_TEXT.test(text);
+        });
+
         const close = existing || makeFallbackClose(modal);
 
         if (!existing) {
-            const panel = modal.querySelector(':scope > div, .relative, [data-flux-modal-content]') || modal.firstElementChild || modal;
+            const panel = modal.querySelector('[data-flux-modal-content], .relative') || modal.firstElementChild || modal;
             if (panel instanceof HTMLElement) {
                 if (getComputedStyle(panel).position === 'static') panel.style.position = 'relative';
                 panel.prepend(close);
             } else {
                 modal.prepend(close);
-            }
-        } else {
-            positionCloseControl(close);
-            const parent = close.parentElement;
-            if (parent && parent !== modal && parent.children.length === 1 && !parent.textContent?.trim()) {
-                parent.style.position = 'absolute';
-                parent.style.left = '1.25rem';
-                parent.style.right = 'auto';
-                parent.style.top = '1.25rem';
-                parent.style.zIndex = '100';
             }
         }
 
@@ -95,15 +117,17 @@
     };
 
     const scan = (root = document) => {
-        root.querySelectorAll?.('[role="dialog"], dialog, [data-flux-modal]').forEach((modal) => {
-            if (modal.getAttribute('data-finance-pro-modal-normalized') !== '1') normalizeModal(modal);
-        });
+        const modals = root.matches?.(MODAL_SELECTOR) ? [root] : [];
+        root.querySelectorAll?.(MODAL_SELECTOR).forEach((modal) => modals.push(modal));
+        modals.forEach(normalizeModal);
     };
 
     const start = () => {
         scan();
-        const observer = new MutationObserver(() => scan());
-        if (document.body) observer.observe(document.body, { childList: true, subtree: true });
+        if (document.body) {
+            const observer = new MutationObserver(() => scan());
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
     };
 
     if (document.readyState === 'loading') {
