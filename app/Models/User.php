@@ -99,7 +99,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'username',
 
         'social_bio',
-        'verification_code',
         'verification_code_hash',
         'verification_code_expires_at',
         'verification_code_attempts',
@@ -125,7 +124,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'two_factor_secret',
         'two_factor_recovery_codes',
         'remember_token',
-        'verification_code',
         'verification_code_hash',
     ];
 
