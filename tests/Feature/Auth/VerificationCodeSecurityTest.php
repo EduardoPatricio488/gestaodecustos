@@ -1,5 +1,6 @@
 <?php
 
+use App\Mail\VerifyAccountMail;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -23,7 +24,7 @@ it('stores registration verification codes only as hashes', function () {
         ->and($user->verification_code_expires_at)->not->toBeNull()
         ->and($user->verification_code_attempts)->toBe(0);
 
-    Mail::assertSent(\App\Mail\VerifyAccountMail::class);
+    Mail::assertSent(VerifyAccountMail::class);
 });
 
 it('rejects expired verification codes', function () {

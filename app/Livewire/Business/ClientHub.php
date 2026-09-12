@@ -17,18 +17,31 @@ class ClientHub extends Component
     use WithPagination;
 
     public $search = '';
+
     public $selectedClient = null;
+
     public $generatedPasscode = '';
+
     public $showModal = false;
+
     public $generatedPortalUrl = '';
+
     public $editingId = null;
+
     public $name;
+
     public $legal_name;
+
     public $tax_number;
+
     public $email;
+
     public $phone;
+
     public $status = 'ativo';
+
     public $address;
+
     public $notes;
 
     protected $rules = [
@@ -132,6 +145,7 @@ class ClientHub extends Component
         $client = auth()->user()->clients()->where('portal_token', $this->generatedPasscode)->firstOrFail();
         if (! $client->email) {
             $this->dispatch('toast', text: 'Este cliente não tem email registado.', variant: 'warning');
+
             return;
         }
 
@@ -227,12 +241,14 @@ class ClientHub extends Component
         do {
             $token = Str::random(64);
         } while (Client::where('portal_token', $token)->exists());
+
         return $token;
     }
 
     public function render()
     {
         $clients = auth()->user()->clients()->where('name', 'like', '%'.$this->search.'%')->get();
+
         return view('livewire.business.client-hub', [
             'clients' => $clients,
             'totalClients' => $clients->count(),

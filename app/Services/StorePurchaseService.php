@@ -147,6 +147,7 @@ class StorePurchaseService
             }
 
             $locked->update(['status' => 'completed', 'stripe_session_id' => $stripeSessionId]);
+
             return $purchases->unique('id')->values();
         });
 

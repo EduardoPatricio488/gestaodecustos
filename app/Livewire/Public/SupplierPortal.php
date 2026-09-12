@@ -18,17 +18,29 @@ class SupplierPortal extends Component
     use WithFileUploads;
 
     public $tax_number = '';
+
     public $token = '';
+
     public $isLoggedIn = false;
+
     public $supplier = null;
+
     public $requesterName = '';
+
     public $requesterEmail = '';
+
     public $requestTaxNumber = '';
+
     public $companySearch = '';
+
     public $selectedCompanyId = null;
+
     public $requestSent = false;
+
     public $amount;
+
     public $notes;
+
     public $invoice_doc;
 
     #[Layout('layouts.guest')]
@@ -45,6 +57,7 @@ class SupplierPortal extends Component
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
             session()->flash('error', 'Demasiadas tentativas. Tenta novamente mais tarde.');
+
             return;
         }
         RateLimiter::hit($rateLimitKey, 60);
@@ -66,6 +79,7 @@ class SupplierPortal extends Component
 
             RateLimiter::clear($rateLimitKey);
             session()->regenerate();
+
             return redirect()->route('supplier.dashboard', ['token' => $cleanTokenInput]);
         }
 
@@ -99,6 +113,7 @@ class SupplierPortal extends Component
         $rateLimitKey = 'supplier-portal-request:'.sha1($email.'|'.request()->ip());
         if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
             $this->addError('requesterEmail', 'Demasiados pedidos. Tenta novamente mais tarde.');
+
             return;
         }
         RateLimiter::hit($rateLimitKey, 300);
@@ -109,6 +124,7 @@ class SupplierPortal extends Component
 
         if (! $workspace || ! filled($workspace->business_email)) {
             $this->addError('selectedCompanyId', 'Esta empresa ainda não tem um email empresarial configurado.');
+
             return;
         }
 
@@ -120,6 +136,7 @@ class SupplierPortal extends Component
 
         if ($pending) {
             $this->addError('requesterEmail', 'Já existe um pedido pendente deste email para esta empresa.');
+
             return;
         }
 

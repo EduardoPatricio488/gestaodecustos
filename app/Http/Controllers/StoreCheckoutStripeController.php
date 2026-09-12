@@ -16,6 +16,7 @@ class StoreCheckoutStripeController extends Controller
 
         if ($pending->status === 'completed') {
             session()->forget(['store_cart', 'store_coupon']);
+
             return redirect()->route('hub.inventory')->with('toast', 'Compra confirmada! Recibo enviado por e-mail.');
         }
 
@@ -32,6 +33,7 @@ class StoreCheckoutStripeController extends Controller
                 'pending_id' => $pending->id,
                 'user_id' => Auth::id(),
             ]);
+
             return redirect()->route('store.checkout')->with('toast', 'Sessão de pagamento inválida.');
         }
 
@@ -39,6 +41,7 @@ class StoreCheckoutStripeController extends Controller
             $stripeSession = Auth::user()->stripe()->checkout->sessions->retrieve($sessionId);
         } catch (\Throwable $e) {
             Log::error('Erro ao verificar sessão Stripe da loja: '.$e->getMessage());
+
             return redirect()->route('store.checkout')->with('toast', 'Não foi possível confirmar o pagamento. Contacta o suporte se o valor foi debitado.');
         }
 
@@ -53,6 +56,7 @@ class StoreCheckoutStripeController extends Controller
                 'stripe_session_id' => $stripeSession->id,
                 'user_id' => Auth::id(),
             ]);
+
             return redirect()->route('store.checkout')->with('toast', 'Sessão de pagamento inválida.');
         }
 
@@ -73,6 +77,7 @@ class StoreCheckoutStripeController extends Controller
                 'actual_currency' => $actualCurrency,
                 'user_id' => Auth::id(),
             ]);
+
             return redirect()->route('store.checkout')->with('toast', 'O valor do pagamento não corresponde à compra. Contacta o suporte.');
         }
 

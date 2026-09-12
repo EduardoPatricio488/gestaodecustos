@@ -23,6 +23,7 @@ class DemoSeeder extends Seeder
     {
         if (! filter_var(env('DEMO_SEED_ENABLED', false), FILTER_VALIDATE_BOOL)) {
             $this->command?->error('DemoSeeder está desactivado. Defina DEMO_SEED_ENABLED=true apenas num ambiente de demonstração controlado.');
+
             return;
         }
 

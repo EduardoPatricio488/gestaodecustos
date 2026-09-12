@@ -39,6 +39,7 @@ class EnsureImpersonationIsValid
             }
 
             $request->session()->forget(ImpersonationController::sessionKey());
+
             return redirect()->route('admin.users');
         }
 

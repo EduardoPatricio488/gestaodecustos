@@ -15,14 +15,23 @@ class UserManagement extends Component
     use WithPagination;
 
     public $search = '';
+
     public $filterStatus = 'all';
+
     public $filterRole = 'all';
+
     public $filterDate = 'all';
+
     public $orderBy = 'created_at|desc';
+
     public $selectedUser = null;
+
     public $userStats = [];
+
     public $userToEditRole = null;
+
     public $newRole = '';
+
     public $adminPassword = '';
 
     protected $queryString = [
@@ -151,6 +160,7 @@ class UserManagement extends Component
 
         if (! Hash::check($this->adminPassword, auth()->user()->password)) {
             $this->addError('adminPassword', 'Password de administrador incorreta.');
+
             return;
         }
 
@@ -158,6 +168,7 @@ class UserManagement extends Component
         abort_unless($user, 404);
         if ($user->id === auth()->id() && $this->newRole !== 'admin') {
             $this->addError('newRole', 'Não podes remover o teu próprio cargo de administrador.');
+
             return;
         }
 

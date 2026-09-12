@@ -3,7 +3,6 @@
 namespace App\Livewire\Business;
 
 use App\Mail\SupplierPortalAccessMail;
-use App\Models\Expense;
 use App\Models\PortalAccessRequest;
 use App\Models\Supplier;
 use Illuminate\Support\Facades\Mail;
@@ -18,16 +17,27 @@ class SupplierHub extends Component
     use WithPagination;
 
     public $name;
+
     public $legal_name;
+
     public $tax_number;
+
     public $email;
+
     public $phone;
+
     public $payment_terms;
+
     public $address;
+
     public $editingId = null;
+
     public $generatedPasscode = '';
+
     public $supplierTaxNumber = '';
+
     public $generatedPortalUrl = '';
+
     public $search = '';
 
     public function updatedTaxNumber($value): void
@@ -62,6 +72,7 @@ class SupplierHub extends Component
 
         if (! $supplier->email) {
             $this->dispatch('toast', text: 'Este fornecedor não tem email registado.', variant: 'warning');
+
             return;
         }
 

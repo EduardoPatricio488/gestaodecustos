@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 class ImpersonationController extends Controller
 {
     private const SESSION_KEY = 'admin_impersonation';
+
     private const TTL_MINUTES = 30;
 
     public function start(Request $request, User $user): RedirectResponse
@@ -40,6 +41,7 @@ class ImpersonationController extends Controller
         ]);
 
         Auth::login($user);
+
         return redirect()->route('dashboard');
     }
 
@@ -59,6 +61,7 @@ class ImpersonationController extends Controller
         Auth::login($actor);
         $request->session()->forget(self::SESSION_KEY);
         $request->session()->regenerate();
+
         return redirect()->route('admin.users');
     }
 

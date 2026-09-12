@@ -15,12 +15,19 @@ use Livewire\Component;
 class ClientLogin extends Component
 {
     public $tax_number = '';
+
     public $token = '';
+
     public $requesterName = '';
+
     public $requesterEmail = '';
+
     public $requestTaxNumber = '';
+
     public $companySearch = '';
+
     public $selectedCompanyId = null;
+
     public $requestSent = false;
 
     #[Layout('layouts.guest')]
@@ -37,6 +44,7 @@ class ClientLogin extends Component
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
             session()->flash('error', 'Demasiadas tentativas. Tenta novamente mais tarde.');
+
             return;
         }
 
@@ -49,6 +57,7 @@ class ClientLogin extends Component
         if ($client) {
             RateLimiter::clear($rateLimitKey);
             session()->regenerate();
+
             return redirect()->route('client.portal', ['token' => $client->portal_token]);
         }
 
@@ -82,6 +91,7 @@ class ClientLogin extends Component
         $rateLimitKey = 'client-portal-request:'.sha1($email.'|'.request()->ip());
         if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
             $this->addError('requesterEmail', 'Demasiados pedidos. Tenta novamente mais tarde.');
+
             return;
         }
         RateLimiter::hit($rateLimitKey, 300);
@@ -92,6 +102,7 @@ class ClientLogin extends Component
 
         if (! $workspace || ! filled($workspace->business_email)) {
             $this->addError('selectedCompanyId', 'Esta empresa ainda não tem um email empresarial configurado.');
+
             return;
         }
 
@@ -103,6 +114,7 @@ class ClientLogin extends Component
 
         if ($pending) {
             $this->addError('requesterEmail', 'Já existe um pedido pendente deste email para esta empresa.');
+
             return;
         }
 
