@@ -10,17 +10,17 @@ return new class extends Migration
     {
         if (Schema::hasColumn('users', 'verification_code')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->dropColumn('verification_code');
+                $table->string('verification_code')->nullable()->change();
             });
+
+            \DB::table('users')->whereNotNull('verification_code')->update([
+                'verification_code' => null,
+            ]);
         }
     }
 
     public function down(): void
     {
-        if (! Schema::hasColumn('users', 'verification_code')) {
-            Schema::table('users', function (Blueprint $table) {
-                $table->string('verification_code')->nullable();
-            });
-        }
+        // Legacy plaintext verification codes remain intentionally empty.
     }
 };
