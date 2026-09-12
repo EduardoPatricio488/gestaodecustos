@@ -22,7 +22,6 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
 // 2. ADICIONADO "implements MustVerifyEmail" - ISTO É O QUE TRAVA O DASHBOARD
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
-    // 3. ORGANIZADO: Traits usados apenas uma vez
     use Billable,
         HasFactory,
         HasGamification,
@@ -100,7 +99,10 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'username',
 
         'social_bio',
-        'verification_code', // OK
+        'verification_code',
+        'verification_code_hash',
+        'verification_code_expires_at',
+        'verification_code_attempts',
         'email',
         'password',
         'locale',
@@ -115,7 +117,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'avatar_path',
         'default_post_visibility',
         'is_profile_private',
-        'plan', // Adicionado caso precises
+        'plan',
     ];
 
     protected $hidden = [
@@ -123,6 +125,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'two_factor_secret',
         'two_factor_recovery_codes',
         'remember_token',
+        'verification_code',
+        'verification_code_hash',
     ];
 
     protected function casts(): array
@@ -131,6 +135,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_login_at' => 'datetime',
+            'verification_code_expires_at' => 'datetime',
+            'verification_code_attempts' => 'integer',
             'is_admin' => 'boolean',
             'is_active' => 'boolean',
             'xp' => 'integer',
@@ -174,7 +180,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     public function hasFeature(string $feature): bool
     {
-        // Admins do sistema saltam a verificação
         if ($this->isAdminRole()) {
             return true;
         }
@@ -184,7 +189,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             return false;
         }
 
-        // Procura as definições do plano na tabela que criámos
         return Cache::remember("plan_features_{$slug}", 3600, function () use ($slug, $feature) {
             $planDefinition = SubscriptionPlan::where('slug', $slug)->first();
 
@@ -277,13 +281,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 
     public function isActive(): bool
     {
-        // Se a tua coluna na base de dados se chamar 'is_active'
         return (bool) $this->is_active;
     }
 
-    /**
-     * Verifica os cargos do utilizador.
-     */
     public function hasRole($roles): bool
     {
         if (is_array($roles)) {
@@ -293,9 +293,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return $this->role === $roles;
     }
 
-    /**
-     * Atalhos de cargos
-     */
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
@@ -328,7 +325,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     protected $casts = [
-        // ... outros casts que já tenhas (email_verified_at, password, etc)
         'badges' => 'collection',
         'is_active' => 'boolean',
     ];
