@@ -4,23 +4,32 @@
 
 **Finance Pro AI** é uma plataforma SaaS de gestão financeira pessoal e empresarial com inteligência artificial.
 
-O produto deve ser apresentado como uma ferramenta de **finance operations / financial management**, não como um substituto de contabilista ou como um ERP contabilístico certificado.
+O produto deve ser apresentado como uma ferramenta de **financial management / finance operations**, não como um substituto de contabilista nem como um ERP contabilístico certificado.
 
-## O que o produto faz
+## Planos actualmente configurados
 
-### Finanças pessoais
+- **Free** — acesso às funcionalidades base pessoais.
+- **Pro** — 5 €/mês no catálogo actualmente configurado; inclui funcionalidades pessoais avançadas, IA e funcionalidades premium configuradas.
+- **Business** — 10 €/mês no catálogo actualmente configurado; inclui funcionalidades empresariais e equipa.
+
+Os preços são configuração actual e podem ser alterados. Os Price IDs Stripe são injectados através de `STRIPE_PRICE_PRO` e `STRIPE_PRICE_BUSINESS`.
+
+## Finanças pessoais
+
 - receitas e despesas;
 - orçamentos;
 - objectivos de poupança;
 - dívidas;
-- investimentos;
+- investimentos e património;
 - subscrições;
 - contas bancárias;
 - relatórios e exportação;
 - análise financeira com IA;
-- PWA e suporte a utilização offline.
+- PWA e fluxos offline suportados pela aplicação;
+- calendários, lembretes e funcionalidades familiares.
 
-### Finanças empresariais
+## Finanças empresariais
+
 - clientes e fornecedores;
 - facturação e propostas;
 - despesas e aprovações;
@@ -31,9 +40,15 @@ O produto deve ser apresentado como uma ferramenta de **finance operations / fin
 - reconciliação de movimentos;
 - centros de custo;
 - projectos e custos;
+- stock/inventário;
 - equipa, funções e permissões;
 - documentos e operações internas;
-- IA financeira empresarial.
+- análise empresarial com IA;
+- portais de terceiros.
+
+## Permissões e isolamento
+
+O acesso é determinado por autenticação, verificação, plano, workspace e papel. Operações sensíveis devem ser validadas no backend. Os dados financeiros devem permanecer isolados pelo workspace actual.
 
 ## Limites importantes
 
@@ -45,7 +60,7 @@ Finance Pro AI **não deve ser apresentado** como:
 - sistema completo de payroll legal;
 - motor fiscal completo para todas as jurisdições;
 - plataforma bancária com integração directa a todas as instituições financeiras;
-- sistema completo de reconciliação contabilística com extractos, clearing accounts e matching avançado.
+- sistema completo de reconciliação contabilística avançada com todas as capacidades de matching/clearing.
 
 As funcionalidades fiscais são de apoio à gestão e devem ser validadas com um profissional competente antes de serem usadas para obrigações oficiais.
 
