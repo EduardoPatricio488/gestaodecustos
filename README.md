@@ -221,9 +221,11 @@ A aplicação deve degradar graciosamente quando uma API externa falha; integra�
 
 ## CI / qualidade
 
-A pipeline GitHub Actions valida Composer, sintaxe PHP, build frontend, Pint e a suite Laravel/Pest. O estado final deve estar verde antes de uma entrega.
+A pipeline GitHub Actions valida Composer, sintaxe PHP, build frontend, `npm audit`, Pint e a suite Laravel/Pest. A validação final deve estar verde antes de uma entrega.
 
-**Estado conhecido do repositório no momento desta auditoria:** a última execução do workflow `business-integrity` falhou durante o build frontend. Portanto, o projecto não é apresentado neste README como tendo CI verde até essa falha ser corrigida e o workflow voltar a passar.
+## Estado de auditoria
+
+As correcções desta auditoria reforçaram segurança, isolamento por workspace, autenticação de portais, verificação de contas, integridade de pagamentos, performance de agregações e preparação de produção. A validação final é feita pela pipeline `business-integrity` no GitHub Actions.
 
 ## Limites e conformidade de apresentação
 
