@@ -50,13 +50,23 @@ class SupplierPortal extends Component
         RateLimiter::hit($rateLimitKey, 60);
 
         $supplier = Supplier::whereRaw("REPLACE(tax_number, ' ', '') = ?", [$cleanNifInput])
-            ->where('portal_token', $cleanTokenInput)
+            ->where(function ($query) use ($cleanTokenInput) {
+                $query->where('portal_token_hash', hash('sha256', $cleanTokenInput))
+                    ->orWhere(function ($legacy) use ($cleanTokenInput) {
+                        $legacy->whereNotNull('portal_token')->where('portal_token', $cleanTokenInput);
+                    });
+            })
+            ->with('workspace')
             ->first();
 
         if ($supplier) {
+            if (! $supplier->portal_token_hash) {
+                $supplier->forceFill(['portal_token_hash' => hash('sha256', $cleanTokenInput)])->saveQuietly();
+            }
+
             RateLimiter::clear($rateLimitKey);
             session()->regenerate();
-            return redirect()->route('supplier.dashboard', ['token' => $supplier->portal_token]);
+            return redirect()->route('supplier.dashboard', ['token' => $cleanTokenInput]);
         }
 
         session()->flash('error', 'CREDENCIAIS INVÁLIDAS. VERIFICA O NIF E O CÓDIGO.');
