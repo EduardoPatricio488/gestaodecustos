@@ -5,7 +5,7 @@
   [32;1m✓[39;22m[90m [39m[90mscores are clamped to safe bounds[39m
 
   [30;42;1m PASS [39;49;22m[39m Tests\Unit\AI\AiIntentDetectorTest[39m
-  [32;1m✓[39;22m[90m [39m[90mdetects financial summary intent[39m[90m                                    [39m [90m0.02s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdetects financial summary intent[39m[90m                                    [39m [90m0.01s[39m  
   [32;1m✓[39;22m[90m [39m[90mdetects transaction creation intent[39m
   [32;1m✓[39;22m[90m [39m[90mdetects comparison and maps it to a deterministic backend tool[39m
   [32;1m✓[39;22m[90m [39m[90mroutes budget forecast and saving analysis to the deterministic financial snapshot[39m
@@ -42,16 +42,16 @@
   [32;1m✓[39;22m[90m [39m[90mit uses disability table IV when applicable[39m
         
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\Auth\AuthenticationTest[39m
-  [32;1m✓[39;22m[90m [39m[90mlogin screen can be rendered[39m[90m                                        [39m [90m5.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlogin screen can be rendered[39m[90m                                        [39m [90m4.93s[39m  
   [32;1m✓[39;22m[90m [39m[90musers can authenticate using the login screen[39m[90m                       [39m [90m0.12s[39m  
-  [32;1m✓[39;22m[90m [39m[90musers can not authenticate with invalid password[39m[90m                    [39m [90m0.46s[39m  
-  [32;1m✓[39;22m[90m [39m[90mnavigation menu can be rendered[39m[90m                                     [39m [90m2.38s[39m  
-  [32;1m✓[39;22m[90m [39m[90musers can logout[39m[90m                                                    [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90musers can not authenticate with invalid password[39m[90m                    [39m [90m0.30s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnavigation menu can be rendered[39m[90m                                     [39m [90m1.92s[39m  
+  [32;1m✓[39;22m[90m [39m[90musers can logout[39m[90m                                                    [39m [90m0.19s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\Auth\EmailVerificationTest[39m
   [32;1m✓[39;22m[90m [39m[90memail verification screen can be rendered[39m[90m                           [39m [90m0.06s[39m  
   [32;1m✓[39;22m[90m [39m[90memail can be verified[39m[90m                                               [39m [90m0.06s[39m  
-  [32;1m✓[39;22m[90m [39m[90memail is not verified with invalid hash[39m[90m                             [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90memail is not verified with invalid hash[39m[90m                             [39m [90m0.05s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\Auth\PasswordConfirmationTest[39m
   [32;1m✓[39;22m[90m [39m[90mconfirm password screen can be rendered[39m[90m                             [39m [90m0.07s[39m  
@@ -62,7 +62,7 @@
   [32;1m✓[39;22m[90m [39m[90mreset password link screen can be rendered[39m[90m                          [39m [90m0.07s[39m  
   [32;1m✓[39;22m[90m [39m[90mreset password link can be requested[39m[90m                                [39m [90m0.27s[39m  
   [32;1m✓[39;22m[90m [39m[90mreset password screen can be rendered[39m[90m                               [39m [90m0.29s[39m  
-  [32;1m✓[39;22m[90m [39m[90mpassword can be reset with valid token[39m[90m                              [39m [90m0.32s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpassword can be reset with valid token[39m[90m                              [39m [90m0.33s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\Auth\PasswordUpdateTest[39m
   [32;1m✓[39;22m[90m [39m[90mpassword can be updated[39m[90m                                             [39m [90m0.17s[39m  
@@ -83,11 +83,11 @@
   [32;1m✓[39;22m[90m [39m[90mit accepts a valid unexpired verification code and clears it[39m[90m        [39m [90m0.06s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\BankPortalTest[39m
-  [32;1m✓[39;22m[90m [39m[90mtoken válido permite acesso apenas às contas do workspace autentica[39m[90m…[39m [90m0.25s[39m  
-  [32;1m✓[39;22m[90m [39m[90mtoken inválido não permite acesso[39m[90m                                   [39m [90m0.16s[39m  
-  [32;1m✓[39;22m[90m [39m[90mtoken de um workspace não autentica outro workspace[39m[90m                 [39m [90m0.20s[39m  
-  [32;1m✓[39;22m[90m [39m[90mtoken expirado não permite acesso[39m[90m                                   [39m [90m0.15s[39m  
-  [32;1m✓[39;22m[90m [39m[90mtoken revogado não permite acesso[39m[90m                                   [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mtoken válido permite acesso apenas às contas do workspace autentica[39m[90m…[39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90mtoken inválido não permite acesso[39m[90m                                   [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mtoken de um workspace não autentica outro workspace[39m[90m                 [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mtoken expirado não permite acesso[39m[90m                                   [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mtoken revogado não permite acesso[39m[90m                                   [39m [90m0.16s[39m  
   [32;1m✓[39;22m[90m [39m[90mtoken antigo deixa de funcionar depois da rotação[39m[90m                   [39m [90m0.20s[39m  
   [32;1m✓[39;22m[90m [39m[90mtentativas de brute force são limitadas[39m[90m                             [39m [90m0.39s[39m  
   [32;1m✓[39;22m[90m [39m[90mdados bancários não são expostos sem autenticação[39m[90m                   [39m [90m0.05s[39m  
@@ -101,11 +101,11 @@
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\BusinessFinancialIntegrityTest[39m
   [32;1m✓[39;22m[90m [39m[90minvoice payment timestamp is created when marked paid[39m[90m               [39m [90m0.12s[39m  
-  [32;1m✓[39;22m[90m [39m[90mworkspace scoped models cannot be loaded from another current works[39m[90m…[39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mworkspace scoped models cannot be loaded from another current works[39m[90m…[39m [90m0.13s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\BusinessGatewayTest[39m
-  [32;1m✓[39;22m[90m [39m[90mconvite válido associa o utilizador ao workspace correto[39m[90m            [39m [90m0.15s[39m  
-  [32;1m✓[39;22m[90m [39m[90mconvite inválido falha sem associar utilizador[39m[90m                      [39m [90m0.13s[39m  
+  [32;1m✓[39;22m[90m [39m[90mconvite válido associa o utilizador ao workspace correto[39m[90m            [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mconvite inválido falha sem associar utilizador[39m[90m                      [39m [90m0.12s[39m  
   [32;1m✓[39;22m[90m [39m[90mconvite expirado falha[39m[90m                                              [39m [90m0.12s[39m  
   [32;1m✓[39;22m[90m [39m[90mconvite revogado falha[39m[90m                                              [39m [90m0.12s[39m  
   [32;1m✓[39;22m[90m [39m[90mconvite já utilizado e funcionário associado não pode ser reutiliza[39m[90m…[39m [90m0.12s[39m  
@@ -114,8 +114,8 @@
   [32;1m✓[39;22m[90m [39m[90mfuncionário terminado não pode aceitar convite[39m[90m                      [39m [90m0.12s[39m  
   [32;1m✓[39;22m[90m [39m[90mconvite de um workspace não dá acesso a outro workspace[39m[90m             [39m [90m0.13s[39m  
   [32;1m✓[39;22m[90m [39m[90mo mesmo convite não pode ser utilizado duas vezes[39m[90m                   [39m [90m0.17s[39m  
-  [32;1m✓[39;22m[90m [39m[90mtentativas de brute force são limitadas[39m[90m                             [39m [90m0.40s[39m  
-  [32;1m✓[39;22m[90m [39m[90madministrador consegue revogar um convite[39m[90m                           [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mtentativas de brute force são limitadas[39m[90m                             [39m [90m0.42s[39m  
+  [32;1m✓[39;22m[90m [39m[90madministrador consegue revogar um convite[39m[90m                           [39m [90m0.26s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\BusinessMetricsTest[39m
   [32;1m✓[39;22m[90m [39m[90minvoice total is recalculated from net and vat[39m[90m                      [39m [90m0.13s[39m  
@@ -136,12 +136,12 @@
   [32;1m✓[39;22m[90m [39m[90mcliente B continua a utilizar os próprios tickets normalmente[39m[90m       [39m [90m0.22s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\DailyReportMailTest[39m
-  [32;1m✓[39;22m[90m [39m[90mit renders only the selected daily report sections[39m[90m                  [39m [90m0.06s[39m  
+  [32;1m✓[39;22m[90m [39m[90mit renders only the selected daily report sections[39m[90m                  [39m [90m0.05s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\DashboardTest[39m
   [32;1m✓[39;22m[90m [39m[90mguests are redirected to the login page[39m[90m                             [39m [90m0.05s[39m  
-  [32;1m✓[39;22m[90m [39m[90mauthenticated users can visit the dashboard[39m[90m                         [39m [90m1.86s[39m  
-  [32;1m✓[39;22m[90m [39m[90mfree users can access the main planning and analysis routes[39m[90m         [39m [90m2.33s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthenticated users can visit the dashboard[39m[90m                         [39m [90m1.75s[39m  
+  [32;1m✓[39;22m[90m [39m[90mfree users can access the main planning and analysis routes[39m[90m         [39m [90m1.93s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\ExampleTest[39m
   [32;1m✓[39;22m[90m [39m[90mit returns a successful response[39m[90m                                    [39m [90m0.07s[39m  
@@ -150,7 +150,7 @@
   [32;1m✓[39;22m[90m [39m[90mit awards xp and stores the action message for the user[39m[90m             [39m [90m0.05s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\ImpersonationTest[39m
-  [32;1m✓[39;22m[90m [39m[90madministrador autorizado consegue impersonar utilizador ativo permi[39m[90m…[39m [90m0.07s[39m  
+  [32;1m✓[39;22m[90m [39m[90madministrador autorizado consegue impersonar utilizador ativo permi[39m[90m…[39m [90m0.06s[39m  
   [32;1m✓[39;22m[90m [39m[90mutilizador normal não consegue iniciar impersonation[39m[90m                [39m [90m0.06s[39m  
   [32;1m✓[39;22m[90m [39m[90madministrador não consegue impersonar outro administrador[39m[90m           [39m [90m0.06s[39m  
   [32;1m✓[39;22m[90m [39m[90mutilizador desativado não pode ser impersonado[39m[90m                      [39m [90m0.06s[39m  
@@ -158,44 +158,44 @@
   [32;1m✓[39;22m[90m [39m[90mPOST autorizado inicia impersonation com CSRF protegido[39m[90m             [39m [90m0.06s[39m  
   [32;1m✓[39;22m[90m [39m[90mPOST de impersonation usa middleware CSRF[39m[90m                           [39m [90m0.04s[39m  
   [32;1m✓[39;22m[90m [39m[90msair da impersonation devolve ao administrador original e regista f[39m[90m…[39m [90m0.07s[39m  
-  [32;1m✓[39;22m[90m [39m[90mimpersonation expirada deixa de ser válida[39m[90m                          [39m [90m0.08s[39m  
+  [32;1m✓[39;22m[90m [39m[90mimpersonation expirada deixa de ser válida[39m[90m                          [39m [90m0.07s[39m  
   [32;1m✓[39;22m[90m [39m[90msessão adulterada não transforma utilizador normal em administrador[39m[90m [39m [90m0.07s[39m  
-  [32;1m✓[39;22m[90m [39m[90msair da impersonation exige DELETE[39m[90m                                  [39m [90m0.28s[39m  
+  [32;1m✓[39;22m[90m [39m[90msair da impersonation exige DELETE[39m[90m                                  [39m [90m0.27s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\OnboardingWizardTest[39m
-  [32;1m✓[39;22m[90m [39m[90monboarding estimates net pay from the 2026 withholding tables[39m[90m       [39m [90m0.10s[39m  
-  [32;1m✓[39;22m[90m [39m[90monboarding creates the configured bank account before income setup[39m[90m  [39m [90m0.19s[39m  
-  [32;1m✓[39;22m[90m [39m[90monboarding links the selected bank account to the recurring income[39m[90m  [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90monboarding estimates net pay from the 2026 withholding tables[39m[90m       [39m [90m0.09s[39m  
+  [32;1m✓[39;22m[90m [39m[90monboarding creates the configured bank account before income setup[39m[90m  [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90monboarding links the selected bank account to the recurring income[39m[90m  [39m [90m0.16s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\PlanReceiptMailTest[39m
   [32;1m✓[39;22m[90m [39m[90mit treats the pro plan as non-business[39m[90m                              [39m [90m0.05s[39m  
   [32;1m✓[39;22m[90m [39m[90mit sends a receipt email when a subscription is paid and when the m[39m[90m…[39m [90m0.06s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\ProductionRouteSmokeTest[39m
-  [32;1m✓[39;22m[90m [39m[90mcritical application routes are registered[39m[90m                          [39m [90m0.05s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcritical application routes are registered[39m[90m                          [39m [90m0.04s[39m  
   [32;1m✓[39;22m[90m [39m[90mcritical application routes require authentication[39m[90m                  [39m [90m0.07s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\ProfileTest[39m
   [32;1m✓[39;22m[90m [39m[90mprofile page is displayed[39m[90m                                           [39m [90m0.28s[39m  
-  [32;1m✓[39;22m[90m [39m[90mprofile information can be updated[39m[90m                                  [39m [90m0.10s[39m  
-  [32;1m✓[39;22m[90m [39m[90memail verification status is unchanged when the email address is un[39m[90m…[39m [90m0.11s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprofile information can be updated[39m[90m                                  [39m [90m0.09s[39m  
+  [32;1m✓[39;22m[90m [39m[90memail verification status is unchanged when the email address is un[39m[90m…[39m [90m0.10s[39m  
   [32;1m✓[39;22m[90m [39m[90muser can delete their account[39m[90m                                       [39m [90m0.07s[39m  
   [32;1m✓[39;22m[90m [39m[90mcorrect password must be provided to delete account[39m[90m                 [39m [90m0.07s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\Settings\ProfileUpdateTest[39m
-  [32;1m✓[39;22m[90m [39m[90mprofile page is displayed[39m[90m                                           [39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprofile page is displayed[39m[90m                                           [39m [90m0.28s[39m  
   [32;1m✓[39;22m[90m [39m[90mprofile information can be updated[39m[90m                                  [39m [90m0.20s[39m  
-  [32;1m✓[39;22m[90m [39m[90memail verification status is unchanged when email address is unchan[39m[90m…[39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90memail verification status is unchanged when email address is unchan[39m[90m…[39m [90m0.15s[39m  
   [32;1m✓[39;22m[90m [39m[90muser can delete their account[39m[90m                                       [39m [90m0.09s[39m  
   [32;1m✓[39;22m[90m [39m[90mcorrect password must be provided to delete account[39m[90m                 [39m [90m0.10s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\Settings\SecurityTest[39m
-  [32;1m✓[39;22m[90m [39m[90msecurity settings page can be rendered[39m[90m                              [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90msecurity settings page can be rendered[39m[90m                              [39m [90m0.15s[39m  
   [32;1m✓[39;22m[90m [39m[90msecurity settings page requires password confirmation when enabled[39m[90m  [39m [90m0.06s[39m  
-  [32;1m✓[39;22m[90m [39m[90msecurity settings page renders without two factor when feature is d[39m[90m…[39m [90m0.11s[39m  
+  [32;1m✓[39;22m[90m [39m[90msecurity settings page renders without two factor when feature is d[39m[90m…[39m [90m0.10s[39m  
   [32;1m✓[39;22m[90m [39m[90mtwo factor authentication disabled when confirmation abandoned betw[39m[90m…[39m [90m0.12s[39m  
   [32;1m✓[39;22m[90m [39m[90mpassword can be updated[39m[90m                                             [39m [90m0.32s[39m  
-  [32;1m✓[39;22m[90m [39m[90mcorrect password must be provided to update password[39m[90m                [39m [90m0.32s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcorrect password must be provided to update password[39m[90m                [39m [90m0.31s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\StateChangingRoutesTest[39m
   [32;1m✓[39;22m[90m [39m[90mworkspace context routes only accept POST[39m[90m                           [39m [90m0.05s[39m  
@@ -203,39 +203,39 @@
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\SupplierPortalTest[39m
   [32;1m✓[39;22m[90m [39m[90mfornecedor A vê apenas os próprios tickets[39m[90m                          [39m [90m0.12s[39m  
-  [32;1m✓[39;22m[90m [39m[90mfornecedor A consegue responder ao próprio ticket[39m[90m                   [39m [90m0.22s[39m  
+  [32;1m✓[39;22m[90m [39m[90mfornecedor A consegue responder ao próprio ticket[39m[90m                   [39m [90m0.21s[39m  
   [32;1m✓[39;22m[90m [39m[90mfornecedor A não consegue abrir o ticket do fornecedor B[39m[90m            [39m [90m0.11s[39m  
   [32;1m✓[39;22m[90m [39m[90mfornecedor A não consegue responder ao ticket do fornecedor B[39m[90m       [39m [90m0.11s[39m  
   [32;1m✓[39;22m[90m [39m[90mfornecedor A não consegue carregar mensagens do fornecedor B[39m[90m        [39m [90m0.11s[39m  
-  [32;1m✓[39;22m[90m [39m[90mfornecedor B continua a utilizar os próprios tickets normalmente[39m[90m    [39m [90m0.22s[39m  
+  [32;1m✓[39;22m[90m [39m[90mfornecedor B continua a utilizar os próprios tickets normalmente[39m[90m    [39m [90m0.21s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\WorkspaceFinancialIntegrityTest[39m
   [32;1m✓[39;22m[90m [39m[90mbank transfers cannot reference accounts from another workspace[39m[90m     [39m [90m0.14s[39m  
   [32;1m✓[39;22m[90m [39m[90mbank reserves cannot reference accounts from another workspace[39m[90m      [39m [90m0.11s[39m  
   [32;1m✓[39;22m[90m [39m[90mgoal contributions cannot reference goals or incomes from another w[39m[90m…[39m [90m0.13s[39m  
   [32;1m✓[39;22m[90m [39m[90mauto savings rules reject invalid percentages and foreign goals[39m[90m     [39m [90m0.11s[39m  
-  [32;1m✓[39;22m[90m [39m[90mbank transactions cannot reference accounts from another workspace[39m[90m  [39m [90m0.11s[39m  
+  [32;1m✓[39;22m[90m [39m[90mbank transactions cannot reference accounts from another workspace[39m[90m  [39m [90m0.10s[39m  
 
   [30;42;1m PASS [39;49;22m[39m Tests\Feature\WorkspaceLogoUrlTest[39m
   [32;1m✓[39;22m[90m [39m[90mo url da logo da empresa remove duplicacao de storage e resolve cor[39m[90m…[39m [90m0.05s[39m  
   [31m────────────────────────────────────────────────────────────────────────────[39m  
   [41;1m FAILED [49;22m [1mTests\Feature\Auth\VerificationCodeSecurityTest[22m [90m>[39m it stores regis…   
-[39;1m  Failed asserting that '303368' is null.[39;22m
+[39;1m  Failed asserting that null is of type string.[39;22m
 
-  at [32mtests/Feature/Auth/VerificationCodeSecurityTest.php[39m:[32m22[39m
-     18▕     $response->assertRedirect();
+  at [32mtests/Feature/Auth/VerificationCodeSecurityTest.php[39m:[32m23[39m
      19▕ 
      20▕     $user = User::where('email', 'verification-security@example.com')->firstOrFail();
      21▕ 
-  ➜  22▕     expect($user->verification_code)->toBeNull()
-     23▕         ->and($user->verification_code_hash)->toBeString()->toHaveLength(64)
+     22▕     expect($user->getAttributes())->not->toHaveKey('verification_code')
+  ➜  23▕         ->and($user->verification_code_hash)->toBeString()->toHaveLength(64)
      24▕         ->and($user->verification_code_expires_at)->not->toBeNull()
      25▕         ->and($user->verification_code_attempts)->toBe(0);
-     26▕
+     26▕ 
+     27▕     Mail::assertSent(VerifyAccountMail::class);
 
-  [33m1   [39m[39;1mtests/Feature/Auth/VerificationCodeSecurityTest.php[39;22m:[39;1m22[39;22m
+  [33m1   [39m[39;1mtests/Feature/Auth/VerificationCodeSecurityTest.php[39;22m:[39;1m23[39;22m
 
 
-  [90mTests:[39m    [31;1m1 failed[39;22m[90m,[39m[39m [39m[32;1m149 passed[39;22m[90m (369 assertions)[39m
-  [90mDuration:[39m [39m27.43s[39m
+  [90mTests:[39m    [31;1m1 failed[39;22m[90m,[39m[39m [39m[32;1m149 passed[39;22m[90m (370 assertions)[39m
+  [90mDuration:[39m [39m25.99s[39m
 
