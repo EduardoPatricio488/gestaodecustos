@@ -1,68 +1,234 @@
 # Finance Pro AI
 
-Finance Pro AI é uma solução SaaS de gestão financeira pessoal e empresarial, desenvolvida em Laravel com Livewire, Tailwind e tecnologias modernas de web app. O produto centraliza receitas, despesas, categorias, orçamentos, subscrições, relatórios, operações empresariais e análise financeira num único ambiente para utilizadores individuais e equipas.
+**Finance Pro AI** é uma plataforma SaaS de gestão financeira pessoal e empresarial com uma camada de inteligência artificial para análise, explicação e produtividade.
 
-## AI Intelligence Layer
+O projecto foi estruturado para suportar utilizadores individuais, workspaces empresariais, equipas, permissões, subscrições e integrações externas.
 
-A plataforma inclui uma camada central de inteligência financeira com:
+> **Importante:** Finance Pro AI é uma plataforma de gestão financeira e operações empresariais. Não deve ser apresentado como software de contabilidade de dupla entrada, substituto de contabilista certificado, payroll legal completo ou software oficialmente certificado pela Autoridade Tributária sem a certificação/licenciamento aplicável.
 
-- contexto seguro por utilizador, workspace, papel, plano e página;
-- cálculos financeiros determinísticos no backend antes de qualquer análise generativa;
-- AI Copilot global persistente;
-- histórico de conversas separado dos chats sociais;
-- memória da IA separada do histórico, com eliminação pelo utilizador;
-- ferramentas AI com autorização server-side e fronteira de workspace;
-- confirmação explícita antes de ações de escrita;
-- registo de auditoria das ações AI;
-- proteção contra prompt injection e contra invenção de dados;
-- insights proativos com prioridade, confiança, score, deduplicação e deep links;
-- AI Observer assíncrono e revisões semanais/mensais determinísticas;
-- Health Score pessoal e empresarial explicável;
-- AI Insight Center / Action Center;
-- feedback de insights;
-- contexto Bunker Offline que distingue estado online/offline e dados pendentes;
-- análise empresarial encaminhada pelo mesmo AI Brain central;
-- respostas e relatórios em Português de Portugal.
+## O que o produto faz
 
-## Segurança
+### Personal
 
-A IA nunca é a autoridade de autorização. O backend valida sempre o utilizador, workspace e permissões antes de ler ou alterar dados. Operações destrutivas não são executadas diretamente pelo modelo: são primeiro apresentadas ao utilizador e só depois executadas através do backend.
+- receitas e despesas;
+- categorias e campos personalizados;
+- orçamentos;
+- objectivos de poupança;
+- dívidas;
+- investimentos e património;
+- subscrições;
+- contas bancárias e posição de caixa;
+- importação de movimentos/extractos;
+- calendários e lembretes;
+- relatórios e exportação PDF;
+- previsões e análise financeira;
+- modo privacidade;
+- PWA e fluxos offline suportados pela aplicação;
+- funcionalidades de família/gamificação;
+- Finance Connect / área social.
 
-Os dados financeiros e empresariais são isolados por workspace e as operações sensíveis são novamente validadas no servidor.
+### Business
 
-## Dados e confiança
+- onboarding e configuração empresarial;
+- dashboard empresarial;
+- clientes e fornecedores;
+- facturação e propostas;
+- despesas e aprovações;
+- pagamentos/recebimentos e notas de crédito;
+- contas bancárias e reconciliação;
+- fluxo de caixa e resultados/P&L;
+- impostos e e-fatura como ferramentas de apoio à gestão;
+- centros de custo e projectos;
+- stock/inventário;
+- equipa, tarefas, calendário, férias e recrutamento;
+- documentos;
+- messenger e operações internas;
+- portais de clientes, fornecedores e banco;
+- análise empresarial com IA.
 
-As respostas devem distinguir factos provenientes da aplicação, inferências e recomendações. Valores financeiros críticos são calculados pelo backend. Quando os dados não são suficientes, a aplicação deve indicar essa limitação em vez de inventar informação.
+### AI
 
-## Business Finance
+A camada de IA inclui Copilot, insights, memória, contexto de workspace, ferramentas autorizadas, confirmações para acções de escrita, registo de acções AI, Health Score e análises proactivas.
 
-A área empresarial inclui clientes, fornecedores, facturação, despesas, pagamentos, notas de crédito, contas bancárias, reconciliação de movimentos, fluxo de caixa, P&L, centros de custo, projectos, equipa, permissões, documentos e análise por IA.
+A IA **não é a autoridade de autorização** e os valores financeiros críticos devem ser calculados/validados no backend. Quando os dados são insuficientes, a aplicação deve indicar a limitação em vez de inventar informação.
 
-### Posicionamento fiscal e contabilístico
+## Stack tecnológica
 
-Finance Pro AI é uma plataforma de **gestão financeira e operações empresariais**. Não deve ser apresentada como software de contabilidade de dupla entrada, substituto de contabilista certificado, payroll legal completo ou software oficialmente certificado pela Autoridade Tributária sem a certificação/licenciamento aplicável.
+- PHP 8.3+
+- Laravel 13
+- Livewire 4 / Volt
+- Flux UI
+- Tailwind CSS 4
+- Vite / Node.js
+- MySQL ou PostgreSQL
+- Laravel Cashier / Stripe
+- Resend
+- OpenRouter
+- Docker / Nginx / PHP-FPM / Supervisor
+- Pest / Pint / GitHub Actions
 
-As funcionalidades fiscais são de apoio à gestão e devem ser validadas com um profissional competente antes de serem usadas para obrigações oficiais.
+As versões e dependências exactas estão em `composer.json` e `package.json`.
 
-## Testing / CI
+## Arquitectura
 
-O projecto inclui testes de integridade financeira, autorização, métricas e settlement, além de uma pipeline GitHub Actions para:
+```text
+Browser / PWA
+    |
+    v
+Laravel Routes
+    |
+    +--> Middleware: auth / verified / plan / workspace / admin
+    |
+    +--> Livewire / Volt UI
+    |
+    +--> Actions / Services / Models
+    |        |
+    |        +--> MySQL / PostgreSQL
+    |        +--> Cache / Queue
+    |
+    +--> Integrações externas
+             +--> Stripe
+             +--> Resend
+             +--> OpenRouter
+             +--> Strava
+             +--> WhatsApp
+             +--> APIs de mercado
+```
 
-- validação do Composer;
-- syntax check de PHP;
-- Pint;
-- suite Laravel completa.
+A autorização é server-side e os dados financeiros são isolados por workspace.
 
-A pipeline deve estar verde no commit final antes de uma entrega de produção.
+## Planos actualmente configurados
 
-Consulte `docs/QA-CHECKLIST.md` para o checklist de lançamento e `docs/PRODUCT-SCOPE.md` para o âmbito e limitações do produto.
+| Plano | Preço no catálogo | Âmbito |
+|---|---:|---|
+| Free | 0 € | Funcionalidades base pessoais |
+| Pro | 5 € | Funcionalidades pessoais avançadas, IA e funcionalidades premium configuradas |
+| Business | 10 € | Gestão empresarial e equipa |
 
-## Performance
+Os preços são configuração actual do produto e podem ser alterados pelo proprietário. Os Price IDs Stripe **não estão hardcoded** no seeder: são fornecidos através de `STRIPE_PRICE_PRO` e `STRIPE_PRICE_BUSINESS`.
 
-Funcionalidades externas, como dados de mercado, devem ser tratadas como dados auxiliares e não como dependências críticas do dashboard. Cache, timeouts e degradação graciosa são preferíveis a bloquear a experiência principal.
+## Instalação rápida
 
-## Agendamento
+### Requisitos
 
-O AI Observer pode analisar workspaces através da fila existente. Existem também revisões semanais e mensais calculadas deterministicamente sem consumir tokens de um modelo generativo.
+- PHP 8.3+
+- Composer 2
+- Node.js 22+ / npm
+- MySQL ou PostgreSQL
+- Git
 
-<!-- trigger -->
+### Local
+
+```bash
+git clone https://github.com/EduardoPatricio488/gestaodecustos.git
+cd gestaodecustos
+composer install
+copy .env.example .env
+php artisan key:generate
+```
+
+Configure a BD no `.env` e execute:
+
+```bash
+php artisan migrate
+php artisan db:seed
+php artisan storage:link
+npm install
+npm run build
+php artisan serve
+```
+
+Para desenvolvimento com servidor, queue e Vite:
+
+```bash
+composer run dev
+```
+
+## Produção
+
+Para produção, configurar no host:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://dominio-real
+SESSION_SECURE_COOKIE=true
+```
+
+Também são necessários, conforme as funcionalidades activadas:
+
+- BD persistente;
+- `APP_KEY` único;
+- Resend + domínio remetente verificado;
+- Stripe LIVE + webhook + Price IDs LIVE;
+- OpenRouter;
+- storage persistente/object storage para uploads;
+- worker de queue;
+- scheduler;
+- HTTPS;
+- backups e monitorização.
+
+O Dockerfile faz o build de produção dos assets. Em Render, as migrations devem ser tratadas como release/pre-deploy operation, e não depender de migrations em background para declarar o serviço pronto.
+
+## Documentação para o comprador
+
+- [`docs/BUYER-HANDOFF.md`](docs/BUYER-HANDOFF.md) — instalação, configuração, deployment, manutenção e troubleshooting.
+- [`docs/PRODUCT-SCOPE.md`](docs/PRODUCT-SCOPE.md) — âmbito, limites e evolução.
+- [`docs/QA-CHECKLIST.md`](docs/QA-CHECKLIST.md) — checklist de QA e produção.
+- [`PRODUCTION-DEPLOYMENT-AUDIT.md`](PRODUCTION-DEPLOYMENT-AUDIT.md) — auditoria de deployment.
+- [`SECURITY-AUDIT.md`](SECURITY-AUDIT.md) — auditoria de segurança.
+- [`PERFORMANCE-AUDIT.md`](PERFORMANCE-AUDIT.md) — auditoria de performance.
+- [`UI-UX-AUDIT.md`](UI-UX-AUDIT.md) — auditoria de UI/UX.
+
+## Seeders
+
+`php artisan db:seed` prepara dados de referência sem criar uma conta administrativa com password conhecida.
+
+Para uma demonstração controlada, existe `DemoSeeder`, mas este deve ser activado explicitamente e nunca usado inadvertidamente em produção. Consulte `docs/BUYER-HANDOFF.md`.
+
+## Email, Stripe e AI
+
+### Email
+
+Produção recomendada:
+
+```env
+MAIL_MAILER=resend
+RESEND_KEY=...
+MAIL_FROM_ADDRESS=um-endereco@dominio-verificado.pt
+```
+
+### Stripe
+
+```env
+STRIPE_KEY=...
+STRIPE_SECRET=...
+STRIPE_WEBHOOK_SECRET=...
+STRIPE_PRICE_PRO=...
+STRIPE_PRICE_BUSINESS=...
+```
+
+Nunca colocar secrets no Git.
+
+### AI
+
+```env
+OPENROUTER_API_KEY=...
+AI_MODEL=...
+```
+
+A aplicação deve degradar graciosamente quando uma API externa falha; integrações externas não devem ser tratadas como fonte de verdade dos valores financeiros internos.
+
+## CI / qualidade
+
+A pipeline GitHub Actions valida Composer, sintaxe PHP, build frontend, Pint e a suite Laravel/Pest. O estado final deve estar verde antes de uma entrega.
+
+**Estado conhecido do repositório no momento desta auditoria:** a última execução do workflow `business-integrity` falhou durante o build frontend. Portanto, o projecto não é apresentado neste README como tendo CI verde até essa falha ser corrigida e o workflow voltar a passar.
+
+## Limites e conformidade de apresentação
+
+Não fazer claims de certificação fiscal, contabilidade oficial, payroll legal completo ou cobertura bancária universal que não estejam efectivamente implementados e certificados. Funcionalidades fiscais e financeiras são ferramentas de apoio à gestão e devem ser validadas profissionalmente antes de obrigações oficiais.
+
+## Licença
+
+MIT. A transferência comercial do projecto deve ser acompanhada pela transferência dos activos, contas externas, domínio, secrets e documentação acordados no contrato de venda.
