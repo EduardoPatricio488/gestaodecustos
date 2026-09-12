@@ -21,14 +21,28 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. UTILIZADOR ADMINISTRADOR DA PLATAFORMA (O MESTRE)
-        // Este utilizador tem acesso à pasta /admin e gere todo o site
+        if (! filter_var(env('DEMO_SEED_ENABLED', false), FILTER_VALIDATE_BOOL)) {
+            $this->command?->error('DemoSeeder está desactivado. Defina DEMO_SEED_ENABLED=true apenas num ambiente de demonstração controlado.');
+            return;
+        }
+
+        $adminPassword = env('DEMO_ADMIN_PASSWORD');
+        $ceoPassword = env('DEMO_CEO_PASSWORD');
+        $memberPassword = env('DEMO_MEMBER_PASSWORD');
+
+        if (! is_string($adminPassword) || strlen($adminPassword) < 12
+            || ! is_string($ceoPassword) || strlen($ceoPassword) < 12
+            || ! is_string($memberPassword) || strlen($memberPassword) < 12) {
+            throw new \RuntimeException('DemoSeeder requer DEMO_ADMIN_PASSWORD, DEMO_CEO_PASSWORD e DEMO_MEMBER_PASSWORD com pelo menos 12 caracteres.');
+        }
+
+        // 1. UTILIZADOR ADMINISTRADOR DE DEMONSTRAÇÃO
         $master = User::updateOrCreate(
             ['email' => 'admin@financepro.com'],
             [
-                'name' => 'Administrador do Sistema',
-                'password' => Hash::make('password'),
-                'role' => 'admin', // 🔥 Status de Administrador Global
+                'name' => 'Administrador de Demonstração',
+                'password' => Hash::make($adminPassword),
+                'role' => 'admin',
                 'is_admin' => true,
                 'email_verified_at' => now(),
                 'username' => 'admin_master',
@@ -36,56 +50,52 @@ class DemoSeeder extends Seeder
             ]
         );
 
-        // 2. UTILIZADOR CEO (EDUARDO - PROPRIETÁRIO DE NEGÓCIO)
+        // 2. UTILIZADOR CEO DE DEMONSTRAÇÃO
         $eduardo = User::updateOrCreate(
             ['email' => 'eduardo@financepro.com'],
             [
-                'name' => 'Eduardo CEO',
-                'password' => Hash::make('password'),
+                'name' => 'Demo Business Owner',
+                'password' => Hash::make($ceoPassword),
                 'role' => 'user',
                 'is_admin' => false,
                 'plan' => 'business',
                 'email_verified_at' => now(),
-                'username' => 'eduardo_ceo',
+                'username' => 'demo_business_owner',
                 'xp' => 2500,
                 'level' => 12,
             ]
         );
 
-        // 3. UTILIZADOR MEMBRO (PARA TESTES DE EQUIPA)
+        // 3. UTILIZADOR MEMBRO DE DEMONSTRAÇÃO
         $joao = User::updateOrCreate(
             ['email' => 'joao@financepro.com'],
             [
-                'name' => 'João Membro',
-                'password' => Hash::make('password'),
+                'name' => 'Demo Team Member',
+                'password' => Hash::make($memberPassword),
                 'role' => 'user',
                 'email_verified_at' => now(),
-                'username' => 'joao_member',
+                'username' => 'demo_team_member',
             ]
         );
 
         // 4. CONFIGURAÇÃO DE WORKSPACES
-        // Workspace Pessoal do Eduardo
         $personalWs = Workspace::updateOrCreate(
             ['owner_id' => $eduardo->id, 'type' => 'personal'],
-            ['name' => 'Cofre do Eduardo', 'plan' => 'pro']
+            ['name' => 'Demo Personal Workspace', 'plan' => 'pro']
         );
         $eduardo->workspaces()->syncWithoutDetaching([$personalWs->id => ['role' => 'admin']]);
 
-        // Workspace Business (A Empresa que o comprador vai ver)
         $businessWs = Workspace::updateOrCreate(
             ['owner_id' => $eduardo->id, 'type' => 'business'],
             [
-                'name' => 'Tech Solutions SaaS',
-                'invite_code' => 'BUSINESS2024',
+                'name' => 'Demo Business Workspace',
+                'invite_code' => 'DEMO-BUSINESS',
                 'plan' => 'business',
                 'initial_capital' => 10000.00,
             ]
         );
         $eduardo->workspaces()->syncWithoutDetaching([$businessWs->id => ['role' => 'admin']]);
         $joao->workspaces()->syncWithoutDetaching([$businessWs->id => ['role' => 'member']]);
-
-        // Definir contexto inicial para o Eduardo
         $eduardo->update(['current_workspace_id' => $businessWs->id]);
 
         // 5. CATEGORIAS DE DEMONSTRAÇÃO
@@ -102,7 +112,7 @@ class DemoSeeder extends Seeder
             );
         }
 
-        // 6. POPULAR DADOS FINANCEIROS (ULTIMOS 3 MESES)
+        // 6. DADOS FINANCEIROS DE DEMONSTRAÇÃO
         for ($m = 0; $m < 3; $m++) {
             $date = Carbon::now()->subMonths($m);
 
@@ -112,7 +122,7 @@ class DemoSeeder extends Seeder
             );
 
             Expense::updateOrCreate(
-                ['workspace_id' => $businessWs->id, 'description' => 'Cloud Hosting AWS - '.$date->format('F')],
+                ['workspace_id' => $businessWs->id, 'description' => 'Cloud Hosting - '.$date->format('F')],
                 [
                     'user_id' => $eduardo->id, 'amount' => rand(300, 600), 'spent_at' => $date,
                     'category_id' => Category::where('name', 'Servidores')->first()->id ?? null,
@@ -121,40 +131,33 @@ class DemoSeeder extends Seeder
             );
         }
 
-        // 7. OPERAÇÕES EMPRESARIAIS
+        // 7. OPERAÇÕES EMPRESARIAIS DE DEMONSTRAÇÃO
         $client = Client::updateOrCreate(
-            ['email' => 'ads-contact@google.pt'],
-            ['workspace_id' => $businessWs->id, 'user_id' => $eduardo->id, 'name' => 'Google Portugal']
+            ['email' => 'demo-client@example.com'],
+            ['workspace_id' => $businessWs->id, 'user_id' => $eduardo->id, 'name' => 'Demo Client']
         );
 
         $project = Project::updateOrCreate(
-            ['workspace_id' => $businessWs->id, 'client_id' => $client->id, 'name' => 'Expansão Cloud 2024'],
+            ['workspace_id' => $businessWs->id, 'client_id' => $client->id, 'name' => 'Demo Cloud Project'],
             ['budget' => 15000, 'status' => 'em_curso']
         );
 
         Task::updateOrCreate(
-            ['workspace_id' => $businessWs->id, 'project_id' => $project->id, 'title' => 'Ligar Webhooks Stripe'],
+            ['workspace_id' => $businessWs->id, 'project_id' => $project->id, 'title' => 'Configure Stripe Webhook'],
             ['user_id' => $eduardo->id, 'status' => 'pendente']
         );
 
         BusinessDocument::updateOrCreate(
-            ['workspace_id' => $businessWs->id, 'title' => 'Contrato de Termos de Uso'],
+            ['workspace_id' => $businessWs->id, 'title' => 'Demo Terms Document'],
             ['user_id' => $eduardo->id, 'type' => 'legal', 'file_path' => 'documents/demo.pdf']
         );
 
         BankAccount::updateOrCreate(
-            ['workspace_id' => $businessWs->id, 'name' => 'Conta Corrente Principal'],
-            ['user_id' => $eduardo->id, 'bank_name' => 'Banco Empresa', 'balance' => 15750.00, 'is_business' => true]
+            ['workspace_id' => $businessWs->id, 'name' => 'Demo Business Account'],
+            ['user_id' => $eduardo->id, 'bank_name' => 'Demo Bank', 'balance' => 15750.00, 'is_business' => true]
         );
 
-        $this->command->info('--------------------------------------------');
-        $this->command->info('✅ FINANCE PRO: BASE DE DADOS PRONTA!');
-        $this->command->info('--------------------------------------------');
-        $this->command->info('1. ACESSO ADMIN MASTER (Site Admin):');
-        $this->command->info('   Email: admin@financepro.com / Password: password');
-        $this->command->info('--------------------------------------------');
-        $this->command->info('2. ACESSO CEO (Para ver o ERP/Dashboard):');
-        $this->command->info('   Email: eduardo@financepro.com / Password: password');
-        $this->command->info('--------------------------------------------');
+        $this->command?->info('Base de dados de demonstração criada/actualizada.');
+        $this->command?->info('As credenciais são as definidas pelas variáveis DEMO_* do ambiente de demonstração.');
     }
 }
