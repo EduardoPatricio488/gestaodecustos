@@ -16,16 +16,16 @@ class CreateNewUser implements CreatesNewUsers
     use PasswordValidationRules, ProfileValidationRules;
 
     protected array $fixedCategories = [
-        'alimentacao' => ['name' => 'Alimentação',   'icon' => 'shopping-cart', 'color' => '#f59e0b', 'order' => 1],
-        'carro' => ['name' => 'Carro',          'icon' => 'truck',         'color' => '#3b82f6', 'order' => 2],
-        'casa' => ['name' => 'Casa',           'icon' => 'home',          'color' => '#10b981', 'order' => 3],
-        'educacao' => ['name' => 'Educação',       'icon' => 'academic-cap',  'color' => '#06b6d4', 'order' => 4],
-        'emprestimos' => ['name' => 'Empréstimos',    'icon' => 'banknotes',     'color' => '#84cc16', 'order' => 5],
-        'entretenimento' => ['name' => 'Entretenimento', 'icon' => 'film',          'color' => '#a855f7', 'order' => 6],
-        'saude' => ['name' => 'Saúde',          'icon' => 'heart',         'color' => '#ef4444', 'order' => 7],
-        'seguros' => ['name' => 'Seguros',        'icon' => 'shield-check',  'color' => '#0ea5e9', 'order' => 8],
-        'tecnologia' => ['name' => 'Tecnologia',     'icon' => 'cpu-chip',      'color' => '#6366f1', 'order' => 9],
-        'transporte' => ['name' => 'Transporte',     'icon' => 'bolt',          'color' => '#8b5cf6', 'order' => 10],
+        'alimentacao' => ['name' => 'Alimentação', 'icon' => 'shopping-cart', 'color' => '#f59e0b', 'order' => 1],
+        'carro' => ['name' => 'Carro', 'icon' => 'truck', 'color' => '#3b82f6', 'order' => 2],
+        'casa' => ['name' => 'Casa', 'icon' => 'home', 'color' => '#10b981', 'order' => 3],
+        'educacao' => ['name' => 'Educação', 'icon' => 'academic-cap', 'color' => '#06b6d4', 'order' => 4],
+        'emprestimos' => ['name' => 'Empréstimos', 'icon' => 'banknotes', 'color' => '#84cc16', 'order' => 5],
+        'entretenimento' => ['name' => 'Entretenimento', 'icon' => 'film', 'color' => '#a855f7', 'order' => 6],
+        'saude' => ['name' => 'Saúde', 'icon' => 'heart', 'color' => '#ef4444', 'order' => 7],
+        'seguros' => ['name' => 'Seguros', 'icon' => 'shield-check', 'color' => '#0ea5e9', 'order' => 8],
+        'tecnologia' => ['name' => 'Tecnologia', 'icon' => 'cpu-chip', 'color' => '#6366f1', 'order' => 9],
+        'transporte' => ['name' => 'Transporte', 'icon' => 'bolt', 'color' => '#8b5cf6', 'order' => 10],
     ];
 
     public function create(array $input): User
@@ -35,14 +35,18 @@ class CreateNewUser implements CreatesNewUsers
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ])->validate();
 
+        $verificationCode = (string) random_int(100000, 999999);
+
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
-            'verification_code' => rand(100000, 999999),
+            'verification_code_hash' => hash('sha256', $verificationCode),
+            'verification_code_expires_at' => now()->addMinutes(10),
+            'verification_code_attempts' => 0,
         ]);
 
-        Mail::to($user->email)->send(new VerifyAccountMail($user->verification_code));
+        Mail::to($user->email)->send(new VerifyAccountMail($verificationCode));
 
         // Criar workspace padrão se o teu sistema usa workspaces
         $workspaceId = $user->currentWorkspace?->id;
