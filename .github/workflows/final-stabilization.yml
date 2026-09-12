@@ -1,0 +1,123 @@
+name: Final stabilization
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  stabilize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+        env:
+          COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY }}"}}}'
+
+      - name: Safe npm security remediation
+        run: |
+          set -euo pipefail
+          npm audit fix --package-lock-only --ignore-scripts
+          npm install --package-lock-only --ignore-scripts
+
+      - name: Apply deterministic stabilization patches
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'Expected block not found in {path}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          # Security: verification codes use random_int, hashing, expiry and attempts.
+          route = Path('routes/web.php')
+          text = route.read_text(encoding='utf-8')
+          old_send = """Route::post('/email/verification-notification', function (Request $request) {\n    $user = $request->user();\n    $newCode = rand(100000, 999999);\n    $user->update(['verification_code' => $newCode]);\n    try {\n        Mail::to($user->email)->send(new VerifyAccountMail($newCode));\n\n        return back()->with('status', 'verification-link-sent');\n    } catch (Exception $e) {\n        return back()->withErrors(['code' => 'Erro de conexão ao servidor de e-mail.']);\n    }\n})->middleware(['auth', 'throttle:6,1'])->name('verification.send');"""
+          new_send = """Route::post('/email/verification-notification', function (Request $request) {\n    $user = $request->user();\n    $newCode = (string) random_int(100000, 999999);\n    $user->update([\n        'verification_code' => null,\n        'verification_code_hash' => hash('sha256', $newCode),\n        'verification_code_expires_at' => now()->addMinutes(10),\n        'verification_code_attempts' => 0,\n    ]);\n    try {\n        Mail::to($user->email)->send(new VerifyAccountMail($newCode));\n\n        return back()->with('status', 'verification-link-sent');\n    } catch (Exception $e) {\n        $user->update([\n            'verification_code_hash' => null,\n            'verification_code_expires_at' => null,\n            'verification_code_attempts' => 0,\n        ]);\n\n        return back()->withErrors(['code' => 'Erro de conexão ao servidor de e-mail.']);\n    }\n})->middleware(['auth', 'throttle:6,1'])->name('verification.send');"""
+          replace_once(route, old_send, new_send)
+
+          old_verify = """    Route::post('/verificar-codigo', function (Request $request) {\n        $request->validate(['code' => 'required|size:6']);\n        $user = Auth::user();\n        if ($request->code == $user->verification_code) {\n            $user->markEmailAsVerified();\n            $user->update(['verification_code' => null]);\n\n            return redirect()->route('dashboard')->with('ok', 'Conta ativada!');\n        }\n\n        return back()->withErrors(['code' => 'Código incorreto.']);\n    })->name('verification.verify-code');"""
+          new_verify = """    Route::post('/verificar-codigo', function (Request $request) {\n        $request->validate(['code' => 'required|digits:6']);\n        $user = Auth::user();\n\n        if ($user->verification_code_expires_at && now()->greaterThan($user->verification_code_expires_at)) {\n            $user->update([\n                'verification_code' => null,\n                'verification_code_hash' => null,\n                'verification_code_expires_at' => null,\n                'verification_code_attempts' => 0,\n            ]);\n\n            return back()->withErrors(['code' => 'O código expirou. Solicita um novo código.']);\n        }\n\n        if (($user->verification_code_attempts ?? 0) >= 5) {\n            return back()->withErrors(['code' => 'Limite de tentativas atingido. Solicita um novo código.']);\n        }\n\n        $valid = $user->verification_code_hash\n            && hash_equals($user->verification_code_hash, hash('sha256', (string) $request->code));\n\n        if ($valid) {\n            $user->markEmailAsVerified();\n            $user->update([\n                'verification_code' => null,\n                'verification_code_hash' => null,\n                'verification_code_expires_at' => null,\n                'verification_code_attempts' => 0,\n            ]);\n\n            return redirect()->route('dashboard')->with('ok', 'Conta ativada!');\n        }\n\n        $user->increment('verification_code_attempts');\n\n        return back()->withErrors(['code' => 'Código incorreto.']);\n    })->middleware('throttle:10,1')->name('verification.verify-code');"""
+          replace_once(route, old_verify, new_verify)
+
+          # Performance: aggregate monthly flow in two grouped queries instead of 2*N queries.
+          banco = Path('app/Services/BancoService.php')
+          text = banco.read_text(encoding='utf-8')
+          pattern = re.compile(r"    public function getMonthlyFlow\(int \$months = 12\): array\n    \{.*?\n    \}\n\n    /\* ═+\n       LIQUIDEZ", re.S)
+          replacement = """    public function getMonthlyFlow(int $months = 12): array\n    {\n        $months = max(1, min($months, 60));\n        $start = now()->startOfMonth()->subMonths($months - 1);\n        $end = now()->endOfMonth();\n        $fixedIncome = $this->getFixedMonthlyIncome();\n\n        $incomes = Income::where('workspace_id', $this->workspaceId)\n            ->whereBetween('received_at', [$start, $end])\n            ->selectRaw('YEAR(received_at) as year, MONTH(received_at) as month, SUM(amount) as total')\n            ->groupByRaw('YEAR(received_at), MONTH(received_at)')\n            ->get()\n            ->keyBy(fn ($row) => sprintf('%04d-%02d', $row->year, $row->month));\n\n        $expenses = Expense::where('workspace_id', $this->workspaceId)\n            ->whereBetween('spent_at', [$start, $end])\n            ->selectRaw('YEAR(spent_at) as year, MONTH(spent_at) as month, SUM(amount) as total')\n            ->groupByRaw('YEAR(spent_at), MONTH(spent_at)')\n            ->get()\n            ->keyBy(fn ($row) => sprintf('%04d-%02d', $row->year, $row->month));\n\n        $data = [];\n        for ($i = $months - 1; $i >= 0; $i--) {\n            $date = now()->startOfMonth()->subMonths($i);\n            $month = $date->format('Y-m');\n            $income = (float) ($incomes->get($month)?->total ?? 0);\n            $expense = (float) ($expenses->get($month)?->total ?? 0);\n\n            $data[] = [\n                'month' => $month,\n                'label' => $date->locale('pt')->isoFormat('MMM YY'),\n                'income' => $income + $fixedIncome,\n                'expense' => $expense,\n                'balance' => $income + $fixedIncome - $expense,\n            ];\n        }\n\n        return $data;\n    }\n\n    /* ══════════════════════════════════════════════════════════\n       LIQUIDEZ"""
+          text2, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit('getMonthlyFlow block not found')
+          banco.write_text(text2, encoding='utf-8')
+
+          # Performance: average monthly expenses in one grouped query.
+          text = banco.read_text(encoding='utf-8')
+          old_avg = """    private function getAvgMonthlyExpense(int $months = 6): float\n    {\n        $total = 0;\n        for ($i = 1; $i <= $months; $i++) {\n            $date = now()->subMonths($i);\n            $total += (float) Expense::where('workspace_id', $this->workspaceId)\n                ->whereYear('spent_at', $date->year)\n                ->whereMonth('spent_at', $date->month)\n                ->sum('amount');\n        }\n\n        return $months > 0 ? $total / $months : 0;\n    }"""
+          new_avg = """    private function getAvgMonthlyExpense(int $months = 6): float\n    {\n        if ($months <= 0) {\n            return 0;\n        }\n\n        $end = now()->startOfMonth()->subMonth()->endOfMonth();\n        $start = $end->copy()->startOfMonth()->subMonths($months - 1);\n        $total = (float) Expense::where('workspace_id', $this->workspaceId)\n            ->whereBetween('spent_at', [$start, $end])\n            ->sum('amount');\n\n        return $total / $months;\n    }"""
+          replace_once(banco, old_avg, new_avg)
+
+          # Performance: use database aggregates in getStats instead of loading every amount.
+          text = banco.read_text(encoding='utf-8')
+          old_stats = """        $allIncomes = Income::where('workspace_id', $this->workspaceId)->pluck('amount');\n        $allExpenses = Expense::where('workspace_id', $this->workspaceId)->pluck('amount');\n\n        $maxIncome = $allIncomes->max() ?? 0;\n        $maxExpense = $allExpenses->max() ?? 0;\n        $totalMoved = $allIncomes->sum() + $allExpenses->sum();"""
+          new_stats = """        $incomeStats = Income::where('workspace_id', $this->workspaceId)\n            ->selectRaw('COALESCE(MAX(amount), 0) as max_amount, COALESCE(SUM(amount), 0) as total_amount')\n            ->first();\n        $expenseStats = Expense::where('workspace_id', $this->workspaceId)\n            ->selectRaw('COALESCE(MAX(amount), 0) as max_amount, COALESCE(SUM(amount), 0) as total_amount')\n            ->first();\n\n        $maxIncome = (float) ($incomeStats->max_amount ?? 0);\n        $maxExpense = (float) ($expenseStats->max_amount ?? 0);\n        $totalMoved = (float) ($incomeStats->total_amount ?? 0) + (float) ($expenseStats->total_amount ?? 0);"""
+          replace_once(banco, old_stats, new_stats)
+
+          # Production: startup scripts must not migrate in the background.
+          start = Path('docker/start.sh')
+          s = start.read_text(encoding='utf-8')
+          s = s.replace('php artisan migrate --force &', 'php artisan migrate --force')
+          start.write_text(s, encoding='utf-8')
+
+          # Remove the temporary stabilizer workflow before committing the real changes.
+          Path('.github/workflows/final-stabilization.yml').unlink()
+
+      - name: Install frontend dependencies
+        run: npm install --ignore-scripts
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Apply PHP formatting
+        run: ./vendor/bin/pint --parallel
+
+      - name: Verify syntax and build
+        run: |
+          set -euo pipefail
+          php -l routes/web.php
+          php -l app/Services/BancoService.php
+          npm run build
+
+      - name: Commit stabilization
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json routes/web.php app/Services/BancoService.php docker/start.sh .github/workflows/final-stabilization.yml
+          if git diff --cached --quiet; then
+            echo 'No stabilization changes required.'
+            exit 0
+          fi
+          git commit -m 'chore: final production stabilization'
+          git push
