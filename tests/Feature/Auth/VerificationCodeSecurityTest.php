@@ -19,7 +19,7 @@ it('stores registration verification codes only as hashes', function () {
 
     $user = User::where('email', 'verification-security@example.com')->firstOrFail();
 
-    expect($user->verification_code)->toBeNull()
+    expect($user->getAttributes())->not->toHaveKey('verification_code')
         ->and($user->verification_code_hash)->toBeString()->toHaveLength(64)
         ->and($user->verification_code_expires_at)->not->toBeNull()
         ->and($user->verification_code_attempts)->toBe(0);
