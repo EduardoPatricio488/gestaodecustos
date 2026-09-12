@@ -14,8 +14,34 @@ class Client extends Model
 
     protected $fillable = [
         'user_id', 'workspace_id', 'name', 'legal_name', 'tax_number', 'email', 'phone',
-        'status', 'address', 'notes', 'portal_token',
+        'status', 'address', 'notes', 'portal_token', 'portal_token_hash',
     ];
+
+    public static function findByPortalToken(string $token): ?self
+    {
+        $token = trim($token);
+        if ($token === '') {
+            return null;
+        }
+
+        $hash = hash('sha256', $token);
+        $client = static::where('portal_token_hash', $hash)->with('workspace')->first();
+
+        if ($client) {
+            return $client;
+        }
+
+        $client = static::whereNotNull('portal_token')
+            ->where('portal_token', $token)
+            ->with('workspace')
+            ->first();
+
+        if ($client) {
+            $client->forceFill(['portal_token_hash' => $hash])->saveQuietly();
+        }
+
+        return $client;
+    }
 
     public function projects(): HasMany
     {
