@@ -33,7 +33,9 @@ class SupplierDashboard extends Component
 
     public function mount($token)
     {
-        $this->supplier = Supplier::where('portal_token', $token)->with('workspace')->firstOrFail();
+        $this->supplier = Supplier::findByPortalToken($token);
+
+        abort_unless($this->supplier, 404);
     }
 
     public function sendTicket()
