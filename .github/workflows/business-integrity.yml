@@ -7,7 +7,7 @@ on:
     branches: [main, master, develop]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   php-syntax:
@@ -59,37 +59,7 @@ jobs:
         run: npm run build
       - name: Run npm audit
         run: npm audit --audit-level=high
-      - name: Apply Pint formatting
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: ./vendor/bin/pint --parallel
-      - name: Commit Pint formatting fixes
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          if git diff --quiet; then
-            echo "Pint made no changes."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Fix Pint formatting issues"
-          git push
       - name: Run Pint check
         run: ./vendor/bin/pint --parallel --test
       - name: Run full Laravel test suite
-        id: pest
-        shell: bash
-        run: |
-          set +e
-          ./vendor/bin/pest 2>&1 | tee ci-pest-failure.log
-          status=${PIPESTATUS[0]}
-          exit "$status"
-      - name: Preserve Pest failure log
-        if: failure() && steps.pest.outcome == 'failure' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ci-pest-failure.log
-          git commit -m "CI: preserve Pest failure log" || true
-          git push || true
+        run: ./vendor/bin/pest
