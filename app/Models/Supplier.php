@@ -14,8 +14,34 @@ class Supplier extends Model
 
     protected $fillable = [
         'user_id', 'workspace_id', 'name', 'legal_name', 'tax_number', 'email', 'phone',
-        'website', 'address', 'portal_token', 'payment_terms',
+        'website', 'address', 'portal_token', 'portal_token_hash', 'payment_terms',
     ];
+
+    public static function findByPortalToken(string $token): ?self
+    {
+        $token = trim($token);
+        if ($token === '') {
+            return null;
+        }
+
+        $hash = hash('sha256', $token);
+        $supplier = static::where('portal_token_hash', $hash)->with('workspace')->first();
+
+        if ($supplier) {
+            return $supplier;
+        }
+
+        $supplier = static::whereNotNull('portal_token')
+            ->where('portal_token', $token)
+            ->with('workspace')
+            ->first();
+
+        if ($supplier) {
+            $supplier->forceFill(['portal_token_hash' => $hash])->saveQuietly();
+        }
+
+        return $supplier;
+    }
 
     public function workspace(): BelongsTo
     {
