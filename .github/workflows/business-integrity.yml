@@ -54,6 +54,8 @@ jobs:
           php artisan key:generate
       - name: Build assets
         run: npm run build
+      - name: Run npm audit
+        run: npm audit --audit-level=high
       - name: Run Pint check
         run: ./vendor/bin/pint --parallel --test
       - name: Run full Laravel test suite
