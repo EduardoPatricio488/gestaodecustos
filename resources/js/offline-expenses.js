@@ -116,12 +116,13 @@ window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExp
         }
 
         found.forEach(({ button, label }) => {
-            button.classList.remove('shadow-sm');
+            button.classList.remove('shadow-sm', 'bg-brand-600', 'bg-brand-500', 'text-white');
             button.classList.add(
                 '!w-full', '!justify-start', '!px-4', '!py-2.5', '!rounded-xl',
                 '!text-[11px]', '!font-black', '!uppercase', '!tracking-widest',
                 'text-brand-600', 'dark:text-brand-400',
-                'hover:!bg-brand-50', 'dark:hover:!bg-brand-950/30', '!border-0'
+                'hover:!bg-brand-50', 'dark:hover:!bg-brand-950/30', '!border-0',
+                '!bg-transparent'
             );
             button.setAttribute('title', label);
             menuBody.appendChild(button);
