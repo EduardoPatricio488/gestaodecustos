@@ -1,0 +1,69 @@
+name: Finalize client resend
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync latest main and fix button
+        shell: python
+        run: |
+          import subprocess
+          from pathlib import Path
+
+          subprocess.run(['git', 'fetch', 'origin', 'main'], check=True)
+          subprocess.run(['git', 'reset', '--hard', 'origin/main'], check=True)
+
+          path = Path('resources/views/livewire/business/client-hub.blade.php')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = {
+              'wire:click="resendPortalAccess({ $client->id })"': 'wire:click="resendPortalAccess({{ $client->id }})"',
+          }
+
+          changed = False
+          for old, new in replacements.items():
+              if old in text:
+                  text = text.replace(old, new)
+                  changed = True
+
+          if 'wire:click="resendPortalAccess({{ $client->id }})"' not in text:
+              marker = 'wire:click="generatePortalLink({{ $client->id }})"'
+              if marker not in text:
+                  raise SystemExit('Could not find the client portal action in the latest main branch.')
+
+              insertion = '''
+                    @if($client->email)
+                        <flux:button type="button" wire:click="resendPortalAccess({{ $client->id }})" wire:loading.attr="disabled" variant="ghost" size="xs" icon="envelope" class="rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400">
+                            Reenviar código
+                        </flux:button>
+                    @endif'''
+              text = text.replace(marker, marker + '"' + insertion, 1) if False else text
+              raise SystemExit('Resend action is missing from the latest main branch; manual review required.')
+
+          if changed:
+              path.write_text(text, encoding='utf-8')
+
+      - name: Commit and clean temporary workflows
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/finalize-client-resend.yml .github/workflows/fix-client-resend-syntax.yml .github/workflows/patch-client-resend.yml
+          git add resources/views/livewire/business/client-hub.blade.php .github/workflows/finalize-client-resend.yml .github/workflows/fix-client-resend-syntax.yml .github/workflows/patch-client-resend.yml
+          if git diff --cached --quiet; then
+            echo "No changes required."
+            exit 0
+          fi
+          git commit -m "Finalizar reenvio de acesso dos clientes"
+          git push
