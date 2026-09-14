@@ -1,6 +1,14 @@
 const QUEUE_KEY = 'finance-pro-offline-expenses';
 const LEGACY_QUEUE_KEY = 'offline_vault';
 
+const isAuthenticated = () => document.body?.dataset?.authenticated === '1';
+
+const clearUnauthenticatedStorage = () => {
+    if (isAuthenticated()) return;
+    localStorage.removeItem(QUEUE_KEY);
+    localStorage.removeItem(LEGACY_QUEUE_KEY);
+};
+
 const safeParse = (value, fallback = []) => {
     try {
         const parsed = JSON.parse(value ?? '');
@@ -28,6 +36,9 @@ function normalizeLegacyItem(item) {
 }
 
 export function migrateOfflineStorage() {
+    clearUnauthenticatedStorage();
+    if (!isAuthenticated()) return [];
+
     const canonical = safeParse(localStorage.getItem(QUEUE_KEY), []);
     const legacy = safeParse(localStorage.getItem(LEGACY_QUEUE_KEY), []);
 
@@ -47,17 +58,32 @@ export function migrateOfflineStorage() {
 }
 
 export function getOfflineBunkerQueue() {
+    if (!isAuthenticated()) {
+        clearUnauthenticatedStorage();
+        return [];
+    }
+
     migrateOfflineStorage();
     return safeParse(localStorage.getItem(QUEUE_KEY), []).map(normalizeLegacyItem);
 }
 
 export function writeOfflineBunkerQueue(queue) {
+    if (!isAuthenticated()) {
+        clearUnauthenticatedStorage();
+        return [];
+    }
+
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
     window.dispatchEvent(new CustomEvent('offline-queue-updated', { detail: { queue } }));
     return queue;
 }
 
 export function saveBunkerExpense(expense) {
+    if (!isAuthenticated()) {
+        clearUnauthenticatedStorage();
+        return null;
+    }
+
     const queue = getOfflineBunkerQueue();
     const item = normalizeLegacyItem({
         ...expense,
@@ -73,6 +99,11 @@ export function saveBunkerExpense(expense) {
 }
 
 export function removeBunkerItems(clientIds) {
+    if (!isAuthenticated()) {
+        clearUnauthenticatedStorage();
+        return [];
+    }
+
     const ids = new Set(clientIds);
     return writeOfflineBunkerQueue(getOfflineBunkerQueue().filter(item => !ids.has(item.client_id)));
 }
@@ -84,6 +115,11 @@ export function clearBunkerQueue() {
 }
 
 export function exportBunkerData(format = 'json') {
+    if (!isAuthenticated()) {
+        clearUnauthenticatedStorage();
+        return;
+    }
+
     const queue = getOfflineBunkerQueue();
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
 
@@ -136,6 +172,11 @@ export function getLocalStorageEstimate() {
 }
 
 export async function syncBunkerExpenses() {
+    if (!isAuthenticated()) {
+        clearUnauthenticatedStorage();
+        throw new Error('AUTHENTICATION_REQUIRED');
+    }
+
     const queue = getOfflineBunkerQueue();
     if (!queue.length) return { synced: [], failed: [], count: 0 };
 
@@ -157,7 +198,7 @@ export async function syncBunkerExpenses() {
         });
 
         if (response.status === 419 || response.status === 401) {
-            writeOfflineBunkerQueue(queue.map(item => ({ ...item, local_status: 'pending', last_error: 'Sessão expirada.' })));
+            clearBunkerQueue();
             throw new Error('SESSION_EXPIRED');
         }
 
@@ -180,11 +221,16 @@ export async function syncBunkerExpenses() {
         writeOfflineBunkerQueue(remaining);
         return { ...data, remaining: remaining.length };
     } catch (error) {
+        if (error.message === 'SESSION_EXPIRED' || error.message === 'AUTHENTICATION_REQUIRED') {
+            clearBunkerQueue();
+            throw error;
+        }
+
         const latest = getOfflineBunkerQueue().map(item => ({
             ...item,
             local_status: 'pending',
             attempts: Number(item.attempts || 0) + 1,
-            last_error: error.message === 'SESSION_EXPIRED' ? 'Sessão expirada. Entra novamente para sincronizar.' : 'Servidor indisponível. Tentaremos novamente quando a ligação estiver estável.',
+            last_error: 'Servidor indisponível. Tentaremos novamente quando a ligação estiver estável.',
         }));
         writeOfflineBunkerQueue(latest);
         throw error;
@@ -192,7 +238,7 @@ export async function syncBunkerExpenses() {
 }
 
 function notifySync() {
-    if (!navigator.onLine || !getOfflineBunkerQueue().length) return;
+    if (!isAuthenticated() || !navigator.onLine || !getOfflineBunkerQueue().length) return;
     syncBunkerExpenses()
         .then(data => window.dispatchEvent(new CustomEvent('offline-bunker-synced', { detail: data })))
         .catch(error => window.dispatchEvent(new CustomEvent('offline-bunker-sync-error', { detail: { error } })));
@@ -201,9 +247,10 @@ function notifySync() {
 migrateOfflineStorage();
 window.addEventListener('online', () => setTimeout(notifySync, 250));
 window.addEventListener('offline', () => window.dispatchEvent(new CustomEvent('offline-bunker-status', { detail: { online: false } })));
-if (navigator.onLine) setTimeout(notifySync, 500);
+if (navigator.onLine && isAuthenticated()) setTimeout(notifySync, 500);
 
 window.financeProBunker = {
+    isAuthenticated,
     getOfflineQueue: getOfflineBunkerQueue,
     saveOfflineExpense: saveBunkerExpense,
     syncOfflineExpenses: syncBunkerExpenses,
