@@ -81,30 +81,53 @@ if ('serviceWorker' in navigator) {
 
 window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExpenses };
 
-// As ações do cliente são construídas diretamente dentro do menu de três pontos.
-// Não movemos componentes Flux já renderizados: isso evita SVGs partidos e bugs
-// durante a navegação SPA/Livewire.
+// As ações do cliente pertencem exclusivamente ao menu dos três pontos.
+// Não movemos os componentes Flux originais: criamos ações independentes no menu
+// e ocultamos estruturalmente a antiga linha de ações do card. Assim, um refresh
+// ou qualquer re-render do Livewire não volta a mostrar os botões no card.
 (function setupClientRecordActionsMenu() {
+    const CARD_SELECTOR = '[wire\\:key^="client-card-"]';
+    const MENU_SELECTOR = '[x-show="optionsOpen"]';
+    const FOOTER_ACTION_SELECTOR = `${CARD_SELECTOR} > div:last-child > div:last-child`;
+
     const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+    const ensurePermanentFooterRule = () => {
+        if (document.getElementById('finance-pro-client-actions-style')) return;
+
+        const style = document.createElement('style');
+        style.id = 'finance-pro-client-actions-style';
+        style.textContent = `
+            ${FOOTER_ACTION_SELECTOR} {
+                display: none !important;
+            }
+        `;
+        document.head.appendChild(style);
+    };
 
     const getComponent = (card) => {
         const root = card.closest('[wire\\:id]');
         const componentId = root?.getAttribute('wire:id');
 
-        if (!componentId || !window.Livewire?.find) {
-            return null;
-        }
+        if (!componentId || !window.Livewire?.find) return null;
 
         return window.Livewire.find(componentId);
     };
 
     const findOriginalAction = (card, text) => Array.from(card.querySelectorAll('button, [role="button"]'))
-        .find((button) => !button.closest('[x-show="optionsOpen"]') && normalize(button.textContent).includes(text));
+        .find((button) => !button.closest(MENU_SELECTOR) && normalize(button.textContent).includes(text));
 
-    const createMenuAction = ({ label, icon, wireClick, component }) => {
+    const closeMenu = (button) => {
+        const alpineRoot = button.closest('[x-data]');
+        const data = alpineRoot?._x_dataStack?.[0];
+
+        if (data) data.optionsOpen = false;
+    };
+
+    const createMenuAction = ({ key, label, icon, wireClick, component }) => {
         const button = document.createElement('button');
         button.type = 'button';
-        button.dataset.clientMenuAction = label.toLowerCase().replace(/\s+/g, '-');
+        button.dataset.clientMenuAction = key;
         button.className = 'w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-zinc-800 transition-all text-left';
 
         const iconElement = document.createElement('span');
@@ -120,42 +143,32 @@ window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExp
             event.preventDefault();
             event.stopPropagation();
 
-            if (!component || typeof component.call !== 'function') {
-                return;
-            }
-
             const match = String(wireClick || '').match(/^([A-Za-z0-9_]+)\((\d+)\)$/);
-            if (!match) {
-                return;
-            }
+            if (!component || typeof component.call !== 'function' || !match) return;
 
             const [, method, id] = match;
+            closeMenu(button);
             component.call(method, Number(id));
-
-            const alpineRoot = button.closest('[x-data]');
-            if (alpineRoot?._x_dataStack?.[0]) {
-                alpineRoot._x_dataStack[0].optionsOpen = false;
-            }
         });
 
         return button;
     };
 
     const setupCard = (card) => {
-        const menu = card.querySelector('[x-show="optionsOpen"]');
+        const menu = card.querySelector(MENU_SELECTOR);
         if (!menu) return;
 
         const menuBody = menu.querySelector(':scope > div') || menu;
         if (!menuBody) return;
 
-        const originalActions = [
-            { text: 'gerar portal', label: 'Gerar Portal', icon: '↗' },
-            { text: 'reenviar código', label: 'Reenviar Código', icon: '✉' },
-            { text: 'ver histórico', label: 'Ver Histórico', icon: '→' },
-        ];
-
         const component = getComponent(card);
         if (!component) return;
+
+        const actions = [
+            { text: 'gerar portal', key: 'gerar-portal', label: 'Gerar Portal', icon: '↗' },
+            { text: 'reenviar código', key: 'reenviar-codigo', label: 'Reenviar Código', icon: '✉' },
+            { text: 'ver histórico', key: 'ver-historico', label: 'Ver Histórico', icon: '→' },
+        ];
 
         let divider = menuBody.querySelector('[data-client-actions-divider="1"]');
         if (!divider) {
@@ -166,25 +179,26 @@ window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExp
 
         const generated = [];
 
-        originalActions.forEach((action) => {
+        actions.forEach((action) => {
+            const existing = menuBody.querySelector(`[data-client-menu-action="${action.key}"]`);
+            if (existing) {
+                generated.push(existing);
+                return;
+            }
+
             const original = findOriginalAction(card, action.text);
             if (!original) return;
 
             const wireClick = original.getAttribute('wire:click');
             if (!wireClick) return;
 
-            const key = action.label.toLowerCase().replace(/\s+/g, '-');
-            let generatedButton = menuBody.querySelector(`[data-client-menu-action="${key}"]`);
-            if (!generatedButton) {
-                generatedButton = createMenuAction({
-                    label: action.label,
-                    icon: action.icon,
-                    wireClick,
-                    component,
-                });
-            }
-
-            generated.push(generatedButton);
+            generated.push(createMenuAction({
+                key: action.key,
+                label: action.label,
+                icon: action.icon,
+                wireClick,
+                component,
+            }));
         });
 
         if (!generated.length) return;
@@ -198,32 +212,47 @@ window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExp
                 menuBody.appendChild(button);
             }
         });
-
-        // Esconde definitivamente os botões originais do rodapé.
-        const footerActionRow = originalActions
-            .map((action) => findOriginalAction(card, action.text)?.parentElement)
-            .find(Boolean);
-
-        if (footerActionRow && !menu.contains(footerActionRow)) {
-            footerActionRow.classList.add('hidden');
-            footerActionRow.setAttribute('aria-hidden', 'true');
-        }
     };
 
+    let scanQueued = false;
+
     const scan = () => {
-        document.querySelectorAll('[wire\\:key^="client-card-"]').forEach(setupCard);
+        scanQueued = false;
+        ensurePermanentFooterRule();
+        document.querySelectorAll(CARD_SELECTOR).forEach(setupCard);
+    };
+
+    const queueScan = () => {
+        if (scanQueued) return;
+        scanQueued = true;
+        queueMicrotask(scan);
     };
 
     const scanAfterNavigation = () => {
+        ensurePermanentFooterRule();
         scan();
         [50, 150, 350, 750].forEach((delay) => window.setTimeout(scan, delay));
     };
 
+    const registerLivewireHooks = () => {
+        if (!window.Livewire?.hook) return;
+
+        try {
+            window.Livewire.hook('morph.updated', queueScan);
+        } catch {}
+
+        try {
+            window.Livewire.hook('message.processed', queueScan);
+        } catch {}
+    };
+
     const start = () => {
+        ensurePermanentFooterRule();
         scanAfterNavigation();
+        registerLivewireHooks();
 
         if (document.body) {
-            new MutationObserver(() => scan()).observe(document.body, {
+            new MutationObserver(queueScan).observe(document.body, {
                 childList: true,
                 subtree: true,
             });
@@ -237,6 +266,9 @@ window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExp
     }
 
     document.addEventListener('livewire:navigated', scanAfterNavigation);
-    document.addEventListener('livewire:initialized', scanAfterNavigation);
+    document.addEventListener('livewire:initialized', () => {
+        registerLivewireHooks();
+        scanAfterNavigation();
+    });
     window.addEventListener('load', scanAfterNavigation);
 })();
