@@ -131,6 +131,29 @@ class ClientHub extends Component
     {
         $client = auth()->user()->clients()->findOrFail($id);
 
+        if (! $client->portal_token || strlen((string) $client->portal_token) < 64) {
+            $client->update([
+                'portal_token' => $this->generateUniquePortalToken(),
+            ]);
+            $client->refresh();
+        }
+
+        if (! $client->portal_token_hash || ! hash_equals((string) $client->portal_token_hash, hash('sha256', (string) $client->portal_token))) {
+            $client->forceFill([
+                'portal_token_hash' => hash('sha256', (string) $client->portal_token),
+            ])->saveQuietly();
+        }
+
+        $this->clientTaxNumber = $client->tax_number;
+        $this->generatedPasscode = $client->portal_token;
+        $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
+        $this->dispatch('modal-show', name: 'portal-link-modal');
+    }
+
+    public function resendPortalAccess($id): void
+    {
+        $client = auth()->user()->clients()->findOrFail($id);
+
         if (! $client->email) {
             $this->dispatch('toast', text: 'Este cliente não tem email registado.', variant: 'warning');
 
@@ -152,16 +175,11 @@ class ClientHub extends Component
             $client->refresh();
         }
 
-        if (! $client->portal_token_hash || ! hash_equals((string) $client->portal_token_hash, hash('sha256', (string) $client->portal_token))) {
-            $client->forceFill([
-                'portal_token_hash' => hash('sha256', (string) $client->portal_token),
-            ])->saveQuietly();
-        }
+        $client->forceFill([
+            'portal_token_hash' => hash('sha256', (string) $client->portal_token),
+        ])->saveQuietly();
 
-        $this->clientTaxNumber = $client->tax_number;
-        $this->generatedPasscode = $client->portal_token;
-        $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
-
+        $portalUrl = route('client.portal', ['token' => $client->portal_token]);
         RateLimiter::hit($rateLimitKey, 600);
 
         try {
@@ -169,7 +187,7 @@ class ClientHub extends Component
                 $client,
                 auth()->user()->currentWorkspace,
                 $client->portal_token,
-                $this->generatedPortalUrl,
+                $portalUrl,
             ));
         } catch (\Throwable $exception) {
             RateLimiter::clear($rateLimitKey);
@@ -180,7 +198,6 @@ class ClientHub extends Component
         }
 
         $this->dispatch('toast', text: 'Código de acesso reenviado para '.$client->email.'.', variant: 'success');
-        $this->dispatch('modal-show', name: 'portal-link-modal');
     }
 
     public function sendPortalEmail(): void
