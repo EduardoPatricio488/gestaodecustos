@@ -1,0 +1,45 @@
+name: Fix client resend syntax
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix syntax and remove temporary workflows
+        shell: python
+        run: |
+          from pathlib import Path
+
+          view = Path('resources/views/livewire/business/client-hub.blade.php')
+          text = view.read_text(encoding='utf-8')
+          old = 'wire:click="resendPortalAccess({ $client->id })"'
+          new = 'wire:click="resendPortalAccess({{ $client->id }})"'
+
+          if old in text:
+              view.write_text(text.replace(old, new), encoding='utf-8')
+              print('Fixed resend button syntax.')
+          elif new in text:
+              print('Resend button syntax already correct.')
+          else:
+              raise SystemExit('Resend button was not found.')
+
+      - name: Commit and clean temporary workflows
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/fix-client-resend-syntax.yml .github/workflows/patch-client-resend.yml
+          git add resources/views/livewire/business/client-hub.blade.php .github/workflows/fix-client-resend-syntax.yml .github/workflows/patch-client-resend.yml
+          if git diff --cached --quiet; then
+            echo "No changes required."
+            exit 0
+          fi
+          git commit -m "Corrigir sintaxe do botão de reenvio de acesso"
+          git push
