@@ -336,7 +336,7 @@
                         </p>
                         <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-3">
                             <span class="size-4 shrink-0 rounded-full bg-brand-500 text-white flex items-center justify-center text-[8px]">2</span>
-                            <span>Introduzir o NIF: <span class="font-black text-zinc-900 dark:text-white">{{ $clientTaxNumber ? implode(' ', str_split(preg_replace('/\D/', '', (string) $clientTaxNumber), 3)) : '---' }}</span></span>
+                            <span>Introduzir o NIF da empresa: <span class="font-black text-zinc-900 dark:text-white">{{ $clientTaxNumber ? implode(' ', str_split(preg_replace('/\D/', '', (string) $clientTaxNumber), 3)) : 'Não configurado' }}</span></span>
                         </p>
                         <p class="text-xs font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-3">
                             <span class="size-4 shrink-0 rounded-full bg-brand-500 text-white flex items-center justify-center text-[8px]">3</span>
