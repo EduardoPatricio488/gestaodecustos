@@ -47,10 +47,11 @@ class ClientHubAccessTest extends TestCase
         Mail::assertSent(ClientPortalAccessMail::class, function (ClientPortalAccessMail $mail) use ($client) {
             return $mail->hasTo('cliente@example.com')
                 && $mail->client->is($client)
-                && $mail->token === $client->portal_token;
+                && preg_match('/^\d{6}$/', (string) $mail->token) === 1;
         });
 
         $client->refresh();
+        $this->assertMatchesRegularExpression('/^\d{6}$/', (string) $client->portal_token);
         $this->assertSame(hash('sha256', $client->portal_token), $client->portal_token_hash);
     }
 
