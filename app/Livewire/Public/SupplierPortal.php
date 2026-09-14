@@ -51,30 +51,42 @@ class SupplierPortal extends Component
             'token' => 'required|digits:6',
         ]);
 
-        $cleanNifInput = preg_replace('/\s+/', '', $this->tax_number);
-        $cleanTokenInput = preg_replace('/\s+/', '', $this->token);
-        $rateLimitKey = 'supplier-portal-login:'.sha1($cleanNifInput.'|'.request()->ip());
+        // No portal do fornecedor, o NIF de entrada é o NIF DA EMPRESA.
+        // O código de 6 dígitos identifica o fornecedor dentro dessa empresa.
+        $cleanCompanyNif = preg_replace('/\D+/', '', (string) $this->tax_number);
+        $cleanTokenInput = preg_replace('/\D+/', '', (string) $this->token);
+        $rateLimitKey = 'supplier-portal-login:'.sha1($cleanCompanyNif.'|'.request()->ip());
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
             session()->flash('error', 'Demasiadas tentativas. Tenta novamente mais tarde.');
 
             return;
         }
+
         RateLimiter::hit($rateLimitKey, 60);
 
-        $supplier = Supplier::whereRaw("REPLACE(tax_number, ' ', '') = ?", [$cleanNifInput])
+        // Primeiro localizamos o fornecedor pelo código. Depois confirmamos
+        // que o NIF da empresa desse fornecedor corresponde ao NIF introduzido.
+        $supplier = Supplier::query()
             ->where(function ($query) use ($cleanTokenInput) {
                 $query->where('portal_token_hash', hash('sha256', $cleanTokenInput))
                     ->orWhere(function ($legacy) use ($cleanTokenInput) {
-                        $legacy->whereNotNull('portal_token')->where('portal_token', $cleanTokenInput);
+                        $legacy->whereNotNull('portal_token')
+                            ->where('portal_token', $cleanTokenInput);
                     });
             })
             ->with('workspace')
             ->first();
 
-        if ($supplier) {
+        $workspaceNif = $supplier?->workspace
+            ? preg_replace('/\D+/', '', (string) ($supplier->workspace->tax_number ?? $supplier->workspace->nif ?? ''))
+            : '';
+
+        if ($supplier && $cleanCompanyNif !== '' && hash_equals($workspaceNif, $cleanCompanyNif)) {
             if (! $supplier->portal_token_hash) {
-                $supplier->forceFill(['portal_token_hash' => hash('sha256', $cleanTokenInput)])->saveQuietly();
+                $supplier->forceFill([
+                    'portal_token_hash' => hash('sha256', $cleanTokenInput),
+                ])->saveQuietly();
             }
 
             RateLimiter::clear($rateLimitKey);
@@ -83,7 +95,7 @@ class SupplierPortal extends Component
             return redirect()->route('supplier.dashboard', ['token' => $cleanTokenInput]);
         }
 
-        session()->flash('error', 'CREDENCIAIS INVÁLIDAS. VERIFICA O NIF E O CÓDIGO.');
+        session()->flash('error', 'CREDENCIAIS INVÁLIDAS. VERIFICA O NIF DA EMPRESA E O CÓDIGO.');
     }
 
     public function selectCompany(int $companyId): void
