@@ -32,7 +32,11 @@ class SupplierPortalAccessMail extends Mailable
     {
         $companyName = e($this->workspace->legal_name ?: $this->workspace->name);
         $supplierName = e($this->supplier->name);
-        $taxNumber = e($this->workspace->tax_number ?? $this->workspace->nif ?? '');
+        $rawTaxNumber = preg_replace('/\D+/', '', (string) ($this->workspace->tax_number ?? $this->workspace->nif ?? ''));
+        $formattedTaxNumber = $rawTaxNumber !== ''
+            ? trim(chunk_split($rawTaxNumber, 3, ' '))
+            : '';
+        $taxNumber = e($formattedTaxNumber);
         $token = e($this->token);
         $portalUrl = e($this->portalUrl);
 
