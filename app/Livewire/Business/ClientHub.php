@@ -7,7 +7,6 @@ use App\Models\Client;
 use App\Models\PortalAccessRequest;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -131,7 +130,7 @@ class ClientHub extends Component
     {
         $client = auth()->user()->clients()->findOrFail($id);
 
-        if (! $client->portal_token || strlen((string) $client->portal_token) < 64) {
+        if (! preg_match('/^\d{6}$/', (string) $client->portal_token)) {
             $client->update([
                 'portal_token' => $this->generateUniquePortalToken(),
             ]);
@@ -168,7 +167,7 @@ class ClientHub extends Component
             return;
         }
 
-        if (! $client->portal_token || strlen((string) $client->portal_token) < 64) {
+        if (! preg_match('/^\d{6}$/', (string) $client->portal_token)) {
             $client->update([
                 'portal_token' => $this->generateUniquePortalToken(),
             ]);
@@ -241,7 +240,7 @@ class ClientHub extends Component
         }
 
         $token = $client?->portal_token;
-        if (! $token || strlen((string) $token) < 64) {
+        if (! preg_match('/^\d{6}$/', (string) $token)) {
             $token = $this->generateUniquePortalToken();
         }
 
@@ -266,6 +265,10 @@ class ClientHub extends Component
             ]);
             $client->refresh();
         }
+
+        $client->forceFill([
+            'portal_token_hash' => hash('sha256', (string) $client->portal_token),
+        ])->saveQuietly();
 
         $portalUrl = route('client.portal', ['token' => $client->portal_token]);
         Mail::to($client->email)->send(new ClientPortalAccessMail(
@@ -299,7 +302,7 @@ class ClientHub extends Component
     private function generateUniquePortalToken(): string
     {
         do {
-            $token = Str::random(64);
+            $token = (string) random_int(100000, 999999);
         } while (Client::where('portal_token', $token)->exists());
 
         return $token;
