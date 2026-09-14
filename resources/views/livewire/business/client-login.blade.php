@@ -19,7 +19,8 @@
     <form wire:submit.prevent="login" class="space-y-5">
         <div class="space-y-2" x-data="{ nif: @entangle('tax_number'), formatNIF(value) { return (value || '').replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ').substring(0, 11); } }" x-init="nif = formatNIF(nif)">
             <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">NIF da Empresa</label>
-            <input type="text" x-model="nif" x-on:input="nif = formatNIF($event.target.value)" inputmode="numeric" maxlength="11" placeholder="000 000 000" class="w-full h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-center font-mono font-bold text-sm tracking-[0.1em] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none dark:text-white" />
+            <input type="text" x-model="nif" x-on:input="nif = formatNIF($event.target.value)" inputmode="numeric" maxlength="11" placeholder="NIF da empresa: 000 000 000" autocomplete="off" class="w-full h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-center font-mono font-bold text-sm tracking-[0.1em] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none dark:text-white" />
+            <p class="text-[9px] text-zinc-400 ml-1">Introduz o NIF da empresa à qual o teu acesso pertence.</p>
         </div>
 
         <div class="space-y-2">
@@ -65,7 +66,7 @@
                         <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Pesquisar empresa</label>
                         <div class="relative">
                             <flux:icon name="magnifying-glass" class="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
-                            <input wire:model.live.debounce.300ms="companySearch" type="search" placeholder="Nome da empresa..." class="w-full h-12 pl-11 pr-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white" />
+                            <input wire:model.live.debounce.300ms="companySearch" type="search" placeholder="Nome ou NIF da empresa..." class="w-full h-12 pl-11 pr-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white" />
                         </div>
                     </div>
 
@@ -78,6 +79,9 @@
                                         <p class="font-black text-sm text-zinc-900 dark:text-white truncate">{{ $company->legal_name ?: $company->name }}</p>
                                         @if($company->legal_name && $company->legal_name !== $company->name)
                                             <p class="text-[10px] text-zinc-500 truncate">{{ $company->name }}</p>
+                                        @endif
+                                        @if($company->tax_number)
+                                            <p class="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-1">NIF: {{ $company->tax_number }}</p>
                                         @endif
                                     </div>
                                     @if($selectedCompanyId === $company->id)
@@ -98,6 +102,9 @@
                         <div class="rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 p-4">
                             <p class="text-[9px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Empresa selecionada</p>
                             <p class="mt-1 font-black text-zinc-900 dark:text-white">{{ $selectedCompany?->legal_name ?: $selectedCompany?->name }}</p>
+                            @if($selectedCompany?->tax_number)
+                                <p class="mt-1 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300">NIF da empresa: {{ $selectedCompany->tax_number }}</p>
+                            @endif
                         </div>
                     @endif
 
@@ -115,7 +122,7 @@
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">NIF (opcional)</label>
+                        <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">NIF do cliente (opcional)</label>
                         <input wire:model="requestTaxNumber" type="text" inputmode="numeric" maxlength="11" placeholder="000 000 000" class="w-full h-12 px-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white" />
                     </div>
 
