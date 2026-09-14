@@ -1,0 +1,64 @@
+name: Patch client access resend
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add resend access action
+        id: patch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('resources/views/livewire/business/client-hub.blade.php')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''                    <flux:button type="button" wire:click="generatePortalLink({{ $client->id }})" variant="primary" size="xs" icon="link" class="rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm">
+                        Gerar Portal
+                    </flux:button>'''
+
+          new = '''                    <div class="flex items-center gap-2">
+                        <flux:button type="button" wire:click="generatePortalLink({{ $client->id }})" variant="primary" size="xs" icon="link" class="rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm">
+                            Gerar Portal
+                        </flux:button>
+                        @if($client->email)
+                            <flux:button type="button" wire:click="resendPortalAccess({{ $client->id }})" wire:loading.attr="disabled" wire:target="resendPortalAccess({{ $client->id }})" variant="ghost" size="xs" icon="envelope" class="rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400">
+                                Reenviar código
+                            </flux:button>
+                        @endif
+                    </div>'''
+
+          if 'resendPortalAccess({{ $client->id }})' in text:
+              print('Already patched.')
+              raise SystemExit(0)
+
+          if old not in text:
+              raise SystemExit('Target button block not found; no changes made.')
+
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          print('View patched successfully.')
+
+      - name: Commit and remove temporary workflow
+        shell: bash
+        run: |
+          if git diff --quiet -- resources/views/livewire/business/client-hub.blade.php; then
+            echo "No view changes needed."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/patch-client-resend.yml
+          git add resources/views/livewire/business/client-hub.blade.php .github/workflows/patch-client-resend.yml
+          git commit -m "Adicionar botão para reenviar acesso do cliente"
+          git push
