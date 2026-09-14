@@ -146,12 +146,14 @@ class ClientLogin extends Component
             ->whereIn('type', ['business', 'company', 'bussiness'])
             ->where(function ($query) {
                 $query->where('name', 'like', '%'.$this->companySearch.'%')
-                    ->orWhere('legal_name', 'like', '%'.$this->companySearch.'%');
+                    ->orWhere('legal_name', 'like', '%'.$this->companySearch.'%')
+                    ->orWhere('tax_number', 'like', '%'.$this->companySearch.'%');
             })
             ->orderBy('name')
             ->limit(100)
-            // Never expose private business contact details on the public portal.
-            ->get(['id', 'name', 'legal_name']);
+            // The company NIF is intentionally available here so the selected company
+            // can be clearly identified in the client access protocol.
+            ->get(['id', 'name', 'legal_name', 'tax_number']);
     }
 
     public function render()
