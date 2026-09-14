@@ -135,11 +135,18 @@
                                 <button type="button" wire:click="edit({{ $supplier->id }})" @click="optionsOpen = false" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 hover:text-brand-600 transition-all">
                                     <flux:icon name="pencil-square" class="size-4 text-brand-500" /> Editar Ficha
                                 </button>
-<button type="button" wire:click="generatePortalLink({{ $supplier->id }})" @click="optionsOpen = false"
-    class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 transition-all">
-    <flux:icon name="link" class="size-4 text-zinc-400" />
-    Gerar Portal
-</button>
+                                <button type="button" wire:click="generatePortalLink({{ $supplier->id }})" @click="optionsOpen = false"
+                                    class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 transition-all">
+                                    <flux:icon name="link" class="size-4 text-zinc-400" />
+                                    Gerar Portal
+                                </button>
+                                @if($supplier->email)
+                                    <button type="button" wire:click="resendPortalAccess({{ $supplier->id }})" wire:loading.attr="disabled" @click="optionsOpen = false"
+                                        class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 hover:text-brand-600 transition-all disabled:opacity-50">
+                                        <flux:icon name="envelope" class="size-4 text-brand-500" />
+                                        Reenviar código
+                                    </button>
+                                @endif
                                 <div class="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
                                 <button type="button" wire:click="delete({{ $supplier->id }})" @click="optionsOpen = false" wire:confirm="Remover parceiro?" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase text-red-500 hover:bg-red-50 transition-all">
                                     <flux:icon name="trash" class="size-4 text-red-500" /> Eliminar
