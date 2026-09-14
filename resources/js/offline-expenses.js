@@ -173,7 +173,8 @@ window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExp
             const wireClick = original.getAttribute('wire:click');
             if (!wireClick) return;
 
-            let generatedButton = menuBody.querySelector(`[data-client-menu-action="${action.label.toLowerCase().replace(/\s+/g, '-')} "]`);
+            const key = action.label.toLowerCase().replace(/\s+/g, '-');
+            let generatedButton = menuBody.querySelector(`[data-client-menu-action="${key}"]`);
             if (!generatedButton) {
                 generatedButton = createMenuAction({
                     label: action.label,
