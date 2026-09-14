@@ -50,7 +50,10 @@ class ClientLogin extends Component
 
         RateLimiter::hit($rateLimitKey, 60);
 
-        $client = Client::whereRaw("REPLACE(tax_number, ' ', '') = ?", [$cleanNifInput])
+        $client = Client::whereHas('workspace', function ($query) use ($cleanNifInput) {
+            $query->whereIn('type', ['business', 'company', 'bussiness'])
+                ->whereRaw("REPLACE(tax_number, ' ', '') = ?", [$cleanNifInput]);
+        })
             ->where('portal_token', $cleanTokenInput)
             ->first();
 
@@ -61,7 +64,7 @@ class ClientLogin extends Component
             return redirect()->route('client.portal', ['token' => $client->portal_token]);
         }
 
-        session()->flash('error', 'CREDENCIAIS INVÁLIDAS. VERIFICA O NIF E O CÓDIGO.');
+        session()->flash('error', 'CREDENCIAIS INVÁLIDAS. VERIFICA O NIF DA EMPRESA E O CÓDIGO.');
     }
 
     public function selectCompany(int $companyId): void
