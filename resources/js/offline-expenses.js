@@ -81,58 +81,57 @@ if ('serviceWorker' in navigator) {
 
 window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExpenses };
 
-// Na gestão de clientes, concentra as ações do registo no menu de três pontos.
+// Na gestão de clientes, todas as ações do registo ficam dentro do menu de três pontos.
 (function setupClientRecordActionsMenu() {
-    const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+    const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+    const findAction = (card, text) => Array.from(card.querySelectorAll('button, [role="button"]'))
+        .find((button) => normalize(button.textContent).includes(text));
 
     const moveActionsIntoMenu = (card) => {
-        if (!card || card.dataset.clientActionsMenuReady === '1') return;
-
         const menu = card.querySelector('[x-show="optionsOpen"]');
         if (!menu) return;
 
-        const buttons = Array.from(card.querySelectorAll('button, [role="button"]'));
-        const findAction = (text) => buttons.find((button) => normalize(button.textContent).toLowerCase().includes(text));
-
-        const portalButton = findAction('gerar portal');
-        const resendButton = findAction('reenviar código');
-        const historyButton = findAction('ver histórico');
-
-        if (!portalButton && !resendButton && !historyButton) return;
-
-        const menuBody = menu.querySelector('.p-1\\.5') || menu.firstElementChild || menu;
+        const menuBody = menu.querySelector(':scope > div') || menu;
         if (!menuBody) return;
 
-        const divider = document.createElement('div');
-        divider.className = 'border-t border-zinc-100 dark:border-zinc-800 my-1';
-
         const actions = [
-            { button: portalButton, label: 'Gerar Portal', icon: 'link', tone: 'text-brand-600 dark:text-brand-400' },
-            { button: resendButton, label: 'Reenviar Código', icon: 'envelope', tone: 'text-brand-600 dark:text-brand-400' },
-            { button: historyButton, label: 'Ver Histórico', icon: 'clock', tone: 'text-brand-600 dark:text-brand-400' },
-        ].filter((action) => action.button);
+            { text: 'gerar portal', label: 'Gerar Portal' },
+            { text: 'reenviar código', label: 'Reenviar Código' },
+            { text: 'ver histórico', label: 'Ver Histórico' },
+        ];
 
-        if (!actions.length) return;
+        const found = actions
+            .map((action) => ({ ...action, button: findAction(card, action.text) }))
+            .filter(({ button }) => button && !menu.contains(button));
 
-        menuBody.appendChild(divider);
+        if (!found.length) return;
 
-        actions.forEach(({ button, label, tone }) => {
+        let divider = menuBody.querySelector('[data-client-actions-divider="1"]');
+        if (!divider) {
+            divider = document.createElement('div');
+            divider.dataset.clientActionsDivider = '1';
+            divider.className = 'border-t border-zinc-100 dark:border-zinc-800 my-1';
+            menuBody.appendChild(divider);
+        }
+
+        found.forEach(({ button, label }) => {
             button.classList.remove('shadow-sm');
-            button.classList.add('!w-full', '!justify-start', '!px-4', '!py-2.5', '!rounded-xl', '!text-[11px]', '!font-black', '!uppercase', '!tracking-widest', tone, 'hover:!bg-brand-50', 'dark:hover:!bg-brand-950/30', '!border-0');
-            if (label === 'Ver Histórico') {
-                button.classList.add('text-brand-600', 'dark:text-brand-400');
-            }
+            button.classList.add(
+                '!w-full', '!justify-start', '!px-4', '!py-2.5', '!rounded-xl',
+                '!text-[11px]', '!font-black', '!uppercase', '!tracking-widest',
+                'text-brand-600', 'dark:text-brand-400',
+                'hover:!bg-brand-50', 'dark:hover:!bg-brand-950/30', '!border-0'
+            );
+            button.setAttribute('title', label);
             menuBody.appendChild(button);
         });
 
-        const footer = portalButton?.closest('.flex.items-center.gap-2') || historyButton?.parentElement;
-        if (footer && footer !== menuBody) {
-            footer.querySelectorAll('button, [role="button"]').forEach((button) => {
-                if (!menu.contains(button)) button.remove();
-            });
+        // Remove the original action row so the buttons cannot remain visible outside the menu.
+        const footer = found[0]?.button?.parentElement;
+        if (footer && footer !== menuBody && !menu.contains(footer)) {
+            footer.remove();
         }
-
-        card.dataset.clientActionsMenuReady = '1';
     };
 
     const scan = () => {
