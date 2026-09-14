@@ -35,7 +35,7 @@ class ClientLogin extends Component
     {
         $this->validate([
             'tax_number' => 'required|string',
-            'token' => 'required|string|min:32|max:255',
+            'token' => 'required|digits:6',
         ]);
 
         $cleanNifInput = preg_replace('/\s+/', '', $this->tax_number);
