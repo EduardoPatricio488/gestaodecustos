@@ -168,6 +168,11 @@
                     <flux:button type="button" wire:click="generatePortalLink({{ $client->id }})" variant="primary" size="xs" icon="link" class="rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm">
                         Gerar Portal
                     </flux:button>
+                    @if($client->email)
+                        <flux:button type="button" wire:click="resendPortalAccess({ $client->id })" wire:loading.attr="disabled" variant="ghost" size="xs" icon="envelope" class="rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400">
+                            Reenviar código
+                        </flux:button>
+                    @endif
                     <flux:button wire:click="openHistory({{ $client->id }})" variant="ghost" size="xs" class="rounded-lg text-[9px] font-black uppercase tracking-widest text-brand-600">
                         Ver Histórico →
                     </flux:button>
