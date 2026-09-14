@@ -107,6 +107,9 @@ window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExp
 
         if (!found.length) return;
 
+        // Guardar a linha original ANTES de mover os botões para o menu.
+        const originalFooter = found[0]?.button?.parentElement;
+
         let divider = menuBody.querySelector('[data-client-actions-divider="1"]');
         if (!divider) {
             divider = document.createElement('div');
@@ -128,10 +131,9 @@ window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExp
             menuBody.appendChild(button);
         });
 
-        // Remove the original action row so the buttons cannot remain visible outside the menu.
-        const footer = found[0]?.button?.parentElement;
-        if (footer && footer !== menuBody && !menu.contains(footer)) {
-            footer.remove();
+        // Remove a linha original depois de os botões terem sido movidos.
+        if (originalFooter && originalFooter !== menuBody && !menu.contains(originalFooter)) {
+            originalFooter.remove();
         }
     };
 
@@ -139,10 +141,22 @@ window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExp
         document.querySelectorAll('[wire\\:key^="client-card-"]').forEach(moveActionsIntoMenu);
     };
 
-    const start = () => {
+    const scanAfterNavigation = () => {
+        // Livewire pode terminar o morph depois do evento de navegação.
         scan();
+        [50, 150, 350, 750].forEach((delay) => {
+            window.setTimeout(scan, delay);
+        });
+    };
+
+    const start = () => {
+        scanAfterNavigation();
+
         if (document.body) {
-            new MutationObserver(() => scan()).observe(document.body, { childList: true, subtree: true });
+            new MutationObserver(() => scan()).observe(document.body, {
+                childList: true,
+                subtree: true,
+            });
         }
     };
 
@@ -152,5 +166,8 @@ window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExp
         start();
     }
 
-    document.addEventListener('livewire:navigated', () => setTimeout(scan, 50));
+    // Suporta navegação Livewire sem refresh completo da página.
+    document.addEventListener('livewire:navigated', scanAfterNavigation);
+    document.addEventListener('livewire:initialized', scanAfterNavigation);
+    window.addEventListener('load', scanAfterNavigation);
 })();
