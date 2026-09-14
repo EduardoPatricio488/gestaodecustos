@@ -1,3 +1,4 @@
+@import './modal-system.css';
 @import 'tailwindcss';
 
 @import '../../vendor/livewire/flux/dist/flux.css';

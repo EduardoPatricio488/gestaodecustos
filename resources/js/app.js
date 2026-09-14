@@ -1,3 +1,4 @@
+import './modal-system';
 import './push-notifications';
 import './offline-expenses';
 
