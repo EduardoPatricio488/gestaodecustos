@@ -34,7 +34,10 @@ class ClientPortal extends Component
 
     public function sendTicket()
     {
-        $this->validate(['subject' => 'required|min:5', 'message' => 'required|min:10']);
+        $this->validate([
+            'subject' => 'required|string|min:5|max:150',
+            'message' => 'required|string|min:10|max:5000',
+        ]);
 
         $admin = DB::table('workspace_user')
             ->where('workspace_id', $this->client->workspace_id)
@@ -61,15 +64,24 @@ class ClientPortal extends Component
         ]);
 
         $this->reset(['subject', 'message']);
+        $this->activeTicketId = $ticket->id;
         $this->dispatch('modal-close', name: 'support-modal');
-        $this->dispatch('toast', variant: 'success', text: 'Mensagem enviada!');
+        $this->dispatch('toast', variant: 'success', text: 'Mensagem enviada com sucesso.');
     }
 
     public function sendReply()
     {
-        $this->validate(['replyMessage' => 'required|min:2']);
+        $this->validate([
+            'replyMessage' => 'required|string|min:2|max:5000',
+        ]);
 
         $ticket = $this->ticketForClient($this->activeTicketId);
+
+        if (in_array($ticket->status, ['closed', 'fechado', 'resolved', 'resolvido'], true)) {
+            $this->addError('replyMessage', 'Este pedido já foi encerrado. Cria um novo pedido de suporte se precisares de ajuda.');
+
+            return;
+        }
 
         SupportMessage::create([
             'support_ticket_id' => $ticket->id,
@@ -79,7 +91,7 @@ class ClientPortal extends Component
         ]);
 
         $this->replyMessage = '';
-        $this->dispatch('toast', variant: 'success', text: 'Resposta enviada!');
+        $this->dispatch('toast', variant: 'success', text: 'Resposta enviada com sucesso.');
     }
 
     public function setActiveTicket($id)
@@ -116,24 +128,51 @@ class ClientPortal extends Component
     #[Layout('layouts.guest')]
     public function render()
     {
-        $projectIds = Project::where('client_id', $this->client->id)->pluck('id');
         $projects = Project::where('client_id', $this->client->id)
             ->withCount(['tasks' => fn ($q) => $q->where('status', '!=', 'concluida')])
+            ->latest()
             ->get();
-        $tickets = SupportTicket::where('client_id', $this->client->id)->with('messages')->latest()->get();
-        $invoices = Invoice::where('client_id', $this->client->id)->latest()->get();
-        $proposals = Proposal::where('client_id', $this->client->id)->where('status', 'pendente')->get();
+
+        $projectIds = $projects->pluck('id');
+
+        $tickets = SupportTicket::where('client_id', $this->client->id)
+            ->with(['messages' => fn ($q) => $q->latest()])
+            ->latest()
+            ->get();
+
+        $invoices = Invoice::where('client_id', $this->client->id)
+            ->latest()
+            ->get();
+
+        $proposals = Proposal::where('client_id', $this->client->id)
+            ->where('status', 'pendente')
+            ->latest()
+            ->get();
+
+        $recentActivity = $projectIds->isNotEmpty()
+            ? Task::whereIn('project_id', $projectIds)
+                ->where('status', 'concluida')
+                ->whereNotNull('completed_at')
+                ->latest('completed_at')
+                ->limit(5)
+                ->get()
+            : collect();
+
+        $workspace = $this->client->workspace;
+        $rawTaxNumber = preg_replace('/\D+/', '', (string) ($workspace?->tax_number ?? $workspace?->nif ?? ''));
+        $formattedTaxNumber = $rawTaxNumber !== '' ? trim(chunk_split($rawTaxNumber, 3, ' ')) : null;
 
         return view('livewire.client-portal', [
             'projects' => $projects,
             'invoices' => $invoices,
             'proposals' => $proposals,
-            'recentActivity' => Task::whereIn('project_id', $projectIds)->where('status', 'concluida')->whereNotNull('completed_at')->latest('completed_at')->limit(5)->get(),
+            'recentActivity' => $recentActivity,
             'tickets' => $tickets,
             'activeMessages' => $this->activeTicketId
                 ? $this->ticketForClient($this->activeTicketId)->messages()->oldest()->get()
                 : collect(),
-            'workspace' => $this->client->workspace,
+            'workspace' => $workspace,
+            'companyTaxNumber' => $formattedTaxNumber,
             'portalStats' => [
                 'projects' => $projects->count(),
                 'openTasks' => $projects->sum('tasks_count'),
