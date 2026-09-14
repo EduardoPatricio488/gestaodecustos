@@ -15,37 +15,38 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Add resend access action
-        id: patch
         shell: python
         run: |
           from pathlib import Path
+          import re
 
           path = Path('resources/views/livewire/business/client-hub.blade.php')
           text = path.read_text(encoding='utf-8')
 
-          old = '''                    <flux:button type="button" wire:click="generatePortalLink({{ $client->id }})" variant="primary" size="xs" icon="link" class="rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm">
-                        Gerar Portal
-                    </flux:button>'''
-
-          new = '''                    <div class="flex items-center gap-2">
-                        <flux:button type="button" wire:click="generatePortalLink({{ $client->id }})" variant="primary" size="xs" icon="link" class="rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm">
-                            Gerar Portal
-                        </flux:button>
-                        @if($client->email)
-                            <flux:button type="button" wire:click="resendPortalAccess({{ $client->id }})" wire:loading.attr="disabled" wire:target="resendPortalAccess({{ $client->id }})" variant="ghost" size="xs" icon="envelope" class="rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400">
-                                Reenviar código
-                            </flux:button>
-                        @endif
-                    </div>'''
-
-          if 'resendPortalAccess({{ $client->id }})' in text:
+          if 'wire:click="resendPortalAccess({{ $client->id }})"' in text:
               print('Already patched.')
               raise SystemExit(0)
 
-          if old not in text:
-              raise SystemExit('Target button block not found; no changes made.')
+          pattern = re.compile(
+              r'(?P<indent>^[ \t]*)<flux:button[^>]*wire:click="generatePortalLink\(\{\{ \$client->id \}\}\)"[^>]*>.*?</flux:button>',
+              re.MULTILINE | re.DOTALL,
+          )
 
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          match = pattern.search(text)
+          if not match:
+              raise SystemExit('Could not find the Gerar Portal button in client-hub.blade.php.')
+
+          indent = match.group('indent')
+          resend = (
+              f'{indent}@if($client->email)\n'
+              f'{indent}    <flux:button type="button" wire:click="resendPortalAccess({{ $client->id }})" wire:loading.attr="disabled" variant="ghost" size="xs" icon="envelope" class="rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400">\n'
+              f'{indent}        Reenviar código\n'
+              f'{indent}    </flux:button>\n'
+              f'{indent}@endif'
+          )
+
+          replacement = match.group(0) + '\n' + resend
+          path.write_text(text[:match.start()] + replacement + text[match.end():], encoding='utf-8')
           print('View patched successfully.')
 
       - name: Commit and remove temporary workflow
