@@ -81,72 +81,141 @@ if ('serviceWorker' in navigator) {
 
 window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExpenses };
 
-// Na gestão de clientes, todas as ações do registo ficam dentro do menu de três pontos.
+// As ações do cliente são construídas diretamente dentro do menu de três pontos.
+// Não movemos componentes Flux já renderizados: isso evita SVGs partidos e bugs
+// durante a navegação SPA/Livewire.
 (function setupClientRecordActionsMenu() {
     const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
 
-    const findAction = (card, text) => Array.from(card.querySelectorAll('button, [role="button"]'))
-        .find((button) => normalize(button.textContent).includes(text));
+    const getComponent = (card) => {
+        const root = card.closest('[wire\\:id]');
+        const componentId = root?.getAttribute('wire:id');
 
-    const moveActionsIntoMenu = (card) => {
+        if (!componentId || !window.Livewire?.find) {
+            return null;
+        }
+
+        return window.Livewire.find(componentId);
+    };
+
+    const findOriginalAction = (card, text) => Array.from(card.querySelectorAll('button, [role="button"]'))
+        .find((button) => !button.closest('[x-show="optionsOpen"]') && normalize(button.textContent).includes(text));
+
+    const createMenuAction = ({ label, icon, wireClick, component }) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.clientMenuAction = label.toLowerCase().replace(/\s+/g, '-');
+        button.className = 'w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-zinc-800 transition-all text-left';
+
+        const iconElement = document.createElement('span');
+        iconElement.className = 'w-4 shrink-0 text-center text-brand-500 font-black';
+        iconElement.textContent = icon;
+
+        const textElement = document.createElement('span');
+        textElement.textContent = label;
+
+        button.append(iconElement, textElement);
+
+        button.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!component || typeof component.call !== 'function') {
+                return;
+            }
+
+            const match = String(wireClick || '').match(/^([A-Za-z0-9_]+)\((\d+)\)$/);
+            if (!match) {
+                return;
+            }
+
+            const [, method, id] = match;
+            component.call(method, Number(id));
+
+            const alpineRoot = button.closest('[x-data]');
+            if (alpineRoot?._x_dataStack?.[0]) {
+                alpineRoot._x_dataStack[0].optionsOpen = false;
+            }
+        });
+
+        return button;
+    };
+
+    const setupCard = (card) => {
         const menu = card.querySelector('[x-show="optionsOpen"]');
         if (!menu) return;
 
         const menuBody = menu.querySelector(':scope > div') || menu;
         if (!menuBody) return;
 
-        const actions = [
-            { text: 'gerar portal', label: 'Gerar Portal' },
-            { text: 'reenviar código', label: 'Reenviar Código' },
-            { text: 'ver histórico', label: 'Ver Histórico' },
+        const originalActions = [
+            { text: 'gerar portal', label: 'Gerar Portal', icon: '↗' },
+            { text: 'reenviar código', label: 'Reenviar Código', icon: '✉' },
+            { text: 'ver histórico', label: 'Ver Histórico', icon: '→' },
         ];
 
-        const found = actions
-            .map((action) => ({ ...action, button: findAction(card, action.text) }))
-            .filter(({ button }) => button && !menu.contains(button));
-
-        if (!found.length) return;
-
-        // Guardar a linha original ANTES de mover os botões para o menu.
-        const originalFooter = found[0]?.button?.parentElement;
+        const component = getComponent(card);
+        if (!component) return;
 
         let divider = menuBody.querySelector('[data-client-actions-divider="1"]');
         if (!divider) {
             divider = document.createElement('div');
             divider.dataset.clientActionsDivider = '1';
             divider.className = 'border-t border-zinc-100 dark:border-zinc-800 my-1';
+        }
+
+        const generated = [];
+
+        originalActions.forEach((action) => {
+            const original = findOriginalAction(card, action.text);
+            if (!original) return;
+
+            const wireClick = original.getAttribute('wire:click');
+            if (!wireClick) return;
+
+            let generatedButton = menuBody.querySelector(`[data-client-menu-action="${action.label.toLowerCase().replace(/\s+/g, '-')} "]`);
+            if (!generatedButton) {
+                generatedButton = createMenuAction({
+                    label: action.label,
+                    icon: action.icon,
+                    wireClick,
+                    component,
+                });
+            }
+
+            generated.push(generatedButton);
+        });
+
+        if (!generated.length) return;
+
+        if (!menuBody.contains(divider)) {
             menuBody.appendChild(divider);
         }
 
-        found.forEach(({ button, label }) => {
-            button.classList.remove('shadow-sm', 'bg-brand-600', 'bg-brand-500', 'text-white');
-            button.classList.add(
-                '!w-full', '!justify-start', '!px-4', '!py-2.5', '!rounded-xl',
-                '!text-[11px]', '!font-black', '!uppercase', '!tracking-widest',
-                'text-brand-600', 'dark:text-brand-400',
-                'hover:!bg-brand-50', 'dark:hover:!bg-brand-950/30', '!border-0',
-                '!bg-transparent'
-            );
-            button.setAttribute('title', label);
-            menuBody.appendChild(button);
+        generated.forEach((button) => {
+            if (!menuBody.contains(button)) {
+                menuBody.appendChild(button);
+            }
         });
 
-        // Remove a linha original depois de os botões terem sido movidos.
-        if (originalFooter && originalFooter !== menuBody && !menu.contains(originalFooter)) {
-            originalFooter.remove();
+        // Esconde definitivamente os botões originais do rodapé.
+        const footerActionRow = originalActions
+            .map((action) => findOriginalAction(card, action.text)?.parentElement)
+            .find(Boolean);
+
+        if (footerActionRow && !menu.contains(footerActionRow)) {
+            footerActionRow.classList.add('hidden');
+            footerActionRow.setAttribute('aria-hidden', 'true');
         }
     };
 
     const scan = () => {
-        document.querySelectorAll('[wire\\:key^="client-card-"]').forEach(moveActionsIntoMenu);
+        document.querySelectorAll('[wire\\:key^="client-card-"]').forEach(setupCard);
     };
 
     const scanAfterNavigation = () => {
-        // Livewire pode terminar o morph depois do evento de navegação.
         scan();
-        [50, 150, 350, 750].forEach((delay) => {
-            window.setTimeout(scan, delay);
-        });
+        [50, 150, 350, 750].forEach((delay) => window.setTimeout(scan, delay));
     };
 
     const start = () => {
@@ -166,7 +235,6 @@ window.financeProOffline = { saveOfflineExpense, getOfflineQueue, syncOfflineExp
         start();
     }
 
-    // Suporta navegação Livewire sem refresh completo da página.
     document.addEventListener('livewire:navigated', scanAfterNavigation);
     document.addEventListener('livewire:initialized', scanAfterNavigation);
     window.addEventListener('load', scanAfterNavigation);
