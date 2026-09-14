@@ -6,6 +6,7 @@ use App\Mail\ClientPortalAccessMail;
 use App\Models\Client;
 use App\Models\PortalAccessRequest;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -129,14 +130,56 @@ class ClientHub extends Component
     public function generatePortalLink($id): void
     {
         $client = auth()->user()->clients()->findOrFail($id);
+
+        if (! $client->email) {
+            $this->dispatch('toast', text: 'Este cliente não tem email registado.', variant: 'warning');
+
+            return;
+        }
+
+        $rateLimitKey = 'client-portal-access:'.auth()->id().':'.$client->id;
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            $this->dispatch('toast', text: 'Aguarda '.ceil($seconds / 60).' minuto(s) antes de reenviar novamente.', variant: 'warning');
+
+            return;
+        }
+
         if (! $client->portal_token || strlen((string) $client->portal_token) < 64) {
-            $client->update(['portal_token' => $this->generateUniquePortalToken()]);
+            $client->update([
+                'portal_token' => $this->generateUniquePortalToken(),
+            ]);
             $client->refresh();
+        }
+
+        if (! $client->portal_token_hash || ! hash_equals((string) $client->portal_token_hash, hash('sha256', (string) $client->portal_token))) {
+            $client->forceFill([
+                'portal_token_hash' => hash('sha256', (string) $client->portal_token),
+            ])->saveQuietly();
         }
 
         $this->clientTaxNumber = $client->tax_number;
         $this->generatedPasscode = $client->portal_token;
         $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
+
+        RateLimiter::hit($rateLimitKey, 600);
+
+        try {
+            Mail::to($client->email)->send(new ClientPortalAccessMail(
+                $client,
+                auth()->user()->currentWorkspace,
+                $client->portal_token,
+                $this->generatedPortalUrl,
+            ));
+        } catch (\Throwable $exception) {
+            RateLimiter::clear($rateLimitKey);
+            report($exception);
+            $this->dispatch('toast', text: 'Não foi possível enviar o email de acesso. Verifica a configuração de email.', variant: 'danger');
+
+            return;
+        }
+
+        $this->dispatch('toast', text: 'Código de acesso reenviado para '.$client->email.'.', variant: 'success');
         $this->dispatch('modal-show', name: 'portal-link-modal');
     }
 
