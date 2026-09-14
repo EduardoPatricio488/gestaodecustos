@@ -143,7 +143,8 @@ class ClientHub extends Component
             ])->saveQuietly();
         }
 
-        $this->clientTaxNumber = $client->tax_number;
+        $workspace = auth()->user()->currentWorkspace;
+        $this->clientTaxNumber = $workspace?->tax_number;
         $this->generatedPasscode = $client->portal_token;
         $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
         $this->dispatch('modal-show', name: 'portal-link-modal');
