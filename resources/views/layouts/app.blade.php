@@ -28,7 +28,7 @@
         }
     </script>
 </head>
-    <body class="font-sans antialiased">
+    <body class="font-sans antialiased" data-authenticated="{{ auth()->check() ? '1' : '0' }}">
         <div class="min-h-screen bg-gray-100">
             <livewire:layout.navigation />
 
