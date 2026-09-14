@@ -1,199 +1,204 @@
-<div class="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-6 md:p-12 text-left">
-    {{-- Contentor de Largura Total --}}
-    <div class="max-w-[1400px] mx-auto space-y-12">
-
-        {{-- 1. HEADER: BRANDING --}}
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden text-left w-full">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500/5 blur-[100px] rounded-full -mr-32 -mt-32"></div>
-
-            <div class="flex items-center gap-6 relative z-10">
-                <div class="size-20 rounded-2xl bg-brand-600 flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-brand-500/20 uppercase italic shrink-0">
-                    {{ substr($supplier->name, 0, 1) }}
-                </div>
-                <div class="text-left">
-                    <div class="flex items-center gap-3 mb-1">
-                        <span class="px-2 py-0.5 bg-brand-500/10 text-brand-600 text-[9px] font-black uppercase tracking-widest rounded-md border border-brand-500/20">Fornecedor Verificado</span>
-                        <h2 class="text-xs font-black text-zinc-400 uppercase tracking-widest">{{ $workspace->name }}</h2>
+<div class="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+        {{-- Header --}}
+        <header class="relative overflow-hidden rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
+            <div class="absolute -right-24 -top-24 size-72 rounded-full bg-brand-500/10 blur-3xl"></div>
+            <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex items-center gap-4 sm:gap-5">
+                    <div class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-2xl font-black uppercase italic text-white shadow-lg shadow-brand-500/20 sm:size-20 sm:text-3xl">
+                        {{ substr($supplier->name, 0, 1) }}
                     </div>
-                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter italic leading-none">Painel de Parceiro: {{ $supplier->name }}</h1>
-                </div>
-            </div>
-
-            <a href="{{ route('supplier.portal') }}" class="px-6 py-3 bg-zinc-900 dark:bg-zinc-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-xl z-10">
-                Sair do Portal
-            </a>
-        </div>
-
-        {{-- RESUMO DO FORNECEDOR --}}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
-                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Movimentos</p>
-                <p class="text-2xl font-black dark:text-white mt-2">{{ $portalStats['movements'] }}</p>
-            </div>
-            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
-                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Total liquidado</p>
-                <p class="text-xl font-black text-emerald-600 mt-2">{{ number_format($portalStats['totalPaid'], 2, ',', ' ') }}€</p>
-            </div>
-            <div class="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm">
-                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Tickets abertos</p>
-                <p class="text-2xl font-black text-brand-600 mt-2">{{ $portalStats['openTickets'] }}</p>
-            </div>
-            <div class="bg-zinc-950 rounded-3xl p-5 shadow-sm">
-                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Último movimento</p>
-                <p class="text-sm font-black text-white mt-2">{{ $portalStats['lastMovement'] ? number_format($portalStats['lastMovement']->amount, 2, ',', ' ').'€' : 'Sem movimentos' }}</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-
-            {{-- COLUNA ESQUERDA: OPERACIONAL (8 Colunas) --}}
-            <div class="lg:col-span-8 space-y-12">
-
-                {{-- BANNER DE SUBMISSÃO --}}
-                <div class="bg-brand-600 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-xl shadow-brand-500/20">
-                    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 text-left">
-                        <div class="flex items-center gap-5">
-                            <div class="p-4 bg-white/10 rounded-2xl shadow-inner"><flux:icon name="cloud-arrow-up" class="size-8 text-white" /></div>
-                            <div class="text-left">
-                                <h3 class="font-black uppercase text-lg tracking-tight leading-none">Submissão Digital de Faturas</h3>
-                                <p class="text-xs text-brand-100 opacity-90 font-medium mt-2">Envie os seus documentos para processamento imediato pela nossa contabilidade.</p>
-                            </div>
+                    <div class="min-w-0">
+                        <div class="mb-2 flex flex-wrap items-center gap-2">
+                            <span class="rounded-full border border-brand-500/20 bg-brand-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400">Fornecedor verificado</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{{ $workspace->name }}</span>
                         </div>
-                        <flux:modal.trigger name="upload-invoice-modal">
-                            <button class="px-10 py-4 bg-white text-brand-600 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-brand-50 transition-all shadow-lg shrink-0">Submeter Agora</button>
-                        </flux:modal.trigger>
+                        <h1 class="truncate text-2xl font-black tracking-tight sm:text-3xl">Olá, {{ $supplier->name }}</h1>
+                        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Bem-vindo ao seu espaço de parceiro.</p>
                     </div>
                 </div>
+                <a href="{{ route('supplier.portal') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-zinc-900 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-brand-600 dark:bg-zinc-800">
+                    <flux:icon name="arrow-left-start-on-rectangle" class="size-4" />
+                    Sair do portal
+                </a>
+            </div>
+        </header>
 
-                {{-- HISTÓRICO DE PAGAMENTOS --}}
-                <div class="space-y-6">
-                    <div class="flex items-center gap-3 text-left px-2">
-                        <flux:icon name="banknotes" class="size-5 text-zinc-400" />
-                        <h3 class="font-black dark:text-white uppercase text-sm tracking-widest italic">Histórico de Movimentos</h3>
+        {{-- KPI --}}
+        <section class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <div class="mb-4 flex size-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800"><flux:icon name="arrows-right-left" class="size-5" /></div>
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Movimentos</p>
+                <p class="mt-1 text-2xl font-black">{{ $portalStats['movements'] }}</p>
+            </div>
+            <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <div class="mb-4 flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600"><flux:icon name="banknotes" class="size-5" /></div>
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Total liquidado</p>
+                <p class="mt-1 text-xl font-black text-emerald-600">{{ number_format($portalStats['totalPaid'], 2, ',', ' ') }} €</p>
+            </div>
+            <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <div class="mb-4 flex size-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600"><flux:icon name="chat-bubble-left-right" class="size-5" /></div>
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Pedidos em aberto</p>
+                <p class="mt-1 text-2xl font-black">{{ $portalStats['openTickets'] }}</p>
+            </div>
+            <div class="rounded-2xl bg-zinc-950 p-5 shadow-sm dark:border dark:border-zinc-800">
+                <div class="mb-4 flex size-10 items-center justify-center rounded-xl bg-white/10 text-brand-400"><flux:icon name="clock" class="size-5" /></div>
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Último movimento</p>
+                <p class="mt-1 truncate text-lg font-black text-white">{{ $portalStats['lastMovement'] ? number_format($portalStats['lastMovement']->amount, 2, ',', ' ').' €' : 'Sem movimentos' }}</p>
+            </div>
+        </section>
+
+        {{-- Ações rápidas --}}
+        <section class="mt-6 grid gap-4 md:grid-cols-2">
+            <div class="relative overflow-hidden rounded-[2rem] bg-brand-600 p-6 text-white shadow-xl shadow-brand-500/10 sm:p-8">
+                <div class="absolute -right-10 -top-10 size-40 rounded-full bg-white/10 blur-2xl"></div>
+                <div class="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <div class="mb-3 flex size-11 items-center justify-center rounded-xl bg-white/15"><flux:icon name="document-arrow-up" class="size-6" /></div>
+                        <h2 class="text-lg font-black uppercase tracking-tight">Submeter uma fatura</h2>
+                        <p class="mt-1 max-w-md text-sm text-brand-100">Envie um documento para a empresa tratar digitalmente.</p>
                     </div>
+                    <flux:modal.trigger name="upload-invoice-modal">
+                        <button class="rounded-xl bg-white px-5 py-3 text-[10px] font-black uppercase tracking-widest text-brand-600 shadow-lg transition hover:bg-brand-50">Submeter fatura</button>
+                    </flux:modal.trigger>
+                </div>
+            </div>
+            <div class="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
+                <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <div class="mb-3 flex size-11 items-center justify-center rounded-xl bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"><flux:icon name="chat-bubble-left-right" class="size-6" /></div>
+                        <h2 class="text-lg font-black uppercase tracking-tight">Precisa de ajuda?</h2>
+                        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Abra um pedido e fale diretamente com a equipa.</p>
+                    </div>
+                    <flux:modal.trigger name="support-modal">
+                        <button class="rounded-xl bg-zinc-900 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-brand-600 dark:bg-zinc-800">Novo pedido</button>
+                    </flux:modal.trigger>
+                </div>
+            </div>
+        </section>
 
-                    <div class="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden w-full">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-zinc-50/50 dark:bg-zinc-950/50 text-[9px] font-black uppercase text-zinc-400 tracking-widest border-b border-zinc-100 dark:border-zinc-800">
-                                    <th class="p-6">Data</th>
-                                    <th class="p-6">Referência / Documento</th>
-                                    <th class="p-6 text-right px-10">Valor Liquidado</th>
+        <div class="mt-8 grid gap-8 lg:grid-cols-12">
+            {{-- Movimentos --}}
+            <section class="lg:col-span-8">
+                <div class="mb-4 flex items-center justify-between px-1">
+                    <div>
+                        <h2 class="text-sm font-black uppercase tracking-widest">Histórico financeiro</h2>
+                        <p class="mt-1 text-xs text-zinc-400">Movimentos associados à sua conta de fornecedor.</p>
+                    </div>
+                    <span class="rounded-full bg-zinc-100 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-zinc-500 dark:bg-zinc-800">{{ $portalStats['movements'] }} registos</span>
+                </div>
+                <div class="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[620px] text-left">
+                            <thead class="border-b border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/50">
+                                <tr class="text-[9px] font-black uppercase tracking-widest text-zinc-400">
+                                    <th class="px-6 py-4">Data</th>
+                                    <th class="px-6 py-4">Documento</th>
+                                    <th class="px-6 py-4 text-right">Valor</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-zinc-50 dark:divide-zinc-800">
+                            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                                 @forelse($history as $item)
-                                    <tr class="hover:bg-zinc-50 dark:hover:bg-brand-500/5 transition-colors">
-                                        <td class="p-6">
-                                            <span class="text-sm font-black dark:text-white uppercase">{{ \Carbon\Carbon::parse($item->spent_at)->translatedFormat('d M, Y') }}</span>
+                                    <tr class="transition hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                                        <td class="px-6 py-5 text-sm font-bold">{{ \Carbon\Carbon::parse($item->spent_at)->translatedFormat('d M Y') }}</td>
+                                        <td class="px-6 py-5">
+                                            <p class="max-w-sm truncate text-sm font-semibold text-zinc-600 dark:text-zinc-300">{{ $item->title }}</p>
                                         </td>
-                                        <td class="p-6 italic text-zinc-500 text-sm">"{{ $item->title }}"</td>
-                                        <td class="p-6 text-right px-10 font-black text-lg dark:text-white">{{ number_format($item->amount, 2, ',', ' ') }}€</td>
+                                        <td class="px-6 py-5 text-right text-sm font-black">{{ number_format($item->amount, 2, ',', ' ') }} €</td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="3" class="p-20 text-center text-zinc-400 uppercase text-[10px] font-black italic">Sem movimentos processados no sistema.</td></tr>
+                                    <tr><td colspan="3" class="px-6 py-16 text-center"><div class="mx-auto flex size-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400 dark:bg-zinc-800"><flux:icon name="document-text" class="size-6" /></div><p class="mt-3 text-xs font-black uppercase tracking-widest text-zinc-400">Ainda não existem movimentos</p></td></tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            {{-- COLUNA DIREITA: ADMIN & CHAT (4 Colunas) --}}
-            <div class="lg:col-span-4 space-y-10 text-left">
-
-                {{-- MENSAGENS --}}
-                <div class="space-y-4">
-                    <h3 class="font-black dark:text-white uppercase text-[11px] tracking-widest px-2 flex items-center gap-2">
-                        <flux:icon name="chat-bubble-left-right" class="size-4" /> Centro de Mensagens
-                    </h3>
-                    <div class="bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm text-left">
-                        <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                            @forelse($tickets as $ticket)
-                                <button wire:click="setActiveTicket({{ $ticket->id }})" class="w-full p-6 flex flex-col gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all text-left group">
-                                    <div class="flex justify-between items-start">
-                                        <span class="text-[8px] font-black uppercase px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500">{{ $ticket->status }}</span>
-                                        <span class="text-[9px] text-zinc-400 font-bold uppercase">{{ $ticket->created_at->diffForHumans() }}</span>
-                                    </div>
-                                    <p class="text-xs font-black dark:text-white uppercase group-hover:text-brand-600 transition-colors">{{ str_replace('[FORNECEDOR] ', '', $ticket->subject) }}</p>
-                                </button>
-                            @empty
-                                <div class="p-10 text-center text-zinc-400 text-[10px] font-black uppercase italic opacity-50">Sem conversas ativas.</div>
-                            @endforelse
-                        </div>
-                        <div class="p-4 bg-zinc-50/50 dark:bg-zinc-950/50 border-t border-zinc-100 dark:border-zinc-800">
-                            <flux:modal.trigger name="support-modal">
-                                <button class="w-full py-3 bg-zinc-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-600 transition-all">Novo Pedido / Ticket</button>
-                            </flux:modal.trigger>
+            {{-- Suporte --}}
+            <aside class="space-y-6 lg:col-span-4">
+                <div>
+                    <div class="mb-4 px-1">
+                        <h2 class="text-sm font-black uppercase tracking-widest">Comunicação</h2>
+                        <p class="mt-1 text-xs text-zinc-400">Acompanhe os seus pedidos.</p>
+                    </div>
+                    <div class="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                        @forelse($tickets as $ticket)
+                            <button wire:click="setActiveTicket({{ $ticket->id }})" class="w-full border-b border-zinc-100 p-5 text-left transition last:border-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/60">
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="rounded-full bg-zinc-100 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-zinc-500 dark:bg-zinc-800">{{ $ticket->status }}</span>
+                                    <span class="text-[9px] font-bold text-zinc-400">{{ $ticket->created_at->diffForHumans() }}</span>
+                                </div>
+                                <p class="mt-3 truncate text-xs font-black uppercase">{{ str_replace('[FORNECEDOR] ', '', $ticket->subject) }}</p>
+                            </button>
+                        @empty
+                            <div class="p-10 text-center"><flux:icon name="chat-bubble-left-right" class="mx-auto size-7 text-zinc-300" /><p class="mt-3 text-[9px] font-black uppercase tracking-widest text-zinc-400">Sem pedidos de suporte</p></div>
+                        @endforelse
+                        <div class="border-t border-zinc-100 bg-zinc-50/70 p-4 dark:border-zinc-800 dark:bg-zinc-950/50">
+                            <flux:modal.trigger name="support-modal"><button class="w-full rounded-xl bg-zinc-900 py-3 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-brand-600 dark:bg-zinc-800">Abrir pedido</button></flux:modal.trigger>
                         </div>
                     </div>
                 </div>
 
-                {{-- FICHA TÉCNICA --}}
-                <div class="p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] space-y-6 shadow-sm text-left">
-                    <h4 class="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b pb-4">Dados Contratuais</h4>
-                    <div class="space-y-4">
-                        <div>
-                            <p class="text-[9px] font-black text-zinc-400 uppercase">NIF Fiscal</p>
-                            <p class="text-sm font-mono font-bold dark:text-white">{{ $supplier->tax_number }}</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] font-black text-zinc-400 uppercase">Acordo Comercial</p>
-                            <p class="text-sm font-black text-brand-600 italic uppercase">{{ $supplier->payment_terms ?? 'Pronto Pagamento' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] font-black text-zinc-400 uppercase">Morada Registada</p>
-                            <p class="text-[11px] text-zinc-500 italic font-medium leading-relaxed">"{{ $supplier->address ?? 'N/D' }}"</p>
-                        </div>
+                <div class="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                    <h3 class="border-b border-zinc-100 pb-4 text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:border-zinc-800">Dados do fornecedor</h3>
+                    <div class="space-y-5 pt-5">
+                        <div><p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">NIF</p><p class="mt-1 font-mono text-sm font-bold">{{ preg_replace('/^(\d{3})(\d{3})(\d{3})$/', '$1 $2 $3', preg_replace('/\D+/', '', (string) $supplier->tax_number)) ?: 'Não registado' }}</p></div>
+                        <div><p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Condições de pagamento</p><p class="mt-1 text-sm font-black text-brand-600">{{ $supplier->payment_terms ?? 'Pronto Pagamento' }}</p></div>
+                        <div><p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Morada</p><p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">{{ $supplier->address ?? 'Não especificada' }}</p></div>
                     </div>
                 </div>
-            </div>
+            </aside>
         </div>
     </div>
 
-    {{-- MODAL CHAT --}}
-    <flux:modal name="view-ticket-modal" class="md:w-[600px] !p-0 rounded-[2.5rem] overflow-hidden text-left" wire:ignore.self>
-        <div class="flex flex-col h-[600px] bg-white dark:bg-zinc-950">
-            <div class="p-6 border-b dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-900/50">
-                <div class="text-left"><h2 class="text-sm font-black uppercase">Canal de Comunicação</h2></div>
+    {{-- Chat --}}
+    <flux:modal name="view-ticket-modal" class="w-full max-w-2xl !p-0 overflow-hidden rounded-[2rem]" wire:ignore.self>
+        <div class="flex h-[620px] flex-col bg-white dark:bg-zinc-950">
+            <div class="flex items-center justify-between border-b border-zinc-100 bg-zinc-50/80 p-5 dark:border-zinc-800 dark:bg-zinc-900/80">
+                <div><p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Comunicação</p><h2 class="mt-1 text-lg font-black">Conversa com a empresa</h2></div>
                 <flux:modal.close><flux:button variant="ghost" icon="x-mark" size="sm" /></flux:modal.close>
             </div>
-            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="flex-1 space-y-5 overflow-y-auto p-5 sm:p-6">
                 @foreach($activeMessages as $msg)
                     <div class="flex {{ $msg->is_admin_reply ? 'justify-start' : 'justify-end' }}">
-                        <div class="max-w-[85%] {{ $msg->is_admin_reply ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-white rounded-t-2xl rounded-r-2xl' : 'bg-brand-600 text-white rounded-t-2xl rounded-l-2xl' }} p-4 shadow-sm">
-                            <p class="text-sm font-medium leading-relaxed text-left">{{ $msg->message }}</p>
-                            <p class="text-[8px] mt-2 font-black uppercase opacity-60">{{ $msg->created_at->format('H:i') }}</p>
+                        <div class="max-w-[85%] rounded-2xl p-4 {{ $msg->is_admin_reply ? 'rounded-tl-md bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100' : 'rounded-tr-md bg-brand-600 text-white' }}">
+                            <p class="text-sm leading-relaxed">{{ $msg->message }}</p>
+                            <p class="mt-2 text-[8px] font-black uppercase opacity-60">{{ $msg->created_at->format('d/m/Y H:i') }}</p>
                         </div>
                     </div>
                 @endforeach
             </div>
-            <div class="p-6 border-t dark:border-zinc-800 bg-white dark:bg-zinc-900">
-                <form wire:submit.prevent="sendReply" class="flex gap-3">
-                    <input wire:model="replyMessage" type="text" placeholder="Escreva a resposta..." class="flex-1 bg-zinc-50 dark:bg-zinc-800 border-none rounded-xl px-4 text-sm h-12" />
-                    <flux:button type="submit" variant="primary" class="!bg-emerald-600 h-12 rounded-xl font-black uppercase text-[10px] px-8 text-white">Enviar</flux:button>
+            <div class="border-t border-zinc-100 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                <form wire:submit.prevent="sendReply" class="flex gap-2">
+                    <input wire:model="replyMessage" type="text" placeholder="Escreva uma mensagem..." class="h-12 min-w-0 flex-1 rounded-xl border-0 bg-zinc-100 px-4 text-sm outline-none ring-brand-500 focus:ring-2 dark:bg-zinc-800" />
+                    <flux:button type="submit" variant="primary" class="h-12 rounded-xl px-5 font-black uppercase text-[10px]">Enviar</flux:button>
                 </form>
             </div>
         </div>
     </flux:modal>
 
-    {{-- MODAL UPLOAD --}}
-    <flux:modal name="upload-invoice-modal" class="md:w-[500px] !p-10 rounded-[2.5rem] text-left" wire:ignore.self>
-        <h2 class="text-2xl font-black uppercase italic tracking-tighter">Submeter Documento</h2>
-        <form wire:submit.prevent="submitInvoice" class="space-y-6 mt-8">
-            <flux:input wire:model="invoice_amount" label="Valor Total (€)" type="number" step="0.01" />
-            <input type="file" wire:model="invoice_doc" class="w-full text-xs" />
-            <flux:button type="submit" variant="primary" class="w-full h-14 rounded-2xl font-black uppercase !bg-brand-600 text-white shadow-lg shadow-brand-500/20">Confirmar Envio</flux:button>
-        </form>
+    {{-- Fatura --}}
+    <flux:modal name="upload-invoice-modal" class="w-full max-w-lg rounded-[2rem]" wire:ignore.self>
+        <div class="p-2">
+            <div class="mb-7"><div class="mb-3 flex size-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600"><flux:icon name="document-arrow-up" class="size-6" /></div><h2 class="text-2xl font-black tracking-tight">Submeter fatura</h2><p class="mt-1 text-sm text-zinc-500">Envie o documento para processamento.</p></div>
+            <form wire:submit.prevent="submitInvoice" class="space-y-5">
+                <flux:input wire:model="invoice_amount" label="Valor total (€)" type="number" step="0.01" />
+                <input type="file" wire:model="invoice_doc" accept=".pdf,.jpg,.jpeg,.png" class="block w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs dark:border-zinc-700 dark:bg-zinc-800" />
+                <flux:button type="submit" variant="primary" class="h-12 w-full rounded-xl font-black uppercase text-[10px]">Confirmar envio</flux:button>
+            </form>
+        </div>
     </flux:modal>
 
-    {{-- MODAL NOVO TICKET --}}
-    <flux:modal name="support-modal" class="md:w-[500px] !p-10 rounded-[2.5rem] text-left" wire:ignore.self>
-        <h2 class="text-2xl font-black uppercase italic tracking-tighter">Novo Pedido de Assistência</h2>
-        <form wire:submit.prevent="sendTicket" class="space-y-6 mt-8">
-            <flux:input wire:model="subject" label="Assunto" placeholder="Ex: Erro no pagamento ou alteração de dados..." />
-            <flux:textarea wire:model="message" label="Mensagem" rows="5" placeholder="Explique detalhadamente o seu pedido..." />
-            <flux:button type="submit" variant="primary" class="w-full h-14 rounded-2xl font-black uppercase !bg-brand-600 text-white shadow-lg shadow-brand-500/20">Iniciar Chat</flux:button>
-        </form>
+    {{-- Novo pedido --}}
+    <flux:modal name="support-modal" class="w-full max-w-lg rounded-[2rem]" wire:ignore.self>
+        <div class="p-2">
+            <div class="mb-7"><div class="mb-3 flex size-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600"><flux:icon name="chat-bubble-left-right" class="size-6" /></div><h2 class="text-2xl font-black tracking-tight">Novo pedido</h2><p class="mt-1 text-sm text-zinc-500">Envie uma mensagem à equipa.</p></div>
+            <form wire:submit.prevent="sendTicket" class="space-y-5">
+                <flux:input wire:model="subject" label="Assunto" placeholder="Ex.: Pagamento, documento ou dados" />
+                <flux:textarea wire:model="message" label="Mensagem" rows="5" placeholder="Descreva o que precisa..." />
+                <flux:button type="submit" variant="primary" class="h-12 w-full rounded-xl font-black uppercase text-[10px]">Enviar pedido</flux:button>
+            </form>
+        </div>
     </flux:modal>
 </div>
