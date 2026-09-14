@@ -46,7 +46,15 @@ class SupplierHub extends Component
         }
 
         $this->generatedPasscode = $supplier->portal_token;
-        $this->supplierTaxNumber = $supplier->tax_number;
+
+        // O NIF usado para entrar no Portal do Fornecedor é o NIF da empresa,
+        // nunca o NIF individual do fornecedor.
+        $companyTaxNumber = preg_replace('/\D+/', '', (string) (auth()->user()->currentWorkspace?->tax_number ?? auth()->user()->currentWorkspace?->nif ?? ''));
+        $companyTaxNumber = substr($companyTaxNumber, 0, 9);
+        $this->supplierTaxNumber = $companyTaxNumber !== ''
+            ? implode(' ', str_split($companyTaxNumber, 3))
+            : '';
+
         $this->generatedPortalUrl = route('supplier.portal');
         $this->dispatch('modal-show', name: 'supplier-portal-modal');
     }
