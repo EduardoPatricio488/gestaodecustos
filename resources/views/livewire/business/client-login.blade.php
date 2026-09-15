@@ -1,4 +1,4 @@
-<div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl backdrop-blur-md space-y-8">
+<div class="w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl backdrop-blur-md space-y-8">
     <div class="flex justify-center">
         <div class="size-16 bg-emerald-600 rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center">
             <flux:icon name="user-group" variant="solid" class="size-8 text-white" />
@@ -74,14 +74,19 @@
                         <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Empresas registadas</label>
                         <div class="max-h-52 overflow-y-auto rounded-2xl border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
                             @forelse($this->companies as $company)
+                                @php
+                                    $companyNif = $company->tax_number
+                                        ? trim(chunk_split(preg_replace('/\D+/', '', (string) $company->tax_number), 3, ' '))
+                                        : null;
+                                @endphp
                                 <button type="button" wire:click="selectCompany({{ $company->id }})" class="w-full text-left px-5 py-4 flex items-center justify-between gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors {{ $selectedCompanyId === $company->id ? 'bg-emerald-50 dark:bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/30' : '' }}">
                                     <div class="min-w-0">
                                         <p class="font-black text-sm text-zinc-900 dark:text-white truncate">{{ $company->legal_name ?: $company->name }}</p>
                                         @if($company->legal_name && $company->legal_name !== $company->name)
                                             <p class="text-[10px] text-zinc-500 truncate">{{ $company->name }}</p>
                                         @endif
-                                        @if($company->tax_number)
-                                            <p class="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-1">NIF: {{ $company->tax_number }}</p>
+                                        @if($companyNif)
+                                            <p class="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-1">NIF: {{ $companyNif }}</p>
                                         @endif
                                     </div>
                                     @if($selectedCompanyId === $company->id)
@@ -98,12 +103,17 @@
                     </div>
 
                     @if($selectedCompanyId)
-                        @php($selectedCompany = $this->companies->firstWhere('id', $selectedCompanyId))
+                        @php
+                            $selectedCompany = $this->companies->firstWhere('id', $selectedCompanyId);
+                            $selectedCompanyNif = $selectedCompany?->tax_number
+                                ? trim(chunk_split(preg_replace('/\D+/', '', (string) $selectedCompany->tax_number), 3, ' '))
+                                : null;
+                        @endphp
                         <div class="rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 p-4">
                             <p class="text-[9px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Empresa selecionada</p>
                             <p class="mt-1 font-black text-zinc-900 dark:text-white">{{ $selectedCompany?->legal_name ?: $selectedCompany?->name }}</p>
-                            @if($selectedCompany?->tax_number)
-                                <p class="mt-1 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300">NIF da empresa: {{ $selectedCompany->tax_number }}</p>
+                            @if($selectedCompanyNif)
+                                <p class="mt-1 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300">NIF da empresa: {{ $selectedCompanyNif }}</p>
                             @endif
                         </div>
                     @endif
