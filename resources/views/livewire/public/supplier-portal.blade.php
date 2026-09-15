@@ -119,9 +119,9 @@
                             </div>
                         </div>
 
-                        <div class="space-y-2">
-                            <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">NIF (opcional)</label>
-                            <input wire:model="requestTaxNumber" type="text" inputmode="numeric" maxlength="11" placeholder="000 000 000" class="w-full h-12 px-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white" />
+                        <div class="space-y-2" x-data="{ nif: @entangle('requestTaxNumber'), formatNIF(value) { return (value || '').replace(/\D/g, '').replace(/(\d{3})(?=\d)/g, '$1 ').substring(0, 11); } }" x-init="nif = formatNIF(nif)">
+                            <label class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">NIF do cliente (opcional)</label>
+                            <input type="text" x-model="nif" x-on:input="nif = formatNIF($event.target.value)" inputmode="numeric" maxlength="11" placeholder="000 000 000" class="w-full h-12 px-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white" />
                         </div>
 
                         <button type="button" wire:click="sendAccessRequest" wire:loading.attr="disabled" class="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20 transition-all">
