@@ -14,6 +14,10 @@ class WorkspaceContextController extends Controller
 
         $user->update(['current_workspace_id' => $workspace->id]);
 
+        if (in_array($workspace->type, ['business', 'company'], true)) {
+            session()->put('last_business_workspace_id', $workspace->id);
+        }
+
         return $workspace->type === 'personal'
             ? redirect()->route('dashboard')
             : redirect()->route('hub.business.dashboard');
