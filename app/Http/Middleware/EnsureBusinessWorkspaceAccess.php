@@ -12,9 +12,43 @@ class EnsureBusinessWorkspaceAccess
     public function handle(Request $request, Closure $next): Response
     {
         $path = $request->path();
+        $user = $request->user();
         $access = app(BusinessAccessService::class);
 
-        if ($request->user()?->current_workspace_id && $access->workspace($request->user())) {
+        /*
+         * O contexto é determinado pela área da aplicação:
+         * - /empresa/* = workspace empresarial
+         * - restante da aplicação = workspace pessoal
+         *
+         * Isto evita que o current_workspace_id empresarial fique "vazado"
+         * para páginas pessoais quando o utilizador usa Back/Forward.
+         */
+        if ($user && ! $request->is('livewire/update')) {
+            if (str_starts_with($path, 'empresa/')) {
+                $currentBusiness = $access->workspace($user);
+
+                if (! $currentBusiness && session()->has('last_business_workspace_id')) {
+                    $business = $user->workspaces()
+                        ->whereKey((int) session('last_business_workspace_id'))
+                        ->whereIn('workspaces.type', ['business', 'company'])
+                        ->first();
+
+                    if ($business) {
+                        $user->update(['current_workspace_id' => $business->id]);
+                    }
+                }
+            } elseif ($access->workspace($user)) {
+                $personal = $user->workspaces()
+                    ->where('workspaces.type', 'personal')
+                    ->first();
+
+                if ($personal) {
+                    $user->update(['current_workspace_id' => $personal->id]);
+                }
+            }
+        }
+
+        if ($user?->current_workspace_id && $access->workspace($user)) {
             if ($path === 'receitas') {
                 return redirect()->route('hub.business.invoices');
             }
