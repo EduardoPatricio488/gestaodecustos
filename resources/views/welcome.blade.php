@@ -329,8 +329,8 @@
                         <flux:icon name="document-text" variant="outline" />
                     </div>
                     <div>
-                        <h3 class="font-black uppercase tracking-tight text-zinc-900 dark:text-white">Relatórios de Auditoria PDF</h3>
-                        <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Exporta relatórios certificados e detalhados. Perfeito para contabilidade, gestão de casal ou análise de auditoria profunda.</p>
+                        <h3 class="font-black uppercase tracking-tight text-zinc-900 dark:text-white">Relatórios financeiros em PDF</h3>
+                        <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Exporta relatórios detalhados para acompanhar receitas, despesas, património e evolução financeira.</p>
                     </div>
                 </div>
             </div>
@@ -362,7 +362,7 @@
                 <div class="flex justify-center">
                     <flux:icon name="shield-check" class="size-16 text-emerald-500" />
                 </div>
-                <h2 class="text-3xl font-black dark:text-white uppercase tracking-tighter italic">Privacidade Total</h2>
+                <h2 class="text-3xl font-black dark:text-white uppercase tracking-tighter italic">Privacidade por defeito</h2>
                 <p class="text-zinc-500 max-w-2xl mx-auto leading-relaxed font-medium">
                     Os teus dados financeiros são encriptados e nunca são partilhados com terceiros.
                     A nossa missão é apenas ajudar-te a crescer o teu património com segurança.
@@ -381,7 +381,7 @@
                     {{ auth()->check() ? 'Voltar ao Dashboard' : 'Começar Agora — É Grátis' }}
                 </a>
             </div>
-            <p class="text-zinc-400 text-[10px] font-black uppercase tracking-[0.4em]">© {{ date('Y') }} {{ config('app.name') }} · High Fidelity Dashboard</p>
+            <p class="text-zinc-400 text-[10px] font-black uppercase tracking-[0.4em]">© {{ date('Y') }} {{ config('app.name') }} · Gestão financeira inteligente</p>
         </div>
 
         <div class="mt-auto p-6 border-t border-zinc-100 dark:border-zinc-800 flex gap-4">
