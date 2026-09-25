@@ -14,43 +14,69 @@
                 $user = auth()->user();
                 $workspace = $user->currentWorkspace;
                 $isBusiness = $workspace?->type === 'business';
-                $nav = [
+
+                $personalNav = [
                     'overview' => [
-                        ['label' => 'Dashboard', 'icon' => 'home', 'route' => $isBusiness ? 'hub.business.dashboard' : 'dashboard'],
+                        ['label' => 'Dashboard', 'icon' => 'home', 'route' => 'dashboard'],
                     ],
                     'finance' => [
-                        ['label' => 'Receitas', 'icon' => 'arrow-trending-up', 'route' => 'incomes.index'],
                         ['label' => 'Despesas', 'icon' => 'arrow-trending-down', 'route' => 'expenses.index'],
-                        ['label' => 'Orçamentos', 'icon' => 'banknotes', 'route' => 'budgets.index'],
-                        ['label' => 'Objectivos', 'icon' => 'flag', 'route' => 'goals.index'],
+                        ['label' => 'Receitas', 'icon' => 'arrow-trending-up', 'route' => 'incomes.index'],
+                        ['label' => 'Orçamento', 'icon' => 'banknotes', 'route' => 'hub.budget'],
+                        ['label' => 'Objectivos', 'icon' => 'flag', 'route' => 'hub.goals'],
                     ],
-                    'planning' => [
-                        ['label' => 'Subscrições', 'icon' => 'arrow-path', 'route' => 'subscriptions.index'],
-                        ['label' => 'Dívidas', 'icon' => 'credit-card', 'route' => 'debts.index'],
-                        ['label' => 'Investimentos', 'icon' => 'chart-bar', 'route' => 'investments.index'],
-                        ['label' => 'Património', 'icon' => 'building-library', 'route' => 'net-worth'],
+                    'planeamento' => [
+                        ['label' => 'Subscrições', 'icon' => 'arrow-path', 'route' => 'hub.subscriptions'],
+                        ['label' => 'Dívidas', 'icon' => 'credit-card', 'route' => 'hub.debts'],
+                        ['label' => 'Investimentos', 'icon' => 'chart-bar', 'route' => 'hub.investments'],
+                        ['label' => 'Património', 'icon' => 'building-library', 'route' => 'hub.networth'],
                     ],
-                    'business' => [
-                        ['label' => 'Clientes', 'icon' => 'users', 'route' => 'business.clients'],
-                        ['label' => 'Fornecedores', 'icon' => 'truck', 'route' => 'business.suppliers'],
-                        ['label' => 'Facturação', 'icon' => 'document-text', 'route' => 'business.invoices'],
-                        ['label' => 'Stock', 'icon' => 'archive-box', 'route' => 'business.stock'],
-                    ],
-                    'tools' => [
-                        ['label' => 'Finance Copilot', 'icon' => 'sparkles', 'route' => 'ai.copilot'],
-                        ['label' => 'Relatórios', 'icon' => 'chart-pie', 'route' => 'reports'],
+                    'ferramentas' => [
+                        ['label' => 'Importar extrato', 'icon' => 'arrow-up-tray', 'route' => 'hub.import'],
+                        ['label' => 'Relatórios', 'icon' => 'document-chart-bar', 'route' => 'hub.reports'],
+                        ['label' => 'IA Financeira', 'icon' => 'sparkles', 'route' => 'ai'],
                     ],
                 ];
+
+                $businessNav = [
+                    'overview' => [
+                        ['label' => 'Dashboard', 'icon' => 'home', 'route' => 'hub.business.dashboard'],
+                    ],
+                    'gestão financeira' => [
+                        ['label' => 'Despesas', 'icon' => 'arrow-trending-down', 'route' => 'company-expenses'],
+                        ['label' => 'Facturação', 'icon' => 'document-text', 'route' => 'hub.business.invoices'],
+                        ['label' => 'Fluxo de caixa', 'icon' => 'arrows-right-left', 'route' => 'hub.business.cashflow'],
+                        ['label' => 'Resultados', 'icon' => 'chart-bar-square', 'route' => 'hub.business.pnl'],
+                    ],
+                    'negócio' => [
+                        ['label' => 'Clientes', 'icon' => 'users', 'route' => 'hub.business.clients'],
+                        ['label' => 'Fornecedores', 'icon' => 'truck', 'route' => 'hub.business.suppliers'],
+                        ['label' => 'Stock', 'icon' => 'archive-box', 'route' => 'hub.business.inventory'],
+                        ['label' => 'Projectos', 'icon' => 'briefcase', 'route' => 'hub.business.projects'],
+                    ],
+                    'ferramentas' => [
+                        ['label' => 'IA Estrategista', 'icon' => 'sparkles', 'route' => 'hub.business.ai'],
+                        ['label' => 'Equipa', 'icon' => 'user-group', 'route' => 'hub.business.team'],
+                    ],
+                ];
+
+                $nav = $isBusiness ? $businessNav : $personalNav;
             @endphp
 
             @if ($workspace)
                 <div class="px-3 pb-3">
                     <div class="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/70">
-                        <div class="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">
-                            {{ $isBusiness ? 'Empresa' : 'Espaço pessoal' }}
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">
+                                {{ $isBusiness ? 'Empresa' : 'Espaço pessoal' }}
+                            </div>
+                            <span class="size-1.5 shrink-0 rounded-full bg-emerald-500"></span>
                         </div>
                         <div class="mt-0.5 truncate text-sm font-bold text-zinc-900 dark:text-white">
                             {{ $workspace->name }}
+                        </div>
+                        <div class="mt-1 text-[9px] font-medium text-zinc-500">
+                            Os dados apresentados pertencem a este espaço.
                         </div>
                     </div>
                 </div>
@@ -66,9 +92,10 @@
                             :heading="match ($group) {
                                 'overview' => 'Visão geral',
                                 'finance' => 'Finanças',
-                                'planning' => 'Planeamento',
-                                'business' => 'Empresa',
-                                'tools' => 'Ferramentas',
+                                'planeamento' => 'Planeamento',
+                                'gestão financeira' => 'Finanças',
+                                'negócio' => 'Negócio',
+                                'ferramentas' => 'Ferramentas',
                                 default => ucfirst($group),
                             }"
                             class="grid"
@@ -97,8 +124,8 @@
                     </flux:sidebar.item>
                 @endif
 
-                @if (route_exists('support'))
-                    <flux:sidebar.item icon="question-mark-circle" :href="route('support')" wire:navigate>
+                @if (route_exists('support.hub'))
+                    <flux:sidebar.item icon="question-mark-circle" :href="route('support.hub')" :current="request()->routeIs('support.*')" wire:navigate>
                         {{ __('Ajuda') }}
                     </flux:sidebar.item>
                 @endif
