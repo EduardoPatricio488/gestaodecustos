@@ -26,7 +26,11 @@ class BusinessGateway extends Component
         }
 
         if ($user->current_workspace_id) {
-            return redirect()->route('hub.business.dashboard');
+            $currentWorkspace = $user->currentWorkspace;
+
+            if ($currentWorkspace && in_array($currentWorkspace->type, ['business', 'company'], true)) {
+                return redirect()->route('hub.business.dashboard');
+            }
         }
     }
 
