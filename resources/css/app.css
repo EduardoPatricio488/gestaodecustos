@@ -170,3 +170,69 @@ input:focus[data-flux-control], textarea:focus[data-flux-control], select:focus[
     .finance-connect, .finance-connect > .grid { content-visibility: visible !important; contain: none !important; contain-intrinsic-size: auto !important; }
 }
 
+
+/* ─── PRODUCT POLISH ─────────────────────────────────────────────── */
+:root {
+    color-scheme: light;
+}
+
+::selection {
+    background: color-mix(in oklab, var(--color-brand-500) 22%, transparent);
+    color: inherit;
+}
+
+:focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--color-brand-500) 70%, transparent);
+    outline-offset: 2px;
+}
+
+@media (min-width: 1024px) {
+    [data-flux-sidebar] {
+        box-shadow: 1px 0 0 color-mix(in oklab, var(--color-zinc-200) 70%, transparent);
+    }
+
+    .dark [data-flux-sidebar] {
+        box-shadow: 1px 0 0 color-mix(in oklab, var(--color-zinc-800) 70%, transparent);
+    }
+}
+
+@layer components {
+    .page-title {
+        @apply text-2xl font-black tracking-tight text-zinc-950 dark:text-white sm:text-3xl;
+    }
+
+    .page-subtitle {
+        @apply mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400;
+    }
+
+    .section-title {
+        @apply text-sm font-black tracking-tight text-zinc-900 dark:text-white;
+    }
+
+    .section-description {
+        @apply mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400;
+    }
+
+    .action-primary {
+        @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .action-secondary {
+        @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 shadow-sm transition hover:bg-zinc-50 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800;
+    }
+
+    .skeleton {
+        @apply animate-pulse rounded-lg bg-zinc-200/80 dark:bg-zinc-800/80;
+    }
+}
+
+@media (max-width: 640px) {
+    .page-title {
+        font-size: 1.65rem;
+    }
+
+    .action-primary,
+    .action-secondary {
+        min-height: 2.75rem;
+    }
+}
