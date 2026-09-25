@@ -1957,6 +1957,14 @@ $hasStoreAccess = $hasLockInAccess;
 @endif
 
 <script>
+    // 0. Revalida o contexto ao usar Back/Forward do browser.
+    // O bfcache pode restaurar uma página antiga sem novo pedido ao servidor.
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+
     // 1. Registo do Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js');
