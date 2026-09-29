@@ -22,13 +22,25 @@
             'schemaType' => 'WebPage',
         ],
         'public.contact' => [
-            'title' => 'Contacto — Finance Pro AI',
+            'title' => 'Contacto — Fala com a equipa Finance Pro AI',
             'description' => 'Entra em contacto com a equipa do Finance Pro AI para obter ajuda, esclarecer dúvidas ou enviar sugestões.',
             'image' => asset('og-image.svg'),
             'schemaType' => 'ContactPage',
         ],
+        'legal.cookies' => [
+            'title' => 'Política de Cookies — Finance Pro AI',
+            'description' => 'Conhece os cookies necessários e as opções de análise e tracking do Finance Pro AI.',
+            'image' => asset('og-image.svg'),
+            'schemaType' => 'WebPage',
+        ],
+        'legal.accessibility' => [
+            'title' => 'Acessibilidade — Finance Pro AI',
+            'description' => 'Declaração de acessibilidade e formas de comunicar barreiras no Finance Pro AI.',
+            'image' => asset('og-image.svg'),
+            'schemaType' => 'WebPage',
+        ],
         'careers.apply' => [
-            'title' => 'Carreiras — Finance Pro AI',
+            'title' => 'Carreiras e candidaturas — Finance Pro AI',
             'description' => 'Consulta oportunidades de carreira e envia a tua candidatura para fazer parte da equipa Finance Pro AI.',
             'image' => asset('og-image.svg'),
             'schemaType' => 'WebPage',
@@ -59,6 +71,22 @@
             'url' => url('/'),
         ],
     ];
+
+
+    if (filled(config('legal.company_name')) && filled(config('legal.address'))) {
+        $schemaMarkup['@graph'][] = [
+            '@type' => 'LocalBusiness',
+            'name' => config('legal.company_name'),
+            'url' => url('/'),
+            'image' => asset('icon-512x512.png'),
+            'address' => [
+                '@type' => 'PostalAddress',
+                'streetAddress' => config('legal.address'),
+                'addressCountry' => 'PT',
+            ],
+            'email' => config('legal.email'),
+        ];
+    }
 
     if ($seoRoute === 'home') {
         $schemaMarkup = [
@@ -108,7 +136,8 @@
 <meta name="twitter:description" content="{{ $seoDescription }}">
 <meta name="twitter:image" content="{{ $seoImage }}">
 
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('icon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ asset('icon-192x192.png') }}">
 <link rel="apple-touch-icon" href="{{ asset('icon-192x192.png') }}?v=20260929">
 
 <script type="application/ld+json">{!! json_encode($schemaMarkup, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}</script>
