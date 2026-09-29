@@ -23,7 +23,8 @@ class AiBrainService
         private readonly FinancialIntelligenceService $intelligence,
         private readonly AiToolRegistry $tools,
         private readonly AiIntentDetector $intentDetector,
-    ) {}
+    ) {
+    }
 
     public function chat(User $user, string $input, ?AiConversation $conversation = null, array $pageContext = []): array
     {
@@ -250,7 +251,6 @@ class AiBrainService
 
         return $json;
     }
-
 
     private function assertMonthlyTokenBudget(User $user, Workspace $workspace): void
     {
