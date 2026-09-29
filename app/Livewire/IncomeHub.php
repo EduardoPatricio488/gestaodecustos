@@ -196,7 +196,10 @@ class IncomeHub extends Component
 
         // 3. Gravar ou Atualizar
         if ($this->recBankAccountId) {
-            abort_unless(BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->whereKey($this->recBankAccountId)->exists(), 422, 'Conta bancária inválida.');
+            abort_unless(BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+                ->where('user_id', auth()->id())
+                ->whereKey($this->recBankAccountId)
+                ->exists(), 422, 'Conta bancária inválida.');
         }
 
         if ($this->editingFixedId) {
@@ -233,9 +236,14 @@ class IncomeHub extends Component
     #[Computed]
     public function bankAccounts()
     {
-        return BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
-            ->orderBy('name')
-            ->get();
+        $user = auth()->user();
+        $query = BankAccount::where('workspace_id', $user->current_workspace_id);
+
+        if ($user->currentWorkspace?->type === 'personal') {
+            $query->where('user_id', $user->id);
+        }
+
+        return $query->orderBy('name')->get();
     }
 
     public function saveExtra()
@@ -254,7 +262,10 @@ class IncomeHub extends Component
         $user = auth()->user();
 
         if ($this->bankAccountId) {
-            abort_unless(BankAccount::where('workspace_id', $user->current_workspace_id)->whereKey($this->bankAccountId)->exists(), 422, 'Conta bancária inválida.');
+            abort_unless(BankAccount::where('workspace_id', $user->current_workspace_id)
+                ->where('user_id', auth()->id())
+                ->whereKey($this->bankAccountId)
+                ->exists(), 422, 'Conta bancária inválida.');
         }
 
         Income::create([
