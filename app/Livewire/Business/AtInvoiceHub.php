@@ -4,6 +4,7 @@ namespace App\Livewire\Business;
 
 use App\Models\AtInvoice;
 use App\Services\AtInvoiceService;
+use App\Services\BusinessAccessService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -33,6 +34,7 @@ class AtInvoiceHub extends Component
 
     public function import(): void
     {
+        app(BusinessAccessService::class)->assert('manage_financials');
         $this->validate(['importFile' => 'required|file|mimes:csv,txt|max:10240']);
 
         $workspace = auth()->user()->currentWorkspace;
@@ -48,6 +50,7 @@ class AtInvoiceHub extends Component
 
     public function validateNif(): void
     {
+        app(BusinessAccessService::class)->assert('view_financials');
         $this->nifValid = app(AtInvoiceService::class)->validateNif($this->nifToValidate);
     }
 
