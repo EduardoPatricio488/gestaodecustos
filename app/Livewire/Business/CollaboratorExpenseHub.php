@@ -39,9 +39,9 @@ class CollaboratorExpenseHub extends Component
         'amount' => 'required|numeric|min:0.01',
         'description' => 'required|string|min:3|max:255',
         'spent_at' => 'required|date',
-        'category_id' => 'required|exists:categories,id',
-        'project_id' => 'nullable|exists:projects,id',
-        'task_id' => 'nullable|exists:tasks,id',
+        'category_id' => 'required|integer',
+        'project_id' => 'nullable|integer',
+        'task_id' => 'nullable|integer',
         'receipt' => 'nullable|image|max:2048',
     ];
 
@@ -86,8 +86,19 @@ class CollaboratorExpenseHub extends Component
     {
         $this->validate();
 
+        $workspaceId = auth()->user()->current_workspace_id;
+        abort_unless($workspaceId, 403);
+
+        abort_unless(Category::whereKey($this->category_id)->where('workspace_id', $workspaceId)->exists(), 422);
+        if ($this->project_id) {
+            abort_unless(Project::whereKey($this->project_id)->where('workspace_id', $workspaceId)->exists(), 422);
+        }
+        if ($this->task_id) {
+            abort_unless(Task::whereKey($this->task_id)->where('workspace_id', $workspaceId)->exists(), 422);
+        }
+
         $data = [
-            'workspace_id' => auth()->user()->current_workspace_id,
+            'workspace_id' => $workspaceId,
             'user_id' => auth()->id(),
             'category_id' => $this->category_id,
             'amount' => $this->amount,
@@ -103,7 +114,15 @@ class CollaboratorExpenseHub extends Component
             $data['receipt_path'] = $this->receipt->store('receipts', 'public');
         }
 
-        Expense::updateOrCreate(['id' => $this->editingId], $data);
+        if ($this->editingId) {
+            $expense = Expense::whereKey($this->editingId)
+                ->where('workspace_id', $workspaceId)
+                ->where('user_id', auth()->id())
+                ->firstOrFail();
+            $expense->update($data);
+        } else {
+            Expense::create($data);
+        }
 
         $this->dispatch('modal-close', name: 'expense-modal');
         $this->dispatch('toast', text: $this->editingId ? 'Gasto atualizado!' : 'Gasto submetido!');
