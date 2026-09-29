@@ -15,7 +15,7 @@ class MiFitnessImportController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => ['required', 'file', 'max:10240', 'mimes:xml,tcx,csv,txt'],
+            'file' => ['required', 'file', 'max:10240', 'mimetypes:text/xml,application/xml,text/csv,text/plain', 'extensions:xml,tcx,csv,txt'],
         ]);
 
         $file = $request->file('file');
@@ -33,7 +33,8 @@ class MiFitnessImportController extends Controller
                 return response()->json(['error' => 'Formato não suportado. Usa TCX ou CSV.'], 422);
             }
         } catch (\Throwable $e) {
-            return response()->json(['error' => 'Erro ao processar ficheiro: '.$e->getMessage()], 422);
+            Log::warning('Falha ao importar actividade Fitness', ['user_id' => Auth::id(), 'exception' => get_class($e)]);
+            return response()->json(['error' => 'Não foi possível processar o ficheiro enviado.'], 422);
         }
 
         return response()->json([
@@ -51,13 +52,13 @@ class MiFitnessImportController extends Controller
         $workspaceId = Auth::user()->current_workspace_id ?? null;
 
         libxml_use_internal_errors(true);
-        $doc = new SimpleXMLElement($xml, LIBXML_NOCDATA);
+        $doc = new SimpleXMLElement($xml, LIBXML_NOCDATA | LIBXML_NONET | LIBXML_COMPACT);
         $doc->registerXPathNamespace('ns', 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2');
         $doc->registerXPathNamespace('ns3', 'http://www.garmin.com/xmlschemas/ActivityExtension/v2');
 
         $activities = $doc->xpath('//ns:Activity') ?: $doc->xpath('//Activity') ?: [];
 
-        foreach ($activities as $act) {
+        foreach (array_slice($activities, 0, 500) as $act) {
             $attrs = $act->attributes();
             $sport = strtolower((string) ($attrs['Sport'] ?? 'other'));
 
@@ -141,7 +142,7 @@ class MiFitnessImportController extends Controller
         $lines = array_filter(explode("\n", trim($csv)));
         $headers = null;
 
-        foreach ($lines as $i => $line) {
+        foreach (array_slice($lines, 0, 1001) as $i => $line) {
             $row = str_getcsv($line);
 
             if ($i === 0) {
