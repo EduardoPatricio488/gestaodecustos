@@ -48,6 +48,7 @@ class BankReserve extends Model
                 $belongsToWorkspace = BankAccount::withoutGlobalScopes()
                     ->whereKey($reserve->bank_account_id)
                     ->where('workspace_id', $reserve->workspace_id)
+                    ->when(Workspace::whereKey($reserve->workspace_id)->value('type') === 'personal', fn ($query) => $query->where('user_id', $reserve->user_id))
                     ->exists();
 
                 if (! $belongsToWorkspace) {
