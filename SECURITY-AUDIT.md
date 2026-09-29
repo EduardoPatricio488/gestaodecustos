@@ -1,6 +1,6 @@
 # Finance Pro AI — Security & Integrity Audit
 
-Date: 2026-09-12
+Date: 2026-09-29
 
 ## Critical/high findings addressed
 
@@ -29,6 +29,19 @@ Date: 2026-09-12
 - Client and supplier portal ticket actions scope ticket lookup through the authenticated portal entity.
 - Store checkout completion uses a database transaction and row locking to reduce double-completion races.
 - CSRF protection remains enabled for normal web requests; Stripe/WhatsApp exceptions are explicitly required by their webhook architecture.
+
+## Hardening completed on 2026-09-29
+
+- Production secrets remain environment configuration; an explicit `.env.production.example` was added without real credentials.
+- Production HTTPS is enforced by middleware; production session cookies default to Secure and HTTP-only, and session payloads are encrypted.
+- Security response headers are applied globally, including HSTS on secure production responses.
+- API/AI endpoints have named rate limits; the existing authentication and verification throttles remain active.
+- Privileged User fields (`is_admin`, `is_active`, `role`, `plan`) are no longer mass assignable; internal plan changes use explicit `forceFill()` writes.
+- Stored user IP addresses are encrypted at rest through Laravel encrypted casting.
+- Fitness file imports validate type/size, disable network access during XML parsing, cap imported records, and no longer return parser exception details to clients.
+- Smartwatch AI input is validated, its response is allowlisted, and the provider key is read through server-side configuration.
+- Composer and npm dependency audits now run automatically on pushes/PRs and weekly through GitHub Actions.
+- Application-level workspace authorization remains mandatory; database row isolation must not be treated as the only security boundary.
 
 ## Remaining attention
 
