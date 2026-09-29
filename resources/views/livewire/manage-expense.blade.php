@@ -247,7 +247,7 @@
 
                         @if ($receipt && !$errors->has('receipt'))
                             <div class="relative inline-block">
-                                <img src="{{ $receipt->temporaryUrl() }}" class="size-44 object-cover rounded-3xl border-4 border-brand-500/50 shadow-2xl">
+                                <img src="{{ $receipt->temporaryUrl() }}" alt="Pré-visualização do comprovativo" class="size-44 object-cover rounded-3xl border-4 border-brand-500/50 shadow-2xl">
                                 <div class="animate-scan-line"></div>
                             </div>
                         @else
