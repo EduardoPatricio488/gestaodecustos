@@ -570,7 +570,7 @@ class IncomeHub extends Component
 
         if ($this->editingFixedId) {
             // ATUALIZAÇÃO
-            RecurringIncome::find($this->editingFixedId)->update($data);
+            RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)->where('user_id', auth()->id())->findOrFail($this->editingFixedId)->update($data);
             $this->dispatch('toast', text: 'Renda atualizada com sucesso! 🏠');
         } else {
             // CRIAÇÃO NOVA
