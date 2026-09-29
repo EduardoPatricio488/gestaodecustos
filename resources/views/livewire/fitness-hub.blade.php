@@ -1041,7 +1041,7 @@
         {{-- Header com Imagem de Fundo --}}
         <div class="relative h-52 bg-orange-600">
             @if($selectedActivity->photo_path)
-                <img src="{{ route('fitness.activity.photo', $selectedActivity->id) }}" class="absolute inset-0 w-full h-full object-cover opacity-40">
+                <img src="{{ route('fitness.activity.photo', $selectedActivity->id) }}" alt="Fotografia da atividade física" class="absolute inset-0 w-full h-full object-cover opacity-40">
             @endif
             <div class="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent"></div>
 
