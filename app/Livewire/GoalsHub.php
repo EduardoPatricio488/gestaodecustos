@@ -56,7 +56,7 @@ class GoalsHub extends Component
         $initialAmount = (float) $this->current_amount;
         $isCreating = $this->editingGoalId === null;
 
-        $goal = Goal::where('workspace_id', $workspaceId)->find($this->editingGoalId);
+        $goal = Goal::where('workspace_id', $workspaceId)->where('user_id', auth()->id())->find($this->editingGoalId);
         if (! $goal) {
             $goal = new Goal();
             $goal->workspace_id = $workspaceId;
@@ -112,7 +112,7 @@ class GoalsHub extends Component
      */
     public function edit(int $id): void
     {
-        $goal = Goal::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+        $goal = Goal::where('workspace_id', auth()->user()->current_workspace_id)->where('user_id', auth()->id())->findOrFail($id);
 
         $this->editingGoalId = $goal->id;
         $this->name = $goal->name;
@@ -157,6 +157,7 @@ class GoalsHub extends Component
         ]);
 
         $goal = Goal::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
             ->findOrFail($this->depositGoalId);
 
         $user = auth()->user();
@@ -211,7 +212,7 @@ class GoalsHub extends Component
         ]);
 
         $workspaceId = auth()->user()->current_workspace_id;
-        $goal = Goal::where('workspace_id', $workspaceId)->findOrFail($this->autoGoalId);
+        $goal = Goal::where('workspace_id', $workspaceId)->where('user_id', auth()->id())->findOrFail($this->autoGoalId);
 
         $user = auth()->user();
 
@@ -273,6 +274,7 @@ class GoalsHub extends Component
         $workspaceId = auth()->user()->current_workspace_id;
         $goalsRaw = Goal::with(['contributions.user'])
             ->where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
             ->orderBy('deadline')
             ->get();
 
