@@ -155,7 +155,7 @@ class TaskHub extends Component
 
     public function updateStatus($id, $newStatus)
     {
-        $task = Task::findOrFail($id);
+        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         $workspace = auth()->user()->currentWorkspace;
 
         if ($newStatus === 'concluida' && $task->is_timer_running) {
@@ -185,7 +185,7 @@ class TaskHub extends Component
 
     public function delete($id)
     {
-        $task = Task::findOrFail($id);
+        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         $title = $task->title;
         $assigneeId = $task->user_id;
 
@@ -202,7 +202,7 @@ class TaskHub extends Component
 
     public function edit($id)
     {
-        $task = Task::findOrFail($id);
+        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         $this->editingId = $task->id;
         $this->title = $task->title;
         $this->description = $task->description;
