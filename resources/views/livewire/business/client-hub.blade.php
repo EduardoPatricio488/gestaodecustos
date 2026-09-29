@@ -93,7 +93,7 @@
             <div class="p-7 flex justify-between items-start">
                 <div class="flex items-center gap-5">
                     <div class="relative">
-                        <img src="{{ $client->avatar_url }}" class="size-16 rounded-[1.5rem] shadow-lg border border-zinc-100 dark:border-zinc-800 object-cover bg-white">
+                        <img src="{{ $client->avatar_url }}" alt="Fotografia de {{ $client->name }}" class="size-16 rounded-[1.5rem] shadow-lg border border-zinc-100 dark:border-zinc-800 object-cover bg-white">
                         <div class="absolute -bottom-1 -right-1 size-5 border-2 border-white dark:border-zinc-900 rounded-full {{ $client->status === 'ativo' ? 'bg-emerald-500' : ($client->status === 'lead' ? 'bg-brand-500' : 'bg-zinc-400') }}"></div>
                     </div>
                     <div class="text-left">
