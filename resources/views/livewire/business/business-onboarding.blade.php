@@ -31,7 +31,7 @@
                 <div class="flex flex-col items-center gap-4">
                     <label class="relative group cursor-pointer">
                         <div class="size-32 rounded-[2.5rem] border-4 border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-all group-hover:border-brand-500/50">
-                            @if($photo)<img src="{{ $photo->temporaryUrl() }}" class="size-full object-cover">@else<flux:icon name="camera" class="size-8 text-zinc-300 group-hover:text-brand-500 transition-colors" />@endif
+                            @if($photo)<img src="{{ $photo->temporaryUrl() }}" alt="Pré-visualização da fotografia de perfil da empresa" class="size-full object-cover">@else<flux:icon name="camera" class="size-8 text-zinc-300 group-hover:text-brand-500 transition-colors" />@endif
                         </div>
                         <input type="file" wire:model="photo" class="hidden">
                     </label>
