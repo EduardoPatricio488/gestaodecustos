@@ -15,13 +15,15 @@ class BackupDatabase extends Command
 
     public function handle(): int
     {
-        if (! app()->environment('production')) {
+        if (!app()->environment('production')) {
             $this->error('Database backups are only enabled in production.');
+
             return self::FAILURE;
         }
 
         if (config('database.default') !== 'mysql') {
             $this->error('The production backup command currently supports MySQL only.');
+
             return self::FAILURE;
         }
 
@@ -30,8 +32,9 @@ class BackupDatabase extends Command
         $secretKey = env('AWS_SECRET_ACCESS_KEY');
         $region = env('AWS_DEFAULT_REGION', 'us-east-1');
 
-        if (! $bucket || ! $accessKey || ! $secretKey) {
+        if (!$bucket || !$accessKey || !$secretKey) {
             $this->error('AWS backup storage is not configured.');
+
             return self::FAILURE;
         }
 
@@ -64,8 +67,9 @@ class BackupDatabase extends Command
         $this->info('A criar backup da base de dados...');
         $dump->run();
 
-        if (! $dump->isSuccessful()) {
+        if (!$dump->isSuccessful()) {
             $this->error('mysqldump falhou: '.$dump->getErrorOutput());
+
             return self::FAILURE;
         }
 
@@ -73,6 +77,7 @@ class BackupDatabase extends Command
 
         if ($compressed === false || file_put_contents($localPath, $compressed) === false) {
             $this->error('Não foi possível criar o ficheiro comprimido.');
+
             return self::FAILURE;
         }
 
@@ -104,13 +109,14 @@ class BackupDatabase extends Command
         $this->info('A enviar backup para armazenamento privado...');
         $upload->run();
 
-        if (! $upload->isSuccessful()) {
+        if (!$upload->isSuccessful()) {
             @unlink($localPath);
             $this->error('Upload do backup falhou: '.$upload->getErrorOutput());
+
             return self::FAILURE;
         }
 
-        if (! $this->option('keep-local')) {
+        if (!$this->option('keep-local')) {
             @unlink($localPath);
         }
 
