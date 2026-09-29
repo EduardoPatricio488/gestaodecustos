@@ -58,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
         Date::use(CarbonImmutable::class);
         DB::prohibitDestructiveCommands(app()->isProduction());
         Model::preventSilentlyDiscardingAttributes(app()->isLocal() || app()->runningUnitTests());
+        Model::preventLazyLoading(app()->isLocal() || app()->runningUnitTests());
         Password::defaults(fn (): ?Password => app()->isProduction() ? Password::min(12)->mixedCase()->letters()->numbers()->symbols()->uncompromised() : null);
     }
 }
