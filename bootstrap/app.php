@@ -14,6 +14,8 @@ use App\Http\Middleware\UpdateUserActivity;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -56,5 +58,31 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->shouldRenderJsonWhen(function (Request $request, \Throwable $e) {
+            return $request->is('api/*') || $request->expectsJson();
+        });
+
+        $exceptions->render(function (\Throwable $e, Request $request) {
+            if (! app()->environment('production')) {
+                return null;
+            }
+
+            $status = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface
+                ? $e->getStatusCode()
+                : Response::HTTP_INTERNAL_SERVER_ERROR;
+
+            if ($status >= 500) {
+                return $request->expectsJson()
+                    ? response()->json(['message' => 'Ocorreu um erro interno. Tenta novamente mais tarde.'], 500)
+                    : response()->view('errors.500', [], 500);
+            }
+
+            if ($status === 429) {
+                return $request->expectsJson()
+                    ? response()->json(['message' => 'Demasiados pedidos. Tenta novamente mais tarde.'], 429)
+                    : response()->view('errors.429', [], 429);
+            }
+
+            return null;
+        });
     })->create();
