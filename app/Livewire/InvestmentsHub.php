@@ -181,7 +181,7 @@ class InvestmentsHub extends Component
             'Content-Type' => 'application/json',
             'HTTP-Referer' => config('app.url'),
             'X-Title' => config('app.name'),
-        ])->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', [
+        ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))->timeout((int) config('limits.ai.request_timeout_seconds', 30))->post('https://openrouter.ai/api/v1/chat/completions', [
             'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
             'messages' => [
                 ['role' => 'system', 'content' => 'És um analista financeiro. Regra absoluta: nunca inventes dados. Só podes afirmar métricas presentes nos dados verificados fornecidos pela aplicação.'],
