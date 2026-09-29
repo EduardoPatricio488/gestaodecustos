@@ -508,6 +508,7 @@ class BancoHub extends Component
     public function deleteAccount(int $id): void
     {
         BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Conta eliminada.');
     }
