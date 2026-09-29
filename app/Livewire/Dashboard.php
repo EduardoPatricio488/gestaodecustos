@@ -358,7 +358,7 @@ class Dashboard extends Component
         return Cache::flexible(
             "dashboard:ai-insights:{$currentWs->id}:{$user->id}:".now()->format('Y-m'),
             [300, 1800],
-            function () use ($currentWs) {
+            function () use ($currentWs, $user) {
                 $insights = [];
                 try {
                     $indices = Http::connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^GSPC,^IXIC,^GDAXI,^FCHI,^FTSE'])->json()['quoteResponse']['result'];
@@ -396,7 +396,7 @@ class Dashboard extends Component
                 } catch (\Exception $e) {
                 }
                 try {
-                    $fx = Http::connectTimeout(1)->timeout(2)->get('https://api.exchangerate.host/latest?base=EUR')->json();
+                    $fx = Http::connectTimeout(1)->timeout(1)->get('https://api.exchangerate.host/latest?base=EUR')->json();
                     $insights[] = 'FX: EUR/JPY '.number_format($fx['rates']['JPY'], 2);
                     $insights[] = 'FX: EUR/CHF '.number_format($fx['rates']['CHF'], 3);
                     $insights[] = 'FX: EUR/AUD '.number_format($fx['rates']['AUD'], 3);
@@ -430,9 +430,6 @@ class Dashboard extends Component
                 }
                 $earned = Income::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('received_at', [$monthStart, $monthEnd])->sum('amount');
                 $spent = Expense::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('spent_at', [$monthStart, $monthEnd])->sum('amount');
-                $net = $earned - $spent;
-                $insights[] = 'FINANÇAS: Recebido '.number_format($earned, 0, ',', ' ').'€ • Gasto '.number_format($spent, 0, ',', ' ').'€';
-                $insights[] = 'FINANÇAS: Balanço '.($net > 0 ? '+' : '').number_format($net, 0, ',', ' ').'€';
                 if ($spent > $earned) {
                     $insights[] = 'ALERTA: Gastos superiores às receitas.';
                 }
@@ -524,10 +521,10 @@ class Dashboard extends Component
 
         $fixedIncome = (float) Cache::remember(
             "dashboard:fixed-income:{$currentWs->id}:{$user->id}", 60,
-            fn () => $user->recurringIncomes()->where('workspace_id', $currentWs->id)->where('is_active', true)->sum('amount')
+            fn () => $user->recurringIncomes()->where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->where('is_active', true)->sum('amount')
         );
 
-        $monthTotals = Cache::remember("dashboard:month-totals:{$currentWs->id}:{$user->id}:{$monthStart->toDateString()}", 60, function () use ($currentWs, $monthStart, $monthEnd) {
+        $monthTotals = Cache::remember("dashboard:month-totals:{$currentWs->id}:{$user->id}:{$monthStart->toDateString()}", 60, function () use ($currentWs, $monthStart, $monthEnd, $user) {
             return [
                 'expenses' => (float) Expense::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('spent_at', [$monthStart, $monthEnd])->sum('amount'),
                 'income' => (float) Income::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('received_at', [$monthStart, $monthEnd])->sum('amount'),
@@ -598,8 +595,15 @@ class Dashboard extends Component
             ->sortByDesc('balance')->take(3)->values()->all()
         );
 
-        $topExpenseCategory = Cache::remember("dashboard:top-category:{$currentWs->id}:{$user->id}:{$monthStart->toDateString()}", 60, function () use ($currentWs, $monthStart, $monthEnd) {
-            $row = Expense::where('workspace_id', $currentWs->id)->whereBetween('spent_at', [$monthStart, $monthEnd])->select('category_id', DB::raw('SUM(amount) as total'))->groupBy('category_id')->orderByDesc('total')->with('category:id,name,icon,color')->first();
+        $topExpenseCategory = Cache::remember("dashboard:top-category:{$currentWs->id}:{$user->id}:{$monthStart->toDateString()}", 60, function () use ($currentWs, $monthStart, $monthEnd, $user) {
+            $row = Expense::where('workspace_id', $currentWs->id)
+                ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                ->whereBetween('spent_at', [$monthStart, $monthEnd])
+                ->select('category_id', DB::raw('SUM(amount) as total'))
+                ->groupBy('category_id')
+                ->orderByDesc('total')
+                ->with('category:id,name,icon,color')
+                ->first();
             if (! $row || ! $row->category) {
                 return null;
             }
@@ -613,11 +617,11 @@ class Dashboard extends Component
 
         $prevMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
         $prevMonthEnd = $prevMonthStart->copy()->endOfMonth();
-        $prevMonthTotals = Cache::remember("dashboard:month-totals:{$currentWs->id}:{$user->id}:{$prevMonthStart->toDateString()}", 60, function () use ($currentWs, $prevMonthStart, $prevMonthEnd) {
+        $prevMonthTotals = Cache::remember("dashboard:month-totals:{$currentWs->id}:{$user->id}:{$prevMonthStart->toDateString()}", 60, function () use ($currentWs, $prevMonthStart, $prevMonthEnd, $user) {
             return [
-                'expenses' => (float) Expense::where('workspace_id', $currentWs->id)->whereBetween('spent_at', [$prevMonthStart, $prevMonthEnd])->sum('amount'),
-                'income' => (float) Income::where('workspace_id', $currentWs->id)->whereBetween('received_at', [$prevMonthStart, $prevMonthEnd])->sum('amount'),
-                'budget' => (float) Category::where('workspace_id', $currentWs->id)->sum('budget_limit'),
+                'expenses' => (float) Expense::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('spent_at', [$prevMonthStart, $prevMonthEnd])->sum('amount'),
+                'income' => (float) Income::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('received_at', [$prevMonthStart, $prevMonthEnd])->sum('amount'),
+                'budget' => (float) Category::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->sum('budget_limit'),
             ];
         });
         $prevOverallScore = $this->calculateScore($prevMonthTotals['expenses'], $prevMonthTotals['income'] + $fixedIncome, $prevMonthTotals['budget']);
@@ -664,11 +668,16 @@ class Dashboard extends Component
 
     private function buildSixMonthSeries(int $workspaceId, $start, $end, float $fixedIncome): Collection
     {
+        $user = auth()->user();
+        $workspace = $user?->currentWorkspace;
+        $isPersonal = $workspace?->id === $workspaceId && $workspace?->type === 'personal';
+
         $driver = DB::connection()->getDriverName();
         $expenseMonth = $driver === 'sqlite' ? "strftime('%Y-%m', spent_at)" : "DATE_FORMAT(spent_at, '%Y-%m')";
         $incomeMonth = $driver === 'sqlite' ? "strftime('%Y-%m', received_at)" : "DATE_FORMAT(received_at, '%Y-%m')";
 
         $expenses = Expense::where('workspace_id', $workspaceId)
+            ->when($isPersonal, fn ($q) => $q->where('user_id', $user->id))
             ->whereBetween('spent_at', [$start, $end])
             ->selectRaw("{$expenseMonth} as month, SUM(amount) as total")
             ->groupBy('month')
@@ -676,6 +685,7 @@ class Dashboard extends Component
             ->map(fn ($value) => (float) $value);
 
         $incomes = Income::where('workspace_id', $workspaceId)
+            ->when($isPersonal, fn ($q) => $q->where('user_id', $user->id))
             ->whereBetween('received_at', [$start, $end])
             ->selectRaw("{$incomeMonth} as month, SUM(amount) as total")
             ->groupBy('month')
@@ -698,7 +708,7 @@ class Dashboard extends Component
     {
         $user = auth()->user();
         $isPersonal = $user?->currentWorkspace?->id === $workspaceId && $user->currentWorkspace?->type === 'personal';
-        return Category::query()->when($isPersonal, fn ($q) => $q->where('categories.user_id', $user->id))->leftJoin('expenses', function ($join) use ($workspaceId, $monthStart, $monthEnd) {
+        return Category::query()->when($isPersonal, fn ($q) => $q->where('categories.user_id', $user->id))->leftJoin('expenses', function ($join) use ($workspaceId, $monthStart, $monthEnd, $isPersonal, $user) {
             $join->on('expenses.category_id', '=', 'categories.id')->where('expenses.workspace_id', '=', $workspaceId)->when($isPersonal, fn ($q) => $q->where('expenses.user_id', $user->id))->whereBetween('expenses.spent_at', [$monthStart, $monthEnd]);
         })->where('categories.workspace_id', $workspaceId)->when($isPersonal, fn ($q) => $q->where('categories.user_id', $user->id))->where('categories.budget_limit', '>', 0)->groupBy('categories.id', 'categories.name', 'categories.budget_limit')->orderByDesc(DB::raw('COALESCE(SUM(expenses.amount), 0)'))->get(['categories.name', 'categories.budget_limit', DB::raw('COALESCE(SUM(expenses.amount), 0) as total')])->map(function ($cat) {
             $spent = (float) $cat->total;
