@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasColumn('users', 'last_ip')) {
-            Schema::table('users', function (Blueprint $table) {
+            Schema::table('users', function (Blueprint $table): void {
                 $table->text('last_ip')->nullable()->change();
             });
         }
