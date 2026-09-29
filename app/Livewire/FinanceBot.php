@@ -495,7 +495,7 @@ COMO AGIR:
 
             $finalReply = null;
 
-            for ($i = 0; $i < 6 && $finalReply === null; $i++) {
+            for ($i = 0; $i < 3 && $finalReply === null; $i++) {
                 $response = Http::withHeaders([
                     'Authorization' => 'Bearer '.$apiKey,
                     'Content-Type' => 'application/json',
@@ -513,7 +513,6 @@ COMO AGIR:
                     Log::error('FinanceBot: erro na API OpenRouter', [
                         'status' => $response->status(),
                         'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
-                        'body' => $response->json() ?: $response->body(),
                     ]);
                     $this->messages[] = $this->botMessage('Estou com soluços técnicos. Tenta de novo.');
 
