@@ -104,7 +104,7 @@
 
                         <flux:menu class="w-48">
                             @if($doc->file_path)
-                                <flux:menu.item href="{{ Storage::url($doc->file_path) }}" target="_blank" icon="eye">
+                                <flux:menu.item wire:click="download({{ $doc->id }})" icon="arrow-down-tray">
                                     Visualizar
                                 </flux:menu.item>
                                 <flux:menu.item href="{{ Storage::url($doc->file_path) }}" download icon="arrow-down-tray">
