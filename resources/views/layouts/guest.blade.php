@@ -64,6 +64,7 @@
             </p>
         </div>
     </div>
+    @include('partials.cookie-consent')
     @livewireScripts
     @fluxScripts
 </body>
