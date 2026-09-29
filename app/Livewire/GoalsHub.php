@@ -56,17 +56,20 @@ class GoalsHub extends Component
         $initialAmount = (float) $this->current_amount;
         $isCreating = $this->editingGoalId === null;
 
-        $goal = Goal::updateOrCreate(
-            ['id' => $this->editingGoalId],
+        $goal = Goal::where('workspace_id', $workspaceId)->find($this->editingGoalId);
+        if (! $goal) {
+            $goal = new Goal();
+            $goal->workspace_id = $workspaceId;
+        }
+        $goal->fill([
             [
                 'user_id' => auth()->id(),
-                'workspace_id' => $workspaceId,
                 'name' => $this->name,
                 'target_amount' => (float) $this->target_amount,
                 'current_amount' => (float) $this->current_amount,
                 'deadline' => $this->deadline ?: null,
-            ]
-        );
+            ]);
+        $goal->save();
 
         $user = auth()->user();
 
