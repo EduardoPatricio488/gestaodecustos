@@ -107,7 +107,7 @@ class RemindersHub extends Component
         ];
 
         if ($this->editingReminderId) {
-            Reminder::find($this->editingReminderId)->update($data);
+            Reminder::where('user_id', auth()->id())->findOrFail($this->editingReminderId)->update($data);
             $this->dispatch('toast', text: 'Lembrete atualizado! ⚡');
         } else {
             Reminder::create($data);
@@ -124,7 +124,7 @@ class RemindersHub extends Component
      */
     public function toggleComplete($id)
     {
-        $reminder = Reminder::findOrFail($id);
+        $reminder = Reminder::where('user_id', auth()->id())->findOrFail($id);
         $reminder->update([
             'is_completed' => ! $reminder->is_completed,
             'completed_at' => ! $reminder->is_completed ? now() : null,
@@ -151,7 +151,7 @@ class RemindersHub extends Component
     {
         $this->resetForm();
         if ($id) {
-            $reminder = Reminder::find($id);
+            $reminder = Reminder::where('user_id', auth()->id())->find($id);
             $this->editingReminderId = $id;
             $this->title = $reminder->title;
             $this->remind_at = $reminder->remind_at->format('Y-m-d\TH:i');
