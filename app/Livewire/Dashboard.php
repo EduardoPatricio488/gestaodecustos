@@ -576,7 +576,7 @@ class Dashboard extends Component
         $totalBankBalance = (float) Cache::remember("dashboard:bank-balance:{$currentWs->id}:{$user->id}", 60, function () use ($currentWs, $user): float {
             $baseBalance = (float) BankAccount::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->where('include_in_total', true)->sum('balance');
             $incomeBalance = (float) Income::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereNotNull('bank_account_id')->sum('amount');
-            $expenseBalance = (float) Expense::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereNotNull('bank_account_id'->sum('amount');
+            $expenseBalance = (float) Expense::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereNotNull('bank_account_id')->sum('amount');
 
             return $baseBalance + $incomeBalance - $expenseBalance;
         });
