@@ -66,6 +66,8 @@ class Incomes extends Component
 
         // 1. Receitas pontuais/registadas (tabela incomes)
         $incomeItems = Income::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('user_id', $user->id)
             ->when($this->search, fn ($q) => $q->where('description', 'like', '%'.$this->search.'%'))
             ->when($this->filterSource, fn ($q) => $q->where('source', $this->filterSource))
             ->get()
@@ -85,6 +87,7 @@ class Incomes extends Component
         // 2. Rendimentos fixos/recorrentes ativos (tabela recurring_incomes) — contam como
         // registos também, só que representam o rendimento esperado este mês.
         $recurringItems = RecurringIncome::where('workspace_id', $workspaceId)
+            ->where('user_id', $user->id)
             ->where('is_active', true)
             ->when($this->search, fn ($q) => $q->where('description', 'like', '%'.$this->search.'%'))
             ->when($this->filterSource, fn ($q) => $q->where('source', $this->filterSource))
@@ -118,7 +121,7 @@ class Incomes extends Component
             ['path' => request()->url(), 'query' => request()->query()]
         );
 
-        $monthTotal = (float) Income::where('received_at', '>=', now()->startOfMonth())->sum('amount')
+        $monthTotal = (float) Income::where('workspace_id', $workspaceId)->where('user_id', $user->id)->where('received_at', '>=', now()->startOfMonth())->sum('amount')
             + (float) RecurringIncome::where('workspace_id', $workspaceId)->where('is_active', true)->sum('amount');
 
         return view('livewire.incomes', [
