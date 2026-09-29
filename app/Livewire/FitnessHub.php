@@ -270,7 +270,7 @@ class FitnessHub extends Component
             $prompt = "És um especialista em wearables. O utilizador tem o dispositivo: \"{$this->searchDevice}\". Devolve APENAS um JSON: {\"name\":\"...\",\"brand\":\"...\",\"emoji\":\"...\",\"battery\":\"...\",\"gps\":true,\"health_metrics\":[],\"sports\":[],\"apps\":[],\"api_available\":true,\"integration_tip\":\"...\"}";
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.env('OPENROUTER_API_KEY'),
+                'Authorization' => 'Bearer '.config('services.openrouter.api_key'),
             ])->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => 'google/gemini-2.0-flash-lite-001', // ou o modelo que preferires
                 'max_tokens' => 1000,
@@ -312,7 +312,7 @@ class FitnessHub extends Component
         }';
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.env('OPENROUTER_API_KEY'),
+                'Authorization' => 'Bearer '.config('services.openrouter.api_key'),
                 'Content-Type' => 'application/json',
             ])->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => 'google/gemini-2.5-flash', // Mantido conforme o seu código
