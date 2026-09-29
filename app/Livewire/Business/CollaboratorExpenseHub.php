@@ -67,7 +67,8 @@ class CollaboratorExpenseHub extends Component
 
     public function edit($id)
     {
-        $expense = Expense::where('user_id', auth()->id())
+        $expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
             ->whereRaw('LOWER(status) = ?', ['pendente'])
             ->findOrFail($id);
 
@@ -141,9 +142,13 @@ class CollaboratorExpenseHub extends Component
 
     public function delete($id)
     {
-        $expense = Expense::where('user_id', auth()->id())
+        $expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
             ->whereRaw('LOWER(status) = ?', ['pendente'])
             ->findOrFail($id);
+        if ($expense->receipt_path) {
+            Storage::disk('local')->delete($expense->receipt_path);
+        }
         $expense->delete();
         $this->dispatch('toast', text: 'Registo removido.', variant: 'warning');
     }
