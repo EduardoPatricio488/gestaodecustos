@@ -1,5 +1,6 @@
 <x-guest-layout>
-<div class="max-w-4xl mx-auto py-16 px-6"><h1 class="text-3xl font-black dark:text-white">Termos e Condições</h1><p class="mt-3 text-zinc-500">Última atualização: 29/09/2026</p><div class="prose dark:prose-invert mt-10">
+<div class="max-w-4xl mx-auto py-16 px-6">
+@include('partials.breadcrumbs', ['breadcrumbs' => [['label' => 'Início', 'url' => route('home')], ['label' => 'Termos e Condições']]])<h1 class="text-3xl font-black dark:text-white">Termos e Condições</h1><p class="mt-3 text-zinc-500">Última atualização: 29/09/2026</p><div class="prose dark:prose-invert mt-10">
 <h2>1. Objeto</h2><p>O Finance Pro AI é uma plataforma SaaS de gestão financeira pessoal e empresarial.</p>
 <h2>2. Conta</h2><p>O utilizador deve fornecer informação verdadeira, manter as credenciais seguras e utilizar o serviço de forma lícita.</p>
 <h2>3. Planos e pagamentos</h2><p>Preços, funcionalidades e períodos de faturação são apresentados antes da contratação. Os pagamentos podem ser processados por prestadores externos.</p>
