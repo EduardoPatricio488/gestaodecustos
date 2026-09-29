@@ -108,9 +108,10 @@
 <meta name="twitter:description" content="{{ $seoDescription }}">
 <meta name="twitter:image" content="{{ $seoImage }}">
 
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="alternate icon" href="/icon-192x192.png" type="image/png">
-<link rel="apple-touch-icon" href="/icon-192x192.png">
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=20260929">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ asset('icon-192x192.png') }}?v=20260929">
+<link rel="shortcut icon" href="{{ asset('favicon.svg') }}?v=20260929">
+<link rel="apple-touch-icon" href="{{ asset('icon-192x192.png') }}?v=20260929">
 
 <script type="application/ld+json">{!! json_encode($schemaMarkup, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}</script>
 
