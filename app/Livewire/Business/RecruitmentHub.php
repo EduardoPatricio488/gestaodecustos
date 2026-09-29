@@ -80,6 +80,7 @@ class RecruitmentHub extends Component
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
         abort_unless($app && $app->cv_path && Storage::disk('local')->exists($app->cv_path), 404);
+
         return Storage::disk('local')->download($app->cv_path, 'CV-candidato.pdf');
     }
 
