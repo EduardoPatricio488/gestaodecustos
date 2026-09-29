@@ -310,7 +310,7 @@
 
                 @if($mediaFile)
                     <div class="relative rounded-xl overflow-hidden border border-black/5 fc-anim-in">
-                        <img src="{{ $mediaFile->temporaryUrl() }}" class="w-full max-h-64 object-cover">
+                        <img src="{{ $mediaFile->temporaryUrl() }}" alt="Pré-visualização da imagem da publicação" class="w-full max-h-64 object-cover">
                         <button type="button" wire:click="$set('mediaFile', null)"
                             class="absolute top-2 right-2 size-7 bg-black/60 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors">
                             <flux:icon name="x-mark" class="size-3.5 text-white" />
