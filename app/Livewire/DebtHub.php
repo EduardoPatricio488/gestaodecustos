@@ -242,6 +242,7 @@ class DebtHub extends Component
             ->map(fn ($d) => $this->decorateDebt($d));
 
         $theyOweMe = Debt::where('workspace_id', $wsId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
             ->where('type', 'owed')
             ->where('is_paid', false)
             ->orderBy('due_at', 'asc')
@@ -249,6 +250,7 @@ class DebtHub extends Component
             ->map(fn ($d) => $this->decorateDebt($d));
 
         $history = Debt::where('workspace_id', $wsId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
             ->where('user_id', auth()->id())
             ->where('is_paid', true)
             ->latest('updated_at')
