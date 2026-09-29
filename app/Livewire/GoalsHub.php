@@ -130,6 +130,7 @@ class GoalsHub extends Component
     public function delete(int $id): void
     {
         Goal::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
             ->findOrFail($id)
             ->delete();
 
