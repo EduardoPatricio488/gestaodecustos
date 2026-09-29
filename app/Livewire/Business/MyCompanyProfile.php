@@ -32,6 +32,7 @@ class MyCompanyProfile extends Component
         $doc = DB::table('business_documents')
             ->where('id', $id)
             ->where('user_id', Auth::id())
+            ->where('workspace_id', Auth::user()->current_workspace_id)
             ->first();
 
         if ($doc && Storage::disk('local')->exists($doc->file_path)) {
