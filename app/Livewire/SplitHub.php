@@ -123,9 +123,21 @@ class SplitHub extends Component
         }
 
         $ws = auth()->user()->currentWorkspace;
+        abort_unless($ws, 403);
 
-        $split = ExpenseSplit::updateOrCreate(
-            ['id' => $this->editingId],
+        $selectedUserIds = array_values(array_unique(array_map('intval', $this->selectedUsers)));
+        abort_unless(
+            collect($selectedUserIds)->every(fn ($uid) => $ws->users()->whereKey($uid)->exists()),
+            422,
+            'Utilizador inválido para este espaço.'
+        );
+        if ($this->categoryId) {
+            abort_unless(Category::where('workspace_id', $ws->id)->whereKey($this->categoryId)->exists(), 422, 'Categoria inválida.');
+        }
+
+        $split = $this->editingId
+            ? ExpenseSplit::where('workspace_id', $ws->id)->where('creator_user_id', auth()->id())->findOrFail($this->editingId)
+            : new ExpenseSplit();
             [
                 'creator_user_id' => auth()->id(),
                 'workspace_id' => $ws->id,
@@ -137,6 +149,7 @@ class SplitHub extends Component
                 'notes' => $this->notes,
             ]
         );
+        $split->save();
 
         // Rebuild participants
         $split->participants()->delete();
@@ -162,7 +175,8 @@ class SplitHub extends Component
 
     public function togglePaid(int $participantId): void
     {
-        $p = ExpenseSplitParticipant::findOrFail($participantId);
+        $p = ExpenseSplitParticipant::whereHas('split', fn ($q) => $q->where('workspace_id', auth()->user()->current_workspace_id))
+            ->findOrFail($participantId);
 
         // Only the split creator or the participant themselves can mark as paid
         $split = $p->split;
