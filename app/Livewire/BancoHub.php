@@ -244,6 +244,7 @@ class BancoHub extends Component
 
         if ($id) {
             $reserve = BankReserve::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                 ->findOrFail($id);
 
             $this->editingId = $reserve->id;
@@ -267,6 +268,7 @@ class BancoHub extends Component
 
         if ($id) {
             $item = BankTransitItem::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                 ->findOrFail($id);
 
             $this->editingId = $item->id;
@@ -291,6 +293,7 @@ class BancoHub extends Component
 
         if ($id) {
             $credit = BankCredit::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                 ->findOrFail($id);
 
             $this->editingId = $credit->id;
@@ -312,6 +315,7 @@ class BancoHub extends Component
 
         if ($id) {
             $pat = BankPatrimony::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                 ->findOrFail($id);
 
             $this->editingId = $pat->id;
@@ -338,8 +342,12 @@ class BancoHub extends Component
 
         if ($this->modalType === 'transfer') {
             abort_unless(
-                BankAccount::where('workspace_id', $wsId)->whereKey($this->tr_from_id)->exists()
-                && BankAccount::where('workspace_id', $wsId)->whereKey($this->tr_to_id)->exists(),
+                BankAccount::where('workspace_id', $wsId)
+                    ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                    ->whereKey($this->tr_from_id)->exists()
+                && BankAccount::where('workspace_id', $wsId)
+                    ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                    ->whereKey($this->tr_to_id)->exists(),
                 422,
                 'Conta bancária inválida.'
             );
@@ -507,6 +515,7 @@ class BancoHub extends Component
     public function deleteReserve(int $id): void
     {
         BankReserve::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Reserva eliminada.');
     }
@@ -514,6 +523,7 @@ class BancoHub extends Component
     public function deleteTransitItem(int $id): void
     {
         BankTransitItem::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Registo em trânsito eliminado.');
     }
@@ -521,6 +531,7 @@ class BancoHub extends Component
     public function deleteCredit(int $id): void
     {
         BankCredit::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Crédito eliminado.');
     }
@@ -528,6 +539,7 @@ class BancoHub extends Component
     public function deletePatrimony(int $id): void
     {
         BankPatrimony::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Ativo eliminado.');
     }
@@ -535,6 +547,7 @@ class BancoHub extends Component
     public function confirmTransitItem(int $id): void
     {
         BankTransitItem::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->findOrFail($id)->update([
                 'status' => 'confirmed',
                 'confirmed_date' => now()->toDateString(),
@@ -545,6 +558,7 @@ class BancoHub extends Component
     public function markCreditReceived(int $id): void
     {
         $credit = BankCredit::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->findOrFail($id);
         $credit->update([
             'status' => 'received',
