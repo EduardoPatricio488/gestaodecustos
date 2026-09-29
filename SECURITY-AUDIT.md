@@ -43,6 +43,12 @@ Date: 2026-09-29
 - Composer and npm dependency audits now run automatically on pushes/PRs and weekly through GitHub Actions.
 - Application-level workspace authorization remains mandatory; database row isolation must not be treated as the only security boundary.
 
+## Backups and disaster recovery
+
+The application cannot create a durable production backup by itself because the deployment filesystem is not a suitable backup target. For Render, configure a dedicated Cron Job that runs `mysqldump` for MySQL and sends the compressed dump to durable off-site object storage (S3/R2/GCS). Render documents Cron Jobs for scheduled tasks and recommends database-native backup tools such as `mysqldump` rather than relying on disk snapshots for custom MySQL databases. citeturn2search0turn2search1
+
+The repository now documents the application-side hardening, but the final backup step requires the production database/storage credentials in Render. No credentials are stored in Git.
+
 ## Remaining attention
 
 - Portal tokens are still stored as reversible plaintext values for compatibility with the existing token-in-URL architecture. A future migration can introduce `portal_token_hash` and one-way lookup/rotation if required.
