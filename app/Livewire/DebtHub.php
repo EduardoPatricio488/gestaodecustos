@@ -69,8 +69,9 @@ class DebtHub extends Component
 
         $workspaceId = auth()->user()->current_workspace_id;
 
-        Debt::updateOrCreate(
-            ['id' => $this->editingId],
+        $debt = $this->editingId
+            ? Debt::where('workspace_id', $workspaceId)->findOrFail($this->editingId)
+            : new Debt();
             [
                 'user_id' => auth()->id(),
                 'workspace_id' => $workspaceId,
@@ -80,8 +81,8 @@ class DebtHub extends Component
                 'description' => $this->description,
                 'due_at' => $this->due_at ?: null,
                 'is_paid' => false,
-            ]
-        );
+            ]);
+        $debt->save();
 
         $user = auth()->user();
 
@@ -192,10 +193,10 @@ class DebtHub extends Component
 
         // Reabrir: remove a despesa/receita que tinha sido lançada
         if ($debt->expense_id) {
-            Expense::where('id', $debt->expense_id)->delete();
+            Expense::where('workspace_id', $debt->workspace_id)->whereKey($debt->expense_id)->delete();
         }
         if ($debt->income_id) {
-            Income::where('id', $debt->income_id)->delete();
+            Income::where('workspace_id', $debt->workspace_id)->whereKey($debt->income_id)->delete();
         }
 
         $debt->update(['is_paid' => false, 'expense_id' => null, 'income_id' => null]);
