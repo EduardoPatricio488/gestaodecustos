@@ -10,7 +10,10 @@ class SmartwatchController extends Controller
 {
     public function info(Request $request)
     {
-        $device = trim($request->input('device', ''));
+        $validated = $request->validate([
+            'device' => ['required', 'string', 'max:120'],
+        ]);
+        $device = trim($validated['device']);
         if (! $device) {
             return response()->json(['error' => 'Nome do dispositivo em falta.'], 400);
         }
@@ -35,7 +38,7 @@ Estrutura:
 }";
 
         try {
-            $apiKey = env('OPENROUTER_API_KEY');
+            $apiKey = config('services.openrouter.api_key');
 
             // USANDO O MESMO MODELO E HEADERS QUE FUNCIONAM NO TEU AI-INSIGHTS
             $response = Http::withHeaders([
@@ -67,7 +70,13 @@ Estrutura:
                     return response()->json(['error' => 'A IA não enviou dados num formato legível.'], 500);
                 }
 
-                return response()->json($data);
+                $allowedKeys = [
+                    'name', 'brand', 'emoji', 'year', 'battery', 'gps', 'nfc',
+                    'display', 'water', 'materials', 'health_metrics', 'sensors',
+                    'sports', 'integration_tip', 'pros', 'cons', 'coach_advice',
+                ];
+
+                return response()->json(array_intersect_key($data, array_flip($allowedKeys)));
             } else {
                 Log::error('OpenRouter Error: '.$response->body());
 
