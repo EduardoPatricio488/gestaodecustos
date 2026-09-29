@@ -33,8 +33,18 @@ class Expense extends Model
             if ($amount <= 0 || $vat < 0 || $vat > $amount || $paid < 0 || $paid > $amount + 0.01) {
                 throw new DomainException('Os valores da despesa são inválidos.');
             }
-            if ($expense->category_id && (int) Category::withoutGlobalScopes()->whereKey($expense->category_id)->value('workspace_id') !== (int) $expense->workspace_id) {
-                throw new DomainException('A categoria selecionada não pertence à empresa.');
+            if ($expense->category_id) {
+                $categoryQuery = Category::withoutGlobalScopes()
+                    ->whereKey($expense->category_id)
+                    ->where('workspace_id', $expense->workspace_id);
+
+                if (Workspace::whereKey($expense->workspace_id)->value('type') === 'personal') {
+                    $categoryQuery->where('user_id', $expense->user_id);
+                }
+
+                if (! $categoryQuery->exists()) {
+                    throw new DomainException('A categoria selecionada não pertence ao utilizador ou à empresa.');
+                }
             }
             if ($expense->supplier_id && (int) Supplier::withoutGlobalScopes()->whereKey($expense->supplier_id)->value('workspace_id') !== (int) $expense->workspace_id) {
                 throw new DomainException('O fornecedor selecionado não pertence à empresa.');
