@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -107,6 +108,13 @@ class TeamHub extends Component
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    public function downloadEmployeeCv($employeeId)
+    {
+        $employee = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($employeeId);
+        abort_unless($employee->cv_path && Storage::disk('local')->exists($employee->cv_path), 404);
+        return Storage::disk('local')->download($employee->cv_path, 'CV-'.$employee->name.'.pdf');
     }
 
     public function viewDocuments($employeeId)
