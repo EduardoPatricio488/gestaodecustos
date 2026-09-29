@@ -7,6 +7,7 @@ use App\Models\Expense;
 use App\Models\Project;
 use App\Models\Task;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -111,7 +112,7 @@ class CollaboratorExpenseHub extends Component
         ];
 
         if ($this->receipt) {
-            $data['receipt_path'] = $this->receipt->store('receipts', 'public');
+            $data['receipt_path'] = $this->receipt->store('receipts', 'local');
         }
 
         if ($this->editingId) {
@@ -127,6 +128,15 @@ class CollaboratorExpenseHub extends Component
         $this->dispatch('modal-close', name: 'expense-modal');
         $this->dispatch('toast', text: $this->editingId ? 'Gasto atualizado!' : 'Gasto submetido!');
         $this->resetForm();
+    }
+
+    public function downloadReceipt($id)
+    {
+        $expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->findOrFail($id);
+        abort_unless($expense->receipt_path && Storage::disk('local')->exists($expense->receipt_path), 404);
+        return Storage::disk('local')->download($expense->receipt_path, basename($expense->receipt_path));
     }
 
     public function delete($id)
