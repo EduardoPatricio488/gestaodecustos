@@ -1018,8 +1018,7 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <a href="{{ asset('storage/' . $selectedEmployee->cv_path) }}"
-                           target="_blank"
+                        <a wire:click="downloadEmployeeCv({{ $selectedEmployee->id }})"
                            class="inline-flex items-center justify-center size-8 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-brand-600 hover:bg-brand-600 hover:text-white transition-all shadow-sm">
                             <flux:icon name="cloud-arrow-down" variant="micro" class="size-4" />
                         </a>
