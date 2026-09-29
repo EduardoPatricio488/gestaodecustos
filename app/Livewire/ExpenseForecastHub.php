@@ -98,6 +98,7 @@ class ExpenseForecastHub extends Component
         $end = now()->copy()->startOfMonth();
 
         $expenses = Expense::where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
             ->where('is_company', false)
             ->where('spent_at', '>=', $start)
             ->where('spent_at', '<', $end)
@@ -114,6 +115,7 @@ class ExpenseForecastHub extends Component
         }
 
         $subscriptionsByCategory = Subscription::where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
             ->get(['category_id', 'amount', 'cycle', 'status', 'is_active'])
             ->filter(fn ($sub) => ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')
             ->groupBy('category_id')
