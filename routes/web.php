@@ -204,12 +204,11 @@ Route::middleware('auth')->group(function () {
         $user = Auth::user();
 
         if ($user->verification_code_expires_at && now()->greaterThan($user->verification_code_expires_at)) {
-            $user->update([
-                'verification_code' => null,
+            $user->forceFill([
                 'verification_code_hash' => null,
                 'verification_code_expires_at' => null,
                 'verification_code_attempts' => 0,
-            ]);
+            ])->save();
 
             return back()->withErrors(['code' => 'O código expirou. Solicita um novo código.']);
         }
@@ -223,12 +222,11 @@ Route::middleware('auth')->group(function () {
 
         if ($valid) {
             $user->markEmailAsVerified();
-            $user->update([
-                'verification_code' => null,
+            $user->forceFill([
                 'verification_code_hash' => null,
                 'verification_code_expires_at' => null,
                 'verification_code_attempts' => 0,
-            ]);
+            ])->save();
 
             return redirect()->route('dashboard')->with('ok', 'Conta ativada!');
         }
