@@ -8,6 +8,7 @@ use App\Models\Expense;
 use App\Services\CurrencyService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -92,7 +93,9 @@ class ManageExpense extends Component
         $this->previousUrl = url()->previous();
 
         if ($expense && $expense->exists) {
-            $this->expense = $expense;
+            $this->expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)
+                ->where('user_id', auth()->id())
+                ->findOrFail($expense->id);
             $this->amount = $expense->amount;
             $this->spent_at = Carbon::parse((string) $expense->spent_at)->format('Y-m-d');
             $this->category_id = $expense->category_id;
@@ -237,8 +240,10 @@ PROMPT;
             'amount' => 'required|numeric|min:0.01',
             'currency' => 'required|string|size:3',
             'spent_at' => 'required|date',
-            'category_id' => 'required',
+            'category_id' => 'required|integer',
         ]);
+
+        abort_unless(Category::where('workspace_id', auth()->user()->current_workspace_id)->whereKey($this->category_id)->exists(), 422, 'Categoria inválida.');
 
         if ($this->bankAccountId) {
             $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
@@ -272,7 +277,7 @@ PROMPT;
         ];
 
         if ($this->receipt) {
-            $data['receipt_path'] = $this->receipt->store('receipts', 'public');
+            $data['receipt_path'] = $this->receipt->store('receipts', 'local');
         }
 
         if ($this->expense && $this->expense->exists) {
@@ -281,11 +286,23 @@ PROMPT;
             Expense::create($data);
         }
 
+        $this->receipt = null;
+
         $target = ($this->previousUrl && $this->previousUrl !== url()->current())
                   ? $this->previousUrl
                   : route('expenses');
 
         return $this->redirect($target, navigate: true);
+    }
+
+    public function downloadReceipt()
+    {
+        abort_unless($this->expense?->exists, 404);
+        abort_unless((int) $this->expense->workspace_id === (int) auth()->user()->current_workspace_id, 403);
+        abort_unless((int) $this->expense->user_id === (int) auth()->id(), 403);
+        abort_unless($this->expense->receipt_path && Storage::disk('local')->exists($this->expense->receipt_path), 404);
+
+        return Storage::disk('local')->download($this->expense->receipt_path, basename($this->expense->receipt_path));
     }
 
     public function render()
