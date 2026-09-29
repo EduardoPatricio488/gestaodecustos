@@ -210,7 +210,7 @@
                     class="size-4 mt-0.5 rounded-md border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-emerald-600 focus:ring-emerald-500/30 focus:ring-2 cursor-pointer transition-all"
                 />
                 <label for="terms" class="text-[11px] text-zinc-600 dark:text-zinc-400 cursor-pointer select-none">
-                    Concordo com os <a href="#" class="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold">Termos de Serviço</a> e <a href="#" class="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold">Política de Privacidade</a>
+                    Concordo com os <a href="{{ route('legal.terms') }}" target="_blank" rel="noopener" class="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold">Termos e Condições</a> e <a href="{{ route('legal.privacy') }}" target="_blank" rel="noopener" class="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold">Política de Privacidade</a>
                 </label>
             </div>
 
