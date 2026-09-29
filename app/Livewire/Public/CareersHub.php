@@ -170,10 +170,10 @@ class CareersHub extends Component
         ])->map(fn ($value) => is_string($value) && trim($value) === '' ? null : $value)->all();
 
         if ($this->cv) {
-            if ($candidate->cv_path && Storage::disk('public')->exists($candidate->cv_path)) {
-                Storage::disk('public')->delete($candidate->cv_path);
+            if ($candidate->cv_path && Storage::disk('local')->exists($candidate->cv_path)) {
+                Storage::disk('local')->delete($candidate->cv_path);
             }
-            $data['cv_path'] = $this->cv->store('candidate-cvs', 'public');
+            $data['cv_path'] = $this->cv->store('candidate-cvs', 'local');
         }
 
         $candidate->update($data);
@@ -199,7 +199,7 @@ class CareersHub extends Component
         abort_unless($candidate, 403);
         abort_unless($candidate->cv_path && Storage::disk('public')->exists($candidate->cv_path), 404);
 
-        return Storage::disk('public')->download($candidate->cv_path, 'CV-'.$candidate->name.'.pdf');
+        return Storage::disk('local')->download($candidate->cv_path, 'CV-'.$candidate->name.'.pdf');
     }
 
     public function toggleSavedJob(int $jobId): void
