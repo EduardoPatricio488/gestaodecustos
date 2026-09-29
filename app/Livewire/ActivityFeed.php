@@ -25,6 +25,7 @@ class ActivityFeed extends Component
         return view('livewire.activity-feed', [
             'logs' => ActivityLog::with('user')
                 ->where('workspace_id', $workspaceId)
+                ->when($workspace?->type === 'personal', fn ($query) => $query->where('user_id', $user->id))
                 ->latest()
                 ->paginate(20),
         ]);
