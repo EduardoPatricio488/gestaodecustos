@@ -5,7 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name') }} — Finanças pessoais inteligentes</title>
+        @php
+            $seoTitle = 'Finance Pro AI — Gestão financeira inteligente';
+            $seoDescription = 'Gere as tuas finanças pessoais e empresariais num só lugar. Controla despesas, receitas, investimentos e subscrições com o Finance Pro AI.';
+            $seoImage = asset('og-image.svg');
+            $isIndexableSeoPage = true;
+        @endphp
 
         {{-- 1. CONFIGURAÇÕES PWA & IPHONE 15 --}}
         <link rel="manifest" href="/manifest.json">
@@ -18,8 +23,6 @@
         <link rel="apple-touch-startup-image"
               href="/pwa/splash_screens/iPhone_16__iPhone_15_Pro__iPhone_15__iPhone_14_Pro_portrait.png"
               media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
-
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
 
         {{-- 2. TEMA & ASSETS --}}
         <script>
