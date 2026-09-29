@@ -39,7 +39,6 @@
         </script>
 
         @include('partials.head')
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
 
     <body class="app-shell antialiased bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
