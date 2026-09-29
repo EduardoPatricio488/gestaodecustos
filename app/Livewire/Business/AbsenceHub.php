@@ -4,6 +4,7 @@ namespace App\Livewire\Business;
 
 use App\Models\Absence;
 use App\Models\Employee;
+use App\Services\BusinessAccessService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -56,6 +57,7 @@ class AbsenceHub extends Component
      */
     public function save()
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $this->validate([
             'employee_id' => 'required',
             'type' => 'required',
@@ -63,8 +65,11 @@ class AbsenceHub extends Component
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
+        $workspaceId = Auth::user()->current_workspace_id;
+        abort_unless(Employee::where('workspace_id', $workspaceId)->whereKey($this->employee_id)->exists(), 422, 'Colaborador inválido.');
+
         Absence::create([
-            'workspace_id' => Auth::user()->current_workspace_id,
+            'workspace_id' => $workspaceId,
             'employee_id' => $this->employee_id,
             'type' => $this->type,
             'start_date' => $this->start_date,
