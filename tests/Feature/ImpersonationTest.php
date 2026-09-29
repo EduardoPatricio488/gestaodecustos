@@ -7,16 +7,19 @@ use Illuminate\Support\Carbon;
 
 function impersonationUsers(): array
 {
-    $admin = User::factory()->create([
+    $admin = User::factory()->create();
+    $admin->forceFill([
         'role' => 'admin',
         'is_admin' => true,
         'is_active' => true,
-    ]);
-    $target = User::factory()->create([
+    ])->save();
+
+    $target = User::factory()->create();
+    $target->forceFill([
         'role' => 'user',
         'is_admin' => false,
         'is_active' => true,
-    ]);
+    ])->save();
 
     return compact('admin', 'target');
 }
@@ -41,7 +44,8 @@ test('administrador autorizado consegue impersonar utilizador ativo permitido', 
 
 test('utilizador normal não consegue iniciar impersonation', function () {
     $users = impersonationUsers();
-    $normal = User::factory()->create(['role' => 'user', 'is_admin' => false]);
+    $normal = User::factory()->create();
+    $normal->forceFill(['role' => 'user', 'is_admin' => false])->save();
 
     $this->actingAs($normal)
         ->post(route('admin.impersonate', $users['target']))
@@ -52,7 +56,8 @@ test('utilizador normal não consegue iniciar impersonation', function () {
 
 test('administrador não consegue impersonar outro administrador', function () {
     $users = impersonationUsers();
-    $otherAdmin = User::factory()->create(['role' => 'moderator', 'is_admin' => true]);
+    $otherAdmin = User::factory()->create();
+    $otherAdmin->forceFill(['role' => 'moderator', 'is_admin' => true])->save();
 
     $this->actingAs($users['admin'])
         ->post(route('admin.impersonate', $otherAdmin))
@@ -127,7 +132,8 @@ test('impersonation expirada deixa de ser válida', function () {
 
 test('sessão adulterada não transforma utilizador normal em administrador', function () {
     $users = impersonationUsers();
-    $normal = User::factory()->create(['role' => 'user', 'is_admin' => false]);
+    $normal = User::factory()->create();
+    $normal->forceFill(['role' => 'user', 'is_admin' => false])->save();
 
     $this->withSession([
         'admin_impersonation' => [
