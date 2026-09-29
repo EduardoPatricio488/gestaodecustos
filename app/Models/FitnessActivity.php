@@ -102,6 +102,6 @@ class FitnessActivity extends Model
 
     public function photoUrl(): ?string
     {
-        return $this->photo_path ? \Storage::url($this->photo_path) : null;
+        return $this->photo_path ? route('fitness.activity.photo', $this->id) : null;
     }
 }
