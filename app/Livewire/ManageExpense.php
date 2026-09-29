@@ -309,7 +309,9 @@ PROMPT;
     {
         $wsId = auth()->user()->current_workspace_id;
         $categories = Category::where('workspace_id', $wsId)->orderBy('order')->get();
-        $selectedCat = $this->category_id ? Category::find($this->category_id) : null;
+        $selectedCat = $this->category_id
+            ? Category::where('workspace_id', $wsId)->find($this->category_id)
+            : null;
 
         $categoryFields = [];
         if ($selectedCat && $selectedCat->fields->count() > 0) {
