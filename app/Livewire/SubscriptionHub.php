@@ -403,7 +403,9 @@ class SubscriptionHub extends Component
             ->orderBy('name')
             ->get();
 
-        $baseQuery = Subscription::where('workspace_id', $wsId)->with('category');
+        $baseQuery = Subscription::where('workspace_id', $wsId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
+            ->with('category');
 
         if (filled($this->search)) {
             $baseQuery->where(function ($inner) {
