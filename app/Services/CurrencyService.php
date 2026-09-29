@@ -18,7 +18,7 @@ class CurrencyService
 
         // Guardamos as taxas em cache por 24h para o site ser rápido e grátis
         $rates = Cache::remember('currency_rates_'.$to, 86400, function () use ($to) {
-            $response = Http::get("https://open.er-api.com/v6/latest/{$to}");
+            $response = Http::connectTimeout((int) config('limits.http.connect_timeout_seconds', 5))->timeout((int) config('limits.http.timeout_seconds', 15))->get("https://open.er-api.com/v6/latest/{$to}");
 
             return $response->json()['rates'] ?? [];
         });
