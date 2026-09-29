@@ -62,8 +62,7 @@ class GoalsHub extends Component
             $goal->workspace_id = $workspaceId;
         }
         $goal->fill([
-            [
-                'user_id' => auth()->id(),
+            'user_id' => auth()->id(),
                 'name' => $this->name,
                 'target_amount' => (float) $this->target_amount,
                 'current_amount' => (float) $this->current_amount,
