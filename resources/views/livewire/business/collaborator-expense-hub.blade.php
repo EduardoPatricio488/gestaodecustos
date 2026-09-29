@@ -141,7 +141,7 @@
                         {{-- ANEXO --}}
                         <flux:table.cell class="text-center">
                             @if($expense->receipt_path)
-                                <a href="{{ Storage::url($expense->receipt_path) }}" target="_blank"
+                                <button type="button" wire:click="downloadReceipt({{ $expense->id }})"
                                    class="inline-flex size-8 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:bg-emerald-600 hover:text-white transition-all shadow-sm group/clip">
                                     <flux:icon name="paper-clip" variant="micro" class="size-4 group-hover/clip:rotate-12 transition-transform" />
                                 </a>
