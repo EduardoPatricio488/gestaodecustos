@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Public;
 
-use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\RateLimiter;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.guest')]
@@ -32,6 +32,7 @@ class ContactPage extends Component
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $this->addError('email', 'Foram enviados demasiados pedidos. Tenta novamente mais tarde.');
             return;
+
         }
         RateLimiter::hit($key, 600);
 
