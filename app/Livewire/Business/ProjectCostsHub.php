@@ -25,14 +25,14 @@ class ProjectCostsHub extends Component
     public function approve($id)
     {
         abort_unless(auth()->user()->isOwner() || auth()->user()->isAdminRole(), 403);
-        Expense::findOrFail($id)->update(['status' => 'aprovado']);
+        Expense::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id)->update(['status' => 'aprovado']);
         $this->dispatch('toast', text: 'Despesa aprovada com sucesso!', variant: 'success');
     }
 
     public function reject($id)
     {
         abort_unless(auth()->user()->isOwner() || auth()->user()->isAdminRole(), 403);
-        Expense::findOrFail($id)->update(['status' => 'rejeitado']);
+        Expense::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id)->update(['status' => 'rejeitado']);
         $this->dispatch('toast', text: 'Despesa rejeitada.', variant: 'warning');
     }
 
