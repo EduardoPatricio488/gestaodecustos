@@ -44,7 +44,7 @@ class NetWorthHub extends Component
         $workspaceId = $user->current_workspace_id;
 
         // ─── 1. INVESTIMENTOS ─────────────────────────────────────────────────
-        $investments = Investment::where('workspace_id', $workspaceId)->get();
+        $investments = Investment::where('workspace_id', $workspaceId)->where('user_id', $user->id)->get();
         $investmentsValue = (float) $investments->sum(fn ($i) => $i->quantity * $i->current_price);
 
         // Breakdown por tipo
@@ -76,20 +76,21 @@ class NetWorthHub extends Component
 
         // Rendimentos de investimentos (últimos 12 meses)
         $investmentIncomes = InvestmentIncome::where('workspace_id', $workspaceId)
+            ->where('user_id', $user->id)
             ->where('reference_date', '>=', now()->subMonths(12))
             ->selectRaw($this->monthGroupingExpression('reference_date').' as month, SUM(net_amount) as total')
             ->groupBy('month')
             ->orderBy('month')
             ->get();
 
-        $totalInvestmentIncome = InvestmentIncome::where('workspace_id', $workspaceId)->sum('net_amount');
+        $totalInvestmentIncome = InvestmentIncome::where('workspace_id', $workspaceId)->where('user_id', $user->id)->sum('net_amount');
 
         // ─── 2. CONTAS BANCÁRIAS ──────────────────────────────────────────────
-        $bankAccounts = BankAccount::where('workspace_id', $workspaceId)->get();
+        $bankAccounts = BankAccount::where('workspace_id', $workspaceId)->where('user_id', $user->id)->get();
         $totalBankBalance = (float) $bankAccounts->sum('balance');
 
         // ─── 3. METAS DE POUPANÇA ─────────────────────────────────────────────
-        $goals = Goal::where('workspace_id', $workspaceId)->get();
+        $goals = Goal::where('workspace_id', $workspaceId)->where('user_id', $user->id)->get();
         $goalsSaved = (float) $goals->sum('current_amount');
         $goalsTarget = (float) $goals->sum('target_amount');
         $goalsProgress = $goalsTarget > 0 ? ($goalsSaved / $goalsTarget) * 100 : 0;
@@ -97,6 +98,7 @@ class NetWorthHub extends Component
         // ─── 4. FLUXO DE CAIXA ────────────────────────────────────────────────
         // Rendimentos mensais (últimos 12 meses)
         $monthlyIncomes = Income::where('workspace_id', $workspaceId)
+            ->where('user_id', $user->id)
             ->where('received_at', '>=', now()->subMonths(12))
             ->selectRaw($this->monthGroupingExpression('received_at').' as month, SUM(amount) as total')
             ->groupBy('month')
@@ -105,6 +107,7 @@ class NetWorthHub extends Component
 
         // Despesas mensais (últimos 12 meses)
         $monthlyExpenses = Expense::where('workspace_id', $workspaceId)
+            ->where('user_id', $user->id)
             ->where('spent_at', '>=', now()->subMonths(12))
             ->selectRaw($this->monthGroupingExpression('spent_at').' as month, SUM(amount) as total')
             ->groupBy('month')
@@ -131,8 +134,8 @@ class NetWorthHub extends Component
             ]);
         }
 
-        $totalIncome = (float) Income::where('workspace_id', $workspaceId)->sum('amount') + $fixedIncome;
-        $totalExpense = (float) Expense::where('workspace_id', $workspaceId)->sum('amount');
+        $totalIncome = (float) Income::where('workspace_id', $workspaceId)->where('user_id', $user->id)->sum('amount') + $fixedIncome;
+        $totalExpense = (float) Expense::where('workspace_id', $workspaceId)->where('user_id', $user->id)->sum('amount');
         $cashFlow = $totalIncome - $totalExpense;
         $cashOnHand = max(0, $cashFlow);
 
@@ -142,7 +145,7 @@ class NetWorthHub extends Component
         $avgSavingsRate = $avg3Income > 0 ? (($avg3Income - $avg3Expense) / $avg3Income) * 100 : 0;
 
         // ─── 5. PASSIVOS / DÍVIDAS ────────────────────────────────────────────
-        $debts = Debt::where('workspace_id', $workspaceId)->where('is_paid', false)->get();
+        $debts = Debt::where('workspace_id', $workspaceId)->where('user_id', $user->id)->where('is_paid', false)->get();
         // 'owe' = eu devo (passivo real). 'owed' = devem-me (é um recebível, não um passivo).
         $liabilities = (float) $debts->where('type', 'owe')->sum('amount');
         $receivables = (float) $debts->where('type', 'owed')->sum('amount');
@@ -157,6 +160,7 @@ class NetWorthHub extends Component
 
         // ─── 6. SUBSCRIÇÕES ATIVAS ───────────────────────────────────────────
         $activeSubscriptions = Subscription::where('workspace_id', $workspaceId)
+            ->where('user_id', $user->id)
             ->where('is_active', true)
             ->get();
 
