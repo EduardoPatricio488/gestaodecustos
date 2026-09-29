@@ -151,7 +151,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     public function getDisplayEmojiAttribute(): string
     {
-        if (! empty($this->attributes['profile_emoji'])) {
+        if (!empty($this->attributes['profile_emoji'])) {
             return $this->attributes['profile_emoji'];
         }
 
@@ -320,7 +320,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'updated_at' => now(),
         ]);
     }
-
 
     public function initials(): string
     {
