@@ -114,6 +114,7 @@ class TeamHub extends Component
     {
         $employee = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($employeeId);
         abort_unless($employee->cv_path && Storage::disk('local')->exists($employee->cv_path), 404);
+
         return Storage::disk('local')->download($employee->cv_path, 'CV-'.$employee->name.'.pdf');
     }
 
