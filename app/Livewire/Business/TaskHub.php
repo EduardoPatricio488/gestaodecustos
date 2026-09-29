@@ -3,6 +3,7 @@
 namespace App\Livewire\Business;
 
 use App\Models\Task;
+use App\Services\BusinessAccessService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -80,8 +81,15 @@ class TaskHub extends Component
 
     public function toggleTimer($taskId)
     {
-        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
-            ->findOrFail($taskId);
+        $workspace = app(BusinessAccessService::class)->assertWorkspace();
+        $access = app(BusinessAccessService::class);
+        $task = $workspace->tasks()->findOrFail($taskId);
+        $role = $access->role(auth()->user(), $workspace);
+
+        // Colaboradores só podem controlar o cronómetro das suas próprias tarefas.
+        if (! in_array($role, ['owner', 'admin', 'manager'], true)) {
+            abort_unless((int) $task->user_id === (int) auth()->id(), 403);
+        }
 
         if ($task->is_timer_running) {
             $elapsed = now()->diffInSeconds($task->timer_started_at);
@@ -121,11 +129,26 @@ class TaskHub extends Component
     {
         $this->validate();
 
-        $workspace = auth()->user()->currentWorkspace;
-        abort_unless($workspace, 403);
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $role = $access->role(auth()->user(), $workspace);
+        $canManage = in_array($role, ['owner', 'admin', 'manager'], true);
+
         abort_unless($workspace->projects()->whereKey($this->project_id)->exists(), 422, 'Projeto inválido.');
         if ($this->user_id) {
             abort_unless($workspace->users()->whereKey($this->user_id)->exists(), 422, 'Utilizador inválido.');
+        }
+
+        if (! $canManage) {
+            // Um colaborador não pode atribuir tarefas a terceiros nem editar tarefas alheias.
+            if ($this->user_id && (int) $this->user_id !== (int) auth()->id()) {
+                abort(403);
+            }
+
+            if ($this->editingId) {
+                $existing = $workspace->tasks()->findOrFail($this->editingId);
+                abort_unless((int) $existing->user_id === (int) auth()->id(), 403);
+            }
         }
 
         $isNew = $this->editingId === null;
@@ -163,8 +186,16 @@ class TaskHub extends Component
 
     public function updateStatus($id, $newStatus)
     {
-        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
-        $workspace = auth()->user()->currentWorkspace;
+        abort_unless(in_array($newStatus, ['pendente', 'em_curso', 'concluida'], true), 422, 'Estado inválido.');
+
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $task = $workspace->tasks()->findOrFail($id);
+        $role = $access->role(auth()->user(), $workspace);
+
+        if (! in_array($role, ['owner', 'admin', 'manager'], true)) {
+            abort_unless((int) $task->user_id === (int) auth()->id(), 403);
+        }
 
         if ($newStatus === 'concluida' && $task->is_timer_running) {
             $elapsed = now()->diffInSeconds($task->timer_started_at);
@@ -193,7 +224,15 @@ class TaskHub extends Component
 
     public function delete($id)
     {
-        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $task = $workspace->tasks()->findOrFail($id);
+        $role = $access->role(auth()->user(), $workspace);
+
+        // Apagar tarefas é uma operação de gestão; colaboradores só podem apagar as suas.
+        if (! in_array($role, ['owner', 'admin', 'manager'], true)) {
+            abort_unless((int) $task->user_id === (int) auth()->id(), 403);
+        }
         $title = $task->title;
         $assigneeId = $task->user_id;
 
@@ -210,7 +249,14 @@ class TaskHub extends Component
 
     public function edit($id)
     {
-        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $task = $workspace->tasks()->findOrFail($id);
+        $role = $access->role(auth()->user(), $workspace);
+
+        if (! in_array($role, ['owner', 'admin', 'manager'], true)) {
+            abort_unless((int) $task->user_id === (int) auth()->id(), 403);
+        }
         $this->editingId = $task->id;
         $this->title = $task->title;
         $this->description = $task->description;
