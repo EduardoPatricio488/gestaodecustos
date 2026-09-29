@@ -101,7 +101,9 @@ class DebtHub extends Component
 
     public function edit(int $id)
     {
-        $debt = Debt::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+        $debt = Debt::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->findOrFail($id);
 
         $this->editingId = $debt->id;
         $this->type = $debt->type;
