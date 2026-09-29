@@ -10,6 +10,7 @@ use App\Models\SupportMessage;
 use App\Models\SupportTicket;
 use App\Models\Task;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -27,6 +28,10 @@ class ClientPortal extends Component
 
     public function mount($token)
     {
+        $rateLimitKey = 'client-portal-token:'.sha1(request()->ip());
+        abort_if(RateLimiter::tooManyAttempts($rateLimitKey, 20), 429);
+        RateLimiter::hit($rateLimitKey, 60);
+
         $this->client = Client::findByPortalToken($token);
 
         abort_unless($this->client, 404);
