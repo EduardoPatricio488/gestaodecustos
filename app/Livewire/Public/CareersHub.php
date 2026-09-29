@@ -186,8 +186,8 @@ class CareersHub extends Component
     {
         $candidate = Auth::guard('candidate')->user();
         abort_unless($candidate, 403);
-        if ($candidate->cv_path && Storage::disk('public')->exists($candidate->cv_path)) {
-            Storage::disk('public')->delete($candidate->cv_path);
+        if ($candidate->cv_path && Storage::disk('local')->exists($candidate->cv_path)) {
+            Storage::disk('local')->delete($candidate->cv_path);
         }
         $candidate->update(['cv_path' => null]);
         $this->dispatch('toast', variant: 'success', text: 'CV removido.');
@@ -197,7 +197,7 @@ class CareersHub extends Component
     {
         $candidate = Auth::guard('candidate')->user();
         abort_unless($candidate, 403);
-        abort_unless($candidate->cv_path && Storage::disk('public')->exists($candidate->cv_path), 404);
+        abort_unless($candidate->cv_path && Storage::disk('local')->exists($candidate->cv_path), 404);
 
         return Storage::disk('local')->download($candidate->cv_path, 'CV-'.$candidate->name.'.pdf');
     }
