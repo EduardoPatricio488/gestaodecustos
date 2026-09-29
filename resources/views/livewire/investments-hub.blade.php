@@ -192,7 +192,7 @@
                                         type="button"
                                         wire:click="selectSuggestion('{{ $item['ticker'] }}')"
                                         class="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                                        <img src="{{ $item['logo'] }}" class="w-5 h-5 rounded-md" />
+                                        <img src="{{ $item['logo'] }}" alt="Logótipo de {{ $item['symbol'] ?? $item['name'] ?? 'Investimento' }}" class="w-5 h-5 rounded-md" />
                                         <span class="font-black text-xs">{{ $item['ticker'] }}</span>
                                         <span class="text-zinc-500 text-[10px] ml-2">{{ $item['name'] }}</span>
                                     </button>
