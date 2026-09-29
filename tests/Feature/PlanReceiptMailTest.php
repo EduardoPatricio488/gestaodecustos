@@ -44,7 +44,7 @@ it('sends a receipt email when a subscription is paid and when the monthly invoi
     });
 
     $user->forceFill(['stripe_id' => 'cus_test_123'])->save();
-    $user->update(['plan' => 'pro']);
+    $user->forceFill(['plan' => 'pro'])->save();
 
     event(new WebhookReceived([
         'type' => 'invoice.paid',
