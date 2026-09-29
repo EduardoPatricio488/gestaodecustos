@@ -654,7 +654,10 @@ class InvestmentsHub extends Component
 
     public function render()
     {
-        $query = Investment::where('workspace_id', Auth::user()->current_workspace_id);
+        $user = Auth::user();
+        $isPersonalWorkspace = $user->currentWorkspace?->type === 'personal';
+        $query = Investment::where('workspace_id', $user->current_workspace_id)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id));
         if ($this->search) {
             $term = '%'.trim($this->search).'%';
             $query->where(fn ($q) => $q->where('symbol', 'like', $term)->orWhere('name', 'like', $term));
@@ -681,7 +684,11 @@ class InvestmentsHub extends Component
         $displayProfit = $this->showNetValues ? ($totalProfit - $totalEstimatedTax) : $totalProfit;
         $composition = $myAssets->groupBy('type')->map(fn ($group) => ['total' => $group->sum('current_value'), 'percent' => $currentPortfolioValue > 0 ? round(($group->sum('current_value') / $currentPortfolioValue) * 100, 1) : 0]);
 
-        return view('livewire.investments-hub', ['myAssets' => $myAssets, 'totalInvested' => $totalInvested, 'currentValue' => $displayValue, 'totalProfit' => $displayProfit, 'totalPnlPct' => $totalPnlPct, 'composition' => $composition, 'bestPerformer' => $myAssets->sortByDesc('pnl_percent')->first(), 'worstPerformer' => $myAssets->sortBy('pnl_percent')->first(), 'highestExposure' => $myAssets->sortByDesc('current_value')->first(), 'marketData' => $this->buildMarketTicker(), 'estimatedTax' => $totalEstimatedTax, 'recentIncomes' => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)->with('investment')->latest('reference_date')->take(10)->get(), 'totalIncomeNet' => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)->sum('net_amount'), 'companyAnalysis' => $this->companyAnalysis, 'tab' => $this->tab]);
+        return view('livewire.investments-hub', ['myAssets' => $myAssets, 'totalInvested' => $totalInvested, 'currentValue' => $displayValue, 'totalProfit' => $displayProfit, 'totalPnlPct' => $totalPnlPct, 'composition' => $composition, 'bestPerformer' => $myAssets->sortByDesc('pnl_percent')->first(), 'worstPerformer' => $myAssets->sortBy('pnl_percent')->first(), 'highestExposure' => $myAssets->sortByDesc('current_value')->first(), 'marketData' => $this->buildMarketTicker(), 'estimatedTax' => $totalEstimatedTax, 'recentIncomes' => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
+                ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
+                ->with('investment')->latest('reference_date')->take(10)->get(), 'totalIncomeNet' => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
+                ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
+                ->sum('net_amount'), 'companyAnalysis' => $this->companyAnalysis, 'tab' => $this->tab]);
     }
 
     private function buildMarketTicker(): array
