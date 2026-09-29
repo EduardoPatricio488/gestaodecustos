@@ -68,9 +68,14 @@ class ManageExpense extends Component
     #[Computed]
     public function bankAccounts()
     {
-        return BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
-            ->orderBy('name')
-            ->get();
+        $user = auth()->user();
+        $query = BankAccount::where('workspace_id', $user->current_workspace_id);
+
+        if ($user->currentWorkspace?->type === 'personal') {
+            $query->where('user_id', $user->id);
+        }
+
+        return $query->orderBy('name')->get();
     }
 
     public function updatedReceipt(): void
@@ -247,6 +252,7 @@ PROMPT;
 
         if ($this->bankAccountId) {
             $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+                ->where('user_id', auth()->id())
                 ->find($this->bankAccountId);
 
             if ($account) {
