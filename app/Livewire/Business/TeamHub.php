@@ -115,7 +115,9 @@ class TeamHub extends Component
     public function downloadEmployeeCv($employeeId)
     {
         app(BusinessAccessService::class)->assert('manage_team');
-        $employee = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($employeeId);
+        $employee = Employee::where('workspace_id', auth()->user()->current_workspace_id)
+            ->whereHas('workspace.users', fn ($q) => $q->whereKey(auth()->id()))
+            ->findOrFail($employeeId);
         abort_unless($employee->cv_path && Storage::disk('local')->exists($employee->cv_path), 404);
 
         return Storage::disk('local')->download($employee->cv_path, 'CV-'.$employee->name.'.pdf');
