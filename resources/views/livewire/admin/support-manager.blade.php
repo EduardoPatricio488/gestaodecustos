@@ -213,7 +213,7 @@
                         </div>
                         <div class="p-8 text-sm text-zinc-800 dark:text-zinc-200">{{ $this->selectedReport->social_post->content }}</div>
                         @if($this->selectedReport->social_post->media_path)
-                            <div class="px-8 pb-8"><img src="{{ Storage::url($this->selectedReport->social_post->media_path) }}" class="w-full h-64 object-cover rounded-2xl"></div>
+                            <div class="px-8 pb-8"><img src="{{ Storage::url($this->selectedReport->social_post->media_path) }}" alt="Imagem da publicação denunciada" class="w-full h-64 object-cover rounded-2xl"></div>
                         @endif
                     </div>
                     {{-- Motivo da Denúncia --}}
