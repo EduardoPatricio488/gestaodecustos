@@ -112,7 +112,7 @@ class RecruitmentHub extends Component
             return;
         }
 
-        if (! empty($app->candidate_id)) {
+        if (!empty($app->candidate_id)) {
             $candidate = Candidate::find($app->candidate_id);
             if (! $candidate) {
                 return;
@@ -156,7 +156,7 @@ class RecruitmentHub extends Component
             return;
         }
         DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->update(['status' => 'pending', 'updated_at' => now()]);
-        if (! empty($app->candidate_id)) {
+        if (!empty($app->candidate_id)) {
             CandidateNotification::create(['candidate_id' => $app->candidate_id, 'type' => 'application_status', 'title' => 'Candidatura reaberta', 'message' => 'A empresa '.$workspace->name.' reabriu a tua candidatura.', 'url' => '/carreiras']);
         }
         $this->dispatch('toast', text: 'Candidatura reaberta.');
