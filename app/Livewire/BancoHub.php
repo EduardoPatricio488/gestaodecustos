@@ -618,7 +618,7 @@ class BancoHub extends Component
     public function render()
     {
         $wsId = auth()->user()->current_workspace_id;
-        $service = new BancoService($wsId);
+        $service = new BancoService($wsId, auth()->id());
 
         $accounts = $service->getAccounts();
         $personalAccounts = $accounts->where('is_business', false)->where('status', '!=', 'archived');
