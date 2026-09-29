@@ -15,20 +15,24 @@ class WellnessFinanceService
         $month = $month ?? now();
         $start = $month->copy()->startOfMonth();
         $end = $month->copy()->endOfMonth();
+        $userId = auth()->id();
+        $isPersonal = $workspace->type === 'personal';
 
         $healthCategoryId = Category::where('workspace_id', $workspace->id)
+            ->when($isPersonal && $userId, fn ($q) => $q->where('user_id', $userId))
             ->where(fn ($q) => $q->where('slug', 'saude')->orWhere('name', 'like', '%Saúde%'))
             ->value('id');
 
         $healthSpent = $healthCategoryId
             ? (float) Expense::where('workspace_id', $workspace->id)
                 ->where('category_id', $healthCategoryId)
+                ->when($isPersonal && $userId, fn ($q) => $q->where('user_id', $userId))
                 ->whereBetween('spent_at', [$start, $end])
                 ->sum('amount')
             : 0.0;
 
-        // Não carregar todas as atividades para PHP: agrega directamente na BD.
-        $activityStats = FitnessActivity::where('user_id', auth()->id())
+        $activityStats = FitnessActivity::where('user_id', $userId)
+            ->where('workspace_id', $workspace->id)
             ->whereBetween('activity_date', [$start, $end])
             ->selectRaw('COALESCE(SUM(distance_km), 0) as total_km')
             ->selectRaw('COALESCE(SUM(calories), 0) as total_calories')
@@ -38,10 +42,7 @@ class WellnessFinanceService
         $totalKm = (float) ($activityStats->total_km ?? 0);
         $totalCalories = (float) ($activityStats->total_calories ?? 0);
         $activityCount = (int) ($activityStats->activity_count ?? 0);
-
-        $costPerKm = $totalKm > 0 && $healthSpent > 0
-            ? round($healthSpent / $totalKm, 2)
-            : null;
+        $costPerKm = $totalKm > 0 && $healthSpent > 0 ? round($healthSpent / $totalKm, 2) : null;
 
         return [
             'health_spent' => $healthSpent,
@@ -56,19 +57,10 @@ class WellnessFinanceService
 
     private function generateVerdict(float $spent, float $km, int $activities): string
     {
-        if ($activities === 0 && $spent > 50) {
-            return 'Gastaste '.number_format($spent, 0, ',', '.').'€ em saúde este mês mas não registaste atividade. Vale a pena mover-te!';
-        }
-        if ($km >= 50 && $spent > 0) {
-            return "Correste/caminhaste {$km}km este mês — cada km 'custou' ".number_format($spent / $km, 2, ',', '.').'€ em saúde. Bom investimento!';
-        }
-        if ($activities >= 10) {
-            return "Excelente! {$activities} atividades este mês. Continua assim!";
-        }
-        if ($spent === 0.0 && $activities === 0) {
-            return 'Regista as tuas atividades e despesas de saúde para ver insights personalizados.';
-        }
-
+        if ($activities === 0 && $spent > 50) return 'Gastaste '.number_format($spent, 0, ',', '.').'€ em saúde este mês mas não registaste atividade. Vale a pena mover-te!';
+        if ($km >= 50 && $spent > 0) return "Correste/caminhaste {$km}km este mês — cada km 'custou' ".number_format($spent / $km, 2, ',', '.').'€ em saúde. Bom investimento!';
+        if ($activities >= 10) return "Excelente! {$activities} atividades este mês. Continua assim!";
+        if ($spent === 0.0 && $activities === 0) return 'Regista as tuas atividades e despesas de saúde para ver insights personalizados.';
         return "Tens {$activities} atividades e ".number_format($spent, 0, ',', '.').'€ em saúde este mês.';
     }
 }
