@@ -35,6 +35,7 @@ class SubscriptionScannerHub extends Component
         $start = now()->copy()->subMonths($this->lookbackMonths)->startOfMonth();
 
         $expenses = Expense::where('workspace_id', $workspaceId)
+            ->where('user_id', $userId)
             ->where('spent_at', '>=', $start)
             ->whereNotNull('description')
             ->get();
@@ -50,7 +51,7 @@ class SubscriptionScannerHub extends Component
             $groups[$merchant][] = $exp;
         }
 
-        $subs = Subscription::where('workspace_id', $workspaceId)->get();
+        $subs = Subscription::where('workspace_id', $workspaceId)->where('user_id', $userId)->get();
         $suggestions = [];
 
         foreach ($groups as $merchant => $items) {
