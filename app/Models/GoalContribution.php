@@ -42,6 +42,7 @@ class GoalContribution extends Model
                 $goalBelongs = Goal::withoutGlobalScopes()
                     ->whereKey($contribution->goal_id)
                     ->where('workspace_id', $contribution->workspace_id)
+                    ->when(Workspace::whereKey($contribution->workspace_id)->value('type') === 'personal', fn ($query) => $query->where('user_id', $contribution->user_id))
                     ->exists();
 
                 if (! $goalBelongs) {
