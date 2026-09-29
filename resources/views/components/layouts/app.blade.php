@@ -430,7 +430,7 @@
             <div class="p-6 bg-zinc-100 rounded-[2.5rem] border border-zinc-200 flex items-center gap-5">
                 <div class="size-16 bg-white rounded-2xl border-4 border-white shadow-xl overflow-hidden shrink-0 flex items-center justify-center text-zinc-400">
                     @if($currentWs && $currentWs->logo_path)
-                        <img src="{{ $currentWs->logo_url }}" class="size-full object-cover">
+                        <img src="{{ $currentWs->logo_url }}" alt="Logótipo de {{ $currentWs->name }}" class="size-full object-cover">
                     @else
                         <flux:icon name="building-office" class="size-7" />
                     @endif
