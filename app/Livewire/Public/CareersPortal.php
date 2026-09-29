@@ -81,7 +81,7 @@ class CareersPortal extends Component
             'role' => $this->role_applied,
             'phone' => $this->phone,
             'notes' => $this->notes,
-            'cv_path' => $this->cv->store('cvs', 'public'),
+            'cv_path' => $this->cv->store('cvs', 'local'),
             'status' => 'pending',
             'created_at' => now(),
             'updated_at' => now(),
