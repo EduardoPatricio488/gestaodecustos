@@ -35,6 +35,7 @@ class MiFitnessImportController extends Controller
             }
         } catch (\Throwable $e) {
             Log::warning('Falha ao importar actividade Fitness', ['user_id' => Auth::id(), 'exception' => get_class($e)]);
+
             return response()->json(['error' => 'Não foi possível processar o ficheiro enviado.'], 422);
         }
 
