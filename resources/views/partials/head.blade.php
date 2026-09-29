@@ -113,14 +113,15 @@
 
 <script type="application/ld+json">{!! json_encode($schemaMarkup, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}</script>
 
-<!-- Google Analytics -->
+@if (request()->cookie('fp_cookie_consent') === 'analytics')
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-ED5683P4Z9"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-ED5683P4Z9');
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-ED5683P4Z9');
 </script>
+@endif
 
 @fonts
 
