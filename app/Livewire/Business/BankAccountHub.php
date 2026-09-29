@@ -159,6 +159,7 @@ class BankAccountHub extends Component
 
     public function mount()
     {
+        app(BusinessAccessService::class)->assert('view_bank_accounts');
         $this->isBusinessMode = request()->routeIs('hub.business.*');
     }
 
