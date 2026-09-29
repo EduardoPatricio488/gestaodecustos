@@ -253,7 +253,7 @@ O JSON deve ter exatamente estes campos:
 }
 PROMPT;
 
-            $apiKey = env('OPENROUTER_API_KEY');
+            $apiKey = config('services.openrouter.api_key');
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer '.$apiKey,
