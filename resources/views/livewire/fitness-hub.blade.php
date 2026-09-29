@@ -795,7 +795,7 @@
 
                         @if($activityPhoto)
                             <div class="relative z-20">
-                                <img src="{{ $activityPhoto->temporaryUrl() }}" class="size-40 mx-auto rounded-[1.5rem] object-cover shadow-2xl ring-4 ring-orange-500/10">
+                                <img src="{{ $activityPhoto->temporaryUrl() }}" alt="Pré-visualização da fotografia do treino" class="size-40 mx-auto rounded-[1.5rem] object-cover shadow-2xl ring-4 ring-orange-500/10">
                                 <div class="mt-6">
                                     <button type="button" wire:click="analyzePhoto" wire:loading.attr="disabled"
                                         class="w-full h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-500/30 transition-all flex items-center justify-center gap-3">
