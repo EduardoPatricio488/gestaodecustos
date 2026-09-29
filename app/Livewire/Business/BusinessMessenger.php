@@ -3,6 +3,7 @@
 namespace App\Livewire\Business;
 
 use App\Models\BusinessMessage;
+use App\Services\BusinessAccessService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -20,6 +21,10 @@ class BusinessMessenger extends Component
      */
     public function sendMessage()
     {
+        $workspace = app(BusinessAccessService::class)->assertWorkspace();
+        if ($this->activeProjectId !== null) {
+            abort_unless($workspace->projects()->whereKey($this->activeProjectId)->exists(), 422, 'Projeto inválido.');
+        }
         $this->validate([
             'content' => 'required|string|max:1000',
         ]);
@@ -50,6 +55,10 @@ class BusinessMessenger extends Component
      */
     public function selectChannel($id = null)
     {
+        $workspace = app(BusinessAccessService::class)->assertWorkspace();
+        if ($id !== null) {
+            abort_unless($workspace->projects()->whereKey($id)->exists(), 404);
+        }
         $this->activeProjectId = $id;
         $this->reset('search');
     }
