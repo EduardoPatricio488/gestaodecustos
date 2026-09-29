@@ -29,7 +29,7 @@ class StravaService
 
     public function exchangeCode(string $code): array
     {
-        $response = Http::post(self::TOKEN_URL, [
+        $response = Http::connectTimeout((int) config('limits.http.connect_timeout_seconds', 5))->timeout((int) config('limits.http.timeout_seconds', 15))->post(self::TOKEN_URL, [
             'client_id' => config('services.strava.client_id'),
             'client_secret' => config('services.strava.client_secret'),
             'code' => $code,
@@ -55,7 +55,7 @@ class StravaService
             return $device;
         }
 
-        $response = Http::post(self::TOKEN_URL, [
+        $response = Http::connectTimeout((int) config('limits.http.connect_timeout_seconds', 5))->timeout((int) config('limits.http.timeout_seconds', 15))->post(self::TOKEN_URL, [
             'client_id' => config('services.strava.client_id'),
             'client_secret' => config('services.strava.client_secret'),
             'grant_type' => 'refresh_token',
