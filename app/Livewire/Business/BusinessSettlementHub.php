@@ -42,6 +42,7 @@ class BusinessSettlementHub extends Component
 
     public function savePayment(): void
     {
+        app(BusinessAccessService::class)->assert('manage_financials');
         $workspace = app(BusinessAccessService::class)->assertWorkspace();
         $this->validate(['type' => 'required|in:invoice,expense', 'recordId' => 'required|integer', 'amount' => 'required|numeric|min:0.01', 'bankAccountId' => 'nullable|integer', 'reference' => 'nullable|string|max:255', 'paidAt' => 'required|date']);
         if ($this->type === 'invoice') {
@@ -54,6 +55,7 @@ class BusinessSettlementHub extends Component
 
     public function saveCreditNote(): void
     {
+        app(BusinessAccessService::class)->assert('manage_financials');
         $workspace = app(BusinessAccessService::class)->assertWorkspace();
         $this->validate(['invoiceIdForCredit' => 'required|integer', 'creditExclVat' => 'required|numeric|min:0.01', 'creditVat' => 'required|numeric|min:0', 'creditReason' => 'required|string|max:500', 'creditNumber' => 'required|string|max:100']);
         app(BusinessSettlementService::class)->issueCreditNote(Invoice::where('workspace_id', $workspace->id)->findOrFail($this->invoiceIdForCredit), (float) $this->creditExclVat, (float) $this->creditVat, $this->creditReason, $this->creditNumber);
