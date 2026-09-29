@@ -51,23 +51,27 @@ class StoreHub extends Component
 
     public function mount(StoreTabsService $tabsService): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->storeTabs = $tabsService->all();
     }
 
     public function setSection(string $section): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->section = $section;
         $this->resetPage();
     }
 
     public function startCreate(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->resetProductForm();
         $this->editingProductId = 0;
     }
 
     public function startEdit(int $id): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $product = StoreProduct::findOrFail($id);
         $this->editingProductId = $product->id;
         $this->title = $product->title;
@@ -85,12 +89,14 @@ class StoreHub extends Component
 
     public function cancelEdit(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->editingProductId = null;
         $this->resetProductForm();
     }
 
     public function saveProduct(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->validate([
             'title' => 'required|string|max:120',
             'type' => 'required|in:ia,widget,automation,data,course,guide,template,pack,plan',
@@ -125,6 +131,7 @@ class StoreHub extends Component
 
     public function deleteProduct(int $id): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $product = StoreProduct::findOrFail($id);
         if ($product->purchases()->exists()) {
             $this->dispatch('toast', text: 'Este produto tem compras registadas — não pode ser eliminado.');
@@ -138,6 +145,7 @@ class StoreHub extends Component
 
     public function toggleFeatured(int $id): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $product = StoreProduct::findOrFail($id);
         $product->update(['is_featured' => ! $product->is_featured]);
         app(StoreCatalogService::class)->clearCache();
@@ -145,6 +153,7 @@ class StoreHub extends Component
 
     public function saveStoreTabs(StoreTabsService $tabsService): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $tabsService->save($this->storeTabs);
         $this->storeTabs = $tabsService->all();
         $this->dispatch('toast', text: 'Abas da loja atualizadas.');
@@ -152,6 +161,7 @@ class StoreHub extends Component
 
     public function resetStoreTabs(StoreTabsService $tabsService): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $tabsService->reset();
         $this->storeTabs = $tabsService->all();
         $this->dispatch('toast', text: 'Abas repostas para o padrão.');
@@ -159,6 +169,7 @@ class StoreHub extends Component
 
     public function moveTabUp(int $index): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         if ($index <= 0 || ! isset($this->storeTabs[$index])) {
             return;
         } [$this->storeTabs[$index - 1], $this->storeTabs[$index]] = [$this->storeTabs[$index], $this->storeTabs[$index - 1]];
@@ -167,6 +178,7 @@ class StoreHub extends Component
 
     public function moveTabDown(int $index): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         if (! isset($this->storeTabs[$index + 1])) {
             return;
         } [$this->storeTabs[$index + 1], $this->storeTabs[$index]] = [$this->storeTabs[$index], $this->storeTabs[$index + 1]];
