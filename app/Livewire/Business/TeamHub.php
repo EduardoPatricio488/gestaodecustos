@@ -648,7 +648,7 @@ class TeamHub extends Component
             'individualLogs' => $this->viewingAttendanceId
                 ? DB::table('attendance_logs')
                     ->where('workspace_id', $workspace->id)
-                    ->where('user_id', Employee::find($this->viewingAttendanceId)?->user_id)
+                    ->where('user_id', Employee::where('workspace_id', $workspace->id)->find($this->viewingAttendanceId)?->user_id)
                     ->whereMonth('date', $this->selectedMonth)
                     ->whereYear('date', $this->selectedYear)
                     ->orderBy('date', 'desc')
