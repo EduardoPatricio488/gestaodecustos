@@ -150,6 +150,7 @@ class CollaboratorExpenseHub extends Component
             Storage::disk('local')->delete($expense->receipt_path);
         }
         $expense->delete();
+
         $this->dispatch('toast', text: 'Registo removido.', variant: 'warning');
     }
 
