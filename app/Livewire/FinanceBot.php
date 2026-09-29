@@ -746,6 +746,7 @@ COMO AGIR:
         $bankAccountId = null;
         if (! empty($args['payment_account_name'])) {
             $account = BankAccount::where('workspace_id', $wsId)
+                ->where('user_id', $userId)
                 ->where('name', 'like', '%'.$args['payment_account_name'].'%')
                 ->first();
 
@@ -938,7 +939,9 @@ COMO AGIR:
 
     private function toolDeleteReminder(array $args, int $wsId, int $userId): array
     {
-        $reminder = Reminder::where('workspace_id', $wsId)->find($args['reminder_id'] ?? null);
+        $reminder = Reminder::where('workspace_id', $wsId)
+            ->where('user_id', $userId)
+            ->find($args['reminder_id'] ?? null);
         if (! $reminder) {
             return ['error' => 'Lembrete não encontrado.'];
         }
@@ -1109,8 +1112,9 @@ COMO AGIR:
         $fixedIncome = (float) RecurringIncome::where('workspace_id', $wsId)->where('user_id', $userId)->where('is_active', true)->sum('amount');
         $earned += $fixedIncome * ($days / 30);
 
-        $byCategory = Expense::where('workspace_id', $wsId)
-            ->where('spent_at', '>=', $since)
+        $byCategory = Expense::where('expenses.workspace_id', $wsId)
+            ->where('expenses.user_id', $userId)
+            ->where('expenses.spent_at', '>=', $since)
             ->join('categories', 'expenses.category_id', '=', 'categories.id')
             ->selectRaw('categories.name as category, SUM(expenses.amount) as total')
             ->groupBy('categories.name')
