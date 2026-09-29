@@ -47,6 +47,7 @@ class ExportController extends Controller
 
         $expenses = $request->query('expenses') === '1'
             ? $workspace->expenses()
+                ->when(! $isBusiness, fn ($q) => $q->where('user_id', $user->id))
                 ->where('is_company', $companyFlag)
                 ->whereBetween('spent_at', [$start->toDateString(), $end->toDateString()])
                 ->with(['category', 'supplier'])
@@ -56,6 +57,7 @@ class ExportController extends Controller
 
         $incomes = $request->query('incomes') === '1'
             ? $workspace->incomes()
+                ->when(! $isBusiness, fn ($q) => $q->where('user_id', $user->id))
                 ->whereBetween('received_at', [$start->toDateString(), $end->toDateString()])
                 ->latest('received_at')
                 ->get()
@@ -82,6 +84,7 @@ class ExportController extends Controller
 
         $isBusiness = in_array($workspace->type, ['business', 'company'], true);
         $expenses = $workspace->expenses()
+            ->when(! $isBusiness, fn ($q) => $q->where('user_id', $user->id))
             ->where('is_company', $isBusiness)
             ->with('category')
             ->latest('spent_at')
