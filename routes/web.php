@@ -149,6 +149,8 @@ Route::get('/sitemap.xml', function () {
         ['loc' => url('/'), 'changefreq' => 'weekly', 'priority' => '1.0'],
         ['loc' => url('/termos'), 'changefreq' => 'yearly', 'priority' => '0.3'],
         ['loc' => url('/privacidade'), 'changefreq' => 'yearly', 'priority' => '0.3'],
+        ['loc' => url('/cookies'), 'changefreq' => 'yearly', 'priority' => '0.2'],
+        ['loc' => url('/acessibilidade'), 'changefreq' => 'yearly', 'priority' => '0.2'],
         ['loc' => url('/contacto'), 'changefreq' => 'monthly', 'priority' => '0.6'],
         ['loc' => url('/carreiras'), 'changefreq' => 'monthly', 'priority' => '0.6'],
     ];
