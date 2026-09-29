@@ -1,21 +1,12 @@
 <x-guest-layout>
-<div class="max-w-4xl mx-auto py-20 px-6">
-    <div class="space-y-4 mb-12">
-        <flux:badge variant="success" class="uppercase font-black text-[9px] tracking-widest">Segurança</flux:badge>
-        <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase italic tracking-tighter">Política de Privacidade</h1>
-        <p class="text-zinc-500 italic">O teu bunker financeiro é a nossa prioridade.</p>
-    </div>
-
-    <div class="prose dark:prose-invert max-w-none text-zinc-600 dark:text-zinc-400 space-y-8 font-medium">
-        <section>
-            <h2 class="text-xl font-black text-zinc-900 dark:text-white uppercase italic">Processamento de Dados</h2>
-            <p>Utilizamos os teus dados exclusivamente para gerar os teus relatórios financeiros. Não vendemos informações a terceiros. Os dados de pagamento são processados de forma segura via Stripe, e o {{ config('app.name') }} nunca armazena o número do teu cartão de crédito.</p>
-        </section>
-
-        <section>
-            <h2 class="text-xl font-black text-zinc-900 dark:text-white uppercase italic">Criptografia</h2>
-            <p>Todos os dados de despesas e receitas são protegidos por criptografia de ponta a ponta. O teu "Cofre Privado" é inacessível até para os administradores do sistema.</p>
-        </section>
-    </div>
-</div>
+<div class="max-w-4xl mx-auto py-16 px-6"><h1 class="text-3xl font-black dark:text-white">Política de Privacidade</h1><p class="mt-3 text-zinc-500">Última atualização: 29/09/2026</p><div class="prose dark:prose-invert mt-10">
+<h2>1. Responsável pelo tratamento</h2><p>O responsável pelo tratamento é a entidade que explora o Finance Pro AI. Os dados legais devem estar preenchidos antes da disponibilização comercial.</p><ul><li>Denominação: {{ config('legal.company_name') ?: 'A preencher' }}</li><li>NIF/NIPC: {{ config('legal.tax_number') ?: 'A preencher' }}</li><li>Morada: {{ config('legal.address') ?: 'A preencher' }}</li><li>Email: {{ config('legal.email') ?: 'A preencher' }}</li></ul>
+<h2>2. Dados e finalidades</h2><p>Podem ser tratados dados de identificação, contacto, autenticação, dados financeiros introduzidos pelo utilizador, dados empresariais e dados técnicos necessários ao funcionamento e segurança.</p><p>As finalidades incluem gestão da conta e workspaces, prestação das funcionalidades, pagamentos, suporte, segurança, prevenção de fraude e cumprimento de obrigações legais.</p>
+<h2>3. Fundamento jurídico</h2><p>O tratamento pode basear-se na execução do contrato, obrigação legal, interesse legítimo ou consentimento quando este seja exigido. O consentimento pode ser retirado a qualquer momento.</p>
+<h2>4. Prestadores</h2><p>Pagamentos podem ser processados pela Stripe e outras funcionalidades podem depender de prestadores tecnológicos. O Finance Pro AI não pretende armazenar os dados completos do cartão bancário.</p>
+<h2>5. Inteligência artificial</h2><p>Algumas funcionalidades utilizam IA para análises e sugestões. As respostas são informativas e não substituem aconselhamento profissional.</p>
+<h2>6. Segurança e conservação</h2><p>Aplicamos medidas técnicas e organizativas de segurança. Os dados são conservados pelo período necessário às finalidades aplicáveis e aos prazos legais.</p>
+<h2>7. Direitos</h2><p>Podes exercer, nos termos aplicáveis, direitos de acesso, retificação, apagamento, limitação, oposição e portabilidade, e retirar consentimentos. Também podes apresentar reclamação junto da CNPD.</p>
+<h2>8. Cookies e tracking</h2><p>Cookies necessários são usados para o funcionamento. Tracking não essencial, incluindo análise, só é ativado após escolha válida. Consulta a <a href="{{ route('legal.cookies') }}">Política de Cookies</a>.</p>
+</div></div>
 </x-guest-layout>
