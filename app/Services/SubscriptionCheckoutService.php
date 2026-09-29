@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Payment;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 class SubscriptionCheckoutService
 {
@@ -42,7 +43,7 @@ class SubscriptionCheckoutService
 
     public function upgradePlan(User $user, string $plan): void
     {
-        $user->update(['plan' => $plan]);
+        $user->forceFill(['plan' => $plan])->save();
 
         if ($user->currentWorkspace) {
             $user->currentWorkspace->update(['plan' => $plan]);
@@ -61,7 +62,7 @@ class SubscriptionCheckoutService
 
         Payment::create([
             'user_id' => $user->id,
-            'invoice_id' => 'INV-'.strtoupper($plan).'-'.time(),
+            'invoice_id' => 'INV-'.strtoupper($plan).'-'.Str::upper((string) Str::ulid()),
             'plan_type' => $plan,
             'amount' => $amount,
             'status' => 'paid',
