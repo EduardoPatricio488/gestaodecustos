@@ -13,6 +13,11 @@ use Livewire\WithPagination;
 #[Layout('components.layouts.app')]
 class ProjectHub extends Component
 {
+    public function mount(): void
+    {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+    }
+
     use WithPagination;
 
     public $search = '';
