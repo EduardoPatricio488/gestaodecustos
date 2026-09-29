@@ -38,6 +38,7 @@ class DebtHub extends Component
     public function bankAccounts()
     {
         return BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
             ->orderBy('name')
             ->get();
     }
@@ -48,7 +49,7 @@ class DebtHub extends Component
             return null;
         }
 
-        return Debt::where('workspace_id', auth()->user()->current_workspace_id)->find($this->settlingId);
+        return Debt::where('workspace_id', auth()->user()->current_workspace_id)->where('user_id', auth()->id())->find($this->settlingId);
     }
 
     public function openCreateModal()
@@ -70,7 +71,7 @@ class DebtHub extends Component
         $workspaceId = auth()->user()->current_workspace_id;
 
         $debt = $this->editingId
-            ? Debt::where('workspace_id', $workspaceId)->findOrFail($this->editingId)
+            ? Debt::where('workspace_id', $workspaceId)->where('user_id', auth()->id())->findOrFail($this->editingId)
             : new Debt();
         $debt->fill([
 
@@ -141,7 +142,7 @@ class DebtHub extends Component
 
         // Só bloqueia por saldo insuficiente quando é um pagamento (saída de dinheiro)
         if ($debt->type === 'owe' && $bankAccountId) {
-            $account = BankAccount::where('workspace_id', $workspaceId)->find($bankAccountId);
+            $account = BankAccount::where('workspace_id', $workspaceId)->where('user_id', auth()->id())->find($bankAccountId);
 
             if ($account && (float) $debt->amount > (float) $account->current_balance) {
                 $this->dispatch('toast', variant: 'error', text: 'Saldo insuficiente em "'.$account->name.'": disponível '.number_format($account->current_balance, 2, ',', '.').'€.');
@@ -233,6 +234,7 @@ class DebtHub extends Component
 
         // 1. Queries Diretas (Performance: Filtrar no SQL é melhor que em PHP)
         $iOwe = Debt::where('workspace_id', $wsId)
+            ->where('user_id', auth()->id())
             ->where('type', 'owe')
             ->where('is_paid', false)
             ->orderBy('due_at', 'asc')
@@ -247,6 +249,7 @@ class DebtHub extends Component
             ->map(fn ($d) => $this->decorateDebt($d));
 
         $history = Debt::where('workspace_id', $wsId)
+            ->where('user_id', auth()->id())
             ->where('is_paid', true)
             ->latest('updated_at')
             ->take(10)
