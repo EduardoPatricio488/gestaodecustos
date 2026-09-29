@@ -41,6 +41,7 @@ class PlanManager extends Component
 
     public function startCreate(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->resetFields();
         $this->showForm = true;
         $this->dispatch('scroll-to-top');
@@ -48,6 +49,7 @@ class PlanManager extends Component
 
     public function edit(int $id): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $plan = SubscriptionPlan::findOrFail($id);
 
         $this->editingId = $plan->id;
@@ -65,6 +67,7 @@ class PlanManager extends Component
 
     public function updatedName($value): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         if (! $this->editingId) {
             $this->slug = Str::slug((string) $value);
         }
@@ -72,6 +75,7 @@ class PlanManager extends Component
 
     public function save(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->features = array_values(array_filter((array) $this->features));
         $this->slug = Str::slug($this->slug ?: $this->name);
 
@@ -125,6 +129,7 @@ class PlanManager extends Component
 
     public function toggleActive(int $id): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $plan = SubscriptionPlan::findOrFail($id);
         $plan->update(['is_active' => ! $plan->is_active]);
         $this->dispatch('toast', text: $plan->is_active ? 'Plano publicado na loja.' : 'Plano ocultado da loja.');
@@ -132,17 +137,20 @@ class PlanManager extends Component
 
     public function viewDossier(int $id): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->viewingPlanId = $id;
         $this->showForm = false;
     }
 
     public function closeDossier(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->viewingPlanId = null;
     }
 
     public function delete(int $id): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $plan = SubscriptionPlan::findOrFail($id);
         $subscribers = User::where('plan', $plan->slug)->count();
 
@@ -161,6 +169,7 @@ class PlanManager extends Component
 
     public function resetFields(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->reset(['editingId', 'name', 'slug', 'price', 'description', 'features', 'stripe_price_id', 'showForm']);
         $this->price = 0;
         $this->is_active = true;
