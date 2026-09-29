@@ -83,24 +83,27 @@ class LockInHub extends Component
         // ═══════════════════════════════════════════
 
         $personalBalance = BankAccount::where('workspace_id', $wsId)
+            ->where('user_id', $user->id)
             ->where('is_business', false)
             ->sum('balance');
 
-        $totalBalance = BankAccount::where('workspace_id', $wsId)->sum('balance');
+        $totalBalance = BankAccount::where('workspace_id', $wsId)->where('user_id', $user->id)->sum('balance');
 
-        $mainGoal = Goal::where('workspace_id', $wsId)->first();
+        $mainGoal = Goal::where('workspace_id', $wsId)->where('user_id', $user->id)->first();
         $goalName = $mainGoal?->name ?? 'Poupança';
         $goalTarget = (float) ($mainGoal?->target_amount ?? 0);
         $goalCurrent = (float) ($mainGoal?->current_amount ?? 0);
         $goalProgress = $goalTarget > 0 ? min(100, round(($goalCurrent / $goalTarget) * 100)) : 0;
 
         $upcomingBills = Subscription::where('workspace_id', $wsId)
+            ->where('user_id', $user->id)
             ->where('is_active', true)
             ->orderBy('billing_day')
             ->limit(3)
             ->get(['name', 'amount', 'billing_day', 'cycle']);
 
         $personalIncomeMonth = Income::where('workspace_id', $wsId)
+            ->where('user_id', $user->id)
             ->whereMonth('received_at', $now->month)
             ->whereYear('received_at', $now->year)
             ->sum('amount');
@@ -108,6 +111,7 @@ class LockInHub extends Component
         // Rendimentos fixos/recorrentes (salário, rendas...) nunca aparecem como transações
         // avulsas na tabela incomes, por isso têm de ser somados à parte.
         $fixedIncomeMonth = (float) RecurringIncome::where('workspace_id', $wsId)
+            ->where('user_id', $user->id)
             ->where('is_active', true)
             ->get()
             ->sum(fn ($r) => match ($r->frequency) {
@@ -119,6 +123,7 @@ class LockInHub extends Component
         $personalIncomeMonth += $fixedIncomeMonth;
 
         $personalExpenseMonth = Expense::where('workspace_id', $wsId)
+            ->where('user_id', $user->id)
             ->whereMonth('spent_at', $now->month)
             ->whereYear('spent_at', $now->year)
             ->sum('amount');
@@ -166,6 +171,7 @@ class LockInHub extends Component
         // ═══════════════════════════════════════════
 
         $totalSpend3m = Expense::where('workspace_id', $wsId)
+            ->where('user_id', $user->id)
             ->where('spent_at', '>=', $now->copy()->subMonths(3))
             ->sum('amount');
 
