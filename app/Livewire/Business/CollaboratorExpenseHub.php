@@ -172,7 +172,7 @@ class CollaboratorExpenseHub extends Component
             'categories' => Category::where('workspace_id', $workspace->id)->get(),
             'stats' => [
                 'total_pending' => Expense::where('workspace_id', $workspace->id)->where('user_id', auth()->id())->whereRaw('LOWER(status) = ?', ['pendente'])->sum('amount'),
-                'total_approved' => Expense::where('user_id', auth()->id())->whereRaw('LOWER(status) = ?', ['aprovado'])->sum('amount'),
+                'total_approved' => Expense::where('workspace_id', $workspace->id)->where('user_id', auth()->id())->whereRaw('LOWER(status) = ?', ['aprovado'])->sum('amount'),
             ],
         ]);
     }
