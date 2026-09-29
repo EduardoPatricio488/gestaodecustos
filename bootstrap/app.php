@@ -25,95 +25,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
 
         if (app()->environment('production')) {
-            $middleware->trustHosts(at: fn () => array_values(array_filter([
-                '^financepro\\.com(?::\\d+)?
-
-        $middleware->web(append: [
-            ForceHttps::class,
-            SecurityHeaders::class,
-            SetLocale::class,
-            CheckMaintenanceMode::class,
-            CheckRegistrationStatus::class,
-            UpdateUserActivity::class,
-            EnsureImpersonationIsValid::class,
-            EnsureBusinessWorkspaceAccess::class,
-            ThrottleVerificationCode::class,
-        ]);
-
-        $middleware->validateCsrfTokens(except: [
-            'api/whatsapp/webhook',
-            'stripe/*',
-        ]);
-
-        $middleware->alias([
-            'admin' => AdminMiddleware::class,
-            'plan' => CheckPlanAccess::class,
-            'business.workspace' => EnsureBusinessWorkspaceAccess::class,
-        ]);
-    })
-    ->withExceptions(function (Exceptions $exceptions) {
-        //
-    })->create();
-,
-                '^www\\.financepro\\.com(?::\\d+)?
-
-        $middleware->web(append: [
-            ForceHttps::class,
-            SecurityHeaders::class,
-            SetLocale::class,
-            CheckMaintenanceMode::class,
-            CheckRegistrationStatus::class,
-            UpdateUserActivity::class,
-            EnsureImpersonationIsValid::class,
-            EnsureBusinessWorkspaceAccess::class,
-            ThrottleVerificationCode::class,
-        ]);
-
-        $middleware->validateCsrfTokens(except: [
-            'api/whatsapp/webhook',
-            'stripe/*',
-        ]);
-
-        $middleware->alias([
-            'admin' => AdminMiddleware::class,
-            'plan' => CheckPlanAccess::class,
-            'business.workspace' => EnsureBusinessWorkspaceAccess::class,
-        ]);
-    })
-    ->withExceptions(function (Exceptions $exceptions) {
-        //
-    })->create();
-,
-                '^gestaodecustos\\.onrender\\.com(?::\\d+)?
-
-        $middleware->web(append: [
-            ForceHttps::class,
-            SecurityHeaders::class,
-            SetLocale::class,
-            CheckMaintenanceMode::class,
-            CheckRegistrationStatus::class,
-            UpdateUserActivity::class,
-            EnsureImpersonationIsValid::class,
-            EnsureBusinessWorkspaceAccess::class,
-            ThrottleVerificationCode::class,
-        ]);
-
-        $middleware->validateCsrfTokens(except: [
-            'api/whatsapp/webhook',
-            'stripe/*',
-        ]);
-
-        $middleware->alias([
-            'admin' => AdminMiddleware::class,
-            'plan' => CheckPlanAccess::class,
-            'business.workspace' => EnsureBusinessWorkspaceAccess::class,
-        ]);
-    })
-    ->withExceptions(function (Exceptions $exceptions) {
-        //
-    })->create();
-,
-            ])));
+            $middleware->trustHosts(at: [
+                '^financepro\\.com(?::\\d+)?$',
+                '^www\\.financepro\\.com(?::\\d+)?$',
+                '^gestaodecustos\\.onrender\\.com(?::\\d+)?$',
+            ]);
         }
 
         $middleware->web(append: [
