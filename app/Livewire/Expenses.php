@@ -86,8 +86,13 @@ class Expenses extends Component
             return;
         }
 
-        // O Global Scope garante que só apaga se pertencer ao workspace ativo
-        Expense::where('id', $id)->delete();
+        $query = Expense::whereKey($id);
+
+        if (auth()->user()->currentWorkspace?->type === 'personal') {
+            $query->where('user_id', auth()->id());
+        }
+
+        $query->delete();
 
         session()->flash('ok', 'Despesa eliminada com sucesso.');
     }
@@ -95,9 +100,17 @@ class Expenses extends Component
     public function render()
     {
         $user = auth()->user();
+        $isPersonalWorkspace = $user->currentWorkspace?->type === 'personal';
 
-        // Consulta filtrada automaticamente pelo Workspace ativo via Trait
-        $expenses = Expense::with(['category', 'user', 'bankAccount'])
+        // O trait filtra pelo workspace; em workspaces pessoais, cada utilizador
+        // deve ver apenas os seus próprios registos.
+        $expenseQuery = Expense::with(['category', 'user', 'bankAccount']);
+
+        if ($isPersonalWorkspace) {
+            $expenseQuery->where('user_id', $user->id);
+        }
+
+        $expenses = $expenseQuery
             ->when($this->search, fn ($q) => $q->where('description', 'like', '%'.$this->search.'%')
             )
             ->when($this->filterCategory, fn ($q) => $q->where('category_id', $this->filterCategory)
@@ -106,7 +119,13 @@ class Expenses extends Component
             ->latest('id')
             ->paginate(20);
 
-        $monthTotal = (float) Expense::where('spent_at', '>=', now()->startOfMonth())->sum('amount');
+        $monthTotalQuery = Expense::where('spent_at', '>=', now()->startOfMonth());
+
+        if ($isPersonalWorkspace) {
+            $monthTotalQuery->where('user_id', $user->id);
+        }
+
+        $monthTotal = (float) $monthTotalQuery->sum('amount');
 
         return view('livewire.expenses', [
             'expenses' => $expenses,
