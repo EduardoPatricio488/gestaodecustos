@@ -30,7 +30,7 @@ class AbsenceHub extends Component
     public function approve($id)
     {
         abort_unless(auth()->user()->isOwner() || auth()->user()->isAdminRole(), 403);
-        Absence::find($id)->update(['status' => 'aprovado']);
+        Absence::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id)->update(['status' => 'aprovado']);
         $this->dispatch('toast', variant: 'success', text: 'Pedido aprovado com sucesso!');
     }
 
@@ -39,7 +39,7 @@ class AbsenceHub extends Component
      */
     public function delete($id)
     {
-        $absence = Absence::find($id);
+        $absence = Absence::where('workspace_id', auth()->user()->current_workspace_id)->find($id);
         if (! $absence) {
             return;
         }
