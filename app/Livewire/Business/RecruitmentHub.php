@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -72,6 +73,14 @@ class RecruitmentHub extends Component
 
         session()->flash('published', true);
         $this->dispatch('toast', variant: 'success', text: 'Montra pública e ofertas sincronizadas!');
+    }
+
+    public function downloadCandidateCv($id)
+    {
+        $workspace = auth()->user()->currentWorkspace;
+        $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
+        abort_unless($app && $app->cv_path && Storage::disk('local')->exists($app->cv_path), 404);
+        return Storage::disk('local')->download($app->cv_path, 'CV-candidato.pdf');
     }
 
     public function rejectCandidate($id)
