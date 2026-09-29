@@ -18,6 +18,7 @@ class BusinessAiHub extends Component
 
     public function runAnalysis(AiBrainService $brain): void
     {
+        app(BusinessAccessService::class)->assert('view_business');
         $user = Auth::user();
         $workspace = $user->currentWorkspace;
         abort_unless($workspace && in_array($workspace->type, ['business', 'company'], true), 404);
