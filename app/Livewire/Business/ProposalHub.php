@@ -3,6 +3,7 @@
 namespace App\Livewire\Business;
 
 use App\Models\Invoice;
+use App\Services\BusinessAccessService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -50,6 +51,7 @@ class ProposalHub extends Component
 
     public function save()
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $this->validate();
         $workspace = $this->workspace();
         abort_unless($workspace->clients()->whereKey($this->client_id)->exists(), 422, 'Cliente inválido para este workspace.');
@@ -70,6 +72,7 @@ class ProposalHub extends Component
 
     public function convertToInvoice(int $id)
     {
+        app(BusinessAccessService::class)->assert('manage_financials');
         $workspace = $this->workspace();
         $proposal = $workspace->proposals()->with('client')->findOrFail($id);
         abort_unless($proposal->client_id && $proposal->client, 422, 'A proposta não tem um cliente válido.');
@@ -98,6 +101,7 @@ class ProposalHub extends Component
 
     public function updateStatus(int $id, string $newStatus)
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         abort_unless(in_array($newStatus, ['rascunho', 'enviada', 'aceite', 'recusada', 'convertida'], true), 422);
         $this->workspace()->proposals()->whereKey($id)->firstOrFail()->update(['status' => $newStatus]);
         $this->dispatch('toast', text: 'Estado da proposta atualizado.');
@@ -105,6 +109,7 @@ class ProposalHub extends Component
 
     public function edit(int $id)
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $proposal = $this->workspace()->proposals()->findOrFail($id);
         $this->editingId = $proposal->id;
         $this->title = $proposal->title;
@@ -119,6 +124,7 @@ class ProposalHub extends Component
 
     public function delete(int $id)
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $this->workspace()->proposals()->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Proposta removida.', variant: 'warning');
     }
