@@ -12,6 +12,8 @@ Finance Pro AI helps users organise personal and business finances, including ex
 - {{ url('/carreiras') }} — Careers
 - {{ url('/privacidade') }} — Privacy policy
 - {{ url('/termos') }} — Terms
+- {{ url('/cookies') }} — Cookie policy
+- {{ url('/acessibilidade') }} — Accessibility
 
 ## Access
 Authenticated dashboards and private financial data are not public and should not be crawled or indexed.
