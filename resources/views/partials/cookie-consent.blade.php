@@ -1,5 +1,6 @@
 @php $cookieConsent = request()->cookie('fp_cookie_consent'); @endphp
 <div x-data="{ open: {{ $cookieConsent ? 'false' : 'true' }}, preferences: false, analytics: false, save(value) { document.cookie = 'fp_cookie_consent=' + encodeURIComponent(value) + '; Max-Age=31536000; Path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); this.open=false; this.preferences=false; window.dispatchEvent(new CustomEvent('finance-pro-cookie-consent', { detail: { analytics: value === 'analytics' } })); }, reopen() { this.open=true; } }" x-on:open-cookie-preferences.window="reopen()" class="relative z-[9999]">
+<button x-show="!open" x-cloak type="button" @click="reopen()" class="fixed bottom-4 right-4 z-[9998] rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs font-bold text-zinc-700 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">Preferências de cookies</button>
 <div x-show="open" x-cloak class="fixed inset-0 bg-zinc-950/50 backdrop-blur-sm"></div>
 <section x-show="open" x-cloak role="dialog" aria-modal="true" aria-labelledby="cookie-consent-title" class="fixed bottom-0 left-0 right-0 z-[10000] border-t border-zinc-200 bg-white p-5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 sm:p-6">
 <div class="mx-auto max-w-6xl"><div x-show="!preferences">
