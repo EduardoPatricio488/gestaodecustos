@@ -271,13 +271,13 @@ class SocialHub extends Component
      */
     public function toggleLike($postId)
     {
-        $like = SocialLike::where('user_id', auth()->id())->where('post_id', $postId)->first();
+        $post = $this->accessiblePost($postId);
+        $like = SocialLike::where('user_id', auth()->id())->where('post_id', $post->id)->first();
 
         if ($like) {
             $like->delete();
         } else {
-            SocialLike::create(['user_id' => auth()->id(), 'post_id' => $postId]);
-            $post = SocialPost::find($postId);
+            SocialLike::create(['user_id' => auth()->id(), 'post_id' => $post->id]);
             if ($post) {
                 SocialNotification::notify($post->user_id, auth()->id(), 'like', $postId);
             }
@@ -289,18 +289,16 @@ class SocialHub extends Component
      */
     public function postComment($postId)
     {
+        $post = $this->accessiblePost($postId);
         $this->validate(['commentContent' => 'required|min:1|max:280']);
 
         SocialComment::create([
             'user_id' => auth()->id(),
-            'post_id' => $postId,
+            'post_id' => $post->id,
             'content' => $this->commentContent,
         ]);
 
-        $post = SocialPost::find($postId);
-        if ($post) {
-            SocialNotification::notify($post->user_id, auth()->id(), 'comment', $postId, $this->commentContent);
-        }
+        SocialNotification::notify($post->user_id, auth()->id(), 'comment', $post->id, $this->commentContent);
 
         $this->reset(['commentContent', 'commentingPostId']);
         $this->dispatch('toast', text: 'Comentário enviado! ✨');
@@ -386,7 +384,8 @@ class SocialHub extends Component
      */
     public function setCommenting($postId)
     {
-        $this->commentingPostId = ($this->commentingPostId === $postId) ? null : $postId;
+        $post = $this->accessiblePost($postId);
+        $this->commentingPostId = ($this->commentingPostId === $post->id) ? null : $post->id;
         if ($this->commentingPostId) {
             $this->commentContent = '';
         }
@@ -453,6 +452,20 @@ class SocialHub extends Component
         ]);
 
         $this->dispatch('toast', text: 'Progresso da meta partilhado no Finance Connect!');
+    }
+
+
+    private function accessiblePost($postId): SocialPost
+    {
+        $userId = auth()->id();
+        $workspaceId = auth()->user()->current_workspace_id;
+        $post = SocialPost::findOrFail($postId);
+        $allowed = $post->user_id === $userId
+            || $post->visibility === 'public'
+            || ($post->visibility === 'workspace' && (int) $post->workspace_id === (int) $workspaceId)
+            || ($post->visibility === 'followers' && SocialFollow::where('follower_id', $userId)->where('following_id', $post->user_id)->exists());
+        abort_unless($allowed, 403);
+        return $post;
     }
 
     #[Layout('components.layouts.app')]
