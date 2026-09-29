@@ -32,7 +32,7 @@ class BackupDatabase extends Command
         $secretKey = config('backup.s3.secret_key');
         $region = config('backup.s3.region');
 
-        if (!$bucket || !$accessKey || !$secretKey) {
+        if (! $bucket || ! $accessKey || ! $secretKey) {
             $this->error('AWS backup storage is not configured.');
 
             return self::FAILURE;
