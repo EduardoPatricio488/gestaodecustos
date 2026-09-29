@@ -72,7 +72,8 @@ class DebtHub extends Component
         $debt = $this->editingId
             ? Debt::where('workspace_id', $workspaceId)->findOrFail($this->editingId)
             : new Debt();
-            [
+        $debt->fill([
+
                 'user_id' => auth()->id(),
                 'workspace_id' => $workspaceId,
                 'type' => $this->type,
