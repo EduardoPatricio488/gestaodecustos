@@ -42,12 +42,12 @@ Date: 2026-09-29
 - Smartwatch AI input is validated, its response is allowlisted, and the provider key is read through server-side configuration.
 - Composer and npm dependency audits now run automatically on pushes/PRs and weekly through GitHub Actions.
 - Application-level workspace authorization remains mandatory; database row isolation must not be treated as the only security boundary.
+- Production database backups are now scheduled daily at 02:30 through Laravel Scheduler; the container includes `mysqldump` and AWS CLI tooling, and backups are compressed and uploaded to private S3-compatible storage with server-side AES-256 encryption.
+- Backup activation requires production AWS/S3 credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_BUCKET`) to be configured in the Render environment; no credentials are stored in Git.
 
 ## Backups and disaster recovery
 
-The application cannot create a durable production backup by itself because the deployment filesystem is not a suitable backup target. For Render, configure a dedicated Cron Job that runs `mysqldump` for MySQL and sends the compressed dump to durable off-site object storage (S3/R2/GCS). Render documents Cron Jobs for scheduled tasks and recommends database-native backup tools such as `mysqldump` rather than relying on disk snapshots for custom MySQL databases.
-
-The repository now documents the application-side hardening, but the final backup step requires the production database/storage credentials in Render. No credentials are stored in Git.
+Database backups are implemented in the application and scheduled daily. The production environment must provide private S3-compatible storage credentials before the first backup can upload successfully. No credentials are stored in Git.
 
 ## Remaining attention
 
