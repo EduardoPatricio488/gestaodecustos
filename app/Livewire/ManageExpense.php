@@ -152,7 +152,7 @@ class ManageExpense extends Component
             $imageData = base64_encode(file_get_contents($imageFullPath));
             $mimeType = $this->receipt->getMimeType() ?: 'image/jpeg';
 
-            $selectedCat = Category::find($this->category_id);
+            $selectedCat = Category::where('workspace_id', auth()->user()->current_workspace_id)->find($this->category_id);
             $subsStr = ($selectedCat && isset($this->hubConfigs[$selectedCat->slug]))
                 ? implode(', ', $this->hubConfigs[$selectedCat->slug]['subs'])
                 : 'Geral, Outros';
