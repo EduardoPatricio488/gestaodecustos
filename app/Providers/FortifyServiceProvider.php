@@ -88,5 +88,17 @@ class FortifyServiceProvider extends ServiceProvider
                 ($request->user()?->getAuthIdentifier() ?? 'guest').'|'.$request->ip(),
             );
         });
+
+        RateLimiter::for('public', function (Request $request) {
+            return Limit::perMinute(120)->by($request->ip());
+        });
+
+        RateLimiter::for('contact', function (Request $request) {
+            return Limit::perMinute(5)->by(Str::lower((string) $request->input('email')).'|'.$request->ip());
+        });
+
+        RateLimiter::for('payments', function (Request $request) {
+            return Limit::perMinute(10)->by(($request->user()?->getAuthIdentifier() ?? 'guest').'|'.$request->ip());
+        });
     }
 }
