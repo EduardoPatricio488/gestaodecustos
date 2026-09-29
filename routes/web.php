@@ -118,6 +118,18 @@ use Illuminate\Support\Facades\Route;
 // 1. ÁREAS EXTERNAS E PÚBLICAS (Acessíveis por Visitantes)
 // ══════════════════════════════════════════════════════════════════
 
+Route::get('/health', function () {
+    try {
+        \Illuminate\Support\Facades\DB::connection()->getPdo();
+
+        return response()->json(['status' => 'ok'], 200, ['Cache-Control' => 'no-store']);
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('Health check failed', ['exception' => get_class($e)]);
+
+        return response()->json(['status' => 'degraded'], 503, ['Cache-Control' => 'no-store']);
+    }
+})->middleware('throttle:public')->name('health.status');
+
 Route::get('/robots.txt', function () {
     return response(implode("\n", [
         'User-agent: *',
