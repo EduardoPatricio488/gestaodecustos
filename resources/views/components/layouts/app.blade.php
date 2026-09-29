@@ -56,11 +56,7 @@
     @include('partials.head')
 
     <link rel="stylesheet" href="/flux/flux.css">
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    @vite([
-        'resources/css/app.css',
-        'resources/js/app.js'
-    ])
+<script defer src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js" crossorigin="anonymous"></script>
 <style>
     html::after {
         content: '';
