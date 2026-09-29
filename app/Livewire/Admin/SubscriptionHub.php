@@ -47,21 +47,25 @@ class SubscriptionHub extends Component
 
     public function updatingSearch(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->resetPage();
     }
 
     public function updatingFilterStatus(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->resetPage();
     }
 
     public function updatingFilterPlan(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->resetPage();
     }
 
     public function startCreatePayment(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->resetPaymentForm();
         $this->pay_invoice_id = 'INV-'.strtoupper(str()->random(6));
         $this->pay_paid_at = now()->format('Y-m-d\TH:i');
@@ -70,6 +74,7 @@ class SubscriptionHub extends Component
 
     public function editPayment(int $id): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $payment = Payment::with('user')->findOrFail($id);
 
         $this->editingPaymentId = $payment->id;
@@ -85,6 +90,7 @@ class SubscriptionHub extends Component
 
     public function savePayment(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->validate([
             'pay_user_email' => 'required|email',
             'pay_invoice_id' => [
@@ -135,6 +141,7 @@ class SubscriptionHub extends Component
 
     public function deletePayment(int $id): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         Payment::destroy($id);
         if ($this->editingPaymentId === $id) {
             $this->resetPaymentForm();
@@ -144,6 +151,7 @@ class SubscriptionHub extends Component
 
     public function resetPaymentForm(): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->reset([
             'showPaymentForm',
             'editingPaymentId',
