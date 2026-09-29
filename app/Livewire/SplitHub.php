@@ -138,7 +138,8 @@ class SplitHub extends Component
         $split = $this->editingId
             ? ExpenseSplit::where('workspace_id', $ws->id)->where('creator_user_id', auth()->id())->findOrFail($this->editingId)
             : new ExpenseSplit();
-            [
+        $split->fill([
+
                 'creator_user_id' => auth()->id(),
                 'workspace_id' => $ws->id,
                 'category_id' => $this->categoryId ?: null,
