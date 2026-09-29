@@ -162,6 +162,8 @@ Route::view('/llms.txt', 'seo.llms')->name('seo.llms');
 Route::view('/', 'welcome')->name('home');
 Route::view('/termos', 'pages.legal.terms')->name('legal.terms');
 Route::view('/privacidade', 'pages.legal.privacy')->name('legal.privacy');
+Route::view('/cookies', 'pages.legal.cookies')->name('legal.cookies');
+Route::view('/acessibilidade', 'pages.legal.accessibility')->name('legal.accessibility');
 Route::get('/contacto', ContactPage::class)->name('public.contact');
 
 Route::prefix('portal')->group(function () {
