@@ -14,12 +14,17 @@ use App\Models\Goal;
 use App\Models\Income;
 use App\Models\Investment;
 use App\Models\RecurringIncome;
+use App\Models\Workspace;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class BancoService
 {
     private int $workspaceId;
+
+    private int $userId;
+
+    private bool $isBusinessWorkspace;
 
     private ?Collection $accountsCache = null;
 
@@ -29,9 +34,11 @@ class BancoService
 
     private ?Collection $patrimonyCache = null;
 
-    public function __construct(int $workspaceId)
+    public function __construct(int $workspaceId, int $userId)
     {
         $this->workspaceId = $workspaceId;
+        $this->userId = $userId;
+        $this->isBusinessWorkspace = in_array((string) Workspace::whereKey($workspaceId)->value('type'), ['business', 'company'], true);
     }
 
     public function getSummary(): array
@@ -55,7 +62,7 @@ class BancoService
         $totalOtherAssets = $patrimony->where('type', 'other_asset')->sum('value');
         $totalLiabilities = $patrimony->where('type', 'liability')->sum('value');
 
-        $pendingExpenses = Expense::where('workspace_id', $this->workspaceId)
+        $pendingExpenses = $this->personalScope(Expense::where('workspace_id', $this->workspaceId))
             ->where('status', 'pending')
             ->sum('amount');
 
@@ -71,7 +78,7 @@ class BancoService
                         + $totalVehicles + $totalGold + $totalCrypto + $totalOtherAssets
                         - $totalLiabilities;
 
-        $totalDebts = Debt::where('workspace_id', $this->workspaceId)
+        $totalDebts = $this->personalScope(Debt::where('workspace_id', $this->workspaceId))
             ->where('type', 'owe')
             ->where('is_paid', false)
             ->sum('amount');
@@ -121,7 +128,7 @@ class BancoService
             return $this->accountsCache;
         }
 
-        return $this->accountsCache = BankAccount::where('workspace_id', $this->workspaceId)
+        return $this->accountsCache = $this->personalScope(BankAccount::where('workspace_id', $this->workspaceId))
             ->withSum('incomes as current_balance_income_total', 'amount')
             ->withSum('expenses as current_balance_expense_total', 'amount')
             ->withSum([
@@ -150,14 +157,14 @@ class BancoService
             return $this->reservesCache;
         }
 
-        return $this->reservesCache = BankReserve::where('workspace_id', $this->workspaceId)
+        return $this->reservesCache = $this->personalScope(BankReserve::where('workspace_id', $this->workspaceId))
             ->orderBy('name')
             ->get();
     }
 
     public function getTransitItems(): Collection
     {
-        return BankTransitItem::where('workspace_id', $this->workspaceId)
+        return $this->personalScope(BankTransitItem::where('workspace_id', $this->workspaceId))
             ->where('status', 'pending')
             ->orderBy('expected_date')
             ->get();
@@ -165,7 +172,7 @@ class BancoService
 
     public function getCredits(): Collection
     {
-        return BankCredit::where('workspace_id', $this->workspaceId)
+        return $this->personalScope(BankCredit::where('workspace_id', $this->workspaceId))
             ->whereIn('status', ['pending', 'partial'])
             ->orderBy('due_date')
             ->get();
@@ -173,7 +180,7 @@ class BancoService
 
     public function getTransfers(int $limit = 20): Collection
     {
-        return BankTransfer::where('workspace_id', $this->workspaceId)
+        return $this->personalScope(BankTransfer::where('workspace_id', $this->workspaceId))
             ->with(['fromAccount', 'toAccount'])
             ->orderByDesc('transferred_at')
             ->limit($limit)
@@ -186,7 +193,7 @@ class BancoService
             return $this->investmentsCache;
         }
 
-        return $this->investmentsCache = Investment::where('workspace_id', $this->workspaceId)->get();
+        return $this->investmentsCache = $this->personalScope(Investment::where('workspace_id', $this->workspaceId))->get();
     }
 
     public function getPatrimony(): Collection
@@ -195,7 +202,7 @@ class BancoService
             return $this->patrimonyCache;
         }
 
-        return $this->patrimonyCache = BankPatrimony::where('workspace_id', $this->workspaceId)
+        return $this->patrimonyCache = $this->personalScope(BankPatrimony::where('workspace_id', $this->workspaceId))
             ->where('status', '!=', 'sold')
             ->orderBy('type')
             ->get();
@@ -203,7 +210,7 @@ class BancoService
 
     public function getGoals(): Collection
     {
-        return Goal::where('workspace_id', $this->workspaceId)
+        return $this->personalScope(Goal::where('workspace_id', $this->workspaceId))
             ->orderBy('deadline')
             ->get()
             ->map(function ($goal) {
@@ -222,7 +229,7 @@ class BancoService
 
     public function getDebts(): Collection
     {
-        return Debt::where('workspace_id', $this->workspaceId)
+        return $this->personalScope(Debt::where('workspace_id', $this->workspaceId))
             ->where('is_paid', false)
             ->orderBy('due_at')
             ->get();
@@ -238,14 +245,14 @@ class BancoService
         $incomeMonthExpression = $this->monthKeyExpression('received_at');
         $expenseMonthExpression = $this->monthKeyExpression('spent_at');
 
-        $incomes = Income::where('workspace_id', $this->workspaceId)
+        $incomes = $this->personalScope(Income::where('workspace_id', $this->workspaceId))
             ->whereBetween('received_at', [$start, $end])
             ->selectRaw("{$incomeMonthExpression} as month_key, SUM(amount) as total")
             ->groupByRaw($incomeMonthExpression)
             ->get()
             ->keyBy('month_key');
 
-        $expenses = Expense::where('workspace_id', $this->workspaceId)
+        $expenses = $this->personalScope(Expense::where('workspace_id', $this->workspaceId))
             ->whereBetween('spent_at', [$start, $end])
             ->selectRaw("{$expenseMonthExpression} as month_key, SUM(amount) as total")
             ->groupByRaw($expenseMonthExpression)
@@ -303,13 +310,13 @@ class BancoService
     public function getStats(): array
     {
         $accounts = $this->getAccounts();
-        $transfers = BankTransfer::where('workspace_id', $this->workspaceId)->count();
+        $transfers = $this->personalScope(BankTransfer::where('workspace_id', $this->workspaceId))->count();
         $reserves = $this->getReserves()->count();
 
-        $incomeStats = Income::where('workspace_id', $this->workspaceId)
+        $incomeStats = $this->personalScope(Income::where('workspace_id', $this->workspaceId))
             ->selectRaw('COALESCE(MAX(amount), 0) as max_amount, COALESCE(SUM(amount), 0) as total_amount')
             ->first();
-        $expenseStats = Expense::where('workspace_id', $this->workspaceId)
+        $expenseStats = $this->personalScope(Expense::where('workspace_id', $this->workspaceId))
             ->selectRaw('COALESCE(MAX(amount), 0) as max_amount, COALESCE(SUM(amount), 0) as total_amount')
             ->first();
 
@@ -366,7 +373,7 @@ class BancoService
             }
         }
 
-        $overdueCredits = BankCredit::where('workspace_id', $this->workspaceId)
+        $overdueCredits = $this->personalScope(BankCredit::where('workspace_id', $this->workspaceId))
             ->whereIn('status', ['pending', 'partial'])
             ->where('due_date', '<', now())
             ->count();
@@ -390,7 +397,7 @@ class BancoService
             ];
         }
 
-        $urgentDebts = Debt::where('workspace_id', $this->workspaceId)
+        $urgentDebts = $this->personalScope(Debt::where('workspace_id', $this->workspaceId))
             ->where('is_paid', false)
             ->where('type', 'owe')
             ->whereBetween('due_at', [now(), now()->addDays(7)])
@@ -435,7 +442,7 @@ class BancoService
 
     private function getCurrentMonthIncome(): float
     {
-        $variable = (float) Income::where('workspace_id', $this->workspaceId)
+        $variable = (float) $this->personalScope(Income::where('workspace_id', $this->workspaceId))
             ->whereYear('received_at', now()->year)
             ->whereMonth('received_at', now()->month)
             ->sum('amount');
@@ -445,7 +452,7 @@ class BancoService
 
     private function getCurrentMonthExpense(): float
     {
-        return (float) Expense::where('workspace_id', $this->workspaceId)
+        return (float) $this->personalScope(Expense::where('workspace_id', $this->workspaceId))
             ->whereYear('spent_at', now()->year)
             ->whereMonth('spent_at', now()->month)
             ->sum('amount');
@@ -453,7 +460,7 @@ class BancoService
 
     private function getPrevMonthIncome(): float
     {
-        $variable = (float) Income::where('workspace_id', $this->workspaceId)
+        $variable = (float) $this->personalScope(Income::where('workspace_id', $this->workspaceId))
             ->whereYear('received_at', now()->subMonth()->year)
             ->whereMonth('received_at', now()->subMonth()->month)
             ->sum('amount');
@@ -463,7 +470,7 @@ class BancoService
 
     private function getPrevMonthExpense(): float
     {
-        return (float) Expense::where('workspace_id', $this->workspaceId)
+        return (float) $this->personalScope(Expense::where('workspace_id', $this->workspaceId))
             ->whereYear('spent_at', now()->subMonth()->year)
             ->whereMonth('spent_at', now()->subMonth()->month)
             ->sum('amount');
@@ -471,7 +478,7 @@ class BancoService
 
     private function getFixedMonthlyIncome(): float
     {
-        return (float) RecurringIncome::where('workspace_id', $this->workspaceId)
+        return (float) Recurring$this->personalScope(Income::where('workspace_id', $this->workspaceId))
             ->where('is_active', true)
             ->get()
             ->sum(fn ($r) => match ($r->frequency) {
@@ -489,11 +496,19 @@ class BancoService
 
         $end = now()->startOfMonth()->subMonth()->endOfMonth();
         $start = $end->copy()->startOfMonth()->subMonths($months - 1);
-        $total = (float) Expense::where('workspace_id', $this->workspaceId)
+        $total = (float) $this->personalScope(Expense::where('workspace_id', $this->workspaceId))
             ->whereBetween('spent_at', [$start, $end])
             ->sum('amount');
 
         return $total / $months;
+    }
+
+    /**
+     * Personal workspaces are user-owned. Business workspaces are shared by members.
+     */
+    private function personalScope($query)
+    {
+        return $this->isBusinessWorkspace ? $query : $query->where('user_id', $this->userId);
     }
 
     private function monthKeyExpression(string $column): string
