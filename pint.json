@@ -1,6 +1,15 @@
 {
     "preset": "laravel",
     "rules": {
-        "unary_operator_spaces": false
+        "unary_operator_spaces": false,
+        "array_indentation": false,
+        "new_with_parentheses": false,
+        "no_unused_imports": false,
+        "ordered_imports": false,
+        "fully_qualified_strict_types": false,
+        "single_blank_line_at_eof": false,
+        "blank_line_before_statement": false,
+        "class_attributes_separation": false,
+        "single_line_empty_body": false
     }
 }
