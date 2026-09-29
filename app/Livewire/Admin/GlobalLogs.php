@@ -26,17 +26,20 @@ class GlobalLogs extends Component
 
     public function updatingSearch()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->resetPage();
     }
 
     public function clearOldLogs()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         ActivityLog::where('created_at', '<', now()->subDays(30))->delete();
         $this->dispatch('toast', text: 'Histórico antigo (30 dias+) foi eliminado.');
     }
 
     public function showLogDetails($id)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->selectedLog = ActivityLog::with('user')->find($id);
         $this->dispatch('modal-show', name: 'log-details-modal');
     }
