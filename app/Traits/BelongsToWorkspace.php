@@ -7,6 +7,7 @@ use App\Services\BusinessAccessService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
 trait BelongsToWorkspace
@@ -25,6 +26,7 @@ trait BelongsToWorkspace
             if ($workspaceId && $model->workspace_id && (int) $model->workspace_id !== (int) $workspaceId) {
                 throw new RuntimeException('Não é permitido criar dados noutro workspace.');
             }
+            static::enforcePersonalOwnership($model);
             static::assertMutationAllowed($model, 'create');
         });
 
@@ -39,6 +41,7 @@ trait BelongsToWorkspace
             if (empty($model->workspace_id)) {
                 $model->workspace_id = $workspaceId;
             }
+            static::enforcePersonalOwnership($model);
             static::assertMutationAllowed($model, $model->exists ? 'update' : 'create');
         });
 
@@ -55,8 +58,31 @@ trait BelongsToWorkspace
         static::addGlobalScope('workspace', function (Builder $builder): void {
             if (Auth::check() && Auth::user()->current_workspace_id) {
                 $builder->where($builder->getModel()->getTable().'.workspace_id', Auth::user()->current_workspace_id);
+
+                $workspace = Auth::user()->currentWorkspace;
+                $table = $builder->getModel()->getTable();
+                if ($workspace?->type === 'personal' && Schema::hasColumn($table, 'user_id')) {
+                    $builder->where($table.'.user_id', Auth::id());
+                }
             }
         });
+    }
+
+    protected static function enforcePersonalOwnership($model): void
+    {
+        $user = Auth::user();
+        $workspace = $user?->currentWorkspace;
+        $table = $model->getTable();
+
+        if (! $user || $workspace?->type !== 'personal' || ! Schema::hasColumn($table, 'user_id')) {
+            return;
+        }
+
+        if ($model->user_id !== null && (int) $model->user_id !== (int) $user->id) {
+            throw new AuthorizationException('Não é permitido utilizar dados de outro utilizador num workspace pessoal.');
+        }
+
+        $model->user_id = $user->id;
     }
 
     protected static function assertMutationAllowed($model, string $operation): void
