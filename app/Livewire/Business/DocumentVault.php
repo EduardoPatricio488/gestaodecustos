@@ -66,9 +66,11 @@ class DocumentVault extends Component
         $this->dispatch('toast', text: 'Documento arquivado com segurança.');
     }
 
-    public function download(int $id) {
+    public function download(int $id)
+    {
         $doc = BusinessDocument::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         abort_unless($doc->file_path && Storage::disk('local')->exists($doc->file_path), 404);
+
         return Storage::disk('local')->download($doc->file_path, basename($doc->file_path));
     }
 
