@@ -220,7 +220,7 @@
                             </div>
                         </div>
                     @else
-                        <img src="{{ Storage::url($post->media_path) }}" loading="lazy"
+                        <img src="{{ Storage::url($post->media_path) }}" alt="Imagem da publicação" loading="lazy"
                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             alt="Post">
                     @endif
