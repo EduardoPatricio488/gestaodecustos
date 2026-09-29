@@ -15,7 +15,7 @@ class ProjectHub extends Component
 {
     public function mount(): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        app(BusinessAccessService::class)->assert('manage_financials');
     }
 
     use WithPagination;
@@ -78,7 +78,7 @@ class ProjectHub extends Component
 
     public function save()
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        app(BusinessAccessService::class)->assert('manage_financials');
         $this->validate();
         $workspace = auth()->user()->currentWorkspace;
 
@@ -111,7 +111,7 @@ class ProjectHub extends Component
 
     public function edit($id)
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        app(BusinessAccessService::class)->assert('manage_financials');
         $workspace = auth()->user()->currentWorkspace;
         $project = $workspace->projects()->findOrFail($id);
 
@@ -133,7 +133,7 @@ class ProjectHub extends Component
 
     public function updateProjectClient($projectId, $clientId)
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        app(BusinessAccessService::class)->assert('manage_financials');
         // Procuramos o projeto específico e atualizamos apenas esse
         $workspace = auth()->user()->currentWorkspace;
         $project = $workspace->projects()->findOrFail($projectId);
@@ -149,7 +149,7 @@ class ProjectHub extends Component
 
     public function delete($id)
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        app(BusinessAccessService::class)->assert('manage_financials');
         auth()->user()->currentWorkspace->projects()->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Projeto arquivado.', variant: 'warning');
     }
