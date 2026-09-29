@@ -42,13 +42,21 @@ class RecruitmentHub extends Component
         $this->recVacancies = $workspace->recruitment_vacancies ?? 1;
     }
 
-    public function toggleActive()
+        private function authorizeRecruitmentManagement(): void
+    {
+        $workspace = auth()->user()->currentWorkspace;
+        abort_unless($workspace, 403);
+        app(\App\Services\BusinessAccessService::class)->assert('manage_team', auth()->user(), $workspace);
+    }
+
+public function toggleActive()
     {
         $this->recActive = ! $this->recActive;
     }
 
     public function saveSettings()
     {
+        $this->authorizeRecruitmentManagement();
         $workspace = auth()->user()->currentWorkspace;
         $vacancies = max(0, (int) $this->recVacancies);
         $workspace->update([
@@ -77,6 +85,7 @@ class RecruitmentHub extends Component
 
     public function downloadCandidateCv($id)
     {
+        $this->authorizeRecruitmentManagement();
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
         abort_unless($app && $app->cv_path && Storage::disk('local')->exists($app->cv_path), 404);
@@ -86,6 +95,7 @@ class RecruitmentHub extends Component
 
     public function rejectCandidate($id)
     {
+        $this->authorizeRecruitmentManagement();
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
         if (! $app) {
@@ -107,6 +117,7 @@ class RecruitmentHub extends Component
 
     public function acceptCandidate($id)
     {
+        $this->authorizeRecruitmentManagement();
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
         if (! $app) {
@@ -151,6 +162,7 @@ class RecruitmentHub extends Component
 
     public function reopenCandidate($id)
     {
+        $this->authorizeRecruitmentManagement();
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
         if (! $app) {
