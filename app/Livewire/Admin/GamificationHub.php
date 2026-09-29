@@ -33,6 +33,7 @@ class GamificationHub extends Component
      */
     public function awardPoints()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->validate([
             'pointsToAdd' => 'required|numeric|min:1',
             'selectedUserId' => 'required',
@@ -65,6 +66,7 @@ class GamificationHub extends Component
      */
     public function assignBadge()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         if (! $this->badgeToAssign || ! $this->selectedUserId) {
             return;
         }
