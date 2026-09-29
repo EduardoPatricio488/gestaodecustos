@@ -22,6 +22,7 @@ class CommunicationManager extends Component
      */
     public function send()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->validate([
             'title' => 'required|min:3',
             'message' => 'required',
@@ -47,6 +48,7 @@ class CommunicationManager extends Component
      */
     public function delete($id)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         DB::table('site_announcements')->where('id', $id)->delete();
         $this->dispatch('toast', text: 'Aviso removido.');
     }
