@@ -2,25 +2,93 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 @php
-    $seoTitle = $seoTitle ?? ($title ?? config('app.name', 'Finance Pro AI').' — Gestão financeira inteligente');
-    $seoDescription = $seoDescription ?? 'Finance Pro AI é uma plataforma de gestão financeira pessoal e empresarial para controlar despesas, receitas, investimentos, subscrições e muito mais.';
-    $seoImage = $seoImage ?? asset('icon-512x512.png');
-    $seoUrl = $seoUrl ?? url()->current();
-    $isPublicSeoPage = $isPublicSeoPage ?? !auth()->check();
-    $seoRobots = $seoRobots ?? ($isPublicSeoPage ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' : 'noindex,nofollow,noarchive');
-    $schemaMarkup = $schemaMarkup ?? [
-        '@context' => 'https://schema.org',
-        '@type' => 'WebSite',
-        'name' => config('app.name', 'Finance Pro AI'),
-        'url' => url('/'),
-        'description' => $seoDescription,
-        'inLanguage' => 'pt-PT',
-        'potentialAction' => [
-            '@type' => 'SearchAction',
-            'target' => url('/?q={search_term_string}'),
-            'query-input' => 'required name=search_term_string',
+    $seoDefaults = [
+        'home' => [
+            'title' => 'Finance Pro AI — Gestão financeira inteligente',
+            'description' => 'Gere as tuas finanças pessoais e empresariais num só lugar. Controla despesas, receitas, investimentos e subscrições com o Finance Pro AI.',
+            'image' => asset('og-image.svg'),
+            'schemaType' => 'WebSite',
+        ],
+        'legal.terms' => [
+            'title' => 'Termos de Serviço — Finance Pro AI',
+            'description' => 'Consulta os Termos de Serviço do Finance Pro AI e as condições de utilização da plataforma.',
+            'image' => asset('og-image.svg'),
+            'schemaType' => 'WebPage',
+        ],
+        'legal.privacy' => [
+            'title' => 'Política de Privacidade — Finance Pro AI',
+            'description' => 'Consulta a Política de Privacidade do Finance Pro AI e conhece como os dados são tratados e protegidos.',
+            'image' => asset('og-image.svg'),
+            'schemaType' => 'WebPage',
+        ],
+        'public.contact' => [
+            'title' => 'Contacto — Finance Pro AI',
+            'description' => 'Entra em contacto com a equipa do Finance Pro AI para obter ajuda, esclarecer dúvidas ou enviar sugestões.',
+            'image' => asset('og-image.svg'),
+            'schemaType' => 'ContactPage',
+        ],
+        'careers.apply' => [
+            'title' => 'Carreiras — Finance Pro AI',
+            'description' => 'Consulta oportunidades de carreira e envia a tua candidatura para fazer parte da equipa Finance Pro AI.',
+            'image' => asset('og-image.svg'),
+            'schemaType' => 'WebPage',
         ],
     ];
+
+    $seoRoute = request()->route()?->getName();
+    $seoPage = $seoDefaults[$seoRoute] ?? null;
+    $seoTitle = $seoTitle ?? ($seoPage['title'] ?? ($title ?? config('app.name', 'Finance Pro AI').' — Gestão financeira inteligente'));
+    $seoDescription = $seoDescription ?? ($seoPage['description'] ?? 'Finance Pro AI é uma plataforma de gestão financeira pessoal e empresarial para controlar despesas, receitas, investimentos, subscrições e muito mais.');
+    $seoImage = $seoImage ?? ($seoPage['image'] ?? asset('og-image.svg'));
+    $seoUrl = $seoUrl ?? url()->current();
+
+    $indexableRoutes = array_keys($seoDefaults);
+    $isIndexableSeoPage = $isIndexableSeoPage ?? in_array($seoRoute, $indexableRoutes, true);
+    $seoRobots = $seoRobots ?? ($isIndexableSeoPage ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' : 'noindex,nofollow,noarchive');
+
+    $schemaMarkup = $schemaMarkup ?? [
+        '@context' => 'https://schema.org',
+        '@type' => $seoPage['schemaType'] ?? 'WebPage',
+        'name' => $seoTitle,
+        'url' => $seoUrl,
+        'description' => $seoDescription,
+        'inLanguage' => 'pt-PT',
+        'isPartOf' => [
+            '@type' => 'WebSite',
+            'name' => config('app.name', 'Finance Pro AI'),
+            'url' => url('/'),
+        ],
+    ];
+
+    if ($seoRoute === 'home') {
+        $schemaMarkup = [
+            '@context' => 'https://schema.org',
+            '@graph' => [
+                [
+                    '@type' => 'WebSite',
+                    'name' => config('app.name', 'Finance Pro AI'),
+                    'url' => url('/'),
+                    'description' => $seoDescription,
+                    'inLanguage' => 'pt-PT',
+                ],
+                [
+                    '@type' => 'Organization',
+                    'name' => config('app.name', 'Finance Pro AI'),
+                    'url' => url('/'),
+                    'logo' => asset('icon-512x512.png'),
+                ],
+                [
+                    '@type' => 'SoftwareApplication',
+                    'name' => config('app.name', 'Finance Pro AI'),
+                    'applicationCategory' => 'FinanceApplication',
+                    'operatingSystem' => 'Web',
+                    'url' => url('/'),
+                    'description' => $seoDescription,
+                    'image' => $seoImage,
+                ],
+            ],
+        ];
+    }
 @endphp
 
 <title>{{ $seoTitle }}</title>
