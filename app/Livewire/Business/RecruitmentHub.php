@@ -42,14 +42,14 @@ class RecruitmentHub extends Component
         $this->recVacancies = $workspace->recruitment_vacancies ?? 1;
     }
 
-        private function authorizeRecruitmentManagement(): void
+    private function authorizeRecruitmentManagement(): void
     {
         $workspace = auth()->user()->currentWorkspace;
         abort_unless($workspace, 403);
         app(\App\Services\BusinessAccessService::class)->assert('manage_team', auth()->user(), $workspace);
     }
 
-public function toggleActive()
+    public function toggleActive()
     {
         $this->recActive = ! $this->recActive;
     }
