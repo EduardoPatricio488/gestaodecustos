@@ -954,9 +954,16 @@ class IncomeHub extends Component
             ->wherePivot('role', '!=', 'admin')
             ->get();
 
-        $fixedIncomes = RecurringIncome::with('bankAccount')->where('workspace_id', $workspaceId)->get();
+        $isPersonalWorkspace = $user->currentWorkspace?->type === 'personal';
 
-        $extraIncomes = Income::with('bankAccount')->where('workspace_id', $workspaceId)
+        $fixedIncomes = RecurringIncome::with('bankAccount')
+            ->where('workspace_id', $workspaceId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
+            ->get();
+
+        $extraIncomes = Income::with('bankAccount')
+            ->where('workspace_id', $workspaceId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
             ->whereMonth('received_at', now()->month)
             ->whereYear('received_at', now()->year)
             ->latest()
@@ -965,10 +972,13 @@ class IncomeHub extends Component
         $totalMonthly = $fixedIncomes->sum('amount') + $extraIncomes->sum(fn ($i) => (float) ($i->amount_converted ?? $i->amount));
 
         // Estatísticas
-        $allIncomes = Income::where('workspace_id', $workspaceId)->get();
+        $allIncomes = Income::where('workspace_id', $workspaceId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
+            ->get();
 
         // Salário fixo mensal (soma dos rendimentos recorrentes ativos)
         $monthlySalary = (float) RecurringIncome::where('workspace_id', $workspaceId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
             ->where('is_active', true)
             ->sum('amount');
 
@@ -979,6 +989,7 @@ class IncomeHub extends Component
             $date = now()->subMonths($i);
 
             $monthExtra = Income::where('workspace_id', $workspaceId)
+                ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
                 ->whereMonth('received_at', $date->month)
                 ->whereYear('received_at', $date->year)
                 ->sum(DB::raw('COALESCE(amount_converted, amount)'));
@@ -995,6 +1006,7 @@ class IncomeHub extends Component
         // Total anual
         $monthsElapsed = min(now()->month, 12);
         $totalYear = (float) Income::where('workspace_id', $workspaceId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
             ->whereYear('received_at', now()->year)
             ->sum(DB::raw('COALESCE(amount_converted, amount)')) + ($monthlySalary * $monthsElapsed);
 
