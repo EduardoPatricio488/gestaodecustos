@@ -93,7 +93,8 @@ class TaskHub extends Component
             $this->logAction($taskId, 'timer_stop', "Parou o cronómetro (+{$elapsed}s)");
             $this->dispatch('toast', text: 'Cronómetro parado.');
         } else {
-            Task::where('user_id', auth()->id())
+            Task::where('workspace_id', auth()->user()->current_workspace_id)
+                ->where('user_id', auth()->id())
                 ->where('is_timer_running', true)
                 ->get()
                 ->each(function ($t) {
