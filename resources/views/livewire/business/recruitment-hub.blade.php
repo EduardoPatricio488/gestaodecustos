@@ -232,7 +232,7 @@
                         </div>
 
                         <div class="mt-8 pt-6 border-t border-zinc-100 dark:border-zinc-800 space-y-3 relative z-20">
-                            <a href="{{ asset('storage/' . $candidate->cv_path) }}" target="_blank" class="w-full h-12 flex items-center justify-center gap-2 bg-zinc-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/10">
+                            <a wire:click="downloadCandidateCv({{ $candidate->id }})" class="w-full h-12 flex items-center justify-center gap-2 bg-zinc-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/10">
                                 <flux:icon name="document-arrow-down" class="size-4" /> Ver Currículo
                             </a>
 
