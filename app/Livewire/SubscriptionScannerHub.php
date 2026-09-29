@@ -32,6 +32,7 @@ class SubscriptionScannerHub extends Component
     private function buildSuggestions(): array
     {
         $workspaceId = auth()->user()->current_workspace_id;
+        $userId = auth()->id();
         $start = now()->copy()->subMonths($this->lookbackMonths)->startOfMonth();
 
         $expenses = Expense::where('workspace_id', $workspaceId)
