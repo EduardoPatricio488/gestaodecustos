@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
 
-        if (app()->environment('production')) {
+        if (config('app.env') === 'production') {
             $middleware->trustHosts(at: [
                 '^financepro\\.com(?::\\d+)?$',
                 '^www\\.financepro\\.com(?::\\d+)?$',
