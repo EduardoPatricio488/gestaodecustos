@@ -150,6 +150,7 @@ class IncomeHub extends Component
     public function openRaiseModal($id)
     {
         $fixed = RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->findOrFail($id);
 
         $this->selectedFixedId = $id;
@@ -203,7 +204,9 @@ class IncomeHub extends Component
         }
 
         if ($this->editingFixedId) {
-            RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)->whereKey($this->editingFixedId)->update($data);
+            RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+                ->whereKey($this->editingFixedId)->update($data);
         } else {
             RecurringIncome::create($data);
         }
@@ -305,6 +308,7 @@ class IncomeHub extends Component
         ]);
 
         $fixed = RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->findOrFail($this->selectedFixedId);
 
         if ($this->raiseMode === 'addition') {
@@ -645,6 +649,7 @@ class IncomeHub extends Component
         if ($this->editingFixedId) {
             RecurringIncome::where('id', $this->editingFixedId)
                 ->where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                 ->update($data);
             $this->dispatch('toast', text: 'Rendimento de freelance atualizado! 💻');
         } else {
@@ -699,6 +704,7 @@ class IncomeHub extends Component
         if ($this->editingFixedId) {
             RecurringIncome::where('id', $this->editingFixedId)
                 ->where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                 ->update($data);
             $this->dispatch('toast', text: 'Rendimento de investimento atualizado! 📈');
         } else {
@@ -939,7 +945,9 @@ class IncomeHub extends Component
 
             return;
         }
-        RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)->whereKey($id)->delete();
+        RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+            ->whereKey($id)->delete();
         $this->dispatch('toast', text: 'Registo removido.');
     }
 
@@ -950,7 +958,9 @@ class IncomeHub extends Component
 
             return;
         }
-        Income::where('workspace_id', auth()->user()->current_workspace_id)->whereKey($id)->delete();
+        Income::where('workspace_id', auth()->user()->current_workspace_id)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+            ->whereKey($id)->delete();
         $this->dispatch('toast', text: 'Receita removida.');
     }
 
