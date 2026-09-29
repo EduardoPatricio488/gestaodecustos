@@ -150,7 +150,6 @@ Route::get('/sitemap.xml', function () {
         ['loc' => url('/privacidade'), 'changefreq' => 'yearly', 'priority' => '0.3'],
         ['loc' => url('/contacto'), 'changefreq' => 'monthly', 'priority' => '0.6'],
         ['loc' => url('/carreiras'), 'changefreq' => 'monthly', 'priority' => '0.6'],
-        ['loc' => url('/planos'), 'changefreq' => 'monthly', 'priority' => '0.8'],
     ];
 
     return response()->view('seo.sitemap', compact('urls'))
