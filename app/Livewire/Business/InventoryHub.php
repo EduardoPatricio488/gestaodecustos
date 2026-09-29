@@ -38,6 +38,7 @@ class InventoryHub extends Component
 
     public function save()
     {
+        app(BusinessAccessService::class)->assert('manage_financials');
         $this->validate();
 
         auth()->user()->currentWorkspace->products()->updateOrCreate(
@@ -60,6 +61,7 @@ class InventoryHub extends Component
 
     public function edit($id)
     {
+        app(BusinessAccessService::class)->assert('manage_financials');
         $product = auth()->user()->currentWorkspace->products()->findOrFail($id);
 
         $this->editingId = $product->id;
@@ -75,6 +77,7 @@ class InventoryHub extends Component
 
     public function delete($id)
     {
+        app(BusinessAccessService::class)->assert('manage_financials');
         auth()->user()->currentWorkspace->products()->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Produto removido.', variant: 'warning');
     }
