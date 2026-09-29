@@ -8,6 +8,7 @@ use App\Models\BankAccount;
 use App\Models\Expense;
 use App\Models\Income;
 use App\Models\Workspace;
+use App\Services\BusinessAccessService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -98,6 +99,7 @@ class BankAccountHub extends Component
 
     public function generateAuditCode()
     {
+        app(BusinessAccessService::class)->assert('view_bank_accounts');
         $workspace = auth()->user()->currentWorkspace;
         $plainToken = $this->ensureAuditCode();
         $this->generatedAuditCode = $plainToken;
@@ -107,6 +109,7 @@ class BankAccountHub extends Component
 
     public function revokeAuditCode(): void
     {
+        app(BusinessAccessService::class)->assert('view_bank_accounts');
         $workspace = auth()->user()->currentWorkspace;
         $workspace->update(['audit_token_revoked_at' => now()]);
         $this->generatedAuditCode = '';
@@ -116,6 +119,7 @@ class BankAccountHub extends Component
 
     public function approveBankAccessRequest(int $requestId): void
     {
+        app(BusinessAccessService::class)->assert('view_bank_accounts');
         $workspace = auth()->user()->currentWorkspace;
         $request = BankAccessRequest::where('workspace_id', $workspace->id)
             ->whereKey($requestId)
@@ -138,6 +142,7 @@ class BankAccountHub extends Component
 
     public function rejectBankAccessRequest(int $requestId): void
     {
+        app(BusinessAccessService::class)->assert('view_bank_accounts');
         $workspace = auth()->user()->currentWorkspace;
         $request = BankAccessRequest::where('workspace_id', $workspace->id)
             ->whereKey($requestId)
@@ -190,6 +195,7 @@ class BankAccountHub extends Component
 
     public function save()
     {
+        app(BusinessAccessService::class)->assert('manage_financials');
         $this->iban = $this->normalizeIban($this->iban);
         $this->balance = $this->moneyValue($this->balance) ?? 0;
         $this->credit_limit = $this->moneyValue($this->credit_limit);
@@ -236,6 +242,7 @@ class BankAccountHub extends Component
 
     public function openHistory($id)
     {
+        app(BusinessAccessService::class)->assert('view_bank_accounts');
         $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         $this->selectedAccountName = $account->name;
         $expenses = $account->expenses()->with('category')->latest()->take(30)->get()->map(fn ($e) => ['date' => $e->spent_at, 'desc' => $e->description ?: $e->category->name, 'amount' => -$e->amount, 'type' => 'expense']);
@@ -246,6 +253,7 @@ class BankAccountHub extends Component
 
     public function edit($id)
     {
+        app(BusinessAccessService::class)->assert('manage_financials');
         $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         $this->editingId = $account->id;
         $this->name = $account->name;
@@ -267,6 +275,7 @@ class BankAccountHub extends Component
 
     public function delete($id)
     {
+        app(BusinessAccessService::class)->assert('delete_financials');
         $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         if ($account->expenses()->exists() || $account->incomes()->exists()) {
             $this->dispatch('toast', text: 'Esta conta tem histórico e não pode ser apagada.', variant: 'error');
