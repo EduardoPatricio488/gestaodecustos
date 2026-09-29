@@ -420,13 +420,17 @@ class FinanceBot extends Component
         $ws = $user->currentWorkspace;
         $monthStart = now()->startOfMonth();
 
-        $spent = Expense::where('workspace_id', $ws->id)
-            ->where('spent_at', '>=', $monthStart)
-            ->sum('amount');
+        $spentQuery = Expense::where('workspace_id', $ws->id)
+            ->where('spent_at', '>=', $monthStart);
+        $earnedQuery = Income::where('workspace_id', $ws->id)
+            ->where('received_at', '>=', $monthStart);
+        if ($ws->type === 'personal') {
+            $spentQuery->where('user_id', $userId);
+            $earnedQuery->where('user_id', $userId);
+        }
+        $spent = $spentQuery->sum('amount');
 
-        $earned = Income::where('workspace_id', $ws->id)
-            ->where('received_at', '>=', $monthStart)
-            ->sum('amount');
+        $earned = $earnedQuery->sum('amount');
 
         $earned += $user->recurringIncomes()
             ->where('workspace_id', $ws->id)
@@ -706,9 +710,14 @@ COMO AGIR:
             return null;
         }
 
-        return Category::where('workspace_id', $wsId)
-            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
-            ->first()
+        $query = Category::where('workspace_id', $wsId)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)]);
+
+        if (Workspace::whereKey($wsId)->value('type') === 'personal') {
+            $query->where('user_id', $userId);
+        }
+
+        return $query->first()
             ?? Category::create([
                 'user_id' => $userId,
                 'workspace_id' => $wsId,
