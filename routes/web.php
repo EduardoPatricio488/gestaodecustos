@@ -413,7 +413,7 @@ Route::delete('/stop-impersonating', [ImpersonationController::class, 'stop'])
 // ══════════════════════════════════════════════════════════════════
 // 7. EXPORTAÇÕES E APIS EXTERNAS
 // ══════════════════════════════════════════════════════════════════
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/export/dashboard-pdf', [ExportController::class, 'dashboardPdf'])->name('export.dashboard.pdf');
     Route::get('/export/expenses', [ExportController::class, 'expensesPdf'])->name('export.expenses');
     Route::get('/export/empresa', [ExportController::class, 'businessExport'])->name('export.business');
