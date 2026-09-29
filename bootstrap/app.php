@@ -24,13 +24,153 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
 
-        if (config('app.env') === 'production') {
-            $middleware->trustHosts(at: [
-                '^financepro\\.com(?::\\d+)?$',
-                '^www\\.financepro\\.com(?::\\d+)?$',
-                '^gestaodecustos\\.onrender\\.com(?::\\d+)?$',
-            ]);
-        }
+        $middleware->trustHosts(at: fn () => [
+            '^financepro\\.com(?::\\d+)?
+
+        $middleware->web(append: [
+            ForceHttps::class,
+            SecurityHeaders::class,
+            SetLocale::class,
+            CheckMaintenanceMode::class,
+            CheckRegistrationStatus::class,
+            UpdateUserActivity::class,
+            EnsureImpersonationIsValid::class,
+            EnsureBusinessWorkspaceAccess::class,
+            ThrottleVerificationCode::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'api/whatsapp/webhook',
+            'stripe/*',
+        ]);
+
+        $middleware->alias([
+            'admin' => AdminMiddleware::class,
+            'plan' => CheckPlanAccess::class,
+            'business.workspace' => EnsureBusinessWorkspaceAccess::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
+,
+            '^www\\.financepro\\.com(?::\\d+)?
+
+        $middleware->web(append: [
+            ForceHttps::class,
+            SecurityHeaders::class,
+            SetLocale::class,
+            CheckMaintenanceMode::class,
+            CheckRegistrationStatus::class,
+            UpdateUserActivity::class,
+            EnsureImpersonationIsValid::class,
+            EnsureBusinessWorkspaceAccess::class,
+            ThrottleVerificationCode::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'api/whatsapp/webhook',
+            'stripe/*',
+        ]);
+
+        $middleware->alias([
+            'admin' => AdminMiddleware::class,
+            'plan' => CheckPlanAccess::class,
+            'business.workspace' => EnsureBusinessWorkspaceAccess::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
+,
+            '^gestaodecustos\\.onrender\\.com(?::\\d+)?
+
+        $middleware->web(append: [
+            ForceHttps::class,
+            SecurityHeaders::class,
+            SetLocale::class,
+            CheckMaintenanceMode::class,
+            CheckRegistrationStatus::class,
+            UpdateUserActivity::class,
+            EnsureImpersonationIsValid::class,
+            EnsureBusinessWorkspaceAccess::class,
+            ThrottleVerificationCode::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'api/whatsapp/webhook',
+            'stripe/*',
+        ]);
+
+        $middleware->alias([
+            'admin' => AdminMiddleware::class,
+            'plan' => CheckPlanAccess::class,
+            'business.workspace' => EnsureBusinessWorkspaceAccess::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
+,
+            '^localhost(?::\\d+)?
+
+        $middleware->web(append: [
+            ForceHttps::class,
+            SecurityHeaders::class,
+            SetLocale::class,
+            CheckMaintenanceMode::class,
+            CheckRegistrationStatus::class,
+            UpdateUserActivity::class,
+            EnsureImpersonationIsValid::class,
+            EnsureBusinessWorkspaceAccess::class,
+            ThrottleVerificationCode::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'api/whatsapp/webhook',
+            'stripe/*',
+        ]);
+
+        $middleware->alias([
+            'admin' => AdminMiddleware::class,
+            'plan' => CheckPlanAccess::class,
+            'business.workspace' => EnsureBusinessWorkspaceAccess::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
+,
+            '^127\\.0\\.0\\.1(?::\\d+)?
+
+        $middleware->web(append: [
+            ForceHttps::class,
+            SecurityHeaders::class,
+            SetLocale::class,
+            CheckMaintenanceMode::class,
+            CheckRegistrationStatus::class,
+            UpdateUserActivity::class,
+            EnsureImpersonationIsValid::class,
+            EnsureBusinessWorkspaceAccess::class,
+            ThrottleVerificationCode::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'api/whatsapp/webhook',
+            'stripe/*',
+        ]);
+
+        $middleware->alias([
+            'admin' => AdminMiddleware::class,
+            'plan' => CheckPlanAccess::class,
+            'business.workspace' => EnsureBusinessWorkspaceAccess::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
+,
+        ]);
 
         $middleware->web(append: [
             ForceHttps::class,
