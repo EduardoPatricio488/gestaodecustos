@@ -117,6 +117,48 @@ use Illuminate\Support\Facades\Route;
 // 1. ÁREAS EXTERNAS E PÚBLICAS (Acessíveis por Visitantes)
 // ══════════════════════════════════════════════════════════════════
 
+Route::get('/robots.txt', function () {
+    return response(implode("\n", [
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /dashboard',
+        'Disallow: /empresa',
+        'Disallow: /admin',
+        'Disallow: /profile',
+        'Disallow: /expenses',
+        'Disallow: /despesas-pessoais',
+        'Disallow: /receitas',
+        'Disallow: /receitas-todas',
+        'Disallow: /categorias',
+        'Disallow: /banco',
+        'Disallow: /calendario',
+        'Disallow: /lembretes',
+        'Disallow: /investimentos',
+        'Disallow: /patrimonio',
+        'Disallow: /assinaturas',
+        'Disallow: /social',
+        'Disallow: /loja',
+        'Disallow: /api',
+        'Sitemap: '.url('/sitemap.xml'),
+    ]), 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+})->name('seo.robots');
+
+Route::get('/sitemap.xml', function () {
+    $urls = [
+        ['loc' => url('/'), 'changefreq' => 'weekly', 'priority' => '1.0'],
+        ['loc' => url('/termos'), 'changefreq' => 'yearly', 'priority' => '0.3'],
+        ['loc' => url('/privacidade'), 'changefreq' => 'yearly', 'priority' => '0.3'],
+        ['loc' => url('/contacto'), 'changefreq' => 'monthly', 'priority' => '0.6'],
+        ['loc' => url('/carreiras'), 'changefreq' => 'monthly', 'priority' => '0.6'],
+        ['loc' => url('/planos'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+    ];
+
+    return response()->view('seo.sitemap', compact('urls'))
+        ->header('Content-Type', 'application/xml; charset=UTF-8');
+})->name('seo.sitemap');
+
+Route::view('/llms.txt', 'seo.llms')->name('seo.llms');
+
 Route::view('/', 'welcome')->name('home');
 Route::view('/termos', 'pages.legal.terms')->name('legal.terms');
 Route::view('/privacidade', 'pages.legal.privacy')->name('legal.privacy');
