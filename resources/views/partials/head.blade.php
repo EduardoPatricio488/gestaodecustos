@@ -133,9 +133,7 @@
 <meta name="twitter:description" content="{{ $seoDescription }}">
 <meta name="twitter:image" content="{{ $seoImage }}">
 
-<link rel="icon" type="image/svg+xml" href="{{ asset('favicon-money-bag.svg') }}?v=20260929">
-<link rel="shortcut icon" type="image/svg+xml" href="{{ asset('favicon-money-bag.svg') }}?v=20260929">
-<link rel="apple-touch-icon" href="{{ asset('favicon-money-bag.svg') }}?v=20260929">
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon-money-bag.svg') }}?v=20260929-2">
 
 <script type="application/ld+json">{!! json_encode($schemaMarkup, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}</script>
 
