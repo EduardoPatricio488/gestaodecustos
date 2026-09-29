@@ -73,21 +73,6 @@
     ];
 
 
-    if (filled(config('legal.company_name')) && filled(config('legal.address'))) {
-        $schemaMarkup['@graph'][] = [
-            '@type' => 'LocalBusiness',
-            'name' => config('legal.company_name'),
-            'url' => url('/'),
-            'image' => asset('icon-512x512.png'),
-            'address' => [
-                '@type' => 'PostalAddress',
-                'streetAddress' => config('legal.address'),
-                'addressCountry' => 'PT',
-            ],
-            'email' => config('legal.email'),
-        ];
-    }
-
     if ($seoRoute === 'home') {
         $schemaMarkup = [
             '@context' => 'https://schema.org',
