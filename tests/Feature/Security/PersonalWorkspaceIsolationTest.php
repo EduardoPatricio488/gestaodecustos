@@ -310,7 +310,7 @@ test('FinanceBot financial summary only includes the authenticated users income 
     expect($summary['earned'])->toBe(20.0)
         ->and($summary['spent'])->toBe(10.0)
         ->and($summary['by_category'])->not->toHaveKey('Categoria B')
-        ->and($summary['by_category'])->not->toHaveValue(999.0);
+        ->and(array_values($summary['by_category']))->not->toContain(999.0);
 });
 
 test('personal workspace isolation still works when an attacker belongs to the same workspace', function () {
@@ -324,4 +324,34 @@ test('personal workspace isolation still works when an attacker belongs to the s
         ->and(financeBotTool('list_subscriptions')['items'][0]['name'])->toBe('SEGREDO SUBSCRIÇÃO B')
         ->and(financeBotTool('list_goals')['items'][0]['name'])->toBe('SEGREDO META B')
         ->and(financeBotTool('list_reminders')['items'][0]['title'])->toBe('SEGREDO LEMBRETE B');
+});
+
+
+test('personal finance pages do not render another users records from the same workspace', function () {
+    $data = personalIsolationFixture();
+
+    $this->actingAs($data['owner']);
+
+    foreach ([
+        route('expenses.index'),
+        route('hub.incomes'),
+        route('hub.debts'),
+        route('hub.goals'),
+        route('hub.banco'),
+        route('hub.investments'),
+        route('hub.subscriptions'),
+        route('hub.networth'),
+        route('hub.reminders'),
+    ] as $url) {
+        $response = $this->get($url)->assertOk();
+
+        $response->assertDontSee('SEGREDO B')
+            ->assertDontSee('SEGREDO RENDIMENTO B')
+            ->assertDontSee('SEGREDO INVESTIMENTO B')
+            ->assertDontSee('SEGREDO META B')
+            ->assertDontSee('SEGREDO SUBSCRIÇÃO B')
+            ->assertDontSee('SEGREDO LEMBRETE B')
+            ->assertDontSee('CONTA SECRETA B')
+            ->assertDontSee('SEGREDO CREDOR B');
+    }
 });
