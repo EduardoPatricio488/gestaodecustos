@@ -137,6 +137,7 @@ class CollaboratorExpenseHub extends Component
             ->where('user_id', auth()->id())
             ->findOrFail($id);
         abort_unless($expense->receipt_path && Storage::disk('local')->exists($expense->receipt_path), 404);
+
         return Storage::disk('local')->download($expense->receipt_path, basename($expense->receipt_path));
     }
 
