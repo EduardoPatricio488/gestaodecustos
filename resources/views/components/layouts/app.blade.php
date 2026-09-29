@@ -653,7 +653,7 @@
         {{-- Foto ou Inicial --}}
         <div class="shrink-0 size-9 rounded-xl overflow-hidden bg-emerald-600 flex items-center justify-center text-white shadow-lg">
             @if($currentWs && $currentWs->logo_path)
-                <img src="{{ $currentWs->logo_url }}?t={{ time() }}" class="size-full object-cover">
+                <img src="{{ $currentWs->logo_url }}?t={{ time() }}" alt="Logótipo de {{ $currentWs->name }}" class="size-full object-cover">
             @else
                 <span class="text-lg font-black italic">
                     {{ substr($currentWs->name ?? 'F', 0, 1) }}
