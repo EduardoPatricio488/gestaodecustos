@@ -175,7 +175,7 @@ Route::prefix('portal')->group(function () {
 Route::get('/carreiras', CareersHub::class)->name('careers.apply');
 
 Route::get('/api/whatsapp/webhook', [WhatsappWebhookController::class, 'verify']);
-Route::post('/api/whatsapp/webhook', [WhatsappWebhookController::class, 'handle']);
+Route::post('/api/whatsapp/webhook', [WhatsappWebhookController::class, 'handle'])->middleware('throttle:api');
 
 // ══════════════════════════════════════════════════════════════════
 // 2. SISTEMA DE VERIFICAÇÃO E LOGOUT
@@ -419,10 +419,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/export/empresa', [ExportController::class, 'businessExport'])->name('export.business');
     Route::get('/loja/download/{purchase}/request', [StoreDownloadController::class, 'requestToken'])->name('store.download.request');
     Route::get('/loja/download/{purchase}', [StoreDownloadController::class, 'download'])->name('store.download');
-    Route::post('/api/smartwatch-info', [SmartwatchController::class, 'info']);
-    Route::post('/api/mifitness/import', [MiFitnessImportController::class, 'import'])->name('mifitness.import');
-    Route::post('/api/offline/expenses/sync', [OfflineExpenseController::class, 'sync'])->name('api.offline.sync');
-    Route::post('/push-subscriptions', [PushSubscriptionController::class, 'update']);
+    Route::post('/api/smartwatch-info', [SmartwatchController::class, 'info'])->middleware('throttle:ai');
+    Route::post('/api/mifitness/import', [MiFitnessImportController::class, 'import'])->middleware('throttle:api')->name('mifitness.import');
+    Route::post('/api/offline/expenses/sync', [OfflineExpenseController::class, 'sync'])->middleware('throttle:api')->name('api.offline.sync');
+    Route::post('/push-subscriptions', [PushSubscriptionController::class, 'update'])->middleware('throttle:api');
 });
 
 // ══════════════════════════════════════════════════════════════════
