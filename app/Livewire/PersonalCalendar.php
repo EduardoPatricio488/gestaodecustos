@@ -138,6 +138,7 @@ class PersonalCalendar extends Component
             });
 
         $debts = Debt::where('workspace_id', $workspaceId)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->where('is_paid', false)
             ->whereBetween('due_at', [$start, $end])
             ->get()
