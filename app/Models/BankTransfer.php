@@ -54,6 +54,7 @@ class BankTransfer extends Model
             $workspaceAccountIds = BankAccount::withoutGlobalScopes()
                 ->where('workspace_id', $transfer->workspace_id)
                 ->whereIn('id', $accountIds)
+                ->when(Workspace::whereKey($transfer->workspace_id)->value('type') === 'personal', fn ($query) => $query->where('user_id', $transfer->user_id))
                 ->pluck('id')
                 ->map(fn ($id) => (int) $id)
                 ->all();
