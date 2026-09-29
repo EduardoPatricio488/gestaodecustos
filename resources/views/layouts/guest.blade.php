@@ -59,9 +59,18 @@
                 {{ $slot }}
             @endif
 
-            <p class="mt-8 text-center text-[9px] text-zinc-500 font-black uppercase tracking-[0.3em] opacity-40">
-                &copy; {{ date('Y') }} — Hub de Gestão Inteligente
-            </p>
+            <footer class="mt-8 text-center">
+                <nav aria-label="Links legais" class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-[10px] font-semibold text-zinc-500">
+                    <a href="{{ route('legal.terms') }}" class="hover:text-emerald-600">Termos</a>
+                    <a href="{{ route('legal.privacy') }}" class="hover:text-emerald-600">Privacidade</a>
+                    <a href="{{ route('legal.cookies') }}" class="hover:text-emerald-600">Cookies</a>
+                    <a href="{{ route('legal.accessibility') }}" class="hover:text-emerald-600">Acessibilidade</a>
+                    <a href="{{ route('public.contact') }}" class="hover:text-emerald-600">Contacto</a>
+                </nav>
+                <p class="mt-4 text-center text-[9px] text-zinc-500 font-black uppercase tracking-[0.3em] opacity-40">
+                    &copy; {{ date('Y') }} — Finance Pro AI
+                </p>
+            </footer>
         </div>
     </div>
     @include('partials.cookie-consent')
