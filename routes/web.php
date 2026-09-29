@@ -417,20 +417,20 @@ Route::post('/empresa/sair-vista-colaborador', function () {
 // ══════════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', AdminDashboard::class)->name('admin.dashboard');
-    Route::get('/planos-config', PlanManager::class)->name('admin.plans');
+    Route::get('/planos-config', PlanManager::class)->name('admin.plans');->middleware('admin.only');
     Route::get('/estatisticas', AnalyticsHub::class)->name('admin.stats');
     Route::get('/ai-monitor', AiMonitor::class)->name('admin.ai');
     Route::get('/produtividade', ProductivityHub::class)->name('admin.productivity');
     Route::get('/lembretes', RemindersMonitor::class)->name('admin.reminders');
-    Route::get('/utilizadores', UserManagement::class)->name('admin.users');
-    Route::get('/faturacao', AdminSubscriptionHub::class)->name('admin.billing');
-    Route::get('/suporte-global', SupportManager::class)->name('admin.support');
-    Route::get('/comunicacao', CommunicationManager::class)->name('admin.communication');
-    Route::get('/gamificacao', GamificationHub::class)->name('admin.gamification');
-    Route::get('/loja', StoreHub::class)->name('admin.store');
+    Route::get('/utilizadores', UserManagement::class)->name('admin.users');->middleware('admin.only');
+    Route::get('/faturacao', AdminSubscriptionHub::class)->name('admin.billing');->middleware('admin.only');
+    Route::get('/suporte-global', SupportManager::class)->name('admin.support');->middleware('admin.only');
+    Route::get('/comunicacao', CommunicationManager::class)->name('admin.communication');->middleware('admin.only');
+    Route::get('/gamificacao', GamificationHub::class)->name('admin.gamification');->middleware('admin.only');
+    Route::get('/loja', StoreHub::class)->name('admin.store');->middleware('admin.only');
     Route::get('/logs', GlobalLogs::class)->name('admin.logs');
-    Route::get('/configuracoes', SiteSettings::class)->name('admin.settings');
-    Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])->name('admin.impersonate');
+    Route::get('/configuracoes', SiteSettings::class)->name('admin.settings');->middleware('admin.only');
+    Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])->name('admin.impersonate');->middleware('admin.only');
 });
 
 Route::delete('/stop-impersonating', [ImpersonationController::class, 'stop'])
