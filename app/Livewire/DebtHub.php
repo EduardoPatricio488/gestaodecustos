@@ -230,7 +230,9 @@ class DebtHub extends Component
 
     public function render()
     {
-        $wsId = auth()->user()->current_workspace_id;
+        $user = auth()->user();
+        $wsId = $user->current_workspace_id;
+        $isPersonalWorkspace = $user->currentWorkspace?->type === 'personal';
 
         // 1. Queries Diretas (Performance: Filtrar no SQL é melhor que em PHP)
         $iOwe = Debt::where('workspace_id', $wsId)
