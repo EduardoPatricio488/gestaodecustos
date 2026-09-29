@@ -68,6 +68,7 @@ class RemindersHub extends Component
     public function reminders()
     {
         $query = Reminder::where('workspace_id', Auth::user()->current_workspace_id)
+            ->where('user_id', Auth::id())
             ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
             ->when($this->filterPriority !== 'all', fn ($q) => $q->where('priority', $this->filterPriority));
 
