@@ -92,7 +92,7 @@ class RecruitmentHub extends Component
         }
 
         DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->update(['status' => 'rejected', 'updated_at' => now()]);
-        if (! empty($app->candidate_id)) {
+        if (!empty($app->candidate_id)) {
             CandidateNotification::create([
                 'candidate_id' => $app->candidate_id,
                 'type' => 'application_status',
