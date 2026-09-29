@@ -27,11 +27,13 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'verification_code' => null,
+        ]);
+
+        $user->forceFill([
             'verification_code_hash' => hash('sha256', $verificationCode),
             'verification_code_expires_at' => now()->addMinutes(10),
             'verification_code_attempts' => 0,
-        ]);
+        ])->save();
 
         Auth::login($user);
 
