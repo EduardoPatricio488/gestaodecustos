@@ -375,7 +375,7 @@ class BankImportService
     {
         try {
             $catList = implode(', ', array_values($categories));
-            $response = Http::withHeaders(['Authorization' => 'Bearer '.config('services.openrouter.api_key'), 'HTTP-Referer' => config('app.url')])->timeout(10)->post('https://openrouter.ai/api/v1/chat/completions', ['model' => config('services.openrouter.model', 'openai/gpt-4o-mini'), 'messages' => [['role' => 'system', 'content' => 'Classifica apenas com base no texto fornecido. Nunca inventes uma categoria.'], ['role' => 'user', 'content' => "Categoriza esta transação bancária numa destas categorias: {$catList}. Transação: \"{$description}\". Responde APENAS com o nome exato da categoria ou UNKNOWN."]], 'max_tokens' => 20, 'temperature' => 0]);
+            $response = Http::withHeaders(['Authorization' => 'Bearer '.config('services.openrouter.api_key'), 'HTTP-Referer' => config('app.url')])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))->timeout((int) config('limits.ai.request_timeout_seconds', 30))->post('https://openrouter.ai/api/v1/chat/completions', ['model' => config('services.openrouter.model', 'openai/gpt-4o-mini'), 'messages' => [['role' => 'system', 'content' => 'Classifica apenas com base no texto fornecido. Nunca inventes uma categoria.'], ['role' => 'user', 'content' => "Categoriza esta transação bancária numa destas categorias: {$catList}. Transação: \"{$description}\". Responde APENAS com o nome exato da categoria ou UNKNOWN."]], 'max_tokens' => 20, 'temperature' => 0]);
             $name = trim($response->json('choices.0.message.content', ''));
             if (strcasecmp($name, 'UNKNOWN') === 0) {
                 return null;
