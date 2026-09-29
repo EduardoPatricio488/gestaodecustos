@@ -100,7 +100,7 @@
                     {{-- Header Modal --}}
                     <div class="flex items-center gap-8 border-b border-zinc-100 dark:border-zinc-800 pb-10">
                         <div class="size-24 rounded-[2rem] bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center text-brand-600 font-black text-4xl shadow-inner border border-zinc-100 dark:border-zinc-800 shrink-0">
-                            @if($viewingCompany->logo_path) <img src="{{ asset('storage/' . $viewingCompany->logo_path) }}" class="w-full h-full object-cover rounded-[2rem]">
+                            @if($viewingCompany->logo_path) <img src="{{ asset('storage/' . $viewingCompany->logo_path) }}" alt="Logótipo de {{ $viewingCompany->name }}" class="w-full h-full object-cover rounded-[2rem]">
                             @else {{ substr($viewingCompany->name, 0, 1) }} @endif
                         </div>
                         <div>
