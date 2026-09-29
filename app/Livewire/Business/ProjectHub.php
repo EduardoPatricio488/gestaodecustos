@@ -48,7 +48,7 @@ class ProjectHub extends Component
         'costs' => 'nullable|numeric|min:0',
         'margin' => 'nullable|numeric|min:0|max:100',
         'manager_id' => 'nullable|integer',
-        'client_id' => 'nullable|exists:clients,id', // ✅ Validação
+        'client_id' => 'nullable|integer',
         'start_date' => 'nullable|date',
         'deadline' => 'nullable|date',
     ];
@@ -74,6 +74,9 @@ class ProjectHub extends Component
     {
         $this->validate();
         $workspace = auth()->user()->currentWorkspace;
+
+        abort_unless(! $this->manager_id || Employee::where('workspace_id', $workspace->id)->whereKey($this->manager_id)->exists(), 422, 'Colaborador inválido.');
+        abort_unless(! $this->client_id || Client::where('workspace_id', $workspace->id)->whereKey($this->client_id)->exists(), 422, 'Cliente inválido.');
 
         $workspace->projects()->updateOrCreate(
             ['id' => $this->editingId],
@@ -123,9 +126,12 @@ class ProjectHub extends Component
     public function updateProjectClient($projectId, $clientId)
     {
         // Procuramos o projeto específico e atualizamos apenas esse
-        $project = Project::find($projectId);
+        $workspace = auth()->user()->currentWorkspace;
+        $project = $workspace->projects()->findOrFail($projectId);
 
         // Se o valor for vazio, pomos null, caso contrário o ID
+        abort_unless(! $clientId || Client::where('workspace_id', $workspace->id)->whereKey($clientId)->exists(), 422, 'Cliente inválido.');
+
         $project->client_id = $clientId ?: null;
         $project->save();
 
@@ -158,7 +164,7 @@ class ProjectHub extends Component
             'totalBudget' => $projects->sum('budget'),
             'activeCount' => $projects->where('status', 'em_curso')->count(),
             'avgMargin' => $projects->avg('margin'),
-            'team' => Employee::all(),
+            'team' => Employee::where('workspace_id', $workspace->id)->get(),
             'clients' => Client::where('workspace_id', $workspace->id)->get(), // ✅ Lista de clientes
         ]);
     }
