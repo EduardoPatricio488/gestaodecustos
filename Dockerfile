@@ -18,7 +18,9 @@ RUN apk add --no-cache \
     npm \
     nginx \
     gettext \
-    supervisor
+    supervisor \
+    mysql-client \
+    aws-cli
 
 # Instalar extensões PHP necessárias
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
