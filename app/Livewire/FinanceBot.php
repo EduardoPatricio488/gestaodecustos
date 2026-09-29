@@ -677,19 +677,19 @@ COMO AGIR:
                 'create_investment' => $this->toolCreateInvestment($args, $userId, $wsId),
                 'create_subscription' => $this->toolCreateSubscription($args, $userId, $wsId),
                 'create_goal' => $this->toolCreateGoal($args, $userId, $wsId),
-                'update_goal_progress' => $this->toolUpdateGoalProgress($args, $wsId),
+                'update_goal_progress' => $this->toolUpdateGoalProgress($args, $wsId, $userId),
                 'create_reminder' => $this->toolCreateReminder($args, $userId, $wsId),
-                'complete_reminder' => $this->toolCompleteReminder($args, $wsId),
-                'delete_reminder' => $this->toolDeleteReminder($args, $wsId),
-                'delete_expense' => $this->toolDeleteExpense($args, $wsId),
-                'list_expenses' => $this->toolListExpenses($args, $wsId),
-                'list_incomes' => $this->toolListIncomes($args, $wsId),
-                'list_investments' => $this->toolListInvestments($wsId),
-                'list_subscriptions' => $this->toolListSubscriptions($wsId),
-                'list_goals' => $this->toolListGoals($wsId),
-                'list_reminders' => $this->toolListReminders($args, $wsId),
+                'complete_reminder' => $this->toolCompleteReminder($args, $wsId, $userId),
+                'delete_reminder' => $this->toolDeleteReminder($args, $wsId, $userId),
+                'delete_expense' => $this->toolDeleteExpense($args, $wsId, $userId),
+                'list_expenses' => $this->toolListExpenses($args, $wsId, $userId),
+                'list_incomes' => $this->toolListIncomes($args, $wsId, $userId),
+                'list_investments' => $this->toolListInvestments($wsId, $userId),
+                'list_subscriptions' => $this->toolListSubscriptions($wsId, $userId),
+                'list_goals' => $this->toolListGoals($wsId, $userId),
+                'list_reminders' => $this->toolListReminders($args, $wsId, $userId),
                 'list_categories' => $this->toolListCategories($wsId),
-                'get_financial_summary' => $this->toolGetFinancialSummary($args, $wsId),
+                'get_financial_summary' => $this->toolGetFinancialSummary($args, $wsId, $userId),
                 default => ['error' => "Ferramenta desconhecida: {$name}"],
             };
         } catch (\Throwable $e) {
@@ -877,9 +877,10 @@ COMO AGIR:
         ];
     }
 
-    private function toolUpdateGoalProgress(array $args, int $wsId): array
+    private function toolUpdateGoalProgress(array $args, int $wsId, int $userId): array
     {
         $goal = Goal::where('workspace_id', $wsId)
+            ->where('user_id', $userId)
             ->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower((string) ($args['goal_name'] ?? '')).'%'])
             ->first();
 
@@ -921,9 +922,11 @@ COMO AGIR:
         ];
     }
 
-    private function toolCompleteReminder(array $args, int $wsId): array
+    private function toolCompleteReminder(array $args, int $wsId, int $userId): array
     {
-        $reminder = Reminder::where('workspace_id', $wsId)->find($args['reminder_id'] ?? null);
+        $reminder = Reminder::where('workspace_id', $wsId)
+            ->where('user_id', $userId)
+            ->find($args['reminder_id'] ?? null);
         if (! $reminder) {
             return ['error' => 'Lembrete não encontrado.'];
         }
@@ -933,7 +936,7 @@ COMO AGIR:
         return ['success' => true, 'message' => "Lembrete '{$reminder->title}' marcado como concluído."];
     }
 
-    private function toolDeleteReminder(array $args, int $wsId): array
+    private function toolDeleteReminder(array $args, int $wsId, int $userId): array
     {
         $reminder = Reminder::where('workspace_id', $wsId)->find($args['reminder_id'] ?? null);
         if (! $reminder) {
@@ -946,9 +949,11 @@ COMO AGIR:
         return ['success' => true, 'message' => "Lembrete '{$title}' apagado."];
     }
 
-    private function toolDeleteExpense(array $args, int $wsId): array
+    private function toolDeleteExpense(array $args, int $wsId, int $userId): array
     {
-        $expense = Expense::where('workspace_id', $wsId)->find($args['expense_id'] ?? null);
+        $expense = Expense::where('workspace_id', $wsId)
+            ->where('user_id', $userId)
+            ->find($args['expense_id'] ?? null);
         if (! $expense) {
             return ['error' => 'Despesa não encontrada.'];
         }
@@ -959,11 +964,12 @@ COMO AGIR:
         return ['success' => true, 'message' => "Despesa '{$desc}' apagada."];
     }
 
-    private function toolListExpenses(array $args, int $wsId): array
+    private function toolListExpenses(array $args, int $wsId, int $userId): array
     {
-        $days = (int) ($args['days'] ?? 30);
+        $days = max(1, min(3660, (int) ($args['days'] ?? 30)));
 
         $query = Expense::where('workspace_id', $wsId)
+            ->where('user_id', $userId)
             ->where('spent_at', '>=', now()->subDays($days))
             ->with('category');
 
@@ -987,11 +993,12 @@ COMO AGIR:
         ];
     }
 
-    private function toolListIncomes(array $args, int $wsId): array
+    private function toolListIncomes(array $args, int $wsId, int $userId): array
     {
         $days = (int) ($args['days'] ?? 30);
 
         $incomes = Income::where('workspace_id', $wsId)
+            ->where('user_id', $userId)
             ->where('received_at', '>=', now()->subDays($days))
             ->orderByDesc('received_at')
             ->limit(30)
@@ -1009,9 +1016,9 @@ COMO AGIR:
         ];
     }
 
-    private function toolListInvestments(int $wsId): array
+    private function toolListInvestments(int $wsId, int $userId): array
     {
-        $investments = Investment::where('workspace_id', $wsId)->get();
+        $investments = Investment::where('workspace_id', $wsId)->where('user_id', $userId)->get();
 
         return [
             'count' => $investments->count(),
@@ -1028,9 +1035,9 @@ COMO AGIR:
         ];
     }
 
-    private function toolListSubscriptions(int $wsId): array
+    private function toolListSubscriptions(int $wsId, int $userId): array
     {
-        $subs = Subscription::where('workspace_id', $wsId)->get();
+        $subs = Subscription::where('workspace_id', $wsId)->where('user_id', $userId)->get();
 
         return [
             'count' => $subs->count(),
@@ -1045,9 +1052,9 @@ COMO AGIR:
         ];
     }
 
-    private function toolListGoals(int $wsId): array
+    private function toolListGoals(int $wsId, int $userId): array
     {
-        $goals = Goal::where('workspace_id', $wsId)->get();
+        $goals = Goal::where('workspace_id', $wsId)->where('user_id', $userId)->get();
 
         return [
             'count' => $goals->count(),
@@ -1062,9 +1069,9 @@ COMO AGIR:
         ];
     }
 
-    private function toolListReminders(array $args, int $wsId): array
+    private function toolListReminders(array $args, int $wsId, int $userId): array
     {
-        $query = Reminder::where('workspace_id', $wsId);
+        $query = Reminder::where('workspace_id', $wsId)->where('user_id', $userId);
 
         if (empty($args['include_completed'])) {
             $query->where('is_completed', false);
@@ -1091,15 +1098,15 @@ COMO AGIR:
         return ['count' => $categories->count(), 'items' => $categories->values()->toArray()];
     }
 
-    private function toolGetFinancialSummary(array $args, int $wsId): array
+    private function toolGetFinancialSummary(array $args, int $wsId, int $userId): array
     {
-        $days = (int) ($args['days'] ?? 30);
+        $days = max(1, min(3660, (int) ($args['days'] ?? 30)));
         $since = now()->subDays($days);
 
-        $earned = (float) Income::where('workspace_id', $wsId)->where('received_at', '>=', $since)->sum('amount');
-        $spent = (float) Expense::where('workspace_id', $wsId)->where('spent_at', '>=', $since)->sum('amount');
+        $earned = (float) Income::where('workspace_id', $wsId)->where('user_id', $userId)->where('received_at', '>=', $since)->sum('amount');
+        $spent = (float) Expense::where('workspace_id', $wsId)->where('user_id', $userId)->where('spent_at', '>=', $since)->sum('amount');
 
-        $fixedIncome = (float) RecurringIncome::where('workspace_id', $wsId)->where('is_active', true)->sum('amount');
+        $fixedIncome = (float) RecurringIncome::where('workspace_id', $wsId)->where('user_id', $userId)->where('is_active', true)->sum('amount');
         $earned += $fixedIncome * ($days / 30);
 
         $byCategory = Expense::where('workspace_id', $wsId)
@@ -1172,7 +1179,9 @@ COMO AGIR:
             // INVESTIMENTOS
             // -----------------------------------------
             'flow:portfolio' => function () {
-                $inv = Investment::where('workspace_id', Auth::user()->current_workspace_id)->get();
+                $inv = Investment::where('workspace_id', Auth::user()->current_workspace_id)
+                    ->where('user_id', Auth::id())
+                    ->get();
 
                 if ($inv->isEmpty()) {
                     $this->messages[] = $this->botMessage('Ainda não tens investimentos.');
@@ -1191,6 +1200,7 @@ COMO AGIR:
             // -----------------------------------------
             'flow:subs_upcoming' => function () {
                 $subs = Subscription::where('workspace_id', Auth::user()->current_workspace_id)
+                    ->where('user_id', Auth::id())
                     ->orderBy('next_charge_at')
                     ->get();
 
