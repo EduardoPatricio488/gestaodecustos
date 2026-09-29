@@ -415,7 +415,7 @@
                     <div class="relative shrink-0" style="width:4.5rem;height:4.5rem">
                         <div class="size-full rounded-2xl overflow-hidden border-2 border-emerald-100">
                             @if($editAvatarFile)
-                                <img src="{{ $editAvatarFile->temporaryUrl() }}" class="size-full object-cover">
+                                <img src="{{ $editAvatarFile->temporaryUrl() }}" alt="Pré-visualização do avatar" class="size-full object-cover">
                             @else
                                 <flux:avatar src="{{ auth()->user()->avatarUrl() }}" class="size-full" />
                             @endif
