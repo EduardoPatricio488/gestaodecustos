@@ -48,11 +48,13 @@ class UserManagement extends Component
 
     public function updatingSearch()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->resetPage();
     }
 
     public function showUserDetails($userId)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $user = User::findOrFail($userId);
         $this->selectedUser = $user;
 
@@ -83,11 +85,13 @@ class UserManagement extends Component
 
     public function closeDetails()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->selectedUser = null;
     }
 
     public function toggleActive($userId)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->requireAdministrator();
         if ($userId === auth()->id()) {
             return;
@@ -100,6 +104,7 @@ class UserManagement extends Component
 
     public function verifyEmailManually($userId)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->requireAdministrator();
         $user = User::findOrFail($userId);
         $user->markEmailAsVerified();
@@ -109,6 +114,7 @@ class UserManagement extends Component
 
     public function resetPassword($userId)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->requireAdministrator();
         $user = User::findOrFail($userId);
         $temporaryPassword = bin2hex(random_bytes(16));
@@ -119,6 +125,7 @@ class UserManagement extends Component
 
     public function forceLogout($userId)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->requireAdministrator();
         $user = User::findOrFail($userId);
         $user->update(['remember_token' => null]);
@@ -128,6 +135,7 @@ class UserManagement extends Component
 
     public function deleteUser($userId)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->requireAdministrator();
         if ($userId === auth()->id()) {
             return;
@@ -142,6 +150,7 @@ class UserManagement extends Component
 
     public function openRoleModal($userId)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->requireAdministrator();
         $user = User::findOrFail($userId);
         $this->userToEditRole = $user;
@@ -152,6 +161,7 @@ class UserManagement extends Component
 
     public function updateRole()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->requireAdministrator();
         $this->validate([
             'newRole' => 'required|in:user,analyst,moderator,admin',
