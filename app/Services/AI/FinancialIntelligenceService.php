@@ -39,6 +39,7 @@ class FinancialIntelligenceService
             ->sum('amount_converted');
 
         $previousSpent = (float) $workspace->expenses()
+            ->when($ownerId, fn ($q) => $q->where('user_id', $ownerId))
             ->where('is_company', false)
             ->whereBetween('spent_at', [$previousStart->toDateString(), $previousEnd->toDateString()])
             ->sum('amount_converted');
@@ -49,6 +50,7 @@ class FinancialIntelligenceService
             ->sum('amount_converted');
 
         $previousEarned = (float) $workspace->incomes()
+            ->when($ownerId, fn ($q) => $q->where('user_id', $ownerId))
             ->whereBetween('received_at', [$previousStart->toDateString(), $previousEnd->toDateString()])
             ->sum('amount_converted');
 
@@ -58,6 +60,7 @@ class FinancialIntelligenceService
             ->sum('amount');
 
         $categories = $workspace->expenses()
+            ->when($ownerId, fn ($q) => $q->where('user_id', $ownerId))
             ->where('is_company', false)
             ->whereBetween('spent_at', [$start->toDateString(), $end->toDateString()])
             ->with('category:id,name')
