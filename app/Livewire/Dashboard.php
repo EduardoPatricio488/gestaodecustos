@@ -566,7 +566,7 @@ class Dashboard extends Component
 
         $pendingDebts = Cache::remember("dashboard:pending-debts:{$currentWs->id}:{$user->id}", 60, fn () => [
             'pay' => (float) Debt::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->where('type', 'owe')->where('is_paid', false)->sum('amount'),
-            'receive' => (float) Debt::where('workspace_id', $currentWs->id)->where('type', 'owed')->where('is_paid', false)->sum('amount'),
+            'receive' => (float) Debt::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->where('type', 'owed')->where('is_paid', false)->sum('amount'),
         ]);
         $pendingDebtsToPay = $pendingDebts['pay'];
         $pendingDebtsToReceive = $pendingDebts['receive'];
