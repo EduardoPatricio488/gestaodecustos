@@ -35,5 +35,4 @@ class BusinessDocument extends Model
             'Legal' => 'document-text','RH' => 'users','Seguros' => 'shield-check','Impostos' => 'receipt-percent',default => 'document'
         };
     }
-
 }
