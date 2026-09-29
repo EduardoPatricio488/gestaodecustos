@@ -26,6 +26,8 @@
                     <flux:input wire:model="name" label="Nome Completo" placeholder="Eduardo..." />
                     <flux:input wire:model="email" label="Teu Email" type="email" placeholder="eduardo@exemplo.com" />
                     <flux:textarea wire:model="message" label="Em que podemos ajudar?" rows="5" placeholder="Escreve aqui..." />
+                    <label class="flex items-start gap-2 text-xs text-zinc-500"><input type="checkbox" wire:model="privacyConsent" class="mt-0.5 rounded" required><span>Aceito o tratamento dos dados para responder a este pedido, de acordo com a <a href="{{ route('legal.privacy') }}" target="_blank" rel="noopener" class="underline text-emerald-600">Política de Privacidade</a>.</span></label>
+                    @error('privacyConsent') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
 
                     <div class="pt-4">
                         <flux:button type="submit" variant="primary" class="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-black uppercase text-xs tracking-widest shadow-lg shadow-emerald-500/20 border-none">
