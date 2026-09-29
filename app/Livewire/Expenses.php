@@ -132,6 +132,7 @@ class Expenses extends Component
         return view('livewire.expenses', [
             'expenses' => $expenses,
             'categories' => Category::where('workspace_id', $user->current_workspace_id)
+                ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
                 ->where('hidden_from_sidebar', false)
                 ->orderBy('name')
                 ->get(),
