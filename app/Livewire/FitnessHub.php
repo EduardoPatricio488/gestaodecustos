@@ -8,6 +8,7 @@ use App\Models\FitnessGoal;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -387,7 +388,7 @@ class FitnessHub extends Component
 
         $photoPath = null;
         if ($this->activityPhoto) {
-            $photoPath = $this->activityPhoto->store('fitness/photos', 'public');
+            $photoPath = $this->activityPhoto->store('fitness/photos', 'local');
         }
 
         FitnessActivity::create([
@@ -425,7 +426,7 @@ class FitnessHub extends Component
     {
         $activity = FitnessActivity::where('user_id', Auth::id())->findOrFail($id);
         if ($activity->photo_path) {
-            \Storage::disk('public')->delete($activity->photo_path);
+            Storage::disk('local')->delete($activity->photo_path);
         }
         $activity->delete();
         Cache::forget("fitness:stats:{$activity->workspace_id}:".Auth::id());
