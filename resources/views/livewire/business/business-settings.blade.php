@@ -79,9 +79,9 @@
                         <div class="size-48 rounded-[3rem] overflow-hidden border-8 border-zinc-50 dark:border-zinc-950 shadow-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center transition-all group-hover/logo:scale-105 duration-500">
 
                             @if ($logo)
-                                <img src="{{ $logo->temporaryUrl() }}" class="w-full h-full object-cover">
+                                <img src="{{ $logo->temporaryUrl() }}" alt="Pré-visualização do logótipo" class="w-full h-full object-cover">
                             @else
-                                <img src="{{ $workspace->logo_url }}" class="w-full h-full object-cover">
+                                <img src="{{ $workspace->logo_url }}" alt="Logótipo de {{ $workspace->name }}" class="w-full h-full object-cover">
                             @endif
 
                             <div wire:loading wire:target="logo"
