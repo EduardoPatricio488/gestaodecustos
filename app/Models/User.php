@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SometimesEncrypted;
 use App\Traits\HasGamification; // 1. IMPORTANTE
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -130,7 +131,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_login_at' => 'datetime',
-            'last_ip' => 'encrypted',
+            'last_ip' => SometimesEncrypted::class,
             'verification_code_expires_at' => 'datetime',
             'verification_code_attempts' => 'integer',
             'is_admin' => 'boolean',
@@ -320,10 +321,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         ]);
     }
 
-    protected $casts = [
-        'badges' => 'collection',
-        'is_active' => 'boolean',
-    ];
 
     public function initials(): string
     {
