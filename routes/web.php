@@ -115,7 +115,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
-use Throwable;
 
 // ══════════════════════════════════════════════════════════════════
 // 1. ÁREAS EXTERNAS E PÚBLICAS (Acessíveis por Visitantes)
