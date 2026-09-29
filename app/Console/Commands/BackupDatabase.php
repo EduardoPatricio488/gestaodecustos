@@ -15,7 +15,7 @@ class BackupDatabase extends Command
 
     public function handle(): int
     {
-        if (!app()->environment('production')) {
+        if (! app()->environment('production')) {
             $this->error('Database backups are only enabled in production.');
 
             return self::FAILURE;
@@ -70,7 +70,9 @@ class BackupDatabase extends Command
         $dump->run();
 
         if (! $dump->isSuccessful()) {
-            @unlink($sqlPath);
+            if (File::exists($sqlPath)) {
+                File::delete($sqlPath);
+            }
             $this->error('mysqldump falhou: '.$dump->getErrorOutput());
 
             return self::FAILURE;
@@ -81,7 +83,9 @@ class BackupDatabase extends Command
         $gzip->run();
 
         if (! $gzip->isSuccessful() || ! File::exists($localPath)) {
-            @unlink($localPath);
+            if (File::exists($localPath)) {
+                File::delete($localPath);
+            }
             $this->error('Não foi possível criar o ficheiro comprimido.');
 
             return self::FAILURE;
@@ -122,8 +126,10 @@ class BackupDatabase extends Command
             return self::FAILURE;
         }
 
-        if (!$this->option('keep-local')) {
-            @unlink($localPath);
+        if (! $this->option('keep-local')) {
+            if (File::exists($localPath)) {
+                File::delete($localPath);
+            }
         }
 
         $this->info('Backup concluído: '.$remoteKey);
