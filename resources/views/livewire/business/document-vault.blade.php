@@ -107,7 +107,7 @@
                                 <flux:menu.item wire:click="download({{ $doc->id }})" icon="arrow-down-tray">
                                     Visualizar
                                 </flux:menu.item>
-                                <flux:menu.item href="{{ Storage::url($doc->file_path) }}" download icon="arrow-down-tray">
+                                <flux:menu.item wire:click="download({{ $doc->id }})" icon="arrow-down-tray">
                                     Download
                                 </flux:menu.item>
                             @endif
