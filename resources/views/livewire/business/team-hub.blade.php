@@ -753,9 +753,9 @@
                 <div class="relative group">
                     <div class="size-32 rounded-3xl overflow-hidden border-4 border-zinc-100 dark:border-zinc-900 shadow-xl bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
                         @if ($photo)
-                            <img src="{{ $photo->temporaryUrl() }}" class="w-full h-full object-cover">
+                            <img src="{{ $photo->temporaryUrl() }}" alt="Pré-visualização da fotografia do colaborador" class="w-full h-full object-cover">
                         @elseif ($editingId && $employee && $employee->photo_path)
-                            <img src="{{ asset('storage/' . $employee->photo_path) }}" class="w-full h-full object-cover">
+                            <img src="{{ asset('storage/' . $employee->photo_path) }}" alt="Fotografia de {{ $employee->name }}" class="w-full h-full object-cover">
                         @else
                             <flux:icon name="user" class="size-16 text-zinc-400" />
                         @endif
