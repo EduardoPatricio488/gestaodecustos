@@ -51,7 +51,7 @@ class RemindersHub extends Component
     #[Computed]
     public function stats()
     {
-        $base = Reminder::where('workspace_id', Auth::user()->current_workspace_id);
+        $base = Reminder::where('workspace_id', Auth::user()->current_workspace_id)->where('user_id', Auth::id());
 
         return [
             'total_active' => (clone $base)->where('is_completed', false)->count(),
