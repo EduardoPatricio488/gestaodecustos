@@ -6,11 +6,26 @@
     $seoDescription = $seoDescription ?? 'Finance Pro AI é uma plataforma de gestão financeira pessoal e empresarial para controlar despesas, receitas, investimentos, subscrições e muito mais.';
     $seoImage = $seoImage ?? asset('icon-512x512.png');
     $seoUrl = $seoUrl ?? url()->current();
+    $isPublicSeoPage = $isPublicSeoPage ?? !auth()->check();
+    $seoRobots = $seoRobots ?? ($isPublicSeoPage ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' : 'noindex,nofollow,noarchive');
+    $schemaMarkup = $schemaMarkup ?? [
+        '@context' => 'https://schema.org',
+        '@type' => 'WebSite',
+        'name' => config('app.name', 'Finance Pro AI'),
+        'url' => url('/'),
+        'description' => $seoDescription,
+        'inLanguage' => 'pt-PT',
+        'potentialAction' => [
+            '@type' => 'SearchAction',
+            'target' => url('/?q={search_term_string}'),
+            'query-input' => 'required name=search_term_string',
+        ],
+    ];
 @endphp
 
 <title>{{ $seoTitle }}</title>
 <meta name="description" content="{{ $seoDescription }}">
-<meta name="robots" content="{{ $seoRobots ?? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' }}">
+<meta name="robots" content="{{ $seoRobots }}">
 <link rel="canonical" href="{{ $seoUrl }}">
 
 <meta property="og:type" content="{{ $ogType ?? 'website' }}">
@@ -29,9 +44,7 @@
 <link rel="alternate icon" href="/icon-192x192.png" type="image/png">
 <link rel="apple-touch-icon" href="/icon-192x192.png">
 
-@if (!empty($schemaMarkup))
-    <script type="application/ld+json">{!! json_encode($schemaMarkup, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}</script>
-@endif
+<script type="application/ld+json">{!! json_encode($schemaMarkup, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}</script>
 
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-ED5683P4Z9"></script>
