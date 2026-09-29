@@ -1,12 +1,46 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<title>
-    {{ filled($title ?? null) ? $title.' - '.config('app.name', 'Laravel') : config('app.name', 'Laravel') }}
-</title>
+@php
+    $seoTitle = $seoTitle ?? ($title ?? config('app.name', 'Finance Pro AI').' — Gestão financeira inteligente');
+    $seoDescription = $seoDescription ?? 'Finance Pro AI é uma plataforma de gestão financeira pessoal e empresarial para controlar despesas, receitas, investimentos, subscrições e muito mais.';
+    $seoImage = $seoImage ?? asset('icon-512x512.png');
+    $seoUrl = $seoUrl ?? url()->current();
+@endphp
 
-<!-- SÍMBOLO NOVO (SACO DE DINHEIRO) -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+<title>{{ $seoTitle }}</title>
+<meta name="description" content="{{ $seoDescription }}">
+<meta name="robots" content="{{ $seoRobots ?? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' }}">
+<link rel="canonical" href="{{ $seoUrl }}">
+
+<meta property="og:type" content="{{ $ogType ?? 'website' }}">
+<meta property="og:site_name" content="{{ config('app.name', 'Finance Pro AI') }}">
+<meta property="og:title" content="{{ $seoTitle }}">
+<meta property="og:description" content="{{ $seoDescription }}">
+<meta property="og:url" content="{{ $seoUrl }}">
+<meta property="og:image" content="{{ $seoImage }}">
+<meta property="og:image:alt" content="{{ $seoTitle }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ $seoTitle }}">
+<meta name="twitter:description" content="{{ $seoDescription }}">
+<meta name="twitter:image" content="{{ $seoImage }}">
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="alternate icon" href="/icon-192x192.png" type="image/png">
+<link rel="apple-touch-icon" href="/icon-192x192.png">
+
+@if (!empty($schemaMarkup))
+    <script type="application/ld+json">{!! json_encode($schemaMarkup, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}</script>
+@endif
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ED5683P4Z9"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ED5683P4Z9');
+</script>
 
 @fonts
 
