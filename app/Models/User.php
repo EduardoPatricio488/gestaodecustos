@@ -130,6 +130,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_login_at' => 'datetime',
+            'last_ip' => 'encrypted',
             'verification_code_expires_at' => 'datetime',
             'verification_code_attempts' => 'integer',
             'is_admin' => 'boolean',
