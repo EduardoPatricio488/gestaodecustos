@@ -4,6 +4,7 @@ namespace App\Livewire\Business;
 
 use App\Mail\SupplierPortalAccessMail;
 use App\Models\PortalAccessRequest;
+use App\Services\BusinessAccessService;
 use App\Models\Supplier;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -49,6 +50,7 @@ class SupplierHub extends Component
 
     public function generatePortalLink($id): void
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $supplier = auth()->user()->suppliers()->findOrFail($id);
 
         if (! preg_match('/^\d{6}$/', (string) $supplier->portal_token)) {
@@ -72,6 +74,7 @@ class SupplierHub extends Component
 
     public function resendPortalAccess($id): void
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $supplier = auth()->user()->suppliers()->findOrFail($id);
 
         if (! $supplier->email) {
@@ -116,6 +119,7 @@ class SupplierHub extends Component
 
     public function sendPortalEmail(): void
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $supplier = auth()->user()->suppliers()
             ->where('portal_token', $this->generatedPasscode)
             ->firstOrFail();
@@ -155,6 +159,7 @@ class SupplierHub extends Component
 
     public function approveAccessRequest($id): void
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
         $taxNumber = preg_replace('/\D/', '', (string) $request->tax_number);
         $taxNumber = substr($taxNumber, 0, 9);
@@ -205,6 +210,7 @@ class SupplierHub extends Component
 
     public function rejectAccessRequest($id): void
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
         $request->update(['status' => 'rejected', 'responded_at' => now()]);
         $this->dispatch('toast', text: 'Pedido de acesso rejeitado.', variant: 'warning');
@@ -239,6 +245,7 @@ class SupplierHub extends Component
 
     public function save()
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $this->validate();
         $taxNumber = preg_replace('/\D/', '', (string) $this->tax_number);
 
@@ -263,6 +270,7 @@ class SupplierHub extends Component
 
     public function edit($id)
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $supplier = auth()->user()->suppliers()->findOrFail($id);
         $this->editingId = $supplier->id;
         $this->name = $supplier->name;
@@ -282,6 +290,7 @@ class SupplierHub extends Component
 
     public function delete($id)
     {
+        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         auth()->user()->suppliers()->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Fornecedor removido da base de dados.', variant: 'warning');
     }
