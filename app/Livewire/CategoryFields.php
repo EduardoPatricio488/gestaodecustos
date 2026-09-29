@@ -102,7 +102,7 @@ class CategoryFields extends Component
     public function updateOrder($items)
     {
         foreach ($items as $item) {
-            CategoryField::where('id', $item['value'])->update(['order' => $item['order']]);
+            $this->category->fields()->whereKey($item['value'])->update(['order' => $item['order']]);
         }
     }
 
