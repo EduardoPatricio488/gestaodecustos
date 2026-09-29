@@ -24,6 +24,7 @@ class BusinessReconciliationHub extends Component
 
     public function reconcile(): void
     {
+        app(BusinessAccessService::class)->assert('manage_financials');
         $workspace = app(BusinessAccessService::class)->assertWorkspace();
         $this->validate(['transactionId' => 'required|integer', 'matchedType' => 'required|in:payment_allocation,invoice,expense', 'matchedId' => 'required|integer']);
         app(BusinessSettlementService::class)->reconcile(BankTransaction::where('workspace_id', $workspace->id)->findOrFail($this->transactionId), $this->matchedType, $this->matchedId);
