@@ -129,7 +129,7 @@ class WrappedReport extends Component
 
         $topCategories = Category::where('workspace_id', $workspaceId)
             ->when($isPersonal, fn ($query) => $query->where('user_id', $user->id))
-            ->withSum(['expenses' => function ($q) {
+            ->withSum(['expenses' => function ($q) use ($isPersonal, $user) {
                 $q->whereYear('spent_at', $this->year)->where('is_company', false);
                 if ($isPersonal) {
                     $q->where('user_id', $user->id);
