@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 return new class extends Migration
 {
@@ -41,7 +42,7 @@ return new class extends Migration
                     Schema::table($tableName, function (Blueprint $table) use ($columns, $name) {
                         $table->index($columns, $name);
                     });
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     // Existing deployments may already have an equivalent index.
                 }
             }
