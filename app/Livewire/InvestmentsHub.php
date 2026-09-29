@@ -547,7 +547,12 @@ class InvestmentsHub extends Component
     {
         $this->isRefreshing = true;
         try {
-            $assets = Investment::where('workspace_id', Auth::user()->current_workspace_id)->get();
+            $assets = Investment::where('workspace_id', Auth::user()->current_workspace_id)
+                ->when(
+                    Auth::user()->currentWorkspace?->type === 'personal',
+                    fn ($q) => $q->where('user_id', Auth::id())
+                )
+                ->get();
             $debtAssets = $assets->where('type', 'Divida');
             $updated = 0;
             foreach ($debtAssets as $debtAsset) {
