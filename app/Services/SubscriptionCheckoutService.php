@@ -30,7 +30,7 @@ class SubscriptionCheckoutService
         }
 
         if ($user->plan !== $planSlug) {
-            $user->update(['plan' => $planSlug]);
+            $user->forceFill(['plan' => $planSlug])->save();
 
             if ($user->currentWorkspace) {
                 $user->currentWorkspace->update(['plan' => $planSlug]);
