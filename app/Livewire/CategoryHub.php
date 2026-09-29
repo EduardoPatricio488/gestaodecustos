@@ -427,7 +427,7 @@ PROMPT;
 
                 // Ao editar, devolve o valor antigo desta despesa antes de validar o novo montante
                 if ($this->editingId) {
-                    $original = Expense::find($this->editingId);
+                    $original = Expense::where('workspace_id', auth()->user()->current_workspace_id)->find($this->editingId);
                     if ($original && (int) $original->bank_account_id === (int) $this->bankAccountId) {
                         $available += (float) $original->amount;
                     }
@@ -464,7 +464,7 @@ PROMPT;
         $user = auth()->user();
 
         if ($this->editingId) {
-            $expense = Expense::findOrFail($this->editingId);
+            $expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($this->editingId);
             $expense->update($data);
             $msg = 'Registo atualizado! ✅';
         } else {
