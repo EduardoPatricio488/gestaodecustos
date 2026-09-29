@@ -166,7 +166,7 @@ Route::view('/termos', 'pages.legal.terms')->name('legal.terms');
 Route::view('/privacidade', 'pages.legal.privacy')->name('legal.privacy');
 Route::view('/cookies', 'pages.legal.cookies')->name('legal.cookies');
 Route::view('/acessibilidade', 'pages.legal.accessibility')->name('legal.accessibility');
-Route::get('/contacto', ContactPage::class)->name('public.contact');
+Route::get('/contacto', ContactPage::class)->middleware('throttle:public')->name('public.contact');
 
 Route::prefix('portal')->group(function () {
     Route::get('/fornecedor', SupplierPortal::class)->name('supplier.portal');
@@ -315,7 +315,7 @@ Route::middleware(['auth', 'verified', 'plan:premium'])->group(function () {
     Route::get('/ia-pilot', AiInsights::class)->name('insights');
     Route::get('/lock-in', LockInHub::class)->name('hub.lockin');
     Route::get('/fitness', FitnessHub::class)->name('hub.fitness');
-    Route::get('/fitness/activity/{id}/photo', [FitnessPhotoController::class, 'show'])->name('fitness.activity.photo');
+    Route::get('/fitness/activity/{id}/photo', [FitnessPhotoController::class, 'show'])->middleware('throttle:public')->name('fitness.activity.photo');
     Route::get('/inventario', UserInventory::class)->name('hub.inventory');
     Route::get('/familia/simulacao', FamilyScenarioHub::class)->name('hub.family.scenario');
     Route::get('/relatorios', YearlyReport::class)->name('hub.reports');
