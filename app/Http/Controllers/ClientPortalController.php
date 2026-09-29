@@ -31,6 +31,10 @@ class ClientPortalController extends Controller
             ->get();
 
         $projects = Project::where('workspace_id', $workspace->id)
+            ->where(function ($query) use ($client) {
+                $query->where('client_id', $client->id)
+                    ->orWhereHas('client', fn ($clientQuery) => $clientQuery->whereKey($client->id));
+            })
             ->orderByDesc('created_at')
             ->limit(10)
             ->get();
