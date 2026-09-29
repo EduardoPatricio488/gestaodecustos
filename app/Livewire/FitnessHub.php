@@ -225,7 +225,7 @@ class FitnessHub extends Component
         try {
             $response = Http::timeout(30)
                 ->withHeaders([
-                    'Authorization' => 'Bearer '.env('OPENROUTER_API_KEY'),
+                    'Authorization' => 'Bearer '.config('services.openrouter.api_key'),
                     'Content-Type' => 'application/json',
                     'HTTP-Referer' => config('app.url'),
                     'X-Title' => config('app.name'),
