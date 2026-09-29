@@ -38,6 +38,7 @@ class SiteSettings extends Component
 
     public function mount()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->site_name = Setting::get('site_name', config('app.name'));
         $this->default_currency = Setting::get('default_currency', 'EUR');
         $this->support_email = Setting::get('support_email', 'suporte@financepro.com');
@@ -54,6 +55,7 @@ class SiteSettings extends Component
 
     public function toggleMaintenance()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->maintenance_mode = ! $this->maintenance_mode;
         Setting::set('maintenance_mode', $this->maintenance_mode ? '1' : '0');
         auth()->user()->logActivity(($this->maintenance_mode ? 'Ativou' : 'Desativou').' manutenção', 'seguranca');
@@ -63,6 +65,7 @@ class SiteSettings extends Component
 
     public function toggleRegistration()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->allow_registration = ! $this->allow_registration;
         Setting::set('allow_registration', $this->allow_registration ? '1' : '0');
         auth()->user()->logActivity(($this->allow_registration ? 'Abriu' : 'Fechou').' registos', 'seguranca');
@@ -75,6 +78,7 @@ class SiteSettings extends Component
      */
     public function resetGlobalOnboarding()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         if (! Hash::check($this->adminPassword, auth()->user()->password)) {
             $this->addError('adminPassword', 'Password incorreta.');
 
@@ -91,6 +95,7 @@ class SiteSettings extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         Setting::set('site_name', $this->site_name);
         Setting::set('default_currency', $this->default_currency);
         Setting::set('support_email', $this->support_email);
