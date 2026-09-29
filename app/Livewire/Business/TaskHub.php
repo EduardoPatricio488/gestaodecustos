@@ -41,7 +41,7 @@ class TaskHub extends Component
 
     protected $rules = [
         'title' => 'required|string|max:255',
-        'project_id' => 'required|exists:projects,id',
+        'project_id' => 'required|integer|exists:projects,id',
         'priority' => 'required|in:baixa,media,alta,critica',
         'due_date' => 'nullable|date',
         'estimated_hours' => 'nullable|numeric|min:0',
@@ -120,9 +120,16 @@ class TaskHub extends Component
     {
         $this->validate();
 
+        $workspace = auth()->user()->currentWorkspace;
+        abort_unless($workspace, 403);
+        abort_unless($workspace->projects()->whereKey($this->project_id)->exists(), 422, 'Projeto inválido.');
+        if ($this->user_id) {
+            abort_unless($workspace->users()->whereKey($this->user_id)->exists(), 422, 'Utilizador inválido.');
+        }
+
         $isNew = $this->editingId === null;
 
-        $task = auth()->user()->currentWorkspace->tasks()->updateOrCreate(
+        $task = $workspace->tasks()->updateOrCreate(
             ['id' => $this->editingId],
             [
                 'project_id' => $this->project_id,
