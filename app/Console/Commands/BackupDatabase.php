@@ -27,10 +27,10 @@ class BackupDatabase extends Command
             return self::FAILURE;
         }
 
-        $bucket = env('AWS_BUCKET');
-        $accessKey = env('AWS_ACCESS_KEY_ID');
-        $secretKey = env('AWS_SECRET_ACCESS_KEY');
-        $region = env('AWS_DEFAULT_REGION', 'us-east-1');
+        $bucket = config('backup.s3.bucket');
+        $accessKey = config('backup.s3.access_key');
+        $secretKey = config('backup.s3.secret_key');
+        $region = config('backup.s3.region');
 
         if (!$bucket || !$accessKey || !$secretKey) {
             $this->error('AWS backup storage is not configured.');
@@ -43,7 +43,7 @@ class BackupDatabase extends Command
 
         $filename = 'finance-pro-ai-'.now()->format('Y-m-d_H-i-s').'.sql.gz';
         $localPath = $backupDir.DIRECTORY_SEPARATOR.$filename;
-        $remoteKey = trim(env('BACKUP_S3_PREFIX', 'finance-pro-ai/backups'), '/').'/'.$filename;
+        $remoteKey = trim((string) config('backup.s3.prefix'), '/').'/'.$filename;
 
         $mysql = config('database.connections.mysql');
 
@@ -81,7 +81,7 @@ class BackupDatabase extends Command
             return self::FAILURE;
         }
 
-        $endpoint = env('AWS_ENDPOINT');
+        $endpoint = config('backup.s3.endpoint');
         $awsArgs = [
             'aws',
             's3',
