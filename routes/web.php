@@ -112,7 +112,10 @@ use App\Mail\VerifyAccountMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 // ══════════════════════════════════════════════════════════════════
 // 1. ÁREAS EXTERNAS E PÚBLICAS (Acessíveis por Visitantes)
@@ -120,11 +123,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
     try {
-        \Illuminate\Support\Facades\DB::connection()->getPdo();
+        DB::connection()->getPdo();
 
         return response()->json(['status' => 'ok'], 200, ['Cache-Control' => 'no-store']);
-    } catch (\Throwable $e) {
-        \Illuminate\Support\Facades\Log::error('Health check failed', ['exception' => get_class($e)]);
+    } catch (Throwable $e) {
+        Log::error('Health check failed', ['exception' => get_class($e)]);
 
         return response()->json(['status' => 'degraded'], 503, ['Cache-Control' => 'no-store']);
     }
