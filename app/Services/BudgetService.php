@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Income;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\Auth;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -22,18 +23,23 @@ class BudgetService
         $start = $month->copy()->startOfMonth();
         $end = $month->copy()->endOfMonth();
         $isBusiness = $this->isBusiness($workspace);
+        $userId = Auth::id();
 
-        $categories = Category::where('workspace_id', $workspace->id)->get();
+        $categories = Category::where('workspace_id', $workspace->id)
+            ->when(! $isBusiness, fn ($query) => $query->where('user_id', $userId))
+            ->get();
         $totalBudget = (float) $categories->sum('budget_limit');
 
         $totalSpent = (float) Expense::where('workspace_id', $workspace->id)
+            ->when(! $isBusiness, fn ($query) => $query->where('user_id', $userId))
             ->where('is_company', $isBusiness)
             ->whereBetween('spent_at', [$start, $end])
             ->sum($isBusiness ? 'amount_converted' : 'amount');
 
         $totalIncome = $isBusiness
             ? (float) $workspace->invoices()->where('status', 'paga')->whereBetween('paid_at', [$start, $end])->sum('amount_excl_vat_converted')
-            : (float) Income::where('workspace_id', $workspace->id)->whereBetween('received_at', [$start, $end])->sum('amount');
+            : (float) Income::where('workspace_id', $workspace->id)
+                ->where('user_id', $userId)->whereBetween('received_at', [$start, $end])->sum('amount');
 
         $daysInMonth = $month->daysInMonth;
         $today = now();
@@ -68,12 +74,15 @@ class BudgetService
         $start = $month->copy()->startOfMonth();
         $end = $month->copy()->endOfMonth();
         $isBusiness = $this->isBusiness($workspace);
+        $userId = Auth::id();
 
         return Category::where('workspace_id', $workspace->id)
+            ->when(! $isBusiness, fn ($query) => $query->where('user_id', $userId))
             ->orderBy('order')
             ->get()
             ->map(function (Category $category) use ($workspace, $start, $end, $isBusiness) {
                 $spent = (float) Expense::where('workspace_id', $workspace->id)
+                    ->when(! $isBusiness, fn ($query) => $query->where('user_id', $userId))
                     ->where('category_id', $category->id)
                     ->where('is_company', $isBusiness)
                     ->whereBetween('spent_at', [$start, $end])
