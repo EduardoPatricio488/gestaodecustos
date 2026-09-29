@@ -90,6 +90,18 @@
                     'url' => url('/'),
                     'logo' => asset('icon-512x512.png'),
                 ],
+                ...((filled(config('legal.company_name')) && filled(config('legal.address'))) ? [[
+                    '@type' => 'LocalBusiness',
+                    'name' => config('legal.company_name'),
+                    'url' => url('/'),
+                    'image' => asset('icon-512x512.png'),
+                    'address' => [
+                        '@type' => 'PostalAddress',
+                        'streetAddress' => config('legal.address'),
+                        'addressCountry' => 'PT',
+                    ],
+                    'email' => config('legal.email'),
+                ]] : []),
                 [
                     '@type' => 'SoftwareApplication',
                     'name' => config('app.name', 'Finance Pro AI'),
@@ -121,7 +133,6 @@
 <meta name="twitter:description" content="{{ $seoDescription }}">
 <meta name="twitter:image" content="{{ $seoImage }}">
 
-<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('icon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('icon-192x192.png') }}">
 <link rel="apple-touch-icon" href="{{ asset('icon-192x192.png') }}?v=20260929">
 
