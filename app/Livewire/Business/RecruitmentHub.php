@@ -51,11 +51,13 @@ class RecruitmentHub extends Component
 
     public function toggleActive()
     {
+        app(\App\Services\BusinessAccessService::class)->assert('manage_team');
         $this->recActive = ! $this->recActive;
     }
 
     public function saveSettings()
     {
+        app(\App\Services\BusinessAccessService::class)->assert('manage_team');
         $this->authorizeRecruitmentManagement();
         $workspace = auth()->user()->currentWorkspace;
         $vacancies = max(0, (int) $this->recVacancies);
@@ -85,6 +87,7 @@ class RecruitmentHub extends Component
 
     public function downloadCandidateCv($id)
     {
+        app(\App\Services\BusinessAccessService::class)->assert('manage_team');
         $this->authorizeRecruitmentManagement();
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
@@ -95,6 +98,7 @@ class RecruitmentHub extends Component
 
     public function rejectCandidate($id)
     {
+        app(\App\Services\BusinessAccessService::class)->assert('manage_team');
         $this->authorizeRecruitmentManagement();
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
@@ -117,6 +121,7 @@ class RecruitmentHub extends Component
 
     public function acceptCandidate($id)
     {
+        app(\App\Services\BusinessAccessService::class)->assert('manage_team');
         $this->authorizeRecruitmentManagement();
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
@@ -162,6 +167,7 @@ class RecruitmentHub extends Component
 
     public function reopenCandidate($id)
     {
+        app(\App\Services\BusinessAccessService::class)->assert('manage_team');
         $this->authorizeRecruitmentManagement();
         $workspace = auth()->user()->currentWorkspace;
         $app = DB::table('job_applications')->where('id', $id)->where('workspace_id', $workspace->id)->first();
