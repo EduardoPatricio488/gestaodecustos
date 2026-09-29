@@ -76,12 +76,11 @@ class BackupDatabase extends Command
             return self::FAILURE;
         }
 
-        $gzip = new Process(['gzip', '-9', '-c', $sqlPath], base_path());
+        $gzip = new Process(['gzip', '-9', $sqlPath], base_path());
         $gzip->setTimeout(900);
         $gzip->run();
-        @unlink($sqlPath);
 
-        if (! $gzip->isSuccessful() || file_put_contents($localPath, $gzip->getOutput()) === false) {
+        if (! $gzip->isSuccessful() || ! File::exists($localPath)) {
             @unlink($localPath);
             $this->error('Não foi possível criar o ficheiro comprimido.');
 
