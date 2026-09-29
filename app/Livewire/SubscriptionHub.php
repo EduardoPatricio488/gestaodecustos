@@ -383,6 +383,7 @@ class SubscriptionHub extends Component
         $user = auth()->user();
         $wsId = $user->current_workspace_id;
         $cashierSub = null;
+        $isPersonalWorkspace = $user->currentWorkspace?->type === 'personal';
 
         $subCatNames = [
             'Streaming (Vídeo/TV)', 'Música & Podcasts', 'Software & SaaS', 'Gaming',
