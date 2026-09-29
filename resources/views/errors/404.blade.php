@@ -9,14 +9,12 @@
         </div>
     </div>
 
-    {{-- Texto de Erro --}}
     <div class="space-y-2">
         <h2 class="text-3xl font-black dark:text-white uppercase tracking-tighter italic leading-none">Página não encontrada</h2>
-        <p class="text-zinc-500 font-medium max-w-md mx-auto">Parece que este cofre financeiro não existe ou foi movido para outra localização. Vamos voltar ao Dashboard?</p>
+        <p class="text-zinc-500 font-medium max-w-md mx-auto">Parece que este cofre financeiro não existe ou foi movido para outra localização.</p>
     </div>
 
-    {{-- Botão de Retorno --}}
-    <flux:button href="{{ route('home') }}" variant="primary" icon="home" class="rounded-2xl px-10 h-14 font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 !bg-brand-600">
+    <flux:button href="{{ url('/') }}" variant="primary" icon="home" class="rounded-2xl px-10 h-14 font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 !bg-brand-600">
         Voltar ao Início
     </flux:button>
 </div>
