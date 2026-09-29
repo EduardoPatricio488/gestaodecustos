@@ -97,7 +97,7 @@ class Expenses extends Component
         $user = auth()->user();
 
         // Consulta filtrada automaticamente pelo Workspace ativo via Trait
-        $expenses = Expense::with(['category', 'user'])
+        $expenses = Expense::with(['category', 'user', 'bankAccount'])
             ->when($this->search, fn ($q) => $q->where('description', 'like', '%'.$this->search.'%')
             )
             ->when($this->filterCategory, fn ($q) => $q->where('category_id', $this->filterCategory)
