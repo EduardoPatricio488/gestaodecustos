@@ -224,7 +224,7 @@ class FitnessHub extends Component
         }
 
         try {
-            $response = Http::timeout(30)
+            $response = Http::connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))->timeout((int) config('limits.ai.request_timeout_seconds', 30))
                 ->withHeaders([
                     'Authorization' => 'Bearer '.config('services.openrouter.api_key'),
                     'Content-Type' => 'application/json',
