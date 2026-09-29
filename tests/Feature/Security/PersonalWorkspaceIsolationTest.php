@@ -6,7 +6,6 @@ use App\Models\Workspace;
 use App\Services\BancoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use ReflectionMethod;
 
 uses(RefreshDatabase::class);
 
@@ -253,7 +252,7 @@ function personalIsolationFixture(): array
 
 function financeBotTool(string $tool, array $args = []): array
 {
-    $method = new ReflectionMethod(FinanceBot::class, 'executeTool');
+    $method = new \ReflectionMethod(FinanceBot::class, 'executeTool');
     $method->setAccessible(true);
 
     return $method->invoke(app(FinanceBot::class), $tool, $args);
@@ -291,9 +290,13 @@ test('FinanceBot cannot delete or complete another users records by id', functio
 
     $this->actingAs($data['owner']);
 
-    expect(financeBotTool('delete_expense', ['expense_id' => $data['expenseB']])['error'])->toBe('Despesa não encontrada.')
+    expect(DB::table('expenses')->whereKey($data['expenseB'])->exists())->toBeTrue()
+        ->and(financeBotTool('delete_expense', ['expense_id' => $data['expenseB']])['error'])->toBe('Despesa não encontrada.')
+        ->and(DB::table('expenses')->whereKey($data['expenseB'])->exists())->toBeTrue()
         ->and(financeBotTool('complete_reminder', ['reminder_id' => $data['reminderB']])['error'])->toBe('Lembrete não encontrado.')
-        ->and(financeBotTool('delete_reminder', ['reminder_id' => $data['reminderB']])['error'])->toBe('Lembrete não encontrado.');
+        ->and(DB::table('expenses')->whereKey($data['expenseB'])->exists())->toBeTrue()
+        ->and(financeBotTool('delete_reminder', ['reminder_id' => $data['reminderB']])['error'])->toBe('Lembrete não encontrado.')
+        ->and(DB::table('expenses')->whereKey($data['expenseB'])->exists())->toBeTrue();
 
     expect(DB::table('expenses')->whereKey($data['expenseB'])->exists())->toBeTrue()
         ->and(DB::table('reminders')->whereKey($data['reminderB'])->value('is_completed'))->toBeFalse()
