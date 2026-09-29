@@ -5,6 +5,8 @@ use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\CheckPlanAccess;
 use App\Http\Middleware\CheckRegistrationStatus;
 use App\Http\Middleware\EnsureBusinessWorkspaceAccess;
+use App\Http\Middleware\ForceHttps;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\EnsureImpersonationIsValid;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\ThrottleVerificationCode;
@@ -23,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
 
         $middleware->web(append: [
+            ForceHttps::class,
+            SecurityHeaders::class,
             SetLocale::class,
             CheckMaintenanceMode::class,
             CheckRegistrationStatus::class,
