@@ -159,7 +159,8 @@ class CollaboratorExpenseHub extends Component
         $workspace = auth()->user()->currentWorkspace;
 
         // Importante: .with(['project', 'task']) para a tabela não dar erro
-        $query = Expense::where('user_id', auth()->id())
+        $query = Expense::where('workspace_id', $workspace->id)
+            ->where('user_id', auth()->id())
             ->where('is_company', true)
             ->with(['project', 'task', 'category']);
 
@@ -169,7 +170,7 @@ class CollaboratorExpenseHub extends Component
             'tasks' => Task::where('workspace_id', $workspace->id)->get(), // Todas as tarefas da empresa
             'categories' => Category::where('workspace_id', $workspace->id)->get(),
             'stats' => [
-                'total_pending' => Expense::where('user_id', auth()->id())->whereRaw('LOWER(status) = ?', ['pendente'])->sum('amount'),
+                'total_pending' => Expense::where('workspace_id', $workspace->id)->where('user_id', auth()->id())->whereRaw('LOWER(status) = ?', ['pendente'])->sum('amount'),
                 'total_approved' => Expense::where('user_id', auth()->id())->whereRaw('LOWER(status) = ?', ['aprovado'])->sum('amount'),
             ],
         ]);
