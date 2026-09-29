@@ -617,10 +617,18 @@ class BancoHub extends Component
 
     public function render()
     {
-        $wsId = auth()->user()->current_workspace_id;
-        $service = new BancoService($wsId, auth()->id());
+        $user = auth()->user();
+        $wsId = $user->current_workspace_id;
+        $service = new BancoService($wsId, $user->id);
 
         $accounts = $service->getAccounts();
+
+        // Workspaces pessoais são estritamente privados por utilizador.
+        // Mantemos esta barreira também na camada Livewire, além do BancoService.
+        if ($user->currentWorkspace?->type === 'personal') {
+            $accounts = $accounts->where('user_id', $user->id)->values();
+        }
+
         $personalAccounts = $accounts->where('is_business', false)->where('status', '!=', 'archived');
         $businessAccounts = $accounts->where('is_business', true)->where('status', '!=', 'archived');
         $reserves = $service->getReserves();
