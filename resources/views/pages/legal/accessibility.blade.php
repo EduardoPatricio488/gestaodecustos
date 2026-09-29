@@ -1,5 +1,6 @@
 <x-guest-layout>
 <div class="max-w-4xl mx-auto py-16 px-6">
+@include('partials.breadcrumbs', ['breadcrumbs' => [['label' => 'Início', 'url' => route('home')], ['label' => 'Acessibilidade']]])
 <h1 class="text-3xl font-black dark:text-white">Declaração de Acessibilidade</h1>
 <p class="mt-4 text-zinc-500">Última atualização: 29/09/2026</p>
 <div class="prose dark:prose-invert mt-10">
