@@ -36,6 +36,7 @@ class SupportManager extends Component
     #[Computed]
     public function activeTicket()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         if (! $this->activeTicketId) {
             return null;
         }
@@ -50,6 +51,7 @@ class SupportManager extends Component
     #[Computed]
     public function selectedReport()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         if (! $this->selectedReportId) {
             return null;
         }
@@ -63,6 +65,7 @@ class SupportManager extends Component
      */
     public function selectTicket($id)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->activeTicketId = $id;
         $this->selectedReportId = null;
         $this->replyMessage = '';
@@ -73,6 +76,7 @@ class SupportManager extends Component
      */
     public function selectReport($id)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->selectedReportId = $id;
         $this->activeTicketId = null;
     }
@@ -82,6 +86,7 @@ class SupportManager extends Component
      */
     public function sendReply()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $this->validate(['replyMessage' => 'required|min:2']);
 
         SupportMessage::create([
@@ -102,6 +107,7 @@ class SupportManager extends Component
      */
     public function closeTicket($id)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         SupportTicket::findOrFail($id)->update(['status' => 'closed']);
         $this->dispatch('toast', text: 'Ticket marcado como resolvido.');
     }
@@ -111,6 +117,7 @@ class SupportManager extends Component
      */
     public function ignoreReport($reportId)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         SocialReport::findOrFail($reportId)->update(['status' => 'ignored']);
         $this->selectedReportId = null;
         $this->dispatch('toast', text: 'Denúncia ignorada.');
@@ -121,6 +128,7 @@ class SupportManager extends Component
      */
     public function deletePost($reportId)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $report = SocialReport::findOrFail($reportId);
 
         // Apaga o post original da rede social
