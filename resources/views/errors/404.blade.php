@@ -16,7 +16,7 @@
     </div>
 
     {{-- Botão de Retorno --}}
-    <flux:button href="{{ route('dashboard') }}" variant="primary" icon="home" class="rounded-2xl px-10 h-14 font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 !bg-brand-600">
+    <flux:button href="{{ route('home') }}" variant="primary" icon="home" class="rounded-2xl px-10 h-14 font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 !bg-brand-600">
         Voltar ao Início
     </flux:button>
 </div>
