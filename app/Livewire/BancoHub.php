@@ -336,6 +336,15 @@ class BancoHub extends Component
         $wsId = $user->current_workspace_id;
         $isCreating = ! $this->editingId;
 
+        if ($this->modalType === 'transfer') {
+            abort_unless(
+                BankAccount::where('workspace_id', $wsId)->whereKey($this->tr_from_id)->exists()
+                && BankAccount::where('workspace_id', $wsId)->whereKey($this->tr_to_id)->exists(),
+                422,
+                'Conta bancária inválida.'
+            );
+        }
+
         match ($this->modalType) {
             'account' => $this->saveAccount($wsId),
             'transfer' => $this->saveTransfer($wsId),
@@ -358,7 +367,7 @@ class BancoHub extends Component
     private function saveAccount(int $wsId): void
     {
         BankAccount::updateOrCreate(
-            ['id' => $this->editingId],
+            ['id' => $this->editingId, 'workspace_id' => $wsId],
             [
                 'workspace_id' => $wsId,
                 'user_id' => auth()->id(),
@@ -385,7 +394,7 @@ class BancoHub extends Component
     private function saveTransfer(int $wsId): void
     {
         $transfer = BankTransfer::updateOrCreate(
-            ['id' => $this->editingId],
+            ['id' => $this->editingId, 'workspace_id' => $wsId],
             [
                 'workspace_id' => $wsId,
                 'user_id' => auth()->id(),
@@ -411,7 +420,7 @@ class BancoHub extends Component
     private function saveReserve(int $wsId): void
     {
         BankReserve::updateOrCreate(
-            ['id' => $this->editingId],
+            ['id' => $this->editingId, 'workspace_id' => $wsId],
             [
                 'workspace_id' => $wsId,
                 'user_id' => auth()->id(),
@@ -431,7 +440,7 @@ class BancoHub extends Component
     private function saveTransit(int $wsId): void
     {
         BankTransitItem::updateOrCreate(
-            ['id' => $this->editingId],
+            ['id' => $this->editingId, 'workspace_id' => $wsId],
             [
                 'workspace_id' => $wsId,
                 'user_id' => auth()->id(),
@@ -452,7 +461,7 @@ class BancoHub extends Component
     private function saveCredit(int $wsId): void
     {
         BankCredit::updateOrCreate(
-            ['id' => $this->editingId],
+            ['id' => $this->editingId, 'workspace_id' => $wsId],
             [
                 'workspace_id' => $wsId,
                 'user_id' => auth()->id(),
@@ -470,7 +479,7 @@ class BancoHub extends Component
     private function savePatrimony(int $wsId): void
     {
         BankPatrimony::updateOrCreate(
-            ['id' => $this->editingId],
+            ['id' => $this->editingId, 'workspace_id' => $wsId],
             [
                 'workspace_id' => $wsId,
                 'user_id' => auth()->id(),
