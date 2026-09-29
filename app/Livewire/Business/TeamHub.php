@@ -112,7 +112,7 @@ class TeamHub extends Component
     public function viewDocuments($employeeId)
     {
         // 1. Carregamos o colaborador para aceder ao cv_path
-        $this->selectedEmployee = Employee::findOrFail($employeeId);
+        $this->selectedEmployee = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($employeeId);
 
         $this->selectedEmpIdForUpload = $employeeId;
         $this->selectedEmployeeName = $this->selectedEmployee->name;
@@ -307,8 +307,14 @@ class TeamHub extends Component
             $data['photo_path'] = $this->photo->store('employees', 'public');
         }
 
-        // 1. Guardar/Atualizar na Base de Dados
-        $emp = Employee::updateOrCreate(['id' => $this->editingId], $data);
+        // 1. Guardar/Atualizar na Base de Dados, sempre dentro do workspace atual
+        if ($this->editingId) {
+            $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)
+                ->findOrFail($this->editingId);
+            $emp->update($data);
+        } else {
+            $emp = Employee::create($data);
+        }
 
         // 2. Lógica de Notificação por E-mail (Apenas se for uma EDIÇÃO)
         if ($this->editingId && $emp->user_id) {
@@ -480,7 +486,8 @@ class TeamHub extends Component
             'docType' => 'required|in:contrato,recibo,outro',
         ]);
 
-        $employee = Employee::findOrFail($this->selectedEmpIdForUpload);
+        $employee = Employee::where('workspace_id', Auth::user()->current_workspace_id)
+            ->findOrFail($this->selectedEmpIdForUpload);
 
         // Guardar o ficheiro na pasta privada (storage/app/business-docs)
         $path = $this->docFile->store('business-docs', 'local');
