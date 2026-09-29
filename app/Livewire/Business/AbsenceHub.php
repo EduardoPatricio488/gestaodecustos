@@ -13,6 +13,11 @@ use Livewire\WithPagination;
 #[Layout('components.layouts.app')]
 class AbsenceHub extends Component
 {
+    public function mount(): void
+    {
+        app(BusinessAccessService::class)->assert('view_business');
+    }
+
     use WithPagination;
 
     public $employee_id = '';
