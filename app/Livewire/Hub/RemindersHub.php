@@ -143,7 +143,10 @@ class RemindersHub extends Component
 
     public function deleteReminder($id)
     {
-        Reminder::destroy($id);
+        Reminder::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->findOrFail($id)
+            ->delete();
         $this->dispatch('toast', text: 'Lembrete removido.');
     }
 
@@ -151,7 +154,9 @@ class RemindersHub extends Component
     {
         $this->resetForm();
         if ($id) {
-            $reminder = Reminder::where('user_id', auth()->id())->find($id);
+            $reminder = Reminder::where('workspace_id', auth()->user()->current_workspace_id)
+                ->where('user_id', auth()->id())
+                ->findOrFail($id);
             $this->editingReminderId = $id;
             $this->title = $reminder->title;
             $this->remind_at = $reminder->remind_at->format('Y-m-d\TH:i');
