@@ -87,7 +87,8 @@ class Expenses extends Component
             return;
         }
 
-        $query = Expense::whereKey($id);
+        $query = Expense::where('workspace_id', auth()->user()->current_workspace_id)
+            ->whereKey($id);
 
         if (auth()->user()->currentWorkspace?->type === 'personal') {
             $query->where('user_id', auth()->id());
