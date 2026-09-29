@@ -520,7 +520,9 @@ class ManageFamily extends Component
             'memberStats' => $memberStats,
             'topRecorders' => $topRecorders,
             'recentActivities' => $recentActivities,
-            'familyGoals' => Goal::where('workspace_id', $currentWs->id)->get(),
+            'familyGoals' => Goal::where('workspace_id', $currentWs->id)
+                ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                ->get(),
             'categories' => $sidebarCategories,
             // --- CORREÇÃO AQUI ---
             'allowances' => FamilyBudgetPermission::where('workspace_id', $workspaceId)
