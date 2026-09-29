@@ -13,14 +13,14 @@ class ExpenseApprovalHub extends Component
     public function approve($id)
     {
         abort_unless(auth()->user()->isOwner() || auth()->user()->isAdminRole(), 403);
-        Expense::findOrFail($id)->update(['status' => 'aprovado']);
+        Expense::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id)->update(['status' => 'aprovado']);
         $this->dispatch('toast', variant: 'success', text: 'Despesa aprovada!');
     }
 
     public function reject($id)
     {
         abort_unless(auth()->user()->isOwner() || auth()->user()->isAdminRole(), 403);
-        Expense::findOrFail($id)->update(['status' => 'rejeitado']);
+        Expense::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id)->update(['status' => 'rejeitado']);
         $this->dispatch('toast', variant: 'warning', text: 'Despesa rejeitada.');
     }
 
