@@ -420,7 +420,7 @@
         <div class="p-7 flex justify-between items-start pt-16 relative z-30">
             <div class="flex items-center gap-5">
                 <div class="size-16 rounded-[1.5rem] overflow-hidden border-2 border-white dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center font-black text-2xl text-brand-600 uppercase shrink-0 shadow-lg">
-                    @if ($emp->photo_path) <img src="{{ asset('storage/' . $emp->photo_path) }}" class="w-full h-full object-cover">
+                    @if ($emp->photo_path) <img src="{{ asset('storage/' . $emp->photo_path) }}" alt="Fotografia de {{ $emp->name }}" class="w-full h-full object-cover">
                     @else {{ substr($emp->name, 0, 1) }} @endif
                 </div>
                 <div class="min-w-0 text-left">
