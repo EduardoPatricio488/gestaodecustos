@@ -43,6 +43,7 @@ class BackupDatabase extends Command
 
         $filename = 'finance-pro-ai-'.now()->format('Y-m-d_H-i-s').'.sql.gz';
         $localPath = $backupDir.DIRECTORY_SEPARATOR.$filename;
+        $sqlPath = $backupDir.DIRECTORY_SEPARATOR.str_replace('.gz', '', $filename);
         $remoteKey = trim((string) config('backup.s3.prefix'), '/').'/'.$filename;
 
         $mysql = config('database.connections.mysql');
@@ -58,6 +59,7 @@ class BackupDatabase extends Command
             '--port='.(string) $mysql['port'],
             '--user='.$mysql['username'],
             $mysql['database'],
+            '--result-file='.$sqlPath,
         ], base_path(), [
             'MYSQL_PWD' => (string) $mysql['password'],
         ]);
@@ -67,15 +69,20 @@ class BackupDatabase extends Command
         $this->info('A criar backup da base de dados...');
         $dump->run();
 
-        if (!$dump->isSuccessful()) {
+        if (! $dump->isSuccessful()) {
+            @unlink($sqlPath);
             $this->error('mysqldump falhou: '.$dump->getErrorOutput());
 
             return self::FAILURE;
         }
 
-        $compressed = gzencode($dump->getOutput(), 9);
+        $gzip = new Process(['gzip', '-9', '-c', $sqlPath], base_path());
+        $gzip->setTimeout(900);
+        $gzip->run();
+        @unlink($sqlPath);
 
-        if ($compressed === false || file_put_contents($localPath, $compressed) === false) {
+        if (! $gzip->isSuccessful() || file_put_contents($localPath, $gzip->getOutput()) === false) {
+            @unlink($localPath);
             $this->error('Não foi possível criar o ficheiro comprimido.');
 
             return self::FAILURE;
@@ -109,7 +116,7 @@ class BackupDatabase extends Command
         $this->info('A enviar backup para armazenamento privado...');
         $upload->run();
 
-        if (!$upload->isSuccessful()) {
+        if (! $upload->isSuccessful()) {
             @unlink($localPath);
             $this->error('Upload do backup falhou: '.$upload->getErrorOutput());
 
