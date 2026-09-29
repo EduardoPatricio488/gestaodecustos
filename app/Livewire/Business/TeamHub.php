@@ -80,6 +80,7 @@ class TeamHub extends Component
 
     public function mount()
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $this->selectedMonth = now()->month;
         $this->selectedYear = now()->year;
     }
