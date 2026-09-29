@@ -66,7 +66,9 @@ class SubscriptionHub extends Component
     public function edit($id)
     {
         $this->editingId = $id;
-        $sub = Subscription::where('user_id', auth()->id())->findOrFail($id);
+        $sub = Subscription::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->findOrFail($id);
         $this->name = $sub->name;
         $this->amount = $sub->amount;
         $this->category_id = $sub->category_id;
@@ -84,7 +86,9 @@ class SubscriptionHub extends Component
 
     public function toggleStatus($id)
     {
-        $sub = Subscription::where('user_id', auth()->id())->findOrFail($id);
+        $sub = Subscription::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->findOrFail($id);
         $sub->status = ($sub->status === 'active') ? 'paused' : 'active';
         $sub->save();
         $this->dispatch('toast', text: 'Estado atualizado!');
@@ -314,7 +318,7 @@ class SubscriptionHub extends Component
         $data = $this->validate([
             'name' => 'required',
             'amount' => 'required|numeric',
-            'category_id' => 'required',
+            'category_id' => 'required|integer',
             'billing_day' => 'required|integer|between:1,31',
             'billing_cycle' => 'nullable|in:monthly,quarterly,semiannual,annual',
             'status' => 'nullable|in:active,paused,cancelled',
@@ -325,6 +329,14 @@ class SubscriptionHub extends Component
             'notify_before_billing' => 'boolean',
             'notify_days_before' => 'nullable|integer|between:1,30',
         ]);
+
+        abort_unless(
+            Category::where('workspace_id', auth()->user()->current_workspace_id)
+                ->whereKey($this->category_id)
+                ->exists(),
+            422,
+            'Categoria inválida.'
+        );
 
         $subscriptionData = [
             'user_id' => auth()->id(),
@@ -345,7 +357,9 @@ class SubscriptionHub extends Component
         ];
 
         if ($this->editingId) {
-            Subscription::where('user_id', auth()->id())->find($this->editingId)?->update($subscriptionData);
+            Subscription::where('workspace_id', auth()->user()->current_workspace_id)
+                ->where('user_id', auth()->id())
+                ->find($this->editingId)?->update($subscriptionData);
             $msg = 'Assinatura atualizada!';
         } else {
             Subscription::create($subscriptionData);
@@ -361,7 +375,9 @@ class SubscriptionHub extends Component
 
     public function delete($id)
     {
-        $sub = Subscription::where('user_id', auth()->id())->find($id);
+        $sub = Subscription::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->find($id);
         if ($sub) {
             $sub->delete();
             $this->dispatch('toast', text: 'Assinatura removida com sucesso!');
