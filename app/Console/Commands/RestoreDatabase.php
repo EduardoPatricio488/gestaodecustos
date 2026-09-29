@@ -54,7 +54,7 @@ class RestoreDatabase extends Command
         $remoteKey = trim((string) config('backup.s3.prefix'), '/').'/'.$file;
         $awsArgs = ['aws', 's3', 'cp', 's3://'.$bucket.'/'.$remoteKey, $gzPath, '--region', $region, '--only-show-errors'];
         if ($endpoint = config('backup.s3.endpoint')) {
-            array_splice($awsArgs, 6, 0, ['--endpoint-url', $endpoint]);
+            $awsArgs = array_merge($awsArgs, ['--endpoint-url', $endpoint]);
         }
 
         $env = [
