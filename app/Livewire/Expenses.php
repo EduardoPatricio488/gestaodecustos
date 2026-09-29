@@ -52,6 +52,7 @@ class Expenses extends Component
         }
 
         $category = Category::where('workspace_id', auth()->user()->current_workspace_id)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->where('hidden_from_sidebar', false)
             ->whereKey($categoryId)
             ->firstOrFail();
