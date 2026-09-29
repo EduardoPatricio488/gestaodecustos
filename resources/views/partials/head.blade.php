@@ -72,7 +72,6 @@
         ],
     ];
 
-
     if ($seoRoute === 'home') {
         $schemaMarkup = [
             '@context' => 'https://schema.org',
@@ -133,9 +132,10 @@
 <meta name="twitter:description" content="{{ $seoDescription }}">
 <meta name="twitter:image" content="{{ $seoImage }}">
 
-<link rel="icon" type="image/svg+xml" href="{{ asset('favicon-money-bag.svg') }}">
-<link rel="shortcut icon" href="{{ asset('favicon-money-bag.svg') }}">
-<link rel="apple-touch-icon" href="{{ asset('favicon-money-bag.svg') }}">
+{{-- Favicon oficial do Finance Pro AI: saco de moedas. O versionamento força a atualização do cache do browser. --}}
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon-money-bag.svg') }}?v=20260929">
+<link rel="shortcut icon" type="image/svg+xml" href="{{ asset('favicon-money-bag.svg') }}?v=20260929">
+<link rel="apple-touch-icon" href="{{ asset('icon-192x192.png') }}?v=20260929">
 
 <script type="application/ld+json">{!! json_encode($schemaMarkup, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}</script>
 
@@ -180,15 +180,9 @@
         box-shadow: 0 6px 20px rgba(16, 185, 129, 0.08) !important;
     }
 
-    [data-flux-sidebar] a[href="/empresa/dashboard"] svg {
-        color: #059669 !important;
-    }
+    [data-flux-sidebar] a[href="/empresa/dashboard"] svg { color: #059669 !important; }
+    .dark [data-flux-sidebar] a[href="/empresa/dashboard"] svg { color: #34d399 !important; }
 
-    .dark [data-flux-sidebar] a[href="/empresa/dashboard"] svg {
-        color: #34d399 !important;
-    }
-
-    /* Finance Pro AI: substitui o antigo botão de modo claro/escuro no fundo da sidebar. */
     [data-flux-sidebar] button[x-data*="darkMode"] {
         display: flex !important;
         align-items: center !important;
@@ -205,9 +199,7 @@
         border-color: rgba(16, 185, 129, 0.22) !important;
     }
 
-    [data-flux-sidebar] button[x-data*="darkMode"] > * {
-        display: none !important;
-    }
+    [data-flux-sidebar] button[x-data*="darkMode"] > * { display: none !important; }
 
     [data-flux-sidebar] button[x-data*="darkMode"]::before {
         content: 'F';
@@ -238,9 +230,7 @@
         text-align: left;
     }
 
-    .dark [data-flux-sidebar] button[x-data*="darkMode"]::after {
-        color: #ffffff;
-    }
+    .dark [data-flux-sidebar] button[x-data*="darkMode"]::after { color: #ffffff; }
 </style>
 
 @fluxAppearance
