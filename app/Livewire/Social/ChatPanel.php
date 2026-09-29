@@ -53,7 +53,9 @@ class ChatPanel extends Component
         }
 
         return ChatConversation::with(['users', 'messages.user'])
-            ->find($this->activeConversationId);
+            ->whereKey($this->activeConversationId)
+            ->whereHas('users', fn ($query) => $query->whereKey(auth()->id()))
+            ->first();
     }
 
     #[On('open-chat-with')]
@@ -122,6 +124,7 @@ class ChatPanel extends Component
 
     public function openConversation(int $conversationId)
     {
+        abort_unless(ChatConversation::whereKey($conversationId)->whereHas('users', fn ($query) => $query->whereKey(auth()->id()))->exists(), 403);
         $this->activeConversationId = $conversationId;
         $this->showNewChat = false;
         $this->markAsRead();
