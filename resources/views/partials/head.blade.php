@@ -106,8 +106,8 @@
 <meta name="twitter:image" content="{{ $seoImage }}">
 
 {{-- Favicon oficial: saco de moedas. Usa SVG diretamente e versão nova para invalidar cache. --}}
-<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=20260929-2">
-<link rel="shortcut icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=20260929-2">
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=20260929-3">
+<link rel="shortcut icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=20260929-3">
 <link rel="apple-touch-icon" href="{{ asset('icon-192x192.png') }}?v=20260929-2">
 
 <script type="application/ld+json">{!! json_encode($schemaMarkup, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}</script>
