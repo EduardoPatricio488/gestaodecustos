@@ -11,6 +11,7 @@ use App\Mail\EmployeeTerminatedMail;
 use App\Mail\WorkspaceInviteMail; // Importa o novo mail
 use App\Models\Employee;
 use App\Models\User;
+use App\Services\BusinessAccessService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -112,6 +113,7 @@ class TeamHub extends Component
 
     public function downloadEmployeeCv($employeeId)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $employee = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($employeeId);
         abort_unless($employee->cv_path && Storage::disk('local')->exists($employee->cv_path), 404);
 
@@ -120,6 +122,7 @@ class TeamHub extends Component
 
     public function viewDocuments($employeeId)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         // 1. Carregamos o colaborador para aceder ao cv_path
         $this->selectedEmployee = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($employeeId);
 
@@ -139,6 +142,7 @@ class TeamHub extends Component
     // 3. Método para eliminar um documento (Opcional, mas recomendado)
     public function deleteDocument($docId)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $doc = DB::table('business_documents')
             ->where('id', $docId)
             ->where('workspace_id', auth()->user()->current_workspace_id)
@@ -159,6 +163,7 @@ class TeamHub extends Component
 
     public function viewAttendance($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         $this->viewingAttendanceId = $id;
         $this->attendanceEmployeeName = $emp->name;
@@ -189,6 +194,7 @@ class TeamHub extends Component
      */
     public function acceptResignation($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
 
         // 1. Marcar como despedido e limpar o status de pedido
@@ -209,6 +215,7 @@ class TeamHub extends Component
      */
     public function sendInviteEmail($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         $workspace = auth()->user()->currentWorkspace;
 
@@ -251,6 +258,7 @@ class TeamHub extends Component
 
     public function activateBusinessPlan($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
 
         if (! $emp->user_id) {
@@ -285,6 +293,7 @@ class TeamHub extends Component
 
     public function rejectResignation($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
 
         // 1. Limpar o status de pedido e manter ativo
@@ -301,6 +310,7 @@ class TeamHub extends Component
 
     public function save()
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $this->validate();
 
         $data = [
@@ -350,6 +360,7 @@ class TeamHub extends Component
 
     public function openRaiseModal($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
 
         $this->raiseEmployeeId = $id;
@@ -362,6 +373,7 @@ class TeamHub extends Component
 
     public function applyRaise()
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         if ($this->raiseAmount <= 0) {
             return;
         }
@@ -387,6 +399,7 @@ class TeamHub extends Component
 
     public function generateNewInviteCode()
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $workspace = Auth::user()->currentWorkspace;
         $prefix = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $workspace->name), 0, 3));
         $random = strtoupper(bin2hex(random_bytes(3)));
@@ -397,6 +410,7 @@ class TeamHub extends Component
 
     public function edit($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
         $this->editingId = $emp->id;
         $this->name = $emp->name;
@@ -409,6 +423,7 @@ class TeamHub extends Component
 
     public function activate($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
 
         // Remove suspensão, ativa e limpa data de término caso existisse
@@ -435,6 +450,7 @@ class TeamHub extends Component
 
     public function suspend($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
         $emp->update(['suspended' => true]);
 
@@ -448,6 +464,7 @@ class TeamHub extends Component
 
     public function terminate($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
         $emp->update(['active' => false, 'terminated_at' => now()]);
 
@@ -461,6 +478,7 @@ class TeamHub extends Component
 
     public function deleteEmployee($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
 
         // Guardamos os dados ANTES de apagar o funcionário da base de dados
@@ -478,6 +496,7 @@ class TeamHub extends Component
 
     public function openUploadModal($employeeId)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $this->selectedEmpIdForUpload = $employeeId;
         $this->docTitle = '';
         $this->docFile = null;
@@ -489,6 +508,7 @@ class TeamHub extends Component
      */
     public function saveDocument()
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $this->validate([
             'docFile' => 'required|file|max:5120', // Máx 5MB
             'docTitle' => 'required|string|max:100',
@@ -527,6 +547,7 @@ class TeamHub extends Component
      */
     public function switchToEmployee($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $employee = Employee::where('workspace_id', auth()->user()->current_workspace_id)
             ->findOrFail($id);
 
@@ -546,6 +567,7 @@ class TeamHub extends Component
 
     public function generateEmployeeAccessCode($id)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $emp = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
 
         if ($emp->user_id) {
@@ -574,6 +596,7 @@ class TeamHub extends Component
 
     public function revokeEmployeeAccessCode($id): void
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $employee = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         $employee->update([
             'portal_token' => null,
