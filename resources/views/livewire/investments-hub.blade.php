@@ -170,7 +170,7 @@
                                     class="w-full flex items-center gap-3 px-4 py-3 text-sm transition-all
                                         {{ $highlightIndex === $index ? 'bg-indigo-600 text-white' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800' }}">
 
-                                    <img src="{{ $item['logo'] }}" class="w-6 h-6 rounded-md object-contain bg-white" />
+                                    <img src="{{ $item['logo'] }}" alt="Logótipo de {{ $item['ticker'] }}" class="w-6 h-6 rounded-md object-contain bg-white" />
 
                                     <div class="flex flex-col text-left">
                                         <span class="font-black">{{ $item['ticker'] }}</span>
