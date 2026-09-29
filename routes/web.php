@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Api\OfflineExpenseController;
 use App\Http\Controllers\Api\WhatsappWebhookController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\FitnessPhotoController;
 use App\Http\Controllers\MiFitnessImportController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\SmartwatchController;
@@ -312,6 +313,7 @@ Route::middleware(['auth', 'verified', 'plan:premium'])->group(function () {
     Route::get('/ia-pilot', AiInsights::class)->name('insights');
     Route::get('/lock-in', LockInHub::class)->name('hub.lockin');
     Route::get('/fitness', FitnessHub::class)->name('hub.fitness');
+    Route::get('/fitness/activity/{id}/photo', [FitnessPhotoController::class, 'show'])->name('fitness.activity.photo');
     Route::get('/inventario', UserInventory::class)->name('hub.inventory');
     Route::get('/familia/simulacao', FamilyScenarioHub::class)->name('hub.family.scenario');
     Route::get('/relatorios', YearlyReport::class)->name('hub.reports');
