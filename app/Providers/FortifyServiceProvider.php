@@ -78,19 +78,19 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by(
+            return Limit::perMinute((int) config('limits.api.requests_per_minute', 60))->by(
                 ($request->user()?->getAuthIdentifier() ?? 'guest').'|'.$request->ip(),
             );
         });
 
         RateLimiter::for('ai', function (Request $request) {
-            return Limit::perMinute(20)->by(
+            return Limit::perMinute((int) config('limits.ai.requests_per_minute', 20))->by(
                 ($request->user()?->getAuthIdentifier() ?? 'guest').'|'.$request->ip(),
             );
         });
 
         RateLimiter::for('public', function (Request $request) {
-            return Limit::perMinute(120)->by($request->ip());
+            return Limit::perMinute((int) config('limits.api.public_requests_per_minute', 120))->by($request->ip());
         });
 
         RateLimiter::for('contact', function (Request $request) {
