@@ -81,6 +81,8 @@ class StravaService
         $device = $this->refreshTokenIfNeeded($device);
 
         $response = Http::withToken($device->access_token)
+            ->connectTimeout((int) config('limits.http.connect_timeout_seconds', 5))
+            ->timeout((int) config('limits.http.timeout_seconds', 15))
             ->get(self::BASE_URL.'/athlete');
 
         return $response->successful() ? $response->json() : [];
@@ -91,6 +93,8 @@ class StravaService
         $device = $this->refreshTokenIfNeeded($device);
 
         $response = Http::withToken($device->access_token)
+            ->connectTimeout((int) config('limits.http.connect_timeout_seconds', 5))
+            ->timeout((int) config('limits.http.timeout_seconds', 15))
             ->get(self::BASE_URL."/athletes/{$athleteId}/stats");
 
         return $response->successful() ? $response->json() : [];
@@ -101,6 +105,8 @@ class StravaService
         $device = $this->refreshTokenIfNeeded($device);
 
         $response = Http::withToken($device->access_token)
+            ->connectTimeout((int) config('limits.http.connect_timeout_seconds', 5))
+            ->timeout((int) config('limits.http.timeout_seconds', 15))
             ->get(self::BASE_URL.'/athlete/activities', [
                 'per_page' => $perPage,
                 'page' => $page,
@@ -114,6 +120,8 @@ class StravaService
         $device = $this->refreshTokenIfNeeded($device);
 
         $response = Http::withToken($device->access_token)
+            ->connectTimeout((int) config('limits.http.connect_timeout_seconds', 5))
+            ->timeout((int) config('limits.http.timeout_seconds', 15))
             ->get(self::BASE_URL."/activities/{$id}");
 
         return $response->successful() ? $response->json() : [];
