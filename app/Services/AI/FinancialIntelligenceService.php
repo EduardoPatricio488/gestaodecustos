@@ -28,10 +28,12 @@ class FinancialIntelligenceService
     {
         $start = $period->copy()->startOfMonth();
         $end = $period->copy()->endOfMonth();
+        $ownerId = $workspace->owner?->id;
         $previousStart = $start->copy()->subMonth()->startOfMonth();
         $previousEnd = $start->copy()->subMonth()->endOfMonth();
 
         $spent = (float) $workspace->expenses()
+            ->when($ownerId, fn ($q) => $q->where('user_id', $ownerId))
             ->where('is_company', false)
             ->whereBetween('spent_at', [$start->toDateString(), $end->toDateString()])
             ->sum('amount_converted');
@@ -42,6 +44,7 @@ class FinancialIntelligenceService
             ->sum('amount_converted');
 
         $earned = (float) $workspace->incomes()
+            ->when($ownerId, fn ($q) => $q->where('user_id', $ownerId))
             ->whereBetween('received_at', [$start->toDateString(), $end->toDateString()])
             ->sum('amount_converted');
 
@@ -50,6 +53,7 @@ class FinancialIntelligenceService
             ->sum('amount_converted');
 
         $recurring = (float) $workspace->recurringIncomes()
+            ->when($ownerId, fn ($q) => $q->where('user_id', $ownerId))
             ->where('is_active', true)
             ->sum('amount');
 
@@ -71,6 +75,7 @@ class FinancialIntelligenceService
 
         $goals = Goal::query()
             ->where('workspace_id', $workspace->id)
+            ->when($ownerId, fn ($q) => $q->where('user_id', $ownerId))
             ->select(['id', 'name', 'target_amount', 'current_amount', 'deadline'])
             ->get()
             ->map(fn ($goal) => [
@@ -84,11 +89,13 @@ class FinancialIntelligenceService
 
         $subscriptions = Subscription::query()
             ->where('workspace_id', $workspace->id)
+            ->when($ownerId, fn ($q) => $q->where('user_id', $ownerId))
             ->where('is_active', true)
             ->get(['id', 'name', 'amount', 'cycle', 'renewal_date']);
 
         $investmentValue = Investment::query()
             ->where('workspace_id', $workspace->id)
+            ->when($ownerId, fn ($q) => $q->where('user_id', $ownerId))
             ->get(['quantity', 'current_price'])
             ->sum(fn ($investment) => (float) $investment->quantity * (float) $investment->current_price);
 
