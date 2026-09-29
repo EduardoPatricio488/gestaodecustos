@@ -119,7 +119,7 @@ use Illuminate\Support\Facades\DB;
 // Alguns browsers/proxies continuam a pedir /favicon.ico diretamente.
 // Servimos o mesmo favicon oficial do saco de moedas, em SVG.
 Route::get('/favicon.ico', function () {
-    return response()->file(public_path('favicon-money-bag.svg'), [
+    return response()->file(public_path('favicon.svg'), [
         'Content-Type' => 'image/svg+xml',
         'Cache-Control' => 'public, max-age=31536000, immutable',
     ]);
