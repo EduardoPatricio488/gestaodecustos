@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FitnessActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use SimpleXMLElement;
 
 class MiFitnessImportController extends Controller
