@@ -31,14 +31,17 @@ class InflationHub extends Component
         $workspaceId = auth()->user()->current_workspace_id;
 
         $monthlyIncomeAvg = (float) Income::where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
             ->where('received_at', '>=', now()->subMonths(3))
             ->avg('amount');
 
         $monthlyExpensesAvg = (float) Expense::where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
             ->where('spent_at', '>=', now()->subMonths(3))
             ->avg('amount');
 
         $recurring = RecurringIncome::where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
             ->where('is_active', true)
             ->get();
 
@@ -53,7 +56,7 @@ class InflationHub extends Component
         $this->monthlySalary = $recurringMonthly > 0 ? round($recurringMonthly, 2) : round($monthlyIncomeAvg, 2);
         $this->monthlyExpenses = round($monthlyExpensesAvg, 2);
         $this->monthlySavings = max(0, round($this->monthlySalary - $this->monthlyExpenses, 2));
-        $this->cashReserve = (float) BankAccount::where('workspace_id', $workspaceId)->sum('balance');
+        $this->cashReserve = (float) BankAccount::where('workspace_id', $workspaceId)->where('user_id', auth()->id())->sum('balance');
     }
 
     public function getDataProperty(): array
