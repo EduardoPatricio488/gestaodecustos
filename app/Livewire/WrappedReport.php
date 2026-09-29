@@ -74,13 +74,17 @@ class WrappedReport extends Component
 
     private function getWrappedData()
     {
-        $workspaceId = auth()->user()->current_workspace_id;
+        $user = auth()->user();
+        $workspaceId = $user->current_workspace_id;
+        $isPersonal = $user->currentWorkspace?->type === 'personal';
 
         $expenseQuery = Expense::where('workspace_id', $workspaceId)
             ->where('is_company', false)
+            ->when($isPersonal, fn ($query) => $query->where('user_id', $user->id))
             ->whereYear('spent_at', $this->year);
 
         $incomeQuery = Income::where('workspace_id', $workspaceId)
+            ->when($isPersonal, fn ($query) => $query->where('user_id', $user->id))
             ->whereYear('received_at', $this->year);
 
         if ($this->view === 'month') {
@@ -96,20 +100,24 @@ class WrappedReport extends Component
         $savingsRate = $earned > 0 ? ($saved / $earned) * 100 : 0;
 
         // Investimentos (Ajustado para os teus campos MySQL: average_price e current_price)
-        $investments = Investment::where('workspace_id', $workspaceId)->get();
+        $investments = Investment::where('workspace_id', $workspaceId)
+            ->when($isPersonal, fn ($query) => $query->where('user_id', $user->id))->get();
         $totalInvested = (float) $investments->sum('average_price');
         $currentPortfolioValue = (float) $investments->sum('current_price');
         $portfolioGain = $currentPortfolioValue - $totalInvested;
 
         // Subscrições (Corrigido: 'amount' em vez de 'price')
-        $activeSubsCount = Subscription::where('workspace_id', $workspaceId)->count();
-        $subsMonthlyCost = (float) Subscription::where('workspace_id', $workspaceId)->sum('amount');
+        $activeSubsCount = Subscription::where('workspace_id', $workspaceId)
+            ->when($isPersonal, fn ($query) => $query->where('user_id', $user->id))->count();
+        $subsMonthlyCost = (float) Subscription::where('workspace_id', $workspaceId)
+            ->when($isPersonal, fn ($query) => $query->where('user_id', $user->id))->sum('amount');
 
         // Padrão Mensal (agnóstico ao driver: MySQL, Postgres ou SQLite)
         $monthlyPattern = collect();
         if ($this->view === 'year') {
             $monthlyPattern = Expense::where('workspace_id', $workspaceId)
                 ->where('is_company', false)
+                ->when($isPersonal, fn ($query) => $query->where('user_id', $user->id))
                 ->whereYear('spent_at', $this->year)
                 ->selectRaw($this->monthNumberExpression('spent_at').' as month, SUM(amount) as total')
                 ->groupBy('month')
@@ -120,8 +128,12 @@ class WrappedReport extends Component
         $biggestExpense = (clone $expenseQuery)->orderByDesc('amount')->first();
 
         $topCategories = Category::where('workspace_id', $workspaceId)
+            ->when($isPersonal, fn ($query) => $query->where('user_id', $user->id))
             ->withSum(['expenses' => function ($q) {
                 $q->whereYear('spent_at', $this->year)->where('is_company', false);
+                if ($isPersonal) {
+                    $q->where('user_id', $user->id);
+                }
                 if ($this->view === 'month') {
                     $q->whereMonth('spent_at', $this->month);
                 }
@@ -167,6 +179,7 @@ class WrappedReport extends Component
             'xp' => $user->xp ?? 0,
             'availableYears' => $years,
             'goalsCompleted' => Goal::where('workspace_id', $user->current_workspace_id)
+                ->when($user->currentWorkspace?->type === 'personal', fn ($query) => $query->where('user_id', $user->id))
                 ->whereColumn('current_amount', '>=', 'target_amount')
                 ->whereYear('updated_at', $this->year)
                 ->count(),
