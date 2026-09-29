@@ -60,8 +60,13 @@ new #[Layout('layouts.guest')] class extends Component
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'verification_code' => $code,
             ]);
+
+            $user->forceFill([
+                'verification_code_hash' => hash('sha256', (string) $code),
+                'verification_code_expires_at' => now()->addMinutes(10),
+                'verification_code_attempts' => 0,
+            ])->save();
 
             // 3. Enviar o e-mail
             try {
