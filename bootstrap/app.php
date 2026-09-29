@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\AdminOnlyMiddleware;
 use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\CheckPlanAccess;
 use App\Http\Middleware\CheckRegistrationStatus;
@@ -54,6 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => AdminMiddleware::class,
+            'admin.only' => AdminOnlyMiddleware::class,
             'plan' => CheckPlanAccess::class,
             'business.workspace' => EnsureBusinessWorkspaceAccess::class,
         ]);
