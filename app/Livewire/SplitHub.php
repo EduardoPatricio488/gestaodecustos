@@ -132,7 +132,7 @@ class SplitHub extends Component
             'Utilizador inválido para este espaço.'
         );
         if ($this->categoryId) {
-            abort_unless(Category::where('workspace_id', $ws->id)->whereKey($this->categoryId)->exists(), 422, 'Categoria inválida.');
+            abort_unless(Category::where('workspace_id', $ws->id)->when($ws->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))->whereKey($this->categoryId)->exists(), 422, 'Categoria inválida.');
         }
 
         $split = $this->editingId
@@ -194,7 +194,8 @@ class SplitHub extends Component
 
     public function deleteSplit(int $id): void
     {
-        $split = ExpenseSplit::where('creator_user_id', auth()->id())->findOrFail($id);
+        $split = ExpenseSplit::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('creator_user_id', auth()->id())->findOrFail($id);
         $split->delete();
         $this->dispatch('toast', text: 'Divisão eliminada.');
     }
@@ -221,9 +222,10 @@ class SplitHub extends Component
 
         $allSplits = ExpenseSplit::with(['participants.user', 'creator', 'category'])
             ->where('workspace_id', $ws->id)
-            ->whereHas('participants', fn ($q) => $q->where('user_id', $uid))
-            ->orWhere('creator_user_id', $uid)
-            ->where('workspace_id', $ws->id)
+            ->where(function ($q) use ($uid) {
+                $q->whereHas('participants', fn ($pq) => $pq->where('user_id', $uid))
+                    ->orWhere('creator_user_id', $uid);
+            })
             ->latest()
             ->get()
             ->unique('id');
@@ -245,7 +247,9 @@ class SplitHub extends Component
         $totalTheyOwe = $theyOwe->sum(fn ($s) => $s->participants->where('user_id', '!=', $uid)->where('paid', false)->sum('amount'));
 
         $members = $ws->users;
-        $categories = Category::where('workspace_id', $ws->id)->get();
+        $categories = Category::where('workspace_id', $ws->id)
+            ->when($ws->type === 'personal', fn ($q) => $q->where('user_id', $uid))
+            ->get();
         $hasFamily = $members->count() > 1;
 
         return view('livewire.split-hub', compact(
