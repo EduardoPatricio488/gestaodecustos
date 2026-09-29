@@ -5,6 +5,7 @@ namespace App\Services\AI;
 use App\Models\AiActionLog;
 use App\Models\AiConversation;
 use App\Models\AiMemory;
+use App\Models\AiMessage;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Models\Workspace;
@@ -31,6 +32,7 @@ class AiBrainService
             throw new RuntimeException('Não existe um workspace ativo para esta conta.');
         }
         $this->assertAiAccess($user);
+        $this->assertMonthlyTokenBudget($user, $workspace);
 
         $rateKey = 'ai-copilot:'.$user->id.':'.$workspace->id;
         if (RateLimiter::tooManyAttempts($rateKey, 30)) {
@@ -133,6 +135,7 @@ class AiBrainService
                     'data_source' => 'Finance Pro AI database',
                 ],
                 'latency_ms' => (int) round((microtime(true) - $startedAt) * 1000),
+                'tokens' => (int) ($response['usage']['total_tokens'] ?? 0),
             ]);
 
             $conversation->update(['last_activity_at' => now(), 'title' => $conversation->title ?: Str::limit($cleanInput, 60)]);
@@ -234,7 +237,9 @@ class AiBrainService
             'tool_choice' => $forcedTool ? ['type' => 'function', 'function' => ['name' => $forcedTool]] : 'auto',
             'max_tokens' => 1600,
         ];
-        $response = Http::withHeaders(['Authorization' => 'Bearer '.$apiKey, 'Content-Type' => 'application/json', 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')])->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', $payload);
+        $response = Http::withHeaders(['Authorization' => 'Bearer '.$apiKey, 'Content-Type' => 'application/json', 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
+            ->timeout((int) config('limits.ai.request_timeout_seconds', 30))
+            ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
         if (! $response->successful()) {
             throw new RuntimeException('Provider indisponível (HTTP '.$response->status().').');
         }
@@ -244,6 +249,30 @@ class AiBrainService
         }
 
         return $json;
+    }
+
+
+    private function assertMonthlyTokenBudget(User $user, Workspace $workspace): void
+    {
+        if (method_exists($user, 'isAdminRole') && $user->isAdminRole()) {
+            return;
+        }
+
+        $limit = (int) config('limits.ai.monthly_tokens', 100000);
+        if ($limit <= 0) {
+            return;
+        }
+
+        $used = AiMessage::query()
+            ->where('user_id', $user->id)
+            ->whereHas('conversation', fn ($query) => $query->where('workspace_id', $workspace->id))
+            ->where('role', 'assistant')
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->sum('tokens');
+
+        if ($used >= $limit) {
+            throw new RuntimeException('Atingiste o limite mensal de utilização da IA. O limite será renovado no próximo mês.');
+        }
     }
 
     private function assertAiAccess(User $user): void
