@@ -7,6 +7,7 @@ use App\Models\Supplier;
 use App\Models\SupportMessage;
 use App\Models\SupportTicket;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -33,6 +34,10 @@ class SupplierDashboard extends Component
 
     public function mount($token)
     {
+        $rateLimitKey = 'supplier-portal-token:'.sha1(request()->ip());
+        abort_if(RateLimiter::tooManyAttempts($rateLimitKey, 20), 429);
+        RateLimiter::hit($rateLimitKey, 60);
+
         $this->supplier = Supplier::findByPortalToken($token);
 
         abort_unless($this->supplier, 404);
