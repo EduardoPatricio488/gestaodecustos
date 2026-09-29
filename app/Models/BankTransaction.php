@@ -25,6 +25,7 @@ class BankTransaction extends Model
             $belongsToWorkspace = BankAccount::withoutGlobalScopes()
                 ->whereKey($transaction->bank_account_id)
                 ->where('workspace_id', $transaction->workspace_id)
+                ->when(Workspace::whereKey($transaction->workspace_id)->value('type') === 'personal', fn ($query) => $query->where('user_id', $transaction->user_id))
                 ->exists();
 
             if (! $belongsToWorkspace) {
