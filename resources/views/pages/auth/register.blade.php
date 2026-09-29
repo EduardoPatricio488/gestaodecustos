@@ -111,7 +111,7 @@
                         placeholder="Mínimo 8 caracteres"
                         class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border {{ $errors->has('password') ? 'border-red-400 dark:border-red-700' : 'border-zinc-200 dark:border-zinc-800' }} rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
                     />
-                    <button type="button" @click="showPass = !showPass" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors focus:outline-none">
+                    <button type="button" @click="showPass = !showPass" :aria-label="showPass ? 'Ocultar password' : 'Mostrar password'" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors focus:outline-none">
                         <flux:icon x-show="!showPass" name="eye" class="size-4" />
                         <flux:icon x-show="showPass" name="eye-slash" class="size-4" x-cloak />
                     </button>
@@ -175,7 +175,7 @@
                         class="w-full h-11 pl-10 pr-11 bg-zinc-50 dark:bg-zinc-900 border {{ $errors->has('password_confirmation') ? 'border-red-400 dark:border-red-700' : 'border-zinc-200 dark:border-zinc-800' }} transition-all rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600"
                         :class="passwordsMismatch ? 'border-red-400 dark:border-red-700' : passwordsMatch ? 'border-emerald-400 dark:border-emerald-600 ring-2 ring-emerald-500/20' : 'border-zinc-200 dark:border-zinc-800'"
                     />
-                    <button type="button" @click="showConfirm = !showConfirm" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors focus:outline-none">
+                    <button type="button" @click="showConfirm = !showConfirm" :aria-label="showConfirm ? 'Ocultar confirmação da password' : 'Mostrar confirmação da password'" class="absolute inset-y-0 right-3 flex items-center px-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors focus:outline-none">
                         <flux:icon x-show="!showConfirm" name="eye" class="size-4" />
                         <flux:icon x-show="showConfirm" name="eye-slash" class="size-4" x-cloak />
                     </button>
