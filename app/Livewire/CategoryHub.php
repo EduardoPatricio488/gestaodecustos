@@ -95,9 +95,11 @@ class CategoryHub extends Component
     #[Computed]
     public function bankAccounts()
     {
-        return BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
-            ->orderBy('name')
-            ->get();
+        $query = BankAccount::where('workspace_id', auth()->user()->current_workspace_id);
+        if (auth()->user()->currentWorkspace?->type === 'personal') {
+            $query->where('user_id', auth()->id());
+        }
+        return $query->orderBy('name')->get();
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -110,9 +112,12 @@ class CategoryHub extends Component
         $this->currency = auth()->user()->currentWorkspace->currency ?? 'EUR';
         $this->setHubConfig();
 
-        $category = Category::where('name', $this->dbName)
-            ->where('workspace_id', auth()->user()->current_workspace_id)
-            ->first();
+        $categoryQuery = Category::where('name', $this->dbName)
+            ->where('workspace_id', auth()->user()->current_workspace_id);
+        if (auth()->user()->currentWorkspace?->type === 'personal') {
+            $categoryQuery->where('user_id', auth()->id());
+        }
+        $category = $categoryQuery->first();
 
         $this->budgetLimit = $category ? (float) $category->budget_limit : 0;
     }
@@ -181,13 +186,19 @@ class CategoryHub extends Component
         // 2. Se não for fixa, procura na base de dados pelo SLUG
         $workspaceId = auth()->user()->current_workspace_id;
 
-        $category = Category::where('workspace_id', $workspaceId)
-            ->where('slug', $this->slug)
-            ->first();
+        $categoryQuery = Category::where('workspace_id', $workspaceId)
+            ->where('slug', $this->slug);
+        if (auth()->user()->currentWorkspace?->type === 'personal') {
+            $categoryQuery->where('user_id', auth()->id());
+        }
+        $category = $categoryQuery->first();
 
         if (! $category) {
-            $category = Category::where('workspace_id', $workspaceId)
-                ->get()
+            $categoryQuery = Category::where('workspace_id', $workspaceId);
+            if (auth()->user()->currentWorkspace?->type === 'personal') {
+                $categoryQuery->where('user_id', auth()->id());
+            }
+            $category = $categoryQuery->get()
                 ->first(fn (Category $c) => Str::slug($c->name) === $this->slug);
         }
 
@@ -399,10 +410,22 @@ PROMPT;
     {
         $this->validate(['budgetLimit' => 'numeric|min:0']);
 
-        Category::updateOrCreate(
-            ['name' => $this->dbName, 'workspace_id' => auth()->user()->current_workspace_id],
-            ['user_id' => auth()->id(), 'budget_limit' => $this->budgetLimit]
-        );
+        $categoryQuery = Category::where('name', $this->dbName)
+            ->where('workspace_id', auth()->user()->current_workspace_id);
+        if (auth()->user()->currentWorkspace?->type === 'personal') {
+            $categoryQuery->where('user_id', auth()->id());
+        }
+        $category = $categoryQuery->first();
+        if ($category) {
+            $category->update(['budget_limit' => $this->budgetLimit]);
+        } else {
+            Category::create([
+                'name' => $this->dbName,
+                'workspace_id' => auth()->user()->current_workspace_id,
+                'user_id' => auth()->id(),
+                'budget_limit' => $this->budgetLimit,
+            ]);
+        }
 
         $this->editingBudget = false;
         $this->dispatch('toast', text: 'Limite orçamental atualizado!');
@@ -549,16 +572,20 @@ PROMPT;
         $currentWs = $user->currentWorkspace;
 
         // 1. Busca os dados da categoria para saber a cor e campos
-        $category = Category::where('name', $this->dbName)
-            ->where('workspace_id', $currentWs->id)
-            ->first();
+        $categoryQuery = Category::where('name', $this->dbName)
+            ->where('workspace_id', $currentWs->id);
+        if ($currentWs->type === 'personal') {
+            $categoryQuery->where('user_id', $user->id);
+        }
+        $category = $categoryQuery->first();
 
         $categoryColor = $category->color ?? '#6366f1';
 
         // 2. Query das despesas
         $query = Expense::with('bankAccount')
             ->whereHas('category', fn ($q) => $q->where('name', $this->dbName))
-            ->where('workspace_id', $currentWs->id);
+            ->where('workspace_id', $currentWs->id)
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id));
 
         // 3. Carrega os campos dinâmicos
         $categoryFields = [];
@@ -584,6 +611,7 @@ PROMPT;
             'isOwner' => $user->isOwner(),
             'priceHistory' => $category ? PriceHistory::where('category_id', $category->id)
                 ->where('workspace_id', $currentWs->id)
+                ->when($currentWs->type === 'personal', fn ($q) => $q->whereHas('category', fn ($cq) => $cq->where('user_id', $user->id)))
                 ->orderByDesc('recorded_at')
                 ->limit(10)
                 ->get() : collect(),
