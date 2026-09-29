@@ -419,15 +419,26 @@ PROMPT;
         ]);
 
         if ($this->bankAccountId) {
-            $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
-                ->find($this->bankAccountId);
+            $accountQuery = BankAccount::where('workspace_id', auth()->user()->current_workspace_id);
+
+            if (auth()->user()->currentWorkspace?->type === 'personal') {
+                $accountQuery->where('user_id', auth()->id());
+            }
+
+            $account = $accountQuery->find($this->bankAccountId);
 
             if ($account) {
                 $available = (float) $account->current_balance;
 
                 // Ao editar, devolve o valor antigo desta despesa antes de validar o novo montante
                 if ($this->editingId) {
-                    $original = Expense::where('workspace_id', auth()->user()->current_workspace_id)->find($this->editingId);
+                    $originalQuery = Expense::where('workspace_id', auth()->user()->current_workspace_id);
+
+                    if (auth()->user()->currentWorkspace?->type === 'personal') {
+                        $originalQuery->where('user_id', auth()->id());
+                    }
+
+                    $original = $originalQuery->find($this->editingId);
                     if ($original && (int) $original->bank_account_id === (int) $this->bankAccountId) {
                         $available += (float) $original->amount;
                     }
