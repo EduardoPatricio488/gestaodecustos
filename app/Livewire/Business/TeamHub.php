@@ -270,7 +270,7 @@ class TeamHub extends Component
             return;
         }
 
-        $user = User::find($emp->user_id);
+        $user = auth()->user()->currentWorkspace->users()->whereKey($emp->user_id)->first();
         $workspace = auth()->user()->currentWorkspace;
 
         // 1. Upgrade na Base de Dados
@@ -340,7 +340,7 @@ class TeamHub extends Component
 
         // 2. Lógica de Notificação por E-mail (Apenas se for uma EDIÇÃO)
         if ($this->editingId && $emp->user_id) {
-            $userAccount = User::find($emp->user_id);
+            $userAccount = auth()->user()->currentWorkspace->users()->whereKey($emp->user_id)->first();
             $companyName = Auth::user()->currentWorkspace->name;
 
             if ($userAccount) {
