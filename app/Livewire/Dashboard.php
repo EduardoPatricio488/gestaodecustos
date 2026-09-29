@@ -100,7 +100,9 @@ class Dashboard extends Component
             if ($sessionId !== '') {
                 try {
                     $stripeSession = $user->stripe()->checkout->sessions->retrieve($sessionId);
-                    if (($stripeSession->payment_status ?? null) === 'paid') {
+                    if (($stripeSession->payment_status ?? null) === 'paid'
+                        && (string) ($stripeSession->client_reference_id ?? '') === (string) $user->id
+                    ) {
                         app(SubscriptionCheckoutService::class)->activateFromStripeSession($stripeSession);
                         $user->refresh();
                     }
