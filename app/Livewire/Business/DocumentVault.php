@@ -54,10 +54,10 @@ class DocumentVault extends Component
             if ($this->editingId) {
                 $oldDoc = BusinessDocument::where('workspace_id', $workspaceId)->findOrFail($this->editingId);
                 if ($oldDoc->file_path) {
-                    Storage::disk('public')->delete($oldDoc->file_path);
+                    Storage::disk('local')->delete($oldDoc->file_path);
                 }
             }
-            $data['file_path'] = $this->file->store('business_vault', 'public');
+            $data['file_path'] = $this->file->store('business_vault', 'local');
         }
 
         BusinessDocument::updateOrCreate(['id' => $this->editingId, 'workspace_id' => $workspaceId], $data);
@@ -66,11 +66,17 @@ class DocumentVault extends Component
         $this->dispatch('toast', text: 'Documento arquivado com segurança.');
     }
 
+    public function download(int $id) {
+        $doc = BusinessDocument::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+        abort_unless($doc->file_path && Storage::disk('local')->exists($doc->file_path), 404);
+        return Storage::disk('local')->download($doc->file_path, basename($doc->file_path));
+    }
+
     public function delete(int $id)
     {
         $doc = BusinessDocument::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
         if ($doc->file_path) {
-            Storage::disk('public')->delete($doc->file_path);
+            Storage::disk('local')->delete($doc->file_path);
         }
         $doc->delete();
         $this->dispatch('toast', text: 'Documento removido do arquivo.', variant: 'warning');
