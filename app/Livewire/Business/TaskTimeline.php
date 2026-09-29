@@ -3,6 +3,7 @@
 namespace App\Livewire\Business;
 
 use App\Models\Task;
+use App\Services\BusinessAccessService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -21,6 +22,7 @@ class TaskTimeline extends Component
      */
     public function openTask($taskId)
     {
+        app(BusinessAccessService::class)->assert('view_business');
         $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
             ->with(['project', 'assignee'])
             ->findOrFail($taskId);
@@ -35,8 +37,12 @@ class TaskTimeline extends Component
      */
     public function editTask($taskId)
     {
-        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
-            ->findOrFail($taskId);
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $task = Task::where('workspace_id', $workspace->id)->findOrFail($taskId);
+        if (! $access->can('manage_team') && (int) $task->user_id !== (int) auth()->id()) {
+            abort(403);
+        }
 
         // Aqui podes abrir outro modal de edição se quiseres
         $this->activeTask = $task;
@@ -49,6 +55,7 @@ class TaskTimeline extends Component
      */
     public function deleteTask($taskId)
     {
+        app(BusinessAccessService::class)->assert('manage_team');
         $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
             ->findOrFail($taskId);
 
@@ -62,9 +69,14 @@ class TaskTimeline extends Component
      */
     public function updateTaskStatus($taskId, $newStatus)
     {
-        $task = Task::where('workspace_id', auth()->user()->current_workspace_id)
-            ->findOrFail($taskId);
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $task = Task::where('workspace_id', $workspace->id)->findOrFail($taskId);
+        if (! $access->can('manage_team') && (int) $task->user_id !== (int) auth()->id()) {
+            abort(403);
+        }
 
+        abort_unless(in_array($newStatus, ['pendente', 'em_curso', 'concluida'], true), 422);
         $updateData = ['status' => $newStatus];
 
         if ($newStatus === 'concluida') {
