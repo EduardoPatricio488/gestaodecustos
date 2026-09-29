@@ -207,7 +207,10 @@ class DebtHub extends Component
 
     public function delete(int $id)
     {
-        Debt::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id)->delete();
+        Debt::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->findOrFail($id)
+            ->delete();
         $this->dispatch('toast', text: 'Registo eliminado.');
     }
 
