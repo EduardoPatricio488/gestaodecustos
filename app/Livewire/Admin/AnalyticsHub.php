@@ -27,6 +27,7 @@ class AnalyticsHub extends Component
      */
     public function showUserModal($userId)
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         // 1. Localizar o utilizador
         $user = User::findOrFail($userId);
         $this->detailedUser = $user;
@@ -62,6 +63,7 @@ class AnalyticsHub extends Component
      */
     public function getFeatureUsageProperty()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         $totalUsers = User::count() ?: 1;
 
         $getUsage = function ($table) use ($totalUsers) {
@@ -85,6 +87,7 @@ class AnalyticsHub extends Component
      */
     public function getOnboardingStatsProperty()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         return [
             'registered' => User::count(),
             'setup_profile' => User::whereNotNull('name')->where('name', '!=', '')->count(),
@@ -98,6 +101,7 @@ class AnalyticsHub extends Component
      */
     public function getDeviceStatsProperty()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         try {
             $sessions = DB::table('sessions')->select('user_agent')->get();
             $mobile = 0;
