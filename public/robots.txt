@@ -1,2 +1,21 @@
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /dashboard
+Disallow: /empresa
+Disallow: /admin
+Disallow: /profile
+Disallow: /expenses
+Disallow: /despesas-pessoais
+Disallow: /receitas
+Disallow: /receitas-todas
+Disallow: /categorias
+Disallow: /banco
+Disallow: /calendario
+Disallow: /lembretes
+Disallow: /investimentos
+Disallow: /patrimonio
+Disallow: /assinaturas
+Disallow: /social
+Disallow: /loja
+Disallow: /api
+Sitemap: https://financepro.com/sitemap.xml
