@@ -46,8 +46,15 @@ class MyCompanyProfile extends Component
      */
     public function downloadCV($path)
     {
-        if (Storage::disk('public')->exists($path)) {
-            return Storage::disk('public')->download($path, 'O-Meu-Curriculo.pdf');
+        $application = DB::table('job_applications')
+            ->where('user_id', Auth::id())
+            ->where('workspace_id', Auth::user()->current_workspace_id)
+            ->where('status', 'accepted')
+            ->where('cv_path', $path)
+            ->first();
+
+        if ($application && Storage::disk('local')->exists($path)) {
+            return Storage::disk('local')->download($path, 'O-Meu-Curriculo.pdf');
         }
 
         $this->dispatch('toast', variant: 'error', text: 'O currículo original não foi encontrado.');
