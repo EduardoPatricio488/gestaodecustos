@@ -37,8 +37,4 @@ class BusinessDocument extends Model
         };
     }
 
-    public function getUrlAttribute(): ?string
-    {
-        return $this->file_path ? Storage::disk('public')->url($this->file_path) : null;
-    }
 }
