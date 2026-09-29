@@ -86,7 +86,14 @@ class SocialProfile extends Component
             'likes:id,post_id,user_id',
         ])
             ->withCount(['likes', 'comments'])
-            ->find($this->commentingPostId);
+            ->whereKey($this->commentingPostId)
+            ->first();
+
+        if (! $post || ! $this->canViewPost($post)) {
+            return null;
+        }
+
+        return $post;
     }
 
     /**
@@ -178,12 +185,12 @@ class SocialProfile extends Component
 
     public function toggleLike($postId)
     {
-        $like = SocialLike::where('user_id', auth()->id())->where('post_id', $postId)->first();
+        $post = $this->accessiblePost($postId);
+        $like = SocialLike::where('user_id', auth()->id())->where('post_id', $post->id)->first();
         if ($like) {
             $like->delete();
         } else {
-            SocialLike::create(['user_id' => auth()->id(), 'post_id' => $postId]);
-            $post = SocialPost::find($postId);
+            SocialLike::create(['user_id' => auth()->id(), 'post_id' => $post->id]);
             SocialNotification::notify($post->user_id, auth()->id(), 'like', $postId);
         }
     }
@@ -204,21 +211,20 @@ class SocialProfile extends Component
             'content' => $this->commentContent,
         ]);
 
-        $post = SocialPost::find($postId);
-        if ($post) {
-            SocialNotification::notify($post->user_id, auth()->id(), 'comment', $postId, $this->commentContent);
-        }
+        $post = $this->accessiblePost($postId);
+        SocialNotification::notify($post->user_id, auth()->id(), 'comment', $post->id, $this->commentContent);
         $this->commentContent = '';
         $this->dispatch('toast', text: 'Comentário enviado! 🟢');
     }
 
     public function submitReport()
     {
+        $post = $this->accessiblePost($this->reportingPostId);
         $this->validate(['reportReason' => 'required|min:10|max:500']);
 
         SocialReport::create([
             'user_id' => auth()->id(),
-            'social_post_id' => $this->reportingPostId,
+            'social_post_id' => $post->id,
             'reason' => $this->reportReason,
             'status' => 'pending',
         ]);
@@ -230,6 +236,23 @@ class SocialProfile extends Component
     /**
      * GESTÃO DE PERFIL
      */
+    private function canViewPost(SocialPost $post): bool
+    {
+        $userId = auth()->id();
+        $workspaceId = auth()->user()->current_workspace_id;
+        return $post->user_id === $userId
+            || $post->visibility === 'public'
+            || ($post->visibility === 'workspace' && (int) $post->workspace_id === (int) $workspaceId)
+            || ($post->visibility === 'followers' && SocialFollow::where('follower_id', $userId)->where('following_id', $post->user_id)->exists());
+    }
+
+    private function accessiblePost($postId): SocialPost
+    {
+        $post = SocialPost::findOrFail($postId);
+        abort_unless($this->canViewPost($post), 403);
+        return $post;
+    }
+
     public function saveProfile()
     {
         if (! $this->isOwnProfile) {
