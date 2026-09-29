@@ -195,8 +195,12 @@ class IncomeHub extends Component
         ];
 
         // 3. Gravar ou Atualizar
+        if ($this->recBankAccountId) {
+            abort_unless(BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->whereKey($this->recBankAccountId)->exists(), 422, 'Conta bancária inválida.');
+        }
+
         if ($this->editingFixedId) {
-            RecurringIncome::where('id', $this->editingFixedId)->update($data);
+            RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)->whereKey($this->editingFixedId)->update($data);
         } else {
             RecurringIncome::create($data);
         }
@@ -248,6 +252,10 @@ class IncomeHub extends Component
         ]);
 
         $user = auth()->user();
+
+        if ($this->bankAccountId) {
+            abort_unless(BankAccount::where('workspace_id', $user->current_workspace_id)->whereKey($this->bankAccountId)->exists(), 422, 'Conta bancária inválida.');
+        }
 
         Income::create([
             'user_id' => auth()->id(),
@@ -920,7 +928,7 @@ class IncomeHub extends Component
 
             return;
         }
-        RecurringIncome::where('id', $id)->delete();
+        RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)->whereKey($id)->delete();
         $this->dispatch('toast', text: 'Registo removido.');
     }
 
@@ -931,7 +939,7 @@ class IncomeHub extends Component
 
             return;
         }
-        Income::where('id', $id)->delete();
+        Income::where('workspace_id', auth()->user()->current_workspace_id)->whereKey($id)->delete();
         $this->dispatch('toast', text: 'Receita removida.');
     }
 
