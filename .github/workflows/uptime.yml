@@ -1,0 +1,17 @@
+name: Uptime health check
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check production health
+        run: |
+          curl --fail --silent --show-error --max-time 15             -H "Accept: application/json"             https://financepro.com/health
