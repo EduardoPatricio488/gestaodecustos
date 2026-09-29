@@ -21,6 +21,11 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    build: {
+        sourcemap: false,
+        cssCodeSplit: true,
+        reportCompressedSize: true,
+    },
     server: {
         host: '0.0.0.0',
         hmr: {
