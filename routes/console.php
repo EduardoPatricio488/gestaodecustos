@@ -73,3 +73,9 @@ Schedule::call(function () {
         }
     });
 })->monthlyOn(1, '08:20');
+
+
+Schedule::command('backup:database')
+    ->dailyAt('02:30')
+    ->withoutOverlapping(120)
+    ->onOneServer();
