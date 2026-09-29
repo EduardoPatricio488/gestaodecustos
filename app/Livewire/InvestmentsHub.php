@@ -616,7 +616,9 @@ class InvestmentsHub extends Component
     public function editAsset(int $id): void
     {
         $this->editingId = $id;
-        $asset = Investment::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($id);
+        $asset = Investment::where('workspace_id', Auth::user()->current_workspace_id)
+            ->when(Auth::user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', Auth::id()))
+            ->findOrFail($id);
         foreach (['symbol', 'name', 'isin', 'type', 'exchange', 'network', 'provider', 'broker', 'quantity', 'average_price', 'fees', 'interest_rate', 'loyalty_bonus', 'issuer', 'series'] as $field) {
             $this->{$field} = $asset->{$field};
         }
@@ -632,7 +634,10 @@ class InvestmentsHub extends Component
         $this->validate(['symbol' => 'required|string|max:20', 'isin' => 'nullable|string|max:12', 'broker' => 'nullable|string|max:100', 'operation_date' => 'nullable|date', 'quantity' => 'required|numeric|gt:0', 'product_type' => 'nullable|in:CA,CT', 'average_price' => 'required|numeric|gt:0', 'fees' => 'nullable|numeric|min:0', 'interest_rate' => 'nullable|numeric|min:0', 'capitalization_date' => 'nullable|date']);
         $data = ['user_id' => Auth::id(), 'workspace_id' => Auth::user()->current_workspace_id, 'symbol' => strtoupper(trim($this->symbol)), 'name' => $this->name ?: strtoupper(trim($this->symbol)), 'isin' => $this->isin ? strtoupper(trim($this->isin)) : null, 'type' => $this->type, 'exchange' => $this->exchange, 'network' => $this->network, 'provider' => $this->provider, 'broker' => $this->broker, 'operation_date' => $this->operation_date ?: null, 'quantity' => (float) $this->quantity, 'average_price' => (float) $this->average_price, 'fees' => (float) ($this->fees ?? 0), 'interest_rate' => $this->type === 'Divida' ? (float) ($this->interest_rate ?? 0) : null, 'loyalty_bonus' => $this->type === 'Divida' ? (float) ($this->loyalty_bonus ?? 0) : null, 'capitalization_date' => $this->type === 'Divida' ? ($this->capitalization_date ?: null) : null, 'issuer' => $this->issuer, 'series' => $this->series, 'product_type' => $this->type === 'Divida' ? $this->product_type : null];
         if ($this->editingId) {
-            Investment::where('workspace_id', Auth::user()->current_workspace_id)->findOrFail($this->editingId)->update($data);
+            Investment::where('workspace_id', Auth::user()->current_workspace_id)
+                ->when(Auth::user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', Auth::id()))
+                ->findOrFail($this->editingId)
+                ->update($data);
             $msg = 'Ativo atualizado no cofre!';
         } else {
             $data['current_price'] = (float) $this->average_price;
