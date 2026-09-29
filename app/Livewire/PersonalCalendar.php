@@ -84,6 +84,7 @@ class PersonalCalendar extends Component
         $end = $start->copy()->endOfMonth();
 
         $expenses = Expense::where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
             ->whereBetween('spent_at', [$start, $end])
             ->get()
             ->map(fn ($expense) => [
@@ -95,6 +96,7 @@ class PersonalCalendar extends Component
             ]);
 
         $incomes = Income::where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
             ->whereBetween('received_at', [$start, $end])
             ->get()
             ->map(fn ($income) => [
@@ -159,7 +161,7 @@ class PersonalCalendar extends Component
                 'color' => 'text-orange-500',
             ]);
 
-        $reminders = Reminder::where('workspace_id', $workspaceId)
+        $reminders = Reminder::where('workspace_id', $workspaceId)->where('user_id', auth()->id())
             ->whereBetween('remind_at', [$start, $end])
             ->get()
             ->map(fn ($reminder) => [
