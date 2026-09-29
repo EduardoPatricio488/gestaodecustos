@@ -41,7 +41,7 @@
                     {{-- Logo --}}
                     <div class="size-16 rounded-2xl bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center text-brand-600 font-black text-2xl shadow-inner border border-zinc-100">
                          @if($company->logo_path)
-                            <img src="{{ asset('storage/' . $company->logo_path) }}" class="w-full h-full object-cover rounded-2xl">
+                            <img src="{{ asset('storage/' . $company->logo_path) }}" alt="Logótipo de {{ $company->name }}" class="w-full h-full object-cover rounded-2xl">
                          @else
                             {{ substr($company->name, 0, 1) }}
                          @endif
