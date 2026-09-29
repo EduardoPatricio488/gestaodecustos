@@ -107,16 +107,13 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'locale',
         'current_workspace_id',
         'onboarding_completed',
-        'is_admin',
-        'is_active',
-        'role',
+        // Campos de privilégio/plano não são mass assignable.
 
         'xp',
         'level',
         'avatar_path',
         'default_post_visibility',
         'is_profile_private',
-        'plan',
     ];
 
     protected $hidden = [
