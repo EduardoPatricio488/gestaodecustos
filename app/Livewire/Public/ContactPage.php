@@ -14,12 +14,15 @@ class ContactPage extends Component
 
     public $message;
 
+    public $privacyConsent = false;
+
     public $sent = false;
 
     protected $rules = [
         'name' => 'required|min:3',
         'email' => 'required|email',
         'message' => 'required|min:10',
+        'privacyConsent' => 'accepted',
     ];
 
     public function send()
@@ -29,7 +32,7 @@ class ContactPage extends Component
         // Aqui podes adicionar lógica de envio de email real no futuro
         // Por agora, apenas simulamos o sucesso para o comprador ver
         $this->sent = true;
-        $this->reset(['name', 'email', 'message']);
+        $this->reset(['name', 'email', 'message', 'privacyConsent']);
     }
 
     public function render()
