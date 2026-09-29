@@ -374,6 +374,7 @@ PROMPT;
     public function editExpense(int $id)
     {
         $expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->findOrFail($id);
 
         $this->editingId = $expense->id;
@@ -475,7 +476,9 @@ PROMPT;
         $user = auth()->user();
 
         if ($this->editingId) {
-            $expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($this->editingId);
+            $expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+                ->findOrFail($this->editingId);
             $expense->update($data);
             $msg = 'Registo atualizado! ✅';
         } else {
@@ -500,6 +503,7 @@ PROMPT;
     public function deleteExpense(int $id): void
     {
         Expense::where('workspace_id', auth()->user()->current_workspace_id)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->findOrFail($id)
             ->delete();
 
