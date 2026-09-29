@@ -126,7 +126,7 @@ class FitnessHub extends Component
     // Novo método para abrir os detalhes
     public function viewActivity(int $id)
     {
-        $this->selectedActivity = FitnessActivity::findOrFail($id);
+        $this->selectedActivity = FitnessActivity::where('user_id', Auth::id())->findOrFail($id);
         $this->showDetailsModal = true;
     }
 
