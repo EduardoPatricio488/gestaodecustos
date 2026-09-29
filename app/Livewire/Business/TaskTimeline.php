@@ -10,6 +10,11 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class TaskTimeline extends Component
 {
+    public function mount(): void
+    {
+        app(BusinessAccessService::class)->assert('view_business');
+    }
+
     public $search = '';
 
     public $activeProjectId = null;
