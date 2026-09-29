@@ -171,5 +171,6 @@
                 new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
             })();
         </script>
+    @include('partials.cookie-consent')
     </body>
 </html>
