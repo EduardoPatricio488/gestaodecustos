@@ -66,7 +66,7 @@ test('administrador não consegue impersonar outro administrador', function () {
 
 test('utilizador desativado não pode ser impersonado', function () {
     $users = impersonationUsers();
-    $users['target']->update(['is_active' => false]);
+    $users['target']->forceFill(['is_active' => false])->save();
 
     $this->actingAs($users['admin'])
         ->post(route('admin.impersonate', $users['target']))
