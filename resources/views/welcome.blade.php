@@ -390,6 +390,8 @@
         <div class="mt-auto p-6 border-t border-zinc-100 dark:border-zinc-800 flex gap-4">
     <a href="{{ route('legal.terms') }}" class="text-[9px] font-black uppercase text-zinc-400 hover:text-emerald-500 transition-colors">Termos</a>
     <a href="{{ route('legal.privacy') }}" class="text-[9px] font-black uppercase text-zinc-400 hover:text-emerald-500 transition-colors">Privacidade</a>
+    <a href="{{ route('legal.cookies') }}" class="text-[9px] font-black uppercase text-zinc-400 hover:text-emerald-500 transition-colors">Cookies</a>
+    <a href="{{ route('legal.accessibility') }}" class="text-[9px] font-black uppercase text-zinc-400 hover:text-emerald-500 transition-colors">Acessibilidade</a>
     <a href="{{ route('public.contact') }}" class="text-[9px] font-black uppercase text-zinc-400 hover:text-emerald-500 transition-colors">Suporte</a>
 </div>
     </main>
