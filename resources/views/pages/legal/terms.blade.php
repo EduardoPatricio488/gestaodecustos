@@ -8,6 +8,8 @@
 <h2>6. Informação financeira</h2><p>A plataforma é uma ferramenta de gestão. Não constitui aconselhamento financeiro, fiscal, jurídico ou contabilístico. As respostas de IA podem conter erros e devem ser verificadas.</p>
 <h2>7. Utilização proibida</h2><p>É proibida a utilização para fraude, acesso não autorizado, malware ou tentativa de contornar controlos de segurança.</p>
 <h2>8. Propriedade intelectual</h2><p>O software, marca, interface e conteúdos próprios permanecem protegidos pelos direitos aplicáveis.</p>
-<h2>9. Legislação aplicável</h2><p>Sem prejuízo das normas imperativas de proteção do consumidor, aplicam-se as leis portuguesas e as regras legais de competência dos tribunais.</p>
+<h2>9. Direitos sobre imagens e conteúdos</h2><p>O utilizador deve possuir os direitos ou licenças necessários para imagens, documentos e outros conteúdos que carregue ou utilize. Não deve utilizar material de terceiros sem autorização ou licença adequada.</p>
+<h2>10. Comunicações e promessas</h2><p>Informação comercial, estimativas ou descrições de funcionalidades não constituem garantia de resultados financeiros. O serviço não promete ganhos, poupanças ou resultados específicos.</p>
+<h2>11. Legislação aplicável</h2><p>Sem prejuízo das normas imperativas de proteção do consumidor, aplicam-se as leis portuguesas e as regras legais de competência dos tribunais.</p>
 </div></div>
 </x-guest-layout>
