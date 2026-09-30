@@ -262,7 +262,7 @@ class ClientHub extends Component
             $client->refresh();
         }
 
-        $portalUrl = route('client.portal', ['token' => $token]);
+        $portalUrl = route('client.portal');
         Mail::to($client->email)->send(new ClientPortalAccessMail(
             $client,
             auth()->user()->currentWorkspace,
