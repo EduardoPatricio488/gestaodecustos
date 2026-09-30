@@ -24,6 +24,15 @@ class WhatsappWebhookController extends Controller
 
     public function handle(Request $request, QuickCommandService $commands)
     {
+        $secret = (string) config('services.whatsapp.app_secret');
+        $signature = (string) $request->header('X-Hub-Signature-256', '');
+
+        // A API só deve aceitar eventos assinados pela Meta.
+        abort_unless($secret !== '' && preg_match('/^sha256=[a-f0-9]{64}$/i', $signature) === 1, 403);
+
+        $expected = 'sha256='.hash_hmac('sha256', $request->getContent(), $secret);
+        abort_unless(hash_equals($expected, $signature), 403);
+
         $entry = $request->input('entry.0.changes.0.value.messages.0');
         if (! $entry) {
             return response('OK');
