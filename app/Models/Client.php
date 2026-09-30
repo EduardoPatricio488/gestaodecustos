@@ -14,7 +14,7 @@ class Client extends Model
 
     protected $fillable = [
         'user_id', 'workspace_id', 'name', 'legal_name', 'tax_number', 'email', 'phone',
-        'status', 'address', 'notes', 'portal_token', 'portal_token_hash',
+        'status', 'address', 'notes', 'portal_token_hash',
     ];
 
     public static function findByPortalToken(string $token): ?self
