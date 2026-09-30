@@ -194,10 +194,10 @@ Route::get('/contacto', ContactPage::class)->middleware('throttle:public')->name
 Route::prefix('portal')->group(function () {
     Route::get('/fornecedor', SupplierPortal::class)->name('supplier.portal');
     Route::get('/banco', BankPortal::class)->name('bank.portal');
-    Route::get('/fornecedor/dashboard/{token}', SupplierDashboard::class)->name('supplier.dashboard');
+    Route::get('/fornecedor/dashboard', SupplierDashboard::class)->name('supplier.dashboard');
     Route::get('/banco/dashboard', BankDashboard::class)->name('bank.dashboard');
     Route::get('/login', ClientLogin::class)->name('client.login');
-    Route::get('/{token}', ClientPortal::class)->name('client.portal');
+    Route::get('/cliente/portal', ClientPortal::class)->name('client.portal');
 });
 
 Route::get('/carreiras', CareersHub::class)->name('careers.apply');
