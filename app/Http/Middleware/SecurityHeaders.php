@@ -26,7 +26,8 @@ class SecurityHeaders
             "img-src 'self' data: blob: https:",
             "font-src 'self' data: https:",
             "style-src 'self' 'unsafe-inline' https:",
-            "script-src 'self' 'unsafe-inline' https:",
+            // 'unsafe-eval' é necessário para o Alpine (Livewire 3 / Flux) avaliar x-data, x-show, @click
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
             "connect-src 'self' https: wss:",
             "frame-src 'self' https:",
         ]));
