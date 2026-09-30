@@ -48,13 +48,13 @@ class SupplierPortal extends Component
     {
         $this->validate([
             'tax_number' => 'required|string',
-            'token' => 'required|digits:6',
+            'token' => ['required', 'string', 'min:64', 'max:64', 'regex:/^[A-Za-z0-9]+$/'],
         ]);
 
         // No portal do fornecedor, o NIF de entrada é o NIF DA EMPRESA.
         // O código de 6 dígitos identifica o fornecedor dentro dessa empresa.
         $cleanCompanyNif = preg_replace('/\D+/', '', (string) $this->tax_number);
-        $cleanTokenInput = preg_replace('/\D+/', '', (string) $this->token);
+        $cleanTokenInput = trim((string) $this->token);
         $rateLimitKey = 'supplier-portal-login:'.sha1($cleanCompanyNif.'|'.request()->ip());
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
@@ -68,13 +68,7 @@ class SupplierPortal extends Component
         // Primeiro localizamos o fornecedor pelo código. Depois confirmamos
         // que o NIF da empresa desse fornecedor corresponde ao NIF introduzido.
         $supplier = Supplier::query()
-            ->where(function ($query) use ($cleanTokenInput) {
-                $query->where('portal_token_hash', hash('sha256', $cleanTokenInput))
-                    ->orWhere(function ($legacy) use ($cleanTokenInput) {
-                        $legacy->whereNotNull('portal_token')
-                            ->where('portal_token', $cleanTokenInput);
-                    });
-            })
+            ->where('portal_token_hash', hash('sha256', $cleanTokenInput))
             ->with('workspace')
             ->first();
 
@@ -92,7 +86,9 @@ class SupplierPortal extends Component
             RateLimiter::clear($rateLimitKey);
             session()->regenerate();
 
-            return redirect()->route('supplier.dashboard', ['token' => $cleanTokenInput]);
+            session()->put('supplier_portal_id', $supplier->id);
+
+            return redirect()->route('supplier.dashboard');
         }
 
         session()->flash('error', 'CREDENCIAIS INVÁLIDAS. VERIFICA O NIF DA EMPRESA E O CÓDIGO.');
