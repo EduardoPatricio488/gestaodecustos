@@ -4,24 +4,23 @@
 
 Permitir que um comprador veja o produto em funcionamento sem precisar configurar o sistema do zero.
 
-## Credenciais reais (geradas por `php artisan db:seed --class=DemoSeeder`)
+## Credenciais de demonstração
+
+As contas de demonstração são criadas pelo `DemoSeeder`, mas as palavras-passe **não são guardadas neste repositório**. Define `DEMO_ADMIN_PASSWORD`, `DEMO_CEO_PASSWORD` e `DEMO_MEMBER_PASSWORD` no ambiente de demonstração (mínimo de 12 caracteres).
 
 ### Admin da Plataforma (acesso a /admin)
 
 - Email: admin@financepro.com
-- Password: password
 - Role: admin (acesso total ao painel de administração)
 
 ### CEO / Dono de Negócio (workspace pessoal + empresarial)
 
 - Email: eduardo@financepro.com
-- Password: password
 - Plano: business
 
 ### Membro de Equipa (para testar convites/permissões)
 
 - Email: joao@financepro.com
-- Password: password
 
 ## Dados de exemplo para apresentar
 
