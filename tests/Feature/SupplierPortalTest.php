@@ -69,7 +69,9 @@ function supplierPortalFixture(): array
 test('fornecedor A vê apenas os próprios tickets', function () {
     $fixture = supplierPortalFixture();
 
-    $component = Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_access_token]);
+    session()->put('supplier_portal_id', $fixture['supplierA']->id);
+
+    $component = Livewire::test(SupplierDashboard::class);
 
     expect($component->viewData('tickets')->pluck('id')->all())
         ->toBe([$fixture['ticketA']->id]);
@@ -78,7 +80,9 @@ test('fornecedor A vê apenas os próprios tickets', function () {
 test('fornecedor A consegue responder ao próprio ticket', function () {
     $fixture = supplierPortalFixture();
 
-    Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_access_token])
+    session()->put('supplier_portal_id', $fixture['supplierA']->id);
+
+    Livewire::test(SupplierDashboard::class)
         ->set('activeTicketId', $fixture['ticketA']->id)
         ->set('replyMessage', 'Resposta do Fornecedor A')
         ->call('sendReply');
@@ -90,7 +94,9 @@ test('fornecedor A consegue responder ao próprio ticket', function () {
 test('fornecedor A não consegue abrir o ticket do fornecedor B', function () {
     $fixture = supplierPortalFixture();
 
-    expect(fn () => Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_access_token])
+    session()->put('supplier_portal_id', $fixture['supplierA']->id);
+
+    expect(fn () => Livewire::test(SupplierDashboard::class)
         ->call('setActiveTicket', $fixture['ticketB']->id))
         ->toThrow(ModelNotFoundException::class);
 });
@@ -119,7 +125,9 @@ test('fornecedor A não consegue carregar mensagens do fornecedor B', function (
 test('fornecedor B continua a utilizar os próprios tickets normalmente', function () {
     $fixture = supplierPortalFixture();
 
-    $component = Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierB']->portal_access_token])
+    session()->put('supplier_portal_id', $fixture['supplierB']->id);
+
+    $component = Livewire::test(SupplierDashboard::class)
         ->call('setActiveTicket', $fixture['ticketB']->id)
         ->set('replyMessage', 'Resposta do Fornecedor B')
         ->call('sendReply');
