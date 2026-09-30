@@ -15,7 +15,7 @@ class Employee extends Model
     protected $fillable = [
         'user_id', 'workspace_id', 'name', 'role', 'salary', 'pay_day', 'photo_path', 'active',
         'suspended', 'terminated_at', 'resignation_reason', 'cv_path', 'resignation_status',
-        'portal_token', 'invite_expires_at', 'invite_used_at', 'invite_revoked_at',
+        'invite_expires_at', 'invite_used_at', 'invite_revoked_at',
     ];
 
     protected $casts = [
