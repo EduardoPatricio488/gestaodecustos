@@ -38,7 +38,7 @@
 
     <div x-show="open" x-cloak class="fixed inset-0 bg-zinc-950/50 backdrop-blur-sm"></div>
 
-    <section x-show="open" x-cloak role="dialog" aria-modal="true" aria-labelledby="cookie-consent-title" class="fixed bottom-0 left-0 right-0 z-[10000] border-t border-zinc-200 bg-white p-5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 sm:p-6">
+    <section x-show="open" x-cloak role="dialog" aria-modal="true" aria-labelledby="cookie-consent-title" data-no-auto-close class="fixed bottom-0 left-0 right-0 z-[10000] border-t border-zinc-200 bg-white p-5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 sm:p-6">
         <div class="mx-auto max-w-6xl">
             <div x-show="!preferences">
                 <h2 id="cookie-consent-title" class="text-lg font-black">Privacidade e cookies</h2>
