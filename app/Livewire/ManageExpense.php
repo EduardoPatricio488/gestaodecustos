@@ -62,7 +62,7 @@ class ManageExpense extends Component
     ];
 
     protected $rules = [
-        'receipt' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:20480',
+        'receipt' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:20480',
     ];
 
     #[Computed]
@@ -85,7 +85,7 @@ class ManageExpense extends Component
 
         try {
             $this->validate([
-                'receipt' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:20480',
+                'receipt' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:20480',
             ]);
         } catch (ValidationException $e) {
             $this->scanError = 'Ficheiro inválido: '.collect($e->errors())->flatten()->first();
