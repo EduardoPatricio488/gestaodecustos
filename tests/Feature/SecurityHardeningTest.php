@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\Public\ClientPortal;
+use App\Livewire\ClientPortal;
 use App\Livewire\Public\SupplierDashboard;
 use App\Livewire\Public\SupplierPortal;
 use App\Models\Client;
