@@ -124,9 +124,8 @@ class BusinessSecurityRegressionTest extends TestCase
         $viewer = User::factory()->create(['current_workspace_id' => $workspace->id]);
         $workspace->users()->attach($viewer->id, ['role' => 'viewer']);
 
-        $this->actingAs($viewer);
-        Livewire::test(StatementImportHub::class)
-            ->call('generatePreview')
+        $this->actingAs($viewer)
+            ->get(route('hub.import'))
             ->assertForbidden();
     }
 
