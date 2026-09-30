@@ -93,12 +93,22 @@ class ClientLogin extends Component
         ]);
 
         $email = strtolower(trim($this->requesterEmail));
+        $ipKey = 'client-portal-request-ip:'.sha1((string) request()->ip());
         $rateLimitKey = 'client-portal-request:'.sha1($email.'|'.request()->ip());
+
+        if (RateLimiter::tooManyAttempts($ipKey, 10)) {
+            $this->addError('requesterEmail', 'Demasiados pedidos. Tenta novamente mais tarde.');
+
+            return;
+        }
+
         if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
             $this->addError('requesterEmail', 'Demasiados pedidos. Tenta novamente mais tarde.');
 
             return;
         }
+
+        RateLimiter::hit($ipKey, 300);
         RateLimiter::hit($rateLimitKey, 300);
 
         $workspace = Workspace::whereKey($this->selectedCompanyId)
@@ -152,8 +162,7 @@ class ClientLogin extends Component
             ->whereIn('type', ['business', 'company', 'bussiness'])
             ->where(function ($query) {
                 $query->where('name', 'like', '%'.$this->companySearch.'%')
-                    ->orWhere('legal_name', 'like', '%'.$this->companySearch.'%')
-                    ;
+                    ->orWhere('legal_name', 'like', '%'.$this->companySearch.'%');
             })
             ->orderBy('name')
             ->limit(100)
