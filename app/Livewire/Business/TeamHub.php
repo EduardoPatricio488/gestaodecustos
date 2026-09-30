@@ -513,7 +513,7 @@ class TeamHub extends Component
     {
         app(BusinessAccessService::class)->assert('manage_team');
         $this->validate([
-            'docFile' => 'required|file|max:5120', // Máx 5MB
+            'docFile' => 'required|file|mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv,txt|max:5120', // Máx 5MB
             'docTitle' => 'required|string|max:100',
             'docType' => 'required|in:contrato,recibo,outro',
         ]);
