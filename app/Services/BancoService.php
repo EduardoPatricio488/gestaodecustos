@@ -34,6 +34,26 @@ class BancoService
 
     private ?Collection $patrimonyCache = null;
 
+    private ?Collection $transitItemsCache = null;
+
+    private ?Collection $creditsCache = null;
+
+    private ?Collection $transfersCache = null;
+
+    private ?float $fixedMonthlyIncomeCache = null;
+
+    private ?array $summaryCache = null;
+
+    private ?array $liquidityCache = null;
+
+    private ?array $statsCache = null;
+
+    private ?array $alertsCache = null;
+
+    private ?array $distributionCache = null;
+
+    private array $monthlyFlowCache = [];
+
     public function __construct(int $workspaceId, int $userId)
     {
         $this->workspaceId = $workspaceId;
@@ -43,6 +63,10 @@ class BancoService
 
     public function getSummary(): array
     {
+        if ($this->summaryCache !== null) {
+            return $this->summaryCache;
+        }
+
         $accounts = $this->getAccounts();
         $reserves = $this->getReserves();
         $transitItems = $this->getTransitItems();
@@ -89,7 +113,7 @@ class BancoService
         $currMonthIncome = $this->getCurrentMonthIncome();
         $currMonthExpense = $this->getCurrentMonthExpense();
 
-        return [
+        return $this->summaryCache = [
             'total_bank_balance' => $totalBankBalance,
             'total_reserves' => $totalReserves,
             'total_transit_in' => $totalTransitIn,
@@ -164,7 +188,11 @@ class BancoService
 
     public function getTransitItems(): Collection
     {
-        return $this->personalScope(BankTransitItem::where('workspace_id', $this->workspaceId))
+        if ($this->transitItemsCache !== null) {
+            return $this->transitItemsCache;
+        }
+
+        return $this->transitItemsCache = $this->personalScope(BankTransitItem::where('workspace_id', $this->workspaceId))
             ->where('status', 'pending')
             ->orderBy('expected_date')
             ->get();
@@ -172,7 +200,11 @@ class BancoService
 
     public function getCredits(): Collection
     {
-        return $this->personalScope(BankCredit::where('workspace_id', $this->workspaceId))
+        if ($this->creditsCache !== null) {
+            return $this->creditsCache;
+        }
+
+        return $this->creditsCache = $this->personalScope(BankCredit::where('workspace_id', $this->workspaceId))
             ->whereIn('status', ['pending', 'partial'])
             ->orderBy('due_date')
             ->get();
@@ -180,7 +212,11 @@ class BancoService
 
     public function getTransfers(int $limit = 20): Collection
     {
-        return $this->personalScope(BankTransfer::where('workspace_id', $this->workspaceId))
+        if ($this->transfersCache !== null && $this->transfersCache->count() >= $limit) {
+            return $this->transfersCache->take($limit);
+        }
+
+        return $this->transfersCache = $this->personalScope(BankTransfer::where('workspace_id', $this->workspaceId))
             ->with(['fromAccount', 'toAccount'])
             ->orderByDesc('transferred_at')
             ->limit($limit)
@@ -238,6 +274,10 @@ class BancoService
     public function getMonthlyFlow(int $months = 12): array
     {
         $months = max(1, min($months, 60));
+        if (isset($this->monthlyFlowCache[$months])) {
+            return $this->monthlyFlowCache[$months];
+        }
+
         $start = now()->startOfMonth()->subMonths($months - 1);
         $end = now()->endOfMonth();
         $fixedIncome = $this->getFixedMonthlyIncome();
@@ -275,7 +315,7 @@ class BancoService
             ];
         }
 
-        return $data;
+        return $this->monthlyFlowCache[$months] = $data;
     }
 
     public function getLiquidity(): array
@@ -295,7 +335,7 @@ class BancoService
             ? round($availableForExpenses / $avgMonthlyExpense, 1)
             : 0;
 
-        return [
+        return $this->liquidityCache = [
             'immediate_cash' => $immediateCash,
             'reserved' => $totalReserved,
             'available_today' => max(0, $immediateCash - $totalReserved),
@@ -309,6 +349,10 @@ class BancoService
 
     public function getStats(): array
     {
+        if ($this->statsCache !== null) {
+            return $this->statsCache;
+        }
+
         $accounts = $this->getAccounts();
         $transfers = $this->personalScope(BankTransfer::where('workspace_id', $this->workspaceId))->count();
         $reserves = $this->getReserves()->count();
@@ -336,7 +380,7 @@ class BancoService
             ? (($investmentValue - $investmentCost) / $investmentCost) * 100
             : 0;
 
-        return [
+        return $this->statsCache = [
             'total_accounts' => $accounts->count(),
             'total_transfers' => $transfers,
             'total_reserves' => $reserves,
@@ -350,6 +394,10 @@ class BancoService
 
     public function getAlerts(): array
     {
+        if ($this->alertsCache !== null) {
+            return $this->alertsCache;
+        }
+
         $alerts = [];
         $accounts = $this->getAccounts();
 
@@ -412,11 +460,15 @@ class BancoService
             ];
         }
 
-        return $alerts;
+        return $this->alertsCache = $alerts;
     }
 
     public function getPatrimonyDistribution(): array
     {
+        if ($this->distributionCache !== null) {
+            return $this->distributionCache;
+        }
+
         $summary = $this->getSummary();
 
         $items = [
@@ -431,7 +483,7 @@ class BancoService
 
         $total = collect($items)->sum('value');
 
-        return collect($items)
+        return $this->distributionCache = collect($items)
             ->filter(fn ($i) => $i['value'] > 0)
             ->map(fn ($i) => array_merge($i, [
                 'pct' => $total > 0 ? round(($i['value'] / $total) * 100, 1) : 0,
@@ -478,7 +530,11 @@ class BancoService
 
     private function getFixedMonthlyIncome(): float
     {
-        return (float) $this->personalScope(RecurringIncome::where('workspace_id', $this->workspaceId))
+        if ($this->fixedMonthlyIncomeCache !== null) {
+            return $this->fixedMonthlyIncomeCache;
+        }
+
+        return $this->fixedMonthlyIncomeCache = (float) $this->personalScope(RecurringIncome::where('workspace_id', $this->workspaceId))
             ->where('is_active', true)
             ->get()
             ->sum(fn ($r) => match ($r->frequency) {
