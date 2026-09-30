@@ -68,9 +68,6 @@ function clientPortalFixture(): array
     $clientA->setAttribute('portal_access_token', $clientTokenA);
     $clientB->setAttribute('portal_access_token', $clientTokenB);
 
-    $clientA->setAttribute('portal_access_token', $clientTokenA);
-    $clientB->setAttribute('portal_access_token', $clientTokenB);
-
     return compact('clientA', 'clientB', 'ticketA', 'ticketB');
 }
 
@@ -86,7 +83,7 @@ test('cliente consegue ver apenas os próprios tickets', function () {
 test('cliente consegue responder ao próprio ticket', function () {
     $fixture = clientPortalFixture();
 
-    Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_token])
+    Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_access_token])
         ->set('activeTicketId', $fixture['ticketA']->id)
         ->set('replyMessage', 'Resposta do Cliente A')
         ->call('sendReply');
