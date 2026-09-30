@@ -20,7 +20,7 @@ class BusinessGateway extends Component
         $user = Auth::user();
 
         if (request()->has('new')) {
-            $user->update(['current_workspace_id' => null]);
+            $user->forceFill(['current_workspace_id' => null])->save();
 
             return;
         }
@@ -94,9 +94,7 @@ class BusinessGateway extends Component
                 $user->id => ['role' => 'employee'],
             ]);
 
-            $user->update([
-                'current_workspace_id' => $workspace->id,
-            ]);
+            $user->forceFill(['current_workspace_id' => $workspace->id])->save();
 
             // A aceitação de um convite é uma operação de onboarding especial:
             // depois de o utilizador entrar como employee, o permissionamento
