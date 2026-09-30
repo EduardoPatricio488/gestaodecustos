@@ -56,6 +56,11 @@ Database backups are implemented in the application and scheduled daily. The pro
 - The business settings `leaveCompany` action now re-checks `manage_settings` on every Livewire request instead of relying only on `mount()` authorization.
 - Demo documentation no longer publishes a reusable password; `DemoSeeder` requires strong `DEMO_*_PASSWORD` environment variables.
 
+## Hardening completed on 2026-09-30 (continued)
+
+- Candidate authentication in `CareersHub` is now throttled to five attempts per minute per IP/email key, with session regeneration after successful authentication and full session invalidation on logout.
+- Store download request/download endpoints now have an additional HTTP rate limit of 30 requests per minute, alongside the existing per-license hourly download limit and one-time session-bound download token.
+
 ## Remaining attention
 
 - Client and supplier portal credentials now use 64-character cryptographically random tokens, stored only as SHA-256 hashes. Plaintext portal tokens are removed by migration and portal URLs no longer contain credentials.
