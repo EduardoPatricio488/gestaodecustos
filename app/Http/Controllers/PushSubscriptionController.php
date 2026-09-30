@@ -14,9 +14,10 @@ class PushSubscriptionController extends Controller
     {
         // Validação moderna do Laravel
         $request->validate([
-            'endpoint' => 'required',
-            'keys.auth' => 'required',
-            'keys.p256dh' => 'required',
+            'endpoint' => ['required', 'string', 'url:http,https', 'max:2048'],
+            'keys.auth' => ['required', 'string', 'max:255'],
+            'keys.p256dh' => ['required', 'string', 'max:255'],
+            'content_encoding' => ['nullable', 'string', 'in:aesgcm,aes128gcm'],
         ]);
 
         $endpoint = $request->endpoint;
