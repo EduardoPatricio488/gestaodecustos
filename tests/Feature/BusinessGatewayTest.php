@@ -197,7 +197,7 @@ test('tentativas de brute force são limitadas', function () {
 
 test('administrador consegue revogar um convite', function () {
     $fixture = employeeInviteFixture();
-    $fixture['owner']->update(['current_workspace_id' => $fixture['workspace']->id]);
+    $fixture['owner']->forceFill(['current_workspace_id' => $fixture['workspace']->id])->save();
 
     Livewire::actingAs($fixture['owner'])
         ->test(TeamHub::class)
