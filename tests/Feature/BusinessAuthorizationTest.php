@@ -131,6 +131,37 @@ class BusinessAuthorizationTest extends TestCase
         $this->get(route('export.business'))->assertForbidden();
     }
 
+
+    public function test_business_viewer_cannot_manage_documents_or_approve_expenses(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = $this->businessWorkspace($owner);
+        $viewer = User::factory()->create();
+        $workspace->users()->attach($viewer->id, ['role' => 'viewer']);
+        $viewer->update(['current_workspace_id' => $workspace->id]);
+
+        $access = app(BusinessAccessService::class);
+
+        $this->assertFalse($access->can('manage_financials', $viewer, $workspace));
+        $this->assertFalse($access->can('approve_expenses', $viewer, $workspace));
+    }
+
+    public function test_global_platform_role_does_not_bypass_business_workspace_permissions(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = $this->businessWorkspace($owner);
+
+        $analyst = User::factory()->create();
+        $analyst->forceFill(['role' => 'analyst'])->save();
+        $workspace->users()->attach($analyst->id, ['role' => 'viewer']);
+        $analyst->update(['current_workspace_id' => $workspace->id]);
+
+        $access = app(BusinessAccessService::class);
+
+        $this->assertFalse($access->can('manage_team', $analyst, $workspace));
+        $this->assertFalse($access->can('approve_expenses', $analyst, $workspace));
+    }
+
     public function test_business_accountant_can_export_financial_data(): void
     {
         $owner = User::factory()->create();
