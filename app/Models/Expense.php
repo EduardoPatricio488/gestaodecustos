@@ -8,7 +8,6 @@ use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\DomainException;
 
 class Expense extends Model
 {
@@ -31,7 +30,7 @@ class Expense extends Model
             $vat = round((float) ($expense->vat_amount ?? 0), 2);
             $paid = round((float) ($expense->amount_paid ?? 0), 2);
             if ($amount <= 0 || $vat < 0 || $vat > $amount || $paid < 0 || $paid > $amount + 0.01) {
-                throw new DomainException('Os valores da despesa são inválidos.');
+                throw new \DomainException('Os valores da despesa são inválidos.');
             }
             if ($expense->category_id) {
                 $categoryQuery = Category::withoutGlobalScopes()->whereKey($expense->category_id)->where('workspace_id', $expense->workspace_id);
@@ -39,22 +38,22 @@ class Expense extends Model
                     $categoryQuery->where('user_id', $expense->user_id);
                 }
                 if (! $categoryQuery->exists()) {
-                    throw new DomainException('A categoria selecionada não pertence ao utilizador ou à empresa.');
+                    throw new \DomainException('A categoria selecionada não pertence ao utilizador ou à empresa.');
                 }
             }
             if ($expense->supplier_id && (int) Supplier::withoutGlobalScopes()->whereKey($expense->supplier_id)->value('workspace_id') !== (int) $expense->workspace_id) {
-                throw new DomainException('O fornecedor selecionado não pertence à empresa.');
+                throw new \DomainException('O fornecedor selecionado não pertence à empresa.');
             }
             if ($expense->cost_center_id && (int) CostCenter::withoutGlobalScopes()->whereKey($expense->cost_center_id)->value('workspace_id') !== (int) $expense->workspace_id) {
-                throw new DomainException('O centro de custo não pertence à empresa.');
+                throw new \DomainException('O centro de custo não pertence à empresa.');
             }
             if ($expense->bank_account_id) {
                 $account = BankAccount::withoutGlobalScopes()->whereKey($expense->bank_account_id)->where('workspace_id', $expense->workspace_id)->first();
                 if (! $account) {
-                    throw new DomainException('A conta bancária selecionada não pertence ao workspace.');
+                    throw new \DomainException('A conta bancária selecionada não pertence ao workspace.');
                 }
                 if ($workspace?->type === 'personal' && (int) $account->user_id !== (int) $expense->user_id) {
-                    throw new DomainException('A conta bancária selecionada não pertence ao utilizador.');
+                    throw new \DomainException('A conta bancária selecionada não pertence ao utilizador.');
                 }
             }
             $expense->forceFill(['amount' => $amount, 'amount_paid' => $paid, 'vat_amount' => $vat, 'currency' => $transactionCurrency, 'amount_converted' => round((float) CurrencyService::convert($amount, $transactionCurrency, $workspaceCurrency), 2)]);
