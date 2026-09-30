@@ -49,11 +49,11 @@ new #[Layout('layouts.guest')] class extends Component
             $validated = $this->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-                'password' => ['required', 'string', 'min:8', 'confirmed'],
+                'password' => ['required', 'string', Rules\Password::defaults(), 'confirmed'],
             ]);
 
             // 1. Gerar o código de 6 dígitos
-            $code = rand(100000, 999999);
+            $code = random_int(100000, 999999);
 
             // 2. Criar o utilizador
             $user = User::create([
