@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class CategoryField extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'category_id', 'label', 'key', 'type', 'options', 'placeholder', 'required', 'order',
+    ];
 
     protected $casts = [
         'options' => 'array',
