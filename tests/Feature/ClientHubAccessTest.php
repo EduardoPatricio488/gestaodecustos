@@ -45,16 +45,19 @@ class ClientHubAccessTest extends TestCase
         Livewire::test(ClientHub::class)
             ->call('resendPortalAccess', $client->id);
 
-        Mail::assertSent(ClientPortalAccessMail::class, function (ClientPortalAccessMail $mail) use ($client) {
+        $sentToken = null;
+        Mail::assertSent(ClientPortalAccessMail::class, function (ClientPortalAccessMail $mail) use ($client, &$sentToken) {
+            $sentToken = (string) $mail->token;
+
             return $mail->hasTo('cliente@example.com')
                 && $mail->client->is($client)
-                && preg_match('/^\d{6}$/', (string) $mail->token) === 1;
+                && preg_match('/^[a-f0-9]{64}$/', $sentToken) === 1;
         });
 
         $client->refresh();
         $this->assertNull($client->portal_token);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $client->portal_token_hash);
-        $this->assertSame(hash('sha256', (string) $mail->token), $client->portal_token_hash);
+        $this->assertSame(hash('sha256', $sentToken), $client->portal_token_hash);
     }
 
     public function test_client_without_email_cannot_trigger_an_access_email(): void
