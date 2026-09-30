@@ -399,14 +399,20 @@ class Dashboard extends Component
                     ];
                 });
 
-                foreach ($responses['market']->json()['quoteResponse']['result'] ?? [] as $i) {
-                    $insights[] = "ÍNDICE: {$i['shortName']} ".number_format($i['regularMarketPrice'], 2).' ('.number_format($i['regularMarketChangePercent'], 2).'%)';
-                }
-                foreach ($responses['market']->json()['quoteResponse']['result'] ?? [] as $m) {
-                    $insights[] = "METAIS: {$m['symbol']} ".number_format($m['regularMarketPrice'], 2).' ('.number_format($m['regularMarketChangePercent'], 2).'%)';
-                }
-                foreach ($responses['market']->json()['quoteResponse']['result'] ?? [] as $item) {
-                    $insights[] = "ENERGIA: {$item['symbol']} ".number_format($item['regularMarketPrice'], 2).' ('.number_format($item['regularMarketChangePercent'], 2).'%)';
+                $marketQuotes = $responses['market']->json()['quoteResponse']['result'] ?? [];
+                $indexSymbols = ['^GSPC', '^IXIC', '^GDAXI', '^FCHI', '^FTSE'];
+                $metalSymbols = ['GC=F', 'SI=F', 'PL=F', 'PA=F'];
+                $energySymbols = ['CL=F', 'NG=F', 'CO1.F'];
+
+                foreach ($marketQuotes as $quote) {
+                    $symbol = $quote['symbol'] ?? '';
+                    if (in_array($symbol, $indexSymbols, true)) {
+                        $insights[] = "ÍNDICE: ".($quote['shortName'] ?? $symbol).' '.number_format($quote['regularMarketPrice'] ?? 0, 2).' ('.number_format($quote['regularMarketChangePercent'] ?? 0, 2).'%)';
+                    } elseif (in_array($symbol, $metalSymbols, true)) {
+                        $insights[] = "METAIS: {$symbol} ".number_format($quote['regularMarketPrice'] ?? 0, 2).' ('.number_format($quote['regularMarketChangePercent'] ?? 0, 2).'%)';
+                    } elseif (in_array($symbol, $energySymbols, true)) {
+                        $insights[] = "ENERGIA: {$symbol} ".number_format($quote['regularMarketPrice'] ?? 0, 2).' ('.number_format($quote['regularMarketChangePercent'] ?? 0, 2).'%)';
+                    }
                 }
                 $inflation = $responses['inflation']->json();
                 if (isset($inflation[1][0]['value'])) $insights[] = 'MACRO: Inflação UE '.number_format($inflation[1][0]['value'], 1).'%';
@@ -421,9 +427,9 @@ class Dashboard extends Component
                 }
                 $weather = $responses['weather']->json();
                 if (isset($weather['current_weather'])) $insights[] = "CLIMA: Lisboa {$weather['current_weather']['temperature']}ºC • Vento {$weather['current_weather']['windspeed']}km/h";
-                $vix = $responses['vix']->json()['quoteResponse']['result'][0] ?? null;
+                $vix = collect($marketQuotes)->firstWhere('symbol', '^VIX');
                 if ($vix) $insights[] = 'RISCO: VIX '.number_format($vix['regularMarketPrice'], 2).' ('.number_format($vix['regularMarketChangePercent'], 2).'%)';
-                $bdi = $responses['bdi']->json()['quoteResponse']['result'][0] ?? null;
+                $bdi = collect($marketQuotes)->firstWhere('symbol', '^BDI');
                 if ($bdi) $insights[] = 'LOGÍSTICA: Baltic Dry Index '.number_format($bdi['regularMarketPrice'], 0);
             } catch (\Throwable $e) {
                 Log::debug('Falha ao obter dados externos dos insights do dashboard: '.$e->getMessage());
