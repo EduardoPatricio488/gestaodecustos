@@ -61,6 +61,12 @@ Database backups are implemented in the application and scheduled daily. The pro
 - Candidate authentication in `CareersHub` is now throttled to five attempts per minute per IP/email key, with session regeneration after successful authentication and full session invalidation on logout.
 - Store download request/download endpoints now have an additional HTTP rate limit of 30 requests per minute, alongside the existing per-license hourly download limit and one-time session-bound download token.
 
+## Hardening completed on 2026-09-30 (final pass)
+
+- Bank audit credentials now use 64-character cryptographically secure tokens, are stored only as hashes, expire after 30 days, and are revoked explicitly. The legacy plaintext `audit_access_code` column is removed by migration.
+- The unused legacy client portal token model/controller and its plaintext-token table are removed; the active client portal uses authenticated session state with hashed portal credentials.
+- Added regression coverage for removal of the plaintext bank audit column and bank audit token storage requirements.
+
 ## Remaining attention
 
 - Client and supplier portal credentials now use 64-character cryptographically random tokens, stored only as SHA-256 hashes. Plaintext portal tokens are removed by migration and portal URLs no longer contain credentials.
