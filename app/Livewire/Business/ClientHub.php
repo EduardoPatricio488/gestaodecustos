@@ -135,23 +135,16 @@ class ClientHub extends Component
         app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $client = auth()->user()->clients()->findOrFail($id);
 
-        if (! preg_match('/^\d{6}$/', (string) $client->portal_token)) {
-            $client->update([
-                'portal_token' => $this->generateUniquePortalToken(),
-            ]);
-            $client->refresh();
-        }
-
-        if (! $client->portal_token_hash || ! hash_equals((string) $client->portal_token_hash, hash('sha256', (string) $client->portal_token))) {
-            $client->forceFill([
-                'portal_token_hash' => hash('sha256', (string) $client->portal_token),
-            ])->saveQuietly();
-        }
+        $token = $this->generateUniquePortalToken();
+        $client->forceFill([
+            'portal_token' => null,
+            'portal_token_hash' => hash('sha256', $token),
+        ])->saveQuietly();
 
         $workspace = auth()->user()->currentWorkspace;
         $this->clientTaxNumber = $workspace?->tax_number;
-        $this->generatedPasscode = $client->portal_token;
-        $this->generatedPortalUrl = route('client.portal', ['token' => $client->portal_token]);
+        $this->generatedPasscode = $token;
+        $this->generatedPortalUrl = route('client.portal');
         $this->dispatch('modal-show', name: 'portal-link-modal');
     }
 
@@ -174,25 +167,20 @@ class ClientHub extends Component
             return;
         }
 
-        if (! preg_match('/^\d{6}$/', (string) $client->portal_token)) {
-            $client->update([
-                'portal_token' => $this->generateUniquePortalToken(),
-            ]);
-            $client->refresh();
-        }
-
+        $token = $this->generateUniquePortalToken();
         $client->forceFill([
-            'portal_token_hash' => hash('sha256', (string) $client->portal_token),
+            'portal_token' => null,
+            'portal_token_hash' => hash('sha256', $token),
         ])->saveQuietly();
 
-        $portalUrl = route('client.portal', ['token' => $client->portal_token]);
+        $portalUrl = route('client.portal');
         RateLimiter::hit($rateLimitKey, 600);
 
         try {
             Mail::to($client->email)->send(new ClientPortalAccessMail(
                 $client,
                 auth()->user()->currentWorkspace,
-                $client->portal_token,
+                $token,
                 $portalUrl,
             ));
         } catch (\Throwable $exception) {
@@ -209,7 +197,7 @@ class ClientHub extends Component
     public function sendPortalEmail(): void
     {
         app(BusinessAccessService::class)->assert('manage_clients_suppliers');
-        $client = auth()->user()->clients()->where('portal_token', $this->generatedPasscode)->firstOrFail();
+        $client = auth()->user()->clients()->where('portal_token_hash', hash('sha256', $this->generatedPasscode))->firstOrFail();
         if (! $client->email) {
             $this->dispatch('toast', text: 'Este cliente não tem email registado.', variant: 'warning');
 
@@ -219,7 +207,7 @@ class ClientHub extends Component
         Mail::to($client->email)->send(new ClientPortalAccessMail(
             $client,
             auth()->user()->currentWorkspace,
-            $client->portal_token,
+            $this->generatedPasscode,
             $this->generatedPortalUrl,
         ));
         $this->dispatch('toast', text: 'Código de acesso enviado para '.$client->email.'.', variant: 'success');
@@ -248,10 +236,7 @@ class ClientHub extends Component
             $client = (clone $clientQuery)->where('tax_number', $taxNumber)->first();
         }
 
-        $token = $client?->portal_token;
-        if (! preg_match('/^\d{6}$/', (string) $token)) {
-            $token = $this->generateUniquePortalToken();
-        }
+        $token = $this->generateUniquePortalToken();
 
         if (! $client) {
             $client = Client::create([
@@ -262,7 +247,8 @@ class ClientHub extends Component
                 'tax_number' => $taxNumber ?: null,
                 'email' => $request->requester_email,
                 'status' => 'ativo',
-                'portal_token' => $token,
+                'portal_token' => null,
+                'portal_token_hash' => hash('sha256', $token),
             ]);
         } else {
             $client->update([
@@ -270,20 +256,17 @@ class ClientHub extends Component
                 'email' => $client->email ?: $request->requester_email,
                 'tax_number' => $client->tax_number ?: ($taxNumber ?: null),
                 'status' => 'ativo',
-                'portal_token' => $token,
+                'portal_token' => null,
+                'portal_token_hash' => hash('sha256', $token),
             ]);
             $client->refresh();
         }
 
-        $client->forceFill([
-            'portal_token_hash' => hash('sha256', (string) $client->portal_token),
-        ])->saveQuietly();
-
-        $portalUrl = route('client.portal', ['token' => $client->portal_token]);
+        $portalUrl = route('client.portal');
         Mail::to($client->email)->send(new ClientPortalAccessMail(
             $client,
             auth()->user()->currentWorkspace,
-            $client->portal_token,
+            $token,
             $portalUrl,
         ));
 
@@ -312,8 +295,8 @@ class ClientHub extends Component
     private function generateUniquePortalToken(): string
     {
         do {
-            $token = (string) random_int(100000, 999999);
-        } while (Client::where('portal_token', $token)->exists());
+            $token = bin2hex(random_bytes(32));
+        } while (Client::where('portal_token_hash', hash('sha256', $token))->exists());
 
         return $token;
     }
