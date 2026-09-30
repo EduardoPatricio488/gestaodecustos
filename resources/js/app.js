@@ -129,8 +129,11 @@ document.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    const data = window.Alpine?.$data?.(cookieRoot);
-    if (!data || typeof data.save !== 'function') return;
+    const data = cookieRoot._x_dataStack?.find((entry) => entry && typeof entry.save === 'function');
+    if (!data) {
+        event.stopImmediatePropagation();
+        return;
+    }
 
     const analytics = button.textContent?.includes('Aceitar tudo')
         || (label === 'Guardar preferências' && Boolean(data.analytics));
