@@ -6,6 +6,7 @@ use App\Models\BankStatementImport;
 use App\Models\CategorizationRule;
 use App\Models\Category;
 use App\Services\BankImportService;
+use App\Services\BusinessAccessService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -33,6 +34,7 @@ class StatementImportHub extends Component
 
     public function generatePreview(): void
     {
+        $this->authorizeImport();
         $this->validate(['statementFile' => 'required|file|mimes:csv,txt,ofx|max:5120']);
 
         $service = app(BankImportService::class);
@@ -52,6 +54,7 @@ class StatementImportHub extends Component
 
     public function importStatement(): void
     {
+        $this->authorizeImport();
         if (! $this->previewReady) {
             $this->dispatch('toast', variant: 'warning', text: 'Gera primeiro a pré-visualização.');
 
@@ -111,6 +114,7 @@ class StatementImportHub extends Component
 
     public function saveCategorizationRule(): void
     {
+        $this->authorizeImport();
         $this->validate([
             'ruleKeyword' => 'required|string|min:2|max:120',
             'ruleCategoryId' => 'required|integer',
@@ -146,6 +150,7 @@ class StatementImportHub extends Component
 
     public function toggleRule(int $ruleId): void
     {
+        $this->authorizeImport();
         $rule = CategorizationRule::query()
             ->where('workspace_id', auth()->user()->current_workspace_id)
             ->where('user_id', auth()->id())
@@ -157,6 +162,7 @@ class StatementImportHub extends Component
 
     public function deleteRule(int $ruleId): void
     {
+        $this->authorizeImport();
         CategorizationRule::query()
             ->where('workspace_id', auth()->user()->current_workspace_id)
             ->where('user_id', auth()->id())
@@ -164,6 +170,14 @@ class StatementImportHub extends Component
             ->delete();
 
         $this->dispatch('toast', variant: 'success', text: 'Regra removida.');
+    }
+
+    private function authorizeImport(): void
+    {
+        $workspace = auth()->user()->currentWorkspace;
+        if ($workspace && in_array($workspace->type, ['business', 'company'], true)) {
+            app(BusinessAccessService::class)->assert('manage_financials', auth()->user(), $workspace);
+        }
     }
 
     public function render()
