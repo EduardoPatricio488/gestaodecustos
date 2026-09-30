@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 function clientPortalFixture(): array
@@ -24,14 +23,16 @@ function clientPortalFixture(): array
         'workspace_id' => $workspace->id,
         'name' => 'Cliente A',
         'email' => 'cliente-a@example.com',
-        'portal_token' => Str::random(48),
+        'portal_token' => null,
+        'portal_token_hash' => hash('sha256', $clientTokenA = bin2hex(random_bytes(32))),
     ]);
     $clientB = Client::create([
         'user_id' => $owner->id,
         'workspace_id' => $workspace->id,
         'name' => 'Cliente B',
         'email' => 'cliente-b@example.com',
-        'portal_token' => Str::random(48),
+        'portal_token' => null,
+        'portal_token_hash' => hash('sha256', $clientTokenB = bin2hex(random_bytes(32))),
     ]);
 
     $ticketA = SupportTicket::create([
@@ -64,13 +65,19 @@ function clientPortalFixture(): array
         'updated_at' => now(),
     ]);
 
+    $clientA->setAttribute('portal_access_token', $clientTokenA);
+    $clientB->setAttribute('portal_access_token', $clientTokenB);
+
+    $clientA->setAttribute('portal_access_token', $clientTokenA);
+    $clientB->setAttribute('portal_access_token', $clientTokenB);
+
     return compact('clientA', 'clientB', 'ticketA', 'ticketB');
 }
 
 test('cliente consegue ver apenas os próprios tickets', function () {
     $fixture = clientPortalFixture();
 
-    $component = Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_token]);
+    $component = Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_access_token]);
 
     expect($component->viewData('tickets')->pluck('id')->all())
         ->toBe([$fixture['ticketA']->id]);
@@ -120,7 +127,7 @@ test('cliente não consegue carregar mensagens de outro cliente', function () {
 test('cliente B continua a utilizar os próprios tickets normalmente', function () {
     $fixture = clientPortalFixture();
 
-    $component = Livewire::test(ClientPortal::class, ['token' => $fixture['clientB']->portal_token])
+    $component = Livewire::test(ClientPortal::class, ['token' => $fixture['clientB']->portal_access_token])
         ->call('setActiveTicket', $fixture['ticketB']->id)
         ->set('replyMessage', 'Resposta do Cliente B')
         ->call('sendReply');
