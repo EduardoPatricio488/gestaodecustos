@@ -21,13 +21,15 @@ class SupportHub extends Component
     public $replyMessage;
 
     /**
-     * O contexto é sempre derivado da rota atual.
+     * O contexto é sempre derivado do workspace atual.
      * Não é uma propriedade pública do Livewire, evitando que o cliente
      * consiga alterar o contexto durante a hidratação.
      */
     private function isBusinessContext(): bool
     {
-        return request()->routeIs('hub.business.*');
+        $workspace = auth()->user()->currentWorkspace;
+
+        return $workspace && in_array($workspace->type, ['business', 'company'], true);
     }
 
     /**
@@ -113,7 +115,10 @@ class SupportHub extends Component
 
     public function render()
     {
+        $isBusinessMode = $this->isBusinessContext();
+
         return view('livewire.support-hub', [
+            'isBusinessMode' => $isBusinessMode,
             'myTickets' => $this->getContextQuery()
                 ->withCount('messages')
                 ->latest()
