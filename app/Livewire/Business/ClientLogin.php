@@ -35,7 +35,7 @@ class ClientLogin extends Component
     {
         $this->validate([
             'tax_number' => 'required|string',
-            'token' => 'required|digits:6',
+            'token' => ['required', 'string', 'min:64', 'max:64', 'regex:/^[A-Za-z0-9]+$/'],
         ]);
 
         $cleanNifInput = preg_replace('/\s+/', '', $this->tax_number);
@@ -54,14 +54,14 @@ class ClientLogin extends Component
             $query->whereIn('type', ['business', 'company', 'bussiness'])
                 ->whereRaw("REPLACE(tax_number, ' ', '') = ?", [$cleanNifInput]);
         })
-            ->where('portal_token', $cleanTokenInput)
+            ->where('portal_token_hash', hash('sha256', $cleanTokenInput))
             ->first();
 
         if ($client) {
             RateLimiter::clear($rateLimitKey);
             session()->regenerate();
 
-            return redirect()->route('client.portal', ['token' => $client->portal_token]);
+            return redirect()->route('client.portal', ['token' => $cleanTokenInput]);
         }
 
         session()->flash('error', 'CREDENCIAIS INVÁLIDAS. VERIFICA O NIF DA EMPRESA E O CÓDIGO.');
@@ -147,13 +147,13 @@ class ClientLogin extends Component
             ->where(function ($query) {
                 $query->where('name', 'like', '%'.$this->companySearch.'%')
                     ->orWhere('legal_name', 'like', '%'.$this->companySearch.'%')
-                    ->orWhere('tax_number', 'like', '%'.$this->companySearch.'%');
+                    ;
             })
             ->orderBy('name')
             ->limit(100)
             // The company NIF is intentionally available here so the selected company
             // can be clearly identified in the client access protocol.
-            ->get(['id', 'name', 'legal_name', 'tax_number']);
+            ->get(['id', 'name', 'legal_name']);
     }
 
     public function render()
