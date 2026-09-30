@@ -32,15 +32,21 @@ class SupplierDashboard extends Component
 
     public $invoice_notes;
 
-    public function mount($token)
+    public function mount($token = null)
     {
-        $rateLimitKey = 'supplier-portal-token:'.sha1(request()->ip());
-        abort_if(RateLimiter::tooManyAttempts($rateLimitKey, 20), 429);
-        RateLimiter::hit($rateLimitKey, 60);
+        if ($token !== null) {
+            $rateLimitKey = 'supplier-portal-token:'.sha1(request()->ip());
+            abort_if(RateLimiter::tooManyAttempts($rateLimitKey, 20), 429);
+            RateLimiter::hit($rateLimitKey, 60);
+            $supplier = Supplier::findByPortalToken($token);
+            abort_unless($supplier, 404);
+            session()->put('supplier_portal_id', $supplier->id);
+        }
 
-        $this->supplier = Supplier::findByPortalToken($token);
-
-        abort_unless($this->supplier, 404);
+        $supplierId = session('supplier_portal_id');
+        abort_unless($supplierId, 401);
+        $this->supplier = Supplier::with('workspace')->find($supplierId);
+        abort_unless($this->supplier, 401);
     }
 
     public function sendTicket()
