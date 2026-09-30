@@ -256,20 +256,17 @@ class ClientHub extends Component
                 'email' => $client->email ?: $request->requester_email,
                 'tax_number' => $client->tax_number ?: ($taxNumber ?: null),
                 'status' => 'ativo',
-                'portal_token' => $token,
+                'portal_token' => null,
+                'portal_token_hash' => hash('sha256', $token),
             ]);
             $client->refresh();
         }
-
-        $client->forceFill([
-            'portal_token_hash' => hash('sha256', (string) $client->portal_token),
-        ])->saveQuietly();
 
         $portalUrl = route('client.portal', ['token' => $token]);
         Mail::to($client->email)->send(new ClientPortalAccessMail(
             $client,
             auth()->user()->currentWorkspace,
-            $client->portal_token,
+            $token,
             $portalUrl,
         ));
 
