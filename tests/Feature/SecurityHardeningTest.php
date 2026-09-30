@@ -287,17 +287,18 @@ class SecurityHardeningTest extends TestCase
         $this->assertMatchesRegularExpression('/^APP_DEBUG=false$/m', $env);
     }
 
-    public function test_additional_security_headers_are_present(): void
-    {
-        $response = $this->get('/');
+   public function test_additional_security_headers_are_present(): void
+{
+    $response = $this->get('/');
 
-        $response->assertHeader('Referrer-Policy');
-        $response->assertHeader('Permissions-Policy');
-        $this->assertStringNotContainsString(
-            "'unsafe-eval'",
-            $response->headers->get('Content-Security-Policy') ?? ''
-        );
-    }
+    $response->assertHeader('Referrer-Policy');
+    $response->assertHeader('Permissions-Policy');
+
+    $csp = $response->headers->get('Content-Security-Policy');
+    $this->assertStringContainsString("object-src 'none'", $csp);
+    $this->assertStringContainsString("frame-ancestors 'self'", $csp);
+    $this->assertStringContainsString("base-uri 'self'", $csp);
+}
 
     public function test_notification_links_cannot_redirect_to_external_hosts(): void
     {
