@@ -36,7 +36,8 @@ class ClientHubAccessTest extends TestCase
             'name' => 'Cliente Teste',
             'email' => 'cliente@example.com',
             'status' => 'ativo',
-            'portal_token' => str_repeat('a', 64),
+            'portal_token' => null,
+            'portal_token_hash' => null,
         ]);
 
         $this->actingAs($owner);
@@ -44,15 +45,19 @@ class ClientHubAccessTest extends TestCase
         Livewire::test(ClientHub::class)
             ->call('resendPortalAccess', $client->id);
 
-        Mail::assertSent(ClientPortalAccessMail::class, function (ClientPortalAccessMail $mail) use ($client) {
+        $sentToken = null;
+        Mail::assertSent(ClientPortalAccessMail::class, function (ClientPortalAccessMail $mail) use ($client, &$sentToken) {
+            $sentToken = (string) $mail->token;
+
             return $mail->hasTo('cliente@example.com')
                 && $mail->client->is($client)
-                && preg_match('/^\d{6}$/', (string) $mail->token) === 1;
+                && preg_match('/^[a-f0-9]{64}$/', $sentToken) === 1;
         });
 
         $client->refresh();
-        $this->assertMatchesRegularExpression('/^\d{6}$/', (string) $client->portal_token);
-        $this->assertSame(hash('sha256', $client->portal_token), $client->portal_token_hash);
+        $this->assertNull($client->portal_token);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $client->portal_token_hash);
+        $this->assertSame(hash('sha256', $sentToken), $client->portal_token_hash);
     }
 
     public function test_client_without_email_cannot_trigger_an_access_email(): void
@@ -74,7 +79,8 @@ class ClientHubAccessTest extends TestCase
             'workspace_id' => $workspace->id,
             'name' => 'Cliente Sem Email',
             'status' => 'ativo',
-            'portal_token' => str_repeat('b', 64),
+            'portal_token' => null,
+            'portal_token_hash' => null,
         ]);
 
         $this->actingAs($owner);
