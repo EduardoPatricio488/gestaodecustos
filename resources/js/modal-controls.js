@@ -6,7 +6,7 @@
 
     const CLOSE_TEXT = /^(fechar|close|close modal|dismiss|descartar|discard)$/i;
     const CLOSE_LABEL = /^(fechar|close|close modal|dismiss)$/i;
-    const MODAL_SELECTOR = '[role="dialog"]:not([data-no-auto-close]), dialog:not([data-no-auto-close]), [data-flux-modal]:not([data-no-auto-close])';
+    const MODAL_SELECTOR = '[role="dialog"]:not([aria-labelledby="cookie-consent-title"]):not([aria-labelledby="cookie-prefs-title"]), dialog:not([aria-labelledby="cookie-consent-title"]):not([aria-labelledby="cookie-prefs-title"]), [data-flux-modal]:not([aria-labelledby="cookie-consent-title"]):not([aria-labelledby="cookie-prefs-title"])';
 
     // app.js historically registered a generic capture listener that treated
     // Cancel/Discard buttons as modal close controls. Prevent that legacy
