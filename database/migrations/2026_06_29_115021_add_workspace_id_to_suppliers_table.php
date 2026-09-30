@@ -1,4 +1,4 @@
-    <?php
+<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,11 +9,16 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        Schema::table('suppliers', function (Blueprint $table) {
-            $table->unsignedBigInteger('workspace_id')->nullable()->after('id');
-        });
+        // The suppliers table already creates workspace_id in its original
+        // migration. Keep this legacy migration idempotent so a fresh test
+        // database does not try to add the column a second time.
+        if (! Schema::hasColumn('suppliers', 'workspace_id')) {
+            Schema::table('suppliers', function (Blueprint $table) {
+                $table->unsignedBigInteger('workspace_id')->nullable()->after('id');
+            });
+        }
     }
 
     /**
@@ -21,8 +26,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('suppliers', function (Blueprint $table) {
-            //
-        });
+        // workspace_id belongs to the suppliers table definition and must
+        // not be removed when this legacy migration is rolled back.
     }
 };
