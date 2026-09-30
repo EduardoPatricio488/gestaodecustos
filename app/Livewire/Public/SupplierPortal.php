@@ -18,29 +18,17 @@ class SupplierPortal extends Component
     use WithFileUploads;
 
     public $tax_number = '';
-
     public $token = '';
-
     public $isLoggedIn = false;
-
     public $supplier = null;
-
     public $requesterName = '';
-
     public $requesterEmail = '';
-
     public $requestTaxNumber = '';
-
     public $companySearch = '';
-
     public $selectedCompanyId = null;
-
     public $requestSent = false;
-
     public $amount;
-
     public $notes;
-
     public $invoice_doc;
 
     #[Layout('layouts.guest')]
@@ -51,22 +39,17 @@ class SupplierPortal extends Component
             'token' => ['required', 'string', 'min:64', 'max:64', 'regex:/^[A-Za-z0-9]+$/'],
         ]);
 
-        // No portal do fornecedor, o NIF de entrada é o NIF DA EMPRESA.
-        // O código de 6 dígitos identifica o fornecedor dentro dessa empresa.
         $cleanCompanyNif = preg_replace('/\D+/', '', (string) $this->tax_number);
         $cleanTokenInput = trim((string) $this->token);
         $rateLimitKey = 'supplier-portal-login:'.sha1($cleanCompanyNif.'|'.request()->ip());
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
             session()->flash('error', 'Demasiadas tentativas. Tenta novamente mais tarde.');
-
             return;
         }
 
         RateLimiter::hit($rateLimitKey, 60);
 
-        // Primeiro localizamos o fornecedor pelo código. Depois confirmamos
-        // que o NIF da empresa desse fornecedor corresponde ao NIF introduzido.
         $supplier = Supplier::query()
             ->where('portal_token_hash', hash('sha256', $cleanTokenInput))
             ->with('workspace')
@@ -77,17 +60,9 @@ class SupplierPortal extends Component
             : '';
 
         if ($supplier && $cleanCompanyNif !== '' && hash_equals($workspaceNif, $cleanCompanyNif)) {
-            if (! $supplier->portal_token_hash) {
-                $supplier->forceFill([
-                    'portal_token_hash' => hash('sha256', $cleanTokenInput),
-                ])->saveQuietly();
-            }
-
             RateLimiter::clear($rateLimitKey);
             session()->regenerate();
-
             session()->put('supplier_portal_id', $supplier->id);
-
             return redirect()->route('supplier.dashboard');
         }
 
@@ -99,7 +74,6 @@ class SupplierPortal extends Component
         $exists = Workspace::whereKey($companyId)
             ->whereIn('type', ['business', 'company', 'bussiness'])
             ->exists();
-
         $this->selectedCompanyId = $exists ? $companyId : null;
         $this->requestSent = false;
     }
@@ -118,12 +92,15 @@ class SupplierPortal extends Component
         ]);
 
         $email = strtolower(trim($this->requesterEmail));
+        $ipKey = 'supplier-portal-request-ip:'.sha1((string) request()->ip());
         $rateLimitKey = 'supplier-portal-request:'.sha1($email.'|'.request()->ip());
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
-            $this->addError('requesterEmail', 'Demasiados pedidos. Tenta novamente mais tarde.');
 
+        if (RateLimiter::tooManyAttempts($ipKey, 10) || RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $this->addError('requesterEmail', 'Demasiados pedidos. Tenta novamente mais tarde.');
             return;
         }
+
+        RateLimiter::hit($ipKey, 300);
         RateLimiter::hit($rateLimitKey, 300);
 
         $workspace = Workspace::whereKey($this->selectedCompanyId)
@@ -132,7 +109,6 @@ class SupplierPortal extends Component
 
         if (! $workspace || ! filled($workspace->business_email)) {
             $this->addError('selectedCompanyId', 'Esta empresa ainda não tem um email empresarial configurado.');
-
             return;
         }
 
@@ -144,7 +120,6 @@ class SupplierPortal extends Component
 
         if ($pending) {
             $this->addError('requesterEmail', 'Já existe um pedido pendente deste email para esta empresa.');
-
             return;
         }
 
