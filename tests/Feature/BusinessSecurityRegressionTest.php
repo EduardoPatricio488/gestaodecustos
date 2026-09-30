@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\BancoHub;
 use App\Livewire\IncomeHub;
 use App\Livewire\ManageExpense;
+use App\Livewire\StatementImportHub;
 use App\Models\BankAccount;
 use App\Models\Category;
 use App\Models\User;
@@ -95,6 +96,38 @@ class BusinessSecurityRegressionTest extends TestCase
             ->set('category_id', $category->id)
             ->set('bankAccountId', $foreignAccount->id)
             ->call('save');
+    }
+
+    public function test_viewer_cannot_sync_offline_expenses_in_business_workspace(): void
+    {
+        [$owner, $workspace] = $this->businessWorkspace();
+        $viewer = User::factory()->create(['current_workspace_id' => $workspace->id]);
+        $workspace->users()->attach($viewer->id, ['role' => 'viewer']);
+
+        $this->actingAs($viewer)
+            ->postJson(route('api.offline.sync'), [
+                'expenses' => [[
+                    'amount' => 25,
+                    'title' => 'Despesa não autorizada',
+                    'spent_at' => now()->format('Y-m-d'),
+                    'description' => 'Teste',
+                ]],
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('expenses', ['workspace_id' => $workspace->id, 'title' => 'Despesa não autorizada']);
+    }
+
+    public function test_viewer_cannot_import_bank_statements_in_business_workspace(): void
+    {
+        [$owner, $workspace] = $this->businessWorkspace();
+        $viewer = User::factory()->create(['current_workspace_id' => $workspace->id]);
+        $workspace->users()->attach($viewer->id, ['role' => 'viewer']);
+
+        $this->actingAs($viewer);
+        Livewire::test(StatementImportHub::class)
+            ->call('generatePreview')
+            ->assertForbidden();
     }
 
     private function businessWorkspace(): array
