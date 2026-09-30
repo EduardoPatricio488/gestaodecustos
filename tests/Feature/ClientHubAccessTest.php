@@ -36,7 +36,8 @@ class ClientHubAccessTest extends TestCase
             'name' => 'Cliente Teste',
             'email' => 'cliente@example.com',
             'status' => 'ativo',
-            'portal_token' => str_repeat('a', 64),
+            'portal_token' => null,
+            'portal_token_hash' => null,
         ]);
 
         $this->actingAs($owner);
@@ -51,8 +52,9 @@ class ClientHubAccessTest extends TestCase
         });
 
         $client->refresh();
-        $this->assertMatchesRegularExpression('/^\d{6}$/', (string) $client->portal_token);
-        $this->assertSame(hash('sha256', $client->portal_token), $client->portal_token_hash);
+        $this->assertNull($client->portal_token);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', (string) $client->portal_token_hash);
+        $this->assertSame(hash('sha256', (string) $mail->token), $client->portal_token_hash);
     }
 
     public function test_client_without_email_cannot_trigger_an_access_email(): void
@@ -74,7 +76,8 @@ class ClientHubAccessTest extends TestCase
             'workspace_id' => $workspace->id,
             'name' => 'Cliente Sem Email',
             'status' => 'ativo',
-            'portal_token' => str_repeat('b', 64),
+            'portal_token' => null,
+            'portal_token_hash' => null,
         ]);
 
         $this->actingAs($owner);
