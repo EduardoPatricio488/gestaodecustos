@@ -137,7 +137,7 @@ class BusinessSettings extends Component
             abort(403, 'O proprietário deve transferir a propriedade antes de sair.');
         }
         $this->workspace->users()->detach($user->id);
-        $user->update(['current_workspace_id' => null]);
+        $user->forceFill(['current_workspace_id' => null])->save();
 
         return redirect()->route('hub.business.gateway');
     }
@@ -148,7 +148,7 @@ class BusinessSettings extends Component
         abort_unless((int) $this->workspace->owner_id === (int) auth()->id(), 403);
 
         $user = auth()->user();
-        $user->update(['current_workspace_id' => null]);
+        $user->forceFill(['current_workspace_id' => null])->save();
         $this->workspace->delete();
 
         return redirect()->route('hub.business.gateway');
