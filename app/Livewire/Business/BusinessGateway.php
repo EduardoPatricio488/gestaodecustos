@@ -20,7 +20,7 @@ class BusinessGateway extends Component
         $user = Auth::user();
 
         if (request()->has('new')) {
-            $user->forceFill(['current_workspace_id' => null])->save(])->save();
+            $user->forceFill(['current_workspace_id' => null])->save();
 
             return;
         }
