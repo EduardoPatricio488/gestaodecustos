@@ -29,11 +29,12 @@ function employeeInviteFixture(array $overrides = []): array
         'active' => $overrides['active'] ?? true,
         'suspended' => $overrides['suspended'] ?? false,
         'terminated_at' => $overrides['terminated_at'] ?? null,
-        'portal_token' => Hash::make($token),
         'invite_expires_at' => $overrides['expires_at'] ?? now()->addDays(7),
         'invite_used_at' => $overrides['used_at'] ?? null,
         'invite_revoked_at' => $overrides['revoked_at'] ?? null,
     ]);
+
+    $employee->forceFill(['portal_token' => Hash::make($token)])->saveQuietly();
 
     return compact('owner', 'workspace', 'employee', 'token');
 }
