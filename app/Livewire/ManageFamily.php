@@ -109,7 +109,7 @@ class ManageFamily extends Component
             return;
         }
 
-        $this->validate(['photo' => 'image|max:2048']);
+        $this->validate(['photo' => 'image|mimes:jpg,jpeg,png,webp|max:2048']);
 
         // store() devolve o caminho relativo: "workspaces/logos/nome.jpg"
         $path = $this->photo->store('workspaces/logos', 'public');
@@ -250,7 +250,7 @@ class ManageFamily extends Component
 
     public function updatedPersonalPhoto()
     {
-        $this->validate(['personalPhoto' => 'image|max:2048']);
+        $this->validate(['personalPhoto' => 'image|mimes:jpg,jpeg,png,webp|max:2048']);
         $user = auth()->user();
         $pw = $user->workspaces()->where('type', 'personal')->where('owner_id', $user->id)->first();
 
