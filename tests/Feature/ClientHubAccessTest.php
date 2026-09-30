@@ -36,7 +36,6 @@ class ClientHubAccessTest extends TestCase
             'name' => 'Cliente Teste',
             'email' => 'cliente@example.com',
             'status' => 'ativo',
-            'portal_token' => null,
             'portal_token_hash' => null,
         ]);
 
@@ -79,7 +78,6 @@ class ClientHubAccessTest extends TestCase
             'workspace_id' => $workspace->id,
             'name' => 'Cliente Sem Email',
             'status' => 'ativo',
-            'portal_token' => null,
             'portal_token_hash' => null,
         ]);
 
