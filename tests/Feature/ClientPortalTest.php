@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 function clientPortalFixture(): array
@@ -25,7 +24,7 @@ function clientPortalFixture(): array
         'name' => 'Cliente A',
         'email' => 'cliente-a@example.com',
         'portal_token' => null,
-        'portal_token_hash' => hash('sha256', $clientTokenA = Str::random(64)),
+        'portal_token_hash' => hash('sha256', $clientTokenA = bin2hex(random_bytes(32))),
     ]);
     $clientB = Client::create([
         'user_id' => $owner->id,
@@ -33,7 +32,7 @@ function clientPortalFixture(): array
         'name' => 'Cliente B',
         'email' => 'cliente-b@example.com',
         'portal_token' => null,
-        'portal_token_hash' => hash('sha256', $clientTokenB = Str::random(64)),
+        'portal_token_hash' => hash('sha256', $clientTokenB = bin2hex(random_bytes(32))),
     ]);
 
     $ticketA = SupportTicket::create([
@@ -65,6 +64,9 @@ function clientPortalFixture(): array
         'created_at' => now(),
         'updated_at' => now(),
     ]);
+
+    $clientA->setAttribute('portal_access_token', $clientTokenA);
+    $clientB->setAttribute('portal_access_token', $clientTokenB);
 
     $clientA->setAttribute('portal_access_token', $clientTokenA);
     $clientB->setAttribute('portal_access_token', $clientTokenB);
