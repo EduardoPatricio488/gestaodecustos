@@ -12,7 +12,7 @@ class WorkspaceContextController extends Controller
         $user = $request->user();
         $workspace = $user->workspaces()->findOrFail($id);
 
-        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save(])->save();
 
         if (in_array($workspace->type, ['business', 'company'], true)) {
             session()->put('last_business_workspace_id', $workspace->id);
@@ -29,7 +29,7 @@ class WorkspaceContextController extends Controller
         $personal = $user->workspaces()->where('type', 'personal')->first();
 
         if ($personal) {
-            $user->forceFill(['current_workspace_id' => $personal->id])->save();
+            $user->forceFill(['current_workspace_id' => $personal->id])->save(])->save();
         }
 
         return redirect()->route('dashboard');
@@ -40,7 +40,7 @@ class WorkspaceContextController extends Controller
         $user = $request->user();
         $workspace = $user->workspaces()->findOrFail($id);
 
-        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save(])->save();
 
         if (in_array($workspace->type, ['business', 'company'], true)) {
             session()->put('last_business_workspace_id', $workspace->id);
