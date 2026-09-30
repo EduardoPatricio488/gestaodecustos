@@ -142,6 +142,10 @@ class ClientLogin extends Component
     #[Computed]
     public function companies()
     {
+        if (mb_strlen(trim((string) $this->companySearch)) < 2) {
+            return collect();
+        }
+
         return Workspace::query()
             ->whereIn('type', ['business', 'company', 'bussiness'])
             ->where(function ($query) {
@@ -151,8 +155,6 @@ class ClientLogin extends Component
             })
             ->orderBy('name')
             ->limit(100)
-            // The company NIF is intentionally available here so the selected company
-            // can be clearly identified in the client access protocol.
             ->get(['id', 'name', 'legal_name']);
     }
 
