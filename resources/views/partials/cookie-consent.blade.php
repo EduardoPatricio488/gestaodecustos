@@ -3,7 +3,24 @@
     preferences: false,
     analytics: false,
     init() {
-        const stored = window.localStorage.getItem('fp_cookie_consent');
+        const readCookie = () => {
+            const match = document.cookie.match(/(?:^|; )fp_cookie_consent=([^;]*)/);
+            return match ? decodeURIComponent(match[1]) : null;
+        };
+
+        let stored = null;
+
+        // localStorage pode estar indisponível em alguns modos de privacidade.
+        try {
+            stored = window.localStorage.getItem('fp_cookie_consent');
+        } catch (error) {
+            stored = null;
+        }
+
+        // O cookie é a fonte de verdade compatível com o backend.
+        if (stored !== 'necessary' && stored !== 'analytics') {
+            stored = readCookie();
+        }
 
         if (stored === 'necessary' || stored === 'analytics') {
             this.open = false;
@@ -13,11 +30,14 @@
     save(value) {
         const consent = value === 'analytics' ? 'analytics' : 'necessary';
 
-        // Guardar localmente garante que a escolha permanece mesmo
-        // durante navegação Livewire, sem depender de uma nova resposta HTTP.
-        window.localStorage.setItem('fp_cookie_consent', consent);
+        // Guardar localmente melhora a persistência durante navegação Livewire.
+        try {
+            window.localStorage.setItem('fp_cookie_consent', consent);
+        } catch (error) {
+            // O cookie abaixo continua a permitir guardar a preferência.
+        }
 
-        // O cookie permite ao backend decidir se deve carregar analytics.
+        // O cookie é persistente e permite ao backend decidir se deve carregar analytics.
         document.cookie = 'fp_cookie_consent=' + encodeURIComponent(consent)
             + '; Max-Age=31536000; Path=/; SameSite=Lax'
             + (location.protocol === 'https:' ? '; Secure' : '');
