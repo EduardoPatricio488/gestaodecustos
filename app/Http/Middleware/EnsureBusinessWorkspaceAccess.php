@@ -34,7 +34,7 @@ class EnsureBusinessWorkspaceAccess
                         ->first();
 
                     if ($business) {
-                        $user->update(['current_workspace_id' => $business->id]);
+                        $user->forceFill(['current_workspace_id' => $business->id]]);
                     }
                 }
             } elseif ($access->workspace($user)) {
@@ -43,7 +43,7 @@ class EnsureBusinessWorkspaceAccess
                     ->first();
 
                 if ($personal) {
-                    $user->update(['current_workspace_id' => $personal->id]);
+                    $user->forceFill(['current_workspace_id' => $personal->id]]);
                 }
             }
         }
