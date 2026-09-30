@@ -7,6 +7,7 @@ use App\Models\Supplier;
 use App\Models\SupportMessage;
 use App\Models\SupportTicket;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -37,10 +38,13 @@ class SupplierDashboard extends Component
         abort_unless($supplierId, 401);
         $this->supplier = Supplier::with('workspace')->find($supplierId);
         abort_unless($this->supplier, 401);
+        abort_unless($this->supplier->status === 'ativo' && filled($this->supplier->portal_token_hash), 403);
     }
 
     public function sendTicket()
     {
+        $this->throttlePortalAction();
+
         $this->validate(['subject' => 'required|min:5', 'message' => 'required|min:10']);
 
         $admin = DB::table('workspace_user')
@@ -74,6 +78,8 @@ class SupplierDashboard extends Component
 
     public function sendReply()
     {
+        $this->throttlePortalAction();
+
         $this->validate(['replyMessage' => 'required|min:2']);
         $ticket = $this->ticketForSupplier($this->activeTicketId);
 
@@ -92,6 +98,14 @@ class SupplierDashboard extends Component
     {
         $this->activeTicketId = $this->ticketForSupplier($id)->id;
         $this->dispatch('modal-show', name: 'view-ticket-modal');
+    }
+
+    private function throttlePortalAction(): void
+    {
+        $key = 'supplier-portal-action:'.sha1((string) session()->getId());
+
+        abort_if(RateLimiter::tooManyAttempts($key, 20), 429);
+        RateLimiter::hit($key, 60);
     }
 
     private function ticketForSupplier($id): SupportTicket
