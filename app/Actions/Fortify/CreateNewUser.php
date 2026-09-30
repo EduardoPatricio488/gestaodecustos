@@ -32,7 +32,7 @@ class CreateNewUser implements CreatesNewUsers
     {
         Validator::make($input, [
             ...$this->profileRules(),
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', $this->passwordRules()[2] ?? \Illuminate\Validation\Rules\Password::defaults(), 'confirmed'],
         ])->validate();
 
         $verificationCode = (string) random_int(100000, 999999);
