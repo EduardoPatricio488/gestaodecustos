@@ -286,19 +286,44 @@ test('a personal workspace never exposes another users bank or debt records thro
 test('FinanceBot cannot delete or complete another users records by id', function () {
     $data = personalIsolationFixture();
 
+    // Create the attacker records after the fixture so this test controls the exact
+    // records being targeted, without Eloquent ownership/global-scope side effects.
+    $expenseB = DB::table('expenses')->insertGetId([
+        'user_id' => $data['attacker']->id,
+        'workspace_id' => $data['workspace']->id,
+        'category_id' => DB::table('categories')
+            ->where('workspace_id', $data['workspace']->id)
+            ->where('user_id', $data['attacker']->id)
+            ->value('id'),
+        'amount' => 999,
+        'description' => 'SEGREDO B - DELETE TEST',
+        'spent_at' => now()->toDateString(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $reminderB = DB::table('reminders')->insertGetId([
+        'user_id' => $data['attacker']->id,
+        'workspace_id' => $data['workspace']->id,
+        'title' => 'SEGREDO LEMBRETE B - DELETE TEST',
+        'remind_at' => now()->addDay(),
+        'priority' => 'high',
+        'frequency' => 'once',
+        'is_completed' => false,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
     $this->actingAs($data['owner']);
 
-    expect(DB::table('expenses')->whereKey($data['expenseB'])->exists())->toBeTrue()
-        ->and(financeBotTool('delete_expense', ['expense_id' => $data['expenseB']])['error'])->toBe('Despesa não encontrada.')
-        ->and(DB::table('expenses')->whereKey($data['expenseB'])->exists())->toBeTrue()
-        ->and(financeBotTool('complete_reminder', ['reminder_id' => $data['reminderB']])['error'])->toBe('Lembrete não encontrado.')
-        ->and(DB::table('expenses')->whereKey($data['expenseB'])->exists())->toBeTrue()
-        ->and(financeBotTool('delete_reminder', ['reminder_id' => $data['reminderB']])['error'])->toBe('Lembrete não encontrado.')
-        ->and(DB::table('expenses')->whereKey($data['expenseB'])->exists())->toBeTrue();
-
-    expect(DB::table('expenses')->whereKey($data['expenseB'])->exists())->toBeTrue()
-        ->and(DB::table('reminders')->whereKey($data['reminderB'])->value('is_completed'))->toBeFalse()
-        ->and(DB::table('reminders')->whereKey($data['reminderB'])->exists())->toBeTrue();
+    expect(DB::table('expenses')->whereKey($expenseB)->exists())->toBeTrue()
+        ->and(financeBotTool('delete_expense', ['expense_id' => $expenseB])['error'])->toBe('Despesa não encontrada.')
+        ->and(DB::table('expenses')->whereKey($expenseB)->exists())->toBeTrue()
+        ->and(financeBotTool('complete_reminder', ['reminder_id' => $reminderB])['error'])->toBe('Lembrete não encontrado.')
+        ->and(DB::table('reminders')->whereKey($reminderB)->value('is_completed'))->toBeFalse()
+        ->and(financeBotTool('delete_reminder', ['reminder_id' => $reminderB])['error'])->toBe('Lembrete não encontrado.')
+        ->and(DB::table('expenses')->whereKey($expenseB)->exists())->toBeTrue()
+        ->and(DB::table('reminders')->whereKey($reminderB)->exists())->toBeTrue();
 });
 
 test('FinanceBot financial summary only includes the authenticated users income and expenses', function () {
