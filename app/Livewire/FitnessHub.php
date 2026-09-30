@@ -381,6 +381,7 @@ class FitnessHub extends Component
             'activityDate' => 'required|date',
             'activityDistance' => 'nullable|numeric|min:0',
             'activityCalories' => 'nullable|numeric|min:0',
+            'activityPhoto' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
         ]);
 
         $user = Auth::user();
