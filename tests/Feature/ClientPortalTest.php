@@ -122,7 +122,9 @@ test('cliente não consegue enviar mensagem para ticket de outro cliente', funct
 test('cliente não consegue carregar mensagens de outro cliente', function () {
     $fixture = clientPortalFixture();
 
-    expect(fn () => Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_access_token])
+    session()->put('client_portal_id', $fixture['clientA']->id);
+
+    expect(fn () => Livewire::test(ClientPortal::class)
         ->set('activeTicketId', $fixture['ticketB']->id))
         ->toThrow(ModelNotFoundException::class);
 });
