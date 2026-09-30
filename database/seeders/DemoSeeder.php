@@ -97,7 +97,7 @@ class DemoSeeder extends Seeder
         );
         $eduardo->workspaces()->syncWithoutDetaching([$businessWs->id => ['role' => 'admin']]);
         $joao->workspaces()->syncWithoutDetaching([$businessWs->id => ['role' => 'member']]);
-        $eduardo->update(['current_workspace_id' => $businessWs->id]);
+        $eduardo->forceFill(['current_workspace_id' => $businessWs->id]]);
 
         // 5. CATEGORIAS DE DEMONSTRAÇÃO
         $catData = [
