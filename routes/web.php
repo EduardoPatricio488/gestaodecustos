@@ -447,8 +447,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/export/dashboard-pdf', [ExportController::class, 'dashboardPdf'])->name('export.dashboard.pdf');
     Route::get('/export/expenses', [ExportController::class, 'expensesPdf'])->name('export.expenses');
     Route::get('/export/empresa', [ExportController::class, 'businessExport'])->name('export.business');
-    Route::get('/loja/download/{purchase}/request', [StoreDownloadController::class, 'requestToken'])->name('store.download.request');
-    Route::get('/loja/download/{purchase}', [StoreDownloadController::class, 'download'])->name('store.download');
+    Route::get('/loja/download/{purchase}/request', [StoreDownloadController::class, 'requestToken'])->middleware('throttle:30,1')->name('store.download.request');
+    Route::get('/loja/download/{purchase}', [StoreDownloadController::class, 'download'])->middleware('throttle:30,1')->name('store.download');
     Route::post('/api/smartwatch-info', [SmartwatchController::class, 'info'])->middleware('throttle:ai');
     Route::post('/api/mifitness/import', [MiFitnessImportController::class, 'import'])->middleware('throttle:api')->name('mifitness.import');
     Route::post('/api/offline/expenses/sync', [OfflineExpenseController::class, 'sync'])->middleware('throttle:api')->name('api.offline.sync');
