@@ -12,6 +12,8 @@ class Supplier extends Model
 {
     use BelongsToWorkspace, LogsActivity;
 
+    protected $hidden = ['portal_token_hash'];
+
     protected $fillable = [
         'user_id', 'workspace_id', 'name', 'legal_name', 'tax_number', 'email', 'phone',
         'website', 'address', 'portal_token_hash', 'payment_terms',
