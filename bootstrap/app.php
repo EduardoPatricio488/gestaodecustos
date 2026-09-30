@@ -36,6 +36,12 @@ return Application::configure(basePath: dirname(__DIR__))
             '^127[.]0[.]0[.]1(:[0-9]+)?$',
         ]);
 
+        // A preferência de cookies é definida pelo navegador e lida pelo frontend.
+        // Mantemo-la em texto simples para que o backend consiga verificar a escolha de analytics.
+        $middleware->encryptCookies(except: [
+            'fp_cookie_consent',
+        ]);
+
         $middleware->web(append: [
             ForceHttps::class,
             SecurityHeaders::class,
