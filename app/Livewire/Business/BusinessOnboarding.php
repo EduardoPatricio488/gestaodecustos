@@ -118,7 +118,7 @@ class BusinessOnboarding extends Component
         }
 
         $user->workspaces()->syncWithoutDetaching([$workspace->id => ['role' => 'admin']]);
-        $user->update(['current_workspace_id' => $workspace->id]);
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         try {
             Mail::to($user->email)->send(new WelcomeBusinessMail($workspace));
