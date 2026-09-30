@@ -34,14 +34,10 @@ class Expense extends Model
                 throw new DomainException('Os valores da despesa são inválidos.');
             }
             if ($expense->category_id) {
-                $categoryQuery = Category::withoutGlobalScopes()
-                    ->whereKey($expense->category_id)
-                    ->where('workspace_id', $expense->workspace_id);
-
-                if (Workspace::whereKey($expense->workspace_id)->value('type') === 'personal') {
+                $categoryQuery = Category::withoutGlobalScopes()->whereKey($expense->category_id)->where('workspace_id', $expense->workspace_id);
+                if ($workspace?->type === 'personal') {
                     $categoryQuery->where('user_id', $expense->user_id);
                 }
-
                 if (! $categoryQuery->exists()) {
                     throw new DomainException('A categoria selecionada não pertence ao utilizador ou à empresa.');
                 }
@@ -52,52 +48,26 @@ class Expense extends Model
             if ($expense->cost_center_id && (int) CostCenter::withoutGlobalScopes()->whereKey($expense->cost_center_id)->value('workspace_id') !== (int) $expense->workspace_id) {
                 throw new DomainException('O centro de custo não pertence à empresa.');
             }
+            if ($expense->bank_account_id) {
+                $account = BankAccount::withoutGlobalScopes()->whereKey($expense->bank_account_id)->where('workspace_id', $expense->workspace_id)->first();
+                if (! $account) {
+                    throw new DomainException('A conta bancária selecionada não pertence ao workspace.');
+                }
+                if ($workspace?->type === 'personal' && (int) $account->user_id !== (int) $expense->user_id) {
+                    throw new DomainException('A conta bancária selecionada não pertence ao utilizador.');
+                }
+            }
             $expense->forceFill(['amount' => $amount, 'amount_paid' => $paid, 'vat_amount' => $vat, 'currency' => $transactionCurrency, 'amount_converted' => round((float) CurrencyService::convert($amount, $transactionCurrency, $workspaceCurrency), 2)]);
         });
     }
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function project(): BelongsTo
-    {
-        return $this->belongsTo(Project::class);
-    }
-
-    public function task(): BelongsTo
-    {
-        return $this->belongsTo(Task::class);
-    }
-
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(Category::class);
-    }
-
-    public function bankAccount(): BelongsTo
-    {
-        return $this->belongsTo(BankAccount::class);
-    }
-
-    public function supplier(): BelongsTo
-    {
-        return $this->belongsTo(Supplier::class);
-    }
-
-    public function costCenter(): BelongsTo
-    {
-        return $this->belongsTo(CostCenter::class);
-    }
-
-    public function payments(): HasMany
-    {
-        return $this->hasMany(PaymentAllocation::class);
-    }
-
-    public function getOutstandingAmountAttribute(): float
-    {
-        return max(0, round((float) $this->amount - (float) $this->amount_paid, 2));
-    }
+    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function project(): BelongsTo { return $this->belongsTo(Project::class); }
+    public function task(): BelongsTo { return $this->belongsTo(Task::class); }
+    public function category(): BelongsTo { return $this->belongsTo(Category::class); }
+    public function bankAccount(): BelongsTo { return $this->belongsTo(BankAccount::class); }
+    public function supplier(): BelongsTo { return $this->belongsTo(Supplier::class); }
+    public function costCenter(): BelongsTo { return $this->belongsTo(CostCenter::class); }
+    public function payments(): HasMany { return $this->hasMany(PaymentAllocation::class); }
+    public function getOutstandingAmountAttribute(): float { return max(0, round((float) $this->amount - (float) $this->amount_paid, 2)); }
 }
