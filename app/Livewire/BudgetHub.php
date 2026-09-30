@@ -128,7 +128,9 @@ class BudgetHub extends Component
                 ->orderByDesc('created_at')
                 ->limit(10)
                 ->get(),
-            'categoryOptions' => Category::where('workspace_id', $workspace->id)->orderBy('name')->get(),
+            'categoryOptions' => Category::where('workspace_id', $workspace->id)
+                ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+                ->orderBy('name')->get(),
         ]);
     }
 }
