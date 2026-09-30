@@ -17,6 +17,10 @@ class Client extends Model
         'status', 'address', 'notes', 'portal_token_hash',
     ];
 
+    protected $hidden = [
+        'portal_token_hash',
+    ];
+
     public static function findByPortalToken(string $token): ?self
     {
         $token = trim($token);
