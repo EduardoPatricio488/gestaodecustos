@@ -38,7 +38,7 @@ class AppServiceProvider extends ServiceProvider
         Carbon::setLocale('pt');
         if (str_contains(request()->getHost(), 'ngrok-free.app') || str_contains(request()->getHost(), 'ngrok-free.dev')) {
             URL::forceScheme('https');
-        } Route::middleware(['web', 'auth', 'plan:business'])->group(function () {
+        } Route::middleware(['web', 'auth', 'verified', 'plan:business'])->group(function () {
             Route::get('/empresa/equipa/permissoes', BusinessRolesHub::class)->name('hub.business.roles');
             Route::get('/empresa/pagamentos', BusinessSettlementHub::class)->name('hub.business.settlements');
             Route::get('/empresa/reconciliacao', BusinessReconciliationHub::class)->name('hub.business.reconciliation');
