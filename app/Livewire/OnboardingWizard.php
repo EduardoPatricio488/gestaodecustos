@@ -267,6 +267,7 @@ class OnboardingWizard extends Component
 
         return BankAccount::query()
             ->where('workspace_id', $workspaceId)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'bank_name', 'currency']);
