@@ -95,7 +95,7 @@ test('cliente consegue responder ao próprio ticket', function () {
 test('cliente não consegue abrir o ticket de outro cliente', function () {
     $fixture = clientPortalFixture();
 
-    expect(fn () => Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_token])
+    expect(fn () => Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_access_token])
         ->call('setActiveTicket', $fixture['ticketB']->id))
         ->toThrow(ModelNotFoundException::class);
 });
@@ -103,7 +103,7 @@ test('cliente não consegue abrir o ticket de outro cliente', function () {
 test('cliente não consegue enviar mensagem para ticket de outro cliente', function () {
     $fixture = clientPortalFixture();
 
-    expect(fn () => Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_token])
+    expect(fn () => Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_access_token])
         ->set('activeTicketId', $fixture['ticketB']->id)
         ->set('replyMessage', 'Mensagem indevida')
         ->call('sendReply'))
@@ -116,7 +116,7 @@ test('cliente não consegue enviar mensagem para ticket de outro cliente', funct
 test('cliente não consegue carregar mensagens de outro cliente', function () {
     $fixture = clientPortalFixture();
 
-    expect(fn () => Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_token])
+    expect(fn () => Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_access_token])
         ->set('activeTicketId', $fixture['ticketB']->id))
         ->toThrow(ModelNotFoundException::class);
 });
