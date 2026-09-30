@@ -156,6 +156,7 @@ class AiToolRegistry
     public function execute(User $user, Workspace $workspace, string $tool, array $args): array
     {
         $this->authorizeScope($user, $workspace);
+        $this->authorizeTool($user, $workspace, $tool);
 
         return match ($tool) {
             'get_financial_snapshot' => $this->snapshot($user, $workspace, $args),
