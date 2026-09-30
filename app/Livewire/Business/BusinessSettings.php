@@ -79,7 +79,7 @@ class BusinessSettings extends Component
             'legal_name' => 'nullable|string|max:200',
             'tax_number' => 'nullable|string|max:11',
             'business_email' => 'required|email:rfc|max:255',
-            'logo' => 'nullable|image|max:2048',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'initial_capital' => 'numeric|min:0',
             'currency' => 'required|string|size:3|in:EUR,USD,GBP,CHF,BRL,JPY',
             'country_code' => 'required|string|size:2|alpha',
@@ -130,6 +130,8 @@ class BusinessSettings extends Component
 
     public function leaveCompany()
     {
+        app(BusinessAccessService::class)->assert('manage_settings', auth()->user(), $this->workspace);
+
         $user = auth()->user();
         if ((int) $this->workspace->owner_id === (int) $user->id) {
             abort(403, 'O proprietário deve transferir a propriedade antes de sair.');
