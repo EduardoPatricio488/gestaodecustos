@@ -172,11 +172,11 @@
         <span class="text-[8px] font-black text-brand-400 uppercase tracking-widest">Chave Portal</span>
         <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono font-black text-white uppercase tracking-[0.15em]">
-                {{ $supplier->portal_token ?? '--- ---' }}
+                {{ $supplier->portal_token_hash ? 'Ativo' : 'Não configurado' }}
             </span>
-            @if($supplier->portal_token)
+            @if($supplier->portal_token_hash)
                 <button
-                    @click.stop="navigator.clipboard.writeText('{{ $supplier->portal_token }}')"
+                    @click.stop="navigator.clipboard.writeText('Gera um novo acesso no botão Portal')"
                     class="text-zinc-600 hover:text-white transition-colors"
                     title="Copiar Chave"
                 >
