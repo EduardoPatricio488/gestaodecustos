@@ -15,6 +15,12 @@ class EnsureBusinessWorkspaceAccess
         $user = $request->user();
         $access = app(BusinessAccessService::class);
 
+        // A saída da vista de colaborador deve continuar disponível mesmo quando
+        // o utilizador já não tem um workspace empresarial activo.
+        if ($user && $request->is('empresa/sair-vista-colaborador')) {
+            return $next($request);
+        }
+
         /*
          * O contexto é determinado pela área da aplicação:
          * - /empresa/* = workspace empresarial
