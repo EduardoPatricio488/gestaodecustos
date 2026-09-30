@@ -93,7 +93,7 @@ test('fornecedor A consegue responder ao próprio ticket', function () {
 test('fornecedor A não consegue abrir o ticket do fornecedor B', function () {
     $fixture = supplierPortalFixture();
 
-    expect(fn () => Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_token])
+    expect(fn () => Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_access_token])
         ->call('setActiveTicket', $fixture['ticketB']->id))
         ->toThrow(ModelNotFoundException::class);
 });
@@ -101,7 +101,7 @@ test('fornecedor A não consegue abrir o ticket do fornecedor B', function () {
 test('fornecedor A não consegue responder ao ticket do fornecedor B', function () {
     $fixture = supplierPortalFixture();
 
-    expect(fn () => Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_token])
+    expect(fn () => Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_access_token])
         ->set('activeTicketId', $fixture['ticketB']->id)
         ->set('replyMessage', 'Mensagem indevida')
         ->call('sendReply'))
@@ -114,7 +114,7 @@ test('fornecedor A não consegue responder ao ticket do fornecedor B', function 
 test('fornecedor A não consegue carregar mensagens do fornecedor B', function () {
     $fixture = supplierPortalFixture();
 
-    expect(fn () => Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_token])
+    expect(fn () => Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_access_token])
         ->set('activeTicketId', $fixture['ticketB']->id))
         ->toThrow(ModelNotFoundException::class);
 });
