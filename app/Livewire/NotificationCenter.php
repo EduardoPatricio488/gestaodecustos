@@ -17,7 +17,13 @@ class NotificationCenter extends Component
         $notification->markAsRead();
 
         if ($notification->link) {
-            return $this->redirect($notification->link, navigate: true);
+            $path = parse_url($notification->link, PHP_URL_PATH);
+            $query = parse_url($notification->link, PHP_URL_QUERY);
+
+            // As notificações só podem navegar dentro da própria aplicação.
+            if (is_string($path) && str_starts_with($path, '/') && ! str_starts_with($path, '//')) {
+                return $this->redirect($path.($query ? '?'.$query : ''), navigate: true);
+            }
         }
     }
 
