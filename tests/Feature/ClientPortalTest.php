@@ -72,7 +72,9 @@ function clientPortalFixture(): array
 test('cliente consegue ver apenas os próprios tickets', function () {
     $fixture = clientPortalFixture();
 
-    $component = Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_access_token]);
+    session()->put('client_portal_id', $fixture['clientA']->id);
+
+    $component = Livewire::test(ClientPortal::class);
 
     expect($component->viewData('tickets')->pluck('id')->all())
         ->toBe([$fixture['ticketA']->id]);
@@ -81,7 +83,9 @@ test('cliente consegue ver apenas os próprios tickets', function () {
 test('cliente consegue responder ao próprio ticket', function () {
     $fixture = clientPortalFixture();
 
-    Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_access_token])
+    session()->put('client_portal_id', $fixture['clientA']->id);
+
+    Livewire::test(ClientPortal::class)
         ->set('activeTicketId', $fixture['ticketA']->id)
         ->set('replyMessage', 'Resposta do Cliente A')
         ->call('sendReply');
@@ -93,7 +97,9 @@ test('cliente consegue responder ao próprio ticket', function () {
 test('cliente não consegue abrir o ticket de outro cliente', function () {
     $fixture = clientPortalFixture();
 
-    expect(fn () => Livewire::test(ClientPortal::class, ['token' => $fixture['clientA']->portal_access_token])
+    session()->put('client_portal_id', $fixture['clientA']->id);
+
+    expect(fn () => Livewire::test(ClientPortal::class)
         ->call('setActiveTicket', $fixture['ticketB']->id))
         ->toThrow(ModelNotFoundException::class);
 });
@@ -122,7 +128,9 @@ test('cliente não consegue carregar mensagens de outro cliente', function () {
 test('cliente B continua a utilizar os próprios tickets normalmente', function () {
     $fixture = clientPortalFixture();
 
-    $component = Livewire::test(ClientPortal::class, ['token' => $fixture['clientB']->portal_access_token])
+    session()->put('client_portal_id', $fixture['clientB']->id);
+
+    $component = Livewire::test(ClientPortal::class)
         ->call('setActiveTicket', $fixture['ticketB']->id)
         ->set('replyMessage', 'Resposta do Cliente B')
         ->call('sendReply');
