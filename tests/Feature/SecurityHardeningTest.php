@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -117,6 +118,30 @@ class SecurityHardeningTest extends TestCase
         $this->assertNotContains('portal_token', (new Supplier)->getFillable());
         $this->assertContains('portal_token_hash', (new Client)->getFillable());
         $this->assertContains('portal_token_hash', (new Supplier)->getFillable());
+    }
+
+    public function test_plaintext_bank_audit_access_code_column_is_removed(): void
+    {
+        $this->assertFalse(Schema::hasColumn('workspaces', 'audit_access_code'));
+        $this->assertContains('audit_token', (new Workspace)->getFillable());
+        $this->assertNotContains('audit_access_code', (new Workspace)->getFillable());
+    }
+
+    public function test_bank_audit_token_storage_is_hashed_and_expiring(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = Workspace::create([
+            'name' => 'Workspace Banco Seguro',
+            'type' => 'business',
+            'owner_id' => $owner->id,
+            'audit_token' => hash('sha256', 'placeholder'),
+            'audit_token_expires_at' => now()->addDays(30),
+            'audit_token_purpose' => 'bank_audit',
+        ]);
+
+        $this->assertNotSame('BancoToken1234567890', $workspace->audit_token);
+        $this->assertNotNull($workspace->audit_token_expires_at);
+        $this->assertSame('bank_audit', $workspace->audit_token_purpose);
     }
 
     public function test_security_headers_include_content_security_policy(): void
