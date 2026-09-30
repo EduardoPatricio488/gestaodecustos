@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Income;
 use App\Models\User;
+use App\Models\Workspace;
 
 class QuickCommandService
 {
