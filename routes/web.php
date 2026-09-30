@@ -263,8 +263,11 @@ Route::middleware('auth')->group(function () {
         return back()->withErrors(['code' => 'Código incorreto.']);
     })->middleware('throttle:10,1')->name('verification.verify-code');
 
-    Route::post('/logout', function () {
+    Route::post('/logout', function (Request $request) {
         Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect('/');
     })->name('logout');
