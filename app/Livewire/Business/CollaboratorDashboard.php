@@ -94,7 +94,7 @@ class CollaboratorDashboard extends Component
         if ($user->current_workspace_id) {
             $user->workspaces()->detach($user->current_workspace_id);
         }
-        $user->forceFill(['current_workspace_id' => null])->save(])->save();
+        $user->forceFill(['current_workspace_id' => null])->save();
 
         return redirect()->route('hub.business.gateway');
     }
