@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Traits\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\DomainException;
 
 class RecurringIncome extends Model
 {
@@ -32,7 +31,7 @@ class RecurringIncome extends Model
 
             $workspace = Workspace::withoutGlobalScopes()->find($income->workspace_id);
             if (! $workspace) {
-                throw new DomainException('O workspace do rendimento não existe.');
+                throw new \DomainException('O workspace do rendimento não existe.');
             }
 
             if ($income->bank_account_id) {
@@ -42,11 +41,11 @@ class RecurringIncome extends Model
                     ->first();
 
                 if (! $account) {
-                    throw new DomainException('A conta bancária selecionada não pertence ao workspace.');
+                    throw new \DomainException('A conta bancária selecionada não pertence ao workspace.');
                 }
 
                 if ($workspace->type === 'personal' && (int) $account->user_id !== (int) $income->user_id) {
-                    throw new DomainException('A conta bancária selecionada não pertence ao utilizador.');
+                    throw new \DomainException('A conta bancária selecionada não pertence ao utilizador.');
                 }
             }
 
@@ -55,7 +54,7 @@ class RecurringIncome extends Model
                     || (int) $workspace->owner_id === (int) $income->user_id;
 
                 if (! $isMember) {
-                    throw new DomainException('O utilizador do rendimento não pertence ao workspace.');
+                    throw new \DomainException('O utilizador do rendimento não pertence ao workspace.');
                 }
             }
 
