@@ -173,7 +173,7 @@ class ClientHub extends Component
             'portal_token_hash' => hash('sha256', $token),
         ])->saveQuietly();
 
-        $portalUrl = route('client.portal', ['token' => $token]);
+        $portalUrl = route('client.portal');
         RateLimiter::hit($rateLimitKey, 600);
 
         try {
