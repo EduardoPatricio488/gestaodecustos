@@ -171,7 +171,7 @@ class SecurityHardeningTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
-        $this->assertSessionMissing('sensitive_context');
+        $this->assertFalse(session()->has('sensitive_context'));
     }
 
     public function test_team_raise_modal_cannot_read_salary_from_another_workspace(): void
@@ -234,7 +234,7 @@ class SecurityHardeningTest extends TestCase
         foreach (['hub.business.roles', 'hub.business.settlements'] as $name) {
             $this->actingAs($user)
                 ->get(route($name))
-                ->assertRedirect(route('verification.notice'));
+                ->assertForbidden();
         }
     }
 
