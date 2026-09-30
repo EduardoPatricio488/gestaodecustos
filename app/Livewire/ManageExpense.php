@@ -129,6 +129,7 @@ class ManageExpense extends Component
         }
 
         $category = Category::where('workspace_id', auth()->user()->current_workspace_id)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
             ->find($value);
 
         if (! $category) {
@@ -157,7 +158,9 @@ class ManageExpense extends Component
             $imageData = base64_encode(file_get_contents($imageFullPath));
             $mimeType = $this->receipt->getMimeType() ?: 'image/jpeg';
 
-            $selectedCat = Category::where('workspace_id', auth()->user()->current_workspace_id)->find($this->category_id);
+            $selectedCat = Category::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+                ->find($this->category_id);
             $subsStr = ($selectedCat && isset($this->hubConfigs[$selectedCat->slug]))
                 ? implode(', ', $this->hubConfigs[$selectedCat->slug]['subs'])
                 : 'Geral, Outros';
@@ -248,7 +251,10 @@ PROMPT;
             'category_id' => 'required|integer',
         ]);
 
-        abort_unless(Category::where('workspace_id', auth()->user()->current_workspace_id)->whereKey($this->category_id)->exists(), 422, 'Categoria inválida.');
+        abort_unless(Category::where('workspace_id', auth()->user()->current_workspace_id)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+            ->whereKey($this->category_id)
+            ->exists(), 422, 'Categoria inválida.');
 
         if ($this->bankAccountId) {
             $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
@@ -314,9 +320,13 @@ PROMPT;
     public function render()
     {
         $wsId = auth()->user()->current_workspace_id;
-        $categories = Category::where('workspace_id', $wsId)->orderBy('order')->get();
+        $categories = Category::where('workspace_id', $wsId)
+            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+            ->orderBy('order')->get();
         $selectedCat = $this->category_id
-            ? Category::where('workspace_id', $wsId)->find($this->category_id)
+            ? Category::where('workspace_id', $wsId)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+                ->find($this->category_id)
             : null;
 
         $categoryFields = [];
