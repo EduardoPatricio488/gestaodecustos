@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Expense;
+use App\Services\BusinessAccessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -29,6 +30,9 @@ class OfflineExpenseController extends Controller
 
         $workspace = $user->currentWorkspace;
         abort_unless($workspace, 422, 'Não existe um espaço de trabalho ativo.');
+        if (in_array($workspace->type, ['business', 'company'], true)) {
+            app(BusinessAccessService::class)->assert('create_expense', $user, $workspace);
+        }
 
         $synced = [];
         $failed = [];
