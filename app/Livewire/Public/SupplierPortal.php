@@ -175,12 +175,21 @@ class SupplierPortal extends Component
                     ->orWhere('legal_name', 'like', '%'.$this->companySearch.'%');
             })
             ->orderBy('name')
-            ->limit(100)
+            ->limit(25)
             ->get(['id', 'name', 'legal_name']);
     }
 
     public function submitInvoice()
     {
+        $supplierId = (int) session('supplier_portal_id');
+        abort_unless($supplierId > 0, 403);
+
+        $supplier = Supplier::query()
+            ->whereKey($supplierId)
+            ->where('status', 'ativo')
+            ->first();
+        abort_unless($supplier, 403);
+
         $this->validate([
             'amount' => 'required|numeric|min:0.01',
             'invoice_doc' => 'required|file|mimes:pdf,jpg,png|max:10240',
