@@ -240,7 +240,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function currentRole(): string
     {
         if (! $this->current_workspace_id) {
-            return 'admin';
+            return 'member';
         }
 
         $workspace = $this->workspaces()
