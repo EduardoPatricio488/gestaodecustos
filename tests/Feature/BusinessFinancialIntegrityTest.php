@@ -17,7 +17,7 @@ class BusinessFinancialIntegrityTest extends TestCase
         $user = User::factory()->create();
         $workspace = Workspace::create(['name' => 'Empresa Teste', 'owner_id' => $user->id, 'type' => 'business', 'currency' => 'EUR']);
         $workspace->users()->attach($user->id, ['role' => 'admin']);
-        $user->update(['current_workspace_id' => $workspace->id]);
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
         $this->actingAs($user);
 
         $invoice = Invoice::create([
@@ -42,7 +42,7 @@ class BusinessFinancialIntegrityTest extends TestCase
         $second = Workspace::create(['name' => 'Empresa B', 'owner_id' => $user->id, 'type' => 'business', 'currency' => 'EUR']);
         $first->users()->attach($user->id, ['role' => 'admin']);
         $second->users()->attach($user->id, ['role' => 'admin']);
-        $user->update(['current_workspace_id' => $first->id]);
+        $user->forceFill(['current_workspace_id' => $first->id])->save();
         $this->actingAs($user);
 
         Invoice::create([
