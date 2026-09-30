@@ -3,6 +3,7 @@
 namespace App\Livewire\Business;
 
 use App\Models\BusinessDocument;
+use App\Services\BusinessAccessService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
@@ -46,8 +47,11 @@ class DocumentVault extends Component
 
     public function save()
     {
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $access->assert('manage_financials', auth()->user(), $workspace);
         $this->validate();
-        $workspaceId = auth()->user()->current_workspace_id;
+        $workspaceId = $workspace->id;
         $data = ['workspace_id' => $workspaceId, 'name' => $this->name, 'category' => $this->category, 'expiry_date' => $this->expiry_date, 'notes' => $this->notes];
 
         if ($this->file) {
@@ -76,7 +80,10 @@ class DocumentVault extends Component
 
     public function delete(int $id)
     {
-        $doc = BusinessDocument::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $access->assert('manage_financials', auth()->user(), $workspace);
+        $doc = BusinessDocument::where('workspace_id', $workspace->id)->findOrFail($id);
         if ($doc->file_path) {
             Storage::disk('local')->delete($doc->file_path);
         }
