@@ -111,6 +111,33 @@ import './offline-expenses';
     }, true);
 })();
 
+// Keep cookie consent actions isolated from global click handlers and modal controls.
+document.addEventListener('click', (event) => {
+    const button = event.target.closest?.('button');
+    if (!button) return;
+
+    const label = button.textContent?.replace(/\\s+/g, ' ').trim() || '';
+    const isCookieAction = label === 'Guardar preferências'
+        || label === 'Só necessários'
+        || label === 'Aceitar tudo';
+
+    if (!isCookieAction) return;
+
+    const cookieRoot = button.closest('[x-data]');
+    if (!cookieRoot || !cookieRoot.querySelector('#cookie-prefs-title, #cookie-consent-title')) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const data = window.Alpine?.$data?.(cookieRoot);
+    if (!data || typeof data.save !== 'function') return;
+
+    const analytics = button.textContent?.includes('Aceitar tudo')
+        || (label === 'Guardar preferências' && Boolean(data.analytics));
+
+    data.save(analytics ? 'analytics' : 'necessary');
+}, true);
+
 window.addEventListener('copy-to-clipboard', (event) => {
     const text = event.detail.text;
     if (!text) return;
