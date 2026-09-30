@@ -9,6 +9,7 @@ use App\Models\Workspace;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -106,18 +107,33 @@ class CareersHub extends Component
     public function authenticate()
     {
         $guard = Auth::guard('candidate');
+        $email = strtolower(trim((string) $this->email));
+        $rateKey = 'candidate-auth:'.sha1($email.'|'.request()->ip());
+
+        if (RateLimiter::tooManyAttempts($rateKey, 5)) {
+            $seconds = RateLimiter::availableIn($rateKey);
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'email' => "Demasiadas tentativas. Tenta novamente dentro de {$seconds} segundos.",
+            ]);
+        }
+
+        RateLimiter::hit($rateKey, 60);
 
         if ($this->isRegistering) {
             $this->validate(['name' => 'required|string|min:3|max:120', 'email' => 'required|email|max:255|unique:candidates,email', 'password' => 'required|string|min:8']);
-            $candidate = Candidate::create(['name' => trim($this->name), 'email' => strtolower(trim($this->email)), 'password' => $this->password]);
+            $candidate = Candidate::create(['name' => trim($this->name), 'email' => $email, 'password' => $this->password]);
             $guard->login($candidate);
+            RateLimiter::clear($rateKey);
         } else {
             $this->validate(['email' => 'required|email', 'password' => 'required']);
-            if (! $guard->attempt(['email' => $this->email, 'password' => $this->password])) {
+            if (! $guard->attempt(['email' => $email, 'password' => $this->password])) {
                 session()->flash('error', 'Credenciais inválidas.');
 
                 return;
             }
+
+            RateLimiter::clear($rateKey);
+            session()->regenerate();
         }
 
         $this->reset(['password']);
@@ -298,6 +314,8 @@ class CareersHub extends Component
     public function logout()
     {
         Auth::guard('candidate')->logout();
+        session()->invalidate();
+        session()->regenerateToken();
 
         return redirect('/');
     }
