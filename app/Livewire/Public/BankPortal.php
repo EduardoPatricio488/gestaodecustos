@@ -156,7 +156,7 @@ class BankPortal extends Component
         return Workspace::query()->whereIn('type', ['business', 'company', 'bussiness'])
             ->where(function ($query) {
                 $query->where('name', 'like', '%'.$this->companySearch.'%')->orWhere('legal_name', 'like', '%'.$this->companySearch.'%');
-            })->orderBy('name')->limit(100)->get(['id', 'name', 'legal_name']);
+            })->orderBy('name')->limit(25)->get(['id', 'name', 'legal_name']);
     }
 
     public function render()
