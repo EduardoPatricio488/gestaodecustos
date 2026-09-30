@@ -31,7 +31,7 @@ test('onboarding creates the configured bank account before income setup', funct
         'name' => 'As Minhas Finanças',
         'owner_id' => $user->id,
     ]);
-    $user->update(['current_workspace_id' => $workspace->id]);
+    $user->forceFill(['current_workspace_id' => $workspace->id])->save();
 
     $this->actingAs($user);
 
@@ -60,7 +60,7 @@ test('onboarding links the selected bank account to the recurring income', funct
         'name' => 'As Minhas Finanças',
         'owner_id' => $user->id,
     ]);
-    $user->update(['current_workspace_id' => $workspace->id]);
+    $user->forceFill(['current_workspace_id' => $workspace->id])->save();
     $account = BankAccount::create([
         'workspace_id' => $workspace->id,
         'user_id' => $user->id,
