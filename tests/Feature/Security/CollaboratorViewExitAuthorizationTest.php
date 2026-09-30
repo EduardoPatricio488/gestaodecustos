@@ -9,7 +9,7 @@ it('does not allow guests to change collaborator-view session state', function (
 });
 
 it('allows an authenticated user to leave collaborator view', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
 
     $this->actingAs($user)
         ->withSession(['viewing_as_collaborator_id' => 123])
