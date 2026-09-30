@@ -23,6 +23,7 @@ function supplierPortalFixture(): array
         'user_id' => $owner->id,
         'workspace_id' => $workspace->id,
         'name' => 'Fornecedor A',
+        'status' => 'ativo',
         'portal_token_hash' => hash('sha256', $supplierAToken),
     ]);
     $supplierBToken = bin2hex(random_bytes(32));
@@ -30,6 +31,7 @@ function supplierPortalFixture(): array
         'user_id' => $owner->id,
         'workspace_id' => $workspace->id,
         'name' => 'Fornecedor B',
+        'status' => 'ativo',
         'portal_token_hash' => hash('sha256', $supplierBToken),
     ]);
 
