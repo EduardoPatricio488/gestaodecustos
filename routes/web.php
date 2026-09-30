@@ -416,19 +416,19 @@ Route::post('/empresa/sair-vista-colaborador', function () {
 // 6. ÁREA DE ADMINISTRAÇÃO (APENAS EQUIPA INTERNA)
 // ══════════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
-    Route::get('/dashboard', AdminDashboard::class)->name('admin.dashboard');
+    Route::get('/dashboard', AdminDashboard::class)->name('admin.dashboard')->middleware('admin.only');
     Route::get('/planos-config', PlanManager::class)->name('admin.plans')->middleware('admin.only');
-    Route::get('/estatisticas', AnalyticsHub::class)->name('admin.stats');
+    Route::get('/estatisticas', AnalyticsHub::class)->name('admin.stats')->middleware('admin.only');
     Route::get('/ai-monitor', AiMonitor::class)->name('admin.ai');
-    Route::get('/produtividade', ProductivityHub::class)->name('admin.productivity');
-    Route::get('/lembretes', RemindersMonitor::class)->name('admin.reminders');
+    Route::get('/produtividade', ProductivityHub::class)->name('admin.productivity')->middleware('admin.only');
+    Route::get('/lembretes', RemindersMonitor::class)->name('admin.reminders')->middleware('admin.only');
     Route::get('/utilizadores', UserManagement::class)->name('admin.users')->middleware('admin.only');
     Route::get('/faturacao', AdminSubscriptionHub::class)->name('admin.billing')->middleware('admin.only');
     Route::get('/suporte-global', SupportManager::class)->name('admin.support')->middleware('admin.only');
     Route::get('/comunicacao', CommunicationManager::class)->name('admin.communication')->middleware('admin.only');
     Route::get('/gamificacao', GamificationHub::class)->name('admin.gamification')->middleware('admin.only');
     Route::get('/loja', StoreHub::class)->name('admin.store')->middleware('admin.only');
-    Route::get('/logs', GlobalLogs::class)->name('admin.logs');
+    Route::get('/logs', GlobalLogs::class)->name('admin.logs')->middleware('admin.only');
     Route::get('/configuracoes', SiteSettings::class)->name('admin.settings')->middleware('admin.only');
     Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])->name('admin.impersonate')->middleware('admin.only');
 });
