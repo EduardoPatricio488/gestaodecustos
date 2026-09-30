@@ -116,7 +116,7 @@ document.addEventListener('click', (event) => {
     const button = event.target.closest?.('button');
     if (!button) return;
 
-    const label = button.textContent?.replace(/\\s+/g, ' ').trim() || '';
+    const label = button.textContent?.replace(/\s+/g, ' ').trim() || '';
     const isCookieAction = label === 'Guardar preferências'
         || label === 'Só necessários'
         || label === 'Aceitar tudo';
@@ -126,16 +126,15 @@ document.addEventListener('click', (event) => {
     const cookieRoot = button.closest('[x-data]');
     if (!cookieRoot || !cookieRoot.querySelector('#cookie-prefs-title, #cookie-consent-title')) return;
 
+    // If Alpine has not initialized this component yet, do not interfere
+    // with its native @click handler.
+    const data = cookieRoot._x_dataStack?.find((entry) => entry && typeof entry.save === 'function');
+    if (!data) return;
+
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    const data = cookieRoot._x_dataStack?.find((entry) => entry && typeof entry.save === 'function');
-    if (!data) {
-        event.stopImmediatePropagation();
-        return;
-    }
-
-    const analytics = button.textContent?.includes('Aceitar tudo')
+    const analytics = label === 'Aceitar tudo'
         || (label === 'Guardar preferências' && Boolean(data.analytics));
 
     data.save(analytics ? 'analytics' : 'necessary');
