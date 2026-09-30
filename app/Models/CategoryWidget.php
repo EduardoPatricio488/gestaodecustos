@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class CategoryWidget extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'category_id', 'type', 'title', 'config', 'enabled', 'order',
+    ];
 
     protected $casts = [
         'enabled' => 'boolean',
