@@ -602,10 +602,10 @@ class TeamHub extends Component
     {
         app(BusinessAccessService::class)->assert('manage_team');
         $employee = Employee::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
-        $employee->update([
+        $employee->forceFill([
             'portal_token' => null,
             'invite_revoked_at' => now(),
-        ]);
+        ])->save();
 
         if ($this->tokenEmployeeId === $employee->id) {
             $this->generatedToken = '';
