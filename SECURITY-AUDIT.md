@@ -49,6 +49,16 @@ Date: 2026-09-29
 
 Database backups are implemented in the application and scheduled daily. The production environment must provide private S3-compatible storage credentials before the first backup can upload successfully. No credentials are stored in Git.
 
+## Hardening completed on 2026-09-30 (second pass)
+
+- Registration paths now use the application's centralized Laravel password policy instead of a standalone min:8 rule.
+- The Livewire registration verification code now uses random_int() instead of rand().
+- Business document vault mutations explicitly require the manage_financials workspace permission; viewers can no longer upload or delete documents through direct Livewire actions.
+- Business task mutations consistently reject the viewer workspace role while retaining self-service task management for employees.
+- Expense approval actions now use BusinessAccessService and the workspace approve_expenses permission, with an explicit is_company scope.
+- Absence approval/deletion and manager visibility now use workspace permissions instead of the platform-wide role/isAdminRole() shortcut.
+- Added regression coverage for viewer permissions and platform-role bypass attempts.
+
 ## Hardening completed on 2026-09-30
 
 - Business, employee and fitness image uploads now use an explicit allowlist (`jpg`, `jpeg`, `png`, `webp`) to prevent unsafe SVG/HTML-style uploads from being stored in public or user-accessible storage.
