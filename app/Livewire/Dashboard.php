@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -304,11 +305,22 @@ class Dashboard extends Component
 
     public function generateInviteCode()
     {
-        $workspace = Auth::user()->currentWorkspace;
-        if ($workspace) {
-            $workspace->update(['invite_code' => strtoupper(Str::random(8))]);
-            $this->dispatch('toast', text: 'Novo código de convite gerado!');
-        }
+        $user = Auth::user();
+        $workspace = $user->currentWorkspace;
+
+        abort_unless($workspace && $user->workspaces()->whereKey($workspace->id)->exists(), 403);
+
+        $role = $workspace->owner_id === $user->id
+            ? 'owner'
+            : (string) $workspace->users()->whereKey($user->id)->first()?->pivot?->role;
+
+        abort_unless(in_array(strtolower($role), ['owner', 'admin'], true), 403);
+
+        $key = 'workspace-invite:'.$user->id.':'.$workspace->id;
+        abort_unless(RateLimiter::attempt($key, 5, fn () => true, 300), 429);
+
+        $workspace->update(['invite_code' => strtoupper(Str::random(8))]);
+        $this->dispatch('toast', text: 'Novo código de convite gerado!');
     }
 
     public function requestPrivacyUnlock()
@@ -318,8 +330,11 @@ class Dashboard extends Component
 
     public function joinWorkspace()
     {
-        $this->validate(['inviteCodeInput' => 'required|string|exists:workspaces,invite_code']);
-        $workspace = Workspace::where('invite_code', $this->inviteCodeInput)->first();
+        $this->validate(['inviteCodeInput' => 'required|string|size:8']);
+        $key = 'workspace-join:'.Auth::id().':'.request()->ip();
+        abort_unless(RateLimiter::attempt($key, 10, fn () => true, 600), 429);
+
+        $workspace = Workspace::where('invite_code', strtoupper(trim($this->inviteCodeInput)))->firstOrFail();
         if ($workspace->users()->where('user_id', Auth::id())->exists()) {
             $this->dispatch('toast', variant: 'error', text: 'Já fazes parte desta conta.');
 
