@@ -442,7 +442,7 @@ class ManageFamily extends Component
         }
 
         auth()->user()->workspaces()->attach($workspace->id, ['role' => 'member']);
-        auth()->user()->update(['current_workspace_id' => $workspace->id]);
+        auth()->user()->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         return redirect()->route('dashboard');
     }
