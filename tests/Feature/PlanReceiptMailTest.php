@@ -32,6 +32,9 @@ it('sends a receipt email when a subscription is paid and when the monthly invoi
             'client_reference_id' => $user->id,
             'amount_total' => 1999,
             'currency' => 'eur',
+            'payment_status' => 'paid',
+            'status' => 'complete',
+            'mode' => 'subscription',
             'metadata' => ['plan_slug' => 'pro'],
         ]],
     ]));
