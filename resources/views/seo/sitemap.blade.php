@@ -1,4 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
+@php
+    echo '<?xml version="1.0" encoding="UTF-8"?>';
+@endphp
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 @foreach ($urls ?? [] as $item)
     @php
@@ -8,9 +10,9 @@
     @endphp
     @if ($loc !== '')
     <url>
-        <loc>{{ $loc }}</loc>
-        <changefreq>{{ $changefreq }}</changefreq>
-        <priority>{{ $priority }}</priority>
+        <loc>{!! $loc !!}</loc>
+        <changefreq>{!! $changefreq !!}</changefreq>
+        <priority>{!! $priority !!}</priority>
     </url>
     @endif
 @endforeach
