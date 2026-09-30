@@ -135,7 +135,7 @@ class BusinessSecurityRegressionTest extends TestCase
         $owner = User::factory()->create();
         $workspace = Workspace::create(['name' => 'Empresa A', 'type' => 'business', 'owner_id' => $owner->id, 'currency' => 'EUR']);
         $workspace->users()->attach($owner->id, ['role' => 'admin']);
-        $owner->update(['current_workspace_id' => $workspace->id]);
+        $owner->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         return [$owner, $workspace];
     }
