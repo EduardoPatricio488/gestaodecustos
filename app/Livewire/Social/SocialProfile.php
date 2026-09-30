@@ -80,7 +80,7 @@ class SocialProfile extends Component
             return null;
         }
 
-        return SocialPost::with([
+        $post = SocialPost::with([
             'user:id,name,username,avatar_path',
             'comments.user:id,name,username,avatar_path',
             'likes:id,post_id,user_id',
