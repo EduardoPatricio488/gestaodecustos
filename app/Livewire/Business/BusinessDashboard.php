@@ -26,7 +26,7 @@ class BusinessDashboard extends Component
         $workspace = $user->workspaces()->whereKey($workspaceId)->firstOrFail();
         abort_unless(in_array($workspace->type, ['business', 'company'], true), 403);
 
-        $user->update(['current_workspace_id' => $workspaceId]);
+        $user->forceFill(['current_workspace_id' => $workspaceId])->save();
         session()->forget('viewing_as_collaborator_id');
         $this->redirect(route('hub.business.dashboard'), navigate: true);
     }
@@ -47,7 +47,7 @@ class BusinessDashboard extends Component
         $user = Auth::user();
         $personalWs = $user->workspaces()->where('type', 'personal')->first();
         if ($personalWs) {
-            $user->update(['current_workspace_id' => $personalWs->id]);
+            $user->forceFill(['current_workspace_id' => $personalWs->id])->save();
             session()->forget('viewing_as_collaborator_id');
         }
 
