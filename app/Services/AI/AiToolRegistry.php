@@ -146,7 +146,7 @@ class AiToolRegistry
                 'summary' => (string) ($args['title'] ?? 'Lembrete'),
                 'details' => $args + ['workspace' => $workspace->name],
             ],
-            'complete_reminder', 'delete_reminder', 'delete_expense' => $this->previewExistingRecordAction($workspace, $tool, $args),
+            'complete_reminder', 'delete_reminder', 'delete_expense' => $this->previewExistingRecordAction($user, $workspace, $tool, $args),
             default => throw new RuntimeException('Tool de escrita não suportada para preview.'),
         };
     }
@@ -156,13 +156,13 @@ class AiToolRegistry
         $this->authorizeScope($user, $workspace);
 
         return match ($tool) {
-            'get_financial_snapshot' => $this->snapshot($workspace, $args),
-            'list_expenses' => $this->expenses($workspace, $args),
-            'list_incomes' => $this->incomes($workspace, $args),
-            'list_goals' => $this->goals($workspace),
-            'list_subscriptions' => $this->subscriptions($workspace),
-            'list_investments' => $this->investments($workspace),
-            'list_categories' => $this->categories($workspace),
+            'get_financial_snapshot' => $this->snapshot($user, $workspace, $args),
+            'list_expenses' => $this->expenses($user, $workspace, $args),
+            'list_incomes' => $this->incomes($user, $workspace, $args),
+            'list_goals' => $this->goals($user, $workspace),
+            'list_subscriptions' => $this->subscriptions($user, $workspace),
+            'list_investments' => $this->investments($user, $workspace),
+            'list_categories' => $this->categories($user, $workspace),
             'list_business_clients' => $this->businessClients($workspace),
             'list_business_invoices' => $this->businessInvoices($workspace),
             'list_business_suppliers' => $this->businessSuppliers($workspace),
@@ -172,9 +172,9 @@ class AiToolRegistry
             'create_subscription' => $this->createSubscription($user, $workspace, $args),
             'create_investment' => $this->createInvestment($user, $workspace, $args),
             'create_reminder' => $this->createReminder($user, $workspace, $args),
-            'complete_reminder' => $this->completeReminder($workspace, $args),
-            'delete_reminder' => $this->deleteReminder($workspace, $args),
-            'delete_expense' => $this->deleteExpense($workspace, $args),
+            'complete_reminder' => $this->completeReminder($user, $workspace, $args),
+            'delete_reminder' => $this->deleteReminder($user, $workspace, $args),
+            'delete_expense' => $this->deleteExpense($user, $workspace, $args),
             default => throw new RuntimeException("Ferramenta desconhecida: {$tool}"),
         };
     }
@@ -191,17 +191,19 @@ class AiToolRegistry
         }
     }
 
-    private function snapshot(Workspace $workspace, array $args): array
+    private function snapshot(User $user, Workspace $workspace, array $args): array
     {
         $period = ! empty($args['period']) ? Carbon::createFromFormat('Y-m', $args['period'])->startOfMonth() : now()->startOfMonth();
 
-        return app(FinancialIntelligenceService::class)->snapshot($workspace, $period);
+        return app(FinancialIntelligenceService::class)->snapshot($workspace, $period, $user->id);
     }
 
-    private function expenses(Workspace $workspace, array $args): array
+    private function expenses(User $user, Workspace $workspace, array $args): array
     {
         $days = min(3660, max(1, (int) ($args['days'] ?? 30)));
-        $query = $workspace->expenses()->where('spent_at', '>=', now()->subDays($days))->with('category');
+        $query = $workspace->expenses()->where('spent_at', '>=', now()->subDays($days))
+            ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->with('category');
         if (! empty($args['category_name'])) {
             $needle = mb_strtolower((string) $args['category_name']);
             $query->whereHas('category', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ["%{$needle}%"]));
@@ -222,10 +224,12 @@ class AiToolRegistry
         ];
     }
 
-    private function incomes(Workspace $workspace, array $args): array
+    private function incomes(User $user, Workspace $workspace, array $args): array
     {
         $days = min(3660, max(1, (int) ($args['days'] ?? 30)));
-        $items = $workspace->incomes()->where('received_at', '>=', now()->subDays($days))->orderByDesc('received_at')->limit(100)->get();
+        $items = $workspace->incomes()->where('received_at', '>=', now()->subDays($days))
+            ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->orderByDesc('received_at')->limit(100)->get();
 
         return [
             'period_days' => $days,
@@ -240,9 +244,9 @@ class AiToolRegistry
         ];
     }
 
-    private function goals(Workspace $workspace): array
+    private function goals(User $user, Workspace $workspace): array
     {
-        $items = Goal::where('workspace_id', $workspace->id)->get();
+        $items = Goal::where('workspace_id', $workspace->id)->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->get();
 
         return ['count' => $items->count(), 'items' => $items->map(fn ($goal) => [
             'id' => $goal->id,
@@ -254,9 +258,9 @@ class AiToolRegistry
         ])->values()->all()];
     }
 
-    private function subscriptions(Workspace $workspace): array
+    private function subscriptions(User $user, Workspace $workspace): array
     {
-        $items = Subscription::where('workspace_id', $workspace->id)->where('is_active', true)->get();
+        $items = Subscription::where('workspace_id', $workspace->id)->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->where('is_active', true)->get();
 
         return [
             'count' => $items->count(),
@@ -271,9 +275,9 @@ class AiToolRegistry
         ];
     }
 
-    private function investments(Workspace $workspace): array
+    private function investments(User $user, Workspace $workspace): array
     {
-        $items = Investment::where('workspace_id', $workspace->id)->get();
+        $items = Investment::where('workspace_id', $workspace->id)->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->get();
 
         return [
             'count' => $items->count(),
@@ -290,9 +294,9 @@ class AiToolRegistry
         ];
     }
 
-    private function categories(Workspace $workspace): array
+    private function categories(User $user, Workspace $workspace): array
     {
-        $items = Category::where('workspace_id', $workspace->id)->orderBy('name')->pluck('name');
+        $items = Category::where('workspace_id', $workspace->id)->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->orderBy('name')->pluck('name');
 
         return ['count' => $items->count(), 'items' => $items->values()->all()];
     }
@@ -448,9 +452,9 @@ class AiToolRegistry
         return ['success' => true, 'id' => $reminder->id, 'title' => $reminder->title];
     }
 
-    private function completeReminder(Workspace $workspace, array $args): array
+    private function completeReminder(User $user, Workspace $workspace, array $args): array
     {
-        $reminder = Reminder::where('workspace_id', $workspace->id)->find($args['reminder_id'] ?? null);
+        $reminder = Reminder::where('workspace_id', $workspace->id)->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->find($args['reminder_id'] ?? null);
         if (! $reminder) {
             throw new RuntimeException('Lembrete não encontrado.');
         }
@@ -459,7 +463,7 @@ class AiToolRegistry
         return ['success' => true, 'id' => $reminder->id];
     }
 
-    private function deleteReminder(Workspace $workspace, array $args): array
+    private function deleteReminder(User $user, Workspace $workspace, array $args): array
     {
         $reminder = Reminder::where('workspace_id', $workspace->id)->find($args['reminder_id'] ?? null);
         if (! $reminder) {
@@ -471,9 +475,9 @@ class AiToolRegistry
         return ['success' => true, 'id' => $id];
     }
 
-    private function deleteExpense(Workspace $workspace, array $args): array
+    private function deleteExpense(User $user, Workspace $workspace, array $args): array
     {
-        $expense = Expense::where('workspace_id', $workspace->id)->find($args['expense_id'] ?? null);
+        $expense = Expense::where('workspace_id', $workspace->id)->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->find($args['expense_id'] ?? null);
         if (! $expense) {
             throw new RuntimeException('Despesa não encontrada.');
         }
@@ -483,7 +487,7 @@ class AiToolRegistry
         return ['success' => true, 'id' => $id];
     }
 
-    private function previewExistingRecordAction(Workspace $workspace, string $tool, array $args): array
+    private function previewExistingRecordAction(User $user, Workspace $workspace, string $tool, array $args): array
     {
         if ($tool === 'delete_expense') {
             $record = Expense::where('workspace_id', $workspace->id)->find($args['expense_id'] ?? null);
@@ -508,7 +512,9 @@ class AiToolRegistry
             return null;
         }
 
-        return Category::where('workspace_id', $workspace->id)->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first()
+        return Category::where('workspace_id', $workspace->id)
+            ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first()
             ?? Category::create(['user_id' => $user->id, 'workspace_id' => $workspace->id, 'name' => ucfirst($name)]);
     }
 
