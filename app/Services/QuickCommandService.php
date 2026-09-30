@@ -82,6 +82,7 @@ class QuickCommandService
     {
         $workspace = $user->currentWorkspace;
         $spent = (float) Expense::where('workspace_id', $workspace->id)
+            ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
             ->where('spent_at', '>=', now()->startOfMonth())
             ->sum('amount');
 
@@ -96,8 +97,8 @@ class QuickCommandService
     {
         $workspace = $user->currentWorkspace;
         $start = now()->startOfMonth();
-        $spent = (float) Expense::where('workspace_id', $workspace->id)->where('spent_at', '>=', $start)->sum('amount');
-        $earned = (float) Income::where('workspace_id', $workspace->id)->where('received_at', '>=', $start)->sum('amount');
+        $spent = (float) Expense::where('workspace_id', $workspace->id)->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->where('spent_at', '>=', $start)->sum('amount');
+        $earned = (float) Income::where('workspace_id', $workspace->id)->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->where('received_at', '>=', $start)->sum('amount');
         $net = $earned - $spent;
 
         return [
@@ -119,12 +120,15 @@ class QuickCommandService
             foreach ($words as $word) {
                 if (str_contains($desc, $word)) {
                     return Category::where('workspace_id', $workspaceId)
+                        ->when(Workspace::whereKey($workspaceId)->value('type') === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                         ->where(fn ($q) => $q->where('slug', $catName)->orWhere('name', 'like', "%{$catName}%"))
                         ->first();
                 }
             }
         }
 
-        return Category::where('workspace_id', $workspaceId)->first();
+        return Category::where('workspace_id', $workspaceId)
+            ->when(Workspace::whereKey($workspaceId)->value('type') === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+            ->first();
     }
 }
