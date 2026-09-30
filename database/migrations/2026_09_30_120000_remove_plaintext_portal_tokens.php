@@ -15,9 +15,17 @@ return new class extends Migration
 
             DB::table($table)
                 ->whereNotNull('portal_token')
-                ->update(['portal_token_hash' => DB::raw("SHA2(portal_token, 256)")]);
-
-            DB::table($table)->update(['portal_token' => null]);
+                ->orderBy('id')
+                ->chunkById(500, function ($rows) use ($table) {
+                    foreach ($rows as $row) {
+                        DB::table($table)
+                            ->where('id', $row->id)
+                            ->update([
+                                'portal_token_hash' => hash('sha256', (string) $row->portal_token),
+                                'portal_token' => null,
+                            ]);
+                    }
+                });
         }
     }
 
