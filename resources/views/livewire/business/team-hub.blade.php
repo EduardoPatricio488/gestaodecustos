@@ -830,7 +830,9 @@
                             />
 
                             @php
-                                $currentSalary = \App\Models\Employee::find($raiseEmployeeId)?->salary ?? 0;
+                                $currentSalary = $raiseEmployeeId
+                                    ? \App\Models\Employee::where('workspace_id', $workspace->id)->find($raiseEmployeeId)?->salary ?? 0
+                                    : 0;
                             @endphp
 
                             <div class="mt-6 flex justify-between items-end border-t border-zinc-200 dark:border-zinc-800 pt-4">
