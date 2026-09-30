@@ -8,7 +8,7 @@
         const rect = el.getBoundingClientRect();
         return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && rect.width > 0 && rect.height > 0;
     };
-    const dialogs = () => Array.from(document.querySelectorAll('[role="dialog"]:not([data-no-auto-close]), dialog[open]:not([data-no-auto-close])')).filter(VISIBLE);
+    const dialogs = () => Array.from(document.querySelectorAll('[role="dialog"]:not([aria-labelledby="cookie-consent-title"]):not([aria-labelledby="cookie-prefs-title"]), dialog[open]:not([aria-labelledby="cookie-consent-title"]):not([aria-labelledby="cookie-prefs-title"])')).filter(VISIBLE);
     const topDialog = () => dialogs().at(-1) || null;
     const closeButtons = (dialog) => Array.from(dialog.querySelectorAll('button, [role="button"]')).filter((button) => {
         const label = (button.getAttribute('aria-label') || button.textContent || '').replace(/\\s+/g, ' ').trim();
