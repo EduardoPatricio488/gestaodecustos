@@ -57,6 +57,7 @@ class SmartAlertService
         $lastMonthEnd = now()->subMonth()->endOfMonth();
 
         $categories = Expense::where('workspace_id', $workspace->id)
+            ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
             ->where('is_company', false)
             ->where('spent_at', '>=', $lastMonth)
             ->with('category')
@@ -100,6 +101,7 @@ class SmartAlertService
 
         $cutoff = now()->subDays(60);
         $inactiveCount = Subscription::where('workspace_id', $workspace->id)
+            ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
             ->where('is_active', true)
             ->where('updated_at', '<', $cutoff)
             ->count();
@@ -167,7 +169,9 @@ class SmartAlertService
             ->pluck('total', 'category_id');
 
         foreach ($personalCurrent as $categoryId => $spentCurrent) {
-            $category = Category::find($categoryId);
+            $category = Category::where('workspace_id', $workspace->id)
+                ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                ->find($categoryId);
             if (! $category) {
                 continue;
             }
@@ -216,6 +220,7 @@ class SmartAlertService
         }
 
         $debts = Debt::where('workspace_id', $workspace->id)
+            ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
             ->where('is_paid', false)
             ->whereBetween('due_at', [now(), now()->addDays(7)])
             ->get();
@@ -236,6 +241,7 @@ class SmartAlertService
         }
 
         $reminders = Reminder::where('workspace_id', $workspace->id)
+            ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
             ->where('is_completed', false)
             ->whereBetween('remind_at', [now(), now()->addDays(3)])
             ->get();
