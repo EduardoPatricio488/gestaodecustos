@@ -81,7 +81,7 @@ class CollaboratorDashboard extends Component
         $user = Auth::user();
         $personalWs = $user->workspaces()->where('type', 'personal')->first();
         if ($personalWs) {
-            $user->forceFill(['current_workspace_id' => $personalWs->id])->save(])->save();
+            $user->forceFill(['current_workspace_id' => $personalWs->id])->save();
         }
         session()->forget('viewing_as_collaborator_id');
 
