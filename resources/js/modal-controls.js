@@ -6,7 +6,7 @@
 
     const CLOSE_TEXT = /^(fechar|close|close modal|dismiss|descartar|discard)$/i;
     const CLOSE_LABEL = /^(fechar|close|close modal|dismiss)$/i;
-    const MODAL_SELECTOR = '[role="dialog"], dialog, [data-flux-modal]';
+    const MODAL_SELECTOR = '[role="dialog"]:not([data-no-auto-close]), dialog:not([data-no-auto-close]), [data-flux-modal]:not([data-no-auto-close])';
 
     // app.js historically registered a generic capture listener that treated
     // Cancel/Discard buttons as modal close controls. Prevent that legacy
