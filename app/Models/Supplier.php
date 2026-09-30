@@ -14,7 +14,7 @@ class Supplier extends Model
 
     protected $fillable = [
         'user_id', 'workspace_id', 'name', 'legal_name', 'tax_number', 'email', 'phone',
-        'website', 'address', 'portal_token', 'portal_token_hash', 'payment_terms',
+        'website', 'address', 'portal_token_hash', 'payment_terms',
     ];
 
     public static function findByPortalToken(string $token): ?self
