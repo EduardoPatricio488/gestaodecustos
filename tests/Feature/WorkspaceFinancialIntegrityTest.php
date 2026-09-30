@@ -44,7 +44,7 @@ test('bank transfers cannot reference accounts from another workspace', function
     ]);
 
     $this->actingAs($user);
-    $user->update(['current_workspace_id' => $workspace->id]);
+    $user->forceFill(['current_workspace_id' => $workspace->id])->save();
     $localAccount = BankAccount::create([
         'workspace_id' => $workspace->id,
         'user_id' => $user->id,
@@ -82,7 +82,7 @@ test('bank reserves cannot reference accounts from another workspace', function 
     ]);
 
     $this->actingAs($user);
-    $user->update(['current_workspace_id' => $workspace->id]);
+    $user->forceFill(['current_workspace_id' => $workspace->id])->save();
 
     expect(fn () => BankReserve::create([
         'workspace_id' => $workspace->id,
@@ -116,7 +116,7 @@ test('goal contributions cannot reference goals or incomes from another workspac
     ]);
 
     $this->actingAs($user);
-    $user->update(['current_workspace_id' => $workspace->id]);
+    $user->forceFill(['current_workspace_id' => $workspace->id])->save();
 
     expect(fn () => GoalContribution::create([
         'workspace_id' => $workspace->id,
@@ -144,7 +144,7 @@ test('auto savings rules reject invalid percentages and foreign goals', function
     ]);
 
     $this->actingAs($user);
-    $user->update(['current_workspace_id' => $workspace->id]);
+    $user->forceFill(['current_workspace_id' => $workspace->id])->save();
 
     expect(fn () => AutoSavingsRule::create([
         'workspace_id' => $workspace->id,
@@ -179,7 +179,7 @@ test('bank transactions cannot reference accounts from another workspace', funct
     ]);
 
     $this->actingAs($user);
-    $user->update(['current_workspace_id' => $workspace->id]);
+    $user->forceFill(['current_workspace_id' => $workspace->id])->save();
 
     expect(fn () => BankTransaction::create([
         'workspace_id' => $workspace->id,
