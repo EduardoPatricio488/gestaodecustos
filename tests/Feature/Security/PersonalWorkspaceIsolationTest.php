@@ -1,6 +1,8 @@
 <?php
 
 use App\Livewire\FinanceBot;
+use App\Models\Expense;
+use App\Models\Reminder;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\BancoService;
@@ -50,16 +52,14 @@ function personalIsolationFixture(): array
         'updated_at' => now(),
     ]);
 
-    $expenseB = DB::table('expenses')->insertGetId([
+    $expenseB = Expense::create([
         'user_id' => $attacker->id,
         'workspace_id' => $workspace->id,
         'category_id' => $categoryB,
         'amount' => 999,
         'description' => 'SEGREDO B',
         'spent_at' => now()->toDateString(),
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    ])->id;
 
     $incomeA = DB::table('incomes')->insertGetId([
         'user_id' => $owner->id,
@@ -215,7 +215,7 @@ function personalIsolationFixture(): array
         'updated_at' => now(),
     ]);
 
-    $reminderB = DB::table('reminders')->insertGetId([
+    $reminderB = Reminder::create([
         'user_id' => $attacker->id,
         'workspace_id' => $workspace->id,
         'title' => 'SEGREDO LEMBRETE B',
@@ -223,9 +223,7 @@ function personalIsolationFixture(): array
         'priority' => 'high',
         'frequency' => 'once',
         'is_completed' => false,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    ])->id;
 
     return compact(
         'owner',
