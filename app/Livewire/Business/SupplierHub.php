@@ -175,6 +175,8 @@ class SupplierHub extends Component
             $supplier = (clone $supplierQuery)->where('tax_number', $taxNumber)->first();
         }
 
+        $token = $this->generateUniquePortalToken();
+
         if (! $supplier) {
             $supplier = Supplier::create([
                 'user_id' => auth()->id(),
@@ -184,7 +186,7 @@ class SupplierHub extends Component
                 'tax_number' => $taxNumber ?: null,
                 'email' => $request->requester_email,
                 'portal_token' => null,
-                'portal_token_hash' => hash('sha256', $this->generateUniquePortalToken()),
+                'portal_token_hash' => hash('sha256', $token),
             ]);
         } else {
             $supplier->update([
@@ -192,7 +194,7 @@ class SupplierHub extends Component
                 'email' => $supplier->email ?: $request->requester_email,
                 'tax_number' => $supplier->tax_number ?: ($taxNumber ?: null),
                 'portal_token' => null,
-                'portal_token_hash' => hash('sha256', $this->generateUniquePortalToken()),
+                'portal_token_hash' => hash('sha256', $token),
             ]);
             $supplier->refresh();
         }
@@ -201,7 +203,7 @@ class SupplierHub extends Component
         Mail::to($supplier->email)->send(new SupplierPortalAccessMail(
             $supplier,
             auth()->user()->currentWorkspace,
-            $supplier->portal_token,
+            $token,
             $portalUrl,
         ));
 
