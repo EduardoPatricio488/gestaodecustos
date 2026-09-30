@@ -332,6 +332,7 @@ class SubscriptionHub extends Component
 
         abort_unless(
             Category::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                 ->whereKey($this->category_id)
                 ->exists(),
             422,
