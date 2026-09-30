@@ -32,7 +32,10 @@ class SecurityHardeningTest extends TestCase
             'admin.logs',
             'admin.ai',
         ] as $name) {
-            $this->assertContains('admin.only', Route::getRoutes()->getByName($name)->gatherMiddleware());
+            $route = Route::getRoutes()->getByName($name);
+
+            $this->assertNotNull($route, "A rota {$name} não está registada.");
+            $this->assertContains('admin.only', $route->gatherMiddleware());
         }
     }
 
@@ -44,7 +47,10 @@ class SecurityHardeningTest extends TestCase
             'hub.business.reconciliation',
             'hub.business.cost-centers',
         ] as $name) {
-            $this->assertContains('verified', Route::getRoutes()->getByName($name)->gatherMiddleware());
+            $route = Route::getRoutes()->getByName($name);
+
+            $this->assertNotNull($route, "A rota {$name} não está registada.");
+            $this->assertContains('verified', $route->gatherMiddleware());
         }
     }
 
@@ -155,7 +161,7 @@ class SecurityHardeningTest extends TestCase
         $response->assertHeader('Content-Security-Policy');
     }
 
-    public function test_logout_invalidates_the_session_and_rotates_the_csrf_token(): void
+    public function test_logout_invalidates_the_session(): void
     {
         $user = User::factory()->create();
 
