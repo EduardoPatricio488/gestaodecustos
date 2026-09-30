@@ -95,7 +95,10 @@ class ManageExpense extends Component
 
     public function mount(?Expense $expense = null): void
     {
-        $this->previousUrl = url()->previous();
+        $previous = url()->previous();
+        $currentHost = parse_url(url('/'), PHP_URL_HOST);
+        $previousHost = parse_url($previous, PHP_URL_HOST);
+        $this->previousUrl = $previousHost === null || $previousHost === $currentHost ? $previous : null;
 
         if ($expense && $expense->exists) {
             $this->expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)
@@ -301,8 +304,8 @@ PROMPT;
         $this->receipt = null;
 
         $target = ($this->previousUrl && $this->previousUrl !== url()->current())
-                  ? $this->previousUrl
-                  : route('expenses');
+            ? $this->previousUrl
+            : route('expenses');
 
         return $this->redirect($target, navigate: true);
     }
