@@ -6,6 +6,7 @@ use App\Livewire\Business\TeamHub;
 use App\Livewire\ClientPortal;
 use App\Livewire\Public\SupplierDashboard;
 use App\Livewire\Public\SupplierPortal;
+use App\Models\AppNotification;
 use App\Models\Client;
 use App\Models\Employee;
 use App\Models\Supplier;
@@ -204,4 +205,39 @@ class SecurityHardeningTest extends TestCase
             ->assertDontSee('9 876,54');
     }
 
+    public function test_notification_links_cannot_redirect_to_external_hosts(): void
+    {
+        $user = User::factory()->create();
+
+        $notification = AppNotification::create([
+            'user_id' => $user->id,
+            'title' => 'Notificação maliciosa',
+            'message' => 'Teste',
+            'type' => 'danger',
+            'link' => 'https://evil.example/phishing',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(\App\Livewire\NotificationCenter::class)
+            ->call('readAndNavigate', $notification->id)
+            ->assertNoRedirect();
+    }
+
+    public function test_notification_links_can_only_use_internal_paths(): void
+    {
+        $user = User::factory()->create();
+
+        $notification = AppNotification::create([
+            'user_id' => $user->id,
+            'title' => 'Notificação interna',
+            'message' => 'Teste',
+            'type' => 'info',
+            'link' => '/dashboard?from=notification',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(\App\Livewire\NotificationCenter::class)
+            ->call('readAndNavigate', $notification->id)
+            ->assertRedirect('/dashboard?from=notification');
+    }
 }
