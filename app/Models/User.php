@@ -106,7 +106,6 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'email',
         'password',
         'locale',
-        'current_workspace_id',
         'onboarding_completed',
         // Campos de privilégio/plano não são mass assignable.
 
