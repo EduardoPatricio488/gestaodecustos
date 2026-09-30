@@ -15,17 +15,11 @@ use Livewire\Component;
 class BankPortal extends Component
 {
     public $company_nif = '';
-
     public $token = '';
-
     public $companySearch = '';
-
     public $selectedCompanyId = null;
-
     public $bankName = '';
-
     public $requestEmail = '';
-
     public $requestSent = false;
 
     #[Layout('layouts.guest')]
@@ -36,7 +30,6 @@ class BankPortal extends Component
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
             session()->flash('error', 'CREDENCIAIS INVÁLIDAS.');
-
             return;
         }
 
@@ -60,7 +53,6 @@ class BankPortal extends Component
             RateLimiter::clear($rateLimitKey);
             session()->regenerate();
             session()->put('bank_portal_workspace_id', $workspace->id);
-
             return redirect()->route('bank.dashboard');
         }
 
@@ -84,7 +76,6 @@ class BankPortal extends Component
     {
         $domain = strtolower((string) substr(strrchr($email, '@') ?: '', 1));
         $freeProviders = ['gmail.com', 'googlemail.com', 'hotmail.com', 'outlook.com', 'live.com', 'msn.com', 'yahoo.com', 'yahoo.pt', 'icloud.com', 'me.com', 'aol.com', 'proton.me', 'protonmail.com', 'gmx.com', 'mail.com', 'sapo.pt', 'iol.pt'];
-
         return $domain !== '' && ! in_array($domain, $freeProviders, true) && str_contains($domain, '.');
     }
 
@@ -102,29 +93,29 @@ class BankPortal extends Component
         ]);
 
         $email = strtolower(trim($this->requestEmail));
+        $ipKey = 'bank-portal-request-ip:'.sha1((string) request()->ip());
         $rateLimitKey = 'bank-portal-request:'.sha1($email.'|'.request()->ip());
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
-            $this->addError('requestEmail', 'Demasiados pedidos. Tenta novamente mais tarde.');
 
+        if (RateLimiter::tooManyAttempts($ipKey, 10) || RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $this->addError('requestEmail', 'Demasiados pedidos. Tenta novamente mais tarde.');
             return;
         }
+
+        RateLimiter::hit($ipKey, 300);
         RateLimiter::hit($rateLimitKey, 300);
 
         if (! $this->isInstitutionalEmail($email)) {
             $this->addError('requestEmail', 'É necessário utilizar um email institucional do banco.');
-
             return;
         }
 
         $workspace = Workspace::whereKey($this->selectedCompanyId)->whereIn('type', ['business', 'company', 'bussiness'])->first();
         if (! $workspace) {
             $this->addError('selectedCompanyId', 'A empresa selecionada não está disponível.');
-
             return;
         }
         if (! filled($workspace->business_email)) {
             $this->addError('selectedCompanyId', 'Esta empresa ainda não tem um email empresarial configurado.');
-
             return;
         }
 
@@ -133,7 +124,6 @@ class BankPortal extends Component
             ->where('status', 'pending')->exists();
         if ($pending) {
             $this->addError('requestEmail', 'Já existe um pedido pendente deste banco para esta empresa.');
-
             return;
         }
 
