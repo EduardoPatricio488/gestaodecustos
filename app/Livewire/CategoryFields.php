@@ -33,10 +33,29 @@ class CategoryFields extends Component
 
     public function mount(Category $category)
     {
-        if ($category->workspace_id !== auth()->user()->current_workspace_id) {
+        if ((int) $category->workspace_id !== (int) auth()->user()->current_workspace_id) {
             abort(403);
         }
+
+        $workspace = auth()->user()->currentWorkspace;
+        if ($workspace?->type === 'personal') {
+            abort_unless((int) $category->user_id === (int) auth()->id(), 403);
+        } else {
+            app(\\App\\Services\\BusinessAccessService::class)->assert('manage_financials', auth()->user(), $workspace);
+        }
+
         $this->category = $category;
+    }
+
+    private function authorizeMutation(): void
+    {
+        $workspace = auth()->user()->currentWorkspace;
+        if ($workspace?->type === 'personal') {
+            abort_unless((int) $this->category->user_id === (int) auth()->id(), 403);
+            return;
+        }
+
+        app(\\App\\Services\\BusinessAccessService::class)->assert('manage_financials', auth()->user(), $workspace);
     }
 
     // --- CARREGAR DADOS PARA EDIÇÃO ---
@@ -64,6 +83,7 @@ class CategoryFields extends Component
     // --- SALVAR (CRIAR OU ATUALIZAR) ---
     public function saveField()
     {
+        $this->authorizeMutation();
         $this->validate();
 
         $data = [
@@ -101,6 +121,7 @@ class CategoryFields extends Component
 
     public function updateOrder($items)
     {
+        $this->authorizeMutation();
         foreach ($items as $item) {
             $this->category->fields()->whereKey($item['value'])->update(['order' => $item['order']]);
         }
@@ -108,6 +129,7 @@ class CategoryFields extends Component
 
     public function removeField($id)
     {
+        $this->authorizeMutation();
         $this->category->fields()->findOrFail($id)->delete();
         if ($this->editingFieldId == $id) {
             $this->cancelEdit();
