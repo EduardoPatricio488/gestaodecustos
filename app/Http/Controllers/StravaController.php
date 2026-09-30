@@ -28,8 +28,13 @@ class StravaController extends Controller
      */
     public function callback(Request $request)
     {
-        // Verifica state CSRF
-        if ($request->input('state') !== session('strava_state')) {
+        // Verifica e consome o state CSRF uma única vez.
+        $expectedState = (string) session('strava_state', '');
+        $providedState = (string) $request->input('state', '');
+
+        session()->forget('strava_state');
+
+        if ($expectedState === '' || $providedState === '' || ! hash_equals($expectedState, $providedState)) {
             return redirect()->route('hub.fitness')
                 ->with('error', 'Autorização Strava inválida (state mismatch).');
         }
@@ -40,6 +45,12 @@ class StravaController extends Controller
         }
 
         $code = $request->input('code');
+
+        if (! is_string($code) || $code === '' || strlen($code) > 2048) {
+            return redirect()->route('hub.fitness')
+                ->with('error', 'Código de autorização Strava inválido.');
+        }
+
         $data = $this->strava->exchangeCode($code);
 
         if (empty($data['access_token'])) {
