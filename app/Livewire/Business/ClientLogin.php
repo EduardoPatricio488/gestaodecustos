@@ -61,7 +61,9 @@ class ClientLogin extends Component
             RateLimiter::clear($rateLimitKey);
             session()->regenerate();
 
-            return redirect()->route('client.portal', ['token' => $cleanTokenInput]);
+            session()->put('client_portal_id', $client->id);
+
+            return redirect()->route('client.portal');
         }
 
         session()->flash('error', 'CREDENCIAIS INVÁLIDAS. VERIFICA O NIF DA EMPRESA E O CÓDIGO.');
