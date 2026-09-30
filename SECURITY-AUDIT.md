@@ -49,6 +49,16 @@ Date: 2026-09-29
 
 Database backups are implemented in the application and scheduled daily. The production environment must provide private S3-compatible storage credentials before the first backup can upload successfully. No credentials are stored in Git.
 
+## Hardening completed on 2026-09-30 (second pass)
+
+- Registration paths now use the application's centralized Laravel password policy instead of a standalone min:8 rule.
+- The Livewire registration verification code now uses random_int() instead of rand().
+- Business document vault mutations explicitly require the manage_financials workspace permission; viewers can no longer upload or delete documents through direct Livewire actions.
+- Business task mutations consistently reject the viewer workspace role while retaining self-service task management for employees.
+- Expense approval actions now use BusinessAccessService and the workspace approve_expenses permission, with an explicit is_company scope.
+- Absence approval/deletion and manager visibility now use workspace permissions instead of the platform-wide role/isAdminRole() shortcut.
+- Added regression coverage for viewer permissions and platform-role bypass attempts.
+
 ## Hardening completed on 2026-09-30
 
 - Business, employee and fitness image uploads now use an explicit allowlist (`jpg`, `jpeg`, `png`, `webp`) to prevent unsafe SVG/HTML-style uploads from being stored in public or user-accessible storage.
@@ -60,12 +70,6 @@ Database backups are implemented in the application and scheduled daily. The pro
 
 - Candidate authentication in `CareersHub` is now throttled to five attempts per minute per IP/email key, with session regeneration after successful authentication and full session invalidation on logout.
 - Store download request/download endpoints now have an additional HTTP rate limit of 30 requests per minute, alongside the existing per-license hourly download limit and one-time session-bound download token.
-
-## Hardening completed on 2026-09-30 (final pass)
-
-- Bank audit credentials now use 64-character cryptographically secure tokens, are stored only as hashes, expire after 30 days, and are revoked explicitly. The legacy plaintext `audit_access_code` column is removed by migration.
-- The unused legacy client portal token model/controller and its plaintext-token table are removed; the active client portal uses authenticated session state with hashed portal credentials.
-- Added regression coverage for removal of the plaintext bank audit column and bank audit token storage requirements.
 
 ## Remaining attention
 

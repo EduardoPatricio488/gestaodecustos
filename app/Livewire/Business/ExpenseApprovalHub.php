@@ -3,6 +3,7 @@
 namespace App\Livewire\Business;
 
 use App\Models\Expense;
+use App\Services\BusinessAccessService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -12,15 +13,19 @@ class ExpenseApprovalHub extends Component
     // Funções de decisão (CEO)
     public function approve($id)
     {
-        abort_unless(auth()->user()->isOwner() || auth()->user()->isAdminRole(), 403);
-        Expense::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id)->update(['status' => 'aprovado']);
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $access->assert('approve_expenses', auth()->user(), $workspace);
+        Expense::where('workspace_id', $workspace->id)->where('is_company', true)->findOrFail($id)->update(['status' => 'aprovado']);
         $this->dispatch('toast', variant: 'success', text: 'Despesa aprovada!');
     }
 
     public function reject($id)
     {
-        abort_unless(auth()->user()->isOwner() || auth()->user()->isAdminRole(), 403);
-        Expense::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id)->update(['status' => 'rejeitado']);
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $access->assert('approve_expenses', auth()->user(), $workspace);
+        Expense::where('workspace_id', $workspace->id)->where('is_company', true)->findOrFail($id)->update(['status' => 'rejeitado']);
         $this->dispatch('toast', variant: 'warning', text: 'Despesa rejeitada.');
     }
 

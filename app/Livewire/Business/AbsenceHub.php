@@ -35,8 +35,10 @@ class AbsenceHub extends Component
      */
     public function approve($id)
     {
-        abort_unless(auth()->user()->isOwner() || auth()->user()->isAdminRole(), 403);
-        Absence::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id)->update(['status' => 'aprovado']);
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $access->assert('manage_team', auth()->user(), $workspace);
+        Absence::where('workspace_id', $workspace->id)->findOrFail($id)->update(['status' => 'aprovado']);
         $this->dispatch('toast', variant: 'success', text: 'Pedido aprovado com sucesso!');
     }
 
@@ -45,13 +47,16 @@ class AbsenceHub extends Component
      */
     public function delete($id)
     {
-        $absence = Absence::where('workspace_id', auth()->user()->current_workspace_id)->find($id);
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace();
+        $absence = Absence::where('workspace_id', $workspace->id)->find($id);
         if (! $absence) {
             return;
         }
 
         $isOwnerOfRecord = $absence->employee && $absence->employee->user_id === auth()->id();
-        abort_unless(auth()->user()->isOwner() || auth()->user()->isAdminRole() || $isOwnerOfRecord, 403);
+        $canManage = $access->can('manage_team', auth()->user(), $workspace);
+        abort_unless($canManage || $isOwnerOfRecord, 403);
 
         $absence->delete();
         $this->dispatch('toast', variant: 'warning', text: 'Registo removido.');
@@ -123,7 +128,7 @@ class AbsenceHub extends Component
         $workspace = $user->currentWorkspace;
 
         // USANDO A MESMA LÓGICA DA SIDEBAR QUE JÁ FUNCIONA
-        $isManager = $user->isAdminRole() || $user->isOwner();
+        $isManager = app(BusinessAccessService::class)->can('manage_team', $user, $workspace);
 
         $query = $workspace->absences()->with('employee');
 
