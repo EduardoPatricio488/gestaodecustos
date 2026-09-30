@@ -119,7 +119,9 @@ test('fornecedor A não consegue responder ao ticket do fornecedor B', function 
 test('fornecedor A não consegue carregar mensagens do fornecedor B', function () {
     $fixture = supplierPortalFixture();
 
-    expect(fn () => Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_access_token])
+    session()->put('supplier_portal_id', $fixture['supplierA']->id);
+
+    expect(fn () => Livewire::test(SupplierDashboard::class)
         ->set('activeTicketId', $fixture['ticketB']->id))
         ->toThrow(ModelNotFoundException::class);
 });
