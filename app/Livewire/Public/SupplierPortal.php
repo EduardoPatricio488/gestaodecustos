@@ -68,13 +68,7 @@ class SupplierPortal extends Component
         // Primeiro localizamos o fornecedor pelo código. Depois confirmamos
         // que o NIF da empresa desse fornecedor corresponde ao NIF introduzido.
         $supplier = Supplier::query()
-            ->where(function ($query) use ($cleanTokenInput) {
-                $query->where('portal_token_hash', hash('sha256', $cleanTokenInput))
-                    ->orWhere(function ($legacy) use ($cleanTokenInput) {
-                        $legacy->whereNotNull('portal_token')
-                            ->where('portal_token', $cleanTokenInput);
-                    });
-            })
+            ->where('portal_token_hash', hash('sha256', $cleanTokenInput))
             ->with('workspace')
             ->first();
 
