@@ -80,7 +80,7 @@ class BudgetService
             ->when(! $isBusiness, fn ($query) => $query->where('user_id', $userId))
             ->orderBy('order')
             ->get()
-            ->map(function (Category $category) use ($workspace, $start, $end, $isBusiness) {
+            ->map(function (Category $category) use ($workspace, $start, $end, $isBusiness, $userId) {
                 $spent = (float) Expense::where('workspace_id', $workspace->id)
                     ->when(! $isBusiness, fn ($query) => $query->where('user_id', $userId))
                     ->where('category_id', $category->id)
