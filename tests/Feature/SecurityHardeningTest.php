@@ -184,7 +184,7 @@ class SecurityHardeningTest extends TestCase
             'currency' => 'EUR',
         ]);
         $workspace->users()->attach($owner->id, ['role' => 'admin']);
-        $owner->update(['current_workspace_id' => $workspace->id]);
+        $owner->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         $foreignOwner = User::factory()->create();
         $foreignWorkspace = Workspace::create([
