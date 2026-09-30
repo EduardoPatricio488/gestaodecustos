@@ -26,15 +26,21 @@ class ClientPortal extends Component
 
     public $replyMessage = '';
 
-    public function mount($token)
+    public function mount($token = null)
     {
-        $rateLimitKey = 'client-portal-token:'.sha1(request()->ip());
-        abort_if(RateLimiter::tooManyAttempts($rateLimitKey, 20), 429);
-        RateLimiter::hit($rateLimitKey, 60);
+        if ($token !== null) {
+            $rateLimitKey = 'client-portal-token:'.sha1(request()->ip());
+            abort_if(RateLimiter::tooManyAttempts($rateLimitKey, 20), 429);
+            RateLimiter::hit($rateLimitKey, 60);
+            $client = Client::findByPortalToken($token);
+            abort_unless($client, 404);
+            session()->put('client_portal_id', $client->id);
+        }
 
-        $this->client = Client::findByPortalToken($token);
-
-        abort_unless($this->client, 404);
+        $clientId = session('client_portal_id');
+        abort_unless($clientId, 401);
+        $this->client = Client::with('workspace')->find($clientId);
+        abort_unless($this->client, 401);
     }
 
     public function sendTicket()
