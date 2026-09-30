@@ -735,7 +735,7 @@ class OnboardingWizard extends Component
 
                 // IMPORTANTE: Se o utilizador não tiver um ID de workspace definido no perfil, definimos agora
                 if (! $user->current_workspace_id) {
-                    $user->update(['current_workspace_id' => $workspace->id]);
+                    $user->forceFill(['current_workspace_id' => $workspace->id])->save();
                 }
 
                 // LIMPAR A CACHE: Isto força a Sidebar e o Header a lerem o nome novo imediatamente
