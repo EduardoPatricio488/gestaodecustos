@@ -21,6 +21,7 @@ use App\Services\StoreEntitlementService;
 use App\Services\SubscriptionCheckoutService;
 use App\Services\SubscriptionCycleService;
 use App\Services\WellnessFinanceService;
+use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -137,13 +138,23 @@ class Dashboard extends Component
         $this->marketPrices = Cache::flexible('market_prices_all', [300, 1800], function () {
             $result = [];
             try {
-                $response = Http::connectTimeout(3)->timeout(6)->get('https://api.coingecko.com/api/v3/simple/price', [
-                    'ids' => 'bitcoin,ethereum,solana,binancecoin,ripple,cardano,avalanche-2,polkadot,chainlink,dogecoin,matic-network,uniswap',
-                    'vs_currencies' => 'eur',
-                    'include_24hr_change' => 'true',
-                ]);
-                if ($response->successful()) {
-                    $data = $response->json();
+                $responses = Http::pool(function (Pool $pool) {
+                    return [
+                        'crypto' => $pool->as('crypto')->connectTimeout(3)->timeout(6)->get('https://api.coingecko.com/api/v3/simple/price', [
+                            'ids' => 'bitcoin,ethereum,solana,binancecoin,ripple,cardano,avalanche-2,polkadot,chainlink,dogecoin,matic-network,uniswap',
+                            'vs_currencies' => 'eur',
+                            'include_24hr_change' => 'true',
+                        ]),
+                        'stocks' => $pool->as('stocks')->connectTimeout(1)->timeout(2)->withHeaders(['User-Agent' => 'Mozilla/5.0'])->get('https://query1.finance.yahoo.com/v7/finance/quote', [
+                            'symbols' => 'NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,NFLX,AMD,TSM,SPY,QQQ,VTI,VOO,IUSA.L,CSPX.L,VWCE.DE,GC=F,CL=F',
+                            'lang' => 'en-US',
+                        ]),
+                    ];
+                });
+
+                $crypto = $responses['crypto'];
+                if ($crypto->successful()) {
+                    $data = $crypto->json();
                     $map = [
                         'BTC' => 'bitcoin', 'ETH' => 'ethereum', 'SOL' => 'solana', 'BNB' => 'binancecoin',
                         'XRP' => 'ripple', 'ADA' => 'cardano', 'AVAX' => 'avalanche-2', 'DOT' => 'polkadot',
@@ -158,19 +169,10 @@ class Dashboard extends Component
                         }
                     }
                 }
-            } catch (\Exception $e) {
-            }
 
-            try {
-                $symbols = 'NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,NFLX,AMD,TSM,SPY,QQQ,VTI,VOO,IUSA.L,CSPX.L,VWCE.DE,GC=F,CL=F';
-                $response = Http::connectTimeout(1)->timeout(2)
-                    ->withHeaders(['User-Agent' => 'Mozilla/5.0'])
-                    ->get('https://query1.finance.yahoo.com/v7/finance/quote', [
-                        'symbols' => $symbols,
-                        'lang' => 'en-US',
-                    ]);
-                if ($response->successful()) {
-                    $quotes = $response->json()['quoteResponse']['result'] ?? [];
+                $stocks = $responses['stocks'];
+                if ($stocks->successful()) {
+                    $quotes = $stocks->json()['quoteResponse']['result'] ?? [];
                     $nameMap = [
                         'NVDA' => 'NVDA', 'AAPL' => 'AAPL', 'MSFT' => 'MSFT', 'AMZN' => 'AMZN', 'GOOGL' => 'GOOGL',
                         'META' => 'META', 'TSLA' => 'TSLA', 'NFLX' => 'NFLX', 'AMD' => 'AMD', 'TSM' => 'TSM',
@@ -186,9 +188,9 @@ class Dashboard extends Component
                         ];
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
+                Log::debug('Falha ao atualizar preços de mercado no dashboard: '.$e->getMessage());
             }
-
             return $result;
         });
 
@@ -375,66 +377,50 @@ class Dashboard extends Component
             [300, 1800],
             function () use ($currentWs, $user) {
                 $insights = [];
-                try {
-                    $indices = Http::connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^GSPC,^IXIC,^GDAXI,^FCHI,^FTSE'])->json()['quoteResponse']['result'];
-                    foreach ($indices as $i) {
-                        $insights[] = "ÍNDICE: {$i['shortName']} ".number_format($i['regularMarketPrice'], 2).' ('.number_format($i['regularMarketChangePercent'], 2).'%)';
-                    }
-                } catch (\Exception $e) {
+            try {
+                $responses = Http::pool(function (Pool $pool) {
+                    return [
+                        'indices' => $pool->as('indices')->connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^GSPC,^IXIC,^GDAXI,^FCHI,^FTSE']),
+                        'metals' => $pool->as('metals')->connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'GC=F,SI=F,PL=F,PA=F']),
+                        'energy' => $pool->as('energy')->connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'CL=F,NG=F,CO1.F']),
+                        'inflation' => $pool->as('inflation')->connectTimeout(1)->timeout(2)->get('https://api.worldbank.org/v2/country/EU/indicator/FP.CPI.TOTL.ZG?format=json'),
+                        'unemployment' => $pool->as('unemployment')->connectTimeout(1)->timeout(2)->get('https://api.worldbank.org/v2/country/PRT/indicator/SL.UEM.TOTL.ZS?format=json'),
+                        'fx' => $pool->as('fx')->connectTimeout(1)->timeout(1)->get('https://api.exchangerate.host/latest?base=EUR'),
+                        'weather' => $pool->as('weather')->connectTimeout(1)->timeout(2)->get('https://api.open-meteo.com/v1/forecast?latitude=38.7&longitude=-9.1&current_weather=true'),
+                        'vix' => $pool->as('vix')->connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^VIX']),
+                        'bdi' => $pool->as('bdi')->connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^BDI']),
+                    ];
+                });
+
+                foreach ($responses['indices']->json()['quoteResponse']['result'] ?? [] as $i) {
+                    $insights[] = "ÍNDICE: {$i['shortName']} ".number_format($i['regularMarketPrice'], 2).' ('.number_format($i['regularMarketChangePercent'], 2).'%)';
                 }
-                try {
-                    $metals = Http::connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'GC=F,SI=F,PL=F,PA=F'])->json()['quoteResponse']['result'];
-                    foreach ($metals as $m) {
-                        $insights[] = "METAIS: {$m['symbol']} ".number_format($m['regularMarketPrice'], 2).' ('.number_format($m['regularMarketChangePercent'], 2).'%)';
-                    }
-                } catch (\Exception $e) {
+                foreach ($responses['metals']->json()['quoteResponse']['result'] ?? [] as $m) {
+                    $insights[] = "METAIS: {$m['symbol']} ".number_format($m['regularMarketPrice'], 2).' ('.number_format($m['regularMarketChangePercent'], 2).'%)';
                 }
-                try {
-                    $energy = Http::connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'CL=F,NG=F,CO1.F'])->json()['quoteResponse']['result'];
-                    foreach ($energy as $e) {
-                        $insights[] = "ENERGIA: {$e['symbol']} ".number_format($e['regularMarketPrice'], 2).' ('.number_format($e['regularMarketChangePercent'], 2).'%)';
-                    }
-                } catch (\Exception $e) {
+                foreach ($responses['energy']->json()['quoteResponse']['result'] ?? [] as $item) {
+                    $insights[] = "ENERGIA: {$item['symbol']} ".number_format($item['regularMarketPrice'], 2).' ('.number_format($item['regularMarketChangePercent'], 2).'%)';
                 }
-                try {
-                    $inflationEU = Http::connectTimeout(1)->timeout(2)->get('https://api.worldbank.org/v2/country/EU/indicator/FP.CPI.TOTL.ZG?format=json')->json();
-                    if (isset($inflationEU[1][0]['value'])) {
-                        $insights[] = 'MACRO: Inflação UE '.number_format($inflationEU[1][0]['value'], 1).'%';
-                    }
-                } catch (\Exception $e) {
+                $inflation = $responses['inflation']->json();
+                if (isset($inflation[1][0]['value'])) $insights[] = 'MACRO: Inflação UE '.number_format($inflation[1][0]['value'], 1).'%';
+                $unemployment = $responses['unemployment']->json();
+                if (isset($unemployment[1][0]['value'])) $insights[] = 'MACRO: Desemprego PT '.number_format($unemployment[1][0]['value'], 1).'%';
+                $fx = $responses['fx']->json();
+                if (isset($fx['rates'])) {
+                    $insights[] = 'FX: EUR/JPY '.number_format($fx['rates']['JPY'] ?? 0, 2);
+                    $insights[] = 'FX: EUR/CHF '.number_format($fx['rates']['CHF'] ?? 0, 3);
+                    $insights[] = 'FX: EUR/AUD '.number_format($fx['rates']['AUD'] ?? 0, 3);
+                    $insights[] = 'FX: EUR/CAD '.number_format($fx['rates']['CAD'] ?? 0, 3);
                 }
-                try {
-                    $unemploymentPT = Http::connectTimeout(1)->timeout(2)->get('https://api.worldbank.org/v2/country/PRT/indicator/SL.UEM.TOTL.ZS?format=json')->json();
-                    if (isset($unemploymentPT[1][0]['value'])) {
-                        $insights[] = 'MACRO: Desemprego PT '.number_format($unemploymentPT[1][0]['value'], 1).'%';
-                    }
-                } catch (\Exception $e) {
-                }
-                try {
-                    $fx = Http::connectTimeout(1)->timeout(1)->get('https://api.exchangerate.host/latest?base=EUR')->json();
-                    $insights[] = 'FX: EUR/JPY '.number_format($fx['rates']['JPY'], 2);
-                    $insights[] = 'FX: EUR/CHF '.number_format($fx['rates']['CHF'], 3);
-                    $insights[] = 'FX: EUR/AUD '.number_format($fx['rates']['AUD'], 3);
-                    $insights[] = 'FX: EUR/CAD '.number_format($fx['rates']['CAD'], 3);
-                } catch (\Exception $e) {
-                }
-                try {
-                    $weather = Http::connectTimeout(1)->timeout(2)->get('https://api.open-meteo.com/v1/forecast?latitude=38.7&longitude=-9.1&current_weather=true')->json();
-                    $temp = $weather['current_weather']['temperature'];
-                    $wind = $weather['current_weather']['windspeed'];
-                    $insights[] = "CLIMA: Lisboa {$temp}ºC • Vento {$wind}km/h";
-                } catch (\Exception $e) {
-                }
-                try {
-                    $vix = Http::connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^VIX'])->json()['quoteResponse']['result'][0];
-                    $insights[] = 'RISCO: VIX '.number_format($vix['regularMarketPrice'], 2).' ('.number_format($vix['regularMarketChangePercent'], 2).'%)';
-                } catch (\Exception $e) {
-                }
-                try {
-                    $bdi = Http::connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^BDI'])->json()['quoteResponse']['result'][0];
-                    $insights[] = 'LOGÍSTICA: Baltic Dry Index '.number_format($bdi['regularMarketPrice'], 0);
-                } catch (\Exception $e) {
-                }
+                $weather = $responses['weather']->json();
+                if (isset($weather['current_weather'])) $insights[] = "CLIMA: Lisboa {$weather['current_weather']['temperature']}ºC • Vento {$weather['current_weather']['windspeed']}km/h";
+                $vix = $responses['vix']->json()['quoteResponse']['result'][0] ?? null;
+                if ($vix) $insights[] = 'RISCO: VIX '.number_format($vix['regularMarketPrice'], 2).' ('.number_format($vix['regularMarketChangePercent'], 2).'%)';
+                $bdi = $responses['bdi']->json()['quoteResponse']['result'][0] ?? null;
+                if ($bdi) $insights[] = 'LOGÍSTICA: Baltic Dry Index '.number_format($bdi['regularMarketPrice'], 0);
+            } catch (\Throwable $e) {
+                Log::debug('Falha ao obter dados externos dos insights do dashboard: '.$e->getMessage());
+            }
 
                 $monthStart = now()->startOfMonth();
                 $monthEnd = now()->endOfMonth();
