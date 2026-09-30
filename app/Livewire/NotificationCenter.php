@@ -21,7 +21,12 @@ class NotificationCenter extends Component
             $query = parse_url($notification->link, PHP_URL_QUERY);
 
             // As notificações só podem navegar dentro da própria aplicação.
-            if (is_string($path) && str_starts_with($path, '/') && ! str_starts_with($path, '//')) {
+            if (
+                is_string($path)
+                && str_starts_with($path, '/')
+                && ! str_starts_with($path, '//')
+                && ! str_contains($path, '\\')
+            ) {
                 return $this->redirect($path.($query ? '?'.$query : ''), navigate: true);
             }
         }
