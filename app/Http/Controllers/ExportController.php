@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\BusinessExport;
+use App\Services\BusinessAccessService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -43,6 +44,9 @@ class ExportController extends Controller
         abort_if($end->lt($start) || $start->diffInDays($end) > 366, 422, 'Período de exportação inválido.');
 
         $isBusiness = in_array($workspace->type, ['business', 'company'], true);
+        if ($isBusiness) {
+            app(BusinessAccessService::class)->assert('export_reports', $user, $workspace);
+        }
         $companyFlag = $isBusiness;
 
         $expenses = $request->query('expenses') === '1'
@@ -83,6 +87,9 @@ class ExportController extends Controller
         [$user, $workspace] = $this->currentUserAndWorkspace();
 
         $isBusiness = in_array($workspace->type, ['business', 'company'], true);
+        if ($isBusiness) {
+            app(BusinessAccessService::class)->assert('export_reports', $user, $workspace);
+        }
         $expenses = $workspace->expenses()
             ->when(! $isBusiness, fn ($q) => $q->where('user_id', $user->id))
             ->where('is_company', $isBusiness)
@@ -96,6 +103,7 @@ class ExportController extends Controller
     public function businessExport(Request $request)
     {
         [$user, $workspace] = $this->businessUserAndWorkspace();
+        app(BusinessAccessService::class)->assert('export_reports', $user, $workspace);
         $monthNumber = (int) $request->get('month', now()->month);
         abort_unless($monthNumber >= 1 && $monthNumber <= 12, 422, 'Mês inválido.');
         $date = Carbon::create(now()->year, $monthNumber, 1);
