@@ -90,6 +90,8 @@ class ManageFamily extends Component
         $pw = $user->workspaces()->where('type', 'personal')->where('owner_id', $user->id)->first();
         $this->personalWorkspaceName = $pw ? $pw->name : '';
 
+        abort_unless($workspace, 403);
+
         // LÓGICA FINAL: Só é Admin se for o Dono do Workspace atual
         // OU se o seu cargo na tabela de ligação for 'admin'
         $role = DB::table('workspace_user')
@@ -152,7 +154,11 @@ class ManageFamily extends Component
             return;
         }
 
-        $workspaceId = auth()->user()->current_workspace_id;
+        $workspace = auth()->user()->currentWorkspace;
+        abort_unless($workspace && $this->iAmAdmin, 403);
+        abort_unless($workspace->users()->whereKey($this->permUserId)->exists(), 422);
+
+        $workspaceId = $workspace->id;
 
         // Procuramos o registo global (onde category_id é null)
         $perm = FamilyBudgetPermission::firstOrNew([
@@ -308,8 +314,13 @@ class ManageFamily extends Component
             'permCategoryId' => 'required|exists:categories,id',
         ]);
 
+        $workspace = auth()->user()->currentWorkspace;
+        abort_unless($workspace && $workspace->users()->whereKey(auth()->id())->exists(), 403);
+        abort_unless($workspace->users()->whereKey($this->permUserId)->exists(), 422);
+        abort_unless(Category::whereKey($this->permCategoryId)->where('workspace_id', $workspace->id)->exists(), 422);
+
         app(FamilyBudgetService::class)->setCategoryAccess(
-            auth()->user()->currentWorkspace,
+            $workspace,
             $this->permUserId,
             $this->permCategoryId,
             true
@@ -332,8 +343,12 @@ class ManageFamily extends Component
             'allowanceFrequency' => 'required',
         ]);
 
+        $workspace = auth()->user()->currentWorkspace;
+        abort_unless($workspace && $this->iAmAdmin, 403);
+        abort_unless($workspace->users()->whereKey($this->allowanceUserId)->exists(), 422);
+
         $perm = FamilyBudgetPermission::firstOrNew([
-            'workspace_id' => auth()->user()->current_workspace_id,
+            'workspace_id' => $workspace->id,
             'user_id' => $this->allowanceUserId,
             'category_id' => null,
         ]);
@@ -378,6 +393,14 @@ class ManageFamily extends Component
         if ($userId === auth()->id()) {
             return;
         }
+
+        abort_unless(in_array($newRole, ['admin', 'member', 'viewer', 'editor'], true), 422);
+        $workspace = auth()->user()->currentWorkspace;
+        abort_unless($workspace && $this->iAmAdmin, 403);
+
+        $target = $workspace->users()->whereKey($userId)->first();
+        abort_unless($target, 404);
+        abort_unless((int) $workspace->owner_id !== (int) $userId, 403);
 
         DB::table('workspace_user')
             ->where('workspace_id', auth()->user()->current_workspace_id)
