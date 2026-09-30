@@ -12,6 +12,7 @@ return new class extends Migration
         Schema::create('suppliers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('workspace_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name'); // Nome Comercial
             $table->string('legal_name')->nullable(); // Nome para Faturas
             $table->string('tax_number', 20)->nullable(); // NIF / CNPJ
@@ -20,6 +21,8 @@ return new class extends Migration
             $table->string('website')->nullable();
             $table->text('address')->nullable();
             $table->string('payment_terms')->nullable(); // Ex: 30 dias, Pronto Pagamento
+            $table->string('status')->default('ativo');
+            $table->string('portal_token_hash', 64)->nullable()->unique();
             $table->timestamps();
         });
 
