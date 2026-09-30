@@ -51,7 +51,7 @@ Database backups are implemented in the application and scheduled daily. The pro
 
 ## Remaining attention
 
-- Portal tokens are still stored as reversible plaintext values for compatibility with the existing token-in-URL architecture. A future migration can introduce `portal_token_hash` and one-way lookup/rotation if required.
-- The verification code is still stored in the existing `verification_code` column for compatibility. A future migration can add expiry/attempt metadata and store only a hash.
-- Admin/moderator/analyst separation should be reviewed route-by-route for every admin screen; only the highest-impact user-management and impersonation operations were tightened in this pass.
-- Full local execution of Pest/Pint/Vite requires the project's local PHP/Composer/Node environment. GitHub Actions contains a PHP 8.3 + Pint + Pest + Vite integrity workflow; its status should be checked after the latest push.
+- Client and supplier portal credentials now use 64-character cryptographically random tokens, stored only as SHA-256 hashes. Plaintext portal tokens are removed by migration and portal URLs no longer contain credentials.
+- Email verification codes remain short-lived one-time codes and are stored as hashes with expiry and attempt limits.
+- Admin/moderator/analyst separation should continue to be reviewed route-by-route for every admin screen; sensitive user-management, billing, support, settings and impersonation operations use the stricter admin-only middleware.
+- Full local execution of Pest/Pint/Vite still requires the project's local PHP/Composer/Node environment. GitHub Actions should be checked after the security branch is merged.
