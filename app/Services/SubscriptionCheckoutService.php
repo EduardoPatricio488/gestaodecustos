@@ -19,14 +19,32 @@ class SubscriptionCheckoutService
     {
         $userId = $session['client_reference_id'] ?? null;
         $planSlug = $session['metadata']['plan_slug'] ?? null;
+        $paymentStatus = (string) ($session['payment_status'] ?? '');
+        $sessionStatus = (string) ($session['status'] ?? '');
+        $mode = (string) ($session['mode'] ?? '');
 
-        if (! $userId || ! $planSlug) {
+        // Nunca ativar um plano apenas porque metadata/client_reference_id parecem válidos.
+        if (! $userId || ! $planSlug || $paymentStatus !== 'paid' || $sessionStatus !== 'complete' || $mode !== 'subscription') {
+            return null;
+        }
+
+        $plan = SubscriptionPlan::where('slug', $planSlug)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $plan) {
             return null;
         }
 
         $user = User::find($userId);
 
         if (! $user) {
+            return null;
+        }
+
+        // Se o Stripe já identificou o cliente, não aceitar uma sessão de outro cliente.
+        $customerId = (string) ($session['customer'] ?? '');
+        if ($customerId !== '' && $user->stripe_id && $customerId !== (string) $user->stripe_id) {
             return null;
         }
 
