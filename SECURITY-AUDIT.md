@@ -49,6 +49,13 @@ Date: 2026-09-29
 
 Database backups are implemented in the application and scheduled daily. The production environment must provide private S3-compatible storage credentials before the first backup can upload successfully. No credentials are stored in Git.
 
+## Hardening completed on 2026-09-30
+
+- Business and employee public-facing image uploads now use an explicit allowlist (`jpg`, `jpeg`, `png`, `webp`) to prevent unsafe SVG/HTML-style uploads from being stored in public storage.
+- Employee private documents now accept only PDF or common raster image formats and remain on the private local disk.
+- The business settings `leaveCompany` action now re-checks `manage_settings` on every Livewire request instead of relying only on `mount()` authorization.
+- Demo documentation no longer publishes a reusable password; `DemoSeeder` requires strong `DEMO_*_PASSWORD` environment variables.
+
 ## Remaining attention
 
 - Client and supplier portal credentials now use 64-character cryptographically random tokens, stored only as SHA-256 hashes. Plaintext portal tokens are removed by migration and portal URLs no longer contain credentials.
