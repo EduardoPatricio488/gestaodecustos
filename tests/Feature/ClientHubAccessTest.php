@@ -28,7 +28,7 @@ class ClientHubAccessTest extends TestCase
             'currency' => 'EUR',
         ]);
         $workspace->users()->attach($owner->id, ['role' => 'admin']);
-        $owner->update(['current_workspace_id' => $workspace->id]);
+        $owner->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         $client = Client::create([
             'user_id' => $owner->id,
@@ -71,7 +71,7 @@ class ClientHubAccessTest extends TestCase
             'currency' => 'EUR',
         ]);
         $workspace->users()->attach($owner->id, ['role' => 'admin']);
-        $owner->update(['current_workspace_id' => $workspace->id]);
+        $owner->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         $client = Client::create([
             'user_id' => $owner->id,
