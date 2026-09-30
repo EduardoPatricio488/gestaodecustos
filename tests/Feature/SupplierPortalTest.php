@@ -104,7 +104,9 @@ test('fornecedor A não consegue abrir o ticket do fornecedor B', function () {
 test('fornecedor A não consegue responder ao ticket do fornecedor B', function () {
     $fixture = supplierPortalFixture();
 
-    expect(fn () => Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_access_token])
+    session()->put('supplier_portal_id', $fixture['supplierA']->id);
+
+    expect(fn () => Livewire::test(SupplierDashboard::class)
         ->set('activeTicketId', $fixture['ticketB']->id)
         ->set('replyMessage', 'Mensagem indevida')
         ->call('sendReply'))
