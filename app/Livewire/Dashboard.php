@@ -200,7 +200,7 @@ class Dashboard extends Component
                 'invite_code' => strtoupper(Str::random(8)),
             ]);
             $user->workspaces()->attach($ws->id, ['role' => 'admin']);
-            $user->update(['current_workspace_id' => $ws->id]);
+            $user->forceFill(['current_workspace_id' => $ws->id]]);
             $user->refresh();
 
             $fixedCategories = [
@@ -224,7 +224,7 @@ class Dashboard extends Component
             }
         }
         if (! $user->current_workspace_id) {
-            $user->update(['current_workspace_id' => $user->workspaces()->first()->id]);
+            $user->forceFill(['current_workspace_id' => $user->workspaces()->first()->id]]);
         }
     }
 
@@ -341,7 +341,7 @@ class Dashboard extends Component
             return;
         }
         Auth::user()->workspaces()->attach($workspace->id, ['role' => 'member']);
-        Auth::user()->update(['current_workspace_id' => $workspace->id]);
+        Auth::user()->forceFill(['current_workspace_id' => $workspace->id]]);
 
         return redirect()->route('dashboard');
     }
@@ -351,7 +351,7 @@ class Dashboard extends Component
         $user = Auth::user();
         $workspace = $user->workspaces()->find($id);
         if ($workspace) {
-            $user->update(['current_workspace_id' => $id]);
+            $user->forceFill(['current_workspace_id' => $id]]);
             if ($workspace->type === 'personal') {
                 return redirect()->route('dashboard');
             }
