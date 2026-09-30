@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Business\TeamHub;
 use App\Livewire\ClientPortal;
 use App\Livewire\Public\SupplierDashboard;
 use App\Livewire\Public\SupplierPortal;
 use App\Models\Client;
+use App\Models\Employee;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Workspace;
@@ -126,4 +128,55 @@ class SecurityHardeningTest extends TestCase
         $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
         $response->assertHeader('Content-Security-Policy');
     }
+
+    public function test_logout_invalidates_the_session_and_rotates_the_csrf_token(): void
+    {
+        $user = User::factory()->create();
+
+        $this->withSession(['sensitive_context' => 'should-be-cleared'])
+            ->actingAs($user)
+            ->post(route('logout'))
+            ->assertRedirect('/');
+
+        $this->assertGuest();
+        $this->assertSessionMissing('sensitive_context');
+    }
+
+    public function test_team_raise_modal_cannot_read_salary_from_another_workspace(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = Workspace::create([
+            'name' => 'Empresa A',
+            'type' => 'business',
+            'owner_id' => $owner->id,
+            'currency' => 'EUR',
+        ]);
+        $workspace->users()->attach($owner->id, ['role' => 'admin']);
+        $owner->update(['current_workspace_id' => $workspace->id]);
+
+        $foreignOwner = User::factory()->create();
+        $foreignWorkspace = Workspace::create([
+            'name' => 'Empresa B',
+            'type' => 'business',
+            'owner_id' => $foreignOwner->id,
+            'currency' => 'EUR',
+        ]);
+        $foreignWorkspace->users()->attach($foreignOwner->id, ['role' => 'admin']);
+
+        $foreignEmployee = Employee::create([
+            'workspace_id' => $foreignWorkspace->id,
+            'name' => 'Colaborador Privado',
+            'role' => 'Diretor',
+            'salary' => 9876.54,
+            'pay_day' => 25,
+            'active' => true,
+        ]);
+
+        Livewire::actingAs($owner)
+            ->test(TeamHub::class)
+            ->set('raiseEmployeeId', $foreignEmployee->id)
+            ->set('raiseAmount', 0)
+            ->assertDontSee('9 876,54');
+    }
+
 }
