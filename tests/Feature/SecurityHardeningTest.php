@@ -211,6 +211,94 @@ class SecurityHardeningTest extends TestCase
             ->assertDontSee('9 876,54');
     }
 
+    public function test_guests_are_redirected_from_admin_routes(): void
+    {
+        foreach (['admin.dashboard', 'admin.stats', 'admin.logs', 'admin.ai'] as $name) {
+            $this->get(route($name))->assertRedirect();
+        }
+    }
+
+    public function test_regular_users_cannot_access_admin_routes(): void
+    {
+        $user = User::factory()->create();
+
+        foreach (['admin.dashboard', 'admin.stats', 'admin.logs', 'admin.ai'] as $name) {
+            $this->actingAs($user)->get(route($name))->assertForbidden();
+        }
+    }
+
+    public function test_unverified_users_cannot_access_business_management_routes(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        foreach (['hub.business.roles', 'hub.business.settlements'] as $name) {
+            $this->actingAs($user)
+                ->get(route($name))
+                ->assertRedirect(route('verification.notice'));
+        }
+    }
+
+    public function test_user_sensitive_fields_are_not_mass_assignable(): void
+    {
+        $fillable = (new User)->getFillable();
+
+        foreach (['is_admin', 'role', 'email_verified_at', 'current_workspace_id'] as $field) {
+            $this->assertNotContains($field, $fillable, "{$field} não devia ser mass-assignable");
+        }
+    }
+
+    public function test_user_serialization_hides_secrets(): void
+    {
+        $array = User::factory()->create()->toArray();
+
+        $this->assertArrayNotHasKey('password', $array);
+        $this->assertArrayNotHasKey('remember_token', $array);
+    }
+
+    public function test_client_serialization_hides_portal_token_hash(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = Workspace::create([
+            'name' => 'Workspace',
+            'type' => 'business',
+            'owner_id' => $owner->id,
+        ]);
+
+        $client = Client::create([
+            'user_id' => $owner->id,
+            'workspace_id' => $workspace->id,
+            'name' => 'Cliente',
+            'portal_token_hash' => hash('sha256', 'token'),
+        ]);
+
+        $this->assertArrayNotHasKey('portal_token_hash', $client->toArray());
+    }
+
+    public function test_session_cookie_is_http_only_and_same_site(): void
+    {
+        $this->assertTrue(config('session.http_only'));
+        $this->assertContains(config('session.same_site'), ['lax', 'strict']);
+    }
+
+    public function test_debug_is_disabled_by_default_in_env_example(): void
+    {
+        $env = file_get_contents(base_path('.env.example'));
+
+        $this->assertMatchesRegularExpression('/^APP_DEBUG=false$/m', $env);
+    }
+
+    public function test_additional_security_headers_are_present(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertHeader('Referrer-Policy');
+        $response->assertHeader('Permissions-Policy');
+        $this->assertStringNotContainsString(
+            "'unsafe-eval'",
+            $response->headers->get('Content-Security-Policy') ?? ''
+        );
+    }
+
     public function test_notification_links_cannot_redirect_to_external_hosts(): void
     {
         $user = User::factory()->create();
