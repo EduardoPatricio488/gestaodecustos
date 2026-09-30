@@ -182,6 +182,7 @@ class StatementImportHub extends Component
 
     public function render()
     {
+        $this->authorizeImport();
         $workspaceId = auth()->user()->current_workspace_id;
 
         $imports = BankStatementImport::where('workspace_id', $workspaceId)
