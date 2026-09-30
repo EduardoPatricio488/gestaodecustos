@@ -84,7 +84,9 @@ class BusinessOnboarding extends Component
 
     public function createCompany()
     {
-        $this->validate(array_merge($this->rules[2], $this->rules[3]));
+        $this->validate(array_merge($this->rules[2], $this->rules[3], [
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]));
         if ($this->industry === 'Outro') {
             $this->validate(['customIndustry' => 'required|string|min:2|max:100']);
         }
