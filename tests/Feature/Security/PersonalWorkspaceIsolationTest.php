@@ -320,7 +320,7 @@ test('FinanceBot cannot delete or complete another users records by id', functio
         ->and(financeBotTool('delete_expense', ['expense_id' => $expenseB])['error'])->toBe('Despesa não encontrada.')
         ->and(DB::table('expenses')->where('id', $expenseB)->exists())->toBeTrue()
         ->and(financeBotTool('complete_reminder', ['reminder_id' => $reminderB])['error'])->toBe('Lembrete não encontrado.')
-        ->and(DB::table('reminders')->whereKey($reminderB)->value('is_completed'))->toBeFalse()
+        ->and(DB::table('reminders')->where('id', $reminderB)->value('is_completed'))->toBeFalse()
         ->and(financeBotTool('delete_reminder', ['reminder_id' => $reminderB])['error'])->toBe('Lembrete não encontrado.')
         ->and(DB::table('expenses')->where('id', $expenseB)->exists())->toBeTrue()
         ->and(DB::table('reminders')->where('id', $reminderB)->exists())->toBeTrue();
