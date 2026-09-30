@@ -54,7 +54,21 @@ class StripeWebhookListener
             return;
         }
 
-        app(SubscriptionCheckoutService::class)->activateFromStripeSession($session);
+        if (($session['payment_status'] ?? null) !== 'paid'
+            || ($session['status'] ?? null) !== 'complete'
+            || ($session['mode'] ?? null) !== 'subscription'
+        ) {
+            Log::warning("⚠️ Checkout de plano não pago/incompleto rejeitado para User ID {$userId}.");
+
+            return;
+        }
+
+        $activatedPlan = app(SubscriptionCheckoutService::class)->activateFromStripeSession($session);
+        if (! $activatedPlan) {
+            Log::warning("⚠️ Sessão Stripe rejeitada na validação de ativação para User ID {$userId}.");
+
+            return;
+        }
 
         $amount = $this->parseAmountFromCents((int) ($session['amount_total'] ?? 0));
         $reference = (string) ($session['id'] ?? 'checkout-session');
