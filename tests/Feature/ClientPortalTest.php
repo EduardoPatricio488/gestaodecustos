@@ -23,7 +23,6 @@ function clientPortalFixture(): array
         'workspace_id' => $workspace->id,
         'name' => 'Cliente A',
         'email' => 'cliente-a@example.com',
-        'portal_token' => null,
         'portal_token_hash' => hash('sha256', $clientTokenA = bin2hex(random_bytes(32))),
     ]);
     $clientB = Client::create([
@@ -31,7 +30,6 @@ function clientPortalFixture(): array
         'workspace_id' => $workspace->id,
         'name' => 'Cliente B',
         'email' => 'cliente-b@example.com',
-        'portal_token' => null,
         'portal_token_hash' => hash('sha256', $clientTokenB = bin2hex(random_bytes(32))),
     ]);
 
