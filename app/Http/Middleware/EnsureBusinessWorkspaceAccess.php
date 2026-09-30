@@ -40,7 +40,7 @@ class EnsureBusinessWorkspaceAccess
                         ->first();
 
                     if ($business) {
-                        $user->forceFill(['current_workspace_id' => $business->id]]);
+                        $user->forceFill(['current_workspace_id' => $business->id])->save();
                     }
                 }
             } elseif ($access->workspace($user)) {
@@ -49,7 +49,7 @@ class EnsureBusinessWorkspaceAccess
                     ->first();
 
                 if ($personal) {
-                    $user->forceFill(['current_workspace_id' => $personal->id]]);
+                    $user->forceFill(['current_workspace_id' => $personal->id])->save();
                 }
             }
         }
