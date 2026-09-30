@@ -419,7 +419,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', AdminDashboard::class)->name('admin.dashboard')->middleware('admin.only');
     Route::get('/planos-config', PlanManager::class)->name('admin.plans')->middleware('admin.only');
     Route::get('/estatisticas', AnalyticsHub::class)->name('admin.stats')->middleware('admin.only');
-    Route::get('/ai-monitor', AiMonitor::class)->name('admin.ai');
+    Route::get('/ai-monitor', AiMonitor::class)->name('admin.ai')->middleware('admin.only');
     Route::get('/produtividade', ProductivityHub::class)->name('admin.productivity')->middleware('admin.only');
     Route::get('/lembretes', RemindersMonitor::class)->name('admin.reminders')->middleware('admin.only');
     Route::get('/utilizadores', UserManagement::class)->name('admin.users')->middleware('admin.only');
