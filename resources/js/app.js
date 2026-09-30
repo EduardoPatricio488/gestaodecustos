@@ -150,24 +150,6 @@ window.addEventListener('copy-to-clipboard', (event) => {
     document.addEventListener('livewire:navigated', () => document.querySelectorAll('input').forEach(apply));
 })();
 
-(function () {
-    const closeModal = (button) => {
-        const dialog = button.closest('[role="dialog"], dialog'); if (!dialog) return false;
-        const modalName = dialog.getAttribute('data-modal') || dialog.getAttribute('data-name') || dialog.getAttribute('data-modal-name') || dialog.id || '';
-        if (modalName) window.dispatchEvent(new CustomEvent('modal-close', { detail: { name: modalName } }));
-        if (typeof dialog.close === 'function' && !dialog.hasAttribute('open')) return true;
-        if (typeof dialog.close === 'function' && dialog.open) dialog.close(); return true;
-    };
-    document.addEventListener('click', (event) => {
-        const button = event.target.closest('button, [role="button"]');
-        if (!button || button.type === 'submit' || button.disabled) return;
-        const label = (button.getAttribute('aria-label') || button.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
-        const isCloseIcon = !!button.querySelector('svg') && /^(fechar|close|close modal|cancelar|descartar|cancel|discard)/.test(label);
-        const isCloseText = ['fechar', 'cancelar', 'descartar', 'close', 'close modal', 'cancel', 'discard'].includes(label);
-        if ((!isCloseIcon && !isCloseText) || !button.closest('[role="dialog"], dialog')) return;
-        event.preventDefault(); closeModal(button);
-    }, true);
-})();
 
 (function () {
     const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
