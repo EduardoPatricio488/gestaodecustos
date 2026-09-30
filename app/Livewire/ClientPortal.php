@@ -10,6 +10,7 @@ use App\Models\SupportMessage;
 use App\Models\SupportTicket;
 use App\Models\Task;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -31,10 +32,13 @@ class ClientPortal extends Component
         abort_unless($clientId, 401);
         $this->client = Client::with('workspace')->find($clientId);
         abort_unless($this->client, 401);
+        abort_unless($this->client->status === 'ativo' && filled($this->client->portal_token_hash), 403);
     }
 
     public function sendTicket()
     {
+        $this->throttlePortalAction();
+
         $this->validate([
             'subject' => 'required|string|min:5|max:150',
             'message' => 'required|string|min:10|max:5000',
@@ -72,6 +76,8 @@ class ClientPortal extends Component
 
     public function sendReply()
     {
+        $this->throttlePortalAction();
+
         $this->validate([
             'replyMessage' => 'required|string|min:2|max:5000',
         ]);
@@ -119,6 +125,14 @@ class ClientPortal extends Component
 
         $proposal->update(['status' => 'recusada']);
         $this->dispatch('toast', variant: 'success', text: 'Proposta recusada.');
+    }
+
+    private function throttlePortalAction(): void
+    {
+        $key = 'client-portal-action:'.sha1((string) session()->getId());
+
+        abort_if(RateLimiter::tooManyAttempts($key, 20), 429);
+        RateLimiter::hit($key, 60);
     }
 
     private function ticketForClient($id): SupportTicket
