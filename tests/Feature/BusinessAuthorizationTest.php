@@ -24,7 +24,7 @@ class BusinessAuthorizationTest extends TestCase
             'currency' => 'EUR',
         ]);
         $workspace->users()->attach($owner->id, ['role' => $role]);
-        $owner->update(['current_workspace_id' => $workspace->id]);
+        $owner->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         return $workspace;
     }
@@ -52,7 +52,7 @@ class BusinessAuthorizationTest extends TestCase
         $workspace = $this->businessWorkspace($owner);
         $employee = User::factory()->create();
         $workspace->users()->attach($employee->id, ['role' => 'employee']);
-        $employee->update(['current_workspace_id' => $workspace->id]);
+        $employee->forceFill(['current_workspace_id' => $workspace->id])->save();
         $this->actingAs($employee);
 
         $this->expectException(AuthorizationException::class);
@@ -74,7 +74,7 @@ class BusinessAuthorizationTest extends TestCase
         $workspace = $this->businessWorkspace($owner);
         $employee = User::factory()->create();
         $workspace->users()->attach($employee->id, ['role' => 'employee']);
-        $employee->update(['current_workspace_id' => $workspace->id]);
+        $employee->forceFill(['current_workspace_id' => $workspace->id])->save();
         $this->actingAs($employee);
 
         $expense = Expense::create([
@@ -109,7 +109,7 @@ class BusinessAuthorizationTest extends TestCase
             'status' => 'pendente',
         ]);
 
-        $user->update(['current_workspace_id' => $second->id]);
+        $user->forceFill(['current_workspace_id' => $second->id])->save();
         $foreignInvoice = Invoice::withoutGlobalScopes()->findOrFail($invoice->id);
 
         $this->expectException(\RuntimeException::class);
@@ -122,7 +122,7 @@ class BusinessAuthorizationTest extends TestCase
         $workspace = $this->businessWorkspace($owner);
         $viewer = User::factory()->create();
         $workspace->users()->attach($viewer->id, ['role' => 'viewer']);
-        $viewer->update(['current_workspace_id' => $workspace->id]);
+        $viewer->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         $this->actingAs($viewer);
 
@@ -138,7 +138,7 @@ class BusinessAuthorizationTest extends TestCase
         $workspace = $this->businessWorkspace($owner);
         $viewer = User::factory()->create();
         $workspace->users()->attach($viewer->id, ['role' => 'viewer']);
-        $viewer->update(['current_workspace_id' => $workspace->id]);
+        $viewer->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         $access = app(BusinessAccessService::class);
 
@@ -154,7 +154,7 @@ class BusinessAuthorizationTest extends TestCase
         $analyst = User::factory()->create();
         $analyst->forceFill(['role' => 'analyst'])->save();
         $workspace->users()->attach($analyst->id, ['role' => 'viewer']);
-        $analyst->update(['current_workspace_id' => $workspace->id]);
+        $analyst->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         $access = app(BusinessAccessService::class);
 
@@ -168,7 +168,7 @@ class BusinessAuthorizationTest extends TestCase
         $workspace = $this->businessWorkspace($owner);
         $accountant = User::factory()->create();
         $workspace->users()->attach($accountant->id, ['role' => 'accountant']);
-        $accountant->update(['current_workspace_id' => $workspace->id]);
+        $accountant->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         $this->actingAs($accountant);
 
