@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Project;
 use App\Models\Task;
+use App\Services\BusinessAccessService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
@@ -67,6 +68,7 @@ class CollaboratorExpenseHub extends Component
 
     public function edit($id)
     {
+        app(BusinessAccessService::class)->assert('create_expense');
         $expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)
             ->where('user_id', auth()->id())
             ->whereRaw('LOWER(status) = ?', ['pendente'])
@@ -86,6 +88,7 @@ class CollaboratorExpenseHub extends Component
 
     public function save()
     {
+        app(BusinessAccessService::class)->assert('create_expense');
         $this->validate();
 
         $workspaceId = auth()->user()->current_workspace_id;
@@ -133,6 +136,7 @@ class CollaboratorExpenseHub extends Component
 
     public function downloadReceipt($id)
     {
+        app(BusinessAccessService::class)->assert('create_expense');
         $expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)
             ->where('user_id', auth()->id())
             ->findOrFail($id);
@@ -143,6 +147,7 @@ class CollaboratorExpenseHub extends Component
 
     public function delete($id)
     {
+        app(BusinessAccessService::class)->assert('create_expense');
         $expense = Expense::where('workspace_id', auth()->user()->current_workspace_id)
             ->where('user_id', auth()->id())
             ->whereRaw('LOWER(status) = ?', ['pendente'])
