@@ -24,8 +24,8 @@ function personalIsolationFixture(): array
 
     $workspace->users()->attach($attacker->id, ['role' => 'member']);
 
-    $owner->update(['current_workspace_id' => $workspace->id]);
-    $attacker->update(['current_workspace_id' => $workspace->id]);
+    $owner->forceFill(['current_workspace_id' => $workspace->id])->save();
+    $attacker->forceFill(['current_workspace_id' => $workspace->id])->save();
 
     $categoryA = DB::table('categories')->where('workspace_id', $workspace->id)->where('user_id', $owner->id)->first()
         ?? DB::table('categories')->where('workspace_id', $workspace->id)->first();
