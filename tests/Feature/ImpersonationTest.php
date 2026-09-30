@@ -49,7 +49,7 @@ test('utilizador normal não consegue iniciar impersonation', function () {
 
     $this->actingAs($normal)
         ->post(route('admin.impersonate', $users['target']))
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertForbidden();
 
     expect(auth()->id())->toBe($normal->id);
 });
