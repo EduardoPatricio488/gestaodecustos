@@ -85,6 +85,7 @@ class TaskHub extends Component
         $access = app(BusinessAccessService::class);
         $task = $workspace->tasks()->findOrFail($taskId);
         $role = $access->role(auth()->user(), $workspace);
+        abort_unless(in_array($role, ['owner', 'admin', 'manager', 'employee'], true), 403);
 
         // Colaboradores só podem controlar o cronómetro das suas próprias tarefas.
         if (! in_array($role, ['owner', 'admin', 'manager'], true)) {
@@ -127,11 +128,11 @@ class TaskHub extends Component
 
     public function save()
     {
-        $this->validate();
-
         $access = app(BusinessAccessService::class);
         $workspace = $access->assertWorkspace();
         $role = $access->role(auth()->user(), $workspace);
+        abort_unless(in_array($role, ['owner', 'admin', 'manager', 'employee'], true), 403);
+        $this->validate();
         $canManage = in_array($role, ['owner', 'admin', 'manager'], true);
 
         abort_unless($workspace->projects()->whereKey($this->project_id)->exists(), 422, 'Projeto inválido.');
@@ -192,6 +193,7 @@ class TaskHub extends Component
         $workspace = $access->assertWorkspace();
         $task = $workspace->tasks()->findOrFail($id);
         $role = $access->role(auth()->user(), $workspace);
+        abort_unless(in_array($role, ['owner', 'admin', 'manager', 'employee'], true), 403);
 
         if (! in_array($role, ['owner', 'admin', 'manager'], true)) {
             abort_unless((int) $task->user_id === (int) auth()->id(), 403);
@@ -228,6 +230,7 @@ class TaskHub extends Component
         $workspace = $access->assertWorkspace();
         $task = $workspace->tasks()->findOrFail($id);
         $role = $access->role(auth()->user(), $workspace);
+        abort_unless(in_array($role, ['owner', 'admin', 'manager', 'employee'], true), 403);
 
         // Apagar tarefas é uma operação de gestão; colaboradores só podem apagar as suas.
         if (! in_array($role, ['owner', 'admin', 'manager'], true)) {
@@ -253,6 +256,7 @@ class TaskHub extends Component
         $workspace = $access->assertWorkspace();
         $task = $workspace->tasks()->findOrFail($id);
         $role = $access->role(auth()->user(), $workspace);
+        abort_unless(in_array($role, ['owner', 'admin', 'manager', 'employee'], true), 403);
 
         if (! in_array($role, ['owner', 'admin', 'manager'], true)) {
             abort_unless((int) $task->user_id === (int) auth()->id(), 403);
