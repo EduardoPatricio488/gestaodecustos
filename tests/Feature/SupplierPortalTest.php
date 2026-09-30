@@ -19,21 +19,21 @@ function supplierPortalFixture(): array
         'owner_id' => $owner->id,
     ]);
 
-    $AToken = bin2hex(random_bytes(32));
+    $supplierAToken = bin2hex(random_bytes(32));
     $supplierA = Supplier::create([
         'user_id' => $owner->id,
         'workspace_id' => $workspace->id,
         'name' => 'Fornecedor A',
         'portal_token' => null,
-        'portal_token_hash' => hash('sha256', $AToken),
+        'portal_token_hash' => hash('sha256', $supplierAToken),
     ]);
-    $BToken = bin2hex(random_bytes(32));
+    $supplierBToken = bin2hex(random_bytes(32));
     $supplierB = Supplier::create([
         'user_id' => $owner->id,
         'workspace_id' => $workspace->id,
         'name' => 'Fornecedor B',
         'portal_token' => null,
-        'portal_token_hash' => hash('sha256', $BToken),
+        'portal_token_hash' => hash('sha256', $supplierBToken),
     ]);
 
     $ticketA = SupportTicket::create([
@@ -81,7 +81,7 @@ test('fornecedor A vê apenas os próprios tickets', function () {
 test('fornecedor A consegue responder ao próprio ticket', function () {
     $fixture = supplierPortalFixture();
 
-    Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_token])
+    Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_access_token])
         ->set('activeTicketId', $fixture['ticketA']->id)
         ->set('replyMessage', 'Resposta do Fornecedor A')
         ->call('sendReply');
