@@ -41,7 +41,7 @@ class CategoryFields extends Component
         if ($workspace?->type === 'personal') {
             abort_unless((int) $category->user_id === (int) auth()->id(), 403);
         } else {
-            app(\\App\\Services\\BusinessAccessService::class)->assert('manage_financials', auth()->user(), $workspace);
+            app(\App\Services\BusinessAccessService::class)->assert('manage_financials', auth()->user(), $workspace);
         }
 
         $this->category = $category;
@@ -55,7 +55,7 @@ class CategoryFields extends Component
             return;
         }
 
-        app(\\App\\Services\\BusinessAccessService::class)->assert('manage_financials', auth()->user(), $workspace);
+        app(\App\Services\BusinessAccessService::class)->assert('manage_financials', auth()->user(), $workspace);
     }
 
     // --- CARREGAR DADOS PARA EDIÇÃO ---
