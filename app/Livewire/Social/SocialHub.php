@@ -365,6 +365,7 @@ class SocialHub extends Component
 
     public function submitReport()
     {
+        $this->accessiblePost($this->reportingPostId);
         $this->validate(['reportReason' => 'required|min:10|max:500']);
 
         // GRAVA A DENÚNCIA PARA O ADMIN VER
