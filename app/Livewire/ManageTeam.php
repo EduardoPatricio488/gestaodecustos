@@ -44,7 +44,7 @@ class ManageTeam extends Component
         auth()->user()->workspaces()->attach($workspace->id, ['role' => 'member']);
 
         // Muda para o novo workspace automaticamente
-        auth()->user()->forceFill(['current_workspace_id' => $workspace->id])->save(])->save();
+        auth()->user()->forceFill(['current_workspace_id' => $workspace->id])->save();
 
         $this->inputInviteCode = '';
         session()->flash('ok', 'Entraste no espaço: '.$workspace->name);
@@ -64,7 +64,7 @@ class ManageTeam extends Component
         ]);
 
         auth()->user()->workspaces()->attach($ws->id, ['role' => 'admin']);
-        auth()->user()->forceFill(['current_workspace_id' => $ws->id])->save(])->save();
+        auth()->user()->forceFill(['current_workspace_id' => $ws->id])->save();
 
         return redirect()->route('manage-team');
     }
