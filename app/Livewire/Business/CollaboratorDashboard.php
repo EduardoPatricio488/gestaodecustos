@@ -81,7 +81,7 @@ class CollaboratorDashboard extends Component
         $user = Auth::user();
         $personalWs = $user->workspaces()->where('type', 'personal')->first();
         if ($personalWs) {
-            $user->forceFill(['current_workspace_id' => $personalWs->id])->save();
+            $user->forceFill(['current_workspace_id' => $personalWs->id])->save(])->save();
         }
         session()->forget('viewing_as_collaborator_id');
 
@@ -94,7 +94,7 @@ class CollaboratorDashboard extends Component
         if ($user->current_workspace_id) {
             $user->workspaces()->detach($user->current_workspace_id);
         }
-        $user->forceFill(['current_workspace_id' => null])->save();
+        $user->forceFill(['current_workspace_id' => null])->save(])->save();
 
         return redirect()->route('hub.business.gateway');
     }
