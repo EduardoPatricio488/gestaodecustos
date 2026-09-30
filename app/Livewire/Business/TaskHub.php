@@ -256,6 +256,7 @@ class TaskHub extends Component
         $workspace = $access->assertWorkspace();
         $task = $workspace->tasks()->findOrFail($id);
         $role = $access->role(auth()->user(), $workspace);
+        abort_unless(in_array($role, ['owner', 'admin', 'manager', 'employee'], true), 403);
 
         if (! in_array($role, ['owner', 'admin', 'manager'], true)) {
             abort_unless((int) $task->user_id === (int) auth()->id(), 403);
