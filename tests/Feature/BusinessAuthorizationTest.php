@@ -115,4 +115,33 @@ class BusinessAuthorizationTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $foreignInvoice->update(['client_name' => 'Ataque']);
     }
+
+    public function test_business_viewer_cannot_export_financial_data(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = $this->businessWorkspace($owner);
+        $viewer = User::factory()->create();
+        $workspace->users()->attach($viewer->id, ['role' => 'viewer']);
+        $viewer->update(['current_workspace_id' => $workspace->id]);
+
+        $this->actingAs($viewer);
+
+        $this->get(route('export.expenses'))->assertForbidden();
+        $this->get(route('export.dashboard.pdf', ['expenses' => '1']))->assertForbidden();
+        $this->get(route('export.business'))->assertForbidden();
+    }
+
+    public function test_business_accountant_can_export_financial_data(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = $this->businessWorkspace($owner);
+        $accountant = User::factory()->create();
+        $workspace->users()->attach($accountant->id, ['role' => 'accountant']);
+        $accountant->update(['current_workspace_id' => $workspace->id]);
+
+        $this->actingAs($accountant);
+
+        $this->get(route('export.expenses'))->assertOk();
+    }
+
 }
