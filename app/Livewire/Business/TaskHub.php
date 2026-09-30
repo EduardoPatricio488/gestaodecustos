@@ -132,6 +132,7 @@ class TaskHub extends Component
         $access = app(BusinessAccessService::class);
         $workspace = $access->assertWorkspace();
         $role = $access->role(auth()->user(), $workspace);
+        abort_unless(in_array($role, ['owner', 'admin', 'manager', 'employee'], true), 403);
         $canManage = in_array($role, ['owner', 'admin', 'manager'], true);
 
         abort_unless($workspace->projects()->whereKey($this->project_id)->exists(), 422, 'Projeto inválido.');
