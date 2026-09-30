@@ -78,18 +78,11 @@ class BankAccountHub extends Component
     private function ensureAuditCode(): string
     {
         $workspace = auth()->user()->currentWorkspace;
-        $plainToken = $workspace->audit_access_code;
-
-        if (! $plainToken) {
-            do {
-                $plainToken = strtoupper(Str::random(8));
-            } while (Workspace::where('audit_access_code', $plainToken)->exists());
-        }
+        $plainToken = Str::random(64);
 
         $workspace->update([
             'audit_token' => Hash::make($plainToken),
-            'audit_access_code' => $plainToken,
-            'audit_token_expires_at' => null,
+            'audit_token_expires_at' => now()->addDays(30),
             'audit_token_revoked_at' => null,
             'audit_token_purpose' => 'bank_audit',
         ]);
