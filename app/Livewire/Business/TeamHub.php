@@ -582,7 +582,7 @@ class TeamHub extends Component
 
         $token = Str::random(64);
 
-        $emp->update([
+        $emp->forceFill([
             'user_id' => null,
             'portal_token' => Hash::make($token),
             'invite_expires_at' => now()->addDays(7),
