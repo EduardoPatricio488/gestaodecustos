@@ -53,12 +53,13 @@ class SupplierHub extends Component
         app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $supplier = auth()->user()->suppliers()->findOrFail($id);
 
-        if (! preg_match('/^\d{6}$/', (string) $supplier->portal_token)) {
-            $supplier->update(['portal_token' => $this->generateUniquePortalToken()]);
-            $supplier->refresh();
-        }
+        $token = $this->generateUniquePortalToken();
+        $supplier->forceFill([
+            'portal_token' => null,
+            'portal_token_hash' => hash('sha256', $token),
+        ])->saveQuietly();
 
-        $this->generatedPasscode = $supplier->portal_token;
+        $this->generatedPasscode = $token;
 
         // O NIF usado para entrar no Portal do Fornecedor é o NIF da empresa,
         // nunca o NIF individual do fornecedor.
@@ -91,10 +92,11 @@ class SupplierHub extends Component
             return;
         }
 
-        if (! preg_match('/^\d{6}$/', (string) $supplier->portal_token)) {
-            $supplier->update(['portal_token' => $this->generateUniquePortalToken()]);
-            $supplier->refresh();
-        }
+        $token = $this->generateUniquePortalToken();
+        $supplier->forceFill([
+            'portal_token' => null,
+            'portal_token_hash' => hash('sha256', $token),
+        ])->saveQuietly();
 
         $portalUrl = route('supplier.portal');
         RateLimiter::hit($rateLimitKey, 600);
@@ -103,7 +105,7 @@ class SupplierHub extends Component
             Mail::to($supplier->email)->send(new SupplierPortalAccessMail(
                 $supplier,
                 auth()->user()->currentWorkspace,
-                $supplier->portal_token,
+                $token,
                 $portalUrl,
             ));
         } catch (\Throwable $exception) {
@@ -121,7 +123,7 @@ class SupplierHub extends Component
     {
         app(BusinessAccessService::class)->assert('manage_clients_suppliers');
         $supplier = auth()->user()->suppliers()
-            ->where('portal_token', $this->generatedPasscode)
+            ->where('portal_token_hash', hash('sha256', $this->generatedPasscode))
             ->firstOrFail();
 
         if (! $supplier->email) {
@@ -133,7 +135,7 @@ class SupplierHub extends Component
         Mail::to($supplier->email)->send(new SupplierPortalAccessMail(
             $supplier,
             auth()->user()->currentWorkspace,
-            $supplier->portal_token,
+            $this->generatedPasscode,
             $this->generatedPortalUrl,
         ));
 
@@ -173,6 +175,8 @@ class SupplierHub extends Component
             $supplier = (clone $supplierQuery)->where('tax_number', $taxNumber)->first();
         }
 
+        $token = $this->generateUniquePortalToken();
+
         if (! $supplier) {
             $supplier = Supplier::create([
                 'user_id' => auth()->id(),
@@ -181,16 +185,16 @@ class SupplierHub extends Component
                 'legal_name' => $request->requester_name,
                 'tax_number' => $taxNumber ?: null,
                 'email' => $request->requester_email,
-                'portal_token' => $this->generateUniquePortalToken(),
+                'portal_token' => null,
+                'portal_token_hash' => hash('sha256', $token),
             ]);
         } else {
             $supplier->update([
                 'name' => $supplier->name ?: $request->requester_name,
                 'email' => $supplier->email ?: $request->requester_email,
                 'tax_number' => $supplier->tax_number ?: ($taxNumber ?: null),
-                'portal_token' => (! preg_match('/^\d{6}$/', (string) $supplier->portal_token))
-                    ? $this->generateUniquePortalToken()
-                    : $supplier->portal_token,
+                'portal_token' => null,
+                'portal_token_hash' => hash('sha256', $token),
             ]);
             $supplier->refresh();
         }
@@ -199,7 +203,7 @@ class SupplierHub extends Component
         Mail::to($supplier->email)->send(new SupplierPortalAccessMail(
             $supplier,
             auth()->user()->currentWorkspace,
-            $supplier->portal_token,
+            $token,
             $portalUrl,
         ));
 
@@ -228,8 +232,8 @@ class SupplierHub extends Component
     private function generateUniquePortalToken(): string
     {
         do {
-            $token = (string) random_int(100000, 999999);
-        } while (Supplier::where('portal_token', $token)->exists());
+            $token = bin2hex(random_bytes(32));
+        } while (Supplier::where('portal_token_hash', hash('sha256', $token))->exists());
 
         return $token;
     }

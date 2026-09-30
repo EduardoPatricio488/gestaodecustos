@@ -19,17 +19,21 @@ function supplierPortalFixture(): array
         'owner_id' => $owner->id,
     ]);
 
+    $AToken = bin2hex(random_bytes(32));
     $supplierA = Supplier::create([
         'user_id' => $owner->id,
         'workspace_id' => $workspace->id,
         'name' => 'Fornecedor A',
-        'portal_token' => Str::random(48),
+        'portal_token' => null,
+        'portal_token_hash' => hash('sha256', $AToken),
     ]);
+    $BToken = bin2hex(random_bytes(32));
     $supplierB = Supplier::create([
         'user_id' => $owner->id,
         'workspace_id' => $workspace->id,
         'name' => 'Fornecedor B',
-        'portal_token' => Str::random(48),
+        'portal_token' => null,
+        'portal_token_hash' => hash('sha256', $BToken),
     ]);
 
     $ticketA = SupportTicket::create([
@@ -59,13 +63,16 @@ function supplierPortalFixture(): array
         ]);
     }
 
+    $supplierA->setAttribute('portal_access_token', $supplierAToken);
+    $supplierB->setAttribute('portal_access_token', $supplierBToken);
+
     return compact('supplierA', 'supplierB', 'ticketA', 'ticketB');
 }
 
 test('fornecedor A vê apenas os próprios tickets', function () {
     $fixture = supplierPortalFixture();
 
-    $component = Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_token]);
+    $component = Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierA']->portal_access_token]);
 
     expect($component->viewData('tickets')->pluck('id')->all())
         ->toBe([$fixture['ticketA']->id]);
@@ -115,7 +122,7 @@ test('fornecedor A não consegue carregar mensagens do fornecedor B', function (
 test('fornecedor B continua a utilizar os próprios tickets normalmente', function () {
     $fixture = supplierPortalFixture();
 
-    $component = Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierB']->portal_token])
+    $component = Livewire::test(SupplierDashboard::class, ['token' => $fixture['supplierB']->portal_access_token])
         ->call('setActiveTicket', $fixture['ticketB']->id)
         ->set('replyMessage', 'Resposta do Fornecedor B')
         ->call('sendReply');
