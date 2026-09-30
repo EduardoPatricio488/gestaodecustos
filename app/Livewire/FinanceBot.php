@@ -11,6 +11,7 @@ use App\Models\Investment;
 use App\Models\RecurringIncome;
 use App\Models\Reminder;
 use App\Models\Subscription;
+use App\Models\Workspace;
 use App\Services\SubscriptionCycleService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -418,6 +419,7 @@ class FinanceBot extends Component
     {
         $user = Auth::user();
         $ws = $user->currentWorkspace;
+        $userId = $user->id;
         $monthStart = now()->startOfMonth();
 
         $spentQuery = Expense::where('workspace_id', $ws->id)
