@@ -20,27 +20,14 @@ class Supplier extends Model
     public static function findByPortalToken(string $token): ?self
     {
         $token = trim($token);
-        if ($token === '') {
+
+        if ($token === '' || strlen($token) !== 64 || ! preg_match('/^[A-Za-z0-9]+$/', $token)) {
             return null;
         }
 
-        $hash = hash('sha256', $token);
-        $supplier = static::where('portal_token_hash', $hash)->with('workspace')->first();
-
-        if ($supplier) {
-            return $supplier;
-        }
-
-        $supplier = static::whereNotNull('portal_token')
-            ->where('portal_token', $token)
+        return static::where('portal_token_hash', hash('sha256', $token))
             ->with('workspace')
             ->first();
-
-        if ($supplier) {
-            $supplier->forceFill(['portal_token_hash' => $hash])->saveQuietly();
-        }
-
-        return $supplier;
     }
 
     public function workspace(): BelongsTo
