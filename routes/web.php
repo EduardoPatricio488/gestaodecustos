@@ -410,7 +410,7 @@ Route::post('/empresa/sair-vista-colaborador', function () {
     session()->forget('viewing_as_collaborator_id');
 
     return redirect()->route('hub.business.dashboard');
-})->name('hub.business.stop-viewing-collaborator');
+})->middleware(['auth', 'verified'])->name('hub.business.stop-viewing-collaborator');
 
 // ══════════════════════════════════════════════════════════════════
 // 6. ÁREA DE ADMINISTRAÇÃO (APENAS EQUIPA INTERNA)
