@@ -380,25 +380,32 @@ class Dashboard extends Component
             try {
                 $responses = Http::pool(function (Pool $pool) {
                     return [
-                        'indices' => $pool->as('indices')->connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^GSPC,^IXIC,^GDAXI,^FCHI,^FTSE']),
-                        'metals' => $pool->as('metals')->connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'GC=F,SI=F,PL=F,PA=F']),
-                        'energy' => $pool->as('energy')->connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => 'CL=F,NG=F,CO1.F']),
-                        'inflation' => $pool->as('inflation')->connectTimeout(1)->timeout(2)->get('https://api.worldbank.org/v2/country/EU/indicator/FP.CPI.TOTL.ZG?format=json'),
-                        'unemployment' => $pool->as('unemployment')->connectTimeout(1)->timeout(2)->get('https://api.worldbank.org/v2/country/PRT/indicator/SL.UEM.TOTL.ZS?format=json'),
-                        'fx' => $pool->as('fx')->connectTimeout(1)->timeout(1)->get('https://api.exchangerate.host/latest?base=EUR'),
-                        'weather' => $pool->as('weather')->connectTimeout(1)->timeout(2)->get('https://api.open-meteo.com/v1/forecast?latitude=38.7&longitude=-9.1&current_weather=true'),
-                        'vix' => $pool->as('vix')->connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^VIX']),
-                        'bdi' => $pool->as('bdi')->connectTimeout(1)->timeout(3)->get('https://query1.finance.yahoo.com/v7/finance/quote', ['symbols' => '^BDI']),
+                        'market' => $pool->as('market')->connectTimeout(1)->timeout(4)->get(
+                            'https://query1.finance.yahoo.com/v7/finance/quote',
+                            ['symbols' => '^GSPC,^IXIC,^GDAXI,^FCHI,^FTSE,GC=F,SI=F,PL=F,PA=F,CL=F,NG=F,CO1.F,^VIX,^BDI']
+                        ),
+                        'inflation' => $pool->as('inflation')->connectTimeout(1)->timeout(2)->get(
+                            'https://api.worldbank.org/v2/country/EU/indicator/FP.CPI.TOTL.ZG?format=json'
+                        ),
+                        'unemployment' => $pool->as('unemployment')->connectTimeout(1)->timeout(2)->get(
+                            'https://api.worldbank.org/v2/country/PRT/indicator/SL.UEM.TOTL.ZS?format=json'
+                        ),
+                        'fx' => $pool->as('fx')->connectTimeout(1)->timeout(1)->get(
+                            'https://api.exchangerate.host/latest?base=EUR'
+                        ),
+                        'weather' => $pool->as('weather')->connectTimeout(1)->timeout(2)->get(
+                            'https://api.open-meteo.com/v1/forecast?latitude=38.7&longitude=-9.1&current_weather=true'
+                        ),
                     ];
                 });
 
-                foreach ($responses['indices']->json()['quoteResponse']['result'] ?? [] as $i) {
+                foreach ($responses['market']->json()['quoteResponse']['result'] ?? [] as $i) {
                     $insights[] = "ÍNDICE: {$i['shortName']} ".number_format($i['regularMarketPrice'], 2).' ('.number_format($i['regularMarketChangePercent'], 2).'%)';
                 }
-                foreach ($responses['metals']->json()['quoteResponse']['result'] ?? [] as $m) {
+                foreach ($responses['market']->json()['quoteResponse']['result'] ?? [] as $m) {
                     $insights[] = "METAIS: {$m['symbol']} ".number_format($m['regularMarketPrice'], 2).' ('.number_format($m['regularMarketChangePercent'], 2).'%)';
                 }
-                foreach ($responses['energy']->json()['quoteResponse']['result'] ?? [] as $item) {
+                foreach ($responses['market']->json()['quoteResponse']['result'] ?? [] as $item) {
                     $insights[] = "ENERGIA: {$item['symbol']} ".number_format($item['regularMarketPrice'], 2).' ('.number_format($item['regularMarketChangePercent'], 2).'%)';
                 }
                 $inflation = $responses['inflation']->json();
