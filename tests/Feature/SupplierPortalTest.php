@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 function supplierPortalFixture(): array
@@ -24,7 +23,6 @@ function supplierPortalFixture(): array
         'user_id' => $owner->id,
         'workspace_id' => $workspace->id,
         'name' => 'Fornecedor A',
-        'portal_token' => null,
         'portal_token_hash' => hash('sha256', $supplierAToken),
     ]);
     $supplierBToken = bin2hex(random_bytes(32));
@@ -32,7 +30,6 @@ function supplierPortalFixture(): array
         'user_id' => $owner->id,
         'workspace_id' => $workspace->id,
         'name' => 'Fornecedor B',
-        'portal_token' => null,
         'portal_token_hash' => hash('sha256', $supplierBToken),
     ]);
 
