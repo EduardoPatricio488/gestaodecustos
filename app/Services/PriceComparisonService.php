@@ -57,11 +57,13 @@ class PriceComparisonService
             : null;
 
         $spentThis = (float) Expense::where('workspace_id', $workspace->id)
+            ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $category->user_id))
             ->where('category_id', $category->id)
             ->whereBetween('spent_at', [$start, $end])
             ->sum('amount');
 
         $spentLast = (float) Expense::where('workspace_id', $workspace->id)
+            ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $category->user_id))
             ->where('category_id', $category->id)
             ->whereBetween('spent_at', [$prevStart, $prevEnd])
             ->sum('amount');
