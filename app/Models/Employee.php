@@ -12,6 +12,8 @@ class Employee extends Model
 {
     use BelongsToWorkspace, LogsActivity;
 
+    protected $hidden = ['portal_token'];
+
     protected $fillable = [
         'user_id', 'workspace_id', 'name', 'role', 'salary', 'pay_day', 'photo_path', 'active',
         'suspended', 'terminated_at', 'resignation_reason', 'cv_path', 'resignation_status',
