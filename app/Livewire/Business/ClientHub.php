@@ -51,6 +51,20 @@ class ClientHub extends Component
         'status' => 'required|in:ativo,lead,inativo',
     ];
 
+
+    /**
+     * Garante que as ações Livewire usam o workspace empresarial validado,
+     * mesmo quando o workspace ativo da conta está temporariamente noutro contexto.
+     */
+    private function assertClientManagementAccess(): void
+    {
+        $user = auth()->user();
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace($user);
+
+        $access->assert('manage_clients_suppliers', $user, $workspace);
+    }
+
     public function updatedTaxNumber($value): void
     {
         $digits = preg_replace('/\D/', '', (string) $value);
@@ -77,7 +91,7 @@ class ClientHub extends Component
 
     public function save(): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertClientManagementAccess();
         $this->validate();
         $taxNumber = preg_replace('/\D/', '', (string) $this->tax_number);
         $taxNumber = substr($taxNumber, 0, 9);
@@ -104,7 +118,7 @@ class ClientHub extends Component
 
     public function edit($id): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertClientManagementAccess();
         $client = auth()->user()->clients()->findOrFail($id);
         $this->editingId = $client->id;
         $this->name = $client->name;
@@ -120,7 +134,7 @@ class ClientHub extends Component
 
     public function delete($id): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertClientManagementAccess();
         auth()->user()->clients()->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Cliente removido.', variant: 'warning');
     }
@@ -132,7 +146,7 @@ class ClientHub extends Component
 
     public function generatePortalLink($id): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertClientManagementAccess();
         $client = auth()->user()->clients()->findOrFail($id);
 
         $token = $this->generateUniquePortalToken();
@@ -150,7 +164,7 @@ class ClientHub extends Component
 
     public function resendPortalAccess($id): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertClientManagementAccess();
         $client = auth()->user()->clients()->findOrFail($id);
 
         if (! $client->email) {
@@ -196,7 +210,7 @@ class ClientHub extends Component
 
     public function sendPortalEmail(): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertClientManagementAccess();
         $client = auth()->user()->clients()->where('portal_token_hash', hash('sha256', $this->generatedPasscode))->firstOrFail();
         if (! $client->email) {
             $this->dispatch('toast', text: 'Este cliente não tem email registado.', variant: 'warning');
@@ -227,7 +241,7 @@ class ClientHub extends Component
 
     public function approveAccessRequest($id): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertClientManagementAccess();
         $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
         $taxNumber = substr(preg_replace('/\D/', '', (string) $request->tax_number), 0, 9);
         $clientQuery = auth()->user()->clients();
@@ -277,7 +291,7 @@ class ClientHub extends Component
 
     public function rejectAccessRequest($id): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertClientManagementAccess();
         $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
         $request->update(['status' => 'rejected', 'responded_at' => now()]);
         $this->dispatch('toast', text: 'Pedido de acesso rejeitado.', variant: 'warning');
