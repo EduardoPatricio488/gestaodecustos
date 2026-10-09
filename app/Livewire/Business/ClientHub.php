@@ -303,7 +303,14 @@ class ClientHub extends Component
 
     public function render()
     {
-        $clients = auth()->user()->clients()->where('name', 'like', '%'.$this->search.'%')->get();
+        $user = auth()->user();
+
+        // Filtra pelo workspace empresarial ativo, permitindo consultar os clientes
+        // partilhados da empresa. O scope global de Client mantém o isolamento.
+        $clients = Client::query()
+            ->where('workspace_id', $user->current_workspace_id)
+            ->where('name', 'like', '%'.$this->search.'%')
+            ->get();
 
         return view('livewire.business.client-hub', [
             'clients' => $clients,
