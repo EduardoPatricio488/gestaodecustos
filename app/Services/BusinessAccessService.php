@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\Workspace;
 use Illuminate\Auth\Access\AuthorizationException;
 
 class BusinessAccessService
@@ -17,9 +18,16 @@ class BusinessAccessService
             return null;
         }
 
-        $workspace = $user->workspaces()->whereKey($user->current_workspace_id)->first();
+        $workspace = Workspace::query()
+            ->whereKey($user->current_workspace_id)
+            ->whereIn('type', ['business', 'company'])
+            ->where(function ($query) use ($user): void {
+                $query->where('owner_id', $user->id)
+                    ->orWhereHas('users', fn ($users) => $users->whereKey($user->id));
+            })
+            ->first();
 
-        return $workspace && in_array($workspace->type, ['business', 'company'], true) ? $workspace : null;
+        return $workspace;
     }
 
     public function role(?User $user = null, ?Workspace $workspace = null): string
