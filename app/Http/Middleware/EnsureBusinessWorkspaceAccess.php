@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Workspace;
 use App\Services\BusinessAccessService;
 use Closure;
 use Illuminate\Http\Request;
@@ -34,8 +35,12 @@ class EnsureBusinessWorkspaceAccess
                 $currentBusiness = $access->workspace($user);
 
                 if (! $currentBusiness) {
-                    $businessQuery = $user->workspaces()
-                        ->whereIn('workspaces.type', ['business', 'company']);
+                    $businessQuery = Workspace::query()
+                        ->whereIn('workspaces.type', ['business', 'company'])
+                        ->where(function ($query) use ($user): void {
+                            $query->where('workspaces.owner_id', $user->id)
+                                ->orWhereHas('users', fn ($users) => $users->whereKey($user->id));
+                        });
 
                     $business = null;
 
