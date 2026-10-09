@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Services;
+namespace App\Services;
 
-use App\\Models\\User;
-use App\\Models\\Workspace;
-use Illuminate\\Auth\\Access\\AuthorizationException;
+use App\Models\User;
+use App\Models\Workspace;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class BusinessAccessService
 {
