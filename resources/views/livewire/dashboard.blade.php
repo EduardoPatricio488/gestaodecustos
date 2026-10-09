@@ -294,47 +294,49 @@
         </div>
     </div>
 
-    {{-- MODAL DETALHADO --}}
-    <flux:modal name="weather-details" position="center" scroll="body" class="md:w-[450px] !p-0 overflow-hidden" wire:ignore.self>
-        <div class="relative bg-zinc-950 text-white p-10 space-y-8 text-left">
-            <div class="absolute inset-0 bg-gradient-to-br from-brand-600/20 to-transparent pointer-events-none"></div>
+    {{-- MODAL DETALHADO: conteúdo centrado e sem botão X duplicado/fora do modal --}}
+    <flux:modal name="weather-details" position="center" scroll="body" closable="false" class="w-[min(450px,calc(100vw-2rem))] !p-0 overflow-hidden" wire:ignore.self>
+        <div class="relative w-full overflow-hidden rounded-3xl bg-zinc-950 p-6 text-center text-white sm:p-8">
+            <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-600/20 via-transparent to-transparent"></div>
 
-            <div class="relative z-10 flex justify-between items-start">
-                <div class="text-left">
-                    <h2 class="text-3xl font-black italic tracking-tighter uppercase leading-none" x-text="data.city"></h2>
-                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mt-2">Condições Atmosféricas</p>
+            <div class="relative z-10 space-y-2">
+                <h2 class="text-2xl font-black italic uppercase tracking-tight sm:text-3xl" x-text="data.city"></h2>
+                <p class="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-400">Condições atmosféricas</p>
+            </div>
+
+            <div class="relative z-10 flex items-center justify-center gap-5 py-7">
+                <template x-if="getWeatherIcon(data.code) === 'sun'"><flux:icon name="sun" class="size-16 text-amber-400 sm:size-20" /></template>
+                <template x-if="getWeatherIcon(data.code) === 'cloud'"><flux:icon name="cloud" class="size-16 text-zinc-300 sm:size-20" /></template>
+                <template x-if="getWeatherIcon(data.code) === 'bolt'"><flux:icon name="bolt" class="size-16 text-blue-400 sm:size-20" /></template>
+                <span class="text-6xl font-black italic tracking-tighter sm:text-7xl" x-text="data.temp + '°'"></span>
+            </div>
+
+            <div class="relative z-10 grid grid-cols-2 gap-3 text-left">
+                <div class="flex min-w-0 items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+                    <flux:icon name="beaker" class="size-5 shrink-0 text-blue-400" />
+                    <div class="min-w-0">
+                        <p class="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Humidade</p>
+                        <p class="text-sm font-black sm:text-base" x-text="data.humidity + '%'"></p>
+                    </div>
+                </div>
+                <div class="flex min-w-0 items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+                    <flux:icon name="flag" class="size-5 shrink-0 text-emerald-400" />
+                    <div class="min-w-0">
+                        <p class="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Vento</p>
+                        <p class="text-sm font-black sm:text-base" x-text="data.wind + ' km/h'"></p>
+                    </div>
                 </div>
             </div>
 
-            <div class="relative z-10 flex items-center justify-center gap-6 py-4">
-                <template x-if="getWeatherIcon(data.code) === 'sun'"><flux:icon name="sun" class="size-20 text-amber-500" /></template>
-                <template x-if="getWeatherIcon(data.code) === 'cloud'"><flux:icon name="cloud" class="size-20 text-zinc-400" /></template>
-                <template x-if="getWeatherIcon(data.code) === 'bolt'"><flux:icon name="bolt" class="size-20 text-blue-500" /></template>
-                <div class="text-left leading-none">
-                    <span class="text-7xl font-black tracking-tighter italic" x-text="data.temp + '°'"></span>
-                </div>
-            </div>
-
-            <div class="relative z-10 grid grid-cols-2 gap-4">
-                <div class="bg-white/5 p-4 rounded-3xl border border-white/5 flex items-center gap-4">
-                    <flux:icon name="beaker" class="size-5 text-blue-400" />
-                    <div><p class="text-[8px] font-black uppercase text-zinc-500">Humidade</p><p class="text-sm font-black" x-text="data.humidity + '%'"></p></div>
-                </div>
-                <div class="bg-white/5 p-4 rounded-3xl border border-white/5 flex items-center gap-4">
-                    <flux:icon name="flag" class="size-5 text-emerald-400" />
-                    <div><p class="text-[8px] font-black uppercase text-zinc-500">Vento</p><p class="text-sm font-black" x-text="data.wind + ' km/h'"></p></div>
-                </div>
-            </div>
-
-            <div class="relative z-10 space-y-4">
-                <p class="text-[9px] font-black uppercase text-zinc-500 tracking-[0.2em] text-left border-b border-white/10 pb-2">Previsão Semanal</p>
-                <div class="flex justify-between items-center gap-2">
-                    <template x-for="item in data.forecast">
-                        <div class="flex flex-col items-center flex-1 p-2 rounded-2xl hover:bg-white/5 transition-colors">
-                            <span class="text-[9px] font-black uppercase text-zinc-500" x-text="item.day"></span>
-                            <div class="my-2 text-center">
-                                <template x-if="getWeatherIcon(item.code) === 'sun'"><flux:icon name="sun" variant="micro" class="size-4 text-amber-500" /></template>
-                                <template x-if="getWeatherIcon(item.code) === 'cloud'"><flux:icon name="cloud" variant="micro" class="size-4 text-zinc-400" /></template>
+            <div class="relative z-10 mt-7 space-y-3">
+                <p class="border-b border-white/10 pb-2 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">Previsão semanal</p>
+                <div class="grid grid-cols-5 gap-1 sm:gap-2">
+                    <template x-for="item in data.forecast" :key="item.day">
+                        <div class="flex min-w-0 flex-col items-center rounded-xl px-1 py-3 transition-colors hover:bg-white/5 sm:px-2">
+                            <span class="text-[9px] font-bold uppercase text-zinc-400" x-text="item.day"></span>
+                            <div class="my-3">
+                                <template x-if="getWeatherIcon(item.code) === 'sun'"><flux:icon name="sun" variant="micro" class="size-4 text-amber-400" /></template>
+                                <template x-if="getWeatherIcon(item.code) === 'cloud'"><flux:icon name="cloud" variant="micro" class="size-4 text-zinc-300" /></template>
                                 <template x-if="getWeatherIcon(item.code) === 'bolt'"><flux:icon name="bolt" variant="micro" class="size-4 text-blue-400" /></template>
                             </div>
                             <span class="text-xs font-black italic" x-text="item.max + '°'"></span>
