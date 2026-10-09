@@ -304,11 +304,13 @@ class ClientHub extends Component
     public function render()
     {
         $user = auth()->user();
+        $workspace = app(BusinessAccessService::class)->assertWorkspace($user);
 
-        // Filtra pelo workspace empresarial ativo, permitindo consultar os clientes
-        // partilhados da empresa. O scope global de Client mantém o isolamento.
-        $clients = Client::query()
-            ->where('workspace_id', $user->current_workspace_id)
+        // O workspace é validado pela associação do utilizador à empresa.
+        // Removemos apenas o scope automático de workspace para evitar filtros
+        // duplicados/desactualizados; o isolamento é mantido pelo ID validado.
+        $clients = Client::withoutGlobalScope('workspace')
+            ->where('workspace_id', $workspace->id)
             ->where('name', 'like', '%'.$this->search.'%')
             ->get();
 
