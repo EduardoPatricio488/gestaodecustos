@@ -45,9 +45,13 @@ class BusinessAccessService
 
         $pivotRole = $workspace->users()->whereKey($user->id)->first()?->pivot?->role;
 
-        return match (strtolower((string) $pivotRole)) {
-            'admin' => 'admin', 'manager', 'editor' => 'manager', 'accountant' => 'accountant',
-            'employee', 'member' => 'employee', 'viewer' => 'viewer', default => 'viewer',
+        return match (strtolower(trim((string) $pivotRole))) {
+            'admin', 'ceo', 'chief executive officer', 'director', 'diretor', 'proprietario', 'proprietário' => 'admin',
+            'manager', 'editor', 'gestor' => 'manager',
+            'accountant', 'contabilista' => 'accountant',
+            'employee', 'member', 'funcionario', 'funcionário' => 'employee',
+            'viewer' => 'viewer',
+            default => 'viewer',
         };
     }
 
