@@ -496,9 +496,7 @@ class Dashboard extends Component
             $symbol = strtolower((string) data_get($inv, 'symbol', ''));
             $currentPrice = (float) data_get($inv, 'current_price', 0);
             $quantity = (float) data_get($inv, 'quantity', 0);
-            $price = match ($symbol) {
-                default => $currentPrice,
-            };
+            $price = $currentPrice;
             $portfolioValue += ($quantity * $price);
         }
 
