@@ -41,6 +41,15 @@ class SupplierHub extends Component
 
     public $search = '';
 
+    private function assertSupplierManagementAccess(): void
+    {
+        $user = auth()->user();
+        $access = app(BusinessAccessService::class);
+        $workspace = $access->assertWorkspace($user);
+
+        $access->assert('manage_clients_suppliers', $user, $workspace);
+    }
+
     public function updatedTaxNumber($value): void
     {
         $digits = preg_replace('/\D/', '', (string) $value);
@@ -50,7 +59,7 @@ class SupplierHub extends Component
 
     public function generatePortalLink($id): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertSupplierManagementAccess();
         $supplier = auth()->user()->suppliers()->findOrFail($id);
 
         $token = $this->generateUniquePortalToken();
@@ -75,7 +84,7 @@ class SupplierHub extends Component
 
     public function resendPortalAccess($id): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertSupplierManagementAccess();
         $supplier = auth()->user()->suppliers()->findOrFail($id);
 
         if (! $supplier->email) {
@@ -121,7 +130,7 @@ class SupplierHub extends Component
 
     public function sendPortalEmail(): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertSupplierManagementAccess();
         $supplier = auth()->user()->suppliers()
             ->where('portal_token_hash', hash('sha256', $this->generatedPasscode))
             ->firstOrFail();
@@ -161,7 +170,7 @@ class SupplierHub extends Component
 
     public function approveAccessRequest($id): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertSupplierManagementAccess();
         $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
         $taxNumber = preg_replace('/\D/', '', (string) $request->tax_number);
         $taxNumber = substr($taxNumber, 0, 9);
@@ -214,7 +223,7 @@ class SupplierHub extends Component
 
     public function rejectAccessRequest($id): void
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertSupplierManagementAccess();
         $request = $this->pendingAccessRequestsQuery()->findOrFail($id);
         $request->update(['status' => 'rejected', 'responded_at' => now()]);
         $this->dispatch('toast', text: 'Pedido de acesso rejeitado.', variant: 'warning');
@@ -249,7 +258,7 @@ class SupplierHub extends Component
 
     public function save()
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertSupplierManagementAccess();
         $this->validate();
         $taxNumber = preg_replace('/\D/', '', (string) $this->tax_number);
 
@@ -274,7 +283,7 @@ class SupplierHub extends Component
 
     public function edit($id)
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertSupplierManagementAccess();
         $supplier = auth()->user()->suppliers()->findOrFail($id);
         $this->editingId = $supplier->id;
         $this->name = $supplier->name;
@@ -294,7 +303,7 @@ class SupplierHub extends Component
 
     public function delete($id)
     {
-        app(BusinessAccessService::class)->assert('manage_clients_suppliers');
+        $this->assertSupplierManagementAccess();
         auth()->user()->suppliers()->findOrFail($id)->delete();
         $this->dispatch('toast', text: 'Fornecedor removido da base de dados.', variant: 'warning');
     }
