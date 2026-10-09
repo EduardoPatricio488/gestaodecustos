@@ -295,7 +295,7 @@
     </div>
 
     {{-- MODAL DETALHADO: conteúdo centrado e sem botão X duplicado/fora do modal --}}
-    <flux:modal name="weather-details" position="center" scroll="body" closable="false" class="w-[min(450px,calc(100vw-2rem))] !p-0 overflow-hidden" wire:ignore.self>
+    <flux:modal name="weather-details" position="center" :closable="false" class="!min-w-0 !w-[calc(100vw-2rem)] !max-w-[450px] !p-0 !overflow-hidden" wire:ignore.self>
         <div class="relative w-full overflow-hidden rounded-3xl bg-zinc-950 p-6 text-center text-white sm:p-8">
             <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-600/20 via-transparent to-transparent"></div>
 
