@@ -44,6 +44,11 @@ class BusinessAuthorizationTest extends TestCase
         $employee = User::factory()->create();
         $workspace->users()->attach($employee->id, ['role' => 'member']);
         $this->assertSame('employee', $service->role($employee, $workspace));
+
+        $ceo = User::factory()->create();
+        $workspace->users()->attach($ceo->id, ['role' => 'CEO']);
+        $this->assertSame('admin', $service->role($ceo, $workspace));
+        $this->assertTrue($service->can('manage_clients_suppliers', $ceo, $workspace));
     }
 
     public function test_employee_cannot_create_invoice_but_can_create_own_expense(): void
