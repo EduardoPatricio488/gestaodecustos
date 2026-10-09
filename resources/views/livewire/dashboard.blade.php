@@ -225,19 +225,101 @@
 {{-- 3. HEADER PRINCIPAL COM CLIMA DINÂMICO E MODAL DETALHADO --}}
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-4"
      x-data="{
-        loading: false,
-        data: { temp: '--', city: 'Localização', code: 0, humidity: 0, wind: 0, feels_like: '--', forecast: [] },
+        loading: true,
+        error: '',
+        locationMessage: '',
+        data: { temp: '--', city: 'A obter localização…', code: 0, humidity: '--', wind: '--', feels_like: '--', forecast: [] },
 
         getWeatherIcon(code) {
-            if (code <= 3) return 'sun';
-            if (code <= 67) return 'cloud';
+            if ([0, 1].includes(Number(code))) return 'sun';
+            if ([2, 3, 45, 48].includes(Number(code))) return 'cloud';
             return 'bolt';
         },
 
+        getWeatherDescription(code) {
+            const descriptions = {
+                0: 'Céu limpo', 1: 'Pouco nublado', 2: 'Parcialmente nublado', 3: 'Nublado',
+                45: 'Nevoeiro', 48: 'Nevoeiro com geada', 51: 'Chuvisco ligeiro',
+                53: 'Chuvisco moderado', 55: 'Chuvisco intenso', 56: 'Chuvisco gelado',
+                57: 'Chuvisco gelado intenso', 61: 'Chuva ligeira', 63: 'Chuva moderada',
+                65: 'Chuva intensa', 66: 'Chuva gelada', 67: 'Chuva gelada intensa',
+                71: 'Neve ligeira', 73: 'Neve moderada', 75: 'Neve intensa',
+                77: 'Grãos de neve', 80: 'Aguaceiros ligeiros', 81: 'Aguaceiros moderados',
+                82: 'Aguaceiros fortes', 85: 'Aguaceiros de neve', 86: 'Aguaceiros de neve fortes',
+                95: 'Trovoada', 96: 'Trovoada com granizo', 99: 'Trovoada forte com granizo'
+            };
+            return descriptions[Number(code)] || 'Condições meteorológicas';
+        },
+
+        async fetchWeather(latitude, longitude, city, isFallback = false) {
+            this.loading = true;
+            this.error = '';
+            try {
+                const params = new URLSearchParams({
+                    latitude: latitude,
+                    longitude: longitude,
+                    current: 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m',
+                    daily: 'weather_code,temperature_2m_max,temperature_2m_min',
+                    forecast_days: '5',
+                    timezone: 'auto'
+                });
+                const response = await fetch('https://api.open-meteo.com/v1/forecast?' + params.toString());
+                if (!response.ok) throw new Error('A fonte meteorológica não respondeu (HTTP ' + response.status + ').');
+                const result = await response.json();
+                if (!result.current || !result.daily) throw new Error('A fonte meteorológica devolveu dados incompletos.');
+
+                const current = result.current;
+                this.data = {
+                    temp: Math.round(current.temperature_2m),
+                    city: city,
+                    code: current.weather_code,
+                    humidity: Math.round(current.relative_humidity_2m),
+                    wind: Math.round(current.wind_speed_10m),
+                    feels_like: Math.round(current.apparent_temperature),
+                    forecast: result.daily.time.map((date, index) => ({
+                        day: index === 0 ? 'Hoje' : new Date(date + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'short' }).replace('.', ''),
+                        code: result.daily.weather_code[index],
+                        max: Math.round(result.daily.temperature_2m_max[index]),
+                        min: Math.round(result.daily.temperature_2m_min[index])
+                    }))
+                };
+                if (isFallback) {
+                    this.locationMessage = 'A localização não foi autorizada. A mostrar a previsão de Lisboa.';
+                } else {
+                    this.locationMessage = '';
+                }
+            } catch (exception) {
+                this.error = 'Não foi possível carregar a meteorologia. Verifica a ligação à Internet e tenta novamente.';
+                console.error('Erro ao carregar meteorologia:', exception);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        loadWeather() {
+            this.loading = true;
+            this.error = '';
+            if (!('geolocation' in navigator)) {
+                this.fetchWeather(38.7223, -9.1393, 'Lisboa', true);
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                position => this.fetchWeather(
+                    position.coords.latitude,
+                    position.coords.longitude,
+                    'A tua localização'
+                ),
+                error => {
+                    console.warn('Não foi possível obter a localização:', error.message);
+                    this.fetchWeather(38.7223, -9.1393, 'Lisboa', true);
+                },
+                { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+            );
+        },
+
         init() {
-            // Não pedimos geolocalização automática para evitar o prompt do navegador.
-            this.loading = false;
-            this.data.city = 'Localização';
+            this.loadWeather();
         }
      }"
      x-init="init()"
@@ -302,6 +384,10 @@
             <div class="relative z-10 space-y-2">
                 <h2 class="text-2xl font-black italic uppercase tracking-tight sm:text-3xl" x-text="data.city"></h2>
                 <p class="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-400">Condições atmosféricas</p>
+                <p x-show="loading" class="pt-2 text-xs font-semibold text-zinc-400" role="status">A carregar dados meteorológicos…</p>
+                <p x-show="locationMessage && !loading" x-text="locationMessage" class="pt-2 text-xs text-amber-300"></p>
+                <p x-show="error && !loading" x-text="error" class="pt-2 text-xs text-red-300" role="alert"></p>
+                <button x-show="error && !loading" @click="loadWeather()" type="button" class="mt-2 rounded-full border border-white/15 px-4 py-2 text-xs font-bold hover:bg-white/10">Tentar novamente</button>
             </div>
 
             <div class="relative z-10 flex items-center justify-center gap-5 py-7">
@@ -340,6 +426,7 @@
                                 <template x-if="getWeatherIcon(item.code) === 'bolt'"><flux:icon name="bolt" variant="micro" class="size-4 text-blue-400" /></template>
                             </div>
                             <span class="text-xs font-black italic" x-text="item.max + '°'"></span>
+                            <span class="mt-1 text-[10px] text-zinc-400" x-text="item.min + '°'"></span>
                         </div>
                     </template>
                 </div>
