@@ -90,8 +90,6 @@ class Dashboard extends Component
 
     public string $privacyPassword = '';
 
-    public $marketPrices = [];
-
     public function mount()
     {
         $user = Auth::user();
@@ -135,64 +133,7 @@ class Dashboard extends Component
         $this->exportStart = now()->startOfMonth()->format('Y-m-d');
         $this->exportEnd = now()->endOfMonth()->format('Y-m-d');
 
-        $this->marketPrices = Cache::flexible('market_prices_all', [300, 1800], function () {
-            $result = [];
-            try {
-                $responses = Http::pool(function (Pool $pool) {
-                    return [
-                        'crypto' => $pool->as('crypto')->connectTimeout(3)->timeout(6)->get('https://api.coingecko.com/api/v3/simple/price', [
-                            'ids' => 'bitcoin,ethereum,solana,binancecoin,ripple,cardano,avalanche-2,polkadot,chainlink,dogecoin,matic-network,uniswap',
-                            'vs_currencies' => 'eur',
-                            'include_24hr_change' => 'true',
-                        ]),
-                        'stocks' => $pool->as('stocks')->connectTimeout(1)->timeout(2)->withHeaders(['User-Agent' => 'Mozilla/5.0'])->get('https://query1.finance.yahoo.com/v7/finance/quote', [
-                            'symbols' => 'NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,NFLX,AMD,TSM,SPY,QQQ,VTI,VOO,IUSA.L,CSPX.L,VWCE.DE,GC=F,CL=F',
-                            'lang' => 'en-US',
-                        ]),
-                    ];
-                });
-
-                $crypto = $responses['crypto'];
-                if ($crypto->successful()) {
-                    $data = $crypto->json();
-                    $map = [
-                        'BTC' => 'bitcoin', 'ETH' => 'ethereum', 'SOL' => 'solana', 'BNB' => 'binancecoin',
-                        'XRP' => 'ripple', 'ADA' => 'cardano', 'AVAX' => 'avalanche-2', 'DOT' => 'polkadot',
-                        'LINK' => 'chainlink', 'DOGE' => 'dogecoin', 'MATIC' => 'polygon-ecosystem-token', 'UNI' => 'uniswap',
-                    ];
-                    foreach ($map as $symbol => $id) {
-                        if (isset($data[$id])) {
-                            $result[$symbol] = [
-                                'price' => $data[$id]['eur'],
-                                'change' => round($data[$id]['eur_24h_change'] ?? 0, 2),
-                            ];
-                        }
-                    }
-                }
-
-                $stocks = $responses['stocks'];
-                if ($stocks->successful()) {
-                    $quotes = $stocks->json()['quoteResponse']['result'] ?? [];
-                    $nameMap = [
-                        'NVDA' => 'NVDA', 'AAPL' => 'AAPL', 'MSFT' => 'MSFT', 'AMZN' => 'AMZN', 'GOOGL' => 'GOOGL',
-                        'META' => 'META', 'TSLA' => 'TSLA', 'NFLX' => 'NFLX', 'AMD' => 'AMD', 'TSM' => 'TSM',
-                        'SPY' => 'SPY', 'QQQ' => 'QQQ', 'VTI' => 'VTI', 'VOO' => 'VOO', 'IUSA.L' => 'IUSA',
-                        'CSPX.L' => 'CSPX', 'VWCE.DE' => 'VWCE', 'GC=F' => 'GOLD', 'CL=F' => 'OIL',
-                    ];
-                    foreach ($quotes as $quote) {
-                        $sym = $quote['symbol'] ?? '';
-                        $key = $nameMap[$sym] ?? $sym;
-                        $result[$key] = [
-                            'price' => round($quote['regularMarketPrice'] ?? 0, 2),
-                            'change' => round($quote['regularMarketChangePercent'] ?? 0, 2),
-                        ];
-                    }
-                }
-            } catch (\Throwable $e) {
-                Log::debug('Falha ao atualizar preços de mercado no dashboard: '.$e->getMessage());
-            }
-            return $result;
-        });
+        // As cotações de mercado são carregadas apenas na página Investimentos.
 
         if (! $user->workspaces()->exists()) {
             $ws = Workspace::create([
@@ -556,11 +497,6 @@ class Dashboard extends Component
             $currentPrice = (float) data_get($inv, 'current_price', 0);
             $quantity = (float) data_get($inv, 'quantity', 0);
             $price = match ($symbol) {
-                'btc' => $this->marketPrices['bitcoin']['eur'] ?? $currentPrice,
-                'eth' => $this->marketPrices['ethereum']['eur'] ?? $currentPrice,
-                'sol' => $this->marketPrices['solana']['eur'] ?? $currentPrice,
-                'sp500', 'spx' => 5222.68,
-                'nvda' => 945.30,
                 default => $currentPrice,
             };
             $portfolioValue += ($quantity * $price);
