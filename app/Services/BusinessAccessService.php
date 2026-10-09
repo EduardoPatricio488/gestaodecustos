@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Services;
+namespace App\\Services;
 
-use App\Models\User;
-use App\Models\Workspace;
-use Illuminate\Auth\Access\AuthorizationException;
+use App\\Models\\User;
+use App\\Models\\Workspace;
+use Illuminate\\Auth\\Access\\AuthorizationException;
 
 class BusinessAccessService
 {
@@ -17,16 +17,19 @@ class BusinessAccessService
             return null;
         }
 
-        $workspace = Workspace::query()
+        return $this->accessibleBusinessWorkspaces($user)
             ->whereKey($user->current_workspace_id)
+            ->first();
+    }
+
+    private function accessibleBusinessWorkspaces(User $user)
+    {
+        return Workspace::query()
             ->whereIn('type', ['business', 'company'])
             ->where(function ($query) use ($user): void {
                 $query->where('owner_id', $user->id)
                     ->orWhereHas('users', fn ($users) => $users->whereKey($user->id));
-            })
-            ->first();
-
-        return $workspace;
+            });
     }
 
     public function role(?User $user = null, ?Workspace $workspace = null): string
@@ -81,8 +84,26 @@ class BusinessAccessService
 
     public function assertWorkspace(?User $user = null): Workspace
     {
+        $user ??= auth()->user();
+        abort_unless($user, 403, 'Workspace empresarial inválido.');
+
         $workspace = $this->workspace($user);
-        abort_unless($workspace, 403, 'Workspace empresarial inválido.');
+
+        if (! $workspace) {
+            $query = $this->accessibleBusinessWorkspaces($user);
+            $lastBusinessWorkspaceId = session('last_business_workspace_id');
+
+            if ($lastBusinessWorkspaceId) {
+                $workspace = (clone $query)->whereKey($lastBusinessWorkspaceId)->first();
+            }
+
+            $workspace ??= $query->latest('updated_at')->first();
+
+            abort_unless($workspace, 403, 'Não tens uma empresa associada a esta conta.');
+
+            $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+            session()->put('last_business_workspace_id', $workspace->id);
+        }
 
         return $workspace;
     }
