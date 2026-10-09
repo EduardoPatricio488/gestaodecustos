@@ -301,9 +301,14 @@ class SupplierHub extends Component
 
     public function render()
     {
-        $workspaceId = auth()->user()->current_workspace_id;
+        $user = auth()->user();
+        $workspace = app(BusinessAccessService::class)->assertWorkspace($user);
 
-        $suppliers = Supplier::where('workspace_id', $workspaceId)
+        // Usar o workspace empresarial validado, tal como na página de clientes.
+        // Evita que um current_workspace_id vazio/desactualizado ou o scope
+        // automático esconda fornecedores que pertencem à empresa selecionada.
+        $suppliers = Supplier::withoutGlobalScope('workspace')
+            ->where('workspace_id', $workspace->id)
             ->where('name', 'like', '%'.$this->search.'%')
             ->withSum('expenses', 'amount')
             ->withCount('expenses')
