@@ -33,15 +33,33 @@ class EnsureBusinessWorkspaceAccess
             if (str_starts_with($path, 'empresa/')) {
                 $currentBusiness = $access->workspace($user);
 
-                if (! $currentBusiness && session()->has('last_business_workspace_id')) {
-                    $business = $user->workspaces()
-                        ->whereKey((int) session('last_business_workspace_id'))
-                        ->whereIn('workspaces.type', ['business', 'company'])
-                        ->first();
+                if (! $currentBusiness) {
+                    $businessQuery = $user->workspaces()
+                        ->whereIn('workspaces.type', ['business', 'company']);
+
+                    $business = null;
+
+                    if (session()->has('last_business_workspace_id')) {
+                        $business = (clone $businessQuery)
+                            ->whereKey((int) session('last_business_workspace_id'))
+                            ->first();
+                    }
+
+                    // Se o utilizador só pertence a uma empresa, é seguro recuperar
+                    // automaticamente esse contexto quando a sessão não o guardou.
+                    if (! $business) {
+                        $businessWorkspaces = $businessQuery->get();
+                        if ($businessWorkspaces->count() === 1) {
+                            $business = $businessWorkspaces->first();
+                        }
+                    }
 
                     if ($business) {
                         $user->forceFill(['current_workspace_id' => $business->id])->save();
+                        session()->put('last_business_workspace_id', $business->id);
                     }
+                } else {
+                    session()->put('last_business_workspace_id', $currentBusiness->id);
                 }
             } elseif ($access->workspace($user)) {
                 $personal = $user->workspaces()
