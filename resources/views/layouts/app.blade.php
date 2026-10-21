@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/modal-controls.js'])
+    @livewireStyles
+    @fluxAppearance
+
     <!-- Configurações PWA -->
     <meta name="theme-color" content="#10b981">
     <link rel="manifest" href="/manifest.json">
@@ -170,5 +174,7 @@
             })();
         </script>
     @include('partials.cookie-consent')
+    @livewireScripts
+    @fluxScripts
     </body>
 </html>
