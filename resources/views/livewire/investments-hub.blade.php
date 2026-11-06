@@ -144,7 +144,7 @@
     @php
         $advisorCurrency = auth()->user()->currentWorkspace?->currency ?? 'EUR';
         $money = fn ($value) => number_format((float) $value, 2, ',', ' ').' '.$advisorCurrency;
-        $hasCashflowData = ($advisorData['income_records'] ?? 0) > 0 || ($advisorData['expense_records'] ?? 0) > 0;
+        $hasSalaryConfigured = (bool) ($advisorData['salary_configured'] ?? false);
         $monthlySurplus = (float) ($advisorData['monthly_surplus'] ?? 0);
         $topShare = (float) ($advisorData['top_asset_percentage'] ?? 0);
         $riskLabel = $advisorData['asset_count'] === 0 ? 'Sem carteira' : (($topShare >= 60 || $advisorData['asset_count'] < 3) ? 'Concentração elevada' : ($topShare >= 35 ? 'Concentração moderada' : 'Mais distribuída'));
@@ -192,7 +192,7 @@
             <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
                 <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Excedente mensal médio</p>
                 <p class="mt-2 text-2xl font-black tracking-tight {{ $monthlySurplus >= 0 ? 'text-emerald-500' : 'text-red-500' }}">{{ $money($monthlySurplus) }}</p>
-                <p class="mt-1 text-xs text-zinc-500">Média dos últimos 90 dias</p>
+                <p class="mt-1 text-xs text-zinc-500">Salário líquido menos despesas médias</p>
             </div>
         </section>
 
@@ -201,13 +201,13 @@
                 <div class="flex items-center justify-between gap-3 mb-6">
                     <div>
                         <h3 class="text-lg font-black dark:text-white">Quanto posso investir?</h3>
-                        <p class="text-xs text-zinc-500 mt-1">Estimativa baseada nos movimentos dos últimos 90 dias</p>
+                        <p class="text-xs text-zinc-500 mt-1">Salário líquido configurado e despesas médias dos últimos 90 dias</p>
                     </div>
                     <span class="rounded-full bg-indigo-500/10 text-indigo-500 px-3 py-1 text-[9px] font-black uppercase tracking-wider">Referência</span>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4">
-                        <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Receitas médias / mês</p>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Salário líquido / mês</p>
                         <p class="mt-2 text-xl font-black dark:text-white">{{ $money($advisorData['monthly_income']) }}</p>
                     </div>
                     <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4">
@@ -220,10 +220,10 @@
                     <p class="mt-2 text-2xl sm:text-3xl font-black tracking-tight dark:text-white">{{ $money($advisorData['suggested_monthly_min']) }} <span class="text-zinc-400 text-base">a</span> {{ $money($advisorData['suggested_monthly_max']) }}</p>
                     <p class="mt-2 text-xs leading-5 text-zinc-500">Corresponde a 20%–30% do excedente médio positivo. Não é uma ordem de investimento: confirma primeiro despesas futuras, dívidas e reserva de emergência.</p>
                 </div>
-                @if(!$hasCashflowData)
-                    <p class="mt-4 text-xs text-amber-600 dark:text-amber-400">Ainda não existem receitas/despesas suficientes registadas para estimar a tua capacidade de investimento. Regista os movimentos para melhorar esta análise.</p>
+                @if(!$hasSalaryConfigured)
+                    <p class="mt-4 text-xs text-amber-600 dark:text-amber-400">Ainda não tens um salário líquido configurado em Rendimentos Fixos. Regista o teu contrato de trabalho para calcular a capacidade de investimento.</p>
                 @elseif($advisorData['income_records'] < 3 || $advisorData['expense_records'] < 3)
-                    <p class="mt-4 text-xs text-amber-600 dark:text-amber-400">A amostra de movimentos ainda é limitada. Usa este valor apenas como referência inicial.</p>
+                    <p class="mt-4 text-xs text-amber-600 dark:text-amber-400">Existem poucos registos de despesas. O cálculo usa o salário líquido configurado e a média das despesas disponíveis.</p>
                 @endif
             </div>
 
