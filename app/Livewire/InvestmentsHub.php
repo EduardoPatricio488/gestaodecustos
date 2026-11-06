@@ -87,6 +87,8 @@ class InvestmentsHub extends Component
 
     public ?string $portfolioAdvisorAnalysis = null;
 
+    public bool $isAnalyzingPortfolio = false;
+
     public string $aiProvider = 'openrouter';
 
     private const ALPHA_VANTAGE_KEY = null;
@@ -457,54 +459,60 @@ class InvestmentsHub extends Component
 
     public function analyzePortfolio(): void
     {
-        $data = $this->buildPortfolioAdvisorData();
-        $apiKey = config('services.openrouter.api_key');
-
-        if (blank($apiKey)) {
-            $this->portfolioAdvisorAnalysis = 'O consultor IA ainda não está configurado neste ambiente. Os indicadores e cálculos apresentados nesta página continuam disponíveis, mas a opinião personalizada por IA requer uma chave OpenRouter válida.';
+        if ($this->isAnalyzingPortfolio) {
             return;
         }
 
-        $context = [
-            'currency' => Auth::user()->currentWorkspace?->currency ?? 'EUR',
-            'portfolio' => [
-                'invested' => round($data['invested'], 2),
-                'current_value' => round($data['current_value'], 2),
-                'profit' => round($data['profit'], 2),
-                'profit_percent' => round($data['profit_percent'], 2),
-                'asset_count' => $data['asset_count'],
-                'composition' => $data['composition'],
-                'largest_position_share_percent' => $data['top_asset_percentage'],
-                'positions' => array_map(fn ($asset) => [
-                    'name' => $asset['name'],
-                    'symbol' => $asset['symbol'],
-                    'type' => $asset['type'],
-                    'current_value' => round($asset['value'], 2),
-                    'profit' => round($asset['profit'], 2),
-                    'profit_percent' => round($asset['profit_percent'], 2),
-                ], $data['assets']),
-            ],
-            'cashflow_last_90_days' => [
-                'monthly_average_income' => round($data['monthly_income'], 2),
-                'monthly_average_expenses' => round($data['monthly_expenses'], 2),
-                'monthly_average_surplus' => round($data['monthly_surplus'], 2),
-                'income_records' => $data['income_records'],
-                'expense_records' => $data['expense_records'],
-                'suggested_investment_range' => [
-                    'minimum' => round($data['suggested_monthly_min'], 2),
-                    'maximum' => round($data['suggested_monthly_max'], 2),
-                ],
-            ],
-        ];
+        $this->isAnalyzingPortfolio = true;
+        $this->portfolioAdvisorAnalysis = 'A preparar os dados da tua carteira e a contactar o consultor IA...';
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer '.$apiKey,
-            'Content-Type' => 'application/json',
-            'HTTP-Referer' => config('app.url'),
-            'X-Title' => config('app.name'),
-        ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
-            ->timeout((int) config('limits.ai.request_timeout_seconds', 45))
-            ->post('https://openrouter.ai/api/v1/chat/completions', [
+        try {
+            $data = $this->buildPortfolioAdvisorData();
+            $apiKey = config('services.openrouter.api_key');
+
+            if (blank($apiKey)) {
+                $this->portfolioAdvisorAnalysis = 'A ligação à IA não está configurada. Falta definir OPENROUTER_API_KEY no ficheiro .env deste ambiente. Os indicadores da carteira continuam disponíveis, mas a análise personalizada necessita dessa chave.';
+                return;
+            }
+
+            $context = [
+                'currency' => Auth::user()->currentWorkspace?->currency ?? 'EUR',
+                'portfolio' => [
+                    'invested' => round($data['invested'], 2),
+                    'current_value' => round($data['current_value'], 2),
+                    'profit' => round($data['profit'], 2),
+                    'profit_percent' => round($data['profit_percent'], 2),
+                    'asset_count' => $data['asset_count'],
+                    'composition' => $data['composition'],
+                    'largest_position_share_percent' => $data['top_asset_percentage'],
+                    'positions' => array_map(fn ($asset) => [
+                        'name' => $asset['name'],
+                        'symbol' => $asset['symbol'],
+                        'type' => $asset['type'],
+                        'current_value' => round($asset['value'], 2),
+                        'profit' => round($asset['profit'], 2),
+                        'profit_percent' => round($asset['profit_percent'], 2),
+                    ], $data['assets']),
+                ],
+                'cashflow_last_90_days' => [
+                    'monthly_average_income' => round($data['monthly_income'], 2),
+                    'monthly_average_expenses' => round($data['monthly_expenses'], 2),
+                    'monthly_average_surplus' => round($data['monthly_surplus'], 2),
+                    'income_records' => $data['income_records'],
+                    'expense_records' => $data['expense_records'],
+                    'suggested_investment_range' => [
+                        'minimum' => round($data['suggested_monthly_min'], 2),
+                        'maximum' => round($data['suggested_monthly_max'], 2),
+                    ],
+                ],
+            ];
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.$apiKey,
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => config('app.url'),
+                'X-Title' => config('app.name'),
+            ])->connectTimeout(10)->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
                 'messages' => [
                     ['role' => 'system', 'content' => 'És um consultor de educação financeira prudente, claro e rigoroso. Analisa exclusivamente os dados fornecidos. Nunca inventes preços, rendimentos, despesas, taxas, previsões ou características dos ativos. Distingue factos de hipóteses. Não prometas retornos nem dês ordens de compra/venda. Se faltarem dados, diz explicitamente. Recomenda manter primeiro uma reserva de emergência adequada e não investir dinheiro necessário a curto prazo. Responde em português de Portugal, com títulos curtos e recomendações práticas.'],
@@ -514,15 +522,35 @@ class InvestmentsHub extends Component
                 'max_tokens' => 1800,
             ]);
 
-        if (! $response->successful()) {
-            Log::warning('InvestmentsHub: falha na análise do consultor de investimentos', ['status' => $response->status()]);
-            $this->portfolioAdvisorAnalysis = 'Não foi possível obter a análise IA neste momento. Confirma a configuração do fornecedor de IA e tenta novamente.';
-            return;
-        }
+            if (! $response->successful()) {
+                Log::warning('InvestmentsHub: falha na análise do consultor de investimentos', [
+                    'status' => $response->status(),
+                    'response' => mb_substr($response->body(), 0, 1500),
+                ]);
 
-        $this->portfolioAdvisorAnalysis = trim((string) ($response->json('choices.0.message.content') ?? ''));
-        if ($this->portfolioAdvisorAnalysis === '') {
-            $this->portfolioAdvisorAnalysis = 'A IA não devolveu uma análise válida. Tenta novamente.';
+                $this->portfolioAdvisorAnalysis = match ($response->status()) {
+                    401, 403 => 'A chave OpenRouter foi rejeitada. Confirma se OPENROUTER_API_KEY está correta e se a conta tem acesso ao modelo configurado.',
+                    402 => 'A conta OpenRouter não tem saldo ou créditos disponíveis para executar esta análise.',
+                    429 => 'O serviço de IA está temporariamente limitado por excesso de pedidos. Aguarda um pouco e tenta novamente.',
+                    default => 'O serviço OpenRouter respondeu com o erro HTTP '.$response->status().'. Consulta o registo de Laravel para mais detalhes e tenta novamente.',
+                };
+                return;
+            }
+
+            $this->portfolioAdvisorAnalysis = trim((string) ($response->json('choices.0.message.content') ?? ''));
+
+            if ($this->portfolioAdvisorAnalysis === '') {
+                $this->portfolioAdvisorAnalysis = 'O serviço de IA respondeu, mas não devolveu texto. Tenta novamente.';
+            }
+        } catch (\\Throwable $e) {
+            Log::error('InvestmentsHub: exceção ao analisar carteira', [
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
+
+            $this->portfolioAdvisorAnalysis = 'Ocorreu um erro ao contactar o consultor IA: '.$e->getMessage();
+        } finally {
+            $this->isAnalyzingPortfolio = false;
         }
     }
 
