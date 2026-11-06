@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Investment;
+use App\Models\InvestmentPortfolioAnalysis;
 use App\Models\BankAccount;
 use App\Models\InvestmentIncome;
 use App\Models\Income;
@@ -92,6 +93,10 @@ class InvestmentsHub extends Component
 
     public bool $portfolioAnalysisCompleted = false;
 
+    public ?string $portfolioAnalysisDate = null;
+
+    public ?int $selectedPortfolioAnalysisId = null;
+
     public string $aiProvider = 'openrouter';
 
     private const ALPHA_VANTAGE_KEY = null;
@@ -103,6 +108,37 @@ class InvestmentsHub extends Component
     public function mount(): void
     {
         $this->lastUpdated = now()->format('H:i');
+        $this->loadLatestPortfolioAnalysis();
+    }
+
+    private function portfolioAnalysisQuery()
+    {
+        $user = Auth::user();
+
+        return InvestmentPortfolioAnalysis::query()
+            ->where('user_id', $user->id)
+            ->where('workspace_id', $user->current_workspace_id);
+    }
+
+    private function loadLatestPortfolioAnalysis(): void
+    {
+        $latest = $this->portfolioAnalysisQuery()->latest('created_at')->first();
+
+        if ($latest) {
+            $this->selectedPortfolioAnalysisId = $latest->id;
+            $this->portfolioAdvisorAnalysis = $latest->analysis;
+            $this->portfolioAnalysisDate = $latest->created_at?->format('d/m/Y H:i');
+        }
+    }
+
+    public function showPortfolioAnalysis(int $analysisId): void
+    {
+        $analysis = $this->portfolioAnalysisQuery()->findOrFail($analysisId);
+
+        $this->selectedPortfolioAnalysisId = $analysis->id;
+        $this->portfolioAdvisorAnalysis = $analysis->analysis;
+        $this->portfolioAnalysisDate = $analysis->created_at?->format('d/m/Y H:i');
+        $this->portfolioAnalysisCompleted = false;
     }
 
     private array $companyList = [
@@ -492,7 +528,7 @@ class InvestmentsHub extends Component
             $apiKey = config('services.openrouter.api_key');
 
             if (blank($apiKey)) {
-                $this->portfolioAdvisorAnalysis = 'A ligação à IA não está configurada. Falta definir OPENROUTER_API_KEY no ficheiro .env deste ambiente. Os indicadores da carteira continuam disponíveis, mas a análise personalizada necessita dessa chave.';
+                $this->portfolioAdvisorAnalysis = 'A ligação à IA não está configurada. Falta definir OPENROUTER_API_KEY no ficheiro .env deste ambiente.';
                 return;
             }
 
@@ -528,6 +564,11 @@ class InvestmentsHub extends Component
                 ],
             ];
 
+            $systemPrompt = 'És um consultor de educação financeira prudente, claro e rigoroso. Analisa exclusivamente os dados fornecidos. Nunca inventes preços, rendimentos, despesas, taxas, previsões ou características dos ativos. Distingue factos de hipóteses. Não prometas retornos nem dês ordens de compra/venda. Se faltarem dados, diz explicitamente. Recomenda manter primeiro uma reserva de emergência adequada e não investir dinheiro necessário a curto prazo. Responde em português de Portugal.';
+            $userPrompt = "Analisa a minha carteira e a minha capacidade de investimento com estes dados reais da aplicação:\n"
+                .json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                ."\n\nEscreve uma análise completa mas objetiva, com cerca de 500-700 palavras, usando obrigatoriamente estes títulos: Diagnóstico geral; Pontos fortes; Riscos e concentração; Capacidade mensal para investir; Próximos passos concretos; Dados em falta. Explica que 20%-30% do excedente é apenas uma referência inicial, não uma garantia. Se não existirem movimentos suficientes nos últimos 90 dias, não apresentes o excedente como rendimento disponível confirmado. Termina cada secção e não deixes frases a meio.";
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer '.$apiKey,
                 'Content-Type' => 'application/json',
@@ -536,11 +577,11 @@ class InvestmentsHub extends Component
             ])->connectTimeout(5)->timeout(25)->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
                 'messages' => [
-                    ['role' => 'system', 'content' => 'És um consultor de educação financeira prudente, claro e rigoroso. Analisa exclusivamente os dados fornecidos. Nunca inventes preços, rendimentos, despesas, taxas, previsões ou características dos ativos. Distingue factos de hipóteses. Não prometas retornos nem dês ordens de compra/venda. Se faltarem dados, diz explicitamente. Recomenda manter primeiro uma reserva de emergência adequada e não investir dinheiro necessário a curto prazo. Responde em português de Portugal, com títulos curtos e recomendações práticas.'],
-                    ['role' => 'user', 'content' => "Analisa a minha carteira e a minha capacidade de investimento com estes dados reais da aplicação:\n".json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n\nOrganiza a resposta em: 1) diagnóstico geral; 2) pontos fortes; 3) riscos e concentração; 4) capacidade mensal para investir, explicando que 20%-30% do excedente é apenas uma referência inicial e não uma garantia; 5) próximos passos concretos; 6) dados em falta. Se não existirem movimentos suficientes nos últimos 90 dias, não apresentes o excedente como rendimento disponível confirmado."],
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => $userPrompt],
                 ],
                 'temperature' => 0.2,
-                'max_tokens' => 1800,
+                'max_tokens' => 2500,
             ]);
 
             if (! $response->successful()) {
@@ -558,22 +599,70 @@ class InvestmentsHub extends Component
                 return;
             }
 
-            $this->portfolioAdvisorAnalysis = trim((string) ($response->json('choices.0.message.content') ?? ''));
+            $choice = $response->json('choices.0', []);
+            $analysisText = trim((string) ($choice['message']['content'] ?? ''));
+            $finishReason = $choice['finish_reason'] ?? null;
 
-            if ($this->portfolioAdvisorAnalysis === '') {
+            // Alguns modelos gratuitos cortam a resposta ao atingir o limite de tokens.
+            // Pedimos a continuação uma única vez e juntamos as duas partes.
+            if ($analysisText !== '' && $finishReason === 'length') {
+                $continuation = Http::withHeaders([
+                    'Authorization' => 'Bearer '.$apiKey,
+                    'Content-Type' => 'application/json',
+                    'HTTP-Referer' => config('app.url'),
+                    'X-Title' => config('app.name'),
+                ])->connectTimeout(5)->timeout(25)->post('https://openrouter.ai/api/v1/chat/completions', [
+                    'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $userPrompt],
+                        ['role' => 'assistant', 'content' => $analysisText],
+                        ['role' => 'user', 'content' => 'Continua exatamente a partir do ponto onde paraste. Não repitas o texto anterior. Conclui todas as secções em falta e termina a análise.'],
+                    ],
+                    'temperature' => 0.2,
+                    'max_tokens' => 1600,
+                ]);
+
+                if ($continuation->successful()) {
+                    $continuedText = trim((string) ($continuation->json('choices.0.message.content') ?? ''));
+                    if ($continuedText !== '') {
+                        $analysisText .= "\n\n".$continuedText;
+                    }
+                } else {
+                    Log::warning('InvestmentsHub: não foi possível obter a continuação da análise', [
+                        'status' => $continuation->status(),
+                    ]);
+                }
+            }
+
+            if ($analysisText === '') {
                 $this->portfolioAdvisorAnalysis = 'O serviço de IA respondeu, mas não devolveu texto. Tenta novamente.';
+                return;
             }
 
-            if ($this->portfolioAdvisorAnalysis !== '') {
-                $this->portfolioAnalysisCompleted = true;
+            if (($choice['finish_reason'] ?? null) === 'length' && ! str_contains($analysisText, 'Dados em falta')) {
+                $analysisText .= "\n\nNota: o modelo atingiu o limite de resposta. Podes voltar a gerar a análise para obter uma versão completa.";
             }
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+
+            $saved = InvestmentPortfolioAnalysis::create([
+                'user_id' => Auth::id(),
+                'workspace_id' => Auth::user()->current_workspace_id,
+                'analysis' => $analysisText,
+                'snapshot' => $context,
+                'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+            ]);
+
+            $this->selectedPortfolioAnalysisId = $saved->id;
+            $this->portfolioAdvisorAnalysis = $saved->analysis;
+            $this->portfolioAnalysisDate = $saved->created_at?->format('d/m/Y H:i');
+            $this->portfolioAnalysisCompleted = true;
+        } catch (\\Illuminate\\Http\\Client\\ConnectionException $e) {
             Log::warning('InvestmentsHub: timeout ou falha de ligação ao consultor IA', [
                 'message' => $e->getMessage(),
             ]);
 
             $this->portfolioAdvisorAnalysis = 'A IA demorou demasiado tempo a responder ou a ligação foi interrompida. Tenta novamente dentro de alguns instantes.';
-        } catch (\Throwable $e) {
+        } catch (\\Throwable $e) {
             Log::error('InvestmentsHub: exceção ao analisar carteira', [
                 'message' => $e->getMessage(),
                 'exception' => get_class($e),
@@ -925,11 +1014,16 @@ class InvestmentsHub extends Component
 
         $advisorData = $this->buildPortfolioAdvisorData();
 
+        $portfolioAnalysisHistory = $this->portfolioAnalysisQuery()
+            ->latest('created_at')
+            ->take(10)
+            ->get(['id', 'created_at', 'model']);
+
         return view('livewire.investments-hub', ['bankAccounts' => $bankAccounts, 'myAssets' => $myAssets, 'totalInvested' => $totalInvested, 'currentValue' => $displayValue, 'totalProfit' => $displayProfit, 'totalPnlPct' => $totalPnlPct, 'composition' => $composition, 'bestPerformer' => $myAssets->sortByDesc('pnl_percent')->first(), 'worstPerformer' => $myAssets->sortBy('pnl_percent')->first(), 'highestExposure' => $myAssets->sortByDesc('current_value')->first(), 'marketData' => $this->buildMarketTicker(), 'estimatedTax' => $totalEstimatedTax, 'recentIncomes' => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
                 ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
                 ->with('investment')->latest('reference_date')->take(10)->get(), 'totalIncomeNet' => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
                 ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
-                ->sum('net_amount'), 'companyAnalysis' => $this->companyAnalysis, 'advisorData' => $advisorData, 'portfolioAdvisorAnalysis' => $this->portfolioAdvisorAnalysis, 'tab' => $this->tab]);
+                ->sum('net_amount'), 'companyAnalysis' => $this->companyAnalysis, 'advisorData' => $advisorData, 'portfolioAdvisorAnalysis' => $this->portfolioAdvisorAnalysis, 'portfolioAnalysisHistory' => $portfolioAnalysisHistory, 'portfolioAnalysisDate' => $this->portfolioAnalysisDate, 'selectedPortfolioAnalysisId' => $this->selectedPortfolioAnalysisId, 'tab' => $this->tab]);
     }
 
     private function buildMarketTicker(): array
