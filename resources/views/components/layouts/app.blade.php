@@ -1246,7 +1246,7 @@ $hasStoreAccess = $hasLockInAccess;
                         :href="route('hub.incomes')"
                         :current="request()->routeIs('hub.incomes')"
                         wire:navigate.hover
-                        class="!bg-transparent !text-zinc-700 dark:!text-zinc-200 !font-black !rounded-xl !py-3.5 !px-3 hover:!bg-zinc-100 dark:hover:!bg-zinc-800 transition-all duration-200"
+                        class="!bg-transparent !text-zinc-700 dark:!text-zinc-200 !font-black !rounded-xl !py-3.5 !px-3 !border !border-emerald-500/50 dark:!border-emerald-400/40 shadow-sm hover:!bg-zinc-100 dark:hover:!bg-zinc-800 hover:!border-emerald-600/70 dark:hover:!border-emerald-300/60 transition-all duration-200"
                     >
                         <span class="flex items-center gap-2.5 w-full">
                             <span class="flex items-center gap-2 font-black tracking-tight">
