@@ -296,8 +296,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         abort_unless(is_string($path) && preg_match('#^income-statements/[0-9]+/[A-Za-z0-9]+\\.pdf$#', $path), 404);
         abort_unless(\Illuminate\Support\Facades\Storage::disk('local')->exists($path), 404);
 
-        return \Illuminate\Support\Facades\Storage::disk('local')->download($path, $download['name'], ['Content-Type' => 'application/pdf'])
-            ->deleteFileAfterSend(true);
+        return response()->download(
+            \Illuminate\Support\Facades\Storage::disk('local')->path($path),
+            $download['name'],
+            ['Content-Type' => 'application/pdf']
+        )->deleteFileAfterSend(true);
     })->name('hub.incomes.statement.download');
     Route::get('/dividas', DebtHub::class)->name('hub.debts');
     Route::get('/objetivos', GoalsHub::class)->name('hub.goals');
