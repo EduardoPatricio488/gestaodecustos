@@ -46,6 +46,7 @@
         .contract-meta { margin-top: 4px; color: #64748b; font-size: 7px; word-wrap: break-word; }
         .footer { position: fixed; left: 0; right: 0; bottom: -25px; padding-top: 7px; border-top: 1px solid #dce5e1; color: #94a3b8; font-size: 7px; }
         .footer .page { float: right; }
+        .footer .page:after { content: counter(page); }
         .keep { page-break-inside: avoid; }
     </style>
 </head>
@@ -330,7 +331,7 @@
 
     <div class="footer">
         Finance Pro · Extrato detalhado de receitas · {{ $workspaceName }}
-        <span class="page">Página <span class="pagenum"></span></span>
+        <span class="page">Página </span>
     </div>
 </body>
 </html>
