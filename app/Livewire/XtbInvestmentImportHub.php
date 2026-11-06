@@ -791,6 +791,7 @@ class XtbInvestmentImportHub extends Component
             $patterns = [
                 $root.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.$executable,
                 $root.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.'Library'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.$executable,
+                $root.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.'Library'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.$executable,
                 $root.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.$executable,
             ];
 
