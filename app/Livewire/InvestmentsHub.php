@@ -603,9 +603,14 @@ class InvestmentsHub extends Component
             $analysisText = trim((string) ($choice['message']['content'] ?? ''));
             $finishReason = $choice['finish_reason'] ?? null;
 
-            // Alguns modelos gratuitos cortam a resposta ao atingir o limite de tokens.
-            // Pedimos a continuação uma única vez e juntamos as duas partes.
-            if ($analysisText !== '' && $finishReason === 'length') {
+            // Alguns modelos gratuitos cortam a resposta sem indicar corretamente o motivo.
+            // Também verificamos se chegou à última secção pedida antes de aceitar a análise.
+            $needsContinuation = $analysisText !== '' && (
+                $finishReason === 'length'
+                || ! str_contains(mb_strtolower($analysisText), 'dados em falta')
+            );
+
+            if ($needsContinuation) {
                 $continuation = Http::withHeaders([
                     'Authorization' => 'Bearer '.$apiKey,
                     'Content-Type' => 'application/json',
@@ -628,6 +633,8 @@ class InvestmentsHub extends Component
                     if ($continuedText !== '') {
                         $analysisText .= "\n\n".$continuedText;
                     }
+                    $needsContinuation = ($continuation->json('choices.0.finish_reason') ?? null) === 'length'
+                        || ! str_contains(mb_strtolower($analysisText), 'dados em falta');
                 } else {
                     Log::warning('InvestmentsHub: não foi possível obter a continuação da análise', [
                         'status' => $continuation->status(),
@@ -640,8 +647,8 @@ class InvestmentsHub extends Component
                 return;
             }
 
-            if (($choice['finish_reason'] ?? null) === 'length' && ! str_contains($analysisText, 'Dados em falta')) {
-                $analysisText .= "\n\nNota: o modelo atingiu o limite de resposta. Podes voltar a gerar a análise para obter uma versão completa.";
+            if ($needsContinuation) {
+                $analysisText .= "\n\nNota: o modelo não conseguiu concluir todas as secções nesta tentativa. Volta a gerar a análise para obter uma versão completa.";
             }
 
             $saved = InvestmentPortfolioAnalysis::create([
