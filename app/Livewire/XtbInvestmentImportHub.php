@@ -711,7 +711,33 @@ class XtbInvestmentImportHub extends Component
 
     private function parsePortugueseNumber(string $value): float
     {
-        $value = str_replace(['.', ','], ['', '.'], trim($value));
+        $value = trim(str_replace(["\xc2\xa0", ' ', '€'], '', $value));
+        if ($value === '') {
+            return 0.0;
+        }
+
+        $lastComma = strrpos($value, ',');
+        $lastDot = strrpos($value, '.');
+
+        if ($lastComma !== false && $lastDot !== false) {
+            // O último separador é o decimal; o outro é separador de milhares.
+            if ($lastComma > $lastDot) {
+                $value = str_replace('.', '', $value);
+                $value = str_replace(',', '.', $value);
+            } else {
+                $value = str_replace(',', '', $value);
+            }
+        } elseif ($lastComma !== false) {
+            // Nos extratos portugueses, a vírgula representa os decimais.
+            $value = str_replace(',', '.', $value);
+        } elseif ($lastDot !== false) {
+            // 2.300 representa milhares; 1.10412 representa um valor unitário.
+            $decimals = strlen($value) - $lastDot - 1;
+            if ($decimals === 3) {
+                $value = str_replace('.', '', $value);
+            }
+        }
+
         return is_numeric($value) ? (float) $value : 0.0;
     }
 
