@@ -17,6 +17,7 @@ use App\Models\RecurringIncome;
 use App\Models\Workspace;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class BancoService
 {
@@ -565,7 +566,26 @@ class BancoService
         $query = $this->isBusinessWorkspace ? $query : $query->where('user_id', $this->userId);
 
         if ($this->bankName !== null && $this->bankName !== '') {
-            $query->whereHas('bankAccount', fn ($accountQuery) => $accountQuery->where('bank_name', $this->bankName));
+            $table = $query->getModel()->getTable();
+
+            if ($table === 'bank_accounts') {
+                $query->where('bank_name', $this->bankName);
+            } elseif ($table === 'bank_transfers') {
+                $query->where(function ($transferQuery) {
+                    $transferQuery->whereHas('fromAccount', fn ($accountQuery) => $accountQuery->where('bank_name', $this->bankName))
+                        ->orWhereHas('toAccount', fn ($accountQuery) => $accountQuery->where('bank_name', $this->bankName));
+                });
+            } elseif (Schema::hasColumn($table, 'bank_account_id')) {
+                $accountIds = BankAccount::query()
+                    ->where('workspace_id', $this->workspaceId)
+                    ->where('bank_name', $this->bankName)
+                    ->when(! $this->isBusinessWorkspace, fn ($accounts) => $accounts->where('user_id', $this->userId))
+                    ->select('id');
+
+                $query->whereIn($table.'.bank_account_id', $accountIds);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         return $query;
