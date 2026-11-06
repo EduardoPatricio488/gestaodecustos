@@ -380,7 +380,7 @@ class InvestmentsHub extends Component
     public function setType(string $newType): void
     {
         $this->type = $newType;
-        $this->reset(['exchange', 'network', 'provider', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type']);
+        $this->reset(['exchange', 'network', 'provider', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type', 'bank_account_id']);
         if ($newType === 'Divida') {
             $this->average_price = 1.00;
             $this->fees = 0;
