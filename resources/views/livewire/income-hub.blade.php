@@ -769,7 +769,7 @@
                                 </div>
                                 <div class="min-w-[90px] flex-1">
                                     <p class="mb-1 text-[9px] font-bold text-zinc-500">Total adicional</p>
-                                    <p class="h-9 flex items-center text-sm font-black text-emerald-700 dark:text-emerald-300">{{ number_format((float) ($job->metadata['service_unit_price'] ?? 0), 2, ',', ' ') }} × quantidade</p>
+                                    <p class="h-9 flex items-center text-sm font-black text-emerald-700 dark:text-emerald-300">{{ number_format((float) ($job->metadata['service_unit_price'] ?? 0), 2, ',', ' ') }} × {{ max(1, (int) ($serviceQuickQuantities[$job->id] ?? 1)) }} = {{ number_format((float) ($job->metadata['service_unit_price'] ?? 0) * max(1, (int) ($serviceQuickQuantities[$job->id] ?? 1)), 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
                                 </div>
                                 <button type="button" wire:click="addMoreServices({{ $job->id }})" class="h-9 rounded-lg border border-emerald-300 bg-white px-3 text-[9px] font-black uppercase text-emerald-800 transition hover:bg-emerald-700 hover:text-white dark:border-emerald-800 dark:bg-zinc-900 dark:text-emerald-300">Adicionar serviços</button>
                             </div>
