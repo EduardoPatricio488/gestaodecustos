@@ -24,6 +24,8 @@ class BancoService
 
     private int $userId;
 
+    private ?string $bankName;
+
     private bool $isBusinessWorkspace;
 
     private ?Collection $accountsCache = null;
@@ -54,10 +56,11 @@ class BancoService
 
     private array $monthlyFlowCache = [];
 
-    public function __construct(int $workspaceId, int $userId)
+    public function __construct(int $workspaceId, int $userId, ?string $bankName = null)
     {
         $this->workspaceId = $workspaceId;
         $this->userId = $userId;
+        $this->bankName = $bankName;
         $this->isBusinessWorkspace = in_array((string) Workspace::whereKey($workspaceId)->value('type'), ['business', 'company'], true);
     }
 
@@ -559,7 +562,13 @@ class BancoService
      */
     private function personalScope($query)
     {
-        return $this->isBusinessWorkspace ? $query : $query->where('user_id', $this->userId);
+        $query = $this->isBusinessWorkspace ? $query : $query->where('user_id', $this->userId);
+
+        if ($this->bankName !== null && $this->bankName !== '') {
+            $query->whereHas('bankAccount', fn ($accountQuery) => $accountQuery->where('bank_name', $this->bankName));
+        }
+
+        return $query;
     }
 
     private function monthKeyExpression(string $column): string
