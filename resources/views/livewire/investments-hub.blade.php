@@ -283,7 +283,7 @@
 
         <section class="rounded-[1.75rem] border border-indigo-500/20 bg-indigo-500/[0.03] p-6 sm:p-7">
             <div class="flex items-center gap-3 mb-4">
-                <div class="size-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><flux:icon name="brain-circuit" class="size-5" /></div>
+                <div class="size-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><span class="text-xs font-black tracking-tight" aria-hidden="true">IA</span></div>
                 <div><h3 class="text-lg font-black dark:text-white">Opinião do consultor IA</h3><p class="text-xs text-zinc-500">Diagnóstico, riscos e próximos passos</p></div>
             </div>
             @if($portfolioAdvisorAnalysis)
