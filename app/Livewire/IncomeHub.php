@@ -2312,10 +2312,18 @@ class IncomeHub extends Component
             'salaryPaymentValue' => $salaryPaymentValue,
         ];
 
-        return Pdf::loadView('pdf.income-statement', $data)
+        $fileName = 'Extrato_Receitas_'.$start->format('Ymd').'-'.$end->format('Ymd').'.pdf';
+        $pdfContent = Pdf::loadView('pdf.income-statement', $data)
             ->setPaper('a4', 'landscape')
             ->setOptions(['isRemoteEnabled' => false, 'isHtml5ParserEnabled' => true, 'defaultFont' => 'DejaVu Sans'])
-            ->download('Extrato_Receitas_'.$start->format('Ymd').'-'.$end->format('Ymd').'.pdf');
+            ->output();
+
+        $token = \Illuminate\Support\Str::random(48);
+        $filePath = 'income-statements/'.$user->id.'/'.$token.'.pdf';
+        Storage::disk('local')->put($filePath, $pdfContent);
+        session()->put('income_statement_downloads.'.$token, ['path' => $filePath, 'name' => $fileName]);
+
+        $this->dispatch('income-statement-download', url: route('hub.incomes.statement.download', ['token' => $token]));
     }
 
     public function render()
