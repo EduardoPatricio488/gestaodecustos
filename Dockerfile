@@ -20,7 +20,8 @@ RUN apk add --no-cache \
     gettext \
     supervisor \
     mysql-client \
-    aws-cli
+    aws-cli \
+    poppler-utils
 
 # Instalar extensões PHP necessárias
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
