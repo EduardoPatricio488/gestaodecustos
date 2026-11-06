@@ -289,7 +289,7 @@
                 <div class="pointer-events-none absolute bottom-0 left-0 h-1 w-full origin-left scale-x-0 bg-gradient-to-r from-emerald-300 via-teal-300 to-emerald-200 transition-transform duration-700 group-hover:scale-x-100"></div>
             </article>
         </div>
-    </section>
+
 
         {{-- MODAL: HISTÓRICO DO SALÁRIO --}}
         <div x-show="showSalaryHistory" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 p-3 backdrop-blur-sm sm:p-6" @click.self="showSalaryHistory = false" @keydown.escape.window="showSalaryHistory = false">
@@ -399,7 +399,9 @@
                 <div class="border-t border-zinc-100 p-4 text-right dark:border-zinc-800"><button type="button" @click="showMealHistory = false" class="rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900">Fechar histórico</button></div>
             </div>
         </div>
-{{-- CARDS DE ESTATÍSTICAS · ULTRA PREMIUM                           --}}
+    </section>
+
+    {{-- CARDS DE ESTATÍSTICAS · ULTRA PREMIUM                           --}}
 {{-- ================================================================== --}}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
