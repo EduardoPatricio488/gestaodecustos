@@ -119,6 +119,7 @@ class XtbInvestmentImportHub extends Component
                         'current_value' => $value,
                         'current_price' => $currentPrice > 0 ? $currentPrice : $value / $volume,
                         'average_price' => $openPrice > 0 ? $openPrice : null,
+                        'reported_profit' => isset($columns['net profit']) ? $this->parseNumber($data[$columns['net profit']] ?? null) : null,
                         'open_time' => $this->parseDate($openTime),
                         'is_summary' => $isSummaryRow,
                         'product' => $product,
@@ -198,7 +199,13 @@ class XtbInvestmentImportHub extends Component
             }
 
             $position['symbol'] = $ticker;
-            $position['profit'] = $position['current_value'] - ($position['quantity'] * $position['average_price']);
+            $reportedProfits = array_values(array_filter(
+                array_column($details, 'reported_profit'),
+                fn ($profit) => $profit !== null
+            ));
+            $position['profit'] = count($reportedProfits) > 0
+                ? array_sum($reportedProfits)
+                : $position['current_value'] - ($position['quantity'] * $position['average_price']);
             $result[] = $position;
         }
 
@@ -206,6 +213,7 @@ class XtbInvestmentImportHub extends Component
             'positions' => $result,
             'summary' => [
                 'open_value' => array_sum(array_column($result, 'current_value')),
+                'open_profit' => array_sum(array_column($result, 'profit')),
                 'positions_count' => count($result),
             ],
             'date' => $reportDate,
