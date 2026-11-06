@@ -875,50 +875,6 @@ class IncomeHub extends Component
         $this->dispatch('modal-show-receita-extra');
     }
 
-    public function saveServiceFixedPrice(int $salaryId): void
-    {
-        $user = auth()->user();
-        $salary = RecurringIncome::where('workspace_id', $user->current_workspace_id)
-            ->where('user_id', $user->id)
-            ->where('source', 'emprego')
-            ->whereNull('metadata->income_type')
-            ->findOrFail($salaryId);
-
-        $field = 'serviceFixedPrices.'.$salaryId;
-        $this->validate([$field => 'required|numeric|min:0.01|max:1000000']);
-
-        $metadata = $salary->metadata ?? [];
-        $metadata['service_unit_price'] = round((float) $this->serviceFixedPrices[$salaryId], 2);
-        $salary->metadata = $metadata;
-        $salary->save();
-
-        $this->dispatch('toast', variant: 'success', text: 'Preço fixo por serviço guardado.');
-    }
-
-    public function addMoreServices(int $salaryId): void
-    {
-        $user = auth()->user();
-        $salary = RecurringIncome::where('workspace_id', $user->current_workspace_id)
-            ->where('user_id', $user->id)
-            ->where('source', 'emprego')
-            ->whereNull('metadata->income_type')
-            ->findOrFail($salaryId);
-
-        $price = (float) ($salary->metadata['service_unit_price'] ?? 0);
-        if ($price <= 0) {
-            $this->dispatch('toast', variant: 'error', text: 'Define primeiro o preço fixo por serviço.');
-            return;
-        }
-
-        $quantity = (int) ($this->serviceQuickQuantities[$salaryId] ?? 1);
-        if ($quantity < 1 || $quantity > 1000) {
-            $this->dispatch('toast', variant: 'error', text: 'A quantidade deve estar entre 1 e 1000 serviços.');
-            return;
-        }
-
-        $this->openExtraModal($salaryId, $quantity);
-    }
-
     public function editSalaryExtraIncome(int $incomeId): void
     {
         $salary = $this->salaryDetailsContract((int) $this->salaryIncomeHistoryId);
