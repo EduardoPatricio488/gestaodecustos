@@ -500,8 +500,28 @@ class XtbInvestmentImportHub extends Component
                 throw new \RuntimeException('Não foram encontradas linhas individuais de subscrição no PDF. Não é seguro importar sem validar as unidades.');
             }
 
+            // Fallback seguro para OCR que lê "CAF" mas perde a linha "Série E".
+            // A Série E esteve aberta entre 01-11-2017 e 02-06-2023; a Série F
+            // só iniciou subscrições em 05-06-2023. Só inferimos E quando o PDF
+            // identifica CAF e TODAS as datas individuais caem nesse intervalo.
+            $seriesInferredFromDates = false;
+            if ($series === null && preg_match('/\bCAF\b/', $normalizedText)) {
+                $seriesEStart = \Illuminate\Support\Carbon::parse('2017-11-01');
+                $seriesEEnd = \Illuminate\Support\Carbon::parse('2023-06-02');
+                $allSubscriptionsInSeriesEWindow = collect($subscriptions)->every(function (array $subscription) use ($seriesEStart, $seriesEEnd): bool {
+                    $date = \Illuminate\Support\Carbon::parse($subscription['operation_date'])->startOfDay();
+
+                    return $date->betweenIncluded($seriesEStart, $seriesEEnd);
+                });
+
+                if ($allSubscriptionsInSeriesEWindow) {
+                    $series = 'E';
+                    $seriesInferredFromDates = true;
+                }
+            }
+
             if ($series === null) {
-                throw new \RuntimeException('O PDF contém subscrições, mas não identifica inequivocamente a série dos certificados.');
+                throw new \RuntimeException('O PDF contém subscrições, mas não identifica inequivocamente a série dos certificados. Confirma a série no extrato original.');
             }
 
             $units = array_sum(array_column($subscriptions, 'quantity'));
