@@ -523,7 +523,12 @@ class ManageFamily extends Component
 
         // 4. Atividade e Mesadas
         $topRecorders = $currentWs->users()->whereIn('users.id', $memberIds)->withCount(['expenses' => fn ($q) => $q->where('workspace_id', $currentWs->id)])->orderBy('expenses_count', 'desc')->take(5)->get();
-        $recentActivities = ActivityLog::whereIn('user_id', $memberIds)->latest()->take(10)->get();
+        $recentActivities = ActivityLog::with('user:id,name')
+            ->where('workspace_id', $currentWs->id)
+            ->whereIn('user_id', $memberIds)
+            ->latest()
+            ->take(10)
+            ->get();
 
         // 5. LÓGICA DA SIDEBAR PARA CATEGORIAS
         $sidebarCategories = Category::where('workspace_id', $workspaceId)
