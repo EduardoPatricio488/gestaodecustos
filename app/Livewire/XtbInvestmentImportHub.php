@@ -702,7 +702,7 @@ class XtbInvestmentImportHub extends Component
                         $bestScore = $scoreText($ocrCandidate);
                     }
                 }
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $ocrStatus = 'falhou';
                 $errors[] = 'OCR indisponivel durante a execucao: '.$exception->getMessage();
             } finally {
