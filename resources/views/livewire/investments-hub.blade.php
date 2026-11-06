@@ -26,7 +26,7 @@
                 class="w-full sm:w-auto !h-12 sm:!h-12 !px-5 rounded-xl !border !border-emerald-600 !bg-emerald-600 !text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider !shadow-md hover:!bg-emerald-700 hover:!border-emerald-700 transition-colors duration-150">
                 <span class="flex items-center justify-center gap-2.5">
                     <flux:icon name="document-arrow-up" class="size-5 text-white" />
-                    <span>Upload de relatório XTB</span>
+                    <span>Upload de relatórios</span>
                 </span>
             </flux:button>
 
@@ -1791,7 +1791,7 @@
             <div class="flex shrink-0 items-center justify-between gap-4 border-b border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-900 sm:px-7">
                 <div class="min-w-0">
                     <p class="text-[10px] font-black uppercase tracking-[.18em] text-emerald-600 dark:text-emerald-400">Importação inteligente</p>
-                    <h2 class="mt-1 truncate text-lg font-black text-zinc-900 dark:text-white sm:text-xl">Upload de relatório XTB</h2>
+                    <h2 class="mt-1 truncate text-lg font-black text-zinc-900 dark:text-white sm:text-xl">Upload de relatórios</h2>
                 </div>
                 <button type="button" @click="showXtbUploadModal = false" class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label="Fechar janela">
                     <flux:icon name="x-mark" class="size-5" />
