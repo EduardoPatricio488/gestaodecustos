@@ -1246,12 +1246,14 @@ $hasStoreAccess = $hasLockInAccess;
                         :href="route('hub.incomes')"
                         :current="request()->routeIs('hub.incomes')"
                         wire:navigate.hover
-                        class="relative !bg-gradient-to-r !from-emerald-100 !via-emerald-50 !to-teal-50 !text-emerald-800 dark:!from-emerald-500/25 dark:!via-emerald-500/15 dark:!to-teal-500/10 dark:!text-emerald-200 !font-black !rounded-xl !shadow-md !shadow-emerald-500/10 !border !border-emerald-300 dark:!border-emerald-400/30 !ring-1 !ring-emerald-500/15 !py-3 !px-3 hover:!shadow-lg hover:!shadow-emerald-500/15 hover:!-translate-y-0.5 hover:!border-emerald-400 dark:hover:!border-emerald-300 transition-all duration-200"
+                        class="relative !bg-gradient-to-r !from-emerald-200 !via-emerald-100 !to-teal-100 !text-emerald-950 dark:!from-emerald-500/35 dark:!via-emerald-500/25 dark:!to-teal-500/20 dark:!text-emerald-100 !font-black !rounded-xl !shadow-lg !shadow-emerald-500/20 !border !border-emerald-400 dark:!border-emerald-400/50 !border-l-4 !border-l-emerald-600 dark:!border-l-emerald-300 !ring-1 !ring-emerald-500/25 !py-3.5 !px-3 hover:!bg-emerald-200 hover:!shadow-xl hover:!shadow-emerald-500/25 hover:!-translate-y-0.5 hover:!border-emerald-500 dark:hover:!border-emerald-300 transition-all duration-200"
                     >
                         <span class="flex items-center gap-2.5 w-full">
-                            <span class="font-black tracking-tight">Receitas</span>
-                            <span class="ml-auto text-[8px] font-black uppercase tracking-wider bg-emerald-600 text-white dark:bg-emerald-500 dark:text-zinc-950 px-2 py-1 rounded-md shadow-sm">Principal</span>
-                            <span class="text-[10px] font-black bg-white/80 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-200/80 dark:border-emerald-400/20">
+                            <span class="flex items-center gap-2 font-black tracking-tight">
+                                <span class="size-2 rounded-full bg-emerald-600 dark:bg-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                                Receitas
+                            </span>
+                            <span class="ml-auto text-[10px] font-black bg-white text-emerald-800 dark:bg-emerald-400/20 dark:text-emerald-100 px-2.5 py-1 rounded-full border border-emerald-300 dark:border-emerald-400/30 shadow-sm">
                                 {{ $counts['incomes'] }}
                             </span>
                         </span>
