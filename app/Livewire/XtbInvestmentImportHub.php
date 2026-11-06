@@ -481,10 +481,23 @@ class XtbInvestmentImportHub extends Component
             }
 
             $subscriptions = [];
-            preg_match_all('/(\d{2}-\d{2}-\d{4})\s+(\d{6,})\s+([\d.,]+)\s+([\d.]+)\s+([\d.,]+)/u', $text, $rows, PREG_SET_ORDER);
+
+            // Os motores de extração podem separar as colunas por quebras de
+            // linha, tabs ou espaços. Procura os campos dentro de cada registo
+            // de subscrição, em vez de exigir que estejam lado a lado.
+            $rowPattern = '/(\d{2}[-\/.]\d{2}[-\/.]\d{4})[\s\S]{0,100}?(\d{6,})[\s\S]{0,100}?([\d.,]+)[\s\S]{0,100}?([\d.]+)[\s\S]{0,100}?([\d.,]+)/u';
+            preg_match_all($rowPattern, $normalizedText, $rows, PREG_SET_ORDER);
+
             foreach ($rows as $row) {
+                $date = str_replace(['/', '.'], '-', $row[1]);
+                try {
+                    $operationDate = \Illuminate\Support\Carbon::createFromFormat('!d-m-Y', $date)->toDateString();
+                } catch (\Throwable) {
+                    continue;
+                }
+
                 $subscriptions[] = [
-                    'operation_date' => \Illuminate\Support\Carbon::createFromFormat('d-m-Y', $row[1])->toDateString(),
+                    'operation_date' => $operationDate,
                     'subscription_number' => $row[2],
                     'current_price' => $this->parsePortugueseNumber($row[3]),
                     'quantity' => $this->parsePortugueseNumber($row[4]),
