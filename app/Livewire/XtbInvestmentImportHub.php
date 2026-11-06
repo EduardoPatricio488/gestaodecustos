@@ -437,20 +437,48 @@ class XtbInvestmentImportHub extends Component
             if (! $reportDate) {
                 throw new \RuntimeException('Não foi possível identificar uma data no cabeçalho do extrato AforroNet.');
             }
-            // Localiza primeiro o nome da série e, a seguir, os dois valores do
-            // resumo. Alguns leitores de PDF dividem ou omitem "Unidades Valor".
-            if (! preg_match('/Certificados\s+de\s+Aforro\s+S[ée]rie\s+([A-Z])\b/iu', $text, $seriesMatch, PREG_OFFSET_CAPTURE)) {
-                throw new \RuntimeException('Não encontrei a identificação da Série de Certificados de Aforro no PDF.');
+            // Normaliza a zona do resumo para lidar com acentos e espaços
+            // que alguns motores de extração de PDF alteram ou removem.
+            $summaryText = $text;
+            if (function_exists('iconv')) {
+                $transliterated = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+                if ($transliterated !== false) {
+                    $summaryText = $transliterated;
+                }
+            }
+            $summaryText = preg_replace('/[\p{Z}\s]+/u', ' ', $summaryText);
+
+            // Procura a série e os valores na mesma sequência, sem depender
+            // de o PDF preservar o cabeçalho "Unidades Valor".
+            $totalMatch = null;
+            $totalPatterns = [
+                '/Certificados\s+de\s+Aforro\s+S[ée]rie\s+([A-Z])\s+(?:Unidades\s+Valor\s*)?([\d.]+)\s+([\d.,]+)/iu',
+                '/Certificados\s+de\s+Aforro.{0,120}?([A-Z])\s+(?:Unidades\s+Valor\s*)?([\d.]+)\s+([\d.,]+)/iu',
+            ];
+
+            foreach ($totalPatterns as $pattern) {
+                if (preg_match($pattern, $summaryText, $totalMatch)) {
+                    break;
+                }
+                $totalMatch = null;
             }
 
-            $series = strtoupper($seriesMatch[1][0]);
-            $afterSeriesOffset = $seriesMatch[0][1] + strlen($seriesMatch[0][0]);
-            $afterSeries = substr($text, $afterSeriesOffset, 120);
-            if (! preg_match('/(?:Unidades\s+Valor\s*)?([\d.]+)\s+([\d.,]+)/iu', $afterSeries, $totalValues)) {
-                throw new \RuntimeException('Encontrei a Série no PDF, mas não consegui ler as unidades e o valor total.');
+            if (! $totalMatch) {
+                // Último recurso: identifica a sequência numérica do resumo
+                // após "Certificados de Aforro", mesmo que o nome da série
+                // tenha sido omitido ou corrompido pelo extrator.
+                if (preg_match('/Certificados\s+de\s+Aforro(.{0,160})/iu', $summaryText, $summaryMatch)) {
+                    if (preg_match('/\b([A-Z])\s+([\d.]+)\s+([\d.,]+)/iu', $summaryMatch[1], $valuesMatch)) {
+                        $totalMatch = $valuesMatch;
+                    }
+                }
             }
 
-            $totalMatch = [0 => $seriesMatch[0][0].' '.$totalValues[0], 1 => $series, 2 => $totalValues[1], 3 => $totalValues[2]];
+            if (! $totalMatch) {
+                throw new \RuntimeException('O PDF foi lido, mas não consegui localizar a linha de resumo com a série, as unidades e o valor. Confirma que o extrato inclui o resumo de saldos por produtos.');
+            }
+
+            $series = strtoupper($totalMatch[1]);
             if ($series !== 'E') {
                 throw new \RuntimeException('Este importador automático está preparado para a Série E.');
             }
