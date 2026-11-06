@@ -87,7 +87,7 @@ class InvestmentsHub extends Component
 
     private const ALPHA_VANTAGE_KEY = null;
 
-    private const CACHE_PRICES_TTL = 900;
+    private const CACHE_PRICES_TTL = 60;
 
     private const CACHE_TICKER_TTL = 300;
 
@@ -566,6 +566,10 @@ class InvestmentsHub extends Component
                 $updated++;
             }
             $cryptoSymbols = $assets->where('type', 'Cripto')->pluck('symbol')->unique()->values()->toArray();
+            $ids = collect($cryptoSymbols)->map(fn ($s) => $this->coinGeckoId($s))->implode(',');
+            if ($ids) {
+                Cache::forget('coingecko_prices_'.md5($ids));
+            }
             $cryptoPrices = $this->fetchCryptoPrices($cryptoSymbols);
             $stockAssets = $assets->whereIn('type', ['Acao', 'ETF', 'Fundo']);
             $stockPrices = [];
@@ -575,10 +579,6 @@ class InvestmentsHub extends Component
                 if ($price !== null) {
                     $stockPrices[strtoupper($sym)] = $price;
                 }
-            }
-            $ids = collect($cryptoSymbols)->map(fn ($s) => $this->coinGeckoId($s))->implode(',');
-            if ($ids) {
-                Cache::forget('coingecko_prices_'.md5($ids));
             }
             foreach ($assets->whereIn('type', ['Acao', 'ETF', 'Fundo', 'Cripto']) as $asset) {
                 $ticker = strtoupper($asset->symbol);
