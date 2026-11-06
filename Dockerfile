@@ -21,7 +21,10 @@ RUN apk add --no-cache \
     supervisor \
     mysql-client \
     aws-cli \
-    poppler-utils \\\n    tesseract-ocr \\\n    tesseract-ocr-data-por \\\n    tesseract-ocr-data-eng
+    poppler-utils \
+    tesseract-ocr \
+    tesseract-ocr-data-por \
+    tesseract-ocr-data-eng
 
 # Instalar extensões PHP necessárias
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
