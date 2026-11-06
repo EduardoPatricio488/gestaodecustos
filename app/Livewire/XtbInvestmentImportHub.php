@@ -563,107 +563,134 @@ class XtbInvestmentImportHub extends Component
      */
     private function extractAforroNetPdfText(string $pdfPath): string
     {
-        // Primeiro tenta uma biblioteca PHP nativa: não depende de Poppler,
-        // Tesseract nem de configurações do PATH no computador do utilizador.
+        $candidates = [];
+        $errors = [];
+
+        // Recolhe todas as extrações digitais disponíveis. Não aceita uma
+        // extração apenas por ter texto: tem de preservar os dados do extrato.
         try {
-            if (class_exists(\Smalot\PdfParser\Parser::class)) {
-                $parser = new \Smalot\PdfParser\Parser();
+            if (class_exists(\Smalot\\PdfParser\\Parser::class)) {
+                $parser = new \Smalot\\PdfParser\\Parser();
                 $document = $parser->parseFile($pdfPath);
                 $text = trim($document->getText());
-
                 if (mb_strlen($text) >= 80) {
-                    return $text;
+                    $candidates[] = $text;
                 }
             }
         } catch (\Throwable $exception) {
-            Log::warning('AforroNet PDF: PHP parser could not extract text', [
-                'message' => $exception->getMessage(),
-            ]);
+            $errors[] = 'PHP parser: '.$exception->getMessage();
         }
 
-        // Fallback para Poppler e OCR apenas quando o PDF não tem texto extraível.
         $pdftotext = $this->resolvePdfExecutable('pdftotext');
         $pdftoppm = $this->resolvePdfExecutable('pdftoppm');
         $tesseract = $this->resolvePdfExecutable('tesseract');
-
-        $errors = [];
-        $processClass = \Symfony\Component\Process\Process::class;
+        $processClass = \Symfony\\Component\\Process\\Process::class;
 
         if ($pdftotext) {
-            try {
-                $process = new $processClass([$pdftotext, '-layout', $pdfPath, '-']);
-                $process->setTimeout(45);
-                $process->run();
-
-                if ($process->isSuccessful() && mb_strlen(trim($process->getOutput())) >= 80) {
-                    return $process->getOutput();
+            foreach ([['-layout'], ['-raw']] as $options) {
+                try {
+                    $process = new $processClass(array_merge([$pdftotext], $options, [$pdfPath, '-']));
+                    $process->setTimeout(45);
+                    $process->run();
+                    $output = trim($process->getOutput());
+                    if ($process->isSuccessful() && mb_strlen($output) >= 80) {
+                        $candidates[] = $output;
+                    } else {
+                        $errors[] = trim($process->getErrorOutput());
+                    }
+                } catch (\Throwable $exception) {
+                    $errors[] = $exception->getMessage();
                 }
-
-                $errors[] = trim($process->getErrorOutput());
-            } catch (\Throwable $exception) {
-                $errors[] = $exception->getMessage();
             }
         } else {
             $errors[] = 'O executável pdftotext não foi encontrado.';
         }
 
-        if (! $pdftoppm || ! $tesseract) {
-            throw new \RuntimeException(
-                'Não foi possível extrair texto diretamente do PDF e não foi possível localizar as ferramentas OCR. '.
-                'O Finance Pro procura automaticamente no PATH e nas pastas habituais do Windows. '.
-                'Detalhes: '.implode(' ', array_filter($errors))
-            );
+        $scoreText = function (string $candidate): int {
+            $upper = mb_strtoupper(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $candidate) ?: $candidate);
+            $score = 0;
+            foreach (['AFORRO', 'SERIE', 'SUBSCRICAO', 'UNIDADES', 'VALOR UNITARIO', 'TOTAL'] as $term) {
+                if (str_contains($upper, $term)) {
+                    $score += 3;
+                }
+            }
+            if (preg_match('/\\b\\d{2}[-\\/.]\\d{2}[-\\/.]\\d{4}\\b/', $upper)) {
+                $score += 3;
+            }
+            if (preg_match('/\\b\\d{8,}\\b/', $upper)) {
+                $score += 2;
+            }
+            if (preg_match('/CAF\\s*\\/\\s*SERIE\\s*[A-Z]/', $upper) || str_contains(preg_replace('/[^A-Z0-9]/', '', $upper), 'CAFSERIE')) {
+                $score += 8;
+            }
+            return $score;
+        };
+
+        $bestText = '';
+        $bestScore = -1;
+        foreach ($candidates as $candidate) {
+            $score = $scoreText($candidate);
+            if ($score > $bestScore) {
+                $bestText = $candidate;
+                $bestScore = $score;
+            }
         }
 
-        $temporaryDirectory = storage_path('app/private/aforronet-ocr/'.uniqid('pdf-', true));
-        if (! is_dir($temporaryDirectory) && ! mkdir($temporaryDirectory, 0775, true) && ! is_dir($temporaryDirectory)) {
-            throw new \RuntimeException('Não foi possível preparar a leitura OCR do PDF.');
-        }
-
-        try {
-            $prefix = $temporaryDirectory.DIRECTORY_SEPARATOR.'page';
-            $render = new $processClass([$pdftoppm, '-r', '250', '-png', $pdfPath, $prefix]);
-            $render->setTimeout(90);
-            $render->run();
-
-            if (! $render->isSuccessful()) {
-                $errors[] = trim($render->getErrorOutput());
-                throw new \RuntimeException('Não foi possível converter o PDF para imagens. '.implode(' ', array_filter($errors)));
+        // Só aplica OCR quando as extrações digitais não preservam informação útil.
+        if ($bestScore < 12 && $pdftoppm && $tesseract) {
+            $temporaryDirectory = storage_path('app/private/aforronet-ocr/'.uniqid('pdf-', true));
+            if (! is_dir($temporaryDirectory) && ! mkdir($temporaryDirectory, 0775, true) && ! is_dir($temporaryDirectory)) {
+                throw new \RuntimeException('Não foi possível preparar a leitura OCR do PDF.');
             }
 
-            $pages = glob($prefix.'-*.png') ?: [];
-            sort($pages, SORT_NATURAL);
-            if (count($pages) === 0) {
-                throw new \RuntimeException('Não foram encontradas páginas no PDF para aplicar OCR.');
-            }
-
-            $extracted = [];
-            foreach ($pages as $page) {
-                $ocr = new $processClass([$tesseract, $page, 'stdout', '-l', 'por+eng', '--psm', '6']);
-                $ocr->setTimeout(60);
-                $ocr->run();
-
-                if ($ocr->isSuccessful() && trim($ocr->getOutput()) !== '') {
-                    $extracted[] = $ocr->getOutput();
+            try {
+                $prefix = $temporaryDirectory.DIRECTORY_SEPARATOR.'page';
+                $render = new $processClass([$pdftoppm, '-r', '300', '-png', $pdfPath, $prefix]);
+                $render->setTimeout(90);
+                $render->run();
+                if (! $render->isSuccessful()) {
+                    $errors[] = trim($render->getErrorOutput());
                 } else {
-                    $errors[] = trim($ocr->getErrorOutput());
+                    $pages = glob($prefix.'-*.png') ?: [];
+                    sort($pages, SORT_NATURAL);
+                    $ocrModes = ['--psm', '6'];
+                    $ocrText = [];
+                    foreach ($pages as $page) {
+                        $ocr = new $processClass([$tesseract, $page, 'stdout', '-l', 'por+eng', ...$ocrModes]);
+                        $ocr->setTimeout(60);
+                        $ocr->run();
+                        if ($ocr->isSuccessful() && trim($ocr->getOutput()) !== '') {
+                            $ocrText[] = $ocr->getOutput();
+                        }
+                    }
+                    $ocrCandidate = trim(implode("\\n", $ocrText));
+                    if (mb_strlen($ocrCandidate) >= 80 && $scoreText($ocrCandidate) > $bestScore) {
+                        $bestText = $ocrCandidate;
+                        $bestScore = $scoreText($ocrCandidate);
+                    }
                 }
-            }
-
-            $result = implode("\n", $extracted);
-            if (mb_strlen(trim($result)) < 80) {
-                throw new \RuntimeException('O OCR não conseguiu reconhecer texto suficiente. Confirma se o PDF está legível. '.implode(' ', array_filter($errors)));
-            }
-
-            return $result;
-        } finally {
-            foreach (glob($temporaryDirectory.DIRECTORY_SEPARATOR.'*') ?: [] as $file) {
-                if (is_file($file)) {
-                    @unlink($file);
+            } finally {
+                foreach (glob($temporaryDirectory.DIRECTORY_SEPARATOR.'*') ?: [] as $file) {
+                    if (is_file($file)) {
+                        @unlink($file);
+                    }
                 }
+                @rmdir($temporaryDirectory);
             }
-            @rmdir($temporaryDirectory);
         }
+
+        if (mb_strlen(trim($bestText)) < 80) {
+            throw new \RuntimeException('Não foi possível extrair texto suficiente do PDF. '.implode(' ', array_filter($errors)));
+        }
+
+        Log::info('AforroNet PDF extraction selected', [
+            'user_id' => auth()->id(),
+            'candidate_count' => count($candidates),
+            'selected_score' => $bestScore,
+            'has_series_label' => (bool) preg_match('/CAF\\s*\\/\\s*SERIE\\s*E|CERTIFICADOS\\s+DE\\s+AFORRO\\s+SERIE\\s+E/i', iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $bestText) ?: $bestText),
+        ]);
+
+        return $bestText;
     }
 
     /**
