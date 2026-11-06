@@ -23,14 +23,10 @@
                 type="button"
                 @click="showXtbUploadModal = true"
                 variant="primary"
-                class="group relative w-full sm:w-auto !h-14 sm:!h-14 !px-6 rounded-2xl !border !border-emerald-300/70 !bg-gradient-to-r !from-emerald-600 !via-emerald-500 !to-teal-500 !text-white text-[11px] sm:text-xs font-black uppercase tracking-widest !shadow-[0_10px_30px_-8px_rgba(16,185,129,0.75)] ring-2 ring-emerald-400/20 hover:!from-emerald-500 hover:!via-emerald-400 hover:!to-teal-400 hover:!shadow-[0_14px_38px_-8px_rgba(16,185,129,0.9)] hover:-translate-y-0.5 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
-                <span class="flex items-center justify-center gap-3">
-                    <span class="relative flex size-8 items-center justify-center rounded-xl bg-white/20 ring-1 ring-white/30">
-                        <span class="absolute -right-1 -top-1 size-2.5 rounded-full bg-lime-200 ring-2 ring-emerald-600 animate-pulse"></span>
-                        <flux:icon name="document-arrow-up" class="size-5 text-white" />
-                    </span>
+                class="w-full sm:w-auto !h-12 sm:!h-12 !px-5 rounded-xl !border !border-emerald-600 !bg-emerald-600 !text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider !shadow-md hover:!bg-emerald-700 hover:!border-emerald-700 transition-colors duration-150">
+                <span class="flex items-center justify-center gap-2.5">
+                    <flux:icon name="document-arrow-up" class="size-5 text-white" />
                     <span>Upload de relatório XTB</span>
-                    <flux:icon name="arrow-up-right" class="size-4 opacity-80 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                 </span>
             </flux:button>
 
