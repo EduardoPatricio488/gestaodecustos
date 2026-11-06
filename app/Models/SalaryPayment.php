@@ -57,4 +57,9 @@ class SalaryPayment extends Model
     {
         return $this->belongsTo(Workspace::class);
     }
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
 }
