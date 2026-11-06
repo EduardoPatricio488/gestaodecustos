@@ -840,6 +840,18 @@ class XtbInvestmentImportHub extends Component
             }
         }
 
+        // O servidor pode correr como serviço e não receber USERPROFILE nem
+        // LOCALAPPDATA. Procura a instalação WinGet nos perfis locais do Windows.
+        $windowsProfilesRoot = getenv('SystemDrive') ?: 'C:';
+        $profilePattern = rtrim(str_replace('\\', '/', $windowsProfilesRoot), '/')
+            .'/Users/*/AppData/Local/Microsoft/WinGet/Packages/*/*/Library/bin/'.$executable;
+
+        foreach (glob($profilePattern) ?: [] as $candidate) {
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
         return null;
     }
 
