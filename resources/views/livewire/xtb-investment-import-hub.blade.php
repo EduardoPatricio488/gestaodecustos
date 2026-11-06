@@ -18,6 +18,51 @@
         </div>
     </div>
 
+    {{-- GUIA VISUAL: EXPORTAR RELATÓRIO XTB --}}
+    <section class="overflow-hidden rounded-3xl border border-sky-200 dark:border-sky-900/60 bg-white dark:bg-zinc-900 shadow-sm">
+        <div class="border-b border-sky-100 dark:border-sky-900/50 bg-sky-50/70 dark:bg-sky-950/20 px-6 py-5 sm:px-8">
+            <div class="flex items-center gap-3">
+                <div class="flex size-11 items-center justify-center rounded-2xl bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 text-xl" aria-hidden="true">📘</div>
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[.18em] text-sky-700 dark:text-sky-300">Guia passo a passo</p>
+                    <h2 class="mt-1 text-xl font-black text-zinc-950 dark:text-white">Como obter o relatório na XTB</h2>
+                </div>
+            </div>
+            <p class="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">Segue as imagens pela ordem apresentada para exportares o relatório necessário à importação da tua carteira.</p>
+        </div>
+
+        <div class="grid gap-5 p-5 sm:grid-cols-2 lg:grid-cols-3 sm:p-7">
+            <article class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/50">
+                <div class="aspect-[16/10] overflow-hidden bg-zinc-100 dark:bg-zinc-800"><img src="https://raw.githubusercontent.com/EduardoPatricio488/gestaodecustos/main/instru%C3%A7%C3%B5es%20de%20relatorio%20xtb/1.jpeg" alt="Instruções XTB - passo 1" loading="lazy" class="h-full w-full object-contain"></div>
+                <div class="p-4"><p class="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400">Passo 1</p><h3 class="mt-1 text-sm font-bold text-zinc-900 dark:text-white">Abre a área de relatórios</h3><p class="mt-1 text-xs leading-relaxed text-zinc-500">Na tua conta XTB, segue o ecrã apresentado na imagem.</p></div>
+            </article>
+            <article class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/50">
+                <div class="aspect-[16/10] overflow-hidden bg-zinc-100 dark:bg-zinc-800"><img src="https://raw.githubusercontent.com/EduardoPatricio488/gestaodecustos/main/instru%C3%A7%C3%B5es%20de%20relatorio%20xtb/2.jpeg" alt="Instruções XTB - passo 2" loading="lazy" class="h-full w-full object-contain"></div>
+                <div class="p-4"><p class="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400">Passo 2</p><h3 class="mt-1 text-sm font-bold text-zinc-900 dark:text-white">Seleciona o relatório</h3><p class="mt-1 text-xs leading-relaxed text-zinc-500">Escolhe as opções indicadas nas instruções da imagem.</p></div>
+            </article>
+            <article class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/50">
+                <div class="aspect-[16/10] overflow-hidden bg-zinc-100 dark:bg-zinc-800"><img src="https://raw.githubusercontent.com/EduardoPatricio488/gestaodecustos/main/instru%C3%A7%C3%B5es%20de%20relatorio%20xtb/3.jpeg" alt="Instruções XTB - passo 3" loading="lazy" class="h-full w-full object-contain"></div>
+                <div class="p-4"><p class="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400">Passo 3</p><h3 class="mt-1 text-sm font-bold text-zinc-900 dark:text-white">Gera o relatório</h3><p class="mt-1 text-xs leading-relaxed text-zinc-500">Confirma a geração do relatório conforme indicado.</p></div>
+            </article>
+            <article class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/50">
+                <div class="aspect-[16/10] overflow-hidden bg-zinc-100 dark:bg-zinc-800"><img src="https://raw.githubusercontent.com/EduardoPatricio488/gestaodecustos/main/instru%C3%A7%C3%B5es%20de%20relatorio%20xtb/4.jpeg" alt="Instruções XTB - passo 4" loading="lazy" class="h-full w-full object-contain"></div>
+                <div class="p-4"><p class="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400">Passo 4</p><h3 class="mt-1 text-sm font-bold text-zinc-900 dark:text-white">Descarrega o ZIP</h3><p class="mt-1 text-xs leading-relaxed text-zinc-500">Descarrega o ficheiro disponibilizado pela XTB. O download vem comprimido em ZIP.</p></div>
+            </article>
+            <article class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/50">
+                <div class="aspect-[16/10] overflow-hidden bg-zinc-100 dark:bg-zinc-800"><img src="https://raw.githubusercontent.com/EduardoPatricio488/gestaodecustos/main/instru%C3%A7%C3%B5es%20de%20relatorio%20xtb/5.jpeg" alt="Instruções XTB - passo 5" loading="lazy" class="h-full w-full object-contain"></div>
+                <div class="p-4"><p class="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400">Passo 5</p><h3 class="mt-1 text-sm font-bold text-zinc-900 dark:text-white">Extrai e abre no Excel</h3><p class="mt-1 text-xs leading-relaxed text-zinc-500">Extrai primeiro o conteúdo do ZIP e abre no Excel o ficheiro da folha de cálculo que ficou na pasta.</p></div>
+            </article>
+            <article class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/50">
+                <div class="aspect-[16/10] overflow-hidden bg-zinc-100 dark:bg-zinc-800"><img src="https://raw.githubusercontent.com/EduardoPatricio488/gestaodecustos/main/instru%C3%A7%C3%B5es%20de%20relatorio%20xtb/6.jpeg" alt="Instruções XTB - passo 6" loading="lazy" class="h-full w-full object-contain"></div>
+                <div class="p-4"><p class="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400">Passo 6</p><h3 class="mt-1 text-sm font-bold text-zinc-900 dark:text-white">Carrega o ficheiro no Finance Pro</h3><p class="mt-1 text-xs leading-relaxed text-zinc-500">Guarda o ficheiro Excel e seleciona-o na área «Carregar relatório», logo abaixo.</p></div>
+            </article>
+        </div>
+        <div class="mx-5 mb-5 flex gap-3 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/20 p-4 sm:mx-7 sm:mb-7">
+            <span class="text-lg" aria-hidden="true">💡</span>
+            <p class="text-xs leading-relaxed text-amber-900 dark:text-amber-200"><strong>Importante:</strong> não envies o ZIP diretamente. Depois de o extraires, seleciona o ficheiro Excel (.xlsx ou .xls) que está dentro da pasta extraída. Também são aceites ficheiros CSV.</p>
+        </div>
+    </section>
+
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <section class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-8 shadow-sm">
             <div class="flex items-center gap-3 mb-6">
