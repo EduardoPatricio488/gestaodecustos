@@ -108,9 +108,6 @@
                     <span class="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20 transition duration-300 hover:rotate-[-6deg] hover:scale-110 motion-reduce:transform-none">
                         <flux:icon name="chart-bar" variant="micro" class="size-5" />
                     </span>
-                    <span class="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-black tabular-nums text-emerald-700 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
-                        {{ number_format($projectedSalaryNetTotal + $projectedMealAllowanceTotal, 2, ',', ' ') }} €
-                    </span>
                     <span class="font-serif text-black dark:text-black">Total Projetado</span>
                 </h2>
             </div>
