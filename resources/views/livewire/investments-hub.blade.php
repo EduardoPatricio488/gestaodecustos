@@ -20,6 +20,14 @@
 
         <div class="flex flex-col sm:flex-row sm:flex-wrap gap-3 w-full lg:w-auto justify-end">
             <flux:button
+                href="{{ route('hub.investments.upload') }}"
+                variant="outline"
+                icon="document-arrow-up"
+                class="w-full sm:w-auto rounded-xl border border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-300 h-11 sm:h-12 text-[10px] font-black uppercase tracking-widest">
+                Upload de relatório XTB
+            </flux:button>
+
+            <flux:button
                 wire:click="refreshPrices"
                 variant="ghost"
                 class="w-full sm:w-auto rounded-xl border border-zinc-200 dark:border-zinc-800 h-11 sm:h-12 text-[10px] font-black uppercase tracking-widest">
