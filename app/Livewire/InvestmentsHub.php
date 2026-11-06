@@ -546,7 +546,7 @@ class InvestmentsHub extends Component
         });
     }
 
-    public function refreshPrices(): void
+    public function refreshPrices(bool $silent = false): void
     {
         $this->isRefreshing = true;
         try {
@@ -591,11 +591,17 @@ class InvestmentsHub extends Component
                 }
             }
             $this->lastUpdated = now()->format('H:i');
-            $this->dispatch('toast', text: "{$updated} ativos sincronizados com o mercado.");
+            if (! $silent) {
+                $this->dispatch('toast', text: "{$updated} ativos sincronizados com o mercado.");
+            }
         } catch (\Throwable $e) {
-            $this->dispatch('toast', text: 'Erro ao sincronizar preços: '.$e->getMessage(), variant: 'error');
+            Log::warning('InvestmentsHub: falha ao atualizar cotações', ['message' => $e->getMessage()]);
+            if (! $silent) {
+                $this->dispatch('toast', text: 'Erro ao sincronizar preços: '.$e->getMessage(), variant: 'error');
+            }
+        } finally {
+            $this->isRefreshing = false;
         }
-        $this->isRefreshing = false;
     }
 
     private function coinGeckoId(string $symbol): string
