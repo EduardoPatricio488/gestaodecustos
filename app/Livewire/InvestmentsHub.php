@@ -520,6 +520,11 @@ class InvestmentsHub extends Component
         }
 
         $this->isAnalyzingPortfolio = true;
+
+        // A análise completa pode demorar mais em modelos gratuitos do OpenRouter.
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(180);
+        }
         $this->portfolioAnalysisCompleted = false;
         $this->portfolioAdvisorAnalysis = 'A preparar os dados da tua carteira e a contactar o consultor IA...';
 
@@ -574,7 +579,7 @@ class InvestmentsHub extends Component
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => config('app.name'),
-            ])->connectTimeout(5)->timeout(25)->post('https://openrouter.ai/api/v1/chat/completions', [
+            ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 10))->timeout((int) config('limits.ai.request_timeout_seconds', 90))->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
                 'messages' => [
                     ['role' => 'system', 'content' => $systemPrompt],
@@ -656,7 +661,7 @@ class InvestmentsHub extends Component
                     'Content-Type' => 'application/json',
                     'HTTP-Referer' => config('app.url'),
                     'X-Title' => config('app.name'),
-                ])->connectTimeout(5)->timeout(25)->post('https://openrouter.ai/api/v1/chat/completions', [
+                ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 10))->timeout((int) config('limits.ai.request_timeout_seconds', 90))->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
