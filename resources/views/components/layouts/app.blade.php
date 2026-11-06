@@ -1241,6 +1241,20 @@ $hasStoreAccess = $hasLockInAccess;
                 <flux:separator class="my-4 mx-2" />
 
                 <flux:sidebar.group heading="Finanças">
+                    <flux:sidebar.item
+                        icon="arrow-trending-up"
+                        :href="route('hub.incomes')"
+                        :current="request()->routeIs('hub.incomes')"
+                        wire:navigate.hover
+                        class="!bg-emerald-50 !text-emerald-700 dark:!bg-emerald-500/15 dark:!text-emerald-300 !font-black !rounded-xl !shadow-sm !border !border-emerald-200/80 dark:!border-emerald-500/25 !py-2.5 !px-3 hover:!bg-emerald-100 dark:hover:!bg-emerald-500/20 transition-all duration-200"
+                    >
+                        <span class="flex items-center gap-2.5 w-full">
+                            <span class="font-black tracking-tight">Receitas</span>
+                            <span class="ml-auto text-[10px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 px-2 py-0.5 rounded-full">
+                                {{ $counts['incomes'] }}
+                            </span>
+                        </span>
+                    </flux:sidebar.item>
                     @if($myRestrictions?->restrict_budget)
     {{-- VERSÃO BLOQUEADA (APARECE MAS NÃO CLICA) --}}
     <flux:sidebar.item
@@ -1266,9 +1280,6 @@ $hasStoreAccess = $hasLockInAccess;
 @endif
                     <flux:sidebar.item icon="arrow-up-tray" :href="route('hub.import')" :current="request()->routeIs('hub.import')" wire:navigate.hover>
                         Importar Extrato {!! $badge($counts['imports']) !!}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="arrow-trending-up" :href="route('hub.incomes')" wire:navigate.hover>
-                        Receitas {!! $badge($counts['incomes']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="hand-raised" :href="route('hub.debts')" wire:navigate.hover>
                         Dívidas {!! $badge($counts['debts']) !!}
