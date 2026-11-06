@@ -48,6 +48,7 @@ class BancoHub extends Component
     public string $tr_date = '';
     public string $tr_status = 'completed';
     public string $tr_notes = '';
+    public ?int $res_bank_account_id = null;
     public string $res_name = '';
     public float $res_amount = 0;
     public ?float $res_target = null;
@@ -90,7 +91,7 @@ class BancoHub extends Component
         return match ($this->modalType) {
             'account' => ['acc_name' => 'required|string|max:100', 'acc_type' => 'required|string', 'acc_balance' => 'required|numeric', 'acc_currency' => 'required|string|max:10', 'acc_color' => 'required|string'],
             'transfer' => ['tr_from_id' => 'required|integer|different:tr_to_id', 'tr_to_id' => 'required|integer', 'tr_amount' => 'required|numeric|min:0.01', 'tr_date' => 'required|date'],
-            'reserve' => ['res_name' => 'required|string|max:100', 'res_amount' => 'required|numeric|min:0'],
+            'reserve' => ['res_name' => 'required|string|max:100', 'res_amount' => 'required|numeric|min:0', 'res_bank_account_id' => 'required|integer'],
             'transit' => ['trs_name' => 'required|string|max:100', 'trs_amount' => 'required|numeric|min:0.01', 'trs_direction' => 'required|in:in,out', 'trs_bank_account_id' => 'required|integer'],
             'credit' => ['crd_name' => 'required|string|max:100', 'crd_amount' => 'required|numeric|min:0.01', 'crd_bank_account_id' => 'required|integer'],
             'patrimony' => ['pat_name' => 'required|string|max:100', 'pat_type' => 'required|string', 'pat_value' => 'required|numeric|min:0', 'pat_bank_account_id' => 'required|integer'],
@@ -149,6 +150,7 @@ class BancoHub extends Component
                 ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                 ->findOrFail($id);
             $this->editingId = $reserve->id;
+            $this->res_bank_account_id = $reserve->bank_account_id;
             $this->res_name = $reserve->name;
             $this->res_amount = $reserve->amount;
             $this->res_target = $reserve->target_amount;
@@ -249,7 +251,7 @@ class BancoHub extends Component
                 'Conta bancária inválida.'
             );
         }
-        $accountField = match ($this->modalType) { 'transit' => $this->trs_bank_account_id, 'credit' => $this->crd_bank_account_id, 'patrimony' => $this->pat_bank_account_id, default => null };
+        $accountField = match ($this->modalType) { 'reserve' => $this->res_bank_account_id, 'transit' => $this->trs_bank_account_id, 'credit' => $this->crd_bank_account_id, 'patrimony' => $this->pat_bank_account_id, default => null };
         if ($accountField !== null) {
             abort_unless(BankAccount::where('workspace_id', $wsId)->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereKey($accountField)->exists(), 422, 'Conta bancária inválida.');
         }
@@ -304,7 +306,7 @@ class BancoHub extends Component
 
     private function saveReserve(int $wsId): void
     {
-        $this->persistWorkspaceRecord(BankReserve::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'name' => $this->res_name, 'amount' => $this->res_amount, 'target_amount' => $this->res_target ?: null, 'target_date' => $this->res_target_date ?: null, 'color' => $this->res_color, 'icon' => $this->res_icon, 'description' => $this->res_description ?: null, 'is_business' => $this->res_is_business, 'status' => 'active']);
+        $this->persistWorkspaceRecord(BankReserve::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'bank_account_id' => $this->res_bank_account_id, 'name' => $this->res_name, 'amount' => $this->res_amount, 'target_amount' => $this->res_target ?: null, 'target_date' => $this->res_target_date ?: null, 'color' => $this->res_color, 'icon' => $this->res_icon, 'description' => $this->res_description ?: null, 'is_business' => $this->res_is_business, 'status' => 'active']);
     }
 
     private function saveTransit(int $wsId): void
@@ -413,6 +415,7 @@ class BancoHub extends Component
         $this->tr_description = $this->tr_notes = '';
         $this->tr_status = 'completed';
         $this->tr_date = now()->format('Y-m-d');
+        $this->res_bank_account_id = null;
         $this->res_name = $this->res_description = '';
         $this->res_amount = 0;
         $this->res_target = null;
