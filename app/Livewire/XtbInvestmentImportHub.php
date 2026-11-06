@@ -790,7 +790,7 @@ class XtbInvestmentImportHub extends Component
 
             // O glob() do PHP no Windows pode interpretar barras invertidas
             // como caracteres de escape. Usa sempre barras normais nos padrões.
-            $globRoot = rtrim(str_replace('\\\\', '/', $root), '/');
+            $globRoot = rtrim(str_replace('\\', '/', $root), '/');
             $patterns = [
                 $globRoot.'/*/'.$executable,
                 $globRoot.'/*/Library/bin/'.$executable,
