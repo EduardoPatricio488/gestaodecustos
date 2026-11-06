@@ -437,49 +437,46 @@ class XtbInvestmentImportHub extends Component
             if (! $reportDate) {
                 throw new \RuntimeException('Não foi possível identificar uma data no cabeçalho do extrato AforroNet.');
             }
-            // Normaliza a zona do resumo para lidar com acentos e espaços
-            // que alguns motores de extração de PDF alteram ou removem.
-            $summaryText = $text;
+            // A série pode aparecer no resumo geral ou no detalhe CAF / Série E.
+            // Normaliza acentos porque alguns extratores de PDF os corrompem.
+            $normalizedText = $text;
             if (function_exists('iconv')) {
-                $transliterated = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
-                if ($transliterated !== false) {
-                    $summaryText = $transliterated;
+                $asciiText = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+                if ($asciiText !== false) {
+                    $normalizedText = $asciiText;
                 }
             }
-            $summaryText = preg_replace('/[\p{Z}\s]+/u', ' ', $summaryText);
+            $normalizedText = preg_replace('/[\p{Z}\s]+/u', ' ', $normalizedText);
 
-            // Procura a série e os valores na mesma sequência, sem depender
-            // de o PDF preservar o cabeçalho "Unidades Valor".
-            $totalMatch = null;
-            $totalPatterns = [
-                '/Certificados\s+de\s+Aforro\s+S[ée]rie\s+([A-Z])\s+(?:Unidades\s+Valor\s*)?([\d.]+)\s+([\d.,]+)/iu',
-                '/Certificados\s+de\s+Aforro.{0,120}?([A-Z])\s+(?:Unidades\s+Valor\s*)?([\d.]+)\s+([\d.,]+)/iu',
+            $series = null;
+            $seriesPatterns = [
+                '/Certificados\s+de\s+Aforro\s+S[eé]rie\s+([A-Z])/iu',
+                '/CAF\s*\/\s*S[eé]rie\s+([A-Z])/iu',
+                '/S[eé]rie\s+([A-Z])\s+Unidades\s+Valor/iu',
             ];
-
-            foreach ($totalPatterns as $pattern) {
-                if (preg_match($pattern, $summaryText, $totalMatch)) {
+            foreach ($seriesPatterns as $pattern) {
+                if (preg_match($pattern, $normalizedText, $seriesMatch)) {
+                    $series = strtoupper($seriesMatch[1]);
                     break;
                 }
-                $totalMatch = null;
             }
 
-            if (! $totalMatch) {
-                // Último recurso: identifica a sequência numérica do resumo
-                // após "Certificados de Aforro", mesmo que o nome da série
-                // tenha sido omitido ou corrompido pelo extrator.
-                if (preg_match('/Certificados\s+de\s+Aforro(.{0,160})/iu', $summaryText, $summaryMatch)) {
-                    if (preg_match('/\b([A-Z])\s+([\d.]+)\s+([\d.,]+)/iu', $summaryMatch[1], $valuesMatch)) {
-                        $totalMatch = $valuesMatch;
-                    }
+            // O total do resumo é opcional: quando o PDF não o disponibiliza
+            // de forma legível, será calculado pela soma das subscrições.
+            $reportedUnits = null;
+            $reportedValue = null;
+            if (preg_match('/Certificados\s+de\s+Aforro\s+S[eé]rie\s+[A-Z]\s+(?:Unidades\s+Valor\s*)?([\d.]+)\s+([\d.,]+)/iu', $normalizedText, $totalMatch)
+                || preg_match('/Certificados\s+de\s+Aforro.{0,140}?([A-Z])\s+([\d.]+)\s+([\d.,]+)/iu', $normalizedText, $totalMatch)) {
+                if (count($totalMatch) === 3) {
+                    $reportedUnits = $this->parsePortugueseNumber($totalMatch[1]);
+                    $reportedValue = $this->parsePortugueseNumber($totalMatch[2]);
+                } elseif (count($totalMatch) >= 4) {
+                    $reportedUnits = $this->parsePortugueseNumber($totalMatch[2]);
+                    $reportedValue = $this->parsePortugueseNumber($totalMatch[3]);
                 }
             }
 
-            if (! $totalMatch) {
-                throw new \RuntimeException('O PDF foi lido, mas não consegui localizar a linha de resumo com a série, as unidades e o valor. Confirma que o extrato inclui o resumo de saldos por produtos.');
-            }
-
-            $series = strtoupper($totalMatch[1]);
-            if ($series !== 'E') {
+            if ($series !== null && $series !== 'E') {
                 throw new \RuntimeException('Este importador automático está preparado para a Série E.');
             }
 
@@ -495,8 +492,18 @@ class XtbInvestmentImportHub extends Component
                 ];
             }
 
-            if (count($subscriptions) === 0) {
-                throw new \RuntimeException('Não foram encontradas linhas individuais de subscrição no PDF.');
+            if (count($subscriptio            if (count($subscriptions) === 0) {
+                throw new \RuntimeException('Não foram encontradas linhas individuais de subscrição no PDF. Não é seguro importar sem validar as unidades.');
+            }
+
+            if ($series === null) {
+                // As linhas individuais CAF só são aceites se a própria
+                // designação do produto identificar inequivocamente a Série E.
+                if (preg_match('/CAF\s*\/\s*S[eé]rie\s+E/iu', $normalizedText)) {
+                    $series = 'E';
+                } else {
+                    throw new \RuntimeException('Encontrei subscrições, mas não consegui confirmar que pertencem à Série E.');
+                }
             }
 
             $units = array_sum(array_column($subscriptions, 'quantity'));
@@ -504,8 +511,9 @@ class XtbInvestmentImportHub extends Component
             $reportedUnits = $this->parsePortugueseNumber($totalMatch[2]);
             $reportedValue = $this->parsePortugueseNumber($totalMatch[3]);
 
-            if (abs($units - $reportedUnits) > 0.00001 || abs($value - $reportedValue) > 0.02) {
-                throw new \RuntimeException('A soma das subscrições individuais não coincide com o total indicado no PDF.');
+            if ($reportedUnits !== null && $reportedValue !== null
+                && (abs($units - $reportedUnits) > 0.00001 || abs($value - $reportedValue) > 0.02)) {
+                throw new \\RuntimeException('A soma das subscrições individuais não coincide com o total indicado no PDF.');
             }
 
             foreach ($subscriptions as $subscription) {
