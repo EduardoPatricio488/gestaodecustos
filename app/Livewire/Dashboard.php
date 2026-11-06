@@ -592,7 +592,23 @@ class Dashboard extends Component
             return $baseBalance + $incomeBalance - $expenseBalance;
         });
 
-        $projectedBalance = $totalBankBalance + $projectedIncome - $projectedExpenses;
+        // O saldo bancário atual já inclui os movimentos registados até hoje.
+        // Para projetar o fim do mês, reconstruímos primeiro o saldo no início
+        // do mês e depois aplicamos apenas uma vez os totais previstos do mês.
+        $monthBankIncome = (float) Income::where('workspace_id', $currentWs->id)
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->whereNotNull('bank_account_id')
+            ->whereBetween('received_at', [$monthStart, now()->endOfDay()])
+            ->sum('amount');
+
+        $monthBankExpenses = (float) Expense::where('workspace_id', $currentWs->id)
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->whereNotNull('bank_account_id')
+            ->whereBetween('spent_at', [$monthStart, now()->endOfDay()])
+            ->sum('amount');
+
+        $openingBankBalance = $totalBankBalance - $monthBankIncome + $monthBankExpenses;
+        $projectedBalance = $openingBankBalance + $projectedIncome - $projectedExpenses;
         $projectionStatus = $projectedBalance < 0 ? 'critical' : ($projectedBalance < ($totalMonthIncome * 0.15) ? 'warning' : 'stable');
 
         $topBankAccounts = Cache::remember("dashboard:top-accounts:{$currentWs->id}:{$user->id}", 60, fn () => BankAccount::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
