@@ -437,11 +437,20 @@ class XtbInvestmentImportHub extends Component
             if (! $reportDate) {
                 throw new \RuntimeException('Não foi possível identificar uma data no cabeçalho do extrato AforroNet.');
             }
-            if (! preg_match('/Certificados\s+de\s+Aforro\s+Série\s+([A-Z])(?:\s+Unidades\s+Valor)?\s+([\d.]+)\s+([\d.,]+)/iu', $text, $totalMatch)) {
-                throw new \RuntimeException('Não encontrei o total da Série no PDF.');
+            // Localiza primeiro o nome da série e, a seguir, os dois valores do
+            // resumo. Alguns leitores de PDF dividem ou omitem "Unidades Valor".
+            if (! preg_match('/Certificados\s+de\s+Aforro\s+S[ée]rie\s+([A-Z])\b/iu', $text, $seriesMatch, PREG_OFFSET_CAPTURE)) {
+                throw new \RuntimeException('Não encontrei a identificação da Série de Certificados de Aforro no PDF.');
             }
 
-            $series = strtoupper($totalMatch[1]);
+            $series = strtoupper($seriesMatch[1][0]);
+            $afterSeriesOffset = $seriesMatch[0][1] + strlen($seriesMatch[0][0]);
+            $afterSeries = substr($text, $afterSeriesOffset, 120);
+            if (! preg_match('/(?:Unidades\s+Valor\s*)?([\d.]+)\s+([\d.,]+)/iu', $afterSeries, $totalValues)) {
+                throw new \RuntimeException('Encontrei a Série no PDF, mas não consegui ler as unidades e o valor total.');
+            }
+
+            $totalMatch = [0 => $seriesMatch[0][0].' '.$totalValues[0], 1 => $series, 2 => $totalValues[1], 3 => $totalValues[2]];
             if ($series !== 'E') {
                 throw new \RuntimeException('Este importador automático está preparado para a Série E.');
             }
