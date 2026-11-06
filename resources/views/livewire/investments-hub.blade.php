@@ -190,7 +190,7 @@
                 <p class="mt-1 text-xs text-zinc-500">{{ number_format($advisorData['profit_percent'], 2, ',', ' ') }}% face ao capital investido</p>
             </div>
             <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
-                <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Excedente mensal médio</p>
+                <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Capacidade mensal estimada</p>
                 <p class="mt-2 text-2xl font-black tracking-tight {{ $monthlySurplus >= 0 ? 'text-emerald-500' : 'text-red-500' }}">{{ $money($monthlySurplus) }}</p>
                 <p class="mt-1 text-xs text-zinc-500">Salário líquido menos despesas médias</p>
             </div>
@@ -222,7 +222,7 @@
                 </div>
                 @if(!$hasSalaryConfigured)
                     <p class="mt-4 text-xs text-amber-600 dark:text-amber-400">Ainda não tens um salário líquido configurado em Rendimentos Fixos. Regista o teu contrato de trabalho para calcular a capacidade de investimento.</p>
-                @elseif($advisorData['income_records'] < 3 || $advisorData['expense_records'] < 3)
+                @elseif($advisorData['expense_records'] < 3)
                     <p class="mt-4 text-xs text-amber-600 dark:text-amber-400">Existem poucos registos de despesas. O cálculo usa o salário líquido configurado e a média das despesas disponíveis.</p>
                 @endif
             </div>
