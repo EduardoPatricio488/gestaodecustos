@@ -1262,7 +1262,7 @@ $hasStoreAccess = $hasLockInAccess;
                         Investimentos {!! $badge($counts['investments']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item
-                        icon="cloud-arrow-up"
+                        icon="arrow-up-tray"
                         :href="route('hub.investments.upload')"
                         :current="request()->routeIs('hub.investments.upload')"
                         wire:navigate.hover
