@@ -209,35 +209,26 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
     {{-- RECEBIDO NO MÊS ANTERIOR · DESTAQUE PRINCIPAL --}}
-    <div class="relative isolate p-6 rounded-[2rem] bg-gradient-to-br from-emerald-700 via-emerald-800 to-teal-950
-                dark:from-emerald-800 dark:via-emerald-900 dark:to-teal-950
-                border border-emerald-500/40 shadow-2xl shadow-emerald-900/25 ring-1 ring-emerald-400/20
-                overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-emerald-900/40">
+    <div class="relative p-6 rounded-[2rem] bg-emerald-50 dark:bg-emerald-950/50
+                border border-emerald-300 dark:border-emerald-800 shadow-lg shadow-emerald-900/10
+                ring-1 ring-emerald-200/70 dark:ring-emerald-900/50 overflow-hidden group">
 
-        <div class="pointer-events-none absolute -right-8 -top-10 size-40 rounded-full border border-white/10"></div>
-        <div class="pointer-events-none absolute -right-3 -top-5 size-28 rounded-full border border-white/10"></div>
-        <div class="pointer-events-none absolute -bottom-10 -left-8 size-36 rounded-full bg-emerald-400/10 blur-2xl"></div>
+        <div class="absolute inset-0 opacity-[0.07]">
+            <flux:icon name="wallet" class="size-32 text-emerald-700 dark:text-emerald-300 rotate-12" />
+        </div>
 
         <div class="relative">
-            <div class="flex items-center justify-between gap-3 mb-4">
-                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-100">
-                    Este mês recebi
-                </p>
-                <span class="flex size-9 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-emerald-100 shadow-inner">
-                    <flux:icon name="wallet" class="size-5" />
-                </span>
-            </div>
-
-            <p class="text-4xl font-black text-white tracking-tight tabular-nums drop-shadow-sm">
-                {{ number_format($thisMonthReceived, 2, ',', ' ') }}<span class="ml-1 text-2xl text-emerald-200">€</span>
+            <p class="text-[9px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-300 mb-2">
+                Este mês recebi
             </p>
 
-            <div class="mt-4 flex items-center gap-2 border-t border-white/20 pt-3">
-                <flux:icon name="calendar-days" variant="micro" class="size-3.5 text-emerald-200" />
-                <p class="text-[10px] text-emerald-100 font-medium">
-                    Entradas e salários fixos de {{ now()->translatedFormat('F Y') }}
-                </p>
-            </div>
+            <p class="text-4xl font-black text-emerald-700 dark:text-emerald-300 italic tracking-tight">
+                {{ number_format($thisMonthReceived, 2, ',', ' ') }}€
+            </p>
+
+            <p class="text-[10px] text-emerald-700/70 dark:text-emerald-400 font-medium mt-1">
+                Entradas e salários fixos de {{ now()->translatedFormat('F Y') }}
+            </p>
         </div>
     </div>
 {{-- ENTRADAS EXTRAS --}}
