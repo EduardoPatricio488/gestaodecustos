@@ -496,8 +496,7 @@
     </div>
 </div>
     {{-- ═══════════════════════════════════════════════════════════════ --}}
-    {{-- 2. SITE COMPLETO (SÓ VISÍVEL SE ONLINE)                         --}}
-    {{-- ═══════════════════════════════════════════════════════════════ --}}
+    {{-- 2. SITE COMPLETO (SÓ VISÍVEL SE ONLINE)                         --}}    {{-- ═══════════════════════════════════════════════════════════════ --}}
     <div x-show="isOnline" class="flex w-full"> {{-- Envolver todo o layout original aqui --}}
 
 
@@ -716,8 +715,7 @@
                       </flux:sidebar.item>
                   @endforeach
               </div>
-          @else
-              <div class="rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-4 text-center">
+          @else              <div class="rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-4 text-center">
                   <flux:icon name="building-office-2" class="size-7 mx-auto text-zinc-300 dark:text-zinc-700 mb-2" />
                   <p class="text-[10px] font-black uppercase text-zinc-500 dark:text-zinc-400">Não tens nenhuma empresa</p>
               </div>
@@ -926,8 +924,7 @@
                 Stock / Inventário {!! $badge($counts['inventory']) !!}
             </flux:sidebar.item>
             <flux:sidebar.item icon="building-library" :href="route('hub.business.accounts')" wire:navigate.hover>
-                Contas Empresa {!! $badge($counts['accounts'] ?? 0) !!}
-            </flux:sidebar.item>
+                Contas Empresa {!! $badge($counts['accounts'] ?? 0) !!}            </flux:sidebar.item>
             <flux:sidebar.item icon="truck" :href="route('hub.business.suppliers')" wire:navigate.hover>
                 Fornecedores {!! $badge($counts['suppliers']) !!}
             </flux:sidebar.item>
@@ -1076,8 +1073,7 @@
                     @endif
 
                     {{-- ONDE SOU COLABORADOR --}}
-                    @if($collabCompanies->count() > 0)
-                        <p class="text-[8px] font-black uppercase text-zinc-400 tracking-widest text-center mt-4 mb-2 opacity-60">Como Colaborador</p>
+                    @if($collabCompanies->count() > 0)                        <p class="text-[8px] font-black uppercase text-zinc-400 tracking-widest text-center mt-4 mb-2 opacity-60">Como Colaborador</p>
                         @foreach($collabCompanies as $ws)
                             <flux:sidebar.item
                                 icon="users"
@@ -1246,11 +1242,14 @@ $hasStoreAccess = $hasLockInAccess;
                         :href="route('hub.incomes')"
                         :current="request()->routeIs('hub.incomes')"
                         wire:navigate.hover
-                        class="!bg-emerald-50 !text-emerald-700 dark:!bg-emerald-500/15 dark:!text-emerald-300 !font-black !rounded-xl !shadow-sm !border !border-emerald-200/80 dark:!border-emerald-500/25 !py-2.5 !px-3 hover:!bg-emerald-100 dark:hover:!bg-emerald-500/20 transition-all duration-200"
+                        class="relative !bg-gradient-to-r !from-emerald-100 !via-emerald-50 !to-teal-50 !text-emerald-800 dark:!from-emerald-500/25 dark:!via-emerald-500/15 dark:!to-teal-500/10 dark:!text-emerald-200 !font-black !rounded-xl !shadow-md !shadow-emerald-500/10 !border !border-emerald-300 dark:!border-emerald-400/30 !ring-1 !ring-emerald-500/15 !py-3 !px-3 hover:!shadow-lg hover:!shadow-emerald-500/15 hover:!-translate-y-0.5 hover:!border-emerald-400 dark:hover:!border-emerald-300 transition-all duration-200"
                     >
                         <span class="flex items-center gap-2.5 w-full">
                             <span class="font-black tracking-tight">Receitas</span>
-                            <span class="ml-auto text-[10px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 px-2 py-0.5 rounded-full">
+                            <span class="ml-auto text-[8px] font-black uppercase tracking-wider bg-emerald-600 text-white dark:bg-emerald-500 dark:text-zinc-950 px-2 py-1 rounded-md shadow-sm">
+                                Principal
+                            </span>
+                            <span class="text-[10px] font-black bg-white/80 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-200/80 dark:border-emerald-400/20">
                                 {{ $counts['incomes'] }}
                             </span>
                         </span>
@@ -1266,8 +1265,7 @@ $hasStoreAccess = $hasLockInAccess;
             Orçamento
             <flux:icon name="lock-closed" variant="micro" class="size-3 text-amber-600" />
         </span>
-    </flux:sidebar.item>
-@else
+    </flux:sidebar.item>@else
     {{-- VERSÃO LIBERTADA (ORIGINAL) --}}
     <flux:sidebar.item
         icon="calculator"
@@ -1598,458 +1596,3 @@ $hasStoreAccess = $hasLockInAccess;
 {{-- Centro: Barra de Pesquisa + Aviso de Contexto --}}
 {{-- Centro: Barra de Pesquisa + Aviso de Contexto --}}
 <div class="flex items-center justify-center flex-1 min-w-0 mx-0 sm:mx-8">
-
-    {{-- AVISO: MODO DE OBSERVAÇÃO (Oculto no mobile para ganhar espaço) --}}
-    @if($isViewingOthers && $currentWs)
-        <div class="hidden xl:flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl shrink-0 mr-4">
-            <div class="relative flex items-center justify-center">
-                <div class="size-1.5 rounded-full bg-amber-500 animate-ping absolute"></div>
-                <flux:icon name="eye" variant="micro" class="size-3.5 text-amber-600 relative" />
-            </div>
-            <span class="text-[9px] font-black uppercase text-amber-600 tracking-widest whitespace-nowrap">
-                A visualizar: <span class="text-amber-800 dark:text-amber-400 italic">{{ $currentWs->name ?? 'Cofre' }}</span>
-            </span>
-            <a href="{{ route('workspace.switch.fast', $myPersonalWsId) }}" class="ml-1 p-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors">
-                <flux:icon name="arrow-uturn-left" variant="micro" class="size-3" />
-            </a>
-        </div>
-    @endif
-
-    {{-- BOTÃO DE PESQUISA: Super colado aos lados no mobile, Gigante no PC --}}
-    <button x-on:click="$dispatch('open-global-search')"
-        aria-label="Abrir pesquisa global"
-        class="size-10 sm:h-auto sm:w-full sm:max-w-5xl sm:px-6 sm:py-2.5 flex shrink-0 items-center justify-center sm:justify-start gap-3 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl sm:rounded-2xl text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all group shadow-sm">
-
-        <flux:icon name="magnifying-glass" class="size-5 sm:size-4 group-hover:text-brand-500 transition-colors shrink-0" />
-
-        <span class="hidden sm:inline-block text-sm font-medium text-left">
-            Procurar tudo no Finance Pro... <span class="opacity-40 ml-2 font-normal">(Control + K)</span>
-        </span>
-    </button>
-</div>
-
-{{-- Lado Direito: Ações e Perfil --}}
-<div class="flex items-center gap-1 sm:gap-3 justify-end shrink-0">
-
-    {{-- Loja --}}
-    @php
-    $hasStoreAccess = $user?->isPaidPlan() ?? false;
-@endphp
-
-@if($hasStoreAccess)
-    {{-- LOJA DISPONÍVEL (PRO / BUSINESS) --}}
-    <a href="{{ route('hub.store') }}"
-       wire:navigate
-    class="relative size-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-brand-600 hover:border-brand-500/30 transition-all group"
-       title="Loja Digital">
-        <flux:icon name="shopping-bag" class="size-5 group-hover:scale-110 transition-transform duration-300" />
-    </a>
-@else
-    {{-- LOJA BLOQUEADA (REDIRECIONA PARA PLANOS) --}}
-    <a href="{{ route('hub.pricing') }}"
-       wire:navigate
-    class="relative size-10 flex items-center justify-center rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 shadow-sm border border-zinc-200/60 dark:border-zinc-800/60 text-zinc-400 opacity-80 hover:opacity-100 hover:border-amber-500/50 transition-all group"
-       title="Loja Digital (Disponível nos planos Pro e Business)">
-
-        {{-- Ícone da Loja em tons de cinza --}}
-        <flux:icon name="shopping-bag" class="size-5 grayscale" />
-
-        {{-- CADEADO PEQUENO NO CANTO --}}
-        <div class="absolute -top-1.5 -right-1.5 bg-white dark:bg-zinc-950 rounded-full p-0.5 border border-zinc-100 dark:border-zinc-800 shadow-sm">
-            <div class="bg-amber-50 dark:bg-amber-900/20 rounded-full p-0.5">
-                <flux:icon name="lock-closed" variant="micro" class="size-2.5 text-amber-600" />
-            </div>
-        </div>
-    </a>
-@endif
-
-                {{-- Botão de Privacidade --}}
-                @if(request()->routeIs('dashboard') || request()->routeIs('social.profile') || request()->routeIs('profile.edit'))
-                    <button @click="privacyMode = !privacyMode"
-                        class="size-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-emerald-600 transition-all">
-                        <flux:icon x-show="!privacyMode" name="eye" class="size-5" />
-                        <flux:icon x-show="privacyMode" name="eye-slash" class="size-5 text-emerald-500" />
-                    </button>
-                @endif
-
-                {{-- Centro de Notificações --}}
-                <livewire:notification-center />
-
-                {{-- Menu de Utilizador --}}
-                <div x-data="{ open: false }" class="relative flex-shrink-0">
-                    <button @click="open = !open" type="button" aria-label="Abrir menu do perfil" class="size-10 flex items-center justify-center gap-2 sm:gap-3 sm:w-auto sm:px-2 py-1.5 rounded-xl sm:rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all">
-    <flux:avatar :initials="auth()->user()->initials()" class="size-9 sm:size-10 shadow-sm shrink-0" />
-    <div class="hidden md:block text-left">
-        <p class="text-sm font-bold text-zinc-800 dark:text-white leading-none">
-            {{ auth()->user()->name }} <span class="ml-1">{{ $planEmoji }}</span>
-        </p>
-        {{-- Texto do Plano com Cor Dinâmica da Base de Dados --}}
-        <p class="text-[10px] font-black uppercase {{ $planColor }} mt-1"
-           style="{{ !empty($planColorHex) ? 'color: ' . $planColorHex . ';' : '' }}">
-            {{ $planText }}
-        </p>
-    </div>
-    <flux:icon name="chevron-down" class="size-4 text-zinc-400" />
-</button>
-
-                    <div x-show="open" x-cloak @click.outside="open = false" x-transition
-                        class="absolute right-0 mt-2 w-60 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden">
-                        <div class="py-1">
-                            <a href="{{ route('profile.edit') }}" wire:navigate class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
-                                👤 O meu perfil
-                            </a>
-
-                            <a href="{{ route('hub.ranking') }}" wire:navigate class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
-                                🏆 Ranking
-                            </a>
-
-                            @if($user->isPaidPlan())
-                                <a href="{{ route('hub.pricing') }}" wire:navigate
-                                   class="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 transition-colors border-b border-zinc-50 dark:border-zinc-800/50">
-                                    @if($user->isBusinessPlan())
-                                        <span class="text-indigo-500">💎</span> O meu plano Business
-                                    @else
-                                        <span class="text-amber-500">⭐</span> O meu plano Pro
-                                    @endif
-                                </a>
-                            @endif
-
-                            @if(!auth()->user()->isAdmin())
-                                <a href="{{ $isBusinessMode ? route('hub.business.support') : route('support.hub') }}"
-                                    wire:navigate
-                                    class="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
-                                    <span>🎫</span> Suporte Técnico
-                                </a>
-                            @endif
-
-                            @if(!$isAnyPremium && !auth()->user()->isAdmin())
-                                <a href="{{ route('hub.pricing') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-brand-600 font-black hover:bg-brand-50 dark:hover:bg-brand-500/10">
-                                    <span class="animate-pulse">⭐</span> Planos Pro & Business
-                                </a>
-                            @endif
-
-                            <div class="border-t border-zinc-200 dark:border-zinc-800 my-1"></div>
-
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit" class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
-                                    🚪 Sair da Conta
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </flux:header>
-
-    <flux:main class="{{ $isBusinessMode ? 'business-main' : '' }} lg:ps-64 h-screen min-w-0 overflow-x-hidden overflow-y-auto custom-scrollbar pt-16">
-        <div id="page-container" class="mx-auto w-full max-w-7xl min-w-0 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-            {{ $slot }}
-        </div>
-    </flux:main>
-
-    @if(request()->routeIs('hub.store', 'store.product.show', 'store.compare', 'store.wishlist'))
-        @persist('store-cart-fab')
-            <livewire:store.cart-icon />
-        @endpersist
-    @endif
-
-{{-- RECUPERADO: CHATBOT IA (Finance Bot) --}}
-     @persist('finance-bot')
-        <livewire:finance-bot />
-    @endpersist
-
-    @persist('toast')
-        <flux:toast.group><flux:toast /></flux:toast.group>
-    @endpersist
-
-    @if(session('toast'))
-        <script>
-            window.addEventListener('load', () => {
-                window.dispatchEvent(new CustomEvent('toast', {
-                    detail: { text: @js(is_array(session('toast')) ? (session('toast')['text'] ?? '') : session('toast')) }
-                }));
-            });
-        </script>
-    @endif
-
-    {{-- 2. MODO VISUALIZAÇÃO CENTRADO EM BAIXO --}}
-    @if(session()->has('admin_impersonation') || session()->has('viewing_as_collaborator_id'))
-        @php
-            $isViewingCollaborator = session()->has('viewing_as_collaborator_id');
-            $exitViewUrl = $isViewingCollaborator
-                ? route('hub.business.stop-viewing-collaborator')
-                : route('admin.stop-impersonating');
-            $viewLabel = $isViewingCollaborator
-                ? 'Vista de Colaborador'
-                : 'Modo Colaborador';
-        @endphp
-        <div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[999] w-auto animate-in fade-in slide-in-from-bottom-10 duration-700">
-            <div class="relative group">
-                <!-- Aura de brilho atrás do botão -->
-                <div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-
-                <form method="POST" action="{{ $exitViewUrl }}">
-                    @csrf
-                    @if(! $isViewingCollaborator) @method('DELETE') @endif
-                    <button type="submit"
-                   class="relative flex items-center gap-4 px-6 py-3 bg-zinc-900 dark:bg-zinc-800 border border-white/10 rounded-full shadow-2xl no-underline transition-all hover:scale-105 active:scale-95 group">
-
-                    <div class="flex items-center gap-3">
-                        <div class="size-8 rounded-full bg-red-600 flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
-                            <flux:icon name="arrow-right-start-on-rectangle" class="size-4 text-white" />
-                        </div>
-
-                        <div class="flex flex-col items-start leading-none pr-4 border-r border-white/10">
-                            <span class="text-[8px] font-black uppercase tracking-[0.2em] text-red-500">Acesso Restrito</span>
-                            <span class="text-[10px] font-black uppercase tracking-tight text-white mt-0.5">{{ $viewLabel }}</span>
-                        </div>
-
-                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">
-                            Voltar para CEO
-                        </span>
-                    </div>
-                    </button>
-                </form>
-            </div>
-        </div>
-    @endif
-
-    {{-- MODAL DE DETALHES DO AVISO --}}
-    <flux:modal name="announcement-detail" variant="center" class="md:w-[600px] !p-0 overflow-hidden border-none shadow-2xl">
-        <div x-data="{
-            id: null, title: '', message: '', type: '', date: '', expires: '',
-            get getColor() {
-                return {
-                    'info': 'bg-blue-600', 'informativo': 'bg-blue-600',
-                    'success': 'bg-emerald-600', 'sucesso': 'bg-emerald-600',
-                    'warning': 'bg-amber-500', 'aviso': 'bg-amber-500',
-                    'danger': 'bg-red-600', 'urgente': 'bg-red-600'
-                }[this.type] || 'bg-zinc-600';
-            }
-        }"
-        x-on:show-announcement.window="id = $event.detail.id; title = $event.detail.title; message = $event.detail.message; type = $event.detail.type.toLowerCase(); date = $event.detail.date; expires = $event.detail.expires"
-        class="text-left bg-white dark:bg-zinc-900 flex flex-col">
-            <div class="h-2 w-full shadow-inner" :class="getColor"></div>
-            <div class="p-10">
-                <div class="flex items-start justify-between mb-10">
-                    <div class="flex items-center gap-6">
-                        <div class="size-16 rounded-[1.5rem] flex items-center justify-center shadow-xl text-white" :class="getColor">
-                            <flux:icon name="megaphone" class="size-8" />
-                        </div>
-                        <div class="text-left">
-                            <h2 class="text-3xl font-black uppercase italic tracking-tighter dark:text-white leading-none mb-2" x-text="title"></h2>
-                            <div class="flex items-center gap-3">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-sm" :class="getColor" x-text="type"></span>
-                                <span class="text-[11px] text-zinc-400 font-black uppercase tracking-widest" x-text="date"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <flux:modal.close><flux:button variant="ghost" icon="x-mark" class="rounded-full" /></flux:modal.close>
-                </div>
-                <div class="space-y-8 text-left">
-                    <div class="p-8 bg-zinc-50 dark:bg-zinc-800/40 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 shadow-inner">
-                        <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed text-lg font-bold italic" x-text="message"></p>
-                    </div>
-                    <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-zinc-400 px-2">
-                        <span>Validade do Aviso:</span>
-                        <span class="text-zinc-900 dark:text-white" x-text="expires"></span>
-                    </div>
-                    <div class="flex gap-4">
-                        <template x-if="type !== 'urgente' && type !== 'danger' && type !== 'erro'">
-                            <flux:button class="flex-1 h-14 rounded-2xl font-black uppercase text-[11px] tracking-widest shadow-lg hover:scale-[1.02] transition-transform"
-                                x-on:click="$dispatch('close-announcement-globally', { id: id }); $dispatch('modal-close', {name: 'announcement-detail'})">
-                                Entendido, remover aviso
-                            </flux:button>
-                        </template>
-                        <flux:modal.close class="flex-1">
-                            <flux:button variant="ghost" class="w-full h-14 rounded-2xl font-black uppercase text-[11px] tracking-widest border-2 border-zinc-100 dark:border-zinc-800">
-                                Sair do Dossiê
-                            </flux:button>
-                        </flux:modal.close>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </flux:modal>
-
-    @fluxScripts
-    @livewireScripts
-    <script src="/flux/flux.js"></script>
-
-    <script>
-    if (!window.__appLayoutInitialized) {
-        window.__appLayoutInitialized = true;
-        window.adjustPageContainer = function() {
-            const main = document.querySelector('flux-main');
-            if (main) main.scrollTop = 0;
-
-            const el = document.getElementById('page-container');
-            if (!el) return;
-            const isSocial = location.pathname.startsWith('/social');
-            el.style.maxWidth = isSocial ? '100rem' : '';
-        };
-        document.addEventListener('livewire:navigated', window.adjustPageContainer);
-        document.addEventListener('livewire:init', () => {
-            Livewire.on('openChatWith', (data) => { Livewire.dispatch('open-chat-with', { userId: data.userId }); });
-            Livewire.on('copyToClipboard', (data) => { navigator.clipboard.writeText(data.text); });
-        });
-    }
-    window.adjustPageContainer && window.adjustPageContainer();
-
-
-
-    </script>
-
-    {{-- MODAL PRIVACIDADE --}}
-    <flux:modal wire:model="showPrivacyModal" position="center" class="md:w-[350px]">
-        <div class="space-y-6 text-center">
-            <h2 class="text-xl font-black uppercase italic text-zinc-900">Confirmar Identidade</h2>
-            <form wire:submit.prevent="unlockPrivacy" class="space-y-4">
-                <flux:input wire:model="privacyPassword" type="password" placeholder="Tua password..." class="rounded-xl" />
-                <flux:button type="submit" variant="primary" class="w-full bg-emerald-600 border-none font-black uppercase">Desbloquear 🟢</flux:button>
-            </form>
-        </div>
-    </flux:modal>
-
-    {{-- MODAL REPORTE --}}
-    @if($reportModal ?? false)
-        <div class="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-md">
-            <div class="w-full max-w-lg bg-white rounded-[2.5rem] p-8 shadow-2xl">
-                <h2 class="text-xl font-black text-zinc-900 uppercase italic mb-6 text-left">Reportar Publicação</h2>
-                <textarea wire:model="reportReason" class="w-full bg-zinc-50 border border-zinc-200 rounded-2xl p-5 text-sm mb-6 h-40 outline-none" placeholder="Motivo da denúncia..."></textarea>
-                <div class="flex gap-4">
-                    <button wire:click="$set('reportModal', false)" class="flex-1 font-black uppercase text-zinc-400">Cancelar</button>
-                    <button wire:click="submitReport" class="flex-[2] bg-emerald-600 text-white h-14 rounded-2xl font-black uppercase shadow-lg">Enviar Ticket 🟢</button>
-                </div>
-            </div>
-        </div>
-    @endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    {{-- ═══════════════════════════════════════════════════════════════ --}}
-    {{-- BARRA FLUTUANTE DE CONTEXTO EXTERNO (FIXA EM BAIXO)            --}}
-    {{-- ═══════════════════════════════════════════════════════════════ --}}
-    @if($isViewingOthers && $currentWs)
-    <div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[999] w-auto animate-in fade-in slide-in-from-bottom-10 duration-700">
-        <div class="relative group">
-            <div class="absolute -inset-1 bg-gradient-to-r from-amber-600 to-orange-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-
-            <div class="relative flex items-center gap-6 px-8 py-4 bg-white dark:bg-zinc-900 border border-amber-500/30 rounded-full shadow-2xl backdrop-blur-md">
-                <div class="flex flex-col text-left leading-tight pr-6 border-r border-zinc-100 dark:border-zinc-800">
-                    <span class="text-[8px] font-black uppercase text-amber-600 tracking-[0.2em]">Modo de Consulta Ativo</span>
-                    <span class="text-sm font-black dark:text-white uppercase italic">{{ $currentWs->name ?? 'Cofre' }}</span>
-                </div>
-
-                {{-- O BOTÃO PARA VOLTAR --}}
-                <a href="{{ route('workspace.switch.fast', $myPersonalWsId) }}"
-                   class="flex items-center gap-3 px-6 py-2 bg-zinc-950 dark:bg-brand-600 text-white rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
-                    <flux:icon name="arrow-uturn-left" variant="micro" class="size-4 transition-transform group-hover/btn:-translate-x-1" />
-                    <span class="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Voltar à Minha Gestão</span>
-                </a>
-            </div>
-        </div>
-    </div>
-@endif
-
-<script>
-    // 0. Revalida o contexto ao usar Back/Forward do browser.
-    // O bfcache pode restaurar uma página antiga sem novo pedido ao servidor.
-    window.addEventListener('pageshow', (event) => {
-        if (event.persisted) {
-            window.location.reload();
-        }
-    });
-
-    // 1. Registo do Service Worker
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js');
-    }
-
-    // 2. Função de Sincronização
-    async function syncOfflineData() {
-        const queue = JSON.parse(localStorage.getItem('offline_vault') || '[]');
-
-        if (queue.length > 0) {
-            try {
-                const response = await fetch('/api/offline/expenses/sync', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({
-                        expenses: queue.map((item) => ({
-                            client_id: String(item.id),
-                            title: item.description || 'Despesa Offline',
-                            description: item.description || null,
-                            amount: item.amount,
-                            category_slug: item.category || null,
-                            spent_at: item.date,
-                        })),
-                    })
-                });
-
-                if (response.ok) {
-                    localStorage.removeItem('offline_vault');
-
-                    // Esvazia também a lista reativa do widget "Bunker Offline"
-                    const bodyData = window.Alpine?.$data(document.body);
-                    if (bodyData) bodyData.offlineQueue = [];
-
-                    window.dispatchEvent(new CustomEvent('toast', {
-                        detail: { text: 'Gastos offline sincronizados! ✅' }
-                    }));
-                }
-            } catch (error) {
-                // Erro silencioso: a UI mostra o estado correto sem expor detalhes técnicos.
-            }
-        }
-    }
-
-    // Tenta sincronizar mal a página carrega e deteta internet
-    window.addEventListener('online', syncOfflineData);
-    if (navigator.onLine) syncOfflineData();
-
-    window.addEventListener('toast', (event) => {
-        const detail = event.detail || {};
-        const text = detail.text || detail.message || 'Ação concluída com sucesso.';
-        const toast = document.createElement('div');
-        const hasXp = /xp/i.test(text);
-
-        toast.className = 'app-action-toast' + (hasXp ? ' app-action-toast--xp' : '');
-        toast.setAttribute('role', 'status');
-        toast.innerHTML = `
-            <div class="app-action-toast__icon">${hasXp ? '🏆' : '✓'}</div>
-            <div>
-                <p class="app-action-toast__title">${hasXp ? 'Recompensa desbloqueada' : 'Concluído'}</p>
-                <p class="app-action-toast__text"></p>
-            </div>
-        `;
-        toast.querySelector('.app-action-toast__text').textContent = text;
-
-        document.body.appendChild(toast);
-        window.setTimeout(() => toast.classList.add('app-action-toast--leaving'), 4200);
-        window.setTimeout(() => toast.remove(), 4600);
-    });
-</script>
-</body>
-</html>
