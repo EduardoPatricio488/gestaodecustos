@@ -1604,6 +1604,13 @@
                 @elseif($modalType === 'reserve')
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
+                            <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Conta bancária *</label>
+                            <select wire:model="res_bank_account_id" class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white">
+                                <option value="">Selecionar conta</option>
+                                @foreach($accounts as $account)<option value="{{ $account->id }}">{{ $account->bank_name ?: $account->name }} — {{ $account->name }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div class="col-span-2">
                             <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Nome da Reserva *</label>
                             <input wire:model="res_name" type="text" placeholder="Ex: IRS, Férias, Emergência"
                                    class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500">
