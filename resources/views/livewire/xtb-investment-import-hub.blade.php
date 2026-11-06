@@ -75,7 +75,7 @@
             <div class="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3">
                 <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Ativos identificados</p><p class="mt-1 text-2xl font-black text-zinc-900 dark:text-white">{{ $reportSummary['positions_count'] ?? count($positions) }}</p></div>
                 <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Valor atual total</p><p class="mt-1 text-2xl font-black text-emerald-600">{{ number_format((float)($reportSummary['open_value'] ?? 0), 2, ',', ' ') }} €</p></div>
-                <div class="col-span-2 sm:col-span-1 rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Origem</p><p class="mt-1 text-lg font-black text-zinc-900 dark:text-white">XTB</p></div>
+                <div class="col-span-2 sm:col-span-1 rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Lucro não realizado</p><p class="mt-1 text-2xl font-black {{ ($reportSummary['open_profit'] ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ number_format((float)($reportSummary['open_profit'] ?? 0), 2, ',', ' ') }} €</p></div>
             </div>
 
             <div class="overflow-x-auto">
