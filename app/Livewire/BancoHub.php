@@ -65,6 +65,9 @@ class BancoHub extends Component
     public string $trs_expected_date = '';
     public string $trs_description = '';
     public bool $trs_is_business = false;
+    public ?int $trs_bank_account_id = null;
+    public ?int $crd_bank_account_id = null;
+    public ?int $pat_bank_account_id = null;
     public string $crd_name = '';
     public float $crd_amount = 0;
     public string $crd_category = 'client';
@@ -88,9 +91,9 @@ class BancoHub extends Component
             'account' => ['acc_name' => 'required|string|max:100', 'acc_type' => 'required|string', 'acc_balance' => 'required|numeric', 'acc_currency' => 'required|string|max:10', 'acc_color' => 'required|string'],
             'transfer' => ['tr_from_id' => 'required|integer|different:tr_to_id', 'tr_to_id' => 'required|integer', 'tr_amount' => 'required|numeric|min:0.01', 'tr_date' => 'required|date'],
             'reserve' => ['res_name' => 'required|string|max:100', 'res_amount' => 'required|numeric|min:0'],
-            'transit' => ['trs_name' => 'required|string|max:100', 'trs_amount' => 'required|numeric|min:0.01', 'trs_direction' => 'required|in:in,out'],
-            'credit' => ['crd_name' => 'required|string|max:100', 'crd_amount' => 'required|numeric|min:0.01'],
-            'patrimony' => ['pat_name' => 'required|string|max:100', 'pat_type' => 'required|string', 'pat_value' => 'required|numeric|min:0'],
+            'transit' => ['trs_name' => 'required|string|max:100', 'trs_amount' => 'required|numeric|min:0.01', 'trs_direction' => 'required|in:in,out', 'trs_bank_account_id' => 'required|integer'],
+            'credit' => ['crd_name' => 'required|string|max:100', 'crd_amount' => 'required|numeric|min:0.01', 'crd_bank_account_id' => 'required|integer'],
+            'patrimony' => ['pat_name' => 'required|string|max:100', 'pat_type' => 'required|string', 'pat_value' => 'required|numeric|min:0', 'pat_bank_account_id' => 'required|integer'],
             default => [],
         };
     }
@@ -167,6 +170,7 @@ class BancoHub extends Component
                 ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                 ->findOrFail($id);
             $this->editingId = $item->id;
+            $this->trs_bank_account_id = $item->bank_account_id;
             $this->trs_name = $item->name;
             $this->trs_amount = $item->amount;
             $this->trs_direction = $item->direction;
@@ -189,6 +193,7 @@ class BancoHub extends Component
                 ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                 ->findOrFail($id);
             $this->editingId = $credit->id;
+            $this->crd_bank_account_id = $credit->bank_account_id;
             $this->crd_name = $credit->name;
             $this->crd_amount = $credit->amount;
             $this->crd_category = $credit->category ?? 'client';
@@ -208,6 +213,7 @@ class BancoHub extends Component
                 ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
                 ->findOrFail($id);
             $this->editingId = $pat->id;
+            $this->pat_bank_account_id = $pat->bank_account_id;
             $this->pat_type = $pat->type;
             $this->pat_name = $pat->name;
             $this->pat_value = $pat->value;
@@ -242,6 +248,10 @@ class BancoHub extends Component
                 422,
                 'Conta bancária inválida.'
             );
+        }
+        $accountField = match ($this->modalType) { 'transit' => $this->trs_bank_account_id, 'credit' => $this->crd_bank_account_id, 'patrimony' => $this->pat_bank_account_id, default => null };
+        if ($accountField !== null) {
+            abort_unless(BankAccount::where('workspace_id', $wsId)->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereKey($accountField)->exists(), 422, 'Conta bancária inválida.');
         }
         match ($this->modalType) {
             'account' => $this->saveAccount($wsId),
@@ -299,17 +309,17 @@ class BancoHub extends Component
 
     private function saveTransit(int $wsId): void
     {
-        $this->persistWorkspaceRecord(BankTransitItem::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'name' => $this->trs_name, 'amount' => $this->trs_amount, 'direction' => $this->trs_direction, 'type' => $this->trs_type, 'origin' => $this->trs_origin ?: null, 'destination' => $this->trs_destination ?: null, 'expected_date' => $this->trs_expected_date ?: null, 'description' => $this->trs_description ?: null, 'is_business' => $this->trs_is_business, 'status' => 'pending']);
+        $this->persistWorkspaceRecord(BankTransitItem::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'bank_account_id' => $this->trs_bank_account_id, 'name' => $this->trs_name, 'amount' => $this->trs_amount, 'direction' => $this->trs_direction, 'type' => $this->trs_type, 'origin' => $this->trs_origin ?: null, 'destination' => $this->trs_destination ?: null, 'expected_date' => $this->trs_expected_date ?: null, 'description' => $this->trs_description ?: null, 'is_business' => $this->trs_is_business, 'status' => 'pending']);
     }
 
     private function saveCredit(int $wsId): void
     {
-        $this->persistWorkspaceRecord(BankCredit::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'name' => $this->crd_name, 'amount' => $this->crd_amount, 'category' => $this->crd_category, 'due_date' => $this->crd_due_date ?: null, 'notes' => $this->crd_notes ?: null, 'is_business' => $this->crd_business, 'status' => 'pending']);
+        $this->persistWorkspaceRecord(BankCredit::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'bank_account_id' => $this->crd_bank_account_id, 'name' => $this->crd_name, 'amount' => $this->crd_amount, 'category' => $this->crd_category, 'due_date' => $this->crd_due_date ?: null, 'notes' => $this->crd_notes ?: null, 'is_business' => $this->crd_business, 'status' => 'pending']);
     }
 
     private function savePatrimony(int $wsId): void
     {
-        $this->persistWorkspaceRecord(BankPatrimony::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'type' => $this->pat_type, 'name' => $this->pat_name, 'value' => $this->pat_value, 'purchase_price' => $this->pat_purchase_price ?: null, 'purchase_date' => $this->pat_purchase_date ?: null, 'description' => $this->pat_description ?: null, 'is_business' => $this->pat_is_business, 'status' => 'active']);
+        $this->persistWorkspaceRecord(BankPatrimony::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'bank_account_id' => $this->pat_bank_account_id, 'type' => $this->pat_type, 'name' => $this->pat_name, 'value' => $this->pat_value, 'purchase_price' => $this->pat_purchase_price ?: null, 'purchase_date' => $this->pat_purchase_date ?: null, 'description' => $this->pat_description ?: null, 'is_business' => $this->pat_is_business, 'status' => 'active']);
     }
 
     private function persistWorkspaceRecord(string $modelClass, int $wsId, array $attributes): Model
@@ -416,6 +426,7 @@ class BancoHub extends Component
         $this->trs_type = 'transfer_sent';
         $this->trs_expected_date = now()->addDays(3)->format('Y-m-d');
         $this->trs_is_business = false;
+        $this->trs_bank_account_id = $this->crd_bank_account_id = $this->pat_bank_account_id = null;
         $this->crd_name = $this->crd_notes = '';
         $this->crd_amount = 0;
         $this->crd_category = 'client';
@@ -434,7 +445,9 @@ class BancoHub extends Component
     {
         $user = auth()->user();
         $wsId = $user->current_workspace_id;
-        $service = new BancoService($wsId, $user->id);
+        $service = new BancoService($wsId, $user->id, $this->accountFilter === 'all' ? null : $this->accountFilter);
+        $allAccounts = (new BancoService($wsId, $user->id))->getAccounts();
+        $bankFilters = $allAccounts->pluck('bank_name')->filter()->unique()->sort()->values();
         $accounts = $service->getAccounts();
         if ($user->currentWorkspace?->type === 'personal') {
             $accounts = $accounts->where('user_id', $user->id)->values();
@@ -454,6 +467,6 @@ class BancoHub extends Component
         $alerts = $service->getAlerts();
         $distribution = $service->getPatrimonyDistribution();
         $monthlyFlow = $service->getMonthlyFlow(12);
-        return view('livewire.banco-hub', compact('accounts', 'personalAccounts', 'businessAccounts', 'reserves', 'transitItems', 'credits', 'debts', 'goals', 'patrimony', 'transfers', 'summary', 'liquidity', 'stats', 'alerts', 'distribution', 'monthlyFlow'));
+        return view('livewire.banco-hub', compact('accounts', 'bankFilters', 'personalAccounts', 'businessAccounts', 'reserves', 'transitItems', 'credits', 'debts', 'goals', 'patrimony', 'transfers', 'summary', 'liquidity', 'stats', 'alerts', 'distribution', 'monthlyFlow'));
     }
 }
