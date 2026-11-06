@@ -184,7 +184,17 @@
                         </td>
                         <td>{{ $kind }}<div class="details">{{ $source }} · {{ $frequencyLabels[$income->frequency] ?? ($income->frequency ?: '—') }}</div></td>
                         <td>{{ $income->salaryContract?->description ?? '—' }}</td>
-                        <td>{{ $destination }}</td>
+                        <td>
+                            {{ $destination }}
+                            @if($income->bankAccount)
+                                <div class="details">
+                                    {{ $income->bankAccount->bank_name ?: $income->bankAccount->name }}
+                                    @if($income->bankAccount->holder_name) · Titular: {{ $income->bankAccount->holder_name }} @endif
+                                    @if($income->bankAccount->iban) · IBAN: {{ $income->bankAccount->iban }} @endif
+                                    @if($income->bankAccount->swift) · SWIFT: {{ $income->bankAccount->swift }} @endif
+                                </div>
+                            @endif
+                        </td>
                         <td class="right">{{ number_format((float) $income->amount, 2, ',', '.') }} {{ strtoupper($income->currency ?: $currency) }}</td>
                         <td class="right {{ $income->added_to_salary ? 'amber-text' : 'green-text' }}">
                             {{ number_format($converted, 2, ',', '.') }} {{ $currency }}
@@ -256,6 +266,14 @@
                         <td class="right {{ $payment->status === 'paid' ? 'green-text' : 'amber-text' }}">{{ number_format($paymentTotal, 2, ',', '.') }} {{ $currency }}</td>
                         <td>
                             {{ $payment->bankAccount?->name ?? 'Sem conta bancária associada' }}
+                            @if($payment->bankAccount)
+                                <div class="details">
+                                    {{ $payment->bankAccount->bank_name ?: $payment->bankAccount->name }}
+                                    @if($payment->bankAccount->holder_name) · Titular: {{ $payment->bankAccount->holder_name }} @endif
+                                    @if($payment->bankAccount->iban) · IBAN: {{ $payment->bankAccount->iban }} @endif
+                                    @if($payment->bankAccount->swift) · SWIFT: {{ $payment->bankAccount->swift }} @endif
+                                </div>
+                            @endif
                             @if((float) $payment->bank_balance_amount > 0)
                                 <div class="details">Valor creditado na conta: {{ number_format((float) $payment->bank_balance_amount, 2, ',', '.') }} {{ $currency }}</div>
                             @endif
@@ -303,7 +321,17 @@
                         <td class="right">{{ number_format((float) $recurring->amount, 2, ',', '.') }} {{ $currency }}</td>
                         <td>{{ $frequencyLabels[$recurring->frequency] ?? ($recurring->frequency ?: '—') }}<div class="details">Dia: {{ $recurring->day_of_month ?: '—' }}</div></td>
                         <td><span class="pill {{ $recurring->is_active ? 'pill-paid' : 'pill-pending' }}">{{ $recurring->is_active ? 'Ativo' : 'Inativo' }}</span></td>
-                        <td>{{ $recurring->bankAccount?->name ?? 'Dinheiro físico / não definido' }}</td>
+                        <td>
+                            {{ $recurring->bankAccount?->name ?? 'Dinheiro físico / não definido' }}
+                            @if($recurring->bankAccount)
+                                <div class="details">
+                                    {{ $recurring->bankAccount->bank_name ?: $recurring->bankAccount->name }}
+                                    @if($recurring->bankAccount->holder_name) · Titular: {{ $recurring->bankAccount->holder_name }} @endif
+                                    @if($recurring->bankAccount->iban) · IBAN: {{ $recurring->bankAccount->iban }} @endif
+                                    @if($recurring->bankAccount->swift) · SWIFT: {{ $recurring->bankAccount->swift }} @endif
+                                </div>
+                            @endif
+                        </td>
                         <td>
                             {{ $recurring->notes ?: '—' }}
                             @if($metadataText)<div class="contract-meta">{{ $metadataText }}</div>@endif
