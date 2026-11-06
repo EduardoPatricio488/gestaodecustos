@@ -569,8 +569,8 @@ class XtbInvestmentImportHub extends Component
         // Recolhe todas as extrações digitais disponíveis. Não aceita uma
         // extração apenas por ter texto: tem de preservar os dados do extrato.
         try {
-            if (class_exists(\Smalot\\PdfParser\\Parser::class)) {
-                $parser = new \Smalot\\PdfParser\\Parser();
+            if (class_exists(\Smalot\PdfParser\Parser::class)) {
+                $parser = new \Smalot\PdfParser\Parser();
                 $document = $parser->parseFile($pdfPath);
                 $text = trim($document->getText());
                 if (mb_strlen($text) >= 80) {
@@ -584,7 +584,7 @@ class XtbInvestmentImportHub extends Component
         $pdftotext = $this->resolvePdfExecutable('pdftotext');
         $pdftoppm = $this->resolvePdfExecutable('pdftoppm');
         $tesseract = $this->resolvePdfExecutable('tesseract');
-        $processClass = \Symfony\\Component\\Process\\Process::class;
+        $processClass = \Symfony\Component\Process\Process::class;
 
         if ($pdftotext) {
             foreach ([['-layout'], ['-raw']] as $options) {
@@ -614,13 +614,13 @@ class XtbInvestmentImportHub extends Component
                     $score += 3;
                 }
             }
-            if (preg_match('/\\b\\d{2}[-\\/.]\\d{2}[-\\/.]\\d{4}\\b/', $upper)) {
+            if (preg_match('/\b\d{2}[-\/.]\d{2}[-\/.]\d{4}\b/', $upper)) {
                 $score += 3;
             }
-            if (preg_match('/\\b\\d{8,}\\b/', $upper)) {
+            if (preg_match('/\b\d{8,}\b/', $upper)) {
                 $score += 2;
             }
-            if (preg_match('/CAF\\s*\\/\\s*SERIE\\s*[A-Z]/', $upper) || str_contains(preg_replace('/[^A-Z0-9]/', '', $upper), 'CAFSERIE')) {
+            if (preg_match('/CAF\s*\/\s*SERIE\s*[A-Z]/', $upper) || str_contains(preg_replace('/[^A-Z0-9]/', '', $upper), 'CAFSERIE')) {
                 $score += 8;
             }
             return $score;
@@ -663,7 +663,7 @@ class XtbInvestmentImportHub extends Component
                             $ocrText[] = $ocr->getOutput();
                         }
                     }
-                    $ocrCandidate = trim(implode("\\n", $ocrText));
+                    $ocrCandidate = trim(implode("\n", $ocrText));
                     if (mb_strlen($ocrCandidate) >= 80 && $scoreText($ocrCandidate) > $bestScore) {
                         $bestText = $ocrCandidate;
                         $bestScore = $scoreText($ocrCandidate);
@@ -687,7 +687,7 @@ class XtbInvestmentImportHub extends Component
             'user_id' => auth()->id(),
             'candidate_count' => count($candidates),
             'selected_score' => $bestScore,
-            'has_series_label' => (bool) preg_match('/CAF\\s*\\/\\s*SERIE\\s*E|CERTIFICADOS\\s+DE\\s+AFORRO\\s+SERIE\\s+E/i', iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $bestText) ?: $bestText),
+            'has_series_label' => (bool) preg_match('/CAF\s*\/\s*SERIE\s*E|CERTIFICADOS\s+DE\s+AFORRO\s+SERIE\s+E/i', iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $bestText) ?: $bestText),
         ]);
 
         return $bestText;
