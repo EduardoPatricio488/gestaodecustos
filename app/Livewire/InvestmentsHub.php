@@ -7,6 +7,7 @@ use App\Models\BankAccount;
 use App\Models\InvestmentIncome;
 use App\Models\Income;
 use App\Models\Expense;
+use App\Models\RecurringIncome;
 use App\Services\DebtInstrumentCalculator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -421,24 +422,41 @@ class InvestmentsHub extends Component
             'percentage' => $currentValue > 0 ? round(($group->sum('value') / $currentValue) * 100, 1) : 0,
         ])->values()->all();
 
-        $incomeQuery = Income::where('workspace_id', $workspaceId)
+        // O salário líquido vem do contrato de emprego configurado em Rendimentos Fixos.
+        // Exclui o subsídio de alimentação para não o confundir com salário disponível.
+        $salaryContracts = RecurringIncome::where('workspace_id', $workspaceId)
             ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
-            ->whereBetween('received_at', [$from->toDateString(), $to->toDateString()]);
+            ->where('user_id', $user->id)
+            ->where('source', 'emprego')
+            ->where('is_active', true)
+            ->get()
+            ->reject(fn (RecurringIncome $income) => ($income->metadata['income_type'] ?? null) === 'meal_card_allowance');
+
+        $monthlyIncome = (float) $salaryContracts->sum(function (RecurringIncome $income): float {
+            $metadata = $income->metadata ?? [];
+            $salaryNet = (float) $income->amount;
+            $hasSeparateMealCard = ! empty($metadata['meal_card_income_id']);
+
+            if (! $hasSeparateMealCard) {
+                $salaryNet -= (float) ($metadata['calculated_sa'] ?? 0);
+            }
+
+            return max(0, $salaryNet);
+        });
+
         $expenseQuery = Expense::where('workspace_id', $workspaceId)
             ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
             ->whereBetween('spent_at', [$from->toDateString(), $to->toDateString()]);
 
-        $incomeCount = (clone $incomeQuery)->count();
         $expenseCount = (clone $expenseQuery)->count();
-        $income90 = (float) (clone $incomeQuery)->sum('amount_converted');
         $expense90 = (float) (clone $expenseQuery)->sum('amount_converted');
-        $monthlyIncome = $income90 / 3;
         $monthlyExpense = $expense90 / 3;
         $monthlySurplus = $monthlyIncome - $monthlyExpense;
 
         return [
             'period_days' => 90,
-            'income_records' => $incomeCount,
+            'income_records' => $salaryContracts->count(),
+            'salary_configured' => $salaryContracts->isNotEmpty(),
             'expense_records' => $expenseCount,
             'monthly_income' => $monthlyIncome,
             'monthly_expenses' => $monthlyExpense,
