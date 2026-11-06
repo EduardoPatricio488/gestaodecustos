@@ -80,7 +80,6 @@ use App\Livewire\IncomeHub;
 use App\Livewire\Incomes;
 use App\Livewire\InflationHub;
 use App\Livewire\InvestmentsHub;
-use App\Livewire\XtbInvestmentImportHub;
 use App\Livewire\LockInHub;
 use App\Livewire\ManageExpense;
 use App\Livewire\ManageFamily;
@@ -348,7 +347,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/assinaturas/scanner', SubscriptionScannerHub::class)->name('hub.subscriptions.scanner');
     Route::get('/dividir', SplitHub::class)->name('hub.split');
     Route::get('/investimentos', InvestmentsHub::class)->name('hub.investments');
-    Route::get('/investimentos/upload', XtbInvestmentImportHub::class)->name('hub.investments.upload');
     Route::get('/patrimonio', NetWorthHub::class)->name('hub.networth');
 });
 
