@@ -602,6 +602,7 @@ class XtbInvestmentImportHub extends Component
         $pdftotext = $this->resolvePdfExecutable('pdftotext');
         $pdftoppm = $this->resolvePdfExecutable('pdftoppm');
         $tesseract = $this->resolvePdfExecutable('tesseract');
+        $ocrStatus = ($pdftoppm && $tesseract) ? 'disponivel, ainda nao executado' : 'indisponivel';
         $processClass = \Symfony\Component\Process\Process::class;
 
         if ($pdftotext) {
@@ -662,8 +663,10 @@ class XtbInvestmentImportHub extends Component
             }
         }
 
-        // Só aplica OCR quando as extrações digitais não preservam informação útil.
-        if ($bestScore < 12 && $pdftoppm && $tesseract) {
+        // O OCR também é obrigatório quando a extração tem texto, mas perdeu a série.
+        // Uma pontuação alta não significa que os campos essenciais foram lidos.
+        if (($bestScore < 12 || $this->detectAforroNetSeries($bestText) === null) && $pdftoppm && $tesseract) {
+            $ocrStatus = 'executado';
             $temporaryDirectory = storage_path('app/private/aforronet-ocr/'.uniqid('pdf-', true));
             if (! is_dir($temporaryDirectory) && ! mkdir($temporaryDirectory, 0775, true) && ! is_dir($temporaryDirectory)) {
                 throw new \RuntimeException('Não foi possível preparar a leitura OCR do PDF.');
@@ -699,6 +702,9 @@ class XtbInvestmentImportHub extends Component
                         $bestScore = $scoreText($ocrCandidate);
                     }
                 }
+            } catch (\\Throwable $exception) {
+                $ocrStatus = 'falhou';
+                $errors[] = 'OCR indisponivel durante a execucao: '.$exception->getMessage();
             } finally {
                 foreach (glob($temporaryDirectory.DIRECTORY_SEPARATOR.'*') ?: [] as $file) {
                     if (is_file($file)) {
@@ -727,7 +733,10 @@ class XtbInvestmentImportHub extends Component
         }
         $this->aforroNetDiagnostic = 'Leitores: '.implode(' | ', $diagnosticParts)
             .'. Selecionado: '.($candidateSources[array_search($bestText, $candidates, true)] ?? 'desconhecido')
-            .'.';
+            .'. Executaveis: pdftotext='.(($pdftotext) ? 'detetado' : 'nao detetado')
+            .', pdftoppm='.(($pdftoppm) ? 'detetado' : 'nao detetado')
+            .', tesseract='.(($tesseract) ? 'detetado' : 'nao detetado')
+            .'. Estado OCR: '.$ocrStatus.'.';
 
         Log::info('AforroNet PDF extraction selected', [
             'user_id' => auth()->id(),
