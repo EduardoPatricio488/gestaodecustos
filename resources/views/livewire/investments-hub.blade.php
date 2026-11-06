@@ -172,9 +172,9 @@
                         Uma visão conjunta dos teus investimentos e dos teus movimentos financeiros para perceberes o que tens, quanto poderás investir e onde deves ter atenção.
                     </p>
                     <div class="mt-6 flex flex-wrap gap-2">
-                        <span class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold text-zinc-300"><flux:icon name="chart-pie" class="size-3.5 text-indigo-300" /> Investimentos</span>
-                        <span class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold text-zinc-300"><flux:icon name="arrow-left-right" class="size-3.5 text-violet-300" /> Movimentos</span>
-                        <span class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold text-zinc-300"><flux:icon name="target" class="size-3.5 text-sky-300" /> Estratégia</span>
+                        <span class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold text-zinc-300"><flux:icon name="chart-bar-square" class="size-3.5 text-indigo-300" /> Investimentos</span>
+                        <span class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold text-zinc-300"><flux:icon name="arrow-path" class="size-3.5 text-violet-300" /> Movimentos</span>
+                        <span class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold text-zinc-300"><flux:icon name="sparkles" class="size-3.5 text-sky-300" /> Estratégia</span>
                     </div>
                 </div>
 
@@ -194,10 +194,10 @@
                         <span class="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full"></span>
                         <span wire:loading.remove wire:target="analyzePortfolio" class="relative inline-flex items-center gap-2">
                             <flux:icon name="sparkles" class="size-5" /> Analisar a minha carteira
-                            <flux:icon name="arrow-right" class="size-4 transition-transform group-hover:translate-x-1" />
+                            <span class="text-lg transition-transform group-hover:translate-x-1">→</span>
                         </span>
                         <span wire:loading wire:target="analyzePortfolio" class="relative inline-flex items-center gap-2">
-                            <flux:icon name="loader-circle" class="size-5 animate-spin" /> A analisar a tua carteira...
+                            <flux:icon name="arrow-path" class="size-5 animate-spin" /> A analisar a tua carteira...
                         </span>
                     </button>
                     <div wire:loading wire:target="analyzePortfolio" class="mt-3 flex items-center gap-2 text-[10px] font-semibold text-indigo-200">
@@ -208,8 +208,8 @@
 
                     @if($portfolioAnalysisCompleted)
                         <a href="#portfolio-ai-analysis" class="mt-4 flex items-center justify-between gap-3 rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-3 py-3 text-left transition hover:bg-emerald-400/15">
-                            <span class="flex items-center gap-2 text-xs font-bold text-emerald-300"><flux:icon name="check-circle" class="size-4 shrink-0" /> Análise concluída! Está no fim da página.</span>
-                            <span class="shrink-0 text-[10px] font-black uppercase tracking-wider text-emerald-200">Ver <flux:icon name="arrow-down" class="inline size-3.5" /></span>
+                            <span class="flex items-center gap-2 text-xs font-bold text-emerald-300"><span class="text-sm font-black">✓</span> Análise concluída! Está no fim da página.</span>
+                            <span class="shrink-0 text-[10px] font-black uppercase tracking-wider text-emerald-200">Ver <span class="text-sm">↓</span></span>
                         </a>
                     @endif
                 </div>
