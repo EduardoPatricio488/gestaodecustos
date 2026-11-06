@@ -656,13 +656,13 @@ class InvestmentsHub extends Component
             $this->portfolioAdvisorAnalysis = $saved->analysis;
             $this->portfolioAnalysisDate = $saved->created_at?->format('d/m/Y H:i');
             $this->portfolioAnalysisCompleted = true;
-        } catch (\\Illuminate\\Http\\Client\\ConnectionException $e) {
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
             Log::warning('InvestmentsHub: timeout ou falha de ligação ao consultor IA', [
                 'message' => $e->getMessage(),
             ]);
 
             $this->portfolioAdvisorAnalysis = 'A IA demorou demasiado tempo a responder ou a ligação foi interrompida. Tenta novamente dentro de alguns instantes.';
-        } catch (\\Throwable $e) {
+        } catch (\Throwable $e) {
             Log::error('InvestmentsHub: exceção ao analisar carteira', [
                 'message' => $e->getMessage(),
                 'exception' => get_class($e),
