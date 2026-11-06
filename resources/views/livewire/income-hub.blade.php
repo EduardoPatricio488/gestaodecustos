@@ -209,16 +209,25 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
     {{-- RECEBIDO NO MÊS ANTERIOR · DESTAQUE PRINCIPAL --}}
-    <div class="relative p-6 rounded-[2rem] bg-emerald-50 dark:bg-emerald-950/50
+    <div class="relative p-6 rounded-[2rem] bg-gradient-to-br from-emerald-50 via-white to-teal-50
+                dark:from-emerald-950/70 dark:via-zinc-900 dark:to-teal-950/60
                 border border-emerald-300 dark:border-emerald-800 shadow-lg shadow-emerald-900/10
-                ring-1 ring-emerald-200/70 dark:ring-emerald-900/50 overflow-hidden group">
+                ring-1 ring-emerald-200/70 dark:ring-emerald-900/50 overflow-hidden group
+                transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400
+                hover:shadow-xl hover:shadow-emerald-900/15">
 
-        <div class="absolute inset-0 opacity-[0.07]">
-            <flux:icon name="wallet" class="size-32 text-emerald-700 dark:text-emerald-300 rotate-12" />
+        <div class="pointer-events-none absolute -top-10 -right-10 size-28 rounded-full bg-emerald-300/20 dark:bg-emerald-400/10 blur-2xl transition-all duration-500 group-hover:scale-150"></div>
+        <div class="pointer-events-none absolute left-0 top-5 bottom-5 w-1 rounded-r-full bg-gradient-to-b from-emerald-400 to-teal-500"></div>
+
+        <div class="absolute top-5 right-5 flex size-10 items-center justify-center rounded-2xl
+                    bg-emerald-600 text-white shadow-md shadow-emerald-700/25
+                    ring-4 ring-emerald-100 dark:ring-emerald-900/70
+                    transition-all duration-300 group-hover:rotate-6 group-hover:scale-110">
+            <flux:icon name="wallet" class="size-5" />
         </div>
 
         <div class="relative">
-            <p class="text-[9px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-300 mb-2">
+            <p class="text-[9px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-300 mb-2 pr-12">
                 Este mês recebi
             </p>
 
