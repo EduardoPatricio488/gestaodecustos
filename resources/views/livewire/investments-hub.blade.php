@@ -151,7 +151,7 @@
     @endphp
 
     <div class="space-y-7 mt-6">
-        <section class="relative isolate overflow-hidden rounded-[2rem] border border-indigo-400/20 bg-gradient-to-br from-[#050816] via-[#0b1024] to-[#11152d] p-6 sm:p-9 text-white shadow-[0_24px_80px_-28px_rgba(30,41,100,0.8)]">
+        <section class="relative isolate overflow-hidden rounded-[2rem] border border-indigo-400/20 bg-gradient-to-br from-[#020309] via-[#050816] to-[#080b18] p-6 sm:p-9 text-white shadow-[0_24px_80px_-28px_rgba(30,41,100,0.8)]">
             <div class="pointer-events-none absolute -right-16 -top-24 size-80 rounded-full bg-indigo-600/25 blur-[90px] animate-pulse"></div>
             <div class="pointer-events-none absolute -bottom-28 left-1/3 size-72 rounded-full bg-blue-500/15 blur-[100px]"></div>
             <div class="pointer-events-none absolute inset-0 opacity-[0.07]" style="background-image: radial-gradient(rgba(165,180,252,.8) 1px, transparent 1px); background-size: 22px 22px;"></div>
