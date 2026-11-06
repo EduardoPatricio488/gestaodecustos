@@ -782,8 +782,8 @@
                         @if($contractNextSalaryTotal > 0)
                             <p class="mt-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300">No salário de {{ now()->addMonth()->translatedFormat('F') }}: +{{ number_format($contractNextSalaryTotal, 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
                         @endif
-                        <button type="button" wire:click="openSalaryIncomeHistory({{ $job->id }})" class="mt-3 rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-[8px] font-black uppercase text-emerald-700 transition hover:border-emerald-500 dark:border-emerald-900/50 dark:bg-zinc-900 dark:text-emerald-300">
-                            Ver histórico ({{ $contractExtras->count() }})
+                        <button type="button" wire:click="openSalaryIncomeHistory({{ $job->id }}, 'service')" class="mt-3 rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-[8px] font-black uppercase text-emerald-700 transition hover:border-emerald-500 dark:border-emerald-900/50 dark:bg-zinc-900 dark:text-emerald-300">
+                            Ver histórico ({{ $contractServices->count() }})
                         </button>
                     </div>
                     <div class="rounded-xl border border-amber-200/70 bg-white/70 p-3 dark:border-amber-900/40 dark:bg-zinc-900/50">
@@ -797,8 +797,8 @@
                         <p class="mt-1 text-xl font-black tabular-nums text-amber-700 dark:text-amber-300">{{ number_format($contractPrizesTotal, 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
                         <p class="text-[10px] font-medium text-zinc-500">{{ $contractPrizesThisYear->count() }} prémio{{ $contractPrizesThisYear->count() === 1 ? '' : 's' }} recebido{{ $contractPrizesThisYear->count() === 1 ? '' : 's' }} este ano</p>
                         <p class="mt-3 text-[10px] text-zinc-500">Prémio configurado no contrato: {{ in_array($job->metadata['bonus']['type'] ?? null, ['one_off', 'monthly', 'annual'], true) ? number_format((float) ($job->metadata['bonus']['net'] ?? 0), 2, ',', ' ').' '.$workspaceCurrency.' líquidos' : 'Nenhum' }}</p>
-                        <button type="button" wire:click="openSalaryIncomeHistory({{ $job->id }})" class="mt-3 rounded-lg border border-amber-200 bg-white px-2.5 py-1.5 text-[8px] font-black uppercase text-amber-700 transition hover:border-amber-500 dark:border-amber-900/50 dark:bg-zinc-900 dark:text-amber-300">
-                            Ver histórico ({{ $contractPrizesThisYear->count() }})
+                        <button type="button" wire:click="openSalaryIncomeHistory({{ $job->id }}, 'prize')" class="mt-3 rounded-lg border border-amber-200 bg-white px-2.5 py-1.5 text-[8px] font-black uppercase text-amber-700 transition hover:border-amber-500 dark:border-amber-900/50 dark:bg-zinc-900 dark:text-amber-300">
+                            Ver histórico ({{ $contractPrizes->count() }})
                         </button>
                     </div>
                 </div>
@@ -1427,16 +1427,12 @@
         <section class="relative z-10 my-auto max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900" @click.stop>
             <header class="flex items-start justify-between gap-4 border-b border-zinc-100 px-5 py-5 dark:border-zinc-800 sm:px-7">
                 <div>
-                    @php
-                        $historyServices = $salaryIncomeHistory->filter(fn ($extra) => ($extra->salary_income_type ?? 'service') !== 'prize');
-                        $historyPrizes = $salaryIncomeHistory->where('salary_income_type', 'prize');
-                    @endphp
-                    <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Histórico de serviços extra e prémios</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider {{ $salaryIncomeHistoryType === 'prize' ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400' }}">Histórico de {{ $salaryIncomeHistoryType === 'prize' ? 'prémios' : 'serviços extra' }}</p>
                     <h2 class="mt-1 text-xl font-bold text-zinc-900 dark:text-white">{{ $salaryIncomeHistoryContract->description }}</h2>
-                    <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                        <p class="text-emerald-700 dark:text-emerald-300">Serviços: {{ number_format($historyServices->sum(fn ($extra) => (float) ($extra->amount_converted ?? $extra->amount)), 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
-                        <p class="text-amber-700 dark:text-amber-300">Prémios: {{ number_format($historyPrizes->sum(fn ($extra) => (float) ($extra->amount_converted ?? $extra->amount)), 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
-                    </div>
+                    <p class="mt-2 text-xs font-semibold {{ $salaryIncomeHistoryType === 'prize' ? 'text-amber-700 dark:text-amber-300' : 'text-emerald-700 dark:text-emerald-300' }}">
+                        Total: {{ number_format($salaryIncomeHistory->sum(fn ($extra) => (float) ($extra->amount_converted ?? $extra->amount)), 2, ',', ' ') }} {{ $workspaceCurrency }}
+                        · {{ $salaryIncomeHistory->count() }} registo{{ $salaryIncomeHistory->count() === 1 ? '' : 's' }}
+                    </p>
                 </div>
                 <button type="button" wire:click="closeSalaryIncomeHistory" @click="close()" class="rounded-xl p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" aria-label="Fechar histórico">
                     <flux:icon name="x-mark" class="size-5" />
@@ -1473,8 +1469,8 @@
                     </div>
                 @empty
                     <div class="px-6 py-12 text-center">
-                        <p class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">Ainda não há entradas extra associadas a este contrato.</p>
-                        <p class="mt-1 text-xs text-zinc-500">As entradas ficam disponíveis aqui quando associadas ao contrato.</p>
+                        <p class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">Ainda não existem registos de {{ $salaryIncomeHistoryType === 'prize' ? 'prémios' : 'serviços extra' }} neste contrato.</p>
+                        <p class="mt-1 text-xs text-zinc-500">Os registos desta categoria aparecerão aqui quando forem associados ao contrato.</p>
                     </div>
                 @endforelse
             </div>
