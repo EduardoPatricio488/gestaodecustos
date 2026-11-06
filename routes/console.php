@@ -98,4 +98,4 @@ Schedule::call(function () {
     } catch (\Throwable $exception) {
         \Illuminate\Support\Facades\Log::warning('AforroNet automatic update skipped', ['message' => $exception->getMessage()]);
     }
-})->dailyAt('09:10')->withoutOverlapping(30);
+})->name('aforronet-series-e-capitalization')->dailyAt('09:10')->withoutOverlapping(30);
