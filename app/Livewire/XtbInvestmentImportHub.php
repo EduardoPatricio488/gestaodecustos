@@ -406,7 +406,7 @@ class XtbInvestmentImportHub extends Component
             }
 
             $text = $this->extractAforroNetPdfText($pdfPath);
-            $text = preg_replace('/\\s+/u', ' ', trim($text));
+            $text = preg_replace('/\s+/u', ' ', trim($text));
 
             if (mb_strlen($text) < 80) {
                 throw new \RuntimeException('Não foi possível ler conteúdo suficiente do PDF. Confirma que não está protegido por palavra-passe e que contém o extrato completo.');
@@ -496,7 +496,7 @@ class XtbInvestmentImportHub extends Component
                 return $process->getOutput();
             }
             $errors[] = trim($process->getErrorOutput());
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             $errors[] = $exception->getMessage();
         }
 
@@ -535,7 +535,7 @@ class XtbInvestmentImportHub extends Component
                 }
             }
 
-            $result = implode("\\n", $extracted);
+            $result = implode("\n", $extracted);
             if (mb_strlen(trim($result)) < 80) {
                 throw new \RuntimeException('O OCR não conseguiu reconhecer texto suficiente. Confirma se o PDF está legível e não protegido por palavra-passe. '.implode(' ', array_filter($errors)));
             }
