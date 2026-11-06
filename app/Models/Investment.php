@@ -11,7 +11,7 @@ class Investment extends Model
     use BelongsToWorkspace, HasFactory;
 
     protected $fillable = [
-        'issuer', 'series', 'interest_rate', 'loyalty_bonus', 'capitalization_date',
+        'issuer', 'series', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'subscription_number', 'valuation_date',
         'user_id',
         'workspace_id',
         'bank_account_id',
@@ -33,6 +33,7 @@ class Investment extends Model
 
     protected $casts = [
         'operation_date' => 'date',
+        'valuation_date' => 'date',
         'quantity' => 'float',
         'product_type' => 'string',
         'average_price' => 'float',
