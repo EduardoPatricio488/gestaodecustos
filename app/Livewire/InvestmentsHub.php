@@ -520,6 +520,7 @@ class InvestmentsHub extends Component
         }
 
         $this->isAnalyzingPortfolio = true;
+        $portfolioModel = 'meta-llama/llama-3.3-70b-instruct:free';
 
         // A análise completa pode demorar mais em modelos gratuitos do OpenRouter.
         if (function_exists('set_time_limit')) {
@@ -580,13 +581,13 @@ class InvestmentsHub extends Component
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => config('app.name'),
             ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 10))->timeout((int) config('limits.ai.request_timeout_seconds', 90))->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                'model' => $portfolioModel,
                 'messages' => [
                     ['role' => 'system', 'content' => $systemPrompt],
                     ['role' => 'user', 'content' => $userPrompt],
                 ],
                 'temperature' => 0.2,
-                'max_tokens' => 2500,
+                'max_tokens' => 1800,
             ]);
 
             if (! $response->successful()) {
@@ -638,7 +639,7 @@ class InvestmentsHub extends Component
 
             if ($analysisText === '') {
                 Log::warning('InvestmentsHub: resposta OpenRouter sem conteúdo textual', [
-                    'model_requested' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                    'model_requested' => $portfolioModel,
                     'model_returned' => $response->json('model'),
                     'provider' => $response->json('provider'),
                     'finish_reason' => $finishReason,
@@ -662,7 +663,7 @@ class InvestmentsHub extends Component
                     'HTTP-Referer' => config('app.url'),
                     'X-Title' => config('app.name'),
                 ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 10))->timeout((int) config('limits.ai.request_timeout_seconds', 90))->post('https://openrouter.ai/api/v1/chat/completions', [
-                    'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                    'model' => $portfolioModel,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
                         ['role' => 'user', 'content' => $userPrompt],
@@ -670,7 +671,7 @@ class InvestmentsHub extends Component
                         ['role' => 'user', 'content' => 'Continua exatamente a partir do ponto onde paraste. Não repitas o texto anterior. Conclui todas as secções em falta e termina a análise.'],
                     ],
                     'temperature' => 0.2,
-                    'max_tokens' => 1600,
+                    'max_tokens' => 1200,
                 ]);
 
                 if ($continuation->successful()) {
@@ -703,7 +704,7 @@ class InvestmentsHub extends Component
                 'workspace_id' => Auth::user()->current_workspace_id,
                 'analysis' => $analysisText,
                 'snapshot' => $context,
-                'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                'model' => $portfolioModel,
             ]);
 
             $this->selectedPortfolioAnalysisId = $saved->id;
