@@ -1,4 +1,4 @@
-<div class="space-y-8 pb-20 p-4 lg:p-10">
+<div class="space-y-8 pb-20 p-4 lg:p-10" wire:init="refreshPrices(true)" wire:poll.60s.visible="refreshPrices(true)">
 
     {{-- 2. HEADER SaaS PREMIUM --}}
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 px-2">
