@@ -523,9 +523,9 @@ class InvestmentsHub extends Component
         // O router gratuito escolhe o modelo disponível; a lista seguinte funciona como fallback automático em caso de erro/limite do fornecedor.
         $portfolioModel = 'openrouter/free';
         $portfolioFallbackModels = [
-            'dots-studio/dots-3-note-preview:free',
-            'xingchen-agi/xing4.0-29b-a4b:free',
-            'recursive/flint-v1.0:free',
+            'google/gemma-4-26b-a4b-it:free',
+            'qwen/qwen3-4b:free',
+            'meta-llama/llama-3.3-70b-instruct:free',
         ];
 
         // A análise completa pode demorar mais em modelos gratuitos do OpenRouter.
@@ -595,6 +595,7 @@ class InvestmentsHub extends Component
                 ],
                 'temperature' => 0.2,
                 'max_tokens' => 1800,
+                'reasoning' => ['effort' => 'none'],
             ]);
 
             if (! $response->successful()) {
@@ -680,6 +681,7 @@ class InvestmentsHub extends Component
                     ],
                     'temperature' => 0.2,
                     'max_tokens' => 1200,
+                    'reasoning' => ['effort' => 'none'],
                 ]);
 
                 if ($continuation->successful()) {
