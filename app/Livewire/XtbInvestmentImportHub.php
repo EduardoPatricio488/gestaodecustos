@@ -22,7 +22,6 @@ class XtbInvestmentImportHub extends Component
     public $reportFile;
     public string $activeProvider = 'xtb';
     public $aforroNetFile;
-    public string $aforroNetText = '';
     public array $aforroNetSubscriptions = [];
     public array $aforroNetPosition = [];
     public bool $aforroNetPreviewReady = false;
@@ -393,18 +392,38 @@ class XtbInvestmentImportHub extends Component
     }
 
 
-    public function analyzeAforroNetText(): void
+    public function analyzeAforroNetFile(): void
     {
         $this->authorizeImport();
-        $this->validate(['aforroNetText' => 'required|string|min:80|max:20000']);
+        $this->validate([
+            'aforroNetFile' => 'required|file|mimes:pdf|max:10240',
+        ]);
 
         try {
-            $text = preg_replace('/\s+/u', ' ', trim($this->aforroNetText));
+            $pdfPath = $this->aforroNetFile->getRealPath();
+            if (! $pdfPath || ! is_file($pdfPath)) {
+                throw new \RuntimeException('Não foi possível aceder ao ficheiro PDF carregado.');
+            }
+
+            // O Poppler (pdftotext) está incluído na imagem Docker da aplicação.
+            $process = new \Symfony\Component\Process\Process(['pdftotext', '-layout', $pdfPath, '-']);
+            $process->setTimeout(30);
+            $process->run();
+
+            if (! $process->isSuccessful()) {
+                throw new \RuntimeException('Não foi possível extrair o texto do PDF. Confirma que o ficheiro não está protegido por palavra-passe.');
+            }
+
+            $text = preg_replace('/\s+/u', ' ', trim($process->getOutput()));
+            if (mb_strlen($text) < 80) {
+                throw new \RuntimeException('O PDF não contém texto legível. Se for um documento digitalizado como imagem, será necessário aplicar OCR.');
+            }
+
             if (! preg_match('/Data do Extrato:\s*(\d{2}-\d{2}-\d{4})/iu', $text, $dateMatch)) {
-                throw new \RuntimeException('Data do extrato não encontrada.');
+                throw new \RuntimeException('Não encontrei a data do extrato no PDF. Confirma que carregaste a declaração completa do AforroNet.');
             }
             if (! preg_match('/Certificados de Aforro\s+Série\s+([A-Z])\s+([\d.]+)\s+([\d.,]+)/iu', $text, $totalMatch)) {
-                throw new \RuntimeException('Total da série não encontrado.');
+                throw new \RuntimeException('Não encontrei o total da Série no PDF.');
             }
 
             $series = strtoupper($totalMatch[1]);
@@ -425,7 +444,7 @@ class XtbInvestmentImportHub extends Component
             }
 
             if (count($subscriptions) === 0) {
-                throw new \RuntimeException('Não foram encontradas linhas individuais de subscrição.');
+                throw new \RuntimeException('Não foram encontradas linhas individuais de subscrição no PDF.');
             }
 
             $units = array_sum(array_column($subscriptions, 'quantity'));
@@ -434,12 +453,12 @@ class XtbInvestmentImportHub extends Component
             $reportedValue = $this->parsePortugueseNumber($totalMatch[3]);
 
             if (abs($units - $reportedUnits) > 0.00001 || abs($value - $reportedValue) > 0.02) {
-                throw new \RuntimeException('A soma das subscrições individuais não coincide com o total do extrato.');
+                throw new \RuntimeException('A soma das subscrições individuais não coincide com o total indicado no PDF.');
             }
 
             foreach ($subscriptions as $subscription) {
                 if ($subscription['quantity'] <= 0 || $subscription['current_price'] <= 0 || $subscription['current_value'] <= 0) {
-                    throw new \RuntimeException('O extrato contém uma subscrição com valores inválidos.');
+                    throw new \RuntimeException('O PDF contém uma subscrição com valores inválidos.');
                 }
                 if (abs(($subscription['quantity'] * $subscription['current_price']) - $subscription['current_value']) > 0.03) {
                     throw new \RuntimeException('O valor unitário e o total de uma subscrição não coincidem.');
@@ -456,10 +475,10 @@ class XtbInvestmentImportHub extends Component
                 'report_date' => $dateMatch[1],
             ];
             $this->aforroNetPreviewReady = true;
-            $this->dispatch('toast', variant: 'success', text: count($subscriptions).' subscrições identificadas e validadas.');
+            $this->dispatch('toast', variant: 'success', text: count($subscriptions).' subscrições identificadas e validadas a partir do PDF.');
         } catch (\Throwable $exception) {
-            Log::warning('AforroNet pasted statement analysis failed', ['user_id' => auth()->id(), 'message' => $exception->getMessage()]);
-            $this->addError('aforroNetText', $exception->getMessage());
+            Log::warning('AforroNet PDF analysis failed', ['user_id' => auth()->id(), 'message' => $exception->getMessage()]);
+            $this->addError('aforroNetFile', $exception->getMessage());
             $this->aforroNetPreviewReady = false;
             $this->aforroNetSubscriptions = [];
             $this->aforroNetPosition = [];
@@ -476,7 +495,7 @@ class XtbInvestmentImportHub extends Component
     {
         $this->authorizeImport();
         if (! $this->aforroNetPreviewReady || empty($this->aforroNetSubscriptions) || empty($this->aforroNetPosition)) {
-            $this->dispatch('toast', variant: 'warning', text: 'Cola e valida primeiro o detalhe do extrato.');
+            $this->dispatch('toast', variant: 'warning', text: 'Carrega e analisa primeiro o PDF do extrato.');
             return;
         }
 
@@ -548,7 +567,7 @@ class XtbInvestmentImportHub extends Component
             });
 
             $this->dispatch('toast', variant: 'success', text: count($this->aforroNetSubscriptions).' subscrições Série E sincronizadas individualmente.');
-            $this->reset(['aforroNetFile', 'aforroNetText', 'aforroNetPosition', 'aforroNetSubscriptions', 'aforroNetPreviewReady']);
+            $this->reset(['aforroNetFile', 'aforroNetFile', 'aforroNetPosition', 'aforroNetSubscriptions', 'aforroNetPreviewReady']);
         } catch (\Throwable $exception) {
             Log::error('AforroNet investment import failed', ['user_id' => $user->id, 'message' => $exception->getMessage()]);
             $this->dispatch('toast', variant: 'danger', text: $exception->getMessage());
@@ -559,7 +578,7 @@ class XtbInvestmentImportHub extends Component
 
     public function clearAforroNet(): void
     {
-        $this->reset(['aforroNetFile', 'aforroNetText', 'aforroNetPosition', 'aforroNetSubscriptions', 'aforroNetPreviewReady']);
+        $this->reset(['aforroNetFile', 'aforroNetFile', 'aforroNetPosition', 'aforroNetSubscriptions', 'aforroNetPreviewReady']);
         $this->resetValidation();
     }
 
