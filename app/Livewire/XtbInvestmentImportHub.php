@@ -485,6 +485,25 @@ class XtbInvestmentImportHub extends Component
      */
     private function extractAforroNetPdfText(string $pdfPath): string
     {
+        // Primeiro tenta uma biblioteca PHP nativa: não depende de Poppler,
+        // Tesseract nem de configurações do PATH no computador do utilizador.
+        try {
+            if (class_exists(\\Smalot\\PdfParser\\Parser::class)) {
+                $parser = new \\Smalot\\PdfParser\\Parser();
+                $document = $parser->parseFile($pdfPath);
+                $text = trim($document->getText());
+
+                if (mb_strlen($text) >= 80) {
+                    return $text;
+                }
+            }
+        } catch (\\Throwable $exception) {
+            Log::warning('AforroNet PDF: PHP parser could not extract text', [
+                'message' => $exception->getMessage(),
+            ]);
+        }
+
+        // Fallback para Poppler e OCR apenas quando o PDF não tem texto extraível.
         $pdftotext = $this->resolvePdfExecutable('pdftotext');
         $pdftoppm = $this->resolvePdfExecutable('pdftoppm');
         $tesseract = $this->resolvePdfExecutable('tesseract');
