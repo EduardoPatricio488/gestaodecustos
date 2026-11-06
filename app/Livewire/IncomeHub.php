@@ -2424,6 +2424,7 @@ class IncomeHub extends Component
             'thisMonthIncomeTotal' => $thisMonthIncomeTotal,
             'thisMonthPaidSalaryTotal' => $thisMonthPaidSalaryTotal,
             'thisMonthPendingSalaryTotal' => $thisMonthPendingSalaryTotal,
+            'thisMonthSalaryExtras' => $thisMonthSalaryExtras,
             'bestMonth' => $bestMonth,
             'totalYear' => $totalYear,
             'monthlyTotals' => $monthlyTotals,
