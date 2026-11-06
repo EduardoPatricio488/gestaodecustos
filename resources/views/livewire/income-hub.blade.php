@@ -752,33 +752,6 @@
                         <p class="mt-1 text-xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{{ number_format($contractServicesTotal, 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
                         <p class="text-[10px] font-medium text-zinc-500">{{ $contractServicesThisYear->sum(fn ($extra) => (int) ($extra->service_quantity ?? 1)) }} serviço{{ $contractServicesThisYear->sum(fn ($extra) => (int) ($extra->service_quantity ?? 1)) === 1 ? '' : 's' }} realizado{{ $contractServicesThisYear->sum(fn ($extra) => (int) ($extra->service_quantity ?? 1)) === 1 ? '' : 's' }} este ano</p>
                         <p class="mt-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">Este mês: {{ $contractServicesMonthCount }} serviço{{ $contractServicesMonthCount === 1 ? '' : 's' }} · {{ number_format($contractServicesMonthTotal, 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
-                        <div class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/30">
-                            <p class="text-[9px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-300">Preço fixo e serviços adicionais</p>
-                            <div class="mt-2 flex flex-wrap items-end gap-2">
-                                <div class="min-w-[110px] flex-1">
-                                    <label class="mb-1 block text-[9px] font-bold text-zinc-500">Preço por serviço ({{ $workspaceCurrency }})</label>
-                                    <input type="number" min="0.01" max="1000000" step="0.01" wire:model="serviceFixedPrices.{{ $job->id }}" value="{{ $job->metadata['service_unit_price'] ?? '' }}" placeholder="Ex.: 25,00" class="h-9 w-full rounded-lg border border-emerald-200 bg-white px-2.5 text-sm font-bold text-zinc-900 outline-none focus:border-emerald-500 dark:border-emerald-800 dark:bg-zinc-900 dark:text-white">
-                                </div>
-                                <button type="button" wire:click="saveServiceFixedPrice({{ $job->id }})" class="h-9 rounded-lg bg-emerald-700 px-3 text-[9px] font-black uppercase text-white transition hover:bg-emerald-800">Guardar preço</button>
-                            </div>
-                            @error('serviceFixedPrices.'.$job->id)<p class="mt-1 text-[10px] font-bold text-rose-600">{{ $message }}</p>@enderror
-                            <div class="mt-3 flex flex-wrap items-end gap-2 border-t border-emerald-200/70 pt-3 dark:border-emerald-900/50">
-                                <div class="w-24">
-                                    <label class="mb-1 block text-[9px] font-bold text-zinc-500">Adicionar mais</label>
-                                    <input type="number" min="1" max="1000" step="1" wire:model="serviceQuickQuantities.{{ $job->id }}" value="1" class="h-9 w-full rounded-lg border border-emerald-200 bg-white px-2.5 text-sm font-bold text-zinc-900 outline-none focus:border-emerald-500 dark:border-emerald-800 dark:bg-zinc-900 dark:text-white">
-                                </div>
-                                <div class="min-w-[90px] flex-1">
-                                    <p class="mb-1 text-[9px] font-bold text-zinc-500">Total adicional</p>
-                                    <p class="h-9 flex items-center text-sm font-black text-emerald-700 dark:text-emerald-300">{{ number_format((float) ($job->metadata['service_unit_price'] ?? 0), 2, ',', ' ') }} × {{ max(1, (int) ($serviceQuickQuantities[$job->id] ?? 1)) }} = {{ number_format((float) ($job->metadata['service_unit_price'] ?? 0) * max(1, (int) ($serviceQuickQuantities[$job->id] ?? 1)), 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
-                                </div>
-                                <button type="button" wire:click="addMoreServices({{ $job->id }})" class="h-9 rounded-lg border border-emerald-300 bg-white px-3 text-[9px] font-black uppercase text-emerald-800 transition hover:bg-emerald-700 hover:text-white dark:border-emerald-800 dark:bg-zinc-900 dark:text-emerald-300">Adicionar serviços</button>
-                            </div>
-                            @if((float) ($job->metadata['service_unit_price'] ?? 0) > 0)
-                                <p class="mt-2 text-[9px] text-zinc-500">Preço guardado: {{ number_format((float) $job->metadata['service_unit_price'], 2, ',', ' ') }} {{ $workspaceCurrency }} por serviço. A quantidade e o total são confirmados no registo.</p>
-                            @else
-                                <p class="mt-2 text-[9px] text-zinc-500">Define e guarda primeiro o preço unitário para poderes adicionar vários serviços de uma vez.</p>
-                            @endif
-                        </div>
                         @if($contractNextSalaryTotal > 0)
                             <p class="mt-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300">No salário de {{ now()->addMonth()->translatedFormat('F') }}: +{{ number_format($contractNextSalaryTotal, 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
                         @endif
