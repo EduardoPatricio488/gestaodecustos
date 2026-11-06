@@ -600,8 +600,48 @@ class InvestmentsHub extends Component
             }
 
             $choice = $response->json('choices.0', []);
-            $analysisText = trim((string) ($choice['message']['content'] ?? ''));
+
+            // Os modelos OpenRouter podem devolver content como texto ou como uma lista de blocos.
+            $extractMessageText = static function ($content): string {
+                if (is_string($content)) {
+                    return trim($content);
+                }
+
+                if (is_array($content)) {
+                    $parts = [];
+
+                    foreach ($content as $part) {
+                        if (is_string($part)) {
+                            $parts[] = $part;
+                        } elseif (is_array($part) && isset($part['text']) && is_string($part['text'])) {
+                            $parts[] = $part['text'];
+                        }
+                    }
+
+                    return trim(implode("\\n", $parts));
+                }
+
+                return '';
+            };
+
+            $analysisText = $extractMessageText($choice['message']['content'] ?? null);
+            if ($analysisText === '') {
+                $analysisText = $extractMessageText($response->json('output_text'));
+            }
+
             $finishReason = $choice['finish_reason'] ?? null;
+
+            if ($analysisText === '') {
+                Log::warning('InvestmentsHub: resposta OpenRouter sem conteúdo textual', [
+                    'model_requested' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                    'model_returned' => $response->json('model'),
+                    'provider' => $response->json('provider'),
+                    'finish_reason' => $finishReason,
+                    'choice_keys' => array_keys($choice),
+                    'message_keys' => array_keys($choice['message'] ?? []),
+                    'response' => mb_substr($response->body(), 0, 4000),
+                ]);
+            }
 
             // Alguns modelos gratuitos cortam a resposta sem indicar corretamente o motivo.
             // Também verificamos se chegou à última secção pedida antes de aceitar a análise.
@@ -629,7 +669,8 @@ class InvestmentsHub extends Component
                 ]);
 
                 if ($continuation->successful()) {
-                    $continuedText = trim((string) ($continuation->json('choices.0.message.content') ?? ''));
+                    $continuedContent = $continuation->json('choices.0.message.content');
+                    $continuedText = $extractMessageText($continuedContent);
                     if ($continuedText !== '') {
                         $analysisText .= "\n\n".$continuedText;
                     }
@@ -638,12 +679,13 @@ class InvestmentsHub extends Component
                 } else {
                     Log::warning('InvestmentsHub: não foi possível obter a continuação da análise', [
                         'status' => $continuation->status(),
+                        'response' => mb_substr($continuation->body(), 0, 2500),
                     ]);
                 }
             }
 
             if ($analysisText === '') {
-                $this->portfolioAdvisorAnalysis = 'O serviço de IA respondeu, mas não devolveu texto. Tenta novamente.';
+                $this->portfolioAdvisorAnalysis = 'O modelo de IA configurado respondeu sem conteúdo de texto. A resposta técnica foi guardada no log da aplicação. Experimenta selecionar outro modelo gratuito na configuração OpenRouter ou consulta storage/logs/laravel.log para identificar o motivo.';
                 return;
             }
 
