@@ -70,6 +70,16 @@ class BankAccount extends Model
             ?? (float) $this->recurringIncomes()
                 ->where('is_active', true)
                 ->where('day_of_month', '<=', now()->day)
+                ->whereNotExists(function ($query): void {
+                    $query->selectRaw('1')
+                        ->from('salary_payments')
+                        ->whereColumn('salary_payments.recurring_income_id', 'recurring_incomes.id')
+                        ->whereColumn('salary_payments.bank_account_id', 'recurring_incomes.bank_account_id')
+                        ->where('salary_payments.payment_month', now()->month)
+                        ->where('salary_payments.payment_year', now()->year)
+                        ->where('salary_payments.status', 'paid')
+                        ->where('salary_payments.bank_balance_amount', '>', 0);
+                })
                 ->sum('amount');
 
         return (float) $this->balance + (float) $incomes - (float) $expenses + (float) $recurringDue;
@@ -82,13 +92,26 @@ class BankAccount extends Model
     public function scopeWithCurrentBalanceTotals($query)
     {
         $today = now()->day;
+        $month = now()->month;
+        $year = now()->year;
 
         return $query
             ->withSum('incomes as current_balance_income_total', 'amount')
             ->withSum('expenses as current_balance_expense_total', 'amount')
             ->withSum([
-                'recurringIncomes as current_balance_recurring_due' => function ($q) use ($today) {
-                    $q->where('is_active', true)->where('day_of_month', '<=', $today);
+                'recurringIncomes as current_balance_recurring_due' => function ($q) use ($today, $month, $year) {
+                    $q->where('is_active', true)
+                        ->where('day_of_month', '<=', $today)
+                        ->whereNotExists(function ($query) use ($month, $year): void {
+                            $query->selectRaw('1')
+                                ->from('salary_payments')
+                                ->whereColumn('salary_payments.recurring_income_id', 'recurring_incomes.id')
+                                ->whereColumn('salary_payments.bank_account_id', 'recurring_incomes.bank_account_id')
+                                ->where('salary_payments.payment_month', $month)
+                                ->where('salary_payments.payment_year', $year)
+                                ->where('salary_payments.status', 'paid')
+                                ->where('salary_payments.bank_balance_amount', '>', 0);
+                        });
                 },
             ], 'amount');
     }

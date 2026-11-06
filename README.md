@@ -138,11 +138,13 @@ npm run build
 php artisan serve
 ```
 
-Para desenvolvimento com servidor, queue e Vite:
+Para desenvolvimento com servidor, queue, scheduler e Vite (inclui pagamentos salariais automáticos):
 
 ```bash
 composer run dev
 ```
+
+Se iniciares apenas `php artisan serve`, inicia também `php artisan schedule:work` noutro terminal para executar as tarefas agendadas.
 
 ## Produção
 

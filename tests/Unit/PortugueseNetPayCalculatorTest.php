@@ -71,19 +71,23 @@ it('taxes meal allowance above the 2026 cash exemption', function () {
         ->and($result['social_security'])->toBe(169.40);
 });
 
-it('zeroes IRS withholding in IRS Jovem year 1 within the monthly cap', function () {
+it('applies the year one IRS Jovem exemption to the estimated withholding base', function () {
     $result = $this->calc->calculate(1500, irsJovem: true, irsJovemYear: 1);
 
     expect($result['irs'])->toBe(0.0)
         ->and($result['irs_before_jovem'])->toBe(168.17)
-        ->and($result['net'])->toBe(1335.00);
+        ->and($result['irs_jovem_exempt_income'])->toBe(1500.0)
+        ->and($result['irs_jovem_estimated_savings'])->toBe(168.17)
+        ->and($result['net'])->toBe(1335.0);
 });
 
-it('applies 75 percent IRS Jovem exemption in year 2', function () {
-    $result = $this->calc->calculate(1500, irsJovem: true, irsJovemYear: 2);
+it('calculates year two IRS Jovem withholding on the taxable remainder', function () {
+    $result = $this->calc->calculate(5000, irsJovem: true, irsJovemYear: 2);
 
     expect($result['irs_jovem_rate'])->toBe(0.75)
-        ->and($result['irs'])->toBe(42.04);
+        ->and($result['irs_jovem_exempt_income'])->toBe(2110.15)
+        ->and($result['irs'])->toBe($this->calc->withholding(5000 - 2110.15, 'solteiro', 0, false)['irs'])
+        ->and($result['irs'])->toBeLessThan($result['irs_before_jovem']);
 });
 
 it('reduces the marginal rate by one point with three dependents', function () {

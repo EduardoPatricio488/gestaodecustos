@@ -152,14 +152,9 @@ class BancoService
             return $this->accountsCache;
         }
 
-        return $this->accountsCache = $this->personalScope(BankAccount::where('workspace_id', $this->workspaceId))
-            ->withSum('incomes as current_balance_income_total', 'amount')
-            ->withSum('expenses as current_balance_expense_total', 'amount')
-            ->withSum([
-                'recurringIncomes as current_balance_recurring_due' => fn ($query) => $query
-                    ->where('is_active', true)
-                    ->where('day_of_month', '<=', now()->day),
-            ], 'amount')
+        return $this->accountsCache = $this->personalScope(
+            BankAccount::withCurrentBalanceTotals()->where('workspace_id', $this->workspaceId)
+        )
             ->orderBy('is_business')
             ->orderBy('name')
             ->get();

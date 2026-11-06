@@ -7,6 +7,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\FitnessPhotoController;
 use App\Http\Controllers\MiFitnessImportController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\SalaryDocumentPreviewController;
 use App\Http\Controllers\SmartwatchController;
 use App\Http\Controllers\StoreCheckoutStripeController;
 use App\Http\Controllers\StoreDownloadController;
@@ -277,6 +278,9 @@ Route::middleware('auth')->group(function () {
 // 3. GRUPO PROTEGIDO (ÁREA LOGADA - ACESSO BÁSICO / FREE)
 // ══════════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/salary-documents/{salaryDocument}/preview', SalaryDocumentPreviewController::class)
+        ->whereNumber('salaryDocument')
+        ->name('salary-documents.preview');
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/atividades', ActivityFeed::class)->name('activity-log');
     Route::get('/planos', SubscriptionPlans::class)->name('hub.pricing');

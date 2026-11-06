@@ -72,7 +72,20 @@
                         <div class="mt-1.5 flex items-center gap-3"><p class="text-[9px] font-black uppercase tracking-tight" style="color: {{ $src['color'] }}">{{ $src['label'] }}</p>@if($i->bank_account_name)<div class="flex items-center gap-1.5 opacity-60"><flux:icon name="credit-card" class="size-3 text-zinc-400" /><span class="text-[9px] font-bold text-zinc-500 uppercase">{{ $i->bank_account_name }}</span></div>@endif</div>
                     </div>
                     <div class="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-none pt-4 sm:pt-0">
-                        <div class="text-right"><span class="text-xl font-black tabular-nums text-emerald-600 italic tracking-tight">+{{ number_format($i->amount, 2, ',', ' ') }}€</span>@if($i->tax_estimate)<p class="text-[8px] font-bold text-zinc-400 uppercase italic">Imposto Est.: {{ number_format($i->tax_estimate, 1) }}%</p>@endif</div>
+                        <div class="text-right">
+                            @if($i->is_meal_card_allowance)
+                                <p class="text-[10px] font-bold text-amber-600">Subsídio de alimentação · cartão</p>
+                                <p class="text-xl font-black tabular-nums text-emerald-600 italic tracking-tight">+{{ number_format($i->amount, 2, ',', ' ') }}€</p>
+                                <p class="text-[8px] text-zinc-400">Ligado ao salário de {{ $i->linked_salary_description }}</p>
+                            @elseif($i->is_recurring && $i->meal_card_amount > 0)
+                                <p class="text-[10px] font-bold text-zinc-500">Salário: +{{ number_format($i->salary_amount, 2, ',', ' ') }}€</p>
+                                <p class="text-[10px] font-bold text-amber-600">Cartão refeição: +{{ number_format($i->meal_card_amount, 2, ',', ' ') }}€</p>
+                                <p class="mt-1 border-t border-zinc-200 pt-1 text-xl font-black tabular-nums text-emerald-600 italic tracking-tight">Total: +{{ number_format($i->amount, 2, ',', ' ') }}€</p>
+                            @else
+                                <span class="text-xl font-black tabular-nums text-emerald-600 italic tracking-tight">+{{ number_format($i->amount, 2, ',', ' ') }}€</span>
+                            @endif
+                            @if($i->tax_estimate)<p class="text-[8px] font-bold text-zinc-400 uppercase italic">Imposto Est.: {{ number_format($i->tax_estimate, 1) }}%</p>@endif
+                        </div>
                         <div class="flex items-center gap-1 sm:opacity-0 group-hover:opacity-100 transition-all"><a href="{{ route('hub.incomes') }}" wire:navigate class="p-2 rounded-xl text-zinc-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors" title="Ver na Gestão de Receitas"><flux:icon name="arrow-top-right-on-square" variant="mini" class="size-4" /></a>@unless($i->is_recurring)<button wire:click="delete({{ $i->real_id }})" wire:confirm="Eliminar definitivo?" class="p-2 rounded-xl text-zinc-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"><flux:icon name="trash" variant="mini" class="size-4" /></button>@endunless</div>
                     </div>
                 </div>

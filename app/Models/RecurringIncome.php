@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToWorkspace;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RecurringIncome extends Model
 {
@@ -73,5 +74,15 @@ class RecurringIncome extends Model
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class);
+    }
+
+    public function salaryPayments(): HasMany
+    {
+        return $this->hasMany(SalaryPayment::class);
+    }
+
+    public function salaryDocuments(): HasMany
+    {
+        return $this->hasMany(SalaryDocument::class);
     }
 }

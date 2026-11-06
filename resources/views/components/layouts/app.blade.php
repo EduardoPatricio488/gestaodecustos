@@ -1570,6 +1570,13 @@ $hasStoreAccess = $hasLockInAccess;
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                     </svg>
                 </a>
+                <a href="{{ route('hub.incomes') }}"
+                    wire:navigate
+                    class="ml-1 size-10 flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:border-emerald-400 transition-all shadow-sm group"
+                    title="Gestão de Receitas"
+                    aria-label="Gestão de Receitas">
+                    <flux:icon name="arrow-trending-up" class="size-5 group-hover:scale-110 transition-transform" />
+                </a>
             </div>
 
 

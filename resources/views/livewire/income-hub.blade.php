@@ -62,7 +62,8 @@
                             ['event' => 'outro', 'icon' => 'ellipsis-horizontal-circle', 'label' => 'Outra Fonte', 'color' => 'text-zinc-500'],
                         ] as $source)
                             <button type="button"
-                                @click="openSourceMenu = false; $dispatch('modal-show-{{ $source['event'] }}')"
+                                @click="openSourceMenu = false"
+                                wire:click="openIncomeSource('{{ $source['event'] }}')"
                                 class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
                                 <flux:icon name="{{ $source['icon'] }}" variant="micro" class="size-4 {{ $source['color'] }}" />
                                 <span class="text-xs font-bold text-zinc-700 dark:text-zinc-200">{{ $source['label'] }}</span>
@@ -91,47 +92,107 @@
     </div>
 
     {{-- ================================================================== --}}
-    {{-- CARD TOTAL MENSAL · RESPONSIVO                                    --}}
+    {{-- PROJEÇÃO DE SALÁRIO E ALIMENTAÇÃO · CARTÕES                         --}}
     {{-- ================================================================== --}}
-    <div class="relative overflow-hidden bg-emerald-600 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl border-none">
-
-        {{-- Fundo decorativo --}}
-        <div class="absolute inset-0 opacity-10 pointer-events-none">
-            <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path d="M0 50 Q 25 40 50 50 T 100 50" fill="none" stroke="white" stroke-width="0.5"/>
-                <path d="M0 30 Q 25 20 50 30 T 100 30" fill="none" stroke="white" stroke-width="0.5"/>
-                <path d="M0 70 Q 25 60 50 70 T 100 70" fill="none" stroke="white" stroke-width="0.5"/>
-            </svg>
-        </div>
-
-        {{-- Conteúdo --}}
-        <div class="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-8">
-
-            <div class="text-center lg:text-left space-y-2">
-                <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-100 opacity-80">
-                    Total Projetado para {{ now()->translatedFormat('F') }}
-                </h3>
-
-                <div class="flex items-baseline justify-center lg:justify-start gap-4">
-                    <span class="text-6xl sm:text-7xl font-black text-white tracking-tighter italic">
-                        {{ number_format($totalMonthly, 2, ',', ' ') }}
-                        <span class="text-3xl">€</span>
+    <section class="space-y-4">
+        <div class="flex items-end justify-between gap-3 px-1">
+            <div>
+                <div class="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 dark:border-emerald-900/50 dark:bg-emerald-950/40">
+                    <span class="relative flex size-2">
+                        <span class="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-50 motion-reduce:animate-none"></span>
+                        <span class="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
                     </span>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Resumo mensal</span>
                 </div>
-
-                @if($taxEstimated > 0)
-                    <p class="text-[10px] text-emerald-100/70 font-bold uppercase tracking-widest">
-                        Imposto estimado: ~{{ number_format($taxEstimated, 2, ',', ' ') }}€
-                        · Líquido: ~{{ number_format($totalMonthly - $taxEstimated, 2, ',', ' ') }}€
-                    </p>
-                @endif
+                <h2 class="flex items-center gap-2 text-2xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
+                    <span class="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20 transition duration-300 hover:rotate-[-6deg] hover:scale-110 motion-reduce:transform-none">
+                        <flux:icon name="chart-bar" variant="micro" class="size-5" />
+                    </span>
+                    <span class="font-serif text-black dark:text-black">Total Projetado</span>
+                </h2>
             </div>
-
-            <div class="hidden lg:block">
-                <flux:icon name="banknotes" class="size-32 text-white/10 rotate-12" />
-            </div>
+            <span class="hidden items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:inline-flex">
+                <flux:icon name="calendar-days" variant="micro" class="size-3.5 text-emerald-500" />
+                {{ now()->translatedFormat('F Y') }}
+            </span>
         </div>
-    </div>
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <article style="background-color: #0b1220; color: #ffffff;" class="group relative isolate min-h-56 overflow-hidden rounded-[1.75rem] border border-slate-700 p-6 text-white shadow-xl shadow-black/40 transition duration-500 hover:-translate-y-1 hover:border-indigo-400 motion-reduce:transition-none sm:p-7">
+                <div class="pointer-events-none absolute -right-10 -top-16 size-56 rounded-full border border-indigo-300/15 transition duration-700 group-hover:scale-110 group-hover:rotate-12"></div>
+                <div class="pointer-events-none absolute -right-2 -top-8 size-40 rounded-full border border-indigo-200/15 transition duration-700 group-hover:scale-110"></div>
+                <div class="pointer-events-none absolute bottom-0 right-0 h-32 w-48 bg-indigo-500/10 opacity-60 blur-2xl transition duration-500 group-hover:opacity-100"></div>
+                <div class="relative flex h-full min-h-44 flex-col justify-between">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-indigo-200">Rendimento do trabalho</p>
+                            <h3 class="mt-2 text-lg font-bold tracking-tight text-white">Salário líquido</h3>
+                        </div>
+                        <div class="flex size-11 items-center justify-center rounded-2xl border border-indigo-300/20 bg-indigo-400/10 shadow-inner backdrop-blur-sm transition duration-300 group-hover:scale-110 group-hover:bg-indigo-400/20">
+                            <flux:icon name="briefcase" variant="outline" class="size-5 text-indigo-200 transition-transform duration-300 group-hover:-rotate-6" />
+                        </div>
+                    </div>
+                    <div class="py-4">
+                        <p class="text-3xl font-black tracking-tight tabular-nums text-white transition duration-300 group-hover:translate-x-1 sm:text-4xl">{{ number_format($projectedSalaryNetTotal, 2, ',', ' ') }} <span class="text-xl text-indigo-200">€</span></p>
+                        <p class="mt-1 text-[10px] font-semibold text-slate-200">Estimativa deste mês, sem alimentação; inclui serviços do mês anterior no salário</p>
+                    </div>
+                    <div class="flex items-end justify-between gap-3 border-t border-white/25 pt-3">
+                        <div class="min-w-0">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-300">Empresa / contrato</p>
+                            <p class="mt-1 truncate text-xs font-semibold text-white">
+                                @forelse($projectedSalaryContracts as $projectedContract)
+                                    {{ $loop->first ? '' : ' · ' }}{{ $projectedContract->description }}
+                                @empty
+                                    Sem salário ativo registado
+                                @endforelse
+                            </p>
+                        </div>
+                        <div class="shrink-0 text-right">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-300">Estimativa anual</p>
+                            <p class="mt-1 text-sm font-bold tabular-nums text-white">{{ number_format($projectedSalaryAnnualTotal, 2, ',', ' ') }} €</p>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article style="background-color: #052e24; color: #ffffff;" class="group relative isolate min-h-56 overflow-hidden rounded-[1.75rem] border border-emerald-800 p-6 text-white shadow-xl shadow-black/40 transition duration-500 hover:-translate-y-1 hover:border-emerald-400 motion-reduce:transition-none sm:p-7">
+                <div class="pointer-events-none absolute -right-10 -top-16 size-56 rounded-full border border-emerald-200/15 transition duration-700 group-hover:scale-110 group-hover:-rotate-12"></div>
+                <div class="pointer-events-none absolute -right-2 -top-8 size-40 rounded-full border border-emerald-200/15 transition duration-700 group-hover:scale-110"></div>
+                <div class="pointer-events-none absolute bottom-0 right-0 h-32 w-48 bg-emerald-400/10 opacity-60 blur-2xl transition duration-500 group-hover:opacity-100"></div>
+                <div class="relative flex h-full min-h-44 flex-col justify-between">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200">Benefício mensal</p>
+                            <h3 class="mt-2 text-lg font-bold tracking-tight text-white">Subsídio de alimentação</h3>
+                        </div>
+                        <div class="flex size-11 items-center justify-center rounded-2xl border border-amber-200/20 bg-amber-400/10 shadow-inner backdrop-blur-sm transition duration-300 group-hover:scale-110 group-hover:bg-amber-400/20">
+                            <flux:icon name="cake" variant="outline" class="size-5 text-amber-100 transition-transform duration-300 group-hover:-rotate-6" />
+                        </div>
+                    </div>
+                    <div class="py-4">
+                        <p class="text-3xl font-black tracking-tight tabular-nums text-white transition duration-300 group-hover:translate-x-1 sm:text-4xl">{{ number_format($projectedMealAllowanceTotal, 2, ',', ' ') }} <span class="text-xl text-emerald-200">€</span></p>
+                        <p class="mt-1 text-[10px] font-semibold text-emerald-100">Estimativa mensal pelos dias elegíveis configurados</p>
+                    </div>
+                    <div class="flex items-end justify-between gap-3 border-t border-white/25 pt-3">
+                        <div class="min-w-0">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.16em] text-emerald-100">Atribuído por</p>
+                            <p class="mt-1 truncate text-xs font-semibold text-white">
+                                @forelse($projectedSalaryContracts as $projectedContract)
+                                    {{ $loop->first ? '' : ' · ' }}{{ $projectedContract->description }}
+                                @empty
+                                    Sem subsídio configurado
+                                @endforelse
+                            </p>
+                        </div>
+                        <div class="shrink-0 text-right">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.16em] text-emerald-100">Estimativa anual</p>
+                            <p class="mt-1 text-sm font-bold text-white">{{ number_format($projectedMealAllowanceTotal * 11, 2, ',', ' ') }} €</p>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
 
 
 
@@ -148,7 +209,7 @@
 {{-- ================================================================== --}}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-    {{-- MÉDIA MENSAL --}}
+    {{-- RECEBIDO NO MÊS ANTERIOR --}}
     <div class="relative p-6 rounded-[2rem] bg-white/40 dark:bg-zinc-900/40
                 backdrop-blur-xl border border-white/20 shadow-xl overflow-hidden group">
 
@@ -157,15 +218,15 @@
         </div>
 
         <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2">
-            Média Mensal
+            Este mês recebi
         </p>
 
         <p class="text-4xl font-black text-emerald-600 italic tracking-tight">
-            {{ number_format($avgMonthly, 0, ',', ' ') }}€
+            {{ number_format($thisMonthReceived, 2, ',', ' ') }}€
         </p>
 
         <p class="text-[10px] text-zinc-400 font-medium mt-1">
-            Últimos 6 meses
+            Entradas e salários fixos de {{ now()->translatedFormat('F Y') }}
         </p>
     </div>
 {{-- ENTRADAS EXTRAS --}}
@@ -177,7 +238,7 @@
     </div>
 
     <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2">
-        Entradas Extras
+        Entradas Extra / Prémios
     </p>
 
     <p class="text-4xl font-black text-yellow-600 italic tracking-tight">
@@ -185,7 +246,7 @@
     </p>
 
     <p class="text-[10px] text-zinc-400 font-medium mt-1">
-        Total de Receitas Variáveis
+        Total de entradas variáveis
     </p>
 </div>
 
@@ -342,7 +403,7 @@
 
 
 {{-- ============================================================= --}}
-{{-- RENDIMENTOS FIXOS · VISTA RÁPIDA (SÓ O REGISTO)                --}}
+{{-- RENDIMENTOS FIXOS · CARTÕES DE GESTÃO SALARIAL                  --}}
 {{-- ============================================================= --}}
 <div class="space-y-6">
 
@@ -357,63 +418,63 @@
             </h2>
         </div>
 
-        <flux:badge
-            variant="neutral"
-            class="bg-zinc-100 dark:bg-zinc-800 text-[10px] font-black uppercase px-2 py-0.5 border-none"
-        >
-            {{ $fixedIncomes->count() }} Ativos
-        </flux:badge>
+        <button type="button" wire:click="newEmployment" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition hover:bg-indigo-700">
+            <flux:icon name="plus" variant="micro" class="size-3" />
+            Adicionar salário
+        </button>
     </div>
 
-    {{-- Lista simples: só o registo, sem detalhes de contrato --}}
-    <div class="space-y-3">
-      @forelse($fixedIncomes as $fixed)
-        <div class="flex items-center justify-between gap-4 p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm">
-            <div class="flex items-center gap-4 min-w-0">
-                <div class="flex flex-col items-center justify-center size-11 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 shrink-0">
-                    <span class="text-[7px] font-black text-zinc-400 uppercase leading-none mb-0.5">DIA</span>
-                    <span class="text-sm font-black text-zinc-800 dark:text-white">{{ sprintf('%02d', $fixed->day_of_month) }}</span>
-                </div>
-                <div class="min-w-0">
-                    <p class="text-sm font-black dark:text-white uppercase tracking-tight truncate">{{ $fixed->description }}</p>
-                    <p class="text-[9px] text-zinc-400 uppercase font-black tracking-widest mt-0.5">Frequência: {{ ucfirst($fixed->frequency ?? 'mensal') }}</p>
-                    @include('livewire.partials.bank-source-badge', ['record' => $fixed])
-                </div>
-            </div>
-            <span class="text-lg font-black text-emerald-600 tracking-tighter italic shrink-0">
-                +{{ number_format($fixed->amount, 2, ',', ' ') }}€
-            </span>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div class="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Salários ativos</p>
+            <p class="mt-1 text-2xl font-black text-indigo-600">{{ $salaryActiveCount }}</p>
         </div>
-      @empty
-            <div class="p-16 border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[2.5rem] text-center">
-                <flux:icon name="clock" class="size-8 text-zinc-200 dark:text-zinc-800 mx-auto mb-4" />
-                <p class="text-zinc-400 font-black uppercase text-[10px] tracking-widest">Sem salários configurados</p>
-            </div>
-        @endforelse
+        <div class="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total mensal líquido estimado</p>
+            <p class="mt-1 text-2xl font-black text-emerald-600">{{ number_format($salaryMonthlyTotal, 2, ',', ' ') }} €</p>
+        </div>
+        <div class="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total anual estimado</p>
+            <p class="mt-1 text-2xl font-black text-amber-600">{{ number_format($salaryAnnualTotal, 2, ',', ' ') }} €</p>
+        </div>
     </div>
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    <div class="grid grid-cols-1 gap-3 xl:grid-cols-2">
+      @forelse($salaryContracts as $fixed)
+        @php
+            $fixedMeta = $fixed->metadata ?? [];
+            $fixedStatus = $fixedMeta['contract_status'] ?? ($fixed->is_active ? 'active' : 'suspended');
+            $statusLabels = ['active' => 'Ativo', 'ended' => 'Terminado', 'suspended' => 'Suspenso'];
+            $contractLabels = ['sem_termo' => 'Sem termo', 'termo_certo' => 'Termo certo', 'termo_incerto' => 'Termo incerto', 'estagio' => 'Estágio', 'prestacao_servicos' => 'Prestação de serviços', 'outro' => 'Outro'];
+            $mealTotal = (float) ($fixedMeta['calculated_sa'] ?? ((float) ($fixedMeta['meal_allowance'] ?? 0) * (int) ($fixedMeta['working_days'] ?? 0)));
+        @endphp
+        <button type="button" wire:click="openSalaryDetails({{ $fixed->id }})" class="group rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition hover:border-indigo-400 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-zinc-800 dark:bg-zinc-900">
+            <span class="flex items-start justify-between gap-4">
+                <span class="min-w-0">
+                    <span class="block truncate text-base font-black uppercase tracking-tight text-zinc-900 dark:text-white">{{ $fixed->description }}</span>
+                    <span class="mt-1 block text-xs text-zinc-500">{{ $fixedMeta['position'] ?? 'Cargo não indicado' }}{{ ! empty($fixedMeta['department']) ? ' · '.$fixedMeta['department'] : '' }}</span>
+                </span>
+                <span class="shrink-0 rounded-full px-2.5 py-1 text-[9px] font-black uppercase {{ $fixedStatus === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : ($fixedStatus === 'ended' ? 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300') }}">{{ $statusLabels[$fixedStatus] ?? 'Ativo' }}</span>
+            </span>
+            <span class="mt-4 grid grid-cols-2 gap-3">
+                <span><span class="block text-[9px] font-bold uppercase text-zinc-400">Bruto mensal</span><span class="text-sm font-bold text-zinc-800 dark:text-zinc-100">{{ number_format((float) ($fixedMeta['salary_gross'] ?? 0), 2, ',', ' ') }} €</span></span>
+                <span><span class="block text-[9px] font-bold uppercase text-zinc-400">Líquido estimado</span><span class="text-sm font-bold text-emerald-600">{{ number_format((float) $fixed->amount, 2, ',', ' ') }} €</span></span>
+                <span><span class="block text-[9px] font-bold uppercase text-zinc-400">Subsídio de alimentação</span><span class="text-sm font-bold text-amber-600">{{ number_format($mealTotal, 2, ',', ' ') }} €/mês</span></span>
+                <span><span class="block text-[9px] font-bold uppercase text-zinc-400">Contrato · início</span><span class="text-sm font-bold text-zinc-800 dark:text-zinc-100">{{ $contractLabels[$fixedMeta['contract_type'] ?? ''] ?? 'Não indicado' }} · {{ ! empty($fixedMeta['start_date']) ? \Carbon\Carbon::parse($fixedMeta['start_date'])->format('d/m/Y') : '—' }}</span></span>
+            </span>
+            <span class="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:border-zinc-800 dark:text-indigo-300">
+                Ver detalhes completos
+                <flux:icon name="arrow-right" variant="micro" class="size-4 transition group-hover:translate-x-1" />
+            </span>
+        </button>
+      @empty
+        <div class="rounded-2xl border-2 border-dashed border-zinc-200 p-10 text-center dark:border-zinc-800 xl:col-span-2">
+            <p class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">Não foram encontrados salários com estes filtros.</p>
+        </div>
+      @endforelse
+    </div>
 
 <h2 class="text-2xl font-black dark:text-white uppercase italic tracking-tighter">Rendimentos por Categorias</h2>
 
@@ -435,7 +496,8 @@
 
         {{-- Botão para abrir o modal de emprego --}}
         <button
-            @click="$dispatch('modal-show-emprego')"
+            type="button"
+            wire:click="newEmployment"
             class="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
         >
             <flux:icon name="plus" variant="micro" class="size-3" />
@@ -444,11 +506,7 @@
     </div>
 
     <div class="space-y-4">
-        @php
-            $employmentIncomes = $fixedIncomes->where('source', 'emprego');
-        @endphp
-
-        @forelse($employmentIncomes as $job)
+        @forelse($salaryContracts as $job)
             <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.2rem] p-6 group transition-all hover:border-indigo-500/40 shadow-sm relative overflow-hidden w-full">
 
                 <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -460,9 +518,20 @@
                         </div>
 
                         <div>
+                            @php
+                                $annualRaise = $job->metadata['annual_raise'] ?? [];
+                                $annualRaiseLabel = ($annualRaise['type'] ?? null) === 'percentage'
+                                    ? '+'.number_format((float) ($annualRaise['value'] ?? 0), 2, ',', ' ').'%/ano'
+                                    : '+'.number_format((float) ($annualRaise['value'] ?? 0), 2, ',', ' ').' €/ano';
+                            @endphp
                             <p class="text-sm font-black dark:text-white uppercase tracking-tight flex items-center gap-2">
                                 {{ $job->description }}
                                 <span class="text-[9px] bg-indigo-500/10 text-indigo-500 px-2 py-0.5 rounded-lg border border-indigo-500/20 font-black">CONTRATO</span>
+                                @if(! empty($annualRaise['enabled']))
+                                    <span class="text-[9px] bg-emerald-500/10 text-emerald-700 px-2 py-0.5 rounded-lg border border-emerald-500/20 font-black dark:text-emerald-300">
+                                        AUMENTO ANUAL {{ $annualRaiseLabel }}
+                                    </span>
+                                @endif
                             </p>
                              {{-- ADICIONA ESTA LINHA ABAIXO --}}
     <p class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest mt-1">
@@ -475,58 +544,121 @@
                                 {{ $job->notes ?: 'Vínculo laboral ativo' }}
                             </p>
                             <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $job])</div>
+                            <button type="button" wire:click="openSalaryPaymentHistory({{ $job->id }})" class="mt-3 inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[9px] font-black uppercase tracking-wider text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/30 dark:text-indigo-300 dark:hover:bg-indigo-950/60">
+                                <flux:icon name="clock" variant="micro" class="size-3" />
+                                Ver histórico de salários
+                            </button>
                         </div>
                     </div>
 
+                    @php
+                        $contractExtras = $salaryExtraIncomes->where('salary_recurring_income_id', $job->id);
+                        $salaryAddedThisMonth = $contractExtras
+                            ->where('added_to_salary', true)
+                            ->filter(fn ($extra) => $extra->received_at?->month === now()->month && $extra->received_at?->year === now()->year)
+                            ->sum(fn ($extra) => (float) ($extra->amount_converted ?? $extra->amount));
+                        $mealAllowanceMonthly = (float) ($job->metadata['calculated_sa']
+                            ?? ((float) ($job->metadata['meal_allowance'] ?? 0) * (int) ($job->metadata['working_days'] ?? 22)));
+                        $hasSeparateMealCard = ! empty($job->metadata['meal_card_income_id']);
+                        $availableReal = (float) $job->amount + ($hasSeparateMealCard ? $mealAllowanceMonthly : 0);
+                        $salaryBonus = $job->metadata['bonus'] ?? [];
+                    @endphp
                     <div class="text-right">
-                        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Disponível Real (Líquido)</p>
+                        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Disponível Real (líquido + alimentação)</p>
                         <span class="text-3xl font-black text-emerald-600 tracking-tighter italic">
-                            {{ number_format($job->amount, 2, ',', ' ') }}€
+                            {{ number_format($availableReal, 2, ',', ' ') }}€
                         </span>
+                        @if($mealAllowanceMonthly > 0)
+                            <p class="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                Subsídio de alimentação: {{ number_format($mealAllowanceMonthly, 2, ',', ' ') }}€/mês{{ $hasSeparateMealCard ? ' (somado ao total)' : ' (incluído no líquido)' }}
+                            </p>
+                        @endif
+                        @if($salaryAddedThisMonth > 0)
+                            <p class="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                                Serviços extra a receber no próximo salário: +{{ number_format($salaryAddedThisMonth, 2, ',', ' ') }}€
+                            </p>
+                        @endif
+                        @if(in_array($salaryBonus['type'] ?? null, ['one_off', 'monthly', 'annual'], true))
+                            <p class="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                Prémio:
+                                {{ number_format((float) ($salaryBonus['net'] ?? 0), 2, ',', ' ') }}€ líquidos
+                                <span class="font-normal text-zinc-500">(bruto {{ number_format((float) ($salaryBonus['gross'] ?? 0), 2, ',', ' ') }}€)</span>
+                            </p>
+                        @endif
+                        <div class="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+                            <p class="text-[8px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Estimativa líquida em 1 ano</p>
+                            <p class="mt-0.5 text-lg font-black tabular-nums text-emerald-700 dark:text-emerald-300">{{ number_format($job->annual_net_estimate, 2, ',', ' ') }}€</p>
+                            <p class="text-[10px] font-medium text-emerald-700/80 dark:text-emerald-300/80">Inclui subsídios configurados e alimentação (11 meses)</p>
+                        </div>
                     </div>
                 </div>
 
-                {{-- BREAKDOWN BRUTO VS LÍQUIDO --}}
-                <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                    <div class="p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                        <p class="text-[8px] font-black text-zinc-400 uppercase mb-1">Salário Bruto</p>
-                        <p class="text-xs font-black dark:text-white">{{ number_format($job->metadata['salary_gross'] ?? 0, 2, ',', ' ') }}€</p>
+                <div class="mt-6 border-t border-zinc-100 pt-5 dark:border-zinc-800">
+                    <p class="mb-3 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">Resumo mensal do salário</p>
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <div class="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/30">
+                            <div class="mb-3 flex items-center justify-between gap-2">
+                                <span class="text-[9px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-300">Salário Bruto</span>
+                                <div x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
+                                    <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Explicação do salário bruto" class="flex size-6 items-center justify-center rounded-full bg-white text-[11px] font-black text-indigo-500 shadow-sm hover:bg-indigo-100 dark:bg-zinc-900 dark:hover:bg-indigo-900">i</button>
+                                    <span x-show="open" x-cloak role="tooltip" class="absolute right-0 top-full z-30 mt-2 w-56 rounded-xl bg-zinc-900 px-3 py-2 text-left text-[10px] font-medium normal-case leading-relaxed text-white shadow-xl">Valor do salário antes dos descontos de Segurança Social e IRS.</span>
+                                </div>
+                            </div>
+                            <p class="text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($job->metadata['salary_gross'] ?? 0, 2, ',', ' ') }}€</p>
+                            <p class="mt-1 text-[9px] font-bold uppercase text-zinc-400">Valor antes dos descontos</p>
+                        </div>
+
+                        <div class="rounded-2xl border border-rose-100 bg-rose-50/70 p-4 dark:border-rose-900/40 dark:bg-rose-950/20">
+                            <div class="mb-3 flex items-center justify-between gap-2">
+                                <span class="text-[9px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-300">Segurança Social · 11%</span>
+                                <div x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
+                                    <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Explicação da Segurança Social" class="flex size-6 items-center justify-center rounded-full bg-white text-[11px] font-black text-rose-500 shadow-sm hover:bg-rose-100 dark:bg-zinc-900 dark:hover:bg-rose-900">i</button>
+                                    <span x-show="open" x-cloak role="tooltip" class="absolute right-0 top-full z-30 mt-2 w-56 rounded-xl bg-zinc-900 px-3 py-2 text-left text-[10px] font-medium normal-case leading-relaxed text-white shadow-xl">Contribuição do trabalhador para a Segurança Social, estimada à taxa de 11%.</span>
+                                </div>
+                            </div>
+                            <p class="text-xl font-black tabular-nums text-rose-600 dark:text-rose-400">−{{ number_format($job->metadata['calculated_ss'] ?? (($job->metadata['salary_gross'] ?? 0) * 0.11), 2, ',', ' ') }}€</p>
+                            <p class="mt-1 text-[9px] font-bold uppercase text-rose-500/70 dark:text-rose-300/70">Desconto para a Segurança Social</p>
+                        </div>
+
+                        <div class="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 dark:border-amber-900/40 dark:bg-amber-950/20">
+                            <div class="mb-3 flex items-center justify-between gap-2">
+                                <span class="text-[9px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Subs. Alimentação</span>
+                                <div x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
+                                    <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Explicação do subsídio de alimentação" class="flex size-6 items-center justify-center rounded-full bg-white text-[11px] font-black text-amber-600 shadow-sm hover:bg-amber-100 dark:bg-zinc-900 dark:hover:bg-amber-900">i</button>
+                                    <span x-show="open" x-cloak role="tooltip" class="absolute right-0 top-full z-30 mt-2 w-56 rounded-xl bg-zinc-900 px-3 py-2 text-left text-[10px] font-medium normal-case leading-relaxed text-white shadow-xl">Estimativa mensal: valor diário do subsídio multiplicado pelos dias trabalhados.</span>
+                                </div>
+                            </div>
+                            <p class="text-xl font-black tabular-nums text-emerald-600 dark:text-emerald-400">+{{ number_format($job->metadata['calculated_sa'] ?? 0, 2, ',', ' ') }}€</p>
+                            <p class="mt-1 text-[9px] font-bold uppercase text-amber-700/70 dark:text-amber-300/70">Acresce ao valor líquido</p>
+                        </div>
+
+                        <div class="rounded-2xl border border-orange-100 bg-orange-50/70 p-4 dark:border-orange-900/40 dark:bg-orange-950/20">
+                            <div class="mb-3 flex items-center justify-between gap-2">
+                                <span class="text-[9px] font-black uppercase tracking-wider text-orange-600 dark:text-orange-300">Retenção IRS</span>
+                                <div x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
+                                    <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Explicação do IRS" class="flex size-6 items-center justify-center rounded-full bg-white text-[11px] font-black text-orange-500 shadow-sm hover:bg-orange-100 dark:bg-zinc-900 dark:hover:bg-orange-900">i</button>
+                                    <span x-show="open" x-cloak role="tooltip" class="absolute right-0 top-full z-30 mt-2 w-56 rounded-xl bg-zinc-900 px-3 py-2 text-left text-[10px] font-medium normal-case leading-relaxed text-white shadow-xl">Retenção mensal estimada antes de qualquer apuramento anual da isenção IRS Jovem.</span>
+                                </div>
+                            </div>
+                            <p class="text-xl font-black tabular-nums text-orange-600 dark:text-orange-400">−{{ number_format($job->metadata['calculated_irs'] ?? 0, 2, ',', ' ') }}€</p>
+                            <p class="mt-1 text-[9px] font-bold uppercase text-orange-500/70 dark:text-orange-300/70">Imposto retido estimado</p>
+                        </div>
                     </div>
 
-                    <div class="p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                        <p class="text-[8px] font-black text-red-400 uppercase mb-1">Segurança Social (11%)</p>
-                        <p class="text-xs font-black text-red-500">-{{ number_format(($job->metadata['salary_gross'] ?? 0) * 0.11, 2, ',', ' ') }}€</p>
-                    </div>
-
-                    <div class="p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                        <p class="text-[8px] font-black text-zinc-400 uppercase mb-1">Subs. Alimentação</p>
-                        <p class="text-xs font-black text-emerald-600">+{{ number_format($job->metadata['calculated_sa'] ?? 0, 2, ',', ' ') }}€</p>
-                    </div>
-
-                   <div class="flex items-center justify-end gap-2">
-
-
-    <button wire:click="openRaiseModal({{ $fixed->id }})"
-                            class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all font-black text-[9px] uppercase shadow-sm">
+                    <div class="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                        <button type="button" wire:click="openSalaryDetails({{ $job->id }})" class="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[9px] font-black uppercase text-indigo-700 shadow-sm transition hover:bg-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/30 dark:text-indigo-300">
+                            Detalhes salariais
+                        </button>
+                        <button wire:click="openRaiseModal({{ $job->id }})" class="flex items-center gap-2 rounded-xl bg-emerald-500/10 px-3 py-2 text-[9px] font-black uppercase text-emerald-600 shadow-sm transition-all hover:bg-emerald-600 hover:text-white">
                             <flux:icon name="rocket-launch" variant="micro" class="size-3" />
                             Aumento
-                        </button>                 {{-- Chamar o método editFixed que agora deteta o tipo e abre o modal certo --}}
-    <flux:button
-        wire:click="editFixed({{ $job->id }})"
-        variant="ghost"
-        icon="pencil-square"
-        size="xs"
-    />
-
-    <flux:button
-        wire:click="deleteFixed({{ $job->id }})"
-        wire:confirm="Apagar contrato?"
-        variant="ghost"
-        icon="trash"
-        size="xs"
-        color="red"
-    />
-</div>
+                        </button>
+                        <button type="button" wire:click="editFixed({{ $job->id }})" class="inline-flex items-center gap-2 rounded-xl border-2 border-indigo-300 bg-indigo-600 px-4 py-2.5 text-[10px] font-black uppercase tracking-wide text-white shadow-md transition hover:border-indigo-500 hover:bg-indigo-700 dark:border-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400">
+                            <flux:icon name="pencil-square" variant="micro" class="size-4" />
+                            Editar registo
+                        </button>
+                        <flux:button wire:click="deleteFixed({{ $job->id }})" wire:confirm="Apagar contrato?" variant="ghost" icon="trash" size="xs" color="red" />
+                    </div>
                 </div>
             </div>
         @empty
@@ -537,6 +669,296 @@
     </div>
 </div>
 
+<section class="mt-10 space-y-4">
+    <div class="flex items-center gap-3 px-2">
+        <div class="rounded-lg bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <flux:icon name="sparkles" variant="outline" class="size-4" />
+        </div>
+        <div>
+            <h2 class="text-sm font-black uppercase tracking-widest text-zinc-500">Receitas extra e prémios · {{ now()->year }}</h2>
+            <p class="mt-1 text-[10px] text-zinc-400">Gestão separada dos serviços realizados e dos prémios de cada contrato.</p>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        @foreach($salaryContracts as $job)
+            @php
+                $contractExtras = $salaryExtraIncomes->where('salary_recurring_income_id', $job->id);
+                $contractServices = $contractExtras->filter(fn ($extra) => ($extra->salary_income_type ?? 'service') !== 'prize');
+                $contractPrizes = $contractExtras->where('salary_income_type', 'prize');
+                $contractServicesThisYear = $contractServices->filter(fn ($extra) => $extra->received_at?->year === now()->year);
+                $contractServicesThisMonth = $contractServicesThisYear->filter(fn ($extra) => $extra->received_at?->month === now()->month);
+                $contractPrizesThisYear = $contractPrizes->filter(fn ($extra) => $extra->received_at?->year === now()->year);
+                $contractServicesTotal = $contractServicesThisYear->sum(fn ($extra) => (float) ($extra->amount_converted ?? $extra->amount));
+                $contractServicesMonthTotal = $contractServicesThisMonth->sum(fn ($extra) => (float) ($extra->amount_converted ?? $extra->amount));
+                $contractServicesMonthCount = $contractServicesThisMonth->sum(fn ($extra) => (int) ($extra->service_quantity ?? 1));
+                $contractNextSalaryTotal = $contractServicesThisMonth->where('added_to_salary', true)->sum(fn ($extra) => (float) ($extra->amount_converted ?? $extra->amount));
+                $contractPrizesTotal = $contractPrizesThisYear->sum(fn ($extra) => (float) ($extra->amount_converted ?? $extra->amount));
+            @endphp
+            <article class="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                        <h3 class="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-100">{{ $job->description }}</h3>
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div class="rounded-xl border border-emerald-200/70 bg-white/70 p-3 dark:border-emerald-900/40 dark:bg-zinc-900/50">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <p class="text-[9px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Serviços extra · {{ now()->year }}</p>
+                            <button type="button" wire:click="openExtraModal({{ $job->id }})" class="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-100 px-2.5 py-1.5 text-[8px] font-black uppercase text-emerald-800 transition hover:bg-emerald-600 hover:text-white dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">
+                                <flux:icon name="plus" variant="micro" class="size-3" />
+                                Adicionar serviço
+                            </button>
+                        </div>
+                        <p class="mt-1 text-xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{{ number_format($contractServicesTotal, 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
+                        <p class="text-[10px] font-medium text-zinc-500">{{ $contractServicesThisYear->sum(fn ($extra) => (int) ($extra->service_quantity ?? 1)) }} serviço{{ $contractServicesThisYear->sum(fn ($extra) => (int) ($extra->service_quantity ?? 1)) === 1 ? '' : 's' }} realizado{{ $contractServicesThisYear->sum(fn ($extra) => (int) ($extra->service_quantity ?? 1)) === 1 ? '' : 's' }} este ano</p>
+                        <p class="mt-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">Este mês: {{ $contractServicesMonthCount }} serviço{{ $contractServicesMonthCount === 1 ? '' : 's' }} · {{ number_format($contractServicesMonthTotal, 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
+                        @if($contractNextSalaryTotal > 0)
+                            <p class="mt-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300">No salário de {{ now()->addMonth()->translatedFormat('F') }}: +{{ number_format($contractNextSalaryTotal, 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
+                        @endif
+                        <button type="button" wire:click="openSalaryIncomeHistory({{ $job->id }})" class="mt-3 rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-[8px] font-black uppercase text-emerald-700 transition hover:border-emerald-500 dark:border-emerald-900/50 dark:bg-zinc-900 dark:text-emerald-300">
+                            Ver histórico ({{ $contractExtras->count() }})
+                        </button>
+                    </div>
+                    <div class="rounded-xl border border-amber-200/70 bg-white/70 p-3 dark:border-amber-900/40 dark:bg-zinc-900/50">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <p class="text-[9px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-300">Prémios · {{ now()->year }}</p>
+                            <button type="button" wire:click="editSalaryBonus({{ $job->id }})" class="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[8px] font-black uppercase text-amber-700 transition hover:border-amber-500 hover:bg-amber-500 hover:text-white dark:border-amber-900/40 dark:bg-amber-900/10 dark:text-amber-300">
+                                <flux:icon name="gift" variant="micro" class="size-3" />
+                                Configurar prémio
+                            </button>
+                        </div>
+                        <p class="mt-1 text-xl font-black tabular-nums text-amber-700 dark:text-amber-300">{{ number_format($contractPrizesTotal, 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
+                        <p class="text-[10px] font-medium text-zinc-500">{{ $contractPrizesThisYear->count() }} prémio{{ $contractPrizesThisYear->count() === 1 ? '' : 's' }} recebido{{ $contractPrizesThisYear->count() === 1 ? '' : 's' }} este ano</p>
+                        <p class="mt-3 text-[10px] text-zinc-500">Prémio configurado no contrato: {{ in_array($job->metadata['bonus']['type'] ?? null, ['one_off', 'monthly', 'annual'], true) ? number_format((float) ($job->metadata['bonus']['net'] ?? 0), 2, ',', ' ').' '.$workspaceCurrency.' líquidos' : 'Nenhum' }}</p>
+                    </div>
+                </div>
+                <p class="mt-3 text-[10px] text-zinc-500 dark:text-zinc-400">Os serviços selecionados para o salário são pagos no mês seguinte à data de realização.</p>
+            </article>
+        @endforeach
+        @if($salaryContracts->isEmpty())
+            <p class="rounded-2xl border border-dashed border-zinc-300 p-6 text-center text-xs text-zinc-500 xl:col-span-2">Regista um contrato de trabalho para associar serviços extra ou prémios.</p>
+        @endif
+    </div>
+</section>
+
+@include('livewire.partials.unlinked-extra-incomes')
+
+@if($salaryDetails)
+    <style>
+        body:has([aria-label="Detalhes do rendimento salarial"]) button[aria-label="Fechar modal"],
+        body:has([aria-label="Detalhes do rendimento salarial"]) button[aria-label="Close modal"],
+        body:has([aria-label="Detalhes do rendimento salarial"]) [data-flux-modal-close] {
+            display: none !important;
+        }
+    </style>
+    @php
+        $detailMeta = $salaryDetails->metadata ?? [];
+        $detailTabs = [
+            'overview' => 'Visão geral',
+            'professional' => 'Profissional',
+            'composition' => 'Composição',
+            'taxes' => 'Impostos',
+            'benefits' => 'Benefícios',
+            'payments' => 'Pagamentos',
+            'documents' => 'Documentos',
+            'notes' => 'Notas',
+        ];
+        $detailContractLabels = ['sem_termo' => 'Sem termo', 'termo_certo' => 'Termo certo', 'termo_incerto' => 'Termo incerto', 'estagio' => 'Estágio', 'prestacao_servicos' => 'Prestação de serviços', 'outro' => 'Outro'];
+        $detailAnnualPayments = (int) ($detailMeta['annual_payments'] ?? 14);
+        $detailMonthlyDuodecimos = (float) ($detailMeta['monthly_duodecimos'] ?? 0);
+        $detailGross = (float) ($detailMeta['salary_gross'] ?? 0);
+        $detailMealTotal = (float) ($detailMeta['calculated_sa'] ?? ((float) ($detailMeta['meal_allowance'] ?? 0) * (int) ($detailMeta['working_days'] ?? 0)));
+        $detailStatus = $detailMeta['contract_status'] ?? ($salaryDetails->is_active ? 'active' : 'suspended');
+        $detailStatusLabels = ['active' => 'Ativo', 'ended' => 'Terminado', 'suspended' => 'Suspenso'];
+    @endphp
+    <div class="fixed inset-0 z-[70] flex items-center justify-center bg-zinc-950/70 p-2 backdrop-blur-sm sm:p-5" role="dialog" aria-modal="true" aria-label="Detalhes do rendimento salarial">
+        <section class="flex max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+            <header class="flex items-start gap-4 border-b border-zinc-100 p-5 dark:border-zinc-800 sm:p-7">
+                <div class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950">
+                    <flux:icon name="briefcase" class="size-6" />
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="truncate text-xl font-black uppercase tracking-tight text-zinc-900 dark:text-white">{{ $salaryDetails->description }}</h2>
+                        <span class="rounded-full px-2.5 py-1 text-[9px] font-black uppercase {{ $detailStatus === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : ($detailStatus === 'ended' ? 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300') }}">{{ $detailStatusLabels[$detailStatus] ?? 'Ativo' }}</span>
+                    </div>
+                    <p class="mt-1 text-xs text-zinc-500">{{ $detailMeta['position'] ?? 'Cargo não indicado' }} · {{ $detailContractLabels[$detailMeta['contract_type'] ?? ''] ?? 'Tipo de contrato não indicado' }}</p>
+                </div>
+                <button type="button" wire:click="closeSalaryDetails" aria-label="Fechar detalhes" class="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800">
+                    <flux:icon name="x-mark" class="size-5" />
+                </button>
+            </header>
+
+            <nav class="flex gap-2 overflow-x-auto border-b border-zinc-100 px-4 py-3 dark:border-zinc-800 sm:px-6" aria-label="Separadores do rendimento salarial">
+                @foreach($detailTabs as $tabKey => $tabLabel)
+                    <button type="button" wire:click="setSalaryDetailsTab('{{ $tabKey }}')" aria-current="{{ $salaryDetailsTab === $tabKey ? 'page' : 'false' }}"
+                        class="shrink-0 rounded-xl px-3 py-2 text-[9px] font-black uppercase tracking-wide transition {{ $salaryDetailsTab === $tabKey ? 'bg-indigo-600 text-white' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700' }}">
+                        {{ $tabLabel }}
+                    </button>
+                @endforeach
+            </nav>
+
+            <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+                @if($salaryDetailsTab === 'overview')
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <div class="rounded-2xl bg-indigo-50 p-4 dark:bg-indigo-950/40"><p class="text-[9px] font-black uppercase text-indigo-500">Bruto mensal</p><p class="mt-1 text-xl font-black text-indigo-700 dark:text-indigo-300">{{ number_format($detailGross, 2, ',', ' ') }} €</p></div>
+                        <div class="rounded-2xl bg-emerald-50 p-4 dark:bg-emerald-950/30"><p class="text-[9px] font-black uppercase text-emerald-600">Líquido mensal estimado</p><p class="mt-1 text-xl font-black text-emerald-700 dark:text-emerald-300">{{ number_format((float) $salaryDetails->amount, 2, ',', ' ') }} €</p></div>
+                        <div class="rounded-2xl bg-rose-50 p-4 dark:bg-rose-950/30"><p class="text-[9px] font-black uppercase text-rose-600">Segurança Social estimada</p><p class="mt-1 text-xl font-black text-rose-700 dark:text-rose-300">{{ number_format((float) ($salaryDetailsPayroll['social_security'] ?? 0), 2, ',', ' ') }} €</p></div>
+                        <div class="rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/30"><p class="text-[9px] font-black uppercase text-amber-600">Alimentação estimada</p><p class="mt-1 text-xl font-black text-amber-700 dark:text-amber-300">{{ number_format($detailMealTotal, 2, ',', ' ') }} €</p></div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <section class="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-zinc-500">Resumo do contrato</h3>
+                            <dl class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                                <div><dt class="text-[9px] font-bold uppercase text-zinc-400">Cargo</dt><dd class="mt-1 font-semibold text-zinc-800 dark:text-zinc-100">{{ $detailMeta['position'] ?? '—' }}</dd></div>
+                                <div><dt class="text-[9px] font-bold uppercase text-zinc-400">Departamento</dt><dd class="mt-1 font-semibold text-zinc-800 dark:text-zinc-100">{{ $detailMeta['department'] ?? '—' }}</dd></div>
+                                <div><dt class="text-[9px] font-bold uppercase text-zinc-400">Início</dt><dd class="mt-1 font-semibold text-zinc-800 dark:text-zinc-100">{{ ! empty($detailMeta['start_date']) ? \Carbon\Carbon::parse($detailMeta['start_date'])->format('d/m/Y') : '—' }}</dd></div>
+                                <div><dt class="text-[9px] font-bold uppercase text-zinc-400">Dia habitual de pagamento</dt><dd class="mt-1 font-semibold text-zinc-800 dark:text-zinc-100">{{ $salaryDetails->day_of_month }}</dd></div>
+                            </dl>
+                        </section>
+                        <section class="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 dark:border-amber-900/40 dark:bg-amber-950/20">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-300">Estimativa, não recibo oficial</h3>
+                            <p class="mt-2 text-xs leading-5 text-zinc-600 dark:text-zinc-300">O cálculo usa as tabelas configuradas para o Continente em 2026. A região fiscal fica registada, mas Madeira e Açores ainda não têm tabelas próprias neste simulador. Confirma os valores no recibo e nas tabelas oficiais.</p>
+                        </section>
+                    </div>
+                    <div class="mt-4 flex flex-wrap justify-end gap-2">
+                        <button type="button" wire:click="editFixed({{ $salaryDetails->id }})" class="rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase text-white hover:bg-indigo-700">Editar contrato</button>
+                    </div>
+                @elseif($salaryDetailsTab === 'professional')
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach([
+                            'Empresa' => $salaryDetails->description,
+                            'Cargo / função' => $detailMeta['position'] ?? '—',
+                            'Departamento' => $detailMeta['department'] ?? '—',
+                            'Tipo de contrato' => $detailContractLabels[$detailMeta['contract_type'] ?? ''] ?? '—',
+                            'Estado' => $detailStatusLabels[$detailStatus] ?? $detailStatus,
+                            'Periodicidade' => ucfirst($salaryDetails->frequency ?? 'mensal'),
+                            'Pagamentos por ano' => ($detailMeta['annual_payments'] ?? 14).'',
+                            'Dia de pagamento' => $salaryDetails->day_of_month,
+                            'Data de início' => ! empty($detailMeta['start_date']) ? \Carbon\Carbon::parse($detailMeta['start_date'])->format('d/m/Y') : '—',
+                            'Data de fim' => ! empty($detailMeta['end_date']) ? \Carbon\Carbon::parse($detailMeta['end_date'])->format('d/m/Y') : '—',
+                        ] as $label => $value)
+                            <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-[9px] font-black uppercase text-zinc-400">{{ $label }}</p><p class="mt-1 text-sm font-bold text-zinc-800 dark:text-zinc-100">{{ $value }}</p></div>
+                        @endforeach
+                    </div>
+                @elseif($salaryDetailsTab === 'composition')
+                    <div class="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                        <table class="w-full min-w-[32rem] text-sm">
+                            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                <tr><th class="p-4 text-left text-xs font-semibold text-zinc-500">Salário base bruto mensal</th><td class="p-4 text-right font-bold">{{ number_format($detailGross, 2, ',', ' ') }} €</td></tr>
+                                <tr><th class="p-4 text-left text-xs font-semibold text-zinc-500">Salário bruto anual estimado ({{ $detailAnnualPayments }} pagamentos)</th><td class="p-4 text-right font-bold">{{ number_format($detailGross * $detailAnnualPayments, 2, ',', ' ') }} €</td></tr>
+                                <tr><th class="p-4 text-left text-xs font-semibold text-zinc-500">Subsídio de férias</th><td class="p-4 text-right font-bold">{{ number_format(($detailMeta['holiday_allowance_same_as_salary'] ?? true) ? $detailGross : (float) ($detailMeta['holiday_allowance_gross'] ?? 0), 2, ',', ' ') }} €</td></tr>
+                                <tr><th class="p-4 text-left text-xs font-semibold text-zinc-500">Subsídio de Natal</th><td class="p-4 text-right font-bold">{{ number_format(($detailMeta['christmas_allowance_same_as_salary'] ?? true) ? $detailGross : (float) ($detailMeta['christmas_allowance_gross'] ?? 0), 2, ',', ' ') }} €</td></tr>
+                                <tr><th class="p-4 text-left text-xs font-semibold text-zinc-500">Duodécimos mensais ({{ $detailMeta['duodecimos_percentage'] ?? (($detailMeta['allowances_in_duodecimos'] ?? false) ? 100 : 0) }}%)</th><td class="p-4 text-right font-bold">{{ number_format($detailMonthlyDuodecimos, 2, ',', ' ') }} €</td></tr>
+                                <tr><th class="p-4 text-left text-xs font-semibold text-zinc-500">Outros complementos</th><td class="p-4 text-right font-bold">{{ number_format((float) ($detailMeta['other_complements'] ?? 0), 2, ',', ' ') }} €</td></tr>
+                                <tr><th class="p-4 text-left text-xs font-semibold text-zinc-500">Prémio / horas extra / outros</th><td class="p-4 text-right font-bold">{{ number_format((float) ($detailMeta['productivity_bonus'] ?? 0) + (float) ($detailMeta['overtime'] ?? 0) + (float) ($detailMeta['other_income'] ?? 0), 2, ',', ' ') }} €</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                @elseif($salaryDetailsTab === 'taxes')
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <div class="rounded-2xl border border-rose-100 bg-rose-50 p-4 dark:border-rose-900/30 dark:bg-rose-950/20"><p class="text-[9px] font-black uppercase text-rose-600">Segurança Social · 11%</p><p class="mt-1 text-xl font-black text-rose-700 dark:text-rose-300">{{ number_format((float) ($salaryDetailsPayroll['social_security'] ?? 0), 2, ',', ' ') }} €/mês</p><p class="text-[10px] text-zinc-500">Incidência estimada: {{ number_format((float) ($salaryDetailsPayroll['taxable_remuneration'] ?? 0), 2, ',', ' ') }} € · anual: {{ number_format((float) ($salaryDetailsPayroll['social_security'] ?? 0) * $detailAnnualPayments, 2, ',', ' ') }} €</p></div>
+                        <div class="rounded-2xl border border-orange-100 bg-orange-50 p-4 dark:border-orange-900/30 dark:bg-orange-950/20"><p class="text-[9px] font-black uppercase text-orange-600">Retenção IRS mensal (estimativa)</p><p class="mt-1 text-xl font-black text-orange-700 dark:text-orange-300">{{ number_format((float) ($salaryDetailsPayroll['irs'] ?? 0), 2, ',', ' ') }} €</p><p class="text-[10px] text-zinc-500">Tabela {{ $salaryDetailsPayroll['table'] ?? '—' }} · anual: {{ number_format((float) ($salaryDetailsPayroll['irs'] ?? 0) * $detailAnnualPayments, 2, ',', ' ') }} € · {{ ($detailMeta['withholding_status'] ?? 'normal') === 'exempt' ? 'sem retenção na fonte indicada' : 'retenção normal estimada' }}</p></div>
+                        <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-[9px] font-black uppercase text-zinc-500">Situação fiscal</p><p class="mt-1 text-sm font-bold">{{ $detailMeta['civil_status'] ?? 'Não indicado' }} · {{ $detailMeta['dependents'] ?? 0 }} dependentes · {{ $detailMeta['tax_region'] ?? 'continente' }}</p></div>
+                        <div class="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-900/30 dark:bg-indigo-950/20"><p class="text-[9px] font-black uppercase text-indigo-600">IRS Jovem · isenção separada</p>
+                            @if($detailMeta['irs_jovem'] ?? false)
+                                <p class="mt-1 text-sm font-bold">{{ $detailMeta['irs_jovem_year'] ?? 1 }}.º ano · {{ number_format((float) ($salaryDetailsPayroll['irs_jovem_rate'] ?? 0) * 100, 0) }}% de isenção legal aplicável</p>
+                                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">Rendimento elegível estimado: {{ number_format((float) ($salaryDetailsPayroll['irs_jovem_eligible_income'] ?? 0), 2, ',', ' ') }} €/mês. Parcela mensal potencialmente isenta: {{ number_format((float) ($salaryDetailsPayroll['irs_jovem_exempt_income'] ?? 0), 2, ',', ' ') }} €.</p>
+                                <p class="mt-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300">Poupança indicativa, não deduzida da retenção: ~{{ number_format((float) ($salaryDetailsPayroll['irs_jovem_estimated_savings'] ?? 0), 2, ',', ' ') }} €/mês (até ~{{ number_format((float) ($salaryDetailsPayroll['irs_jovem_estimated_savings'] ?? 0) * $detailAnnualPayments, 2, ',', ' ') }} €/ano estimados).</p>
+                                <p class="text-[10px] text-zinc-500">Início do benefício: {{ $detailMeta['irs_jovem_start_year'] ?? 'não indicado' }}.</p>
+                            @else
+                                <p class="mt-1 text-sm text-zinc-500">Não configurado neste contrato.</p>
+                            @endif
+                        </div>
+                    </div>
+                    <p class="mt-4 rounded-xl bg-zinc-50 p-3 text-[10px] leading-5 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">Fórmulas: Segurança Social estimada = remuneração contributiva × 11%; IRS = cálculo da tabela de retenção selecionada (Continente, 2026), dependentes e situação civil. Os valores anuais multiplicam a estimativa mensal pelo número de pagamentos configurado.</p>
+                    <p class="mt-2 rounded-xl bg-amber-50 p-3 text-[10px] leading-5 text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">IRS Jovem é uma isenção no apuramento do IRS e não uma redução aplicada à taxa de retenção na fonte. A poupança mostrada é apenas indicativa, baseada nas tabelas mensais; não substitui a liquidação anual.</p>
+                @elseif($salaryDetailsTab === 'benefits')
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/30 dark:bg-amber-950/20"><p class="text-[9px] font-black uppercase text-amber-700">Alimentação</p><p class="mt-1 text-lg font-black">{{ number_format((float) ($detailMeta['meal_allowance'] ?? 0), 2, ',', ' ') }} €/dia</p><p class="text-xs text-zinc-500">{{ $detailMeta['working_days'] ?? 0 }} dias · {{ number_format($detailMealTotal, 2, ',', ' ') }} €/mês · {{ number_format($detailMealTotal * 11, 2, ',', ' ') }} €/ano estimado</p><p class="mt-1 text-[10px] text-zinc-500">Método: {{ $detailMeta['meal_allowance_destination'] ?? 'igual ao salário' }} · limite diário estimado de isenção: {{ number_format(($detailMeta['meal_allowance_destination'] ?? '') === 'meal_card' ? 10.455 : 6.15, 3, ',', ' ') }} €.</p><p class="text-[10px] text-zinc-500">Parcela mensal sujeita a tributação: {{ number_format((float) ($salaryDetailsPayroll['meal_taxable'] ?? 0), 2, ',', ' ') }} €.</p></div>
+                        <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-[9px] font-black uppercase text-zinc-500">Subsídios de férias e Natal</p><p class="mt-1 text-sm font-bold">{{ ($detailMeta['duodecimos_percentage'] ?? (($detailMeta['allowances_in_duodecimos'] ?? false) ? 100 : 0)) }}% em duodécimos{{ (int) ($detailMeta['duodecimos_percentage'] ?? (($detailMeta['allowances_in_duodecimos'] ?? false) ? 100 : 0)) < 100 ? ' · remanescente pago nos meses correspondentes' : '' }}</p><p class="text-xs text-zinc-500">{{ number_format($detailMonthlyDuodecimos, 2, ',', ' ') }} €/mês em duodécimos</p></div>
+                        <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-[9px] font-black uppercase text-zinc-500">Outros benefícios registados</p><p class="mt-1 text-sm font-bold">{{ $detailMeta['health_insurance'] ?? 'Sem seguro de saúde registado' }}</p><p class="text-xs text-zinc-500">Ajudas de custo: {{ number_format((float) ($detailMeta['expense_allowance'] ?? 0), 2, ',', ' ') }} €/mês</p><p class="mt-1 whitespace-pre-wrap text-xs text-zinc-500">{{ $detailMeta['additional_benefits'] ?? 'Sem benefícios adicionais registados.' }}</p><p class="mt-2 text-[10px] text-zinc-500">O tratamento fiscal/contributivo destes benefícios não é calculado automaticamente.</p></div>
+                    </div>
+                @elseif($salaryDetailsTab === 'payments')
+                    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <div><h3 class="text-sm font-black uppercase text-zinc-700 dark:text-zinc-200">Histórico de pagamentos</h3><p class="text-[10px] text-zinc-500">O sistema cria o registo mensal automaticamente e paga-o na data prevista. Podes editar os valores; o estado e a data são atualizados pelo sistema.</p></div>
+                    </div>
+                    @php
+                        $paymentChart = $salaryPayments
+                            ->sortBy(fn ($payment) => ((int) $payment->payment_year * 12) + (int) $payment->payment_month)
+                            ->take(-12)
+                            ->values();
+                        $paymentChartMax = max(1, (float) $paymentChart->max('net_received'));
+                    @endphp
+                    @if($paymentChart->isNotEmpty())
+                        <section class="mb-5 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+                            <h4 class="mb-3 text-[9px] font-black uppercase tracking-widest text-zinc-500">Evolução do líquido recebido · últimos registos</h4>
+                            <div class="flex h-36 items-end gap-2 overflow-x-auto border-b border-zinc-200 pb-2 dark:border-zinc-700">
+                                @foreach($paymentChart as $paymentPoint)
+                                    @php $barHeight = max(8, ((float) $paymentPoint->net_received / $paymentChartMax) * 100); @endphp
+                                    <div class="flex h-full min-w-8 flex-1 flex-col items-center justify-end gap-1" title="{{ number_format((float) $paymentPoint->net_received, 2, ',', ' ') }} €">
+                                        <span class="max-w-12 truncate text-[8px] font-bold text-zinc-500">{{ number_format((float) $paymentPoint->net_received, 0, ',', ' ') }}€</span>
+                                        <span class="w-full max-w-10 rounded-t-md bg-indigo-500/80" style="height: {{ $barHeight }}%"></span>
+                                        <span class="text-[8px] text-zinc-400">{{ \Carbon\Carbon::create($paymentPoint->payment_year, $paymentPoint->payment_month)->format('m/y') }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </section>
+                    @endif
+                    @if($salaryPaymentForm)
+                        <form wire:submit.prevent="saveSalaryPayment" class="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/20 sm:grid-cols-2 lg:grid-cols-4">
+                            @foreach(['salary_base_gross' => 'Salário bruto', 'allowances_duodecimos' => 'Duodécimos', 'other_complements' => 'Complementos', 'social_security' => 'Segurança Social', 'irs' => 'IRS', 'other_deductions' => 'Outros descontos', 'meal_allowance' => 'Subsídio alimentação', 'net_received' => 'Líquido recebido'] as $field => $label)
+                                <label class="text-[9px] font-bold uppercase text-zinc-500">{{ $label }} (€)<input type="number" min="0" step="0.01" wire:model="salaryPaymentForm.{{ $field }}" class="mt-1 h-10 w-full rounded-lg border-zinc-200 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900"></label>
+                            @endforeach
+                            <label class="text-[9px] font-bold uppercase text-zinc-500 sm:col-span-2">Observações<input type="text" wire:model="salaryPaymentForm.notes" class="mt-1 h-10 w-full rounded-lg border-zinc-200 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900"></label>
+                            <div class="flex items-end gap-2"><button type="submit" class="h-10 rounded-lg bg-indigo-600 px-4 text-[9px] font-black uppercase text-white">Guardar</button><button type="button" wire:click="$set('salaryPaymentForm', [])" class="h-10 rounded-lg border border-zinc-300 px-4 text-[9px] font-black uppercase">Cancelar</button></div>
+                        </form>
+                    @endif
+                    <div class="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                        <table class="w-full min-w-[48rem] text-left text-xs">
+                            <thead class="bg-zinc-50 text-[9px] uppercase text-zinc-500 dark:bg-zinc-800"><tr><th class="p-3">Mês</th><th class="p-3">Bruto</th><th class="p-3">SS</th><th class="p-3">IRS</th><th class="p-3">Alimentação</th><th class="p-3">Líquido</th><th class="p-3">Estado</th><th class="p-3">Ações</th></tr></thead>
+                            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                @forelse($salaryPayments as $payment)
+                                    <tr><td class="p-3 font-semibold">{{ \Carbon\Carbon::create($payment->payment_year, $payment->payment_month)->translatedFormat('F Y') }}<span class="block text-[9px] text-zinc-400">{{ $payment->paid_at?->format('d/m/Y') ?? 'Data prevista: '.$salaryDetails->day_of_month.'/'.str_pad((string) $payment->payment_month, 2, '0', STR_PAD_LEFT).'/'.$payment->payment_year }}</span>@if($payment->is_automatic)<span class="mt-1 inline-block rounded bg-indigo-50 px-1.5 py-0.5 text-[8px] font-black uppercase text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300">Automático</span>@endif</td><td class="p-3">{{ number_format((float) $payment->salary_base_gross, 2, ',', ' ') }} €</td><td class="p-3">{{ number_format((float) $payment->social_security, 2, ',', ' ') }} €</td><td class="p-3">{{ number_format((float) $payment->irs, 2, ',', ' ') }} €</td><td class="p-3">{{ number_format((float) $payment->meal_allowance, 2, ',', ' ') }} €</td><td class="p-3 font-bold">{{ number_format((float) $payment->net_received, 2, ',', ' ') }} €</td><td class="p-3">{{ ['pending' => 'Pendente', 'paid' => 'Pago', 'late' => 'Atrasado'][$payment->status] ?? $payment->status }}</td><td class="p-3"><button type="button" wire:click="openSalaryPaymentForm({{ $payment->id }})" class="font-bold text-indigo-600">Editar valores</button></td></tr>
+                                @empty
+                                    <tr><td colspan="8" class="p-8 text-center text-zinc-500">Ainda não existem pagamentos registados.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div class="rounded-xl bg-zinc-100 p-3 dark:bg-zinc-800"><p class="text-[9px] font-black uppercase text-zinc-500">Líquido estimado por mês</p><p class="mt-1 text-sm font-bold">{{ number_format((float) $salaryDetails->amount, 2, ',', ' ') }} €</p></div>
+                        <div class="rounded-xl bg-emerald-50 p-3 dark:bg-emerald-950/30"><p class="text-[9px] font-black uppercase text-emerald-600">Líquido recebido registado em {{ now()->year }}</p><p class="mt-1 text-sm font-bold text-emerald-700 dark:text-emerald-300">{{ number_format((float) $salaryPayments->where('payment_year', now()->year)->sum('net_received'), 2, ',', ' ') }} €</p></div>
+                    </div>
+                @elseif($salaryDetailsTab === 'documents')
+                    <form wire:submit.prevent="uploadSalaryDocument" class="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800 sm:grid-cols-[1fr_auto_auto]">
+                        <input type="file" wire:model="salaryDocumentFile" accept=".pdf,.jpg,.jpeg,.png,.webp" class="min-w-0 text-xs text-zinc-600 dark:text-zinc-300">
+                        <select wire:model="salaryDocumentType" class="h-10 rounded-lg border-zinc-200 bg-white text-xs dark:border-zinc-700 dark:bg-zinc-900"><option value="contract">Contrato de trabalho</option><option value="payslip">Recibo de vencimento</option><option value="irs">Declaração de IRS</option><option value="payment_proof">Comprovativo de pagamento</option><option value="other">Outro documento</option></select>
+                        <button type="submit" wire:loading.attr="disabled" wire:target="uploadSalaryDocument" class="h-10 rounded-lg bg-indigo-600 px-4 text-[9px] font-black uppercase text-white disabled:opacity-60"><span wire:loading.remove wire:target="uploadSalaryDocument">Carregar documento</span><span wire:loading wire:target="uploadSalaryDocument">A carregar…</span></button>
+                        @error('salaryDocumentFile')<p class="text-xs text-rose-600 sm:col-span-3">{{ $message }}</p>@enderror
+                        <p class="text-[10px] text-zinc-500 sm:col-span-3">PDF ou imagem, máximo 10 MB. Os ficheiros são guardados no disco privado.</p>
+                    </form>
+                    <div class="space-y-2">
+                        @forelse($salaryDocuments as $document)
+                            <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
+                                <div class="min-w-0"><p class="truncate text-sm font-bold text-zinc-800 dark:text-zinc-100">{{ $document->original_name }}</p><p class="text-[9px] uppercase text-zinc-500">{{ ['contract' => 'Contrato', 'payslip' => 'Recibo', 'irs' => 'IRS', 'payment_proof' => 'Comprovativo', 'other' => 'Outro'][$document->document_type] ?? 'Documento' }} · {{ number_format($document->file_size / 1024, 0) }} KB</p></div>
+                                <div class="flex gap-2"><a href="{{ route('salary-documents.preview', $document) }}" target="_blank" rel="noopener" class="rounded-lg border border-indigo-200 px-3 py-2 text-[9px] font-black uppercase text-indigo-700 dark:border-indigo-900 dark:text-indigo-300">Visualizar</a><button type="button" wire:click="downloadSalaryDocument({{ $document->id }})" class="rounded-lg border border-zinc-200 px-3 py-2 text-[9px] font-black uppercase text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">Descarregar</button><button type="button" wire:click="deleteSalaryDocument({{ $document->id }})" wire:confirm="Eliminar este documento?" class="rounded-lg border border-rose-200 px-3 py-2 text-[9px] font-black uppercase text-rose-600">Apagar</button></div>
+                            </div>
+                        @empty
+                            <p class="rounded-xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-700">Ainda não existem documentos associados.</p>
+                        @endforelse
+                    </div>
+                @elseif($salaryDetailsTab === 'notes')
+                    <section class="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
+                        <h3 class="text-xs font-black uppercase tracking-widest text-zinc-500">Notas e observações do contrato</h3>
+                        <p class="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-200">{{ $salaryDetails->notes ?: 'Sem notas registadas.' }}</p>
+                        <p class="mt-5 text-[10px] text-zinc-500">Para alterar as observações, utiliza “Editar contrato”. As observações por pagamento ficam no separador Histórico de pagamentos.</p>
+                    </section>
+                @endif
+            </div>
+        </section>
+    </div>
+@endif
 
 
 
@@ -564,29 +986,54 @@
     <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
 
     <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
-        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+        <div x-show="open" x-transition.scale class="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2.5rem] border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
 
-            <form wire:submit.prevent="saveEmployment" class="flex flex-col">
+            <form wire:submit.prevent="saveEmployment" class="flex min-h-0 flex-col">
                 {{-- HEADER --}}
-                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                <div class="shrink-0 border-b border-zinc-100 p-5 dark:border-zinc-800 sm:p-6">
+                    <div class="flex items-center gap-4">
                     <div class="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg">
                         <flux:icon name="briefcase" class="size-6" />
                     </div>
                     <div class="flex-1">
-                        <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white">Configurar Salário</h2>
+                        <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white">{{ $editingFixedId ? 'Editar Salário' : 'Configurar Salário' }}</h2>
                         <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Cálculo Automático de Impostos</p>
                     </div>
                     <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
+                    </div>
                 </div>
 
                 {{-- BODY --}}
-                <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar sm:p-6">
 
                     {{-- DESCRIÇÃO --}}
                     <div class="relative">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-indigo-600 z-10">Descrição do Vínculo</label>
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-indigo-600 z-10">Nome da Empresa</label>
                         <input type="text" wire:model="recDescription" placeholder="Ex: Salário Mensal - Empresa X" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-indigo-500 transition-all">
                     </div>
+
+                    <section class="space-y-3 rounded-3xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+                        <h3 class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Dados profissionais e contrato</h3>
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <input type="text" wire:model="recPosition" placeholder="Cargo / função" class="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-white">
+                            <input type="text" wire:model="recDepartment" placeholder="Departamento" class="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-white">
+                            <select wire:model.live="recContractType" class="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-white">
+                                <option value="sem_termo">Contrato sem termo</option><option value="termo_certo">Termo certo</option><option value="termo_incerto">Termo incerto</option><option value="estagio">Estágio</option><option value="prestacao_servicos">Prestação de serviços</option><option value="outro">Outro</option>
+                            </select>
+                            <select wire:model="recContractStatus" class="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-white">
+                                <option value="active">Ativo</option><option value="ended">Terminado</option><option value="suspended">Suspenso</option>
+                            </select>
+                            <label class="text-[9px] font-bold uppercase text-zinc-500">Data de início<input type="date" wire:model="recStartDate" class="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"></label>
+                            @if($recContractType !== 'sem_termo')
+                                <label class="text-[9px] font-bold uppercase text-zinc-500">Data de fim<input type="date" wire:model="recEndDate" class="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"></label>
+                            @endif
+                            @unless($editingFixedId)
+                                <label class="text-[9px] font-bold uppercase text-zinc-500">Pagamentos por ano<select wire:model="recAnnualPayments" class="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"><option value="12">12 pagamentos</option><option value="14">14 pagamentos</option></select></label>
+                                <label class="text-[9px] font-bold uppercase text-zinc-500">Estado da retenção<select wire:model.live="recWithholdingStatus" class="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"><option value="normal">Retenção normal estimada</option><option value="exempt">Sem retenção na fonte</option></select></label>
+                            @endunless
+                        </div>
+                        <p class="text-[10px] text-zinc-500">O dia habitual de pagamento é configurado abaixo. O cálculo fiscal disponível é uma estimativa para o Continente em 2026.</p>
+                    </section>
 
                     {{-- VALORES BRUTO / LÍQUIDO --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -599,10 +1046,101 @@
                             <input type="number" step="0.01" wire:model.live="recAmount" class="w-full h-14 bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-500/30 rounded-2xl px-5 text-lg font-black text-emerald-600 outline-none" readonly>
                         </div>
                     </div>
+                    {{-- IRS JOVEM --}}
+                    <div class="p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-900/30 space-y-3">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" wire:model.live="recIrsJovem" class="mt-0.5 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500">
+                            <span>
+                                <span class="block text-sm font-black text-indigo-700 dark:text-indigo-300">Tenho IRS Jovem</span>
+                                <span class="block text-[10px] text-zinc-500 mt-1">A retenção estimada continua a ser apresentada separadamente. A isenção não é aplicada como redução direta da taxa.</span>
+                            </span>
+                        </label>
+                        @if($recIrsJovem)
+                            <div>
+                                <label class="text-[9px] font-black text-zinc-500 uppercase block mb-1">Ano de benefício</label>
+                                <select wire:model.live="recIrsJovemYear" class="w-full h-11 bg-white dark:bg-zinc-800 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-4 font-bold text-sm text-zinc-900 dark:text-white">
+                                    @for($year = 1; $year <= 10; $year++)
+                                        <option value="{{ $year }}">{{ $year }}.º ano</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            @if($recSalaryGross > 0)
+                                <div class="rounded-xl border border-indigo-200 bg-white/80 p-3 dark:border-indigo-800 dark:bg-zinc-900/70">
+                                    <p class="text-xs font-black text-indigo-700 dark:text-indigo-300">
+                                        {{ number_format($calculatedIRSJovemRate * 100, 0) }}% de isenção no {{ $recIrsJovemYear }}.º ano
+                                    </p>
+                                    <p class="mt-1 text-[10px] text-zinc-600 dark:text-zinc-300">
+                                        Remuneração mensal elegível isenta estimada: {{ number_format($calculatedIRSJovemExemptIncome, 2, ',', ' ') }} €.
+                                    </p>
+                                    <p class="mt-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300">
+                                        IRS estimado após a isenção: {{ number_format((float) $calculatedIRS, 2, ',', ' ') }} €/mês.
+                                        Líquido estimado com o benefício: ~{{ number_format((float) $recAmount, 2, ',', ' ') }} €/mês.
+                                    </p>
+                                    <p class="mt-1 text-[9px] text-zinc-500">A estimativa considera a parcela isenta e aplica a tabela de retenção apenas à remuneração não isenta. A taxa da tabela não é reduzida diretamente; o IRS Jovem continua sujeito ao apuramento anual.</p>
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+
+                    {{-- SUBSÍDIOS DE FÉRIAS E NATAL --}}
+                    <div class="p-4 bg-sky-50 dark:bg-sky-900/10 rounded-3xl border border-sky-100 dark:border-sky-900/30 space-y-3">
+                        <div>
+                            <p class="text-[10px] font-black uppercase text-sky-700 dark:text-sky-300 tracking-widest">Subsídios de Férias e de Natal</p>
+                            <p class="text-[10px] text-zinc-500 mt-1">Define o valor bruto de cada subsídio e como é pago.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="space-y-3">
+                                <label class="text-[9px] font-black text-zinc-500 uppercase block">Subsídio de férias</label>
+                                <label class="flex items-center gap-2 text-xs font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="recHolidayAllowanceSameAsSalary" class="rounded border-sky-300 text-sky-600 focus:ring-sky-500">
+                                    Igual ao salário bruto
+                                </label>
+                                @unless($recHolidayAllowanceSameAsSalary)
+                                    <input type="number" min="0" step="0.01" wire:model.live="recHolidayAllowanceGross" placeholder="Valor bruto (€)" class="w-full h-11 bg-white dark:bg-zinc-800 border border-sky-100 dark:border-sky-900/30 rounded-xl px-4 font-bold text-sm text-zinc-900 dark:text-white">
+                                @endunless
+                            </div>
+                            <div class="space-y-3">
+                                <label class="text-[9px] font-black text-zinc-500 uppercase block">Subsídio de Natal</label>
+                                <label class="flex items-center gap-2 text-xs font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="recChristmasAllowanceSameAsSalary" class="rounded border-sky-300 text-sky-600 focus:ring-sky-500">
+                                    Igual ao salário bruto
+                                </label>
+                                @unless($recChristmasAllowanceSameAsSalary)
+                                    <input type="number" min="0" step="0.01" wire:model.live="recChristmasAllowanceGross" placeholder="Valor bruto (€)" class="w-full h-11 bg-white dark:bg-zinc-800 border border-sky-100 dark:border-sky-900/30 rounded-xl px-4 font-bold text-sm text-zinc-900 dark:text-white">
+                                @endunless
+                            </div>
+                        </div>
+
+                        <label class="flex items-start gap-3 pt-4 border-t border-sky-100 dark:border-sky-900/30 cursor-pointer">
+                            <input type="checkbox" wire:model.live="recAllowancesInDuodecimos" class="mt-0.5 rounded border-sky-300 text-sky-600 focus:ring-sky-500">
+                            <span>
+                                <span class="block text-xs font-black text-zinc-700 dark:text-zinc-200">Receber em duodécimos</span>
+                                <span class="block text-[10px] text-zinc-500 mt-1">Os dois subsídios são divididos por 12 e incluídos na estimativa mensal.</span>
+                            </span>
+                        </label>
+                        @unless($recAllowancesInDuodecimos)
+                            <p class="text-[10px] text-zinc-500">Recebidos por inteiro nos meses correspondentes; não incluídos na estimativa mensal.</p>
+                        @endunless
+                        @if($recAllowancesInDuodecimos)
+                            @php
+                                $monthlyDuodecimos = (
+                                    ($recHolidayAllowanceSameAsSalary ? (float) $recSalaryGross : (float) $recHolidayAllowanceGross)
+                                    + ($recChristmasAllowanceSameAsSalary ? (float) $recSalaryGross : (float) $recChristmasAllowanceGross)
+                                ) / 12;
+                            @endphp
+                            <p class="text-[10px] font-bold text-sky-700 dark:text-sky-300">
+                                Acréscimo bruto mensal estimado: + {{ number_format($monthlyDuodecimos, 2, ',', ' ') }} €
+                            </p>
+                        @endif
+                    </div>
 
                     {{-- SUBSIDIO ALIMENTAÇÃO --}}
-                    <div class="p-6 bg-amber-50 dark:bg-amber-900/10 rounded-3xl border border-amber-100 dark:border-amber-900/30">
+                    <div class="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-3xl border border-amber-100 dark:border-amber-900/30">
                         <p class="text-[10px] font-black uppercase text-amber-600 mb-4 ml-1 tracking-widest">Subsídio de Alimentação</p>
+                        <p class="text-[10px] text-amber-800 dark:text-amber-200 mb-4">
+                            A estimativa anual considera 11 meses: normalmente não há subsídio de alimentação durante o mês de férias. O valor por dia e os dias trabalhados são editáveis.
+                        </p>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="relative">
                                 <label class="text-[9px] font-black text-zinc-400 uppercase block mb-1">Valor por dia</label>
@@ -613,14 +1151,29 @@
                                 <input type="number" wire:model.live="recWorkingDays" class="w-full h-11 bg-white dark:bg-zinc-800 border-none rounded-xl px-4 font-bold text-sm text-center text-zinc-900 dark:text-white">
                             </div>
                         </div>
+                        <div class="mt-4">
+                            <label class="text-[9px] font-black text-zinc-400 uppercase block mb-1">Onde entra o subsídio de alimentação?</label>
+                            <select wire:model.live="recMealDestination" class="w-full h-11 bg-white dark:bg-zinc-800 border border-amber-100 dark:border-amber-900/30 rounded-xl px-4 font-bold text-sm text-zinc-900 dark:text-white">
+                                <option value="same">Mesmo destino do salário</option>
+                                <option value="meal_card">Cartão de refeição separado</option>
+                                <option value="cash">Dinheiro físico</option>
+                                @foreach($this->bankAccounts->where('user_id', auth()->id()) as $acc)
+                                    <option value="bank:{{ $acc->id }}">🏦 Para a conta - {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="text-[9px] text-zinc-500 mt-2">Escolhe a conta bancária ou indica se o subsídio é carregado num cartão à parte.</p>
+                        </div>
+                        <p class="text-[10px] font-bold text-amber-700 dark:text-amber-300 mt-3">
+                            Estimativa anual ({{ number_format($recMealAllowance * $recWorkingDays, 2, ',', ' ') }} € × 11): {{ number_format($recMealAllowance * $recWorkingDays * 11, 2, ',', ' ') }} €
+                        </p>
                     </div>
 
                     {{-- QUADRO DE AUDITORIA (IDENTICO AO ONBOARDING) --}}
                     @if($recSalaryGross > 0)
-                    <div class="p-6 bg-zinc-950 text-white rounded-[2rem] border border-white/10 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+                    <div class="p-4 bg-zinc-950 text-white rounded-[2rem] border border-white/10 shadow-2xl space-y-3 animate-in fade-in zoom-in-95">
                         <div class="flex items-center justify-between border-b border-white/10 pb-3">
-                            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 italic">Audit de Descontos</h3>
-                            <span class="text-[9px] font-black bg-emerald-500/10 px-2 py-0.5 rounded text-emerald-400 uppercase">Calculado por IA</span>
+                            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 italic">Cálculo de Salário</h3>
+                            <span class="text-[9px] font-black bg-emerald-500/10 px-2 py-0.5 rounded text-emerald-400 uppercase">Estimativa 2026</span>
                         </div>
                         <div class="space-y-2 font-mono text-[11px]">
                             <div class="flex justify-between text-zinc-400">
@@ -628,17 +1181,19 @@
                                 <span class="font-bold text-red-400">- {{ number_format($calculatedSS, 2, ',', ' ') }} €</span>
                             </div>
                             <div class="flex justify-between text-zinc-400">
-                                <span>RETENÇÃO IRS (ESTIMADA)</span>
+                                <span>{{ $recIrsJovem ? 'IRS JOVEM (RETENÇÃO ESTIMADA)' : 'IRS NORMAL (RETENÇÃO ESTIMADA)' }}</span>
                                 <span class="font-bold text-red-400">- {{ number_format($calculatedIRS, 2, ',', ' ') }} €</span>
                             </div>
                             <div class="flex justify-between text-zinc-400">
-                                <span>TOTAL SUBSÍDIOS</span>
+                                <span>SUBSÍDIO DE ALIMENTAÇÃO</span>
                                 <span class="font-bold text-emerald-400">+ {{ number_format($calculatedSA, 2, ',', ' ') }} €</span>
                             </div>
-                            <div class="pt-3 border-t border-dashed border-white/10 flex justify-between items-center">
-                                <span class="text-zinc-500 font-black uppercase text-[9px]">Líquido Final:</span>
-                                <span class="text-lg font-black text-white italic">{{ number_format($recAmount, 2, ',', ' ') }} €</span>
-                            </div>
+                            @if($recAllowancesInDuodecimos)
+                                <div class="flex justify-between text-zinc-400">
+                                    <span>DUODÉCIMOS (BRUTO)</span>
+                                    <span class="font-bold text-emerald-400">+ {{ number_format($monthlyDuodecimos, 2, ',', ' ') }} €</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                     @endif
@@ -651,33 +1206,219 @@
                         </div>
                         <div class="relative">
                             <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-indigo-600 z-10">Onde entra este valor?</label>
-                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-indigo-500 transition-all">
-                                <option value="">💵 Dinheiro Físico</option>
-                                @foreach($this->bankAccounts as $acc)
-                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                            <select wire:model.live="recSalaryDestination" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-indigo-500 transition-all">
+                                <option value="cash">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts->where('user_id', auth()->id()) as $acc)
+                                    <option value="bank:{{ $acc->id }}">🏦 {{ $acc->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                     </div>
+                    <label class="flex items-start gap-3 p-4 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl cursor-pointer">
+                        <input type="checkbox" wire:model="recSalaryReceivedThisMonth" class="mt-0.5 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500">
+                        <span>
+                            <span class="block text-xs font-black text-indigo-700 dark:text-indigo-300">Já recebi este salário este mês</span>
+                            <span class="block text-[10px] text-zinc-500 mt-1">Esta indicação fica associada ao mês atual.</span>
+                        </span>
+                    </label>
+                    <div>
+                        <label class="text-[9px] font-black uppercase text-zinc-500">Notas e observações do contrato</label>
+                        <textarea wire:model="recNotes" rows="3" maxlength="5000" placeholder="Alterações contratuais, aumentos, funções ou notas pessoais" class="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></textarea>
+                        @error('recNotes')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                    </div>
                 </div>
 
                 {{-- FOOTER --}}
-                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
-                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
-                    <button type="submit" class="flex-[2] h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-indigo-500/20 transition-all">
+                <div class="shrink-0 border-t border-zinc-100 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                    <div class="mb-2 flex items-center justify-between rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-2 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+                        <span class="text-xs font-black uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Líquido final mensal</span>
+                        <span class="text-2xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{{ number_format((float) $recAmount, 2, ',', ' ') }} €</span>
+                    </div>
+                    <div class="flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-indigo-500/20 transition-all">
                         Confirmar Contrato 💼
                     </button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+@if($showSalaryBonusModal)
+<div
+    x-data="{
+        open: false,
+        show() { this.open = true; document.documentElement.classList.add('overflow-hidden'); },
+        close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); }
+    }"
+    x-init="setTimeout(() => show(), 50)"
+    x-on:modal-show-salary-bonus.window="show()"
+    x-on:modal-close-salary-bonus.window="close()"
+    x-on:keydown.escape.window="close(); $wire.closeSalaryBonusModal()"
+>
+    <div x-show="open" x-cloak x-transition.opacity.duration.150ms @click="close(); $wire.closeSalaryBonusModal()" class="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm"></div>
+    <div x-show="open" x-cloak @click.self="close(); $wire.closeSalaryBonusModal()" class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-6">
+        <div x-show="open" x-transition.scale.duration.150ms class="relative z-10 my-auto flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-950/20 dark:border-zinc-800 dark:bg-zinc-900" @click.stop>
+            <form wire:submit.prevent="saveSalaryBonus" class="flex min-h-0 flex-col" autocomplete="off">
+                <header class="flex items-start gap-4 border-b border-zinc-100 px-5 py-5 dark:border-zinc-800 sm:px-7">
+                    <div class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-2xl dark:bg-amber-500/10">
+                        🎁
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Prémio do contrato</p>
+                        <h2 class="mt-1 text-xl font-bold tracking-tight text-zinc-900 dark:text-white">{{ $recDescription }}</h2>
+                        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Configura o prémio sem alterar os restantes dados do salário.</p>
+                    </div>
+                    <button type="button" wire:click="closeSalaryBonusModal" @click="close()" aria-label="Fechar" class="rounded-xl p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200">
+                        <flux:icon name="x-mark" class="size-5" />
+                    </button>
+                </header>
 
+                <div class="min-h-0 space-y-6 overflow-y-auto px-5 py-5 text-left sm:px-7 sm:py-6">
+                    <section class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+                        <div class="mb-4">
+                            <h3 class="text-sm font-semibold text-zinc-900 dark:text-white">Valor do prémio</h3>
+                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Indica um único valor bruto em euros. Com 0 €, o prémio atual é removido.</p>
+                        </div>
+                        <div>
+                            <label for="salary-bonus-gross" class="mb-2 block text-sm font-semibold text-zinc-900 dark:text-white">Valor bruto</label>
+                            <div class="relative">
+                                <input id="salary-bonus-gross" type="number" min="0" step="0.01" inputmode="decimal" wire:model.live.debounce.300ms="recBonusGross" placeholder="0,00" class="h-14 w-full rounded-xl border border-zinc-300 bg-white px-4 pr-12 text-lg font-semibold text-zinc-900 outline-none transition placeholder:font-normal placeholder:text-zinc-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white">
+                                <span class="absolute inset-y-0 right-3 flex items-center"><span class="rounded-lg bg-amber-100 px-3 py-1 text-lg font-black text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">€</span></span>
+                            </div>
+                            @error('recBonusGross')<p class="mt-1 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                    </section>
 
+                    <section class="space-y-3">
+                        <h3 class="text-sm font-semibold text-zinc-900 dark:text-white">Descontos configuráveis</h3>
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
+                                <label class="flex items-center gap-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                                    <input type="checkbox" wire:model.live="recBonusDeductIrs" class="size-4 rounded border-zinc-300 text-amber-600 focus:ring-amber-500">
+                                    Descontar IRS
+                                </label>
+                                <label for="salary-bonus-irs-rate" class="mb-2 mt-4 block text-xs font-medium text-zinc-500">Percentagem de IRS</label>
+                                <div class="relative">
+                                    <input id="salary-bonus-irs-rate" type="number" min="0" max="100" step="0.01" wire:model.live.debounce.300ms="recBonusIrsPercentage" class="h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 pr-10 text-sm font-semibold text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white">
+                                    <span class="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-zinc-400">%</span>
+                                </div>
+                                @error('recBonusIrsPercentage')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                                <p class="mt-2 text-xs text-zinc-500">Desconto calculado: {{ number_format($recBonusIrsAmount, 2, ',', ' ') }} €</p>
+                            </div>
+                            <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
+                                <label class="flex items-center gap-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                                    <input type="checkbox" wire:model.live="recBonusDeductSocialSecurity" class="size-4 rounded border-zinc-300 text-amber-600 focus:ring-amber-500">
+                                    Descontar Segurança Social
+                                </label>
+                                <label for="salary-bonus-ss-rate" class="mb-2 mt-4 block text-xs font-medium text-zinc-500">Percentagem de Segurança Social</label>
+                                <div class="relative">
+                                    <input id="salary-bonus-ss-rate" type="number" min="0" max="100" step="0.01" wire:model.live.debounce.300ms="recBonusSocialSecurityPercentage" class="h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 pr-10 text-sm font-semibold text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white">
+                                    <span class="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-zinc-400">%</span>
+                                </div>
+                                @error('recBonusSocialSecurityPercentage')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                                <p class="mt-2 text-xs text-zinc-500">Desconto calculado: {{ number_format($recBonusSocialSecurityAmount, 2, ',', ' ') }} €</p>
+                            </div>
+                        </div>
+                        <p class="text-xs leading-5 text-zinc-500 dark:text-zinc-400">As taxas são editáveis e aplicadas diretamente ao valor bruto do prémio. Esta é uma estimativa configurável, não substitui o cálculo oficial do recibo de vencimento.</p>
+                    </section>
 
+                    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label for="salary-bonus-date" class="mb-2 block text-sm font-semibold text-zinc-900 dark:text-white">Data de recebimento</label>
+                            <input id="salary-bonus-date" type="date" wire:model="recBonusDate" class="h-12 w-full rounded-xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white">
+                            @error('recBonusDate')<p class="mt-1 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                        <div class="flex flex-col justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900/40 dark:bg-emerald-900/20">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Valor líquido estimado</p>
+                            <p class="mt-1 text-2xl font-black tabular-nums text-emerald-700 dark:text-emerald-300">{{ number_format((float) $recBonusNet, 2, ',', ' ') }} €</p>
+                            <p class="text-xs text-emerald-700/80 dark:text-emerald-300/80">Bruto menos IRS e Segurança Social selecionados</p>
+                        </div>
+                    </section>
+                </div>
 
+                <footer class="flex flex-col-reverse gap-2 border-t border-zinc-100 bg-zinc-50 px-5 py-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:justify-end sm:px-7">
+                    <button type="button" wire:click="closeSalaryBonusModal" @click="close()" class="inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-200/70 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancelar</button>
+                    <button type="submit" class="inline-flex h-11 items-center justify-center rounded-xl bg-amber-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 focus:outline-none focus:ring-4 focus:ring-amber-500/20">Guardar prémio</button>
+                </footer>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
 
+@if($salaryIncomeHistoryContract)
+<div
+    x-data="{ open: true, close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); } }"
+    x-init="document.documentElement.classList.add('overflow-hidden')"
+    x-on:keydown.escape.window="close(); $wire.closeSalaryIncomeHistory()"
+>
+    <div x-show="open" x-cloak x-transition.opacity @click="close(); $wire.closeSalaryIncomeHistory()" class="fixed inset-0 z-[70] bg-zinc-950/70 backdrop-blur-sm"></div>
+    <div x-show="open" x-cloak @click.self="close(); $wire.closeSalaryIncomeHistory()" class="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto p-3 sm:p-6">
+        <section class="relative z-10 my-auto max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900" @click.stop>
+            <header class="flex items-start justify-between gap-4 border-b border-zinc-100 px-5 py-5 dark:border-zinc-800 sm:px-7">
+                <div>
+                    @php
+                        $historyServices = $salaryIncomeHistory->filter(fn ($extra) => ($extra->salary_income_type ?? 'service') !== 'prize');
+                        $historyPrizes = $salaryIncomeHistory->where('salary_income_type', 'prize');
+                    @endphp
+                    <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Histórico de serviços extra e prémios</p>
+                    <h2 class="mt-1 text-xl font-bold text-zinc-900 dark:text-white">{{ $salaryIncomeHistoryContract->description }}</h2>
+                    <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                        <p class="text-emerald-700 dark:text-emerald-300">Serviços: {{ number_format($historyServices->sum(fn ($extra) => (float) ($extra->amount_converted ?? $extra->amount)), 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
+                        <p class="text-amber-700 dark:text-amber-300">Prémios: {{ number_format($historyPrizes->sum(fn ($extra) => (float) ($extra->amount_converted ?? $extra->amount)), 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
+                    </div>
+                </div>
+                <button type="button" wire:click="closeSalaryIncomeHistory" @click="close()" class="rounded-xl p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" aria-label="Fechar histórico">
+                    <flux:icon name="x-mark" class="size-5" />
+                </button>
+            </header>
+            <div class="max-h-[65vh] overflow-y-auto">
+                @forelse($salaryIncomeHistory as $extra)
+                    <div class="flex items-center justify-between gap-4 border-b border-zinc-100 px-5 py-4 last:border-b-0 dark:border-zinc-800 sm:px-7">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-zinc-900 dark:text-white">{{ $extra->description }}</p>
+                            <p class="mt-1 text-xs text-zinc-500">
+                                {{ $extra->salary_income_type === 'prize' ? 'Prémio' : 'Serviço extra' }}
+                                @if($extra->salary_income_type !== 'prize' && $extra->service_quantity)
+                                    · {{ $extra->service_quantity }} × {{ number_format((float) $extra->service_unit_amount, 2, ',', ' ') }} {{ $extra->currency }}
+                                @endif
+                                · {{ $extra->received_at?->translatedFormat('d M Y') }}
+                                @if($extra->salary_income_type !== 'prize' && $extra->added_to_salary)
+                                    · será pago no próximo salário
+                                @endif
+                            </p>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-3">
+                            <p class="text-sm font-bold tabular-nums text-emerald-600">+{{ number_format((float) ($extra->amount_converted ?? $extra->amount), 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
+                            @if($extra->salary_income_type !== 'prize')
+                                <button type="button" wire:click="editSalaryExtraIncome({{ $extra->id }})" class="rounded-lg p-2 text-indigo-500 transition hover:bg-indigo-50 hover:text-indigo-700 dark:hover:bg-indigo-950/30" aria-label="Editar serviço extra">
+                                    <flux:icon name="pencil-square" class="size-4" />
+                                </button>
+                            @endif
+                            @if($isOwner)
+                                <button type="button" wire:click="deleteExtra({{ $extra->id }})" wire:confirm="Apagar esta entrada extra?" class="rounded-lg p-2 text-zinc-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" aria-label="Apagar entrada extra">
+                                    <flux:icon name="trash" class="size-4" />
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="px-6 py-12 text-center">
+                        <p class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">Ainda não há entradas extra associadas a este contrato.</p>
+                        <p class="mt-1 text-xs text-zinc-500">As entradas ficam disponíveis aqui quando associadas ao contrato.</p>
+                    </div>
+                @endforelse
+            </div>
+            <footer class="flex justify-end border-t border-zinc-100 px-5 py-4 dark:border-zinc-800 sm:px-7">
+                <button type="button" wire:click="closeSalaryIncomeHistory" @click="close()" class="rounded-xl bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">Fechar</button>
+            </footer>
+        </section>
+    </div>
+</div>
+@endif
 
 
 
@@ -1907,21 +2648,29 @@
 </div>
 
 
-{{-- ══════════════════════════════════════════════════════════════ --}}
-{{-- MODAL TÁTICO: ATUALIZAÇÃO DE AUMENTO (PREMIUM) --}}
-{{-- ══════════════════════════════════════════════════════════════ --}}
+{{-- Modal para atualizar um rendimento recorrente --}}
 @if($showRaiseModal)
 @php
     $raiseMeta = [
-        'emprego'      => ['emoji' => '🚀', 'title' => 'Upgrade de Salário!', 'subtitle' => 'Parabéns pelo teu progresso financeiro', 'noun' => 'Extra', 'totalQ' => 'Qual o novo valor líquido do salário?', 'addQ' => 'Quanto vais receber a mais no final do mês?', 'confirm' => 'Confirmar Upgrade', 'bounce' => true],
-        'imobiliario'  => ['emoji' => '📈', 'title' => 'Atualizar Valor da Renda', 'subtitle' => 'Ajuste estratégico de rendimentos imobiliários', 'noun' => 'Aumento', 'totalQ' => 'Qual o novo valor da renda mensal?', 'addQ' => 'Qual o valor do aumento da renda?', 'confirm' => 'Confirmar Ajuste', 'bounce' => false],
-        'freelance'    => ['emoji' => '💻', 'title' => 'Atualizar Rendimento Freelance', 'subtitle' => 'Ajuste do valor líquido dos recibos verdes', 'noun' => 'Aumento', 'totalQ' => 'Qual o novo valor líquido?', 'addQ' => 'Qual o valor a somar ao rendimento?', 'confirm' => 'Confirmar Ajuste', 'bounce' => false],
-        'investimento' => ['emoji' => '📊', 'title' => 'Atualizar Rendimento de Investimento', 'subtitle' => 'Ajuste de dividendos, juros ou mais-valias', 'noun' => 'Aumento', 'totalQ' => 'Qual o novo valor líquido?', 'addQ' => 'Qual o valor a somar ao rendimento?', 'confirm' => 'Confirmar Ajuste', 'bounce' => false],
-        'reforma'      => ['emoji' => '👴', 'title' => 'Atualizar Pensão', 'subtitle' => 'Ajuste do valor líquido da reforma/pensão', 'noun' => 'Aumento', 'totalQ' => 'Qual o novo valor líquido?', 'addQ' => 'Qual o valor a somar à pensão?', 'confirm' => 'Confirmar Ajuste', 'bounce' => false],
-        'bolsa'        => ['emoji' => '🎓', 'title' => 'Atualizar Bolsa', 'subtitle' => 'Ajuste do valor da bolsa de estudo', 'noun' => 'Aumento', 'totalQ' => 'Qual o novo valor da bolsa?', 'addQ' => 'Qual o valor a somar à bolsa?', 'confirm' => 'Confirmar Ajuste', 'bounce' => false],
-        'outro'        => ['emoji' => '✨', 'title' => 'Atualizar Rendimento', 'subtitle' => 'Ajuste do valor desta fonte de rendimento', 'noun' => 'Aumento', 'totalQ' => 'Qual o novo valor?', 'addQ' => 'Qual o valor a somar?', 'confirm' => 'Confirmar Ajuste', 'bounce' => false],
+        'emprego'      => ['emoji' => '💼', 'title' => 'Atualizar salário', 'subtitle' => 'Altera o valor deste rendimento recorrente.', 'totalQ' => 'Novo valor líquido mensal', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'imobiliario'  => ['emoji' => '🏠', 'title' => 'Atualizar valor da renda', 'subtitle' => 'Altera o valor deste rendimento recorrente.', 'totalQ' => 'Novo valor mensal', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'freelance'    => ['emoji' => '💻', 'title' => 'Atualizar rendimento freelance', 'subtitle' => 'Altera o valor líquido deste rendimento.', 'totalQ' => 'Novo valor líquido', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'investimento' => ['emoji' => '📊', 'title' => 'Atualizar rendimento de investimento', 'subtitle' => 'Altera o valor deste rendimento recorrente.', 'totalQ' => 'Novo valor', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'reforma'      => ['emoji' => '👴', 'title' => 'Atualizar pensão', 'subtitle' => 'Altera o valor líquido desta pensão.', 'totalQ' => 'Novo valor líquido mensal', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'bolsa'        => ['emoji' => '🎓', 'title' => 'Atualizar bolsa', 'subtitle' => 'Altera o valor deste rendimento recorrente.', 'totalQ' => 'Novo valor', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'outro'        => ['emoji' => '✨', 'title' => 'Atualizar rendimento', 'subtitle' => 'Altera o valor deste rendimento recorrente.', 'totalQ' => 'Novo valor', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
     ];
     $rm = $raiseMeta[$raiseSourceType] ?? $raiseMeta['emprego'];
+    $raiseModes = [
+        ...($raiseSourceType === 'emprego' ? [
+            'none' => ['title' => 'Sem aumento', 'description' => 'Mantém o salário atual e não agenda aumentos automáticos.', 'symbol' => '—'],
+        ] : []),
+        'total' => ['title' => 'Definir novo valor', 'description' => 'Substitui o valor atual.', 'symbol' => '€'],
+        'addition' => ['title' => 'Aumento pontual', 'description' => 'Acrescenta ao valor atual uma única vez.', 'symbol' => '€'],
+        'annual_fixed' => ['title' => 'Aumento anual fixo', 'description' => 'Acrescenta este valor todos os anos.', 'symbol' => '€'],
+        'annual_percentage' => ['title' => 'Aumento anual percentual', 'description' => 'Aplica esta percentagem sobre o valor atualizado.', 'symbol' => '%'],
+    ];
+    $selectedRaiseMode = $raiseModes[$raiseMode] ?? $raiseModes['total'];
 @endphp
 <div
     x-data="{
@@ -1935,111 +2684,142 @@
     x-on:keydown.escape.window="close()"
 >
 
-    {{-- BACKDROP PREMIUM --}}
     <div
         x-show="open"
         x-cloak
-        x-transition.opacity.duration.120ms
+        x-transition.opacity.duration.150ms
         @click="close()"
-        class="fixed inset-0 z-50 bg-zinc-950/80"
+        class="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm"
     ></div>
 
-    {{-- WRAPPER --}}
     <div
         x-show="open"
         x-cloak
         @click.self="close()"
-        class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
+        class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-6"
     >
-
-        {{-- PAINEL PREMIUM --}}
         <div
             x-show="open"
-            x-transition.scale.duration.120ms
-            class="relative z-10 w-full max-w-2xl rounded-[2rem] shadow-xl overflow-hidden transform-gpu
-                   bg-emerald-500/10 backdrop-blur-sm border border-emerald-500/20"
+            x-transition.scale.duration.150ms
+            class="relative z-10 my-auto flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-950/20 dark:border-zinc-800 dark:bg-zinc-900"
             @click.stop
         >
 
-           <form wire:submit.prevent="applyRaise" class="flex max-h-[86vh] flex-col" autocomplete="off">
-
-                {{-- HEADER DINÂMICO (Contexto Rendas vs Salário) --}}
-                <div class="text-center mb-8 pt-8 px-6">
-                    <div class="size-20 bg-emerald-500/20 rounded-[2rem] flex items-center justify-center mx-auto mb-4 border border-emerald-500/30">
-                        <span class="text-4xl {{ $rm['bounce'] ? 'animate-bounce' : '' }}">
-                            {{ $rm['emoji'] }}
-                        </span>
+            <form wire:submit.prevent="applyRaise" class="flex min-h-0 flex-col" autocomplete="off">
+                <header class="flex items-start gap-4 border-b border-zinc-100 px-5 py-5 dark:border-zinc-800 sm:px-7">
+                    <div class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-2xl dark:bg-emerald-500/10">
+                        {{ $rm['emoji'] }}
                     </div>
-
-                    <h2 class="text-2xl font-black uppercase italic tracking-tighter text-white leading-none">
-                        {{ $rm['title'] }}
-                    </h2>
-
-                    <p class="text-[10px] text-emerald-300 font-bold uppercase tracking-widest mt-2 px-10">
-                        {{ $rm['subtitle'] }}
-                    </p>
-                </div>
-
-                {{-- CORPO --}}
-                <div class="space-y-6 px-6 pb-8 text-left">
-
-                    {{-- Selector de Modo --}}
-                    <div class="flex bg-white/10 dark:bg-zinc-800/40 p-1 rounded-2xl border border-white/10 backdrop-blur-sm">
-                        <button type="button" wire:click="$set('raiseMode', 'total')"
-                            class="flex-1 py-2 text-[9px] font-black uppercase rounded-xl transition-all
-                            {{ $raiseMode === 'total'
-                                ? 'bg-white/20 dark:bg-zinc-600 text-emerald-400 shadow-md'
-                                : 'text-zinc-400' }}">
-                            Definir Novo Total
-                        </button>
-
-                        <button type="button" wire:click="$set('raiseMode', 'addition')"
-                            class="flex-1 py-2 text-[9px] font-black uppercase rounded-xl transition-all
-                            {{ $raiseMode === 'addition'
-                                ? 'bg-white/20 dark:bg-zinc-600 text-emerald-400 shadow-md'
-                                : 'text-zinc-400' }}">
-                            Somar {{ $rm['noun'] }}
-                        </button>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Rendimento recorrente</p>
+                        <h2 class="mt-1 text-xl font-bold tracking-tight text-zinc-900 dark:text-white">{{ $rm['title'] }}</h2>
+                        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ $rm['subtitle'] }}</p>
                     </div>
+                    <button type="button" wire:click="closeRaiseModal" @click="close()" aria-label="Fechar"
+                        class="rounded-xl p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200">
+                        <flux:icon name="x-mark" class="size-5" />
+                    </button>
+                </header>
 
-                    {{-- Input com Label Dinâmica --}}
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black uppercase text-emerald-300 ml-1">
-                            {{ $raiseMode === 'total' ? $rm['totalQ'] : $rm['addQ'] }}
-                        </label>
+                <div class="min-h-0 space-y-6 overflow-y-auto px-5 py-5 text-left sm:px-7 sm:py-6">
 
-                        <div class="relative">
-                            <input
-                                type="number"
-                                step="0.01"
-                                wire:model="raiseValue"
-                                class="w-full h-20 bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-[1.5rem]
-                                       px-8 text-3xl font-black text-emerald-400 shadow-inner backdrop-blur-sm
-                                       focus:ring-4 focus:ring-emerald-500/20 transition-all text-center"
-                                placeholder="0,00"
-                                autofocus
-                            >
-                            <span class="absolute right-6 top-1/2 -translate-y-1/2 text-emerald-300 font-black text-xl">€</span>
+                    <section>
+                        <div class="mb-3">
+                            <h3 class="text-sm font-semibold text-zinc-900 dark:text-white">Como queres atualizar?</h3>
+                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Escolhe se a alteração é pontual ou automática.</p>
                         </div>
-                    </div>
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            @foreach($raiseModes as $mode => $option)
+                                <button type="button" wire:click="$set('raiseMode', '{{ $mode }}')" aria-pressed="{{ $raiseMode === $mode ? 'true' : 'false' }}"
+                                    class="rounded-2xl border p-4 text-left transition focus:outline-none focus:ring-2 focus:ring-emerald-500/40 {{ $raiseMode === $mode ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500 dark:bg-emerald-500/10' : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800' }}">
+                                    <span class="flex items-center justify-between gap-3">
+                                        <span class="text-sm font-semibold {{ $raiseMode === $mode ? 'text-emerald-800 dark:text-emerald-300' : 'text-zinc-800 dark:text-zinc-100' }}">{{ $option['title'] }}</span>
+                                        <span class="flex size-5 shrink-0 items-center justify-center rounded-full border {{ $raiseMode === $mode ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-zinc-300 dark:border-zinc-600' }}">
+                                            @if($raiseMode === $mode)<span class="text-xs">✓</span>@endif
+                                        </span>
+                                    </span>
+                                    <span class="mt-1 block text-xs leading-5 text-zinc-500 dark:text-zinc-400">{{ $option['description'] }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    </section>
 
-                    {{-- BOTÕES --}}
-                    <div class="flex gap-4 pt-2">
-                         <button type="button" wire:click="closeRaiseModal"
-                            @click="close()"
-                            class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px]
-                                   text-zinc-400 hover:text-white transition-colors">
-                            Cancelar
-                        </button>
+                    @if($raiseMode !== 'none')
+                    <section class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+                        <label for="raise-value" class="mb-2 block text-sm font-semibold text-zinc-900 dark:text-white">
+                            @if($raiseMode === 'total')
+                                {{ $rm['totalQ'] }}
+                            @elseif($raiseMode === 'addition')
+                                {{ $rm['addQ'] }}
+                            @elseif($raiseMode === 'annual_fixed')
+                                Valor do aumento anual
+                            @else
+                                Percentagem de aumento anual
+                            @endif
+                        </label>
+                        <div class="relative">
+                            <input id="raise-value" type="number" min="0.01" step="0.01" inputmode="decimal" wire:model="raiseValue"
+                                class="h-14 w-full rounded-xl border border-zinc-300 bg-white px-4 pr-12 text-lg font-semibold text-zinc-900 outline-none transition placeholder:font-normal placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
+                                placeholder="0,00" autofocus>
+                            <span class="absolute inset-y-0 right-3 flex items-center">
+                                @if(in_array($raiseMode, ['annual_fixed', 'annual_percentage'], true))
+                                    <span class="rounded-lg bg-emerald-100 px-3 py-1 text-lg font-black text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">{{ $selectedRaiseMode['symbol'] }}</span>
+                                @else
+                                    <span class="text-sm font-semibold text-zinc-500">{{ $selectedRaiseMode['symbol'] }}</span>
+                                @endif
+                            </span>
+                        </div>
+                        @if($raiseMode === 'total')
+                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Este valor passa a ser o novo montante recorrente.</p>
+                        @elseif($raiseMode === 'addition')
+                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Este montante será somado ao valor atual uma única vez.</p>
+                        @elseif($raiseMode === 'annual_percentage')
+                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Usa uma percentagem entre 0,01% e 100%. Cada aplicação considera o valor mais recente.</p>
+                        @else
+                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Este montante será somado ao valor atual em cada aplicação anual.</p>
+                        @endif
+                        @error('raiseValue')
+                            <p class="mt-2 text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </section>
+                    @endif
 
-                        <button type="submit"
-                            class="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase
-                                   text-[11px] tracking-widest shadow-xl shadow-emerald-500/30 transition-all
-                                   hover:scale-[1.02] active:scale-95">
-                            {{ $rm['confirm'] }} 💪
-                        </button>
-                    </div>
+                    @if(in_array($raiseMode, ['annual_fixed', 'annual_percentage'], true))
+                        <section>
+                            <label for="raise-next-date" class="mb-2 block text-sm font-semibold text-zinc-900 dark:text-white">Data do primeiro aumento</label>
+                            <input id="raise-next-date" type="date" wire:model="raiseNextDate" min="{{ now()->toDateString() }}"
+                                class="h-12 w-full rounded-xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white">
+                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">O aumento será aplicado nesta data e repetido anualmente.</p>
+                            @error('raiseNextDate')
+                                <p class="mt-2 text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </section>
+                    @endif
+
+                    @if($hasAnnualRaise && $raiseMode !== 'none')
+                        <div class="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">Aumento anual ativo</p>
+                                <p class="mt-1 text-xs text-amber-800/80 dark:text-amber-200/70">Podes atualizar a configuração acima ou desativar a aplicação automática.</p>
+                            </div>
+                            <button type="button" wire:click="cancelAnnualRaise" wire:confirm="Queres desativar o aumento anual automático?"
+                                class="shrink-0 rounded-xl border border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 dark:border-amber-500/30 dark:bg-zinc-900 dark:text-amber-200 dark:hover:bg-amber-500/10">
+                                Desativar
+                            </button>
+                        </div>
+                    @endif
                 </div>
+
+                <footer class="flex flex-col-reverse gap-2 border-t border-zinc-100 bg-zinc-50 px-5 py-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:justify-end sm:px-7">
+                    <button type="button" wire:click="closeRaiseModal" @click="close()"
+                        class="inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-200/70 dark:text-zinc-300 dark:hover:bg-zinc-800">
+                        Voltar
+                    </button>
+                    <button type="submit"
+                        class="inline-flex h-11 items-center justify-center rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/20">
+                        {{ $raiseMode === 'none' ? 'Guardar sem aumento' : $rm['confirm'] }}
+                    </button>
+                </footer>
 
             </form>
         </div>
@@ -2054,144 +2834,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<br>
-        {{-- ============================================================= --}}
-        {{-- ENTRADAS EXTRAS                                               --}}
-        {{-- ============================================================= --}}
-        <div class="space-y-6">
-
-            {{-- Título --}}
-            <div class="flex items-center justify-between px-2">
-                <div class="flex items-center gap-3">
-                    <div class="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-500">
-                        <flux:icon name="sparkles" variant="outline" class="size-4" />
-                    </div>
-                    <h2 class="text-sm font-black uppercase tracking-widest text-zinc-400">
-                        Entradas Extras ({{ now()->translatedFormat('M') }})
-                    </h2>
-                </div>
-
-                <flux:badge
-                    variant="success"
-                    class="bg-emerald-500/10 text-emerald-600 text-[10px] font-black uppercase px-2 py-0.5 border-none"
-                >
-                    {{ $extraIncomes->count() }} Lançamentos
-                </flux:badge>
-            </div>
-
-            {{-- Tabela --}}
-            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden">
-
-                <div class="overflow-x-auto">
-                                       <table class="w-full text-left border-collapse">
-                        <thead class="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800">
-                            <tr class="text-[9px] uppercase text-zinc-400 font-black tracking-widest">
-                                <th class="p-5">Data</th>
-                                <th class="p-5">Descrição</th>
-                                <th class="p-5">Fonte</th>
-                                <th class="p-5 text-right px-8">Valor</th>
-                                <th class="p-5 w-10"></th>
-                            </tr>
-                        </thead>
-
-                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/50">
-                            @forelse($extraIncomes as $extra)
-                                <tr class="hover:bg-emerald-50/30 dark:hover:bg-emerald-500/5 transition-all group">
-                                    <td class="p-5">
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-black dark:text-white leading-none">
-                                                {{ \Carbon\Carbon::parse($extra->received_at)->format('d') }}
-                                            </span>
-                                            <span class="text-[9px] font-black text-zinc-400 uppercase mt-1">
-                                                {{ \Carbon\Carbon::parse($extra->received_at)->translatedFormat('M') }}
-                                            </span>
-                                        </div>
-                                    </td>
-
-                                    <td class="p-5">
-                                        <p class="text-sm font-bold dark:text-white uppercase tracking-tight">
-                                            {{ $extra->description }}
-                                        </p>
-
-                                        @if($extra->notes)
-                                            <p class="text-[10px] text-zinc-400 italic mt-0.5 truncate max-w-[140px] sm:max-w-[180px]">
-                                                {{ $extra->notes }}
-                                            </p>
-                                        @endif
-
-                                        @if($extra->tax_estimate)
-                                            <p class="text-[9px] text-amber-500 font-bold mt-0.5">
-                                                ~{{ $extra->tax_estimate }}% imposto
-                                            </p>
-                                        @endif
-
-                                        <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $extra])</div>
-                                    </td>
-
-                                    <td class="p-5">
-                                        @php
-                                            $sourceMap = [
-                                                'emprego'      => ['icon' => '💼', 'color' => 'text-blue-600'],
-                                                'imobiliario'  => ['icon' => '🏠', 'color' => 'text-sky-600'],
-                                                'freelance'    => ['icon' => '💻', 'color' => 'text-purple-600'],
-                                                'investimento' => ['icon' => '📈', 'color' => 'text-emerald-600'],
-                                                'reforma'      => ['icon' => '🏦', 'color' => 'text-indigo-600'],
-                                                'bolsa'        => ['icon' => '🎓', 'color' => 'text-fuchsia-600'],
-                                                'outro'        => ['icon' => '✨', 'color' => 'text-zinc-500'],
-                                            ];
-                                        @endphp
-
-                                        <span class="text-[10px] font-black uppercase px-2 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
-                                            {{ $sourceMap[$extra->source ?? 'outro']['icon'] ?? '✨' }}
-                                            {{ ucfirst($extra->source ?? 'outro') }}
-                                        </span>
-                                    </td>
-
-                                    <td class="p-5 text-right px-8">
-                                        <span class="text-lg font-black text-emerald-600 tracking-tighter">
-                                            +{{ number_format($extra->amount, 2, ',', ' ') }}€
-                                        </span>
-                                    </td>
-
-                                    <td class="p-5">
-                                        <flux:button
-                                            wire:click="deleteExtra({{ $extra->id }})"
-                                            variant="ghost"
-                                            icon="trash"
-                                            size="xs"
-                                            color="red"
-                                            class="opacity-0 group-hover:opacity-100 transition-opacity"
-                                        />
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="p-16 sm:p-20 text-center">
-                                        <p class="text-zinc-400 font-black uppercase text-[10px] tracking-widest">
-                                            Sem ganhos extra este mês
-                                        </p>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
 
 
 
@@ -2231,7 +2873,7 @@
                     </div>
                     <div class="flex-1">
                         <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white leading-none">Receita Extra</h2>
-                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Regista uma entrada pontual ou recorrente</p>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Regista uma entrada ou serviço extra</p>
                     </div>
                     <button type="button" @click="close(); $wire.closeExtraModal()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
                 </div>
@@ -2241,61 +2883,61 @@
 
                     {{-- DESCRIÇÃO --}}
                     <div class="relative">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">Origem do Ganho</label>
-                        <input type="text" wire:model="description" placeholder="Ex: Freelance, Venda, Bónus..." class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">{{ $extraSalaryId ? 'Serviço extra realizado' : 'Descrição' }}</label>
+                        <input type="text" wire:model="description" placeholder="{{ $extraSalaryId ? 'Ex: Serviço técnico, turno extra...' : 'Ex: Serviço, venda...' }}" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
                     </div>
 
                     {{-- VALOR + MOEDA + DATA --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        @if($extraSalaryId)
+                            <div class="relative">
+                                <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Valor por serviço ({{ strtoupper($currency) }})</label>
+                                <input type="number" min="0.01" step="0.01" wire:model.live="serviceUnitAmount" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
+                                @error('serviceUnitAmount')<p class="mt-1 text-xs font-bold text-red-600">{{ $message }}</p>@enderror
+                            </div>
+                            <div class="relative">
+                                <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Serviços feitos este mês</label>
+                                <input type="number" min="1" max="1000" step="1" wire:model.live="serviceQuantity" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
+                                @error('serviceQuantity')<p class="mt-1 text-xs font-bold text-red-600">{{ $message }}</p>@enderror
+                            </div>
+                        @else
                         <div class="relative">
                             <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Valor ({{ strtoupper($currency) }})</label>
                             <input type="number" step="0.01" wire:model="amount" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
                         </div>
-                        <div class="relative">
-                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Moeda</label>
-                            <select wire:model="currency" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
-                                @foreach($currencyOptions as $code => $label)
-                                    <option value="{{ $code }}">{{ $code }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                        @endif
                         <div class="relative">
                             <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Data</label>
                             <input type="date" wire:model="received_at" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none">
                         </div>
+                        @if($extraSalaryId)
+                            <div class="relative">
+                                <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Total do serviço ({{ strtoupper($currency) }})</label>
+                                <input type="number" wire:model="amount" readonly class="w-full h-14 bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-200 dark:border-emerald-900 rounded-2xl px-5 text-lg font-black text-emerald-700 dark:text-emerald-300 outline-none">
+                                @error('amount')<p class="mt-1 text-xs font-bold text-red-600">{{ $message }}</p>@enderror
+                            </div>
+                        @endif
                     </div>
 
-                    {{-- FONTE + FREQUÊNCIA --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @if($salaryContractOptions->isNotEmpty() && ! $extraSalaryId)
                         <div class="relative">
-                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">Fonte</label>
-                            <select wire:model="source" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
-                                <option value="emprego">💼 Emprego</option>
-                                <option value="imobiliario">🏠 Renda Imobiliária</option>
-                                <option value="freelance">💻 Freelance</option>
-                                <option value="investimento">📈 Investimento</option>
-                                <option value="reforma">🏦 Reforma / Pensão</option>
-                                <option value="bolsa">🎓 Bolsa de Estudo</option>
-                                <option value="outro">✨ Outro</option>
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">Associar ao contrato</label>
+                            <select wire:model.live="extraSalaryId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                                <option value="">Sem contrato associado</option>
+                                @foreach($salaryContractOptions as $salaryContract)
+                                    <option value="{{ $salaryContract->id }}">{{ $salaryContract->description }}</option>
+                                @endforeach
                             </select>
+                            <p class="mt-2 text-xs text-zinc-500">A entrada aparece no total anual e no histórico do contrato escolhido.</p>
                         </div>
-                        <div class="relative">
-                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-zinc-400 z-10">Frequência</label>
-                            <select wire:model="frequency" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
-                                <option value="pontual">📌 Pontual</option>
-                                <option value="semanal">📅 Semanal</option>
-                                <option value="mensal">🔁 Mensal</option>
-                                <option value="anual">📆 Anual</option>
-                            </select>
-                        </div>
-                    </div>
+                    @endif
 
                     {{-- IMPOSTO ESTIMADO --}}
                     <div class="relative">
                         <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-amber-600 z-10">Imposto Estimado (%)</label>
                         <div class="relative">
-                            <input type="number" step="0.1" min="0" max="100" wire:model="tax_estimate" placeholder="Ex: 25 (IRS, IVA...)" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-amber-500 transition-all">
-                            <span class="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 font-black text-sm">%</span>
+                        <input type="number" step="0.1" min="0" max="100" wire:model="tax_estimate" placeholder="Ex: 25 (IRS, IVA...)" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl pl-5 pr-16 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-amber-500 transition-all">
+                        <span class="absolute right-4 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-xl border-2 border-amber-300 bg-amber-100 text-lg font-black text-amber-700 shadow-sm dark:border-amber-500/60 dark:bg-amber-500/20 dark:text-amber-300">%</span>
                         </div>
                         @if($tax_estimate && $amount)
                             <p class="text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-1.5">
@@ -2314,12 +2956,20 @@
                     {{-- DESTINO DO DINHEIRO --}}
                     <div class="relative">
                         <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">Onde entra este valor?</label>
-                        <select wire:model="bankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-emerald-500 transition-all">
-                            <option value="">💵 Dinheiro Físico</option>
+                        <select wire:model="extraDestination" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-emerald-500 transition-all">
+                            @if($extraSalaryId)
+                                <option value="salary">💼 Adicionar ao salário do próximo mês</option>
+                            @endif
+                            <option value="cash">💵 Dinheiro Físico</option>
                             @foreach($this->bankAccounts as $acc)
-                                <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @if((int) $acc->user_id === (int) auth()->id())
+                                    <option value="bank:{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endif
                             @endforeach
                         </select>
+                        @if($extraSalaryId && $extraDestination === 'salary')
+                            <p class="mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-300">O total calculado (valor por serviço × número de serviços) será somado ao próximo salário na data prevista, sem alterar o salário base do contrato.</p>
+                        @endif
                     </div>
                 </div>
 
@@ -2416,7 +3066,7 @@
                 {{-- BODY --}}
                 <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
 {{-- SELETOR DE VÍNCULO EMPRESARIAL --}}
-<div class="relative mb-8 text-left">
+<div class="relative mb-3 text-left">
     <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
         Vincular a uma Empresa
     </label>
@@ -2550,7 +3200,7 @@
                         >
                             <option value="" class="bg-white text-zinc-900">💵 Dinheiro Físico</option>
                             @foreach($this->bankAccounts as $acc)
-                                <option value="{{ $acc->id }}" class="bg-white text-zinc-900">🏦 {{ $acc->name }}</option>
+                                <option value="{{ $acc->id }}" class="bg-white text-zinc-900">🏦 Banco — {{ $acc->name }}</option>
                             @endforeach
                         </select>
                     </div>

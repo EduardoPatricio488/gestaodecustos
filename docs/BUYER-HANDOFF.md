@@ -56,11 +56,13 @@ npm run build
 php artisan serve
 ```
 
-Para desenvolvimento com Vite/queue:
+Para desenvolvimento com Vite, queue e scheduler (incluindo pagamentos salariais automáticos):
 
 ```bash
 composer run dev
 ```
+
+Se iniciares apenas `php artisan serve`, inicia também `php artisan schedule:work` noutro terminal para executar as tarefas agendadas.
 
 O projecto usa `database` para sessões/cache/queue por defeito, o que simplifica uma instalação inicial. Em escala, Redis é preferível.
 

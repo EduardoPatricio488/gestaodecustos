@@ -1,7 +1,7 @@
 <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5 group hover:shadow-lg hover:shadow-black/5 transition-all duration-300 relative overflow-hidden">
 
     {{-- Background accent --}}
-    <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"
+    <div class="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"
          style="background: linear-gradient(135deg, {{ $acc->color ?? '#6366f1' }}08 0%, transparent 60%)"></div>
 
     {{-- Header --}}
@@ -18,14 +18,18 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button wire:click="openAccountModal({{ $acc->id }})"
-                    class="size-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+        <div class="flex items-center gap-1">
+            <button type="button" wire:click="openAccountModal({{ $acc->id }})"
+                    aria-label="Editar conta {{ $acc->name }}"
+                    title="Editar conta"
+                    class="size-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
                 <flux:icon name="pencil" variant="micro" class="size-3.5 text-zinc-500" />
             </button>
-            <button wire:click="deleteAccount({{ $acc->id }})"
-                    onclick="return confirm('Eliminar a conta \'{{ addslashes($acc->name) }}\'?')"
-                    class="size-7 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+            <button type="button" wire:click="deleteAccount({{ $acc->id }})"
+                    wire:confirm="Eliminar a conta '{{ $acc->name }}'? As transferências e transações associadas também serão eliminadas."
+                    aria-label="Eliminar conta {{ $acc->name }}"
+                    title="Eliminar conta"
+                    class="size-8 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
                 <flux:icon name="trash" variant="micro" class="size-3.5 text-red-500" />
             </button>
         </div>

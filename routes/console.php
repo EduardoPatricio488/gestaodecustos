@@ -78,3 +78,13 @@ Schedule::command('backup:database')
     ->dailyAt('02:30')
     ->withoutOverlapping(120)
     ->onOneServer();
+
+Schedule::command('incomes:apply-annual-raises')
+    ->dailyAt('00:15')
+    ->withoutOverlapping(60)
+    ->onOneServer();
+
+Schedule::command('salary:process-monthly-payments')
+    ->dailyAt('08:45')
+    ->withoutOverlapping(60)
+    ->onOneServer();

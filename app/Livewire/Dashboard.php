@@ -596,9 +596,7 @@ class Dashboard extends Component
         $projectionStatus = $projectedBalance < 0 ? 'critical' : ($projectedBalance < ($totalMonthIncome * 0.15) ? 'warning' : 'stable');
 
         $topBankAccounts = Cache::remember("dashboard:top-accounts:{$currentWs->id}:{$user->id}", 60, fn () => BankAccount::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
-            ->withSum('incomes as current_balance_income_total', 'amount')
-            ->withSum('expenses as current_balance_expense_total', 'amount')
-            ->withSum(['recurringIncomes as current_balance_recurring_due' => fn ($query) => $query->where('is_active', true)->where('day_of_month', '<=', now()->day)], 'amount')
+            ->withCurrentBalanceTotals()
             ->get(['id', 'name', 'balance', 'icon', 'color'])
             ->map(fn ($account) => [
                 'name' => $account->name,

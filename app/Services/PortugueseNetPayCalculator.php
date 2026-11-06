@@ -29,6 +29,7 @@ class PortugueseNetPayCalculator
      *     social_security: float,
      *     irs: float,
      *     irs_before_jovem: float,
+     *     irs_jovem_estimated_savings: float,
      *     meal_total: float,
      *     meal_exempt: float,
      *     meal_taxable: float,
@@ -37,7 +38,8 @@ class PortugueseNetPayCalculator
      *     marginal_rate: float,
      *     effective_irs_rate: float,
      *     irs_jovem_rate: float,
-     *     irs_jovem_exempt_income: float
+     *     irs_jovem_exempt_income: float,
+     *     irs_jovem_eligible_income: float
      * }
      */
     public function calculate(
@@ -71,20 +73,13 @@ class PortugueseNetPayCalculator
 
         $jovemRate = $irsJovem ? $this->irsJovemExemptionRate($irsJovemYear) : 0.0;
         $monthlyCap = round(self::IRS_JOVEM_ANNUAL_CAP / 14, 2);
-        $exemptIncome = 0.0;
-        $irs = $irsNormal;
-
-        if ($irsJovem && $taxableRemuneration > 0) {
-            $exemptIncome = min($taxableRemuneration * $jovemRate, $monthlyCap);
-            $taxableShare = max(0, $taxableRemuneration - $exemptIncome);
-
-            if ($irsNormal > 0) {
-                $effective = $irsNormal / $taxableRemuneration;
-                $irs = round($taxableShare * $effective, 2);
-            } else {
-                $irs = 0.0;
-            }
-        }
+        $eligibleIncome = $irsJovem ? $gross : 0.0;
+        $exemptIncome = $irsJovem ? min($gross * $jovemRate, $monthlyCap) : 0.0;
+        $withholdingOnExemptedBase = $irsJovem
+            ? $this->withholding(max(0, $taxableRemuneration - $exemptIncome), $civilStatus, $dependents, $isDisabled)['irs']
+            : $irsNormal;
+        $estimatedSavings = round(max(0, $irsNormal - $withholdingOnExemptedBase), 2);
+        $irs = $withholdingOnExemptedBase;
 
         $net = round($gross - $ss - $irs + $mealTotal, 2);
 
@@ -94,6 +89,7 @@ class PortugueseNetPayCalculator
             'social_security' => $ss,
             'irs' => $irs,
             'irs_before_jovem' => $irsNormal,
+            'irs_jovem_estimated_savings' => $estimatedSavings,
             'meal_total' => $mealTotal,
             'meal_exempt' => $mealExempt,
             'meal_taxable' => $mealTaxable,
@@ -103,6 +99,7 @@ class PortugueseNetPayCalculator
             'effective_irs_rate' => $taxableRemuneration > 0 ? round($irs / $taxableRemuneration, 4) : 0.0,
             'irs_jovem_rate' => $jovemRate,
             'irs_jovem_exempt_income' => round($exemptIncome, 2),
+            'irs_jovem_eligible_income' => round($eligibleIncome, 2),
         ];
     }
 

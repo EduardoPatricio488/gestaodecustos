@@ -16,7 +16,8 @@ class Income extends Model
     use BelongsToWorkspace, LogsActivity;
 
     protected $fillable = [
-        'user_id', 'workspace_id', 'bank_account_id', 'description', 'amount', 'currency',
+        'user_id', 'workspace_id', 'salary_recurring_income_id', 'salary_income_type', 'service_unit_amount', 'service_quantity',
+        'bank_account_id', 'added_to_salary', 'description', 'amount', 'currency',
         'amount_converted', 'received_at', 'type', 'source', 'frequency', 'tax_estimate', 'notes',
     ];
 
@@ -24,6 +25,9 @@ class Income extends Model
         'received_at' => 'date',
         'amount' => 'decimal:2',
         'amount_converted' => 'decimal:2',
+        'service_unit_amount' => 'decimal:2',
+        'service_quantity' => 'integer',
+        'added_to_salary' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -61,6 +65,11 @@ class Income extends Model
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class);
+    }
+
+    public function salaryContract(): BelongsTo
+    {
+        return $this->belongsTo(RecurringIncome::class, 'salary_recurring_income_id');
     }
 
     public function goalContributions(): HasMany

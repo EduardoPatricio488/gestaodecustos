@@ -8,8 +8,10 @@ use App\Models\BankPatrimony;
 use App\Models\BankReserve;
 use App\Models\BankTransfer;
 use App\Models\BankTransitItem;
+use App\Models\Workspace;
 use App\Services\BancoService;
 use App\Services\BusinessAccessService;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -259,12 +261,31 @@ class BancoHub extends Component
 
     private function saveAccount(int $wsId): void
     {
-        BankAccount::updateOrCreate(['id' => $this->editingId, 'workspace_id' => $wsId], ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'name' => $this->acc_name, 'type' => $this->acc_type, 'balance' => $this->acc_balance, 'currency' => $this->acc_currency, 'color' => $this->acc_color, 'icon' => $this->acc_icon, 'status' => $this->acc_status, 'description' => $this->acc_description ?: null, 'bank_name' => $this->acc_bank_name ?: null, 'iban' => $this->acc_iban ?: null, 'swift' => $this->acc_swift ?: null, 'holder_name' => $this->acc_holder ?: null, 'is_business' => $this->acc_is_business, 'include_in_total' => $this->acc_include, 'alert_below' => $this->acc_alert_below ?: null, 'opened_at' => $this->acc_opened_at ?: null]);
+        $this->persistWorkspaceRecord(BankAccount::class, $wsId, [
+            'workspace_id' => $wsId,
+            'user_id' => auth()->id(),
+            'name' => $this->acc_name,
+            'type' => $this->acc_type,
+            'balance' => $this->acc_balance,
+            'currency' => $this->acc_currency,
+            'color' => $this->acc_color,
+            'icon' => $this->acc_icon,
+            'status' => $this->acc_status,
+            'description' => $this->acc_description ?: null,
+            'bank_name' => $this->acc_bank_name ?: null,
+            'iban' => $this->acc_iban ?: null,
+            'swift' => $this->acc_swift ?: null,
+            'holder_name' => $this->acc_holder ?: null,
+            'is_business' => $this->acc_is_business,
+            'include_in_total' => $this->acc_include,
+            'alert_below' => $this->acc_alert_below ?: null,
+            'opened_at' => $this->acc_opened_at ?: null,
+        ]);
     }
 
     private function saveTransfer(int $wsId): void
     {
-        $transfer = BankTransfer::updateOrCreate(['id' => $this->editingId, 'workspace_id' => $wsId], ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'from_account_id' => $this->tr_from_id, 'to_account_id' => $this->tr_to_id, 'amount' => $this->tr_amount, 'description' => $this->tr_description ?: null, 'transferred_at' => $this->tr_date, 'status' => $this->tr_status, 'notes' => $this->tr_notes ?: null]);
+        $transfer = $this->persistWorkspaceRecord(BankTransfer::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'from_account_id' => $this->tr_from_id, 'to_account_id' => $this->tr_to_id, 'amount' => $this->tr_amount, 'description' => $this->tr_description ?: null, 'transferred_at' => $this->tr_date, 'status' => $this->tr_status, 'notes' => $this->tr_notes ?: null]);
         if ($transfer->status === 'completed' && ! $this->editingId) {
             BankAccount::where('workspace_id', $wsId)->whereKey($this->tr_from_id)->decrement('balance', $this->tr_amount);
             BankAccount::where('workspace_id', $wsId)->whereKey($this->tr_to_id)->increment('balance', $this->tr_amount);
@@ -273,29 +294,49 @@ class BancoHub extends Component
 
     private function saveReserve(int $wsId): void
     {
-        BankReserve::updateOrCreate(['id' => $this->editingId, 'workspace_id' => $wsId], ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'name' => $this->res_name, 'amount' => $this->res_amount, 'target_amount' => $this->res_target ?: null, 'target_date' => $this->res_target_date ?: null, 'color' => $this->res_color, 'icon' => $this->res_icon, 'description' => $this->res_description ?: null, 'is_business' => $this->res_is_business, 'status' => 'active']);
+        $this->persistWorkspaceRecord(BankReserve::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'name' => $this->res_name, 'amount' => $this->res_amount, 'target_amount' => $this->res_target ?: null, 'target_date' => $this->res_target_date ?: null, 'color' => $this->res_color, 'icon' => $this->res_icon, 'description' => $this->res_description ?: null, 'is_business' => $this->res_is_business, 'status' => 'active']);
     }
 
     private function saveTransit(int $wsId): void
     {
-        BankTransitItem::updateOrCreate(['id' => $this->editingId, 'workspace_id' => $wsId], ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'name' => $this->trs_name, 'amount' => $this->trs_amount, 'direction' => $this->trs_direction, 'type' => $this->trs_type, 'origin' => $this->trs_origin ?: null, 'destination' => $this->trs_destination ?: null, 'expected_date' => $this->trs_expected_date ?: null, 'description' => $this->trs_description ?: null, 'is_business' => $this->trs_is_business, 'status' => 'pending']);
+        $this->persistWorkspaceRecord(BankTransitItem::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'name' => $this->trs_name, 'amount' => $this->trs_amount, 'direction' => $this->trs_direction, 'type' => $this->trs_type, 'origin' => $this->trs_origin ?: null, 'destination' => $this->trs_destination ?: null, 'expected_date' => $this->trs_expected_date ?: null, 'description' => $this->trs_description ?: null, 'is_business' => $this->trs_is_business, 'status' => 'pending']);
     }
 
     private function saveCredit(int $wsId): void
     {
-        BankCredit::updateOrCreate(['id' => $this->editingId, 'workspace_id' => $wsId], ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'name' => $this->crd_name, 'amount' => $this->crd_amount, 'category' => $this->crd_category, 'due_date' => $this->crd_due_date ?: null, 'notes' => $this->crd_notes ?: null, 'is_business' => $this->crd_business, 'status' => 'pending']);
+        $this->persistWorkspaceRecord(BankCredit::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'name' => $this->crd_name, 'amount' => $this->crd_amount, 'category' => $this->crd_category, 'due_date' => $this->crd_due_date ?: null, 'notes' => $this->crd_notes ?: null, 'is_business' => $this->crd_business, 'status' => 'pending']);
     }
 
     private function savePatrimony(int $wsId): void
     {
-        BankPatrimony::updateOrCreate(['id' => $this->editingId, 'workspace_id' => $wsId], ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'type' => $this->pat_type, 'name' => $this->pat_name, 'value' => $this->pat_value, 'purchase_price' => $this->pat_purchase_price ?: null, 'purchase_date' => $this->pat_purchase_date ?: null, 'description' => $this->pat_description ?: null, 'is_business' => $this->pat_is_business, 'status' => 'active']);
+        $this->persistWorkspaceRecord(BankPatrimony::class, $wsId, ['workspace_id' => $wsId, 'user_id' => auth()->id(), 'type' => $this->pat_type, 'name' => $this->pat_name, 'value' => $this->pat_value, 'purchase_price' => $this->pat_purchase_price ?: null, 'purchase_date' => $this->pat_purchase_date ?: null, 'description' => $this->pat_description ?: null, 'is_business' => $this->pat_is_business, 'status' => 'active']);
+    }
+
+    private function persistWorkspaceRecord(string $modelClass, int $wsId, array $attributes): Model
+    {
+        $record = $this->editingId
+            ? $modelClass::where('workspace_id', $wsId)->findOrFail($this->editingId)
+            : new $modelClass;
+
+        $record->fill($attributes);
+        $record->save();
+
+        return $record;
     }
 
     public function deleteAccount(int $id): void
     {
         $this->authorizeBankMutation();
-        BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))->findOrFail($id)->delete();
-        $this->dispatch('toast', text: 'Conta eliminada.');
+        $user = auth()->user();
+        $workspaceType = Workspace::whereKey($user->current_workspace_id)->value('type');
+        $accountQuery = BankAccount::where('workspace_id', $user->current_workspace_id);
+        if (! in_array($workspaceType, ['business', 'company'], true)) {
+            $accountQuery->where('user_id', $user->id);
+        }
+        $account = $accountQuery->findOrFail($id);
+        $account->delete();
+
+        $this->dispatch('toast', variant: 'success', text: 'Conta eliminada com sucesso.');
     }
 
     public function deleteReserve(int $id): void

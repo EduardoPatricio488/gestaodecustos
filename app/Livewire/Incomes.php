@@ -86,7 +86,8 @@ class Incomes extends Component
 
         // 2. Rendimentos fixos/recorrentes ativos (tabela recurring_incomes) — contam como
         // registos também, só que representam o rendimento esperado este mês.
-        $recurringItems = RecurringIncome::where('workspace_id', $workspaceId)
+        $recurringItems = RecurringIncome::with('bankAccount')
+            ->where('workspace_id', $workspaceId)
             ->where('user_id', $user->id)
             ->where('is_active', true)
             ->when($this->search, fn ($q) => $q->where('description', 'like', '%'.$this->search.'%'))
@@ -94,6 +95,13 @@ class Incomes extends Component
             ->get()
             ->map(function ($recurring) {
                 $day = max(1, min(now()->daysInMonth, (int) ($recurring->day_of_month ?: 1)));
+                $metadata = $recurring->metadata ?? [];
+                $isMealCardAllowance = ($metadata['income_type'] ?? null) === 'meal_card_allowance';
+                $mealCardAmount = $isMealCardAllowance
+                    ? (float) $recurring->amount
+                    : ((($metadata['meal_allowance_destination'] ?? null) === 'meal_card' && empty($metadata['meal_card_income_id']))
+                    ? min((float) ($metadata['calculated_sa'] ?? 0), (float) $recurring->amount)
+                    : 0.0);
 
                 return (object) [
                     'key' => 'recurring-'.$recurring->id,
@@ -106,6 +114,10 @@ class Incomes extends Component
                     'received_at' => now()->copy()->day($day),
                     'tax_estimate' => $recurring->tax_estimate,
                     'bank_account_name' => $recurring->bankAccount?->name,
+                    'meal_card_amount' => $mealCardAmount,
+                    'salary_amount' => (float) $recurring->amount - $mealCardAmount,
+                    'is_meal_card_allowance' => $isMealCardAllowance,
+                    'linked_salary_description' => $metadata['linked_salary_description'] ?? null,
                 ];
             });
 
