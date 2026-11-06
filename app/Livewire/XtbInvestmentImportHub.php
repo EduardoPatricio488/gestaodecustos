@@ -605,7 +605,7 @@ class XtbInvestmentImportHub extends Component
 
         // Diagnóstico temporário do ambiente real do pedido Livewire.
         $runtimePopplerRoot = getenv('LOCALAPPDATA')
-            ? rtrim(str_replace('\\\\', '/', getenv('LOCALAPPDATA')), '/').'/Microsoft/WinGet/Packages'
+            ? rtrim(str_replace('\\', '/', getenv('LOCALAPPDATA')), '/').'/Microsoft/WinGet/Packages'
             : null;
         Log::info('AforroNet executable runtime diagnostics', [
             'pid' => getmypid(),
