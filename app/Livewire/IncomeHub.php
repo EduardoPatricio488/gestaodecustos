@@ -2355,6 +2355,8 @@ class IncomeHub extends Component
             ->sum(fn (Income $income) => (float) ($income->amount_converted ?? $income->amount));
 
         $thisMonthSalaryTotal = $thisMonthPaidSalaryNet + $thisMonthPendingSalaryNet;
+        $thisMonthPaidSalaryTotal = $thisMonthPaidSalaryNet;
+        $thisMonthPendingSalaryTotal = $thisMonthPendingSalaryNet;
         $thisMonthReceived = $thisMonthIncomeTotal + $thisMonthSalaryTotal + $thisMonthSalaryExtras;
 
         // Média mensal (últimos 6 meses) — inclui salário fixo
