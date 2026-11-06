@@ -141,287 +141,163 @@
 {{-- TAB: ANÁLISE IA (ISOLADA) --}}
 {{-- ========================= --}}
 @if($tab === 'analysis')
-    <div class="space-y-6 mt-6 min-h-[600px]">
+    @php
+        $advisorCurrency = auth()->user()->currentWorkspace?->currency ?? 'EUR';
+        $money = fn ($value) => number_format((float) $value, 2, ',', ' ').' '.$advisorCurrency;
+        $hasCashflowData = ($advisorData['income_records'] ?? 0) > 0 || ($advisorData['expense_records'] ?? 0) > 0;
+        $monthlySurplus = (float) ($advisorData['monthly_surplus'] ?? 0);
+        $topShare = (float) ($advisorData['top_asset_percentage'] ?? 0);
+        $riskLabel = $advisorData['asset_count'] === 0 ? 'Sem carteira' : (($topShare >= 60 || $advisorData['asset_count'] < 3) ? 'Concentração elevada' : ($topShare >= 35 ? 'Concentração moderada' : 'Mais distribuída'));
+    @endphp
 
-        {{-- Barra de pesquisa --}}
-        <div class="relative flex-1" x-data @keydown.arrow-down="$wire.moveHighlight('down')" @keydown.arrow-up="$wire.moveHighlight('up')" @keydown.enter.prevent="$wire.confirmSelection()">
-
-            <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1 block">
-                Empresa / Ticker
-            </label>
-
-            <div class="relative flex flex-col md:flex-row gap-4">
-                <div class="relative flex-1">
-                    <input
-                        wire:model.live.debounce.300ms="companyQuery"
-                        type="text"
-                        placeholder="Ex: AAPL, TSLA, MSFT, NVDA..."
-                        class="w-full rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                        wire:loading.class="opacity-50 cursor-wait"
-                        wire:target="selectSuggestion, analyzeCompany">
-
-                    {{-- SUGESTÕES --}}
-                    @if(!empty($suggestions))
-                        <div class="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl z-50 overflow-hidden">
-                            @foreach($suggestions as $index => $item)
-                                <button
-                                    type="button"
-                                    wire:click="selectSuggestion('{{ $item['ticker'] }}')"
-                                    class="w-full flex items-center gap-3 px-4 py-3 text-sm transition-all
-                                        {{ $highlightIndex === $index ? 'bg-indigo-600 text-white' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800' }}">
-
-                                    <img src="{{ $item['logo'] }}" alt="Logótipo de {{ $item['ticker'] }}" class="w-6 h-6 rounded-md object-contain bg-white" />
-
-                                    <div class="flex flex-col text-left">
-                                        <span class="font-black">{{ $item['ticker'] }}</span>
-                                        <span class="text-[10px] {{ $highlightIndex === $index ? 'text-indigo-100' : 'text-zinc-500' }}">{{ $item['name'] }}</span>
-                                    </div>
-                                </button>
-                            @endforeach
-                        </div>
-                    @endif
-
-                    {{-- HISTÓRICO --}}
-                    @if(empty($companyQuery) && empty($suggestions) && !empty($recentCompanies))
-                        <div class="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl z-50">
-                            <p class="px-4 py-2 text-[10px] uppercase tracking-widest text-zinc-400 font-black">Últimas analisadas</p>
-                            @foreach($recentCompanies as $ticker)
-                                @php $item = $this->getCompanyData($ticker); @endphp
-                                @if($item)
-                                    <button
-                                        type="button"
-                                        wire:click="selectSuggestion('{{ $item['ticker'] }}')"
-                                        class="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                                        <img src="{{ $item['logo'] }}" alt="Logótipo de {{ $item['symbol'] ?? $item['name'] ?? 'Investimento' }}" class="w-5 h-5 rounded-md" />
-                                        <span class="font-black text-xs">{{ $item['ticker'] }}</span>
-                                        <span class="text-zinc-500 text-[10px] ml-2">{{ $item['name'] }}</span>
-                                    </button>
-                                @endif
-                            @endforeach
-                        </div>
-                    @endif
+    <div class="space-y-7 mt-6">
+        <section class="relative overflow-hidden rounded-[2rem] border border-indigo-500/20 bg-gradient-to-br from-zinc-950 via-indigo-950 to-zinc-950 p-6 sm:p-9 text-white shadow-2xl">
+            <div class="absolute -right-16 -top-20 size-72 rounded-full bg-indigo-500/20 blur-3xl"></div>
+            <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div class="max-w-2xl">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-indigo-300/20 bg-indigo-400/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-200">
+                        <flux:icon name="sparkles" class="size-3.5" /> Consultor Financeiro IA
+                    </div>
+                    <h2 class="mt-4 text-3xl sm:text-4xl font-black tracking-tight">A tua carteira, com uma estratégia.</h2>
+                    <p class="mt-3 max-w-xl text-sm leading-6 text-zinc-300">Uma visão conjunta dos teus investimentos e dos teus movimentos financeiros para perceberes o que tens, quanto poderás investir e onde deves ter atenção.</p>
                 </div>
-
-                <div class="flex gap-2">
-                    <select
-                        wire:model="aiProvider"
-                        class="rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-[11px] font-black uppercase tracking-widest outline-none">
-                        <option value="openrouter">GPT‑4o</option>
-                        <option value="gemini">Gemini</option>
-                    </select>
-
-                    <flux:button
-                        wire:click="analyzeCompany"
-                        variant="primary"
-                        wire:loading.attr="disabled"
-                        class="relative rounded-2xl px-8 py-2 h-12 font-black uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 min-w-[140px]">
-
-                        <span wire:loading.remove wire:target="analyzeCompany, selectSuggestion">Analisar</span>
-
-                        <span wire:loading wire:target="analyzeCompany, selectSuggestion" class="flex items-center gap-2">
-                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            ...
-                        </span>
+                <div class="flex flex-col gap-2 min-w-[210px]">
+                    <flux:button wire:click="analyzePortfolio" variant="primary" class="h-12 rounded-xl bg-indigo-500 hover:bg-indigo-400 font-black" wire:loading.attr="disabled" wire:target="analyzePortfolio">
+                        <span wire:loading.remove wire:target="analyzePortfolio"><flux:icon name="sparkles" class="size-4 mr-2" /> Analisar a minha carteira</span>
+                        <span wire:loading wire:target="analyzePortfolio">A analisar...</span>
                     </flux:button>
+                    <p class="text-center text-[10px] text-zinc-400">A análise usa os dados registados no Finance Pro.</p>
                 </div>
             </div>
-        </div>
+        </section>
 
-        {{-- AREA DE RESULTADOS COM LOADING OVERLAY --}}
-        <div class="relative min-h-[400px]">
-
-            {{-- Feedback visual de processamento --}}
-            <div wire:loading wire:target="analyzeCompany, selectSuggestion" class="absolute inset-0 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-[2.5rem]">
-                <div class="flex flex-col items-center gap-4">
-                    <div class="p-5 bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-200 dark:border-zinc-800">
-                        <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600 animate-pulse">Consultando Inteligência Artificial</p>
-                </div>
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+                <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Valor atual</p>
+                <p class="mt-2 text-2xl font-black tracking-tight dark:text-white">{{ $money($advisorData['current_value']) }}</p>
+                <p class="mt-1 text-xs text-zinc-500">Valor estimado da carteira</p>
             </div>
+            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+                <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Capital investido</p>
+                <p class="mt-2 text-2xl font-black tracking-tight dark:text-white">{{ $money($advisorData['invested']) }}</p>
+                <p class="mt-1 text-xs text-zinc-500">{{ $advisorData['asset_count'] }} posições registadas</p>
+            </div>
+            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+                <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Lucro / prejuízo</p>
+                <p class="mt-2 text-2xl font-black tracking-tight {{ $advisorData['profit'] >= 0 ? 'text-emerald-500' : 'text-red-500' }}">{{ $advisorData['profit'] >= 0 ? '+' : '' }}{{ $money($advisorData['profit']) }}</p>
+                <p class="mt-1 text-xs text-zinc-500">{{ number_format($advisorData['profit_percent'], 2, ',', ' ') }}% face ao capital investido</p>
+            </div>
+            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+                <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Excedente mensal médio</p>
+                <p class="mt-2 text-2xl font-black tracking-tight {{ $monthlySurplus >= 0 ? 'text-emerald-500' : 'text-red-500' }}">{{ $money($monthlySurplus) }}</p>
+                <p class="mt-1 text-xs text-zinc-500">Média dos últimos 90 dias</p>
+            </div>
+        </section>
 
-            @if($companyAnalysis)
-                @if(isset($companyAnalysis['error']))
-                    <div class="p-4 rounded-2xl bg-red-500/10 border border-red-500 text-red-600 font-black text-sm">
-                        {{ $companyAnalysis['error'] }}
+        <section class="grid grid-cols-1 xl:grid-cols-5 gap-5">
+            <div class="xl:col-span-3 rounded-[1.75rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-7">
+                <div class="flex items-center justify-between gap-3 mb-6">
+                    <div>
+                        <h3 class="text-lg font-black dark:text-white">Quanto posso investir?</h3>
+                        <p class="text-xs text-zinc-500 mt-1">Estimativa baseada nos movimentos dos últimos 90 dias</p>
                     </div>
-                @else
-                    @php
-                        $company = $this->getCompanyData(strtoupper($companyQuery));
-                        $marketData = $companyAnalysis['market_data'] ?? [];
-                        $companyName = $marketData['name'] ?? $company['name'] ?? strtoupper($companyQuery);
-                        $hasMarketData = filled($marketData['price'] ?? null) || filled($marketData['volume'] ?? null);
-                        $analysisLabels = [
-                            'fundamentals' => 'Fundamentais',
-                            'valuation' => 'Valorização',
-                            'risks' => 'Riscos',
-                            'strategy' => 'Estratégia',
-                            'portfolio_impact' => 'Impacto no portefólio',
-                            'recommendation' => 'Selo de decisão',
-                        ];
-                        $extraAnalysis = collect($companyAnalysis)
-                            ->except(['market_data', 'analysis_message', 'score', 'empresa', 'company', 'company_name', 'name', 'ticker', 'symbol'])
-                            ->reject(fn ($value, $key) => array_key_exists($key, $analysisLabels) || blank($value))
-                            ->all();
-                        $formatAnalysisLines = function ($value): array {
-                            if (is_array($value)) {
-                                return collect($value)->map(function ($item, $key): string {
-                                    return is_array($item)
-                                        ? ucfirst(str_replace('_', ' ', (string) $key)).': '.collect($item)->flatten()->implode(', ')
-                                        : (is_string($key) && ! is_numeric($key) ? ucfirst(str_replace('_', ' ', $key)).': ' : '').(string) $item;
-                                })->values()->all();
-                            }
-
-                            $text = trim((string) $value);
-
-                            return preg_split('/(?<=[.!?])\s+/', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [$text];
-                        };
-                    @endphp
-
-                    <div class="space-y-6 animate-[fadeIn_0.3s_ease-out]">
-                        {{-- Identidade da empresa --}}
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5 p-6 rounded-[2.5rem] bg-zinc-950 text-white border border-zinc-800 shadow-xl">
-                            <div class="flex items-center gap-4 min-w-0">
-                                @if(!empty($company['logo']))
-                                    <img src="{{ $company['logo'] }}" alt="Logótipo de {{ $companyName }}" class="size-14 rounded-2xl bg-white object-contain p-2 shrink-0">
-                                @else
-                                    <div class="size-14 rounded-2xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-black text-xl shrink-0">
-                                        {{ substr($companyName, 0, 1) }}
-                                    </div>
-                                @endif
-                                <div class="min-w-0">
-                                    <p class="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">Empresa analisada</p>
-                                    <h2 class="text-2xl font-black uppercase italic tracking-tighter truncate">{{ $companyName }}</h2>
-                                    <p class="text-xs font-bold uppercase tracking-widest text-indigo-300">{{ strtoupper($companyQuery) }}</p>
-                                </div>
-                            </div>
-                            <span class="text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl {{ $hasMarketData ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300' }}">
-                                {{ $hasMarketData ? 'Mercado atualizado' : 'Mercado indisponível' }}
-                            </span>
-                        </div>
-
-                        {{-- Dados de Mercado --}}
-                        <div class="p-6 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl space-y-4">
-                            <div class="flex items-center gap-3 mb-2">
-                                <div class="p-2 bg-emerald-500/10 rounded-lg">
-                                    <flux:icon name="chart-bar" class="size-5 text-emerald-500" />
-                                </div>
-                                <h2 class="text-xl font-black italic uppercase tracking-tighter dark:text-white">Dados de Mercado</h2>
-                            </div>
-
-                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-6">
-                                <div>
-                                    <p class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Preço Atual</p>
-                                    <p class="text-lg font-black dark:text-white italic">{{ $marketData['price'] ?? 'Indisponível' }}{{ filled($marketData['price'] ?? null) ? ' €' : '' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Variação %</p>
-                                    @php $change = (string) ($marketData['change'] ?? ''); @endphp
-                                    <p class="text-lg font-black {{ str_contains($change, '+') ? 'text-emerald-500' : 'text-red-500' }} italic">
-                                        {{ $change !== '' ? $change : 'Indisponível' }}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Volume</p>
-                                    <p class="text-lg font-black dark:text-white italic">{{ $marketData['volume'] ?? 'Indisponível' }}</p>
-                                </div>
-                                <div class="col-span-2">
-                                    <p class="text-[9px] font-black uppercase text-zinc-400 tracking-widest">52 Semanas (Range)</p>
-                                    <p class="text-lg font-black dark:text-white italic">{{ $marketData['52w_range'] ?? 'Indisponível' }}</p>
-                                </div>
-                            </div>
-                            @if(!$hasMarketData)
-                                <p class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-xl px-4 py-3">As cotações em tempo real não estão disponíveis neste momento. A análise da empresa continua visível abaixo.</p>
-                            @endif
-                        </div>
-
-                        {{-- Análise IA --}}
-                        <div class="p-6 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl space-y-4">
-                            <div class="flex items-center gap-3 mb-2">
-                                <div class="p-2 bg-indigo-500/10 rounded-lg">
-                                    <flux:icon name="cpu-chip" class="size-5 text-indigo-500" />
-                                </div>
-                                <h2 class="text-xl font-black italic uppercase tracking-tighter dark:text-white">Análise da Empresa</h2>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                @foreach($analysisLabels as $key => $label)
-                                    @if(filled($companyAnalysis[$key] ?? null))
-                                        <div class="bg-zinc-50 dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800 {{ $key === 'risks' || $key === 'strategy' ? 'md:col-span-2' : '' }}">
-                                            <p class="text-[9px] font-black uppercase tracking-widest text-indigo-500 mb-2">{{ $label }}</p>
-                                            @foreach($formatAnalysisLines($companyAnalysis[$key]) as $line)
-                                                <p class="text-sm font-medium leading-relaxed text-zinc-600 dark:text-zinc-300">{{ $line }}</p>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                @endforeach
-
-                                @foreach($extraAnalysis as $key => $value)
-                                    <div class="md:col-span-2 bg-zinc-50 dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800">
-                                        <p class="text-[9px] font-black uppercase tracking-widest text-indigo-500 mb-2">{{ ucfirst(str_replace(['_', '-'], ' ', (string) $key)) }}</p>
-                                        <div class="space-y-2">
-                                            @foreach($formatAnalysisLines($value) as $line)
-                                                <p class="text-sm font-medium leading-relaxed text-zinc-600 dark:text-zinc-300">{{ $line }}</p>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endforeach
-
-                                @if(isset($companyAnalysis['score']))
-                                    <div class="bg-indigo-600 text-white p-5 rounded-2xl">
-                                        <p class="text-[9px] font-black uppercase tracking-widest text-indigo-200 mb-2">Score de análise</p>
-                                        <p class="text-4xl font-black italic">{{ $companyAnalysis['score'] }}<span class="text-lg text-indigo-200">/100</span></p>
-                                    </div>
-                                @endif
-                            </div>
-
-                            @if(!empty($companyAnalysis['analysis_message']))
-                                <p class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-xl px-4 py-3">
-                                    {{ $companyAnalysis['analysis_message'] }}
-                                </p>
-                            @endif
-
-                            @if(!collect($analysisLabels)->keys()->contains(fn ($key) => filled($companyAnalysis[$key] ?? null)) && empty($extraAnalysis) && empty($companyAnalysis['analysis_message']))
-                                <p class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-xl px-4 py-3">
-                                    A IA não devolveu dados detalhados para esta pesquisa. Tenta novamente em instantes.
-                                </p>
-                            @endif
-                        </div>
+                    <span class="rounded-full bg-indigo-500/10 text-indigo-500 px-3 py-1 text-[9px] font-black uppercase tracking-wider">Referência</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4">
+                        <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Receitas médias / mês</p>
+                        <p class="mt-2 text-xl font-black dark:text-white">{{ $money($advisorData['monthly_income']) }}</p>
                     </div>
+                    <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4">
+                        <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Despesas médias / mês</p>
+                        <p class="mt-2 text-xl font-black dark:text-white">{{ $money($advisorData['monthly_expenses']) }}</p>
+                    </div>
+                </div>
+                <div class="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Intervalo indicativo para investir / mês</p>
+                    <p class="mt-2 text-2xl sm:text-3xl font-black tracking-tight dark:text-white">{{ $money($advisorData['suggested_monthly_min']) }} <span class="text-zinc-400 text-base">a</span> {{ $money($advisorData['suggested_monthly_max']) }}</p>
+                    <p class="mt-2 text-xs leading-5 text-zinc-500">Corresponde a 20%–30% do excedente médio positivo. Não é uma ordem de investimento: confirma primeiro despesas futuras, dívidas e reserva de emergência.</p>
+                </div>
+                @if(!$hasCashflowData)
+                    <p class="mt-4 text-xs text-amber-600 dark:text-amber-400">Ainda não existem receitas/despesas suficientes registadas para estimar a tua capacidade de investimento. Regista os movimentos para melhorar esta análise.</p>
+                @elseif($advisorData['income_records'] < 3 || $advisorData['expense_records'] < 3)
+                    <p class="mt-4 text-xs text-amber-600 dark:text-amber-400">A amostra de movimentos ainda é limitada. Usa este valor apenas como referência inicial.</p>
                 @endif
-            @else
-                {{-- Estado Vazio --}}
-                <div class="flex flex-col items-center justify-center py-20 text-center">
-                    <div class="size-20 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
-                        <flux:icon name="magnifying-glass" class="size-10 text-zinc-400" />
+            </div>
+
+            <div class="xl:col-span-2 rounded-[1.75rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-7">
+                <h3 class="text-lg font-black dark:text-white">Diagnóstico de risco</h3>
+                <p class="text-xs text-zinc-500 mt-1">Leitura simples da diversificação atual</p>
+                <div class="mt-6 flex items-center gap-3">
+                    <div class="size-12 rounded-2xl flex items-center justify-center {{ $topShare >= 60 ? 'bg-amber-500/10 text-amber-500' : 'bg-indigo-500/10 text-indigo-500' }}">
+                        <flux:icon name="shield-alert" class="size-6" />
                     </div>
-                    <p class="text-sm font-black uppercase tracking-widest text-zinc-400 italic">
-                        Pesquisa um ticker acima para iniciar a análise IA
-                    </p>
+                    <div>
+                        <p class="font-black dark:text-white">{{ $riskLabel }}</p>
+                        <p class="text-xs text-zinc-500">Maior posição: {{ number_format($topShare, 1, ',', ' ') }}% da carteira</p>
+                    </div>
+                </div>
+                <div class="mt-5 space-y-3">
+                    @forelse($advisorData['composition'] as $part)
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5"><span class="font-bold dark:text-zinc-200">{{ $part['type'] }}</span><span class="text-zinc-500">{{ number_format($part['percentage'], 1, ',', ' ') }}%</span></div>
+                            <div class="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden"><div class="h-full rounded-full bg-indigo-500" style="width: {{ min(100, max(0, $part['percentage'])) }}%"></div></div>
+                        </div>
+                    @empty
+                        <p class="text-sm text-zinc-500">Ainda não existem ativos registados.</p>
+                    @endforelse
+                </div>
+                @if($advisorData['top_asset'])
+                    <p class="mt-5 text-xs text-zinc-500">Maior posição: <strong class="text-zinc-700 dark:text-zinc-200">{{ $advisorData['top_asset']['name'] }}</strong> · {{ $money($advisorData['top_asset']['value']) }}</p>
+                @endif
+                <p class="mt-4 text-[10px] leading-4 text-zinc-400">O risco real também depende dos ativos subjacentes, regiões, setores, moeda e horizonte temporal, informação que pode não estar disponível nesta carteira.</p>
+            </div>
+        </section>
+
+        <section class="rounded-[1.75rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-7">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+                <div>
+                    <h3 class="text-lg font-black dark:text-white">As tuas posições</h3>
+                    <p class="text-xs text-zinc-500 mt-1">Resumo de cada ativo registado</p>
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">{{ $advisorData['asset_count'] }} ativos</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[620px] text-left">
+                    <thead><tr class="text-[9px] uppercase tracking-widest text-zinc-400 border-b border-zinc-100 dark:border-zinc-800"><th class="pb-3">Ativo</th><th class="pb-3 text-right">Valor atual</th><th class="pb-3 text-right">Resultado</th><th class="pb-3 text-right">Rentabilidade</th></tr></thead>
+                    <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        @forelse($advisorData['assets'] as $asset)
+                            <tr>
+                                <td class="py-3"><p class="text-sm font-black dark:text-white">{{ $asset['name'] }}</p><p class="text-[10px] text-zinc-500">{{ $asset['symbol'] ?: $asset['type'] }}</p></td>
+                                <td class="py-3 text-right text-sm font-bold dark:text-zinc-200">{{ $money($asset['value']) }}</td>
+                                <td class="py-3 text-right text-sm font-bold {{ $asset['profit'] >= 0 ? 'text-emerald-500' : 'text-red-500' }}">{{ $asset['profit'] >= 0 ? '+' : '' }}{{ $money($asset['profit']) }}</td>
+                                <td class="py-3 text-right text-sm font-bold {{ $asset['profit_percent'] >= 0 ? 'text-emerald-500' : 'text-red-500' }}">{{ number_format($asset['profit_percent'], 2, ',', ' ') }}%</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="py-8 text-center text-sm text-zinc-500">Adiciona ou importa investimentos para o consultor conseguir analisar a tua carteira.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="rounded-[1.75rem] border border-indigo-500/20 bg-indigo-500/[0.03] p-6 sm:p-7">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="size-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><flux:icon name="brain-circuit" class="size-5" /></div>
+                <div><h3 class="text-lg font-black dark:text-white">Opinião do consultor IA</h3><p class="text-xs text-zinc-500">Diagnóstico, riscos e próximos passos</p></div>
+            </div>
+            @if($portfolioAdvisorAnalysis)
+                <div class="rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-5 text-sm leading-7 text-zinc-700 dark:text-zinc-200 whitespace-pre-line">{{ $portfolioAdvisorAnalysis }}</div>
+            @else
+                <div class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center">
+                    <p class="text-sm font-bold dark:text-white">Ainda não foi feita uma análise personalizada.</p>
+                    <p class="mt-1 text-xs text-zinc-500">Carrega em «Analisar a minha carteira» para receber uma opinião com base nos teus dados.</p>
                 </div>
             @endif
-        </div>
+            <p class="mt-4 text-[10px] leading-5 text-zinc-400">Informação educativa, não constitui aconselhamento financeiro regulado nem substitui a avaliação do teu perfil, objetivos, prazo e tolerância ao risco. Os valores dependem da qualidade e atualização dos dados registados.</p>
+        </section>
     </div>
 @endif
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 @if($tab === 'portfolio')
     {{-- 3. CARDS DE PERFORMANCE (WEALTH DASHBOARD) --}}
