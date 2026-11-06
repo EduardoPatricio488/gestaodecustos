@@ -406,7 +406,9 @@ class XtbInvestmentImportHub extends Component
             }
 
             $text = $this->extractAforroNetPdfText($pdfPath);
-            $text = preg_replace('/\s+/u', ' ', trim($text));
+            // Normaliza espaços Unicode (incluindo NBSP) comuns em PDFs.
+            $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $text = preg_replace('/[\p{Z}\s]+/u', ' ', trim($text));
 
             if (mb_strlen($text) < 80) {
                 throw new \RuntimeException('Não foi possível ler conteúdo suficiente do PDF. Confirma que não está protegido por palavra-passe e que contém o extrato completo.');
@@ -427,8 +429,13 @@ class XtbInvestmentImportHub extends Component
                 }
             }
 
+            // No extrato oficial, a data do cabeçalho é a primeira data completa.
+            if (! $reportDate && preg_match('/(?:^|\s)(\d{2}-\d{2}-\d{4})(?=\s)/u', $text, $dateMatch)) {
+                $reportDate = $dateMatch[1];
+            }
+
             if (! $reportDate) {
-                throw new \RuntimeException('Não encontrei a data do extrato no PDF. A leitura do documento funcionou, mas o formato da data não corresponde aos formatos reconhecidos.');
+                throw new \RuntimeException('Não foi possível identificar uma data no cabeçalho do extrato AforroNet.');
             }
             if (! preg_match('/Certificados de Aforro\s+Série\s+([A-Z])\s+([\d.]+)\s+([\d.,]+)/iu', $text, $totalMatch)) {
                 throw new \RuntimeException('Não encontrei o total da Série no PDF.');
