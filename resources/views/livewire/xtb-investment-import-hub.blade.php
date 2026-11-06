@@ -177,7 +177,7 @@
                         <p class="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">Cola o texto do extrato uma única vez. O Finance Pro guarda cada subscrição separadamente e atualiza as capitalizações trimestrais com as taxas históricas disponíveis, sem precisares de importar o extrato todos os meses.</p>
                     </div>
                 </div>
-                <div class="mt-5 rounded-2xl border border-teal-200/80 bg-white/80 p-4 text-xs leading-relaxed text-teal-900 dark:border-teal-800 dark:bg-zinc-900/70 dark:text-teal-200"><strong>Nota:</strong> a valorização automática só avança quando existe uma taxa publicada para o trimestre. Se a fonte de taxas estiver indisponível ou desatualizada, o saldo não é alterado.</div>
+                <div class="mt-5 rounded-2xl border border-teal-200/80 bg-white/80 p-4 text-xs leading-relaxed text-teal-900 dark:border-teal-800 dark:bg-zinc-900/70 dark:text-teal-200"><strong>Nota:</strong> os juros são capitalizados trimestralmente, não em tempo real. O cálculo usa um histórico público que reproduz a metodologia do IGCP a partir da Euribor a 3 meses; não é uma API oficial do IGCP. Se o histórico estiver indisponível ou desatualizado, o saldo não é alterado.</div>
             </section>
 
             <section class="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
