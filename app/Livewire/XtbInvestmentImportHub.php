@@ -488,8 +488,8 @@ class XtbInvestmentImportHub extends Component
         // Primeiro tenta uma biblioteca PHP nativa: não depende de Poppler,
         // Tesseract nem de configurações do PATH no computador do utilizador.
         try {
-            if (class_exists(\Smalot\\PdfParser\\Parser::class)) {
-                $parser = new \Smalot\\PdfParser\\Parser();
+            if (class_exists(\Smalot\PdfParser\Parser::class)) {
+                $parser = new \Smalot\PdfParser\Parser();
                 $document = $parser->parseFile($pdfPath);
                 $text = trim($document->getText());
 
