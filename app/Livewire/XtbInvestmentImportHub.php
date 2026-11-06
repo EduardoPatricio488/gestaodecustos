@@ -20,6 +20,12 @@ class XtbInvestmentImportHub extends Component
     use WithFileUploads;
 
     public $reportFile;
+    public string $activeProvider = 'xtb';
+    public $aforroNetFile;
+    public array $aforroNetPosition = [];
+    public bool $aforroNetPreviewReady = false;
+    public bool $isAnalyzingAforroNet = false;
+    public bool $isImportingAforroNet = false;
     public array $positions = [];
     public array $reportSummary = [];
     public ?string $reportDate = null;
@@ -381,6 +387,137 @@ class XtbInvestmentImportHub extends Component
             $this->dispatch('toast', variant: 'danger', text: 'Não foi possível importar as posições. Nenhuma alteração parcial foi guardada.');
         } finally {
             $this->isImporting = false;
+        }
+    }
+
+
+    public function analyzeAforroNet(): void
+    {
+        $this->authorizeImport();
+        $this->validate(['aforroNetFile' => 'required|file|mimes:pdf|max:10240']);
+        $this->isAnalyzingAforroNet = true;
+
+        try {
+            $process = new \Symfony\Component\Process\Process(['pdftotext', '-layout', $this->aforroNetFile->getRealPath(), '-']);
+            $process->setTimeout(30);
+            $process->run();
+            if (! $process->isSuccessful()) {
+                throw new \RuntimeException('Falha na leitura do PDF.');
+            }
+
+            $text = preg_replace('/\s+/u', ' ', $process->getOutput());
+            if (! preg_match('/Data do Extrato:\s*(\d{2}-\d{2}-\d{4})/iu', $text, $dateMatch)) {
+                throw new \RuntimeException('Data do extrato não encontrada.');
+            }
+            if (! preg_match('/Certificados de Aforro\s+Série\s+([A-Z])\s+([\d.]+)\s+([\d.,]+)/iu', $text, $matches)) {
+                throw new \RuntimeException('Posição de Certificados de Aforro não encontrada.');
+            }
+
+            $series = strtoupper($matches[1]);
+            $units = $this->parsePortugueseNumber($matches[2]);
+            $value = $this->parsePortugueseNumber($matches[3]);
+            if ($units <= 0 || $value <= 0) {
+                throw new \RuntimeException('Valores do extrato inválidos.');
+            }
+
+            $this->aforroNetPosition = [
+                'name' => 'Certificados de Aforro — Série '.$series,
+                'symbol' => 'CAF-SERIE-'.$series,
+                'series' => $series,
+                'quantity' => $units,
+                'current_value' => $value,
+                'current_price' => $value / $units,
+                'average_price' => 1.0,
+                'profit' => $value - $units,
+                'report_date' => $dateMatch[1],
+            ];
+            $this->aforroNetPreviewReady = true;
+            $this->dispatch('toast', variant: 'success', text: 'Extrato AforroNet lido. Confirma os valores antes de importar.');
+        } catch (\Throwable $exception) {
+            \Illuminate\Support\Facades\Log::warning('AforroNet statement import failed', ['user_id' => auth()->id(), 'message' => $exception->getMessage()]);
+            $this->addError('aforroNetFile', 'Não foi possível ler este extrato. Confirma que é o PDF mensal original do AforroNet.');
+            $this->aforroNetPreviewReady = false;
+            $this->aforroNetPosition = [];
+        } finally {
+            $this->isAnalyzingAforroNet = false;
+        }
+    }
+
+    private function parsePortugueseNumber(string $value): float
+    {
+        $value = str_replace(['.', ','], ['', '.'], trim($value));
+        return is_numeric($value) ? (float) $value : 0.0;
+    }
+
+    public function importAforroNetPosition(): void
+    {
+        $this->authorizeImport();
+        if (! $this->aforroNetPreviewReady || empty($this->aforroNetPosition)) {
+            $this->dispatch('toast', variant: 'warning', text: 'Carrega e analisa primeiro o extrato mensal.');
+            return;
+        }
+
+        $user = auth()->user();
+        $workspace = $user->currentWorkspace;
+        abort_unless($workspace && $user->current_workspace_id, 403);
+        $this->isImportingAforroNet = true;
+
+        try {
+            DB::transaction(function () use ($user, $workspace) {
+                $account = BankAccount::firstOrCreate(
+                    ['workspace_id' => $workspace->id, 'user_id' => $user->id, 'name' => 'AforroNet'],
+                    ['type' => 'investimentos', 'balance' => 0, 'currency' => 'EUR', 'color' => '#0f766e', 'include_in_total' => false, 'status' => 'active', 'description' => 'Certificados de Aforro importados do AforroNet']
+                );
+
+                $position = $this->aforroNetPosition;
+                $data = [
+                    'user_id' => $user->id,
+                    'workspace_id' => $workspace->id,
+                    'bank_account_id' => $account->id,
+                    'name' => $position['name'],
+                    'symbol' => $position['symbol'],
+                    'type' => 'Divida',
+                    'quantity' => $position['quantity'],
+                    'average_price' => $position['average_price'],
+                    'current_price' => $position['current_price'],
+                    'provider' => 'AforroNet',
+                    'broker' => 'AforroNet',
+                    'issuer' => 'IGCP',
+                    'series' => $position['series'],
+                    'product_type' => 'CA',
+                    'fees' => 0,
+                ];
+
+                $existing = Investment::query()
+                    ->where('workspace_id', $workspace->id)
+                    ->where('user_id', $user->id)
+                    ->where('broker', 'AforroNet')
+                    ->where('symbol', $position['symbol'])
+                    ->first();
+
+                $existing ? $existing->update($data) : Investment::create($data);
+            });
+
+            $this->dispatch('toast', variant: 'success', text: 'Certificados de Aforro sincronizados com os Investimentos.');
+            $this->reset(['aforroNetFile', 'aforroNetPosition', 'aforroNetPreviewReady']);
+        } catch (\Throwable $exception) {
+            \Illuminate\Support\Facades\Log::error('AforroNet investment import failed', ['user_id' => $user->id, 'message' => $exception->getMessage()]);
+            $this->dispatch('toast', variant: 'danger', text: 'Não foi possível importar os Certificados de Aforro.');
+        } finally {
+            $this->isImportingAforroNet = false;
+        }
+    }
+
+    public function clearAforroNet(): void
+    {
+        $this->reset(['aforroNetFile', 'aforroNetPosition', 'aforroNetPreviewReady']);
+        $this->resetValidation();
+    }
+
+    public function switchProvider(string $provider): void
+    {
+        if (in_array($provider, ['xtb', 'aforronet'], true)) {
+            $this->activeProvider = $provider;
         }
     }
 
