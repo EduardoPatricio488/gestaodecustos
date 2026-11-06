@@ -17,6 +17,8 @@ class DebtHub extends Component
     // Propriedades do Formulário - Inicializadas para evitar erros de tipo
     public string $type = 'owe';
 
+    public ?int $bank_account_id = null;
+
     public string $person_name = '';
 
     public $amount = '';
@@ -54,7 +56,7 @@ class DebtHub extends Component
 
     public function openCreateModal()
     {
-        $this->reset(['person_name', 'amount', 'description', 'due_at', 'editingId']);
+        $this->reset(['bank_account_id', 'person_name', 'amount', 'description', 'due_at', 'editingId']);
         $this->type = 'owe';
         $this->dispatch('open-debt-modal');
     }
@@ -62,6 +64,7 @@ class DebtHub extends Component
     public function save(): void
     {
         $this->validate([
+            'bank_account_id' => 'required|integer|exists:bank_accounts,id',
             'person_name' => 'required|string|max:100',
             'amount' => 'required|numeric|min:0.01',
             'type' => 'required|in:owe,owed',
@@ -69,6 +72,7 @@ class DebtHub extends Component
         ]);
 
         $workspaceId = auth()->user()->current_workspace_id;
+        BankAccount::where('workspace_id', $workspaceId)->where('user_id', auth()->id())->findOrFail($this->bank_account_id);
 
         $debt = $this->editingId
             ? Debt::where('workspace_id', $workspaceId)->where('user_id', auth()->id())->findOrFail($this->editingId)
@@ -77,6 +81,7 @@ class DebtHub extends Component
 
                 'user_id' => auth()->id(),
                 'workspace_id' => $workspaceId,
+                'bank_account_id' => $this->bank_account_id,
                 'type' => $this->type,
                 'person_name' => $this->person_name,
                 'amount' => (float) $this->amount,
@@ -96,7 +101,7 @@ class DebtHub extends Component
         }
 
         $this->dispatch('close-debt-modal');
-        $this->reset(['person_name', 'amount', 'description', 'due_at', 'editingId']);
+        $this->reset(['bank_account_id', 'person_name', 'amount', 'description', 'due_at', 'editingId']);
     }
 
     public function edit(int $id)
@@ -106,6 +111,7 @@ class DebtHub extends Component
             ->findOrFail($id);
 
         $this->editingId = $debt->id;
+        $this->bank_account_id = $debt->bank_account_id;
         $this->type = $debt->type;
         $this->person_name = $debt->person_name;
         $this->amount = $debt->amount;
