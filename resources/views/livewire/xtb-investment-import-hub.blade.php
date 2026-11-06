@@ -4,14 +4,14 @@
         <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div class="max-w-2xl">
                 <div class="inline-flex items-center gap-2 rounded-full border border-emerald-300/70 dark:border-emerald-700/60 bg-white/70 dark:bg-zinc-900/60 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.18em] text-emerald-700 dark:text-emerald-300">
-                    <flux:icon name="sparkles" class="size-3.5" /> Importação inteligente com IA
+                    <span aria-hidden="true">✦</span> Importação inteligente com IA
                 </div>
                 <h1 class="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-zinc-950 dark:text-white">Upload de Investimentos</h1>
                 <p class="mt-3 text-sm sm:text-base leading-relaxed text-zinc-600 dark:text-zinc-300">Carrega o relatório da XTB e deixa o Finance Pro identificar os ativos, quantidades, preços médios e valores atuais. Revê tudo antes de sincronizar a tua carteira.</p>
             </div>
             <div class="shrink-0 flex items-center gap-3 rounded-2xl border border-white/80 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/70 px-5 py-4 shadow-sm">
                 <div class="flex size-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
-                    <flux:icon name="document-chart-bar" class="size-6" />
+                    <span class="text-2xl" aria-hidden="true">📊</span>
                 </div>
                 <div><p class="text-xs font-black text-zinc-900 dark:text-white">Relatório XTB</p><p class="text-[10px] text-zinc-500">Excel · XLSX · XLS · CSV</p></div>
             </div>
@@ -21,18 +21,18 @@
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <section class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-8 shadow-sm">
             <div class="flex items-center gap-3 mb-6">
-                <div class="size-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 flex items-center justify-center"><flux:icon name="cloud-arrow-up" class="size-5" /></div>
+                <div class="size-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 flex items-center justify-center"><span class="text-xl" aria-hidden="true">☁</span></div>
                 <div><h2 class="font-black text-zinc-900 dark:text-white">Carregar relatório</h2><p class="text-xs text-zinc-500">Seleciona o ficheiro exportado da tua conta XTB.</p></div>
             </div>
 
             <form wire:submit="analyzeReport" class="space-y-5">
                 <label class="group flex min-h-52 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 px-5 py-8 text-center transition hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20">
                     <input type="file" wire:model="reportFile" accept=".xlsx,.xls,.csv,.txt" class="sr-only">
-                    <span class="mb-3 flex size-14 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 text-emerald-600 shadow-sm"><flux:icon name="file-spreadsheet" class="size-7" /></span>
+                    <span class="mb-3 flex size-14 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 text-emerald-600 shadow-sm"><span class="text-3xl" aria-hidden="true">📄</span></span>
                     <span class="font-bold text-sm text-zinc-800 dark:text-zinc-100">Clica para escolher ou arrasta o ficheiro</span>
                     <span class="mt-1 text-xs text-zinc-500">Excel ou CSV · máximo 10 MB</span>
                     @if($reportFile)
-                        <span class="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-3 py-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-200"><flux:icon name="check-circle" class="size-4" /> {{ $reportFile->getClientOriginalName() }}</span>
+                        <span class="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-3 py-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-200"><span aria-hidden="true">✓</span> {{ $reportFile->getClientOriginalName() }}</span>
                     @endif
                 </label>
                 @error('reportFile') <p class="text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
@@ -59,7 +59,7 @@
                 </ol>
             </div>
             <div class="rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/20 p-5">
-                <div class="flex gap-2 text-amber-800 dark:text-amber-300"><flux:icon name="shield-check" class="size-4 shrink-0" /><p class="text-xs font-black">Importação sem duplicados</p></div>
+                <div class="flex gap-2 text-amber-800 dark:text-amber-300"><span aria-hidden="true">🛡</span><p class="text-xs font-black">Importação sem duplicados</p></div>
                 <p class="mt-2 text-xs leading-relaxed text-amber-900/80 dark:text-amber-200/80">As posições abertas são a fonte principal. As compras históricas e posições fechadas não são somadas à carteira atual. Uma nova importação atualiza os ativos XTB já existentes.</p>
             </div>
         </aside>
@@ -68,7 +68,7 @@
     @if($previewReady)
         <section class="overflow-hidden rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
             <div class="flex flex-col gap-4 border-b border-zinc-100 dark:border-zinc-800 p-6 sm:flex-row sm:items-center sm:justify-between">
-                <div><div class="flex items-center gap-2"><flux:icon name="clipboard-check" class="size-5 text-emerald-600" /><h2 class="font-black text-zinc-900 dark:text-white">Pré-visualização dos investimentos</h2></div><p class="mt-1 text-xs text-zinc-500">Confirma os valores encontrados antes de importar.</p></div>
+                <div><div class="flex items-center gap-2"><span class="text-lg text-emerald-600" aria-hidden="true">✓</span><h2 class="font-black text-zinc-900 dark:text-white">Pré-visualização dos investimentos</h2></div><p class="mt-1 text-xs text-zinc-500">Confirma os valores encontrados antes de importar.</p></div>
                 @if($reportDate)<span class="text-xs text-zinc-500">Relatório de {{ $reportDate }}</span>@endif
             </div>
 
@@ -99,7 +99,7 @@
 
             @if($aiSummary)
                 <div class="mx-5 my-5 rounded-2xl border border-violet-200 dark:border-violet-900/60 bg-violet-50/70 dark:bg-violet-950/20 p-5">
-                    <div class="flex items-center gap-2 text-violet-700 dark:text-violet-300"><flux:icon name="sparkles" class="size-4" /><p class="text-xs font-black uppercase tracking-wider">Validação do assistente IA</p></div>
+                    <div class="flex items-center gap-2 text-violet-700 dark:text-violet-300"><span aria-hidden="true">✦</span><p class="text-xs font-black uppercase tracking-wider">Validação do assistente IA</p></div>
                     <p class="mt-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{{ $aiSummary }}</p>
                 </div>
             @endif
