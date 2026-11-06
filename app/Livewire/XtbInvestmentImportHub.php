@@ -1,18 +1,18 @@
 <?php
 
-namespace App\\Livewire;
+namespace App\Livewire;
 
-use App\\Models\\BankAccount;
-use App\\Models\\Investment;
-use App\\Services\\BusinessAccessService;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Http;
-use Illuminate\\Support\\Facades\\Log;
-use Livewire\\Attributes\\Layout;
-use Livewire\\Component;
-use Livewire\\WithFileUploads;
-use Maatwebsite\\Excel\\Facades\\Excel;
-use App\\Imports\\XtbReportImport;
+use App\Models\BankAccount;
+use App\Models\Investment;
+use App\Services\BusinessAccessService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\XtbReportImport;
 
 #[Layout('components.layouts.app')]
 class XtbInvestmentImportHub extends Component
@@ -51,7 +51,7 @@ class XtbInvestmentImportHub extends Component
             $this->previewReady = true;
             $this->aiSummary = $this->getAiValidationSummary($this->positions, $this->reportSummary);
             $this->dispatch('toast', variant: 'success', text: count($this->positions).' posições identificadas. Confirma os dados antes de importar.');
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             Log::warning('XTB report import: failed to parse report', ['user_id' => auth()->id(), 'message' => $exception->getMessage()]);
             $this->addError('reportFile', 'Não foi possível ler este ficheiro. Experimenta exportar novamente o relatório da XTB em Excel (.xlsx).');
         }
@@ -229,7 +229,7 @@ class XtbInvestmentImportHub extends Component
             return (float) $value;
         }
 
-        $value = trim(str_replace(["\\xc2\\xa0", ' ', '€'], '', (string) $value));
+        $value = trim(str_replace(["\xc2\xa0", ' ', '€'], '', (string) $value));
         if ($value === '' || $value === '-') {
             return 0.0;
         }
@@ -245,19 +245,19 @@ class XtbInvestmentImportHub extends Component
 
     private function parseDate(mixed $value): ?string
     {
-        if ($value instanceof \\DateTimeInterface) {
+        if ($value instanceof \DateTimeInterface) {
             return $value->format('Y-m-d');
         }
         if (is_numeric($value) && (float) $value > 20000) {
             try {
-                return \\PhpOffice\\PhpSpreadsheet\\Shared\\Date::excelToDateTimeObject((float) $value)->format('Y-m-d');
-            } catch (\\Throwable) {
+                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $value)->format('Y-m-d');
+            } catch (\Throwable) {
                 return null;
             }
         }
         try {
-            return filled($value) ? \\Illuminate\\Support\\Carbon::parse($value)->toDateString() : null;
-        } catch (\\Throwable) {
+            return filled($value) ? \Illuminate\Support\Carbon::parse($value)->toDateString() : null;
+        } catch (\Throwable) {
             return null;
         }
     }
@@ -301,7 +301,7 @@ class XtbInvestmentImportHub extends Component
             if ($response->successful()) {
                 return trim((string) $response->json('choices.0.message.content'));
             }
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             Log::info('XTB AI validation unavailable', ['message' => $exception->getMessage()]);
         }
 
@@ -364,7 +364,7 @@ class XtbInvestmentImportHub extends Component
 
             $this->dispatch('toast', variant: 'success', text: count($this->positions).' posições XTB sincronizadas com os Investimentos.');
             $this->reset(['reportFile', 'positions', 'reportSummary', 'reportDate', 'aiSummary', 'previewReady']);
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             Log::error('XTB investment import failed', ['user_id' => $user->id, 'message' => $exception->getMessage()]);
             $this->dispatch('toast', variant: 'danger', text: 'Não foi possível importar as posições. Nenhuma alteração parcial foi guardada.');
         } finally {
