@@ -84,7 +84,7 @@
 </flux:button>
 
 {{-- EXPORTAÇÃO DO EXTRATO DE RECEITAS --}}
-<div x-data="{ openStatementExport: false }" class="relative">
+<div x-data="{ openStatementExport: false }" x-on:income-statement-download.window="window.location.href = $event.detail.url" class="relative">
     <flux:button
         type="button"
         variant="outline"
