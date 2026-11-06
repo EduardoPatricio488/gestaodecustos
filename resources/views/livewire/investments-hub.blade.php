@@ -151,7 +151,7 @@
     @endphp
 
     <div class="space-y-7 mt-6">
-        <section class="relative overflow-hidden rounded-[2rem] border border-indigo-500/20 bg-gradient-to-br from-zinc-950 via-indigo-950 to-zinc-950 p-6 sm:p-9 text-white shadow-2xl">
+        <section class="relative overflow-hidden rounded-[2rem] border border-indigo-500/20 bg-[#171b35] p-6 sm:p-9 text-white shadow-2xl">
             <div class="absolute -right-16 -top-20 size-72 rounded-full bg-indigo-500/20 blur-3xl"></div>
             <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div class="max-w-2xl">
