@@ -542,7 +542,7 @@ class InvestmentsHub extends Component
             if ($this->portfolioAdvisorAnalysis === '') {
                 $this->portfolioAdvisorAnalysis = 'O serviço de IA respondeu, mas não devolveu texto. Tenta novamente.';
             }
-        } catch (\\Throwable $e) {
+        } catch (\Throwable $e) {
             Log::error('InvestmentsHub: exceção ao analisar carteira', [
                 'message' => $e->getMessage(),
                 'exception' => get_class($e),
