@@ -614,7 +614,7 @@ class InvestmentsHub extends Component
 
     public function createAsset(): void
     {
-        $this->reset(['symbol', 'name', 'isin', 'quantity', 'average_price', 'fees', 'total_amount', 'exchange', 'network', 'provider', 'broker', 'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type']);
+        $this->reset(['symbol', 'name', 'isin', 'quantity', 'average_price', 'fees', 'total_amount', 'exchange', 'network', 'provider', 'broker', 'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type', 'bank_account_id']);
         $this->type = 'Acao';
         $this->bank_account_id = null;
         $this->fees = 0;
@@ -657,7 +657,7 @@ class InvestmentsHub extends Component
             $user->awardXp(25, 'investimento registado');
             $msg = 'Novo capital registado com sucesso! '.$user->xpToastText(25, 'investimento registado');
         }
-        $this->reset(['symbol', 'name', 'isin', 'quantity', 'average_price', 'fees', 'total_amount', 'exchange', 'network', 'provider', 'broker', 'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type']);
+        $this->reset(['symbol', 'name', 'isin', 'quantity', 'average_price', 'fees', 'total_amount', 'exchange', 'network', 'provider', 'broker', 'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type', 'bank_account_id']);
         $this->dispatch('modal-close-add-investment');
         $this->dispatch('toast', text: $msg);
     }
