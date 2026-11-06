@@ -2436,6 +2436,20 @@ class IncomeHub extends Component
         $projectedMealAllowanceTotal = $projectedSalaryContracts->sum(fn (RecurringIncome $income) => (float) ($income->metadata['calculated_sa'] ?? 0));
         $salaryAnnualTotal = $projectedSalaryContracts->sum(fn (RecurringIncome $income) => (float) ($income->annual_net_estimate ?? ((float) $income->amount * (int) ($income->metadata['annual_payments'] ?? 12))));
 
+        // Histórico detalhado apresentado nos cartões de salário e alimentação.
+        $projectedSalaryHistoryPayments = SalaryPayment::with(['recurringIncome', 'bankAccount'])
+            ->where('workspace_id', $workspaceId)
+            ->where('user_id', $user->id)
+            ->whereIn('recurring_income_id', $projectedContractIds)
+            ->orderByDesc('payment_year')
+            ->orderByDesc('payment_month')
+            ->orderByDesc('paid_at')
+            ->get();
+
+        $projectedSalaryHistoryExtras = $salaryExtraIncomes
+            ->sortByDesc(fn (Income $income) => $income->received_at?->timestamp ?? 0)
+            ->values();
+
         $totalMonthly = $fixedIncomes->sum('amount') + $extraIncomes->sum(fn ($i) => (float) ($i->amount_converted ?? $i->amount));
 
         // Estatísticas
@@ -2558,6 +2572,8 @@ class IncomeHub extends Component
             'projectedSalaryNetTotal' => $projectedSalaryNetTotal,
             'projectedSalaryAnnualTotal' => $projectedSalaryAnnualTotal,
             'projectedMealAllowanceTotal' => $projectedMealAllowanceTotal,
+            'projectedSalaryHistoryPayments' => $projectedSalaryHistoryPayments,
+            'projectedSalaryHistoryExtras' => $projectedSalaryHistoryExtras,
             'salaryExtraIncomes' => $salaryExtraIncomes,
             'unlinkedExtraIncomes' => $unlinkedExtraIncomes,
             'salaryIncomeHistoryContract' => $salaryIncomeHistoryContract,
