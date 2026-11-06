@@ -11,24 +11,18 @@ class BankCredit extends Model
     use BelongsToWorkspace;
 
     protected $fillable = [
-        'workspace_id',
-        'user_id',
-        'name',
-        'amount',
-        'category',
-        'due_date',
-        'status',
-        'received_amount',
-        'notes',
-        'is_business',
+        'workspace_id', 'user_id', 'bank_account_id', 'name', 'amount', 'category', 'due_date',
+        'status', 'received_amount', 'notes', 'is_business',
     ];
 
     protected $casts = [
-        'amount' => 'float',
-        'received_amount' => 'float',
-        'due_date' => 'date',
-        'is_business' => 'boolean',
+        'amount' => 'float', 'received_amount' => 'float', 'due_date' => 'date', 'is_business' => 'boolean',
     ];
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
 
     public function user(): BelongsTo
     {
