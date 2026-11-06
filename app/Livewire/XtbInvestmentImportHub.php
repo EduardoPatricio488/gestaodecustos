@@ -492,13 +492,11 @@ class XtbInvestmentImportHub extends Component
                 ];
             }
 
-            if (count($subscriptio            if (count($subscriptions) === 0) {
+            if (count($subscriptions) === 0) {
                 throw new \RuntimeException('Não foram encontradas linhas individuais de subscrição no PDF. Não é seguro importar sem validar as unidades.');
             }
 
             if ($series === null) {
-                // As linhas individuais CAF só são aceites se a própria
-                // designação do produto identificar inequivocamente a Série E.
                 if (preg_match('/CAF\s*\/\s*S[eé]rie\s+E/iu', $normalizedText)) {
                     $series = 'E';
                 } else {
@@ -508,12 +506,10 @@ class XtbInvestmentImportHub extends Component
 
             $units = array_sum(array_column($subscriptions, 'quantity'));
             $value = array_sum(array_column($subscriptions, 'current_value'));
-            $reportedUnits = $this->parsePortugueseNumber($totalMatch[2]);
-            $reportedValue = $this->parsePortugueseNumber($totalMatch[3]);
 
             if ($reportedUnits !== null && $reportedValue !== null
                 && (abs($units - $reportedUnits) > 0.00001 || abs($value - $reportedValue) > 0.02)) {
-                throw new \\RuntimeException('A soma das subscrições individuais não coincide com o total indicado no PDF.');
+                throw new \RuntimeException('A soma das subscrições individuais não coincide com o total indicado no PDF.');
             }
 
             foreach ($subscriptions as $subscription) {
