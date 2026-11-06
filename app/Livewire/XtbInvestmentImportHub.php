@@ -448,24 +448,7 @@ class XtbInvestmentImportHub extends Component
             }
             $normalizedText = preg_replace('/[\p{Z}\s]+/u', ' ', $normalizedText);
 
-            $series = null;
-            $seriesPatterns = [
-                '/Certificados\s+de\s+Aforro\s+S[eé]rie\s+([A-Z])/iu',
-                '/CAF\s*\/\s*S[eé]rie\s+([A-Z])/iu',
-                '/S[eé]rie\s+([A-Z])\s+Unidades\s+Valor/iu',
-            ];
-            foreach ($seriesPatterns as $pattern) {
-                if (preg_match($pattern, $normalizedText, $seriesMatch)) {
-                    $series = strtoupper($seriesMatch[1]);
-                    break;
-                }
-            }
-
-            // Reconhece também o rótulo quando o extrator fragmenta ou remove separadores.
-            $compactText = preg_replace('/[^A-Z0-9]/', '', mb_strtoupper($normalizedText));
-            if ($series === null && (str_contains($compactText, 'CAFSERIEE') || str_contains($compactText, 'CERTIFICADOSDEAFORROSERIEE'))) {
-                $series = 'E';
-            }
+            $series = $this->detectAforroNetSeries($normalizedText);
 
             // O total do resumo é opcional: quando o PDF não o disponibiliza
             // de forma legível, será calculado pela soma das subscrições.
@@ -557,6 +540,37 @@ class XtbInvestmentImportHub extends Component
     }
 
     /**
+     * Identifica a série mesmo quando o extrator separa o rótulo em blocos,
+     * colunas ou linhas diferentes. Só aceita uma série ligada ao contexto
+     * "CAF" ou "Certificados de Aforro", nunca uma letra isolada.
+     */
+    private function detectAforroNetSeries(string $text): ?string
+    {
+        $text = mb_strtoupper(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text) ?: $text);
+        $text = preg_replace('/[^A-Z0-9]+/', ' ', $text);
+        $text = trim(preg_replace('/\s+/', ' ', $text));
+
+        $patterns = [
+            '/\bCERTIFICADOS\s+DE\s+AFORRO\b.{0,180}?\bSERIE\s*([A-Z])\b/',
+            '/\bCAF\b.{0,180}?\bSERIE\s*([A-Z])\b/',
+            '/\bSERIE\s*([A-Z])\b.{0,100}?\b(?:UNIDADES|VALOR|SUBSCRICAO)\b/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $match)) {
+                return strtoupper($match[1]);
+            }
+        }
+
+        // Alguns leitores devolvem os elementos do cabeçalho em ordem inversa.
+        if (preg_match('/\bSERIE\s*([A-Z])\b.{0,180}?\b(?:CAF|CERTIFICADOS\s+DE\s+AFORRO)\b/', $text, $match)) {
+            return strtoupper($match[1]);
+        }
+
+        return null;
+    }
+
+    /**
      * Extrai texto de PDFs digitais e aplica OCR quando o documento é digitalizado.
      * Funciona no Docker/Linux e tenta localizar automaticamente as instalações
      * do Poppler e Tesseract no Windows, sem exigir alterações manuais ao PATH.
@@ -620,8 +634,15 @@ class XtbInvestmentImportHub extends Component
             if (preg_match('/\b\d{8,}\b/', $upper)) {
                 $score += 2;
             }
-            if (preg_match('/CAF\s*\/\s*SERIE\s*[A-Z]/', $upper) || str_contains(preg_replace('/[^A-Z0-9]/', '', $upper), 'CAFSERIE')) {
-                $score += 8;
+            if ($this->detectAforroNetSeries($upper) !== null) {
+                // Prioriza extrações que preservam a série, não apenas números.
+                $score += 40;
+            }
+            if (preg_match_all('/\\b\\d{2}[-\\/.]\\d{2}[-\\/.]\\d{4}\\b/', $upper) >= 2) {
+                $score += 4;
+            }
+            if (preg_match_all('/\\b\\d{6,}\\b/', $upper) >= 2) {
+                $score += 4;
             }
             return $score;
         };
