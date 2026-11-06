@@ -461,6 +461,12 @@ class XtbInvestmentImportHub extends Component
                 }
             }
 
+            // Reconhece também o rótulo quando o extrator fragmenta ou remove separadores.
+            $compactText = preg_replace('/[^A-Z0-9]/', '', mb_strtoupper($normalizedText));
+            if ($series === null && (str_contains($compactText, 'CAFSERIEE') || str_contains($compactText, 'CERTIFICADOSDEAFORROSERIEE'))) {
+                $series = 'E';
+            }
+
             // O total do resumo é opcional: quando o PDF não o disponibiliza
             // de forma legível, será calculado pela soma das subscrições.
             $reportedUnits = null;
@@ -510,11 +516,7 @@ class XtbInvestmentImportHub extends Component
             }
 
             if ($series === null) {
-                if (preg_match('/CAF\s*\/\s*S[eé]rie\s+E/iu', $normalizedText)) {
-                    $series = 'E';
-                } else {
-                    throw new \RuntimeException('Encontrei subscrições, mas não consegui confirmar que pertencem à Série E.');
-                }
+                throw new \RuntimeException('O PDF contém subscrições, mas não identifica inequivocamente a série dos certificados.');
             }
 
             $units = array_sum(array_column($subscriptions, 'quantity'));
