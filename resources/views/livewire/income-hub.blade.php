@@ -203,7 +203,6 @@
 
 
 
-
 {{-- ================================================================== --}}
 {{-- CARDS DE ESTATÍSTICAS · ULTRA PREMIUM                           --}}
 {{-- ================================================================== --}}
@@ -608,8 +607,7 @@
                     <p class="mb-3 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">Resumo mensal do salário</p>
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         <div class="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/30">
-                            <div class="mb-3 flex items-center justify-between gap-2">
-                                <span class="text-[9px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-300">Salário Bruto</span>
+                            <div class="mb-3 flex items-center justify-between gap-2">                                <span class="text-[9px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-300">Salário Bruto</span>
                                 <div x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
                                     <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Explicação do salário bruto" class="flex size-6 items-center justify-center rounded-full bg-white text-[11px] font-black text-indigo-500 shadow-sm hover:bg-indigo-100 dark:bg-zinc-900 dark:hover:bg-indigo-900">i</button>
                                     <span x-show="open" x-cloak role="tooltip" class="absolute right-0 top-full z-30 mt-2 w-56 rounded-xl bg-zinc-900 px-3 py-2 text-left text-[10px] font-medium normal-case leading-relaxed text-white shadow-xl">Valor do salário antes dos descontos de Segurança Social e IRS.</span>
@@ -1007,8 +1005,7 @@
                     <div class="flex items-center gap-4">
                     <div class="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg">
                         <flux:icon name="briefcase" class="size-6" />
-                    </div>
-                    <div class="flex-1">
+                    </div>                    <div class="flex-1">
                         <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white">{{ $editingFixedId ? 'Editar Salário' : 'Configurar Salário' }}</h2>
                         <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Cálculo Automático de Impostos</p>
                     </div>
@@ -1406,8 +1403,7 @@
                         <div class="flex shrink-0 items-center gap-3">
                             <p class="text-sm font-bold tabular-nums text-emerald-600">+{{ number_format((float) ($extra->amount_converted ?? $extra->amount), 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
                             @if($extra->salary_income_type !== 'prize')
-                                <button type="button" wire:click="editSalaryExtraIncome({{ $extra->id }})" class="rounded-lg p-2 text-indigo-500 transition hover:bg-indigo-50 hover:text-indigo-700 dark:hover:bg-indigo-950/30" aria-label="Editar serviço extra">
-                                    <flux:icon name="pencil-square" class="size-4" />
+                                <button type="button" wire:click="editSalaryExtraIncome({{ $extra->id }})" class="rounded-lg p-2 text-indigo-500 transition hover:bg-indigo-50 hover:text-indigo-700 dark:hover:bg-indigo-950/30" aria-label="Editar serviço extra">                                    <flux:icon name="pencil-square" class="size-4" />
                                 </button>
                             @endif
                             @if($isOwner)
@@ -1805,8 +1801,7 @@
                 <div class="h-1.5 w-full bg-rose-500"></div>
 
                 <div class="p-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
-                        <div class="flex items-start gap-4 flex-1">
+                    <div class="flex flex-col sm:flex-row justify-between items-start gap-4">                        <div class="flex items-start gap-4 flex-1">
                             <div class="flex flex-col items-center justify-center size-14 rounded-2xl bg-rose-50 dark:bg-zinc-950 border border-rose-100 dark:border-rose-900/50 shadow-inner shrink-0">
                                 <span class="text-[7px] font-black text-rose-400 uppercase leading-none mb-1 text-center">RECEB.</span>
                                 <span class="text-xl font-black text-rose-600">{{ sprintf('%02d', $fixed->day_of_month) }}</span>
@@ -2005,4 +2000,1288 @@
                                     {{ $fixed->description }}
                                     <span class="text-[9px] bg-zinc-500/10 text-zinc-500 px-2 py-0.5 rounded-lg border border-zinc-500/20 font-black tracking-widest">OUTRO</span>
                                 </p>
-                                <p class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest mt-1">
+                                <p class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest mt-1">                                    Frequência: {{ ucfirst($fixed->frequency ?? 'mensal') }}
+                                </p>
+                                <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $fixed])</div>
+                            </div>
+                        </div>
+
+                        <div class="text-right shrink-0">
+                            <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 italic">Valor</p>
+                            <span class="text-3xl font-black text-zinc-700 dark:text-white tracking-tighter italic">
+                                {{ number_format($fixed->amount, 2, ',', ' ') }}€
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-end gap-2 border-t border-zinc-50 dark:border-zinc-800/50 pt-4">
+                        <button wire:click="openRaiseModal({{ $fixed->id }})"
+                            class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-500/10 text-zinc-600 hover:bg-zinc-600 hover:text-white transition-all font-black text-[9px] uppercase shadow-sm">
+                            <flux:icon name="rocket-launch" variant="micro" class="size-3" />
+                            Aumento
+                        </button>
+                        <flux:button wire:click="editFixed({{ $fixed->id }})" variant="ghost" icon="pencil-square" size="xs" />
+                        <flux:button wire:click="deleteFixed({{ $fixed->id }})" wire:confirm="Apagar?" variant="ghost" icon="trash" size="xs" color="red" />
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="p-16 border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[2.5rem] text-center">
+                <flux:icon name="sparkles" class="size-8 text-zinc-200 dark:text-zinc-800 mx-auto mb-4" />
+                <p class="text-zinc-400 font-black uppercase text-[10px] tracking-widest italic">Nenhuma outra fonte registada</p>
+            </div>
+        @endforelse
+    </div>
+</div>
+
+
+{{-- BOTÃO PARA ABRIR O MODAL (Adicionar ao cabeçalho da secção imobiliária) --}}
+{{-- <button @click="$dispatch('modal-show-renda')" ... > --}}
+
+{{-- ══════════════════════════════════════════════════════════════ --}}
+{{-- MODAL: NOVA RENDA / IMOBILIÁRIO                               --}}
+{{-- ══════════════════════════════════════════════════════════════ --}}
+<div
+    x-data="{
+        open: false,
+        show() { this.open = true; document.documentElement.classList.add('overflow-hidden'); },
+        close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); }
+    }"
+    x-on:modal-show-renda.window="show()"
+    x-on:modal-close-renda.window="close()"
+    x-on:keydown.escape.window="close()"
+>
+    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
+
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+
+            <form wire:submit.prevent="saveRental" class="flex flex-col">
+                {{-- HEADER --}}
+                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                    <div class="p-3 bg-blue-600 rounded-2xl text-white shadow-lg">
+                        <flux:icon name="home-modern" class="size-6" />
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white leading-none">Rendimento Imobiliário</h2>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Registo de Rendas e Exploração</p>
+                    </div>
+                    <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
+                </div>
+
+                {{-- BODY --}}
+                <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+
+                    {{-- TIPO DE EXPLORAÇÃO (Estilo Wizard) --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-blue-600 z-10">Tipo de Gestão</label>
+                        <select wire:model="recPropertyType" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                            <option value="arrendamento">🏠 Arrendamento de Longa Duração</option>
+                            <option value="alojamento_local">🏨 Alojamento Local (Turismo)</option>
+                            <option value="outro">🏢 Comercial / Outro</option>
+                        </select>
+                    </div>
+
+                    {{-- DESCRIÇÃO --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Identificação do Ativo</label>
+                        <input type="text" wire:model="recDescription" placeholder="Ex: Apartamento em Lisboa..." class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-blue-500 transition-all">
+                    </div>
+
+                    {{-- RENDIMENTO BRUTO VS DESPESAS --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Renda Bruta (€)</label>
+                            <input type="number" step="0.01" wire:model.live="recRentalGross" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-red-400 z-10">Despesas Totais (€)</label>
+                            <input type="number" step="0.01" wire:model.live="recRentalExpenses" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-red-500 transition-all">
+                        </div>
+                    </div>
+
+                    {{-- QUADRO DE RESULTADO (IDENTICO AO WIZARD) --}}
+                    <div class="p-6 bg-blue-50 dark:bg-blue-900/10 rounded-3xl border border-blue-100 dark:border-blue-900/30 text-center animate-in fade-in duration-700">
+                        <p class="text-[10px] font-black text-blue-700 dark:text-blue-300 uppercase tracking-wider">🏦 Rendimento estimado mensal</p>
+                        <p class="text-4xl font-black text-blue-700 dark:text-blue-300 mt-2 tracking-tighter italic">
+                            {{ number_format((float)$recAmount, 2, ',', ' ') }} €
+                        </p>
+                        <p class="text-[9px] text-blue-600/60 dark:text-blue-400/50 mt-1 uppercase font-bold tracking-widest">
+                            Valor livre após custos operacionais
+                        </p>
+                    </div>
+
+                    {{-- DIA DE RECOLHA + DESTINO --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia da Cobrança</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-blue-600 z-10">Onde entra este valor?</label>
+                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-blue-500 transition-all">
+                                <option value="">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts as $acc)
+                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- FOOTER --}}
+                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 transition-all">
+                        Ativar Rendimento 🏢
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{{-- ══════════════════════════════════════════════════════════════ --}}
+{{-- MODAL: TRABALHO INDEPENDENTE / RECIBOS VERDES                 --}}
+{{-- ══════════════════════════════════════════════════════════════ --}}
+<div
+    x-data="{
+        open: false,
+        show() { this.open = true; document.documentElement.classList.add('overflow-hidden'); },
+        close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); }
+    }"
+    x-on:modal-show-freelance.window="show()"
+    x-on:modal-close-freelance.window="close()"
+    x-on:keydown.escape.window="close()"
+>
+    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
+
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+
+            <form wire:submit.prevent="saveFreelance" class="flex flex-col">
+                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                    <div class="p-3 bg-sky-600 rounded-2xl text-white shadow-lg">
+                        <flux:icon name="computer-desktop" class="size-6" />
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white leading-none">Trabalho Independente</h2>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Recibos Verdes / Prestação de Serviços</p>
+                    </div>
+                    <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
+                </div>
+
+                <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Descrição</label>
+                        <input type="text" wire:model="recDescription" placeholder="Ex: Recibos Verdes - Cliente X" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-sky-500 transition-all">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-sky-600 z-10">Atividade</label>
+                            <input type="text" wire:model="recFreelanceActivity" placeholder="Ex: Designer, Programador..." class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-sky-500 transition-all">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Tipo de Rendimento</label>
+                            <select wire:model="recFreelanceType" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                                <option value="prestacao_servicos">Prestação de Serviços</option>
+                                <option value="vendas">Vendas</option>
+                                <option value="consultoria">Consultoria</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Faturação Média (€)</label>
+                            <input type="number" step="0.01" wire:model.live="recFreelanceGross" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-emerald-600 outline-none focus:border-emerald-500 transition-all">
+                        </div>                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-red-400 z-10">Despesas Médias (€)</label>
+                            <input type="number" step="0.01" wire:model.live="recFreelanceExpenses" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-red-500 transition-all">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-red-400 z-10">Retenção na Fonte (€)</label>
+                            <input type="number" step="0.01" wire:model.live="recFreelanceWithholding" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-red-500 transition-all">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Periodicidade</label>
+                            <select wire:model="recFreelanceFrequency" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                                <option value="mensal">Mensal</option>
+                                <option value="trimestral">Trimestral</option>
+                                <option value="anual">Anual</option>
+                                <option value="variavel">Variável</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="p-6 bg-sky-50 dark:bg-sky-900/10 rounded-3xl border border-sky-100 dark:border-sky-900/30 text-center">
+                        <p class="text-[10px] font-black text-sky-700 dark:text-sky-300 uppercase tracking-wider">💡 Rendimento estimado</p>
+                        <p class="text-4xl font-black text-sky-700 dark:text-sky-300 mt-2 tracking-tighter italic">
+                            {{ number_format((float)$recAmount, 2, ',', ' ') }} €
+                        </p>
+                        <p class="text-[9px] text-sky-600/60 dark:text-sky-400/50 mt-1 uppercase font-bold tracking-widest">
+                            Faturação − despesas − retenção
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-sky-600 z-10">Onde entra este valor?</label>
+                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-sky-500 transition-all">
+                                <option value="">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts as $acc)
+                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-14 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-sky-500/20 transition-all">
+                        Confirmar Rendimento 💻
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{{-- ══════════════════════════════════════════════════════════════ --}}
+{{-- MODAL: RENDIMENTOS DE INVESTIMENTOS / DIVIDENDOS              --}}
+{{-- ══════════════════════════════════════════════════════════════ --}}
+<div
+    x-data="{
+        open: false,
+        show() { this.open = true; document.documentElement.classList.add('overflow-hidden'); },
+        close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); }
+    }"
+    x-on:modal-show-investimento.window="show()"
+    x-on:modal-close-investimento.window="close()"
+    x-on:keydown.escape.window="close()"
+>
+    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
+
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+
+            <form wire:submit.prevent="saveInvestment" class="flex flex-col">
+                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                    <div class="p-3 bg-violet-600 rounded-2xl text-white shadow-lg">
+                        <flux:icon name="chart-bar" class="size-6" />
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white leading-none">Rendimento de Investimento</h2>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Dividendos, Juros e Mais-Valias</p>
+                    </div>
+                    <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
+                </div>
+
+                <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Descrição</label>
+                        <input type="text" wire:model="recDescription" placeholder="Ex: Dividendos - ETF S&P 500" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-violet-500 transition-all">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-violet-600 z-10">Tipo de Rendimento</label>
+                            <select wire:model="recInvestmentType" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                                <option value="dividendos">💰 Dividendos</option>
+                                <option value="juros">🏦 Juros</option>
+                                <option value="mais_valias">📊 Mais-valias</option>
+                                <option value="fundos">📈 Fundos / ETFs</option>
+                                <option value="cripto">₿ Criptoativos</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Investimento / Entidade</label>
+                            <input type="text" wire:model="recInvestmentName" placeholder="Ex: ETF S&P 500, Banco X..." class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Rendimento (€)</label>
+                            <input type="number" step="0.01" wire:model.live="recInvestmentAmount" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-emerald-500/30 rounded-2xl px-5 text-lg font-black text-emerald-600 outline-none">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Periodicidade</label>
+                            <select wire:model="recInvestmentFrequency" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                                <option value="mensal">Mensal</option>
+                                <option value="trimestral">Trimestral</option>
+                                <option value="semestral">Semestral</option>
+                                <option value="anual">Anual</option>
+                                <option value="variavel">Variável</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-red-400 z-10">Custos / Comissões (€)</label>
+                        <input type="number" step="0.01" wire:model.live="recInvestmentExpenses" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-red-500 transition-all">
+                    </div>
+
+                    <div class="p-6 bg-violet-50 dark:bg-violet-900/10 rounded-3xl border border-violet-100 dark:border-violet-900/30 text-center">
+                        <p class="text-[10px] font-black text-violet-700 dark:text-violet-300 uppercase tracking-wider">📈 Rendimento líquido estimado</p>
+                        <p class="text-4xl font-black text-violet-700 dark:text-violet-300 mt-2 tracking-tighter italic">
+                            {{ number_format((float)$recAmount, 2, ',', ' ') }} €
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-violet-600 z-10">Onde entra este valor?</label>
+                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-violet-500 transition-all">
+                                <option value="">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts as $acc)
+                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-14 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-violet-500/20 transition-all">
+                        Confirmar Investimento 📈
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{{-- ══════════════════════════════════════════════════════════════ --}}
+{{-- MODAL: REFORMA / PENSÃO DE VELHICE                            --}}
+{{-- ══════════════════════════════════════════════════════════════ --}}
+<div
+    x-data="{
+        open: false,
+        show() { this.open = true; document.documentElement.classList.add('overflow-hidden'); },
+        close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); }
+    }"
+    x-on:modal-show-reforma.window="show()"
+    x-on:modal-close-reforma.window="close()"
+    x-on:keydown.escape.window="close()"
+>
+    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
+
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+
+            <form wire:submit.prevent="savePension" class="flex flex-col">
+                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                    <div class="p-3 bg-rose-600 rounded-2xl text-white shadow-lg">
+                        <flux:icon name="user-circle" class="size-6" />
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white leading-none">Reforma / Pensão</h2>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Registo de Pensão de Velhice ou Invalidez</p>                    </div>
+                    <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
+                </div>
+
+                <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Descrição</label>
+                        <input type="text" wire:model="recDescription" placeholder="Ex: Pensão de Velhice - Segurança Social" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-rose-500 transition-all">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-rose-600 z-10">Tipo de Pensão</label>
+                            <select wire:model="recPensionType" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                                <option value="velhice">👴 Pensão de Velhice</option>
+                                <option value="invalidez">♿ Pensão de Invalidez</option>
+                                <option value="sobrevivencia">❤️ Pensão de Sobrevivência</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Entidade Pagadora</label>
+                            <input type="text" wire:model="recPensionEntity" placeholder="Ex: Segurança Social" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Valor Bruto (€)</label>
+                            <input type="number" step="0.01" wire:model="recPensionGross" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Valor Líquido (€)</label>
+                            <input type="number" step="0.01" wire:model.live="recPensionAmount" placeholder="0,00" class="w-full h-14 bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-500/30 rounded-2xl px-5 text-lg font-black text-emerald-600 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-rose-600 z-10">Onde entra este valor?</label>
+                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-rose-500 transition-all">
+                                <option value="">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts as $acc)
+                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-14 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-rose-500/20 transition-all">
+                        Confirmar Pensão 👴
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{{-- ══════════════════════════════════════════════════════════════ --}}
+{{-- MODAL: BOLSA DE ESTUDO / APOIO À FORMAÇÃO                     --}}
+{{-- ══════════════════════════════════════════════════════════════ --}}
+<div
+    x-data="{
+        open: false,
+        show() { this.open = true; document.documentElement.classList.add('overflow-hidden'); },
+        close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); }
+    }"
+    x-on:modal-show-bolsa.window="show()"
+    x-on:modal-close-bolsa.window="close()"
+    x-on:keydown.escape.window="close()"
+>
+    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
+
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+
+            <form wire:submit.prevent="saveScholarship" class="flex flex-col">
+                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                    <div class="p-3 bg-amber-600 rounded-2xl text-white shadow-lg">
+                        <flux:icon name="academic-cap" class="size-6" />
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white leading-none">Bolsa de Estudo</h2>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Apoio à Formação / Investigação</p>
+                    </div>
+                    <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
+                </div>
+
+                <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Descrição</label>
+                        <input type="text" wire:model="recDescription" placeholder="Ex: Bolsa de Investigação - FCT" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-amber-500 transition-all">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-amber-600 z-10">Tipo de Bolsa</label>
+                            <select wire:model="recScholarshipType" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                                <option value="estudo">🎓 Bolsa de Estudo</option>
+                                <option value="formacao">📚 Apoio à Formação</option>
+                                <option value="investigacao">🔬 Bolsa de Investigação</option>
+                                <option value="estagio">💼 Bolsa de Estágio</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Entidade</label>
+                            <input type="text" wire:model="recScholarshipEntity" placeholder="Ex: Universidade, IEFP..." class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Valor (€)</label>
+                            <input type="number" step="0.01" wire:model.live="recScholarshipAmount" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-emerald-500/30 rounded-2xl px-5 text-lg font-black text-emerald-600 outline-none">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Periodicidade</label>
+                            <select wire:model="recScholarshipFrequency" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                                <option value="mensal">Mensal</option>
+                                <option value="trimestral">Trimestral</option>
+                                <option value="anual">Anual</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Data de Fim (opcional)</label>
+                            <input type="date" wire:model="recScholarshipEndDate" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-amber-600 z-10">Onde entra este valor?</label>
+                        <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-amber-500 transition-all">
+                            <option value="">💵 Dinheiro Físico</option>
+                            @foreach($this->bankAccounts as $acc)
+                                <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-14 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-amber-500/20 transition-all">
+                        Confirmar Bolsa 🎓
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{{-- ══════════════════════════════════════════════════════════════ --}}
+{{-- MODAL: OUTRA FONTE DE RENDIMENTO                              --}}
+{{-- ══════════════════════════════════════════════════════════════ --}}
+<div
+    x-data="{
+        open: false,
+        show() { this.open = true; document.documentElement.classList.add('overflow-hidden'); },
+        close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); }
+    }"
+    x-on:modal-show-outro.window="show()"
+    x-on:modal-close-outro.window="close()"
+    x-on:keydown.escape.window="close()"
+>
+    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
+
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+
+            <form wire:submit.prevent="saveOther" class="flex flex-col">
+                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                    <div class="p-3 bg-zinc-900 dark:bg-white rounded-2xl text-white dark:text-zinc-900 shadow-lg">
+                        <flux:icon name="sparkles" class="size-6" />
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white leading-none">Outra Fonte</h2>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Subsídio, Mesada, Comissão...</p>
+                    </div>
+                    <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
+                </div>
+                <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-600 z-10">Nome da Fonte</label>
+                        <input type="text" wire:model="recOtherSourceDetail" placeholder="Ex: Subsídio, Mesada, Pensão, Comissão..." class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-zinc-500 transition-all">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Valor (€)</label>
+                            <input type="number" step="0.01" wire:model.live="recOtherAmount" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-emerald-500/30 rounded-2xl px-5 text-lg font-black text-emerald-600 outline-none">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Periodicidade</label>
+                            <select wire:model="recOtherFrequency" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                                <option value="mensal">Mensal</option>
+                                <option value="semanal">Semanal</option>
+                                <option value="trimestral">Trimestral</option>
+                                <option value="anual">Anual</option>
+                                <option value="variavel">Variável</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Dia de Recebimento</label>
+                            <input type="number" min="1" max="31" wire:model="recDay" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-xl font-black text-center text-zinc-900 dark:text-white">
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-600 z-10">Onde entra este valor?</label>
+                            <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-zinc-500 transition-all">
+                                <option value="">💵 Dinheiro Físico</option>
+                                @foreach($this->bankAccounts as $acc)
+                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-14 bg-zinc-900 dark:bg-white hover:opacity-90 text-white dark:text-zinc-900 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all">
+                        Confirmar Rendimento ✨
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{{-- Modal para atualizar um rendimento recorrente --}}
+@if($showRaiseModal)
+@php
+    $raiseMeta = [
+        'emprego'      => ['emoji' => '💼', 'title' => 'Atualizar salário', 'subtitle' => 'Altera o valor deste rendimento recorrente.', 'totalQ' => 'Novo valor líquido mensal', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'imobiliario'  => ['emoji' => '🏠', 'title' => 'Atualizar valor da renda', 'subtitle' => 'Altera o valor deste rendimento recorrente.', 'totalQ' => 'Novo valor mensal', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'freelance'    => ['emoji' => '💻', 'title' => 'Atualizar rendimento freelance', 'subtitle' => 'Altera o valor líquido deste rendimento.', 'totalQ' => 'Novo valor líquido', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'investimento' => ['emoji' => '📊', 'title' => 'Atualizar rendimento de investimento', 'subtitle' => 'Altera o valor deste rendimento recorrente.', 'totalQ' => 'Novo valor', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'reforma'      => ['emoji' => '👴', 'title' => 'Atualizar pensão', 'subtitle' => 'Altera o valor líquido desta pensão.', 'totalQ' => 'Novo valor líquido mensal', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'bolsa'        => ['emoji' => '🎓', 'title' => 'Atualizar bolsa', 'subtitle' => 'Altera o valor deste rendimento recorrente.', 'totalQ' => 'Novo valor', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+        'outro'        => ['emoji' => '✨', 'title' => 'Atualizar rendimento', 'subtitle' => 'Altera o valor deste rendimento recorrente.', 'totalQ' => 'Novo valor', 'addQ' => 'Valor a acrescentar', 'confirm' => 'Guardar alteração'],
+    ];
+    $rm = $raiseMeta[$raiseSourceType] ?? $raiseMeta['emprego'];
+    $raiseModes = [
+        ...($raiseSourceType === 'emprego' ? [
+            'none' => ['title' => 'Sem aumento', 'description' => 'Mantém o salário atual e não agenda aumentos automáticos.', 'symbol' => '—'],
+        ] : []),
+        'total' => ['title' => 'Definir novo valor', 'description' => 'Substitui o valor atual.', 'symbol' => '€'],
+        'addition' => ['title' => 'Aumento pontual', 'description' => 'Acrescenta ao valor atual uma única vez.', 'symbol' => '€'],
+        'annual_fixed' => ['title' => 'Aumento anual fixo', 'description' => 'Acrescenta este valor todos os anos.', 'symbol' => '€'],
+        'annual_percentage' => ['title' => 'Aumento anual percentual', 'description' => 'Aplica esta percentagem sobre o valor atualizado.', 'symbol' => '%'],
+    ];
+    $selectedRaiseMode = $raiseModes[$raiseMode] ?? $raiseModes['total'];
+@endphp
+<div
+    x-data="{
+        open: false,
+        show() { this.open = true; document.documentElement.classList.add('overflow-hidden'); },
+        close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); }
+    }"
+    x-init="setTimeout(() => show(), 50)"
+    x-on:modal-show-upgrade.window="show()"
+    x-on:modal-close-upgrade.window="close()"
+    x-on:keydown.escape.window="close()"
+>
+
+    <div
+        x-show="open"
+        x-cloak
+        x-transition.opacity.duration.150ms
+        @click="close()"
+        class="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm"
+    ></div>
+
+    <div
+        x-show="open"
+        x-cloak
+        @click.self="close()"
+        class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-6"
+    >
+        <div
+            x-show="open"
+            x-transition.scale.duration.150ms
+            class="relative z-10 my-auto flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-950/20 dark:border-zinc-800 dark:bg-zinc-900"
+            @click.stop
+        >
+
+            <form wire:submit.prevent="applyRaise" class="flex min-h-0 flex-col" autocomplete="off">
+                <header class="flex items-start gap-4 border-b border-zinc-100 px-5 py-5 dark:border-zinc-800 sm:px-7">
+                    <div class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-2xl dark:bg-emerald-500/10">
+                        {{ $rm['emoji'] }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Rendimento recorrente</p>
+                        <h2 class="mt-1 text-xl font-bold tracking-tight text-zinc-900 dark:text-white">{{ $rm['title'] }}</h2>
+                        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ $rm['subtitle'] }}</p>
+                    </div>
+                    <button type="button" wire:click="closeRaiseModal" @click="close()" aria-label="Fechar"
+                        class="rounded-xl p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200">
+                        <flux:icon name="x-mark" class="size-5" />
+                    </button>
+                </header>
+
+                <div class="min-h-0 space-y-6 overflow-y-auto px-5 py-5 text-left sm:px-7 sm:py-6">
+
+                    <section>
+                        <div class="mb-3">
+                            <h3 class="text-sm font-semibold text-zinc-900 dark:text-white">Como queres atualizar?</h3>
+                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Escolhe se a alteração é pontual ou automática.</p>
+                        </div>
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            @foreach($raiseModes as $mode => $option)
+                                <button type="button" wire:click="$set('raiseMode', '{{ $mode }}')" aria-pressed="{{ $raiseMode === $mode ? 'true' : 'false' }}"
+                                    class="rounded-2xl border p-4 text-left transition focus:outline-none focus:ring-2 focus:ring-emerald-500/40 {{ $raiseMode === $mode ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500 dark:bg-emerald-500/10' : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800' }}">
+                                    <span class="flex items-center justify-between gap-3">
+                                        <span class="text-sm font-semibold {{ $raiseMode === $mode ? 'text-emerald-800 dark:text-emerald-300' : 'text-zinc-800 dark:text-zinc-100' }}">{{ $option['title'] }}</span>
+                                        <span class="flex size-5 shrink-0 items-center justify-center rounded-full border {{ $raiseMode === $mode ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-zinc-300 dark:border-zinc-600' }}">
+                                            @if($raiseMode === $mode)<span class="text-xs">✓</span>@endif
+                                        </span>
+                                    </span>
+                                    <span class="mt-1 block text-xs leading-5 text-zinc-500 dark:text-zinc-400">{{ $option['description'] }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    </section>
+
+                    @if($raiseMode !== 'none')
+                    <section class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+                        <label for="raise-value" class="mb-2 block text-sm font-semibold text-zinc-900 dark:text-white">
+                            @if($raiseMode === 'total')
+                                {{ $rm['totalQ'] }}
+                            @elseif($raiseMode === 'addition')
+                                {{ $rm['addQ'] }}
+                            @elseif($raiseMode === 'annual_fixed')
+                                Valor do aumento anual
+                            @else
+                                Percentagem de aumento anual
+                            @endif
+                        </label>
+                        <div class="relative">
+                            <input id="raise-value" type="number" min="0.01" step="0.01" inputmode="decimal" wire:model="raiseValue"
+                                class="h-14 w-full rounded-xl border border-zinc-300 bg-white px-4 pr-12 text-lg font-semibold text-zinc-900 outline-none transition placeholder:font-normal placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
+                                placeholder="0,00" autofocus>
+                            <span class="absolute inset-y-0 right-3 flex items-center">
+                                @if(in_array($raiseMode, ['annual_fixed', 'annual_percentage'], true))
+                                    <span class="rounded-lg bg-emerald-100 px-3 py-1 text-lg font-black text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">{{ $selectedRaiseMode['symbol'] }}</span>
+                                @else
+                                    <span class="text-sm font-semibold text-zinc-500">{{ $selectedRaiseMode['symbol'] }}</span>
+                                @endif
+                            </span>
+                        </div>
+                        @if($raiseMode === 'total')
+                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Este valor passa a ser o novo montante recorrente.</p>
+                        @elseif($raiseMode === 'addition')
+                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Este montante será somado ao valor atual uma única vez.</p>
+                        @elseif($raiseMode === 'annual_percentage')
+                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Usa uma percentagem entre 0,01% e 100%. Cada aplicação considera o valor mais recente.</p>
+                        @else
+                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Este montante será somado ao valor atual em cada aplicação anual.</p>
+                        @endif
+                        @error('raiseValue')
+                            <p class="mt-2 text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </section>
+                    @endif
+
+                    @if(in_array($raiseMode, ['annual_fixed', 'annual_percentage'], true))
+                        <section>
+                            <label for="raise-next-date" class="mb-2 block text-sm font-semibold text-zinc-900 dark:text-white">Data do primeiro aumento</label>
+                            <input id="raise-next-date" type="date" wire:model="raiseNextDate" min="{{ now()->toDateString() }}"
+                                class="h-12 w-full rounded-xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white">
+                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">O aumento será aplicado nesta data e repetido anualmente.</p>
+                            @error('raiseNextDate')
+                                <p class="mt-2 text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </section>
+                    @endif
+                    @if($hasAnnualRaise && $raiseMode !== 'none')
+                        <div class="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">Aumento anual ativo</p>
+                                <p class="mt-1 text-xs text-amber-800/80 dark:text-amber-200/70">Podes atualizar a configuração acima ou desativar a aplicação automática.</p>
+                            </div>
+                            <button type="button" wire:click="cancelAnnualRaise" wire:confirm="Queres desativar o aumento anual automático?"
+                                class="shrink-0 rounded-xl border border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 dark:border-amber-500/30 dark:bg-zinc-900 dark:text-amber-200 dark:hover:bg-amber-500/10">
+                                Desativar
+                            </button>
+                        </div>
+                    @endif
+                </div>
+
+                <footer class="flex flex-col-reverse gap-2 border-t border-zinc-100 bg-zinc-50 px-5 py-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:justify-end sm:px-7">
+                    <button type="button" wire:click="closeRaiseModal" @click="close()"
+                        class="inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-200/70 dark:text-zinc-300 dark:hover:bg-zinc-800">
+                        Voltar
+                    </button>
+                    <button type="submit"
+                        class="inline-flex h-11 items-center justify-center rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/20">
+                        {{ $raiseMode === 'none' ? 'Guardar sem aumento' : $rm['confirm'] }}
+                    </button>
+                </footer>
+
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </div>@if($showExtraModal)
+
+<div
+    x-data="{
+        open: false,
+        show() { this.open = true; document.documentElement.classList.add('overflow-hidden'); },
+        close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); }
+    }"
+    x-on:modal-show-receita-extra.window="show()"
+    x-on:modal-close-receita-extra.window="close()"
+    x-on:keydown.escape.window="close()"
+>
+    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
+
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+
+            <form wire:submit.prevent="saveExtra" class="flex flex-col" autocomplete="off">
+                {{-- HEADER --}}
+                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                    <div class="p-3 bg-emerald-600 rounded-2xl text-white shadow-lg">
+                        <flux:icon name="sparkles" class="size-6" />
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white leading-none">Receita Extra</h2>
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Regista uma entrada ou serviço extra</p>
+                    </div>
+                    <button type="button" @click="close(); $wire.closeExtraModal()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
+                </div>
+
+                {{-- BODY --}}
+                <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+
+                    {{-- DESCRIÇÃO --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">{{ $extraSalaryId ? 'Serviço extra realizado' : 'Descrição' }}</label>
+                        <input type="text" wire:model="description" placeholder="{{ $extraSalaryId ? 'Ex: Serviço técnico, turno extra...' : 'Ex: Serviço, venda...' }}" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
+                    </div>
+
+                    {{-- VALOR + MOEDA + DATA --}}
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        @if($extraSalaryId)
+                            <div class="relative">
+                                <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Valor por serviço ({{ strtoupper($currency) }})</label>
+                                <input type="number" min="0.01" step="0.01" wire:model.live="serviceUnitAmount" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
+                                @error('serviceUnitAmount')<p class="mt-1 text-xs font-bold text-red-600">{{ $message }}</p>@enderror
+                            </div>
+                            <div class="relative">
+                                <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Serviços feitos este mês</label>
+                                <input type="number" min="1" max="1000" step="1" wire:model.live="serviceQuantity" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
+                                @error('serviceQuantity')<p class="mt-1 text-xs font-bold text-red-600">{{ $message }}</p>@enderror
+                            </div>
+                        @else
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Valor ({{ strtoupper($currency) }})</label>
+                            <input type="number" step="0.01" wire:model="amount" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
+                        </div>
+                        @endif
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Data</label>
+                            <input type="date" wire:model="received_at" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none">
+                        </div>
+                        @if($extraSalaryId)
+                            <div class="relative">
+                                <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Total do serviço ({{ strtoupper($currency) }})</label>
+                                <input type="number" wire:model="amount" readonly class="w-full h-14 bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-200 dark:border-emerald-900 rounded-2xl px-5 text-lg font-black text-emerald-700 dark:text-emerald-300 outline-none">
+                                @error('amount')<p class="mt-1 text-xs font-bold text-red-600">{{ $message }}</p>@enderror
+                            </div>
+                        @endif
+                    </div>
+
+                    @if($salaryContractOptions->isNotEmpty() && ! $extraSalaryId)
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">Associar ao contrato</label>
+                            <select wire:model.live="extraSalaryId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
+                                <option value="">Sem contrato associado</option>
+                                @foreach($salaryContractOptions as $salaryContract)
+                                    <option value="{{ $salaryContract->id }}">{{ $salaryContract->description }}</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-2 text-xs text-zinc-500">A entrada aparece no total anual e no histórico do contrato escolhido.</p>
+                        </div>
+                    @endif
+
+                    {{-- IMPOSTO ESTIMADO --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-amber-600 z-10">Imposto Estimado (%)</label>
+                        <div class="relative">
+                        <input type="number" step="0.1" min="0" max="100" wire:model="tax_estimate" placeholder="Ex: 25 (IRS, IVA...)" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl pl-5 pr-16 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:border-amber-500 transition-all">
+                        <span class="absolute right-4 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-xl border-2 border-amber-300 bg-amber-100 text-lg font-black text-amber-700 shadow-sm dark:border-amber-500/60 dark:bg-amber-500/20 dark:text-amber-300">%</span>
+                        </div>
+                        @if($tax_estimate && $amount)
+                            <p class="text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-1.5">
+                                Imposto estimado: ~{{ number_format($amount * $tax_estimate / 100, 2, ',', '.') }} {{ strtoupper($currency) }}
+                                · Líquido: ~{{ number_format($amount - ($amount * $tax_estimate / 100), 2, ',', '.') }} {{ strtoupper($currency) }}
+                            </p>
+                        @endif
+                    </div>
+
+                    {{-- NOTAS --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-zinc-400 z-10">Notas (opcional)</label>
+                        <textarea wire:model="notes" rows="2" placeholder="Observações, cliente, referência..." class="w-full bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 py-4 text-sm font-medium text-zinc-900 dark:text-white resize-none outline-none focus:border-emerald-500 transition-all"></textarea>
+                    </div>
+
+                    {{-- DESTINO DO DINHEIRO --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">Onde entra este valor?</label>
+                        <select wire:model="extraDestination" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-emerald-500 transition-all">
+                            @if($extraSalaryId)
+                                <option value="salary">💼 Adicionar ao salário do próximo mês</option>
+                            @endif
+                            <option value="cash">💵 Dinheiro Físico</option>
+                            @foreach($this->bankAccounts as $acc)
+                                @if((int) $acc->user_id === (int) auth()->id())
+                                    <option value="bank:{{ $acc->id }}">🏦 {{ $acc->name }}</option>
+                                @endif
+                            @endforeach
+                        </select>
+                        @if($extraSalaryId && $extraDestination === 'salary')
+                            <p class="mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-300">O total calculado (valor por serviço × número de serviços) será somado ao próximo salário na data prevista, sem alterar o salário base do contrato.</p>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- FOOTER --}}
+                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close(); $wire.closeExtraModal()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button
+                        wire:click="saveExtra"
+                        @click="close()"
+                        wire:loading.attr="disabled"
+                        wire:target="saveExtra"
+                        class="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20 transition-all disabled:opacity-60">
+                        Confirmar Ganho ✨
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- ══════════════════════════════════════════════════════════════ --}}
+{{-- MODAL: SALÁRIO FIXO · PREMIUM + FLUIDO --}}
+{{-- ══════════════════════════════════════════════════════════════ --}}
+<div    x-data="{
+        open: false,
+        show() {
+            this.open = true;
+            document.documentElement.classList.add('overflow-hidden');
+        },
+        close() {
+            this.open = false;
+            document.documentElement.classList.remove('overflow-hidden');
+        }
+    }"
+    x-on:modal-show-salario.window="show()"
+    x-on:modal-close-salario.window="close()"
+    x-on:keydown.escape.window="close()"
+>
+
+    {{-- BACKDROP PREMIUM --}}
+    <div
+        x-show="open"
+        x-cloak
+        x-transition.opacity.duration.120ms
+        @click="close()"
+        class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"
+    ></div>
+
+    {{-- WRAPPER --}}
+    <div
+        x-show="open"
+        x-cloak
+        @click.self="close()"
+        class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
+    >
+
+        {{-- PAINEL PREMIUM --}}
+        <div
+            x-show="open"
+            x-transition.scale.duration.120ms
+            class="relative z-10 w-full max-w-2xl rounded-[2rem] shadow-xl overflow-hidden transform-gpu
+                   bg-emerald-500/10 backdrop-blur-sm border border-emerald-500/20"
+            @click.stop
+        >
+
+            <form wire:submit.prevent="{{ $editingFixedId ? 'updateFixed' : 'saveFixed' }}" class="flex max-h-[86vh] flex-col" autocomplete="off">
+
+                {{-- HEADER --}}
+                <div class="shrink-0 p-6 pb-4 flex items-center gap-4 border-b border-white/10 bg-white/10 backdrop-blur-sm">
+                    <div class="p-3 bg-emerald-600 rounded-2xl text-white shadow-md shadow-emerald-500/20">
+                        <flux:icon name="calendar-days" class="size-5" />
+                    </div>
+
+                    <div class="flex-1 min-w-0">
+                        <h2 class="font-black uppercase italic tracking-tight leading-none text-white">
+                            {{ $editingFixedId ? 'Editar Salário' : 'Configurar Salário' }}
+                        </h2>
+                        <p class="text-[10px] text-emerald-300 font-black uppercase tracking-widest mt-1.5 italic">
+                            Rendimento que se repete automaticamente
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        @click="close()"
+                        class="rounded-full p-2 hover:bg-white/10 text-zinc-300 hover:text-white transition-colors"
+                    >
+                        <flux:icon name="x-mark" class="size-5" />
+                    </button>
+                </div>
+
+                {{-- BODY --}}
+                <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+{{-- SELETOR DE VÍNCULO EMPRESARIAL --}}
+<div class="relative mb-3 text-left">
+    <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+        Vincular a uma Empresa
+    </label>
+    <div class="relative">
+        <select
+            wire:model.live="recWorkspaceId"
+            class="w-full bg-white/10 dark:bg-zinc-900/40 border border-white/10 rounded-2xl py-4 px-5
+                   text-sm font-bold text-white outline-none appearance-none transition-all focus:ring-2 focus:ring-emerald-500/30"
+        >
+            <option value="" class="bg-white text-zinc-900">Entrada Manual (Individual)</option>
+
+            @foreach($collabBusinesses as $biz)
+                {{-- Estilo inline para garantir que as opções são legíveis --}}
+                <option value="{{ $biz->id }}" class="bg-white text-zinc-900">
+                    🏢 {{ $biz->name }}
+                </option>
+            @endforeach
+        </select>
+
+        <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-300/50">
+            <flux:icon name="chevron-down" variant="micro" class="size-4" />
+        </div>
+    </div>
+    <p class="text-[8px] text-zinc-400 uppercase font-black mt-2 ml-1 tracking-[0.2em]">
+        Selecione a empresa onde trabalha para importar os dados do contrato
+    </p>
+</div>
+
+                    {{-- Identificação --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                            Identificação
+                        </label>
+                        <input
+                            type="text"
+                            wire:model="recDescription"
+                            placeholder="Ex: Salário Mensal - Empresa X"
+                            class="w-full bg-white/10 dark:bg-zinc-900/20 border @error('recDescription') border-red-500/60 @else border-white/10 @enderror rounded-2xl py-4 px-5
+                                   text-sm font-bold text-white placeholder-white/40 outline-none transition-all focus:ring-2 focus:ring-emerald-500/30"
+                        >
+                        @error('recDescription')
+                            <p class="text-red-400 text-[10px] font-bold mt-1 ml-2">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Valor + Dia --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                                Valor Líquido (€)
+                            </label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                wire:model="recAmount"
+                                placeholder="0,00"
+                                class="w-full bg-white/10 dark:bg-zinc-900/20 border @error('recAmount') border-red-500/60 @else border-white/10 @enderror rounded-2xl py-4 px-5
+                                       text-lg font-black text-emerald-400 placeholder-white/40 outline-none transition-all focus:ring-2 focus:ring-emerald-500/30"
+                            >
+                            @error('recAmount')
+                                <p class="text-red-400 text-[10px] font-bold mt-1 ml-2">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                                Dia de Recebimento
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="31"
+                                wire:model="recDay"
+                                placeholder="Ex: 25"
+                                class="w-full bg-white/10 dark:bg-zinc-900/20 border @error('recDay') border-red-500/60 @else border-white/10 @enderror rounded-2xl py-4 px-5
+                                       text-lg font-black text-white text-center outline-none transition-all focus:ring-2 focus:ring-emerald-500/30"
+                            >
+                            @error('recDay')
+                                <p class="text-red-400 text-[10px] font-bold mt-1 ml-2">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                    </div>
+
+                    {{-- Fonte + Frequência --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                                Fonte
+                            </label>
+                            <select
+                                wire:model="recSource"
+                                class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
+                                       text-sm font-bold text-white outline-none transition-all focus:ring-2 focus:ring-emerald-500/30 appearance-none"
+                            >
+                                <option value="emprego">💼 Emprego</option>
+                                <option value="freelance">💻 Freelance</option>
+                                <option value="investimento">📈 Investimento</option>
+                                <option value="outro">✨ Outro</option>
+                            </select>
+                        </div>
+
+                        <div class="relative">
+                            <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                                Frequência
+                            </label>
+                            <select
+                                wire:model="recFrequency"
+                                class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
+                                       text-sm font-bold text-white outline-none transition-all focus:ring-2 focus:ring-emerald-500/30 appearance-none"
+                            >
+                                <option value="semanal">📅 Semanal</option>
+                                <option value="mensal">🔁 Mensal</option>
+                                <option value="anual">📆 Anual</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    {{-- Onde entra este valor --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                            Onde entra este valor?
+                        </label>
+                        <select
+                            wire:model="recBankAccountId"                            class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
+                                   text-sm font-bold text-white outline-none transition-all focus:ring-2 focus:ring-emerald-500/30 appearance-none"
+                        >
+                            <option value="" class="bg-white text-zinc-900">💵 Dinheiro Físico</option>
+                            @foreach($this->bankAccounts as $acc)
+                                <option value="{{ $acc->id }}" class="bg-white text-zinc-900">🏦 Banco — {{ $acc->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Imposto estimado --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                            Imposto Estimado (%)
+                        </label>
+                        <div class="relative">
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                wire:model="recTaxEstimate"
+                                placeholder="Ex: 28.5 (IRS)"
+                                class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
+                                       text-sm font-bold text-white placeholder-white/40 outline-none transition-all focus:ring-2 focus:ring-amber-500/30"
+                            >
+                            <span class="absolute right-5 top-1/2 -translate-y-1/2 text-emerald-300 font-black text-sm">%</span>
+                        </div>
+                    </div>
+
+                    {{-- Notas --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-emerald-500/10 backdrop-blur-sm text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                            Notas (opcional)
+                        </label>
+                        <textarea
+                            wire:model="recNotes"
+                            rows="2"
+                            placeholder="Empresa, contrato, observações..."
+                            class="w-full bg-white/10 dark:bg-zinc-900/20 border border-white/10 rounded-2xl py-4 px-5
+                                   text-sm font-medium text-white placeholder-white/40 resize-none outline-none transition-all focus:ring-2 focus:ring-emerald-500/30"
+                        ></textarea>
+                    </div>
+
+                </div>
+{{-- FOOTER DO MODAL --}}
+                <div class="shrink-0 p-6 pt-4 flex flex-col sm:flex-row gap-3 border-t border-white/10 bg-white/10 backdrop-blur-sm">
+                    <button
+                        type="button"
+                        @click="close(); $wire.set('editingFixedId', null)"
+                        class="w-full h-14 rounded-2xl text-zinc-300 hover:text-white hover:bg-white/10
+                               font-bold uppercase text-xs tracking-widest transition-all active:scale-95"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        wire:loading.attr="disabled"
+                        wire:target="saveFixed, updateFixed"
+                        class="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white
+                               font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20
+                               transition-all text-xs active:scale-95 disabled:opacity-60"
+                    >
+                        {{-- Texto muda quando está a processar --}}
+                        <span wire:loading.remove wire:target="saveFixed, updateFixed">
+                            {{ $editingFixedId ? 'Guardar Alterações' : 'Confirmar Salário' }}
+                        </span>
+
+                        <span wire:loading wire:target="saveFixed, updateFixed" class="flex items-center justify-center gap-2">
+                            <div class="size-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                            A processar...
+                        </span>
+                    </button>
+                </div>
+
+            </form> {{-- FECHA O FORM --}}
+        </div> {{-- FECHA O PAINEL --}}
+    </div> {{-- FECHA O WRAPPER --}}
+</div> {{-- FECHA O x-data DO MODAL --}}
+
+    {{-- ================================================================== --}}
+    {{-- FOOTER DA PÁGINA                                                 --}}
+    {{-- ================================================================== --}}
+    <footer class="pt-16 sm:pt-20 pb-6 text-center border-t border-zinc-100 dark:border-zinc-800 mt-16 sm:mt-20">
+        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">
+            © {{ date('Y') }} {{ config('app.name') }} · Terminal de Receitas e Fluxo
+        </p>
+    </footer>
+
+</div> {{-- FECHA A DIV RAIZ DO FICHEIRO --}}
