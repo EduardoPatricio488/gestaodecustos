@@ -415,9 +415,9 @@ class XtbInvestmentImportHub extends Component
             // Os PDFs do AforroNet podem apresentar a data com rótulos e
             // separadores diferentes consoante a versão da declaração.
             $datePatterns = [
-                '/Data\\s+do\\s+Extrato\\s*:?\\s*(\\d{2}[.\\/-]\\d{2}[.\\/-]\\d{4})/iu',
-                '/Data\\s+(?:de\\s+)?(?:emiss[aã]o|refer[eê]ncia)\\s*:?\\s*(\\d{2}[.\\/-]\\d{2}[.\\/-]\\d{4})/iu',
-                '/Extrato\\s+(?:emitido\\s+)?em\\s*:?\\s*(\\d{2}[.\\/-]\\d{2}[.\\/-]\\d{4})/iu',
+                '/Data\s+do\s+Extrato\s*:?\s*(\d{2}[.\/-]\d{2}[.\/-]\d{4})/iu',
+                '/Data\s+(?:de\s+)?(?:emiss[aã]o|refer[eê]ncia)\s*:?\s*(\d{2}[.\/-]\d{2}[.\/-]\d{4})/iu',
+                '/Extrato\s+(?:emitido\s+)?em\s*:?\s*(\d{2}[.\/-]\d{2}[.\/-]\d{4})/iu',
             ];
             $reportDate = null;
             foreach ($datePatterns as $pattern) {
@@ -428,7 +428,7 @@ class XtbInvestmentImportHub extends Component
             }
 
             if (! $reportDate) {
-                throw new \\RuntimeException('Não encontrei a data do extrato no PDF. A leitura do documento funcionou, mas o formato da data não corresponde aos formatos reconhecidos.');
+                throw new \RuntimeException('Não encontrei a data do extrato no PDF. A leitura do documento funcionou, mas o formato da data não corresponde aos formatos reconhecidos.');
             }
             if (! preg_match('/Certificados de Aforro\s+Série\s+([A-Z])\s+([\d.]+)\s+([\d.,]+)/iu', $text, $totalMatch)) {
                 throw new \RuntimeException('Não encontrei o total da Série no PDF.');
