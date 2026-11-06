@@ -480,24 +480,42 @@ class XtbInvestmentImportHub extends Component
 
     /**
      * Extrai texto de PDFs digitais e aplica OCR quando o documento é digitalizado.
-     * Requer Poppler e Tesseract no PATH (incluídos na imagem Docker).
+     * Funciona no Docker/Linux e tenta localizar automaticamente as instalações
+     * do Poppler e Tesseract no Windows, sem exigir alterações manuais ao PATH.
      */
     private function extractAforroNetPdfText(string $pdfPath): string
     {
-        $processClass = \Symfony\Component\Process\Process::class;
+        $pdftotext = $this->resolvePdfExecutable('pdftotext');
+        $pdftoppm = $this->resolvePdfExecutable('pdftoppm');
+        $tesseract = $this->resolvePdfExecutable('tesseract');
+
         $errors = [];
+        $processClass = \Symfony\Component\Process\Process::class;
 
-        try {
-            $process = new $processClass(['pdftotext', '-layout', $pdfPath, '-']);
-            $process->setTimeout(45);
-            $process->run();
+        if ($pdftotext) {
+            try {
+                $process = new $processClass([$pdftotext, '-layout', $pdfPath, '-']);
+                $process->setTimeout(45);
+                $process->run();
 
-            if ($process->isSuccessful() && mb_strlen(trim($process->getOutput())) >= 80) {
-                return $process->getOutput();
+                if ($process->isSuccessful() && mb_strlen(trim($process->getOutput())) >= 80) {
+                    return $process->getOutput();
+                }
+
+                $errors[] = trim($process->getErrorOutput());
+            } catch (\Throwable $exception) {
+                $errors[] = $exception->getMessage();
             }
-            $errors[] = trim($process->getErrorOutput());
-        } catch (\Throwable $exception) {
-            $errors[] = $exception->getMessage();
+        } else {
+            $errors[] = 'O executável pdftotext não foi encontrado.';
+        }
+
+        if (! $pdftoppm || ! $tesseract) {
+            throw new \RuntimeException(
+                'Não foi possível extrair texto diretamente do PDF e não foi possível localizar as ferramentas OCR. '.
+                'O Finance Pro procura automaticamente no PATH e nas pastas habituais do Windows. '.
+                'Detalhes: '.implode(' ', array_filter($errors))
+            );
         }
 
         $temporaryDirectory = storage_path('app/private/aforronet-ocr/'.uniqid('pdf-', true));
@@ -507,13 +525,13 @@ class XtbInvestmentImportHub extends Component
 
         try {
             $prefix = $temporaryDirectory.DIRECTORY_SEPARATOR.'page';
-            $render = new $processClass(['pdftoppm', '-r', '250', '-png', $pdfPath, $prefix]);
+            $render = new $processClass([$pdftoppm, '-r', '250', '-png', $pdfPath, $prefix]);
             $render->setTimeout(90);
             $render->run();
 
             if (! $render->isSuccessful()) {
                 $errors[] = trim($render->getErrorOutput());
-                throw new \RuntimeException('Não foi possível converter o PDF para imagens. Confirma se não está protegido por palavra-passe. '.implode(' ', array_filter($errors)));
+                throw new \RuntimeException('Não foi possível converter o PDF para imagens. '.implode(' ', array_filter($errors)));
             }
 
             $pages = glob($prefix.'-*.png') ?: [];
@@ -524,7 +542,7 @@ class XtbInvestmentImportHub extends Component
 
             $extracted = [];
             foreach ($pages as $page) {
-                $ocr = new $processClass(['tesseract', $page, 'stdout', '-l', 'por+eng', '--psm', '6']);
+                $ocr = new $processClass([$tesseract, $page, 'stdout', '-l', 'por+eng', '--psm', '6']);
                 $ocr->setTimeout(60);
                 $ocr->run();
 
@@ -537,7 +555,7 @@ class XtbInvestmentImportHub extends Component
 
             $result = implode("\n", $extracted);
             if (mb_strlen(trim($result)) < 80) {
-                throw new \RuntimeException('O OCR não conseguiu reconhecer texto suficiente. Confirma se o PDF está legível e não protegido por palavra-passe. '.implode(' ', array_filter($errors)));
+                throw new \RuntimeException('O OCR não conseguiu reconhecer texto suficiente. Confirma se o PDF está legível. '.implode(' ', array_filter($errors)));
             }
 
             return $result;
@@ -549,6 +567,64 @@ class XtbInvestmentImportHub extends Component
             }
             @rmdir($temporaryDirectory);
         }
+    }
+
+    /**
+     * Resolve executáveis no PATH e, no Windows, nas pastas de instalação
+     * comuns do Poppler/Tesseract instalados através do WinGet.
+     */
+    private function resolvePdfExecutable(string $binary): ?string
+    {
+        if (PHP_OS_FAMILY !== 'Windows') {
+            return $binary;
+        }
+
+        $executable = $binary.'.exe';
+        $processClass = \Symfony\Component\Process\Process::class;
+
+        try {
+            $where = new $processClass(['where.exe', $executable]);
+            $where->setTimeout(5);
+            $where->run();
+
+            if ($where->isSuccessful()) {
+                $found = trim(strtok($where->getOutput(), "\r\n"));
+                if ($found !== '' && is_file($found)) {
+                    return $found;
+                }
+            }
+        } catch (\Throwable) {
+            // Continua a procura nas pastas habituais.
+        }
+
+        $roots = array_filter([
+            getenv('ProgramFiles') ?: 'C:\\Program Files',
+            getenv('ProgramFiles(x86)') ?: 'C:\\Program Files (x86)',
+            getenv('LOCALAPPDATA') ? getenv('LOCALAPPDATA'). '\\Microsoft\\WinGet\\Packages' : null,
+            getenv('ProgramData') ? getenv('ProgramData'). '\\chocolatey\\bin' : null,
+        ]);
+
+        foreach ($roots as $root) {
+            if (! is_dir($root)) {
+                continue;
+            }
+
+            $patterns = [
+                $root.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.$executable,
+                $root.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.'Library'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.$executable,
+                $root.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.$executable,
+            ];
+
+            foreach ($patterns as $pattern) {
+                foreach (glob($pattern) ?: [] as $candidate) {
+                    if (is_file($candidate)) {
+                        return $candidate;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     private function parsePortugueseNumber(string $value): float
