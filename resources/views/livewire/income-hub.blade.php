@@ -227,9 +227,40 @@
         </div>
 
         <div class="relative">
-            <p class="text-[9px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-300 mb-2 pr-12">
-                Este mês recebi
-            </p>
+            <div class="mb-2 flex items-center gap-2 pr-12">
+                <p class="text-[9px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-300">
+                    Este mês recebi
+                </p>
+                <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
+                    <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Como é calculado o valor recebido este mês" class="flex size-5 items-center justify-center rounded-full border border-emerald-400/60 bg-white/80 text-[10px] font-black text-emerald-700 shadow-sm transition hover:scale-110 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900 dark:text-emerald-200 dark:hover:bg-emerald-800">
+                        i
+                    </button>
+                    <div x-show="open" x-cloak x-transition role="tooltip" class="absolute left-0 top-full z-40 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-2xl border border-zinc-700 bg-zinc-950 p-4 text-left normal-case shadow-2xl">
+                        <p class="mb-3 text-[10px] font-black uppercase tracking-wider text-white">Composição do valor</p>
+                        <div class="space-y-2 text-[10px]">
+                            <div class="flex items-start justify-between gap-3">
+                                <span class="text-zinc-300">Receitas registadas este mês</span>
+                                <span class="shrink-0 font-bold tabular-nums text-white">{{ number_format($thisMonthIncomeTotal, 2, ',', ' ') }} €</span>
+                            </div>
+                            <div class="flex items-start justify-between gap-3">
+                                <span class="text-zinc-300">Salários já pagos</span>
+                                <span class="shrink-0 font-bold tabular-nums text-white">{{ number_format($thisMonthPaidSalaryTotal, 2, ',', ' ') }} €</span>
+                            </div>
+                            <div class="flex items-start justify-between gap-3">
+                                <span class="text-zinc-300">Salários recorrentes ativos sem pagamento registado</span>
+                                <span class="shrink-0 font-bold tabular-nums text-white">{{ number_format($thisMonthPendingSalaryTotal, 2, ',', ' ') }} €</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 border-t border-zinc-700 pt-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-emerald-300">Total apresentado</span>
+                                <span class="text-xs font-black tabular-nums text-emerald-300">{{ number_format($thisMonthReceived, 2, ',', ' ') }} €</span>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-[9px] leading-relaxed text-zinc-400">Os salários recorrentes sem pagamento registado são incluídos como estimativa. O subsídio de alimentação é somado quando está configurado no contrato.</p>
+                    </div>
+                </div>
+            </div>
 
             <p class="text-4xl font-black text-emerald-700 dark:text-emerald-300 italic tracking-tight">
                 {{ number_format($thisMonthReceived, 2, ',', ' ') }}€
