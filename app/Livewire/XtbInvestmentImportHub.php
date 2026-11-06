@@ -484,7 +484,7 @@ class XtbInvestmentImportHub extends Component
      */
     private function extractAforroNetPdfText(string $pdfPath): string
     {
-        $processClass = \\Symfony\\Component\\Process\\Process::class;
+        $processClass = \Symfony\Component\Process\Process::class;
         $errors = [];
 
         try {
