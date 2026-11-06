@@ -1471,9 +1471,9 @@
                             <div class="flex flex-col gap-4">
                                 <div class="flex items-start justify-between gap-4">
                                     <div class="flex items-center gap-3">
-                                        <flux:avatar initials="{{ substr($log->user->name, 0, 2) }}" class="size-8 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700" />
+                                        <flux:avatar initials="{{ substr($log->user?->name ?? 'UR', 0, 2) }}" class="size-8 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700" />
                                         <div class="space-y-0.5">
-                                            <p class="text-xs font-black dark:text-white uppercase tracking-tight">{{ $log->user->name }}</p>
+                                            <p class="text-xs font-black dark:text-white uppercase tracking-tight">{{ $log->user?->name ?? 'Utilizador removido' }}</p>
                                             <p class="text-[11px] text-zinc-500 font-medium leading-relaxed">{{ $log->description }}</p>
                                         </div>
                                     </div>
