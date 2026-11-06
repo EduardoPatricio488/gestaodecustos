@@ -2291,7 +2291,7 @@ class IncomeHub extends Component
             ->sum('net_received');
 
         $thisMonth = now();
-        $thisMonthReceived = (float) Income::where('workspace_id', $workspaceId)
+        $thisMonthIncomeTotal = (float) Income::where('workspace_id', $workspaceId)
             ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
             ->whereMonth('received_at', $thisMonth->month)
             ->whereYear('received_at', $thisMonth->year)
@@ -2302,11 +2302,11 @@ class IncomeHub extends Component
             ->whereMonth('paid_at', $thisMonth->month)
             ->whereYear('paid_at', $thisMonth->year)
             ->get(['recurring_income_id', 'net_received']);
-        $thisMonthReceived += (float) $paidSalaryPayments->sum('net_received');
+        $thisMonthPaidSalaryTotal = (float) $paidSalaryPayments->sum('net_received');
 
         $receivedSalaryContracts = $projectedSalaryContracts
             ->reject(fn (RecurringIncome $income) => $paidSalaryPayments->contains('recurring_income_id', $income->id));
-        $thisMonthReceived += $receivedSalaryContracts->sum(function (RecurringIncome $income): float {
+        $thisMonthPendingSalaryTotal = (float) $receivedSalaryContracts->sum(function (RecurringIncome $income): float {
             $metadata = $income->metadata ?? [];
             $salaryAmount = (float) $income->amount;
             if (! empty($metadata['meal_card_income_id'])) {
@@ -2315,6 +2315,8 @@ class IncomeHub extends Component
 
             return $salaryAmount;
         });
+
+        $thisMonthReceived = $thisMonthIncomeTotal + $thisMonthPaidSalaryTotal + $thisMonthPendingSalaryTotal;
 
         // Média mensal (últimos 6 meses) — inclui salário fixo
         $monthlyTotals = collect();
@@ -2378,6 +2380,9 @@ class IncomeHub extends Component
             'lastMonth' => $lastMonth,
             'lastMonthReceived' => $lastMonthReceived,
             'thisMonthReceived' => $thisMonthReceived,
+            'thisMonthIncomeTotal' => $thisMonthIncomeTotal,
+            'thisMonthPaidSalaryTotal' => $thisMonthPaidSalaryTotal,
+            'thisMonthPendingSalaryTotal' => $thisMonthPendingSalaryTotal,
             'bestMonth' => $bestMonth,
             'totalYear' => $totalYear,
             'monthlyTotals' => $monthlyTotals,
