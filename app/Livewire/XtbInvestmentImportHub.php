@@ -409,7 +409,7 @@ class XtbInvestmentImportHub extends Component
             $text = preg_replace('/\\s+/u', ' ', trim($text));
 
             if (mb_strlen($text) < 80) {
-                throw new \\RuntimeException('Não foi possível ler conteúdo suficiente do PDF. Confirma que não está protegido por palavra-passe e que contém o extrato completo.');
+                throw new \RuntimeException('Não foi possível ler conteúdo suficiente do PDF. Confirma que não está protegido por palavra-passe e que contém o extrato completo.');
             }
 
             if (! preg_match('/Data do Extrato:\s*(\d{2}-\d{2}-\d{4})/iu', $text, $dateMatch)) {
@@ -502,7 +502,7 @@ class XtbInvestmentImportHub extends Component
 
         $temporaryDirectory = storage_path('app/private/aforronet-ocr/'.uniqid('pdf-', true));
         if (! is_dir($temporaryDirectory) && ! mkdir($temporaryDirectory, 0775, true) && ! is_dir($temporaryDirectory)) {
-            throw new \\RuntimeException('Não foi possível preparar a leitura OCR do PDF.');
+            throw new \RuntimeException('Não foi possível preparar a leitura OCR do PDF.');
         }
 
         try {
@@ -513,13 +513,13 @@ class XtbInvestmentImportHub extends Component
 
             if (! $render->isSuccessful()) {
                 $errors[] = trim($render->getErrorOutput());
-                throw new \\RuntimeException('Não foi possível converter o PDF para imagens. Confirma se não está protegido por palavra-passe. '.implode(' ', array_filter($errors)));
+                throw new \RuntimeException('Não foi possível converter o PDF para imagens. Confirma se não está protegido por palavra-passe. '.implode(' ', array_filter($errors)));
             }
 
             $pages = glob($prefix.'-*.png') ?: [];
             sort($pages, SORT_NATURAL);
             if (count($pages) === 0) {
-                throw new \\RuntimeException('Não foram encontradas páginas no PDF para aplicar OCR.');
+                throw new \RuntimeException('Não foram encontradas páginas no PDF para aplicar OCR.');
             }
 
             $extracted = [];
@@ -537,7 +537,7 @@ class XtbInvestmentImportHub extends Component
 
             $result = implode("\\n", $extracted);
             if (mb_strlen(trim($result)) < 80) {
-                throw new \\RuntimeException('O OCR não conseguiu reconhecer texto suficiente. Confirma se o PDF está legível e não protegido por palavra-passe. '.implode(' ', array_filter($errors)));
+                throw new \RuntimeException('O OCR não conseguiu reconhecer texto suficiente. Confirma se o PDF está legível e não protegido por palavra-passe. '.implode(' ', array_filter($errors)));
             }
 
             return $result;
