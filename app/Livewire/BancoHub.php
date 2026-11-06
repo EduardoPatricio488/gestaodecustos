@@ -448,8 +448,9 @@ class BancoHub extends Component
     {
         $user = auth()->user();
         $wsId = $user->current_workspace_id;
-        $service = new BancoService($wsId, $user->id, $this->accountFilter === 'all' ? null : $this->accountFilter);
-        $allAccounts = (new BancoService($wsId, $user->id))->getAccounts();
+        $service = new BancoService($wsId, $user->id);
+        $overviewService = new BancoService($wsId, $user->id, $this->accountFilter === 'all' ? null : $this->accountFilter);
+        $allAccounts = $service->getAccounts();
         $bankFilters = $allAccounts->pluck('bank_name')->filter()->unique()->sort()->values();
         $accounts = $service->getAccounts();
         if ($user->currentWorkspace?->type === 'personal') {
@@ -464,12 +465,12 @@ class BancoHub extends Component
         $goals = $service->getGoals();
         $patrimony = $service->getPatrimony();
         $transfers = $service->getTransfers(30);
-        $summary = $service->getSummary();
-        $liquidity = $service->getLiquidity();
-        $stats = $service->getStats();
-        $alerts = $service->getAlerts();
-        $distribution = $service->getPatrimonyDistribution();
-        $monthlyFlow = $service->getMonthlyFlow(12);
+        $summary = $overviewService->getSummary();
+        $liquidity = $overviewService->getLiquidity();
+        $stats = $overviewService->getStats();
+        $alerts = $overviewService->getAlerts();
+        $distribution = $overviewService->getPatrimonyDistribution();
+        $monthlyFlow = $overviewService->getMonthlyFlow(12);
         return view('livewire.banco-hub', compact('accounts', 'bankFilters', 'personalAccounts', 'businessAccounts', 'reserves', 'transitItems', 'credits', 'debts', 'goals', 'patrimony', 'transfers', 'summary', 'liquidity', 'stats', 'alerts', 'distribution', 'monthlyFlow'));
     }
 }
