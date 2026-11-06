@@ -332,11 +332,31 @@
                 <div><h3 class="text-lg font-black dark:text-white">Opinião do consultor IA</h3><p class="text-xs text-zinc-500">Diagnóstico, riscos e próximos passos</p></div>
             </div>
             @if($portfolioAdvisorAnalysis)
+                @if($portfolioAnalysisDate)
+                    <p class="mb-3 text-xs font-semibold text-zinc-500">Análise realizada em {{ $portfolioAnalysisDate }}</p>
+                @endif
                 <div class="rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-5 text-sm leading-7 text-zinc-700 dark:text-zinc-200 whitespace-pre-line">{{ $portfolioAdvisorAnalysis }}</div>
             @else
                 <div class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center">
                     <p class="text-sm font-bold dark:text-white">Ainda não foi feita uma análise personalizada.</p>
                     <p class="mt-1 text-xs text-zinc-500">Carrega em «Analisar a minha carteira» para receber uma opinião com base nos teus dados.</p>
+                </div>
+            @endif
+            @if($portfolioAnalysisHistory->isNotEmpty())
+                <div class="mt-6 border-t border-zinc-200 dark:border-zinc-800 pt-5">
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                        <h4 class="text-sm font-black dark:text-white">Histórico de análises</h4>
+                        <span class="text-[10px] text-zinc-500">{{ $portfolioAnalysisHistory->count() }} registos recentes</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($portfolioAnalysisHistory as $historyItem)
+                            <button type="button" wire:click="showPortfolioAnalysis({{ $historyItem->id }})"
+                                class="rounded-xl border px-3 py-2 text-left transition {{ $selectedPortfolioAnalysisId === $historyItem->id ? 'border-indigo-500 bg-indigo-500/10 text-indigo-600 dark:text-indigo-300' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-indigo-400' }}">
+                                <span class="block text-xs font-bold">{{ $historyItem->created_at->format('d/m/Y') }}</span>
+                                <span class="block text-[10px] opacity-70">{{ $historyItem->created_at->format('H:i') }}</span>
+                            </button>
+                        @endforeach
+                    </div>
                 </div>
             @endif
             <p class="mt-4 text-[10px] leading-5 text-zinc-400">Informação educativa, não constitui aconselhamento financeiro regulado nem substitui a avaliação do teu perfil, objetivos, prazo e tolerância ao risco. Os valores dependem da qualidade e atualização dos dados registados.</p>
