@@ -2351,7 +2351,8 @@ class IncomeHub extends Component
 
         $thisMonthSalaryExtras = (float) $salaryExtraIncomes
             ->filter(fn (Income $income) => $income->received_at?->month === $thisMonth->month
-                && $income->received_at?->year === $thisMonth->year)
+                && $income->received_at?->year === $thisMonth->year
+                && ! (bool) $income->added_to_salary)
             ->sum(fn (Income $income) => (float) ($income->amount_converted ?? $income->amount));
 
         $thisMonthSalaryTotal = $thisMonthPaidSalaryNet + $thisMonthPendingSalaryNet;
