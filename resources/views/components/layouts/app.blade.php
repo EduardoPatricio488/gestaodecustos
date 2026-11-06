@@ -1261,6 +1261,16 @@ $hasStoreAccess = $hasLockInAccess;
                     <flux:sidebar.item icon="chart-bar-square" :href="route('hub.investments')" wire:navigate.hover>
                         Investimentos {!! $badge($counts['investments']) !!}
                     </flux:sidebar.item>
+                    <flux:sidebar.item
+                        icon="cloud-arrow-up"
+                        :href="route('hub.investments.upload')"
+                        :current="request()->routeIs('hub.investments.upload')"
+                        wire:navigate.hover
+                        class="text-violet-700 dark:text-violet-300 font-bold"
+                    >
+                        Upload de Investimentos
+                        <span class="ml-auto text-[8px] font-black uppercase rounded-md bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 px-1.5 py-1">IA</span>
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="hand-raised" :href="route('hub.debts')" wire:navigate.hover>
                         Dívidas {!! $badge($counts['debts']) !!}
                     </flux:sidebar.item>
