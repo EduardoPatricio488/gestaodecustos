@@ -2248,6 +2248,10 @@ class IncomeHub extends Component
             ->where('user_id', $user->id)
             ->reject(fn (RecurringIncome $income) => ($income->metadata['income_type'] ?? null) === 'meal_card_allowance');
         $salaryContracts = $allSalaryContracts->values();
+        foreach ($salaryContracts as $salaryContract) {
+            $this->serviceFixedPrices[$salaryContract->id] ??= (float) ($salaryContract->metadata['service_unit_price'] ?? 0);
+            $this->serviceQuickQuantities[$salaryContract->id] ??= 1;
+        }
         $salaryContractIds = $allSalaryContracts->modelKeys();
         $salaryExtraIncomes = Income::with('bankAccount')
             ->where('workspace_id', $workspaceId)
