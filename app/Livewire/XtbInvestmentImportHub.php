@@ -119,7 +119,7 @@ class XtbInvestmentImportHub extends Component
                         'current_value' => $value,
                         'current_price' => $currentPrice > 0 ? $currentPrice : $value / $volume,
                         'average_price' => $openPrice > 0 ? $openPrice : null,
-                        'reported_profit' => isset($columns['net profit']) ? $this->parseNumber($data[$columns['net profit']] ?? null) : null,
+                        'reported_profit' => isset($columns['net profit']) && filled($data[$columns['net profit']] ?? null) ? $this->parseNumber($data[$columns['net profit']]) : null,
                         'open_time' => $this->parseDate($openTime),
                         'is_summary' => $isSummaryRow,
                         'product' => $product,
