@@ -90,6 +90,8 @@ class InvestmentsHub extends Component
 
     public bool $isAnalyzingPortfolio = false;
 
+    public bool $portfolioAnalysisCompleted = false;
+
     public string $aiProvider = 'openrouter';
 
     private const ALPHA_VANTAGE_KEY = null;
@@ -482,6 +484,7 @@ class InvestmentsHub extends Component
         }
 
         $this->isAnalyzingPortfolio = true;
+        $this->portfolioAnalysisCompleted = false;
         $this->portfolioAdvisorAnalysis = 'A preparar os dados da tua carteira e a contactar o consultor IA...';
 
         try {
@@ -559,6 +562,10 @@ class InvestmentsHub extends Component
 
             if ($this->portfolioAdvisorAnalysis === '') {
                 $this->portfolioAdvisorAnalysis = 'O serviço de IA respondeu, mas não devolveu texto. Tenta novamente.';
+            }
+
+            if ($this->portfolioAdvisorAnalysis !== '') {
+                $this->portfolioAnalysisCompleted = true;
             }
         } catch (\Throwable $e) {
             Log::error('InvestmentsHub: exceção ao analisar carteira', [
