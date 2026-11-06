@@ -9,6 +9,8 @@ use App\Models\RecurringIncome;
 use App\Models\SalaryDocument;
 use App\Models\SalaryPayment;
 use App\Models\Workspace;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use App\Services\CurrencyService;
 use App\Services\PortugueseNetPayCalculator;
 use App\Services\SalaryPaymentAutomationService;
@@ -146,6 +148,10 @@ class IncomeHub extends Component
     public ?int $salaryIncomeHistoryId = null;
 
     public string $salaryIncomeHistoryType = 'service';
+
+    public int $statementExportMonth = 1;
+
+    public int $statementExportYear = 2026;
 
     public ?int $salaryDetailsId = null;
 
@@ -561,6 +567,8 @@ class IncomeHub extends Component
         $this->received_at = now()->format('Y-m-d');
         $this->recBonusDate = now()->format('Y-m-d');
         $this->currency = strtoupper((string) ($user->currentWorkspace?->currency ?? 'EUR'));
+        $this->statementExportMonth = (int) now()->month;
+        $this->statementExportYear = (int) now()->year;
 
         // CARREGAR ENTRADAS EXTRAS
         $this->totalExtras = Income::where('workspace_id', $this->workspaceId)
@@ -2185,6 +2193,120 @@ class IncomeHub extends Component
         $income->salary_recurring_income_id = $salary?->id;
         $income->save();
         $this->dispatch('toast', text: $salary ? 'Entrada associada ao contrato.' : 'Associação ao contrato removida.');
+    }
+
+
+    public function exportIncomeStatement(string $period = 'previous_month')
+    {
+        $user = auth()->user();
+        $workspace = $user?->currentWorkspace;
+        abort_unless($user && $workspace && (int) $workspace->id === (int) $user->current_workspace_id, 403);
+
+        $isBusiness = in_array($workspace->type, ['business', 'company'], true);
+        if ($isBusiness) {
+            app(\App\Services\BusinessAccessService::class)->assert('export_reports', $user, $workspace);
+        }
+
+        if ($period === 'previous_month') {
+            $start = Carbon::now()->subMonthNoOverflow()->startOfMonth();
+            $periodLabel = 'Último mês — '.$start->translatedFormat('F Y');
+        } elseif ($period === 'previous_year') {
+            $start = Carbon::now()->subYear()->startOfYear();
+            $periodLabel = 'Último ano — '.$start->year;
+        } elseif ($period === 'specific_month') {
+            $this->validate([
+                'statementExportMonth' => 'required|integer|between:1,12',
+                'statementExportYear' => 'required|integer|between:2000,'.now()->year,
+            ]);
+
+            $start = Carbon::create((int) $this->statementExportYear, (int) $this->statementExportMonth, 1)->startOfMonth();
+            $periodLabel = ucfirst($start->translatedFormat('F Y'));
+        } else {
+            abort(422, 'Período de exportação inválido.');
+        }
+
+        $end = $period === 'previous_year'
+            ? $start->copy()->endOfYear()
+            : $start->copy()->endOfMonth();
+
+        $scopeIncome = fn ($query) => $query
+            ->where('workspace_id', $workspace->id)
+            ->when(! $isBusiness, fn ($q) => $q->where('user_id', $user->id));
+
+        $incomes = Income::with(['bankAccount', 'salaryContract'])
+            ->where($scopeIncome)
+            ->whereBetween('received_at', [$start->toDateString(), $end->toDateString()])
+            ->orderBy('received_at')
+            ->orderBy('id')
+            ->get();
+
+        $salaryPayments = SalaryPayment::with(['recurringIncome', 'bankAccount'])
+            ->where('workspace_id', $workspace->id)
+            ->when(! $isBusiness, fn ($q) => $q->where('user_id', $user->id))
+            ->whereBetween('paid_at', [$start->toDateString(), $end->toDateString()])
+            ->orderBy('paid_at')
+            ->orderBy('id')
+            ->get();
+
+        $recurringIncomes = RecurringIncome::with('bankAccount')
+            ->where('workspace_id', $workspace->id)
+            ->when(! $isBusiness, fn ($q) => $q->where('user_id', $user->id))
+            ->orderBy('source')
+            ->orderBy('description')
+            ->get();
+
+        $currency = strtoupper((string) ($workspace->currency ?? 'EUR'));
+        $normalIncomes = $incomes->filter(fn (Income $income) => ! (bool) $income->added_to_salary);
+        $deferredIncomes = $incomes->filter(fn (Income $income) => (bool) $income->added_to_salary);
+
+        $incomeReceivedTotal = (float) $normalIncomes->sum(
+            fn (Income $income) => (float) ($income->amount_converted ?? $income->amount)
+        );
+        $deferredIncomeTotal = (float) $deferredIncomes->sum(
+            fn (Income $income) => (float) ($income->amount_converted ?? $income->amount)
+        );
+
+        $salaryPaymentValue = fn (SalaryPayment $payment): float => round(
+            (float) $payment->net_received
+                + (($payment->recurringIncome?->metadata['meal_allowance_destination'] ?? null) === 'meal_card'
+                    ? 0
+                    : (float) $payment->meal_allowance),
+            2
+        );
+
+        $paidSalaryPayments = $salaryPayments->filter(fn (SalaryPayment $payment) => $payment->status === 'paid');
+        $pendingSalaryPayments = $salaryPayments->reject(fn (SalaryPayment $payment) => $payment->status === 'paid');
+        $paidSalaryTotal = (float) $paidSalaryPayments->sum($salaryPaymentValue);
+        $pendingSalaryTotal = (float) $pendingSalaryPayments->sum($salaryPaymentValue);
+
+        $incomeBySource = $normalIncomes
+            ->groupBy(fn (Income $income) => $income->source ?: 'outro')
+            ->map(fn ($group) => (float) $group->sum(fn (Income $income) => (float) ($income->amount_converted ?? $income->amount)));
+
+        $data = [
+            'workspaceName' => $workspace->name,
+            'userName' => $user->name,
+            'periodLabel' => $periodLabel,
+            'startDate' => $start->format('d/m/Y'),
+            'endDate' => $end->format('d/m/Y'),
+            'generatedAt' => now()->format('d/m/Y H:i'),
+            'currency' => $currency,
+            'incomes' => $incomes,
+            'salaryPayments' => $salaryPayments,
+            'recurringIncomes' => $recurringIncomes,
+            'incomeReceivedTotal' => $incomeReceivedTotal,
+            'deferredIncomeTotal' => $deferredIncomeTotal,
+            'paidSalaryTotal' => $paidSalaryTotal,
+            'pendingSalaryTotal' => $pendingSalaryTotal,
+            'totalReceived' => round($incomeReceivedTotal + $paidSalaryTotal, 2),
+            'incomeBySource' => $incomeBySource,
+            'salaryPaymentValue' => $salaryPaymentValue,
+        ];
+
+        return Pdf::loadView('pdf.income-statement', $data)
+            ->setPaper('a4', 'landscape')
+            ->setOptions(['isRemoteEnabled' => false, 'isHtml5ParserEnabled' => true, 'defaultFont' => 'DejaVu Sans'])
+            ->download('Extrato_Receitas_'.$start->format('Ymd').'-'.$end->format('Ymd').'.pdf');
     }
 
     public function render()
