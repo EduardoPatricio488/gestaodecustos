@@ -136,7 +136,7 @@
                 class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-emerald-50 disabled:opacity-50 dark:hover:bg-emerald-950/40"
             >
                 <span class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
-                    <flux:icon name="calendar-range" class="size-4" />
+                    <flux:icon name="calendar-days" class="size-4" />
                 </span>
                 <span class="min-w-0 flex-1">
                     <span class="block text-xs font-bold text-zinc-800 dark:text-zinc-100">Último ano</span>
@@ -174,7 +174,7 @@
                 wire:target="exportIncomeStatement"
                 class="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 disabled:opacity-50"
             >
-                <flux:icon name="file-pdf" class="size-4" />
+                <flux:icon name="arrow-down-tray" class="size-4" />
                 Descarregar PDF
             </button>
         </div>
