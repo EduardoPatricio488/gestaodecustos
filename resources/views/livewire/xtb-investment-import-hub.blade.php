@@ -174,19 +174,28 @@
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Importação e valorização automática</p>
                         <h2 class="mt-1 text-2xl font-black text-zinc-950 dark:text-white">Certificados de Aforro — Série E</h2>
-                        <p class="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">Cola o texto do extrato uma única vez. O Finance Pro guarda cada subscrição separadamente e atualiza as capitalizações trimestrais com as taxas históricas disponíveis, sem precisares de importar o extrato todos os meses.</p>
+                        <p class="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">Carrega o PDF do extrato. O Finance Pro lê cada subscrição, valida os valores e atualiza as capitalizações trimestrais com as taxas históricas disponíveis, sem precisares de importar o extrato todos os meses.</p>
                     </div>
                 </div>
                 <div class="mt-5 rounded-2xl border border-teal-200/80 bg-white/80 p-4 text-xs leading-relaxed text-teal-900 dark:border-teal-800 dark:bg-zinc-900/70 dark:text-teal-200"><strong>Nota:</strong> os juros são capitalizados trimestralmente, não em tempo real. O cálculo usa um histórico público que reproduz a metodologia do IGCP a partir da Euribor a 3 meses; não é uma API oficial do IGCP. Se o histórico estiver indisponível ou desatualizado, o saldo não é alterado.</div>
             </section>
 
             <section class="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
-                <form wire:submit="analyzeAforroNetText" class="space-y-4">
-                    <label class="block text-sm font-bold text-zinc-800 dark:text-zinc-100">Texto do extrato AforroNet</label>
-                    <textarea wire:model="aforroNetText" rows="11" class="w-full rounded-2xl border border-zinc-300 bg-zinc-50 p-4 font-mono text-xs leading-relaxed text-zinc-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200" placeholder="Cola aqui o texto completo do extrato, incluindo o resumo e o detalhe de saldos por produtos..."></textarea>
-                    @error('aforroNetText') <p class="text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
-                    <button type="submit" wire:loading.attr="disabled" wire:target="analyzeAforroNetText" class="w-full rounded-xl bg-teal-700 px-5 py-3.5 text-sm font-black text-white transition hover:bg-teal-800 disabled:opacity-60">
-                        <span wire:loading.remove wire:target="analyzeAforroNetText">Analisar extrato e validar subscrições</span><span wire:loading wire:target="analyzeAforroNetText">A validar dados...</span>
+                <form wire:submit="analyzeAforroNetFile" class="space-y-4">
+                    <label class="block text-sm font-bold text-zinc-800 dark:text-zinc-100">Ficheiro PDF do extrato AforroNet</label>
+                    <label class="group flex min-h-52 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-teal-300 bg-teal-50/50 px-5 py-8 text-center transition hover:border-teal-500 hover:bg-teal-50 dark:border-teal-800 dark:bg-zinc-950/40 dark:hover:bg-teal-950/20">
+                        <input type="file" wire:model="aforroNetFile" accept=".pdf,application/pdf" class="sr-only">
+                        <span class="mb-3 flex size-14 items-center justify-center rounded-2xl bg-white text-teal-700 shadow-sm dark:bg-zinc-900"><span class="text-3xl" aria-hidden="true">📄</span></span>
+                        <span class="font-bold text-sm text-zinc-800 dark:text-zinc-100">Clica para escolher ou arrasta o PDF</span>
+                        <span class="mt-1 text-xs text-zinc-500">Documento PDF · máximo 10 MB</span>
+                        @if($aforroNetFile)
+                            <span class="mt-4 inline-flex items-center gap-2 rounded-full bg-teal-100 px-3 py-1.5 text-xs font-bold text-teal-800 dark:bg-teal-900/40 dark:text-teal-200"><span aria-hidden="true">✓</span> {{ $aforroNetFile->getClientOriginalName() }}</span>
+                        @endif
+                    </label>
+                    @error('aforroNetFile') <p class="text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
+                    <div wire:loading wire:target="aforroNetFile" class="text-xs font-semibold text-teal-700 dark:text-teal-300">A carregar PDF...</div>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="analyzeAforroNetFile,aforroNetFile" class="w-full rounded-xl bg-teal-700 px-5 py-3.5 text-sm font-black text-white transition hover:bg-teal-800 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="analyzeAforroNetFile">Analisar PDF e validar subscrições</span><span wire:loading wire:target="analyzeAforroNetFile">A analisar documento...</span>
                     </button>
                 </form>
             </section>
@@ -219,7 +228,7 @@
                         </table>
                     </div>
                     <div class="flex flex-col gap-3 border-t border-zinc-100 p-5 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
-                        <p class="text-xs text-zinc-500">A soma das subscrições foi validada contra o total do extrato. O capital de aquisição é 1,00 € por unidade.</p>
+                        <p class="text-xs text-zinc-500">A soma das subscrições foi validada contra o total do PDF. O capital de aquisição é 1,00 € por unidade.</p>
                         <div class="flex gap-3">
                             <button type="button" wire:click="clearAforroNet" class="rounded-xl px-4 py-2 text-xs font-bold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
                             <button type="button" wire:click="importAforroNetPosition" wire:loading.attr="disabled" wire:target="importAforroNetPosition" class="rounded-xl bg-teal-700 px-5 py-2.5 text-xs font-black text-white hover:bg-teal-800 disabled:opacity-60">
