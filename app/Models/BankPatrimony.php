@@ -13,36 +13,28 @@ class BankPatrimony extends Model
     protected $table = 'bank_patrimony';
 
     protected $fillable = [
-        'workspace_id',
-        'user_id',
-        'type',
-        'name',
-        'value',
-        'purchase_price',
-        'purchase_date',
-        'currency',
-        'description',
-        'status',
-        'is_business',
-        'metadata',
+        'workspace_id', 'user_id', 'bank_account_id', 'type', 'name', 'value', 'purchase_price',
+        'purchase_date', 'currency', 'description', 'status', 'is_business', 'metadata',
     ];
 
     protected $casts = [
-        'value' => 'float',
-        'purchase_price' => 'float',
-        'purchase_date' => 'date',
-        'is_business' => 'boolean',
-        'metadata' => 'array',
+        'value' => 'float', 'purchase_price' => 'float', 'purchase_date' => 'date',
+        'is_business' => 'boolean', 'metadata' => 'array',
     ];
 
     public static array $types = [
-        'real_estate' => ['label' => 'Imóvel',        'icon' => 'home',         'color' => '#10b981'],
-        'vehicle' => ['label' => 'Veículo',        'icon' => 'truck',        'color' => '#3b82f6'],
-        'gold' => ['label' => 'Ouro',           'icon' => 'star',         'color' => '#f59e0b'],
-        'crypto' => ['label' => 'Criptomoeda',    'icon' => 'cpu-chip',     'color' => '#8b5cf6'],
-        'other_asset' => ['label' => 'Outro Ativo',    'icon' => 'cube',         'color' => '#6b7280'],
-        'liability' => ['label' => 'Passivo',        'icon' => 'minus-circle', 'color' => '#ef4444'],
+        'real_estate' => ['label' => 'Imóvel', 'icon' => 'home', 'color' => '#10b981'],
+        'vehicle' => ['label' => 'Veículo', 'icon' => 'truck', 'color' => '#3b82f6'],
+        'gold' => ['label' => 'Ouro', 'icon' => 'star', 'color' => '#f59e0b'],
+        'crypto' => ['label' => 'Criptomoeda', 'icon' => 'cpu-chip', 'color' => '#8b5cf6'],
+        'other_asset' => ['label' => 'Outro Ativo', 'icon' => 'cube', 'color' => '#6b7280'],
+        'liability' => ['label' => 'Passivo', 'icon' => 'minus-circle', 'color' => '#ef4444'],
     ];
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
 
     public function user(): BelongsTo
     {
@@ -51,19 +43,13 @@ class BankPatrimony extends Model
 
     public function getGainLossAttribute(): float
     {
-        if (! $this->purchase_price) {
-            return 0;
-        }
-
-        return $this->value - $this->purchase_price;
+        return $this->purchase_price ? $this->value - $this->purchase_price : 0;
     }
 
     public function getGainLossPctAttribute(): float
     {
-        if (! $this->purchase_price || $this->purchase_price <= 0) {
-            return 0;
-        }
-
-        return (($this->value - $this->purchase_price) / $this->purchase_price) * 100;
+        return $this->purchase_price && $this->purchase_price > 0
+            ? (($this->value - $this->purchase_price) / $this->purchase_price) * 100
+            : 0;
     }
 }
