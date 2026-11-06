@@ -145,6 +145,8 @@ class IncomeHub extends Component
 
     public ?int $salaryIncomeHistoryId = null;
 
+    public string $salaryIncomeHistoryType = 'service';
+
     public ?int $salaryDetailsId = null;
 
     public string $salaryDetailsTab = 'overview';
@@ -1565,8 +1567,10 @@ class IncomeHub extends Component
         $this->dispatch('modal-close-salary-bonus');
     }
 
-    public function openSalaryIncomeHistory(int $salaryId): void
+    public function openSalaryIncomeHistory(int $salaryId, string $type = 'service'): void
     {
+        abort_unless(in_array($type, ['service', 'prize'], true), 422);
+
         $user = auth()->user();
         $salary = RecurringIncome::where('workspace_id', $user->current_workspace_id)
             ->where('user_id', $user->id)
@@ -1575,11 +1579,13 @@ class IncomeHub extends Component
             ->findOrFail($salaryId);
 
         $this->salaryIncomeHistoryId = $salary->id;
+        $this->salaryIncomeHistoryType = $type;
     }
 
     public function closeSalaryIncomeHistory(): void
     {
         $this->salaryIncomeHistoryId = null;
+        $this->salaryIncomeHistoryType = 'service';
     }
 
     public function updated($propertyName)
@@ -2287,7 +2293,12 @@ class IncomeHub extends Component
             ? $allSalaryContracts->firstWhere('id', $this->salaryIncomeHistoryId)
             : null;
         $salaryIncomeHistory = $salaryIncomeHistoryContract
-            ? $salaryExtraIncomes->where('salary_recurring_income_id', $salaryIncomeHistoryContract->id)->values()
+            ? $salaryExtraIncomes
+                ->where('salary_recurring_income_id', $salaryIncomeHistoryContract->id)
+                ->filter(fn ($extra) => $this->salaryIncomeHistoryType === 'prize'
+                    ? $extra->salary_income_type === 'prize'
+                    : ($extra->salary_income_type ?? 'service') !== 'prize')
+                ->values()
             : collect();
 
         $salaryDetails = $this->salaryDetailsId ? $this->salaryDetailsContract($this->salaryDetailsId) : null;
