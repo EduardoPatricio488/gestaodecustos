@@ -289,6 +289,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/ranking', FamilyRanking::class)->name('hub.ranking');
 
     Route::get('/receitas', IncomeHub::class)->name('hub.incomes');
+    Route::get('/receitas/extrato/download/{token}', function (string $token) {
+        $download = session()->pull('income_statement_downloads.'.$token);
+        abort_unless(is_array($download) && isset($download['path'], $download['name']), 404);
+        $path = $download['path'];
+        abort_unless(is_string($path) && preg_match('#^income-statements/[0-9]+/[A-Za-z0-9]+\\.pdf$#', $path), 404);
+        abort_unless(\\Illuminate\\Support\\Facades\\Storage::disk('local')->exists($path), 404);
+
+        return \\Illuminate\\Support\\Facades\\Storage::disk('local')->download($path, $download['name'], ['Content-Type' => 'application/pdf'])
+            ->deleteFileAfterSend(true);
+    })->name('hub.incomes.statement.download');
     Route::get('/dividas', DebtHub::class)->name('hub.debts');
     Route::get('/objetivos', GoalsHub::class)->name('hub.goals');
     Route::get('/orcamento', BudgetHub::class)->name('hub.budget');
