@@ -1072,7 +1072,6 @@
                             'Tipo de contrato' => $detailContractLabels[$detailMeta['contract_type'] ?? ''] ?? '—',
                             'Estado' => $detailStatusLabels[$detailStatus] ?? $detailStatus,
                             'Periodicidade' => ucfirst($salaryDetails->frequency ?? 'mensal'),
-                            'Pagamentos por ano' => ($detailMeta['annual_payments'] ?? 14).'',
                             'Dia de pagamento' => $salaryDetails->day_of_month,
                             'Data de início' => ! empty($detailMeta['start_date']) ? \Carbon\Carbon::parse($detailMeta['start_date'])->format('d/m/Y') : '—',
                             'Data de fim' => ! empty($detailMeta['end_date']) ? \Carbon\Carbon::parse($detailMeta['end_date'])->format('d/m/Y') : '—',
@@ -1266,7 +1265,6 @@
                                 <label class="text-[9px] font-bold uppercase text-zinc-500">Data de fim<input type="date" wire:model="recEndDate" class="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"></label>
                             @endif
                             @unless($editingFixedId)
-                                <label class="text-[9px] font-bold uppercase text-zinc-500">Pagamentos por ano<select wire:model="recAnnualPayments" class="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"><option value="12">12 pagamentos</option><option value="14">14 pagamentos</option></select></label>
                                 <label class="text-[9px] font-bold uppercase text-zinc-500">Estado da retenção<select wire:model.live="recWithholdingStatus" class="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"><option value="normal">Retenção normal estimada</option><option value="exempt">Sem retenção na fonte</option></select></label>
                             @endunless
                         </div>
