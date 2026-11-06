@@ -306,8 +306,8 @@
                 <div class="pointer-events-none absolute -right-2 -top-8 size-40 rounded-full border border-emerald-200/20 income-projection-orbit group-hover:scale-110"></div>
                 <div class="pointer-events-none absolute bottom-0 right-0 h-32 w-48 bg-emerald-400/25 opacity-60 blur-2xl income-projection-aura group-hover:scale-150 group-hover:opacity-100"></div>
                 <div class="pointer-events-none absolute -inset-px rounded-[1.75rem] bg-gradient-to-br from-emerald-300/0 via-teal-200/0 to-lime-300/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-                <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[450%]"></div>
-                <div style="transform: translateZ(22px); transform-style: preserve-3d;" class="relative flex h-full min-h-44 flex-col justify-between transition-transform duration-500 group-hover:[transform:translateZ(34px)]">
+                <div class="pointer-events-none absolute inset-y-0 -left-1/2 z-10 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent income-projection-shine"></div>
+                <div class="income-projection-content relative flex h-full min-h-44 flex-col justify-between">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <div class="flex items-center gap-2">
@@ -324,7 +324,7 @@
                         </div>
                     </div>
                     <div class="py-4">
-                        <p class="text-3xl font-black tracking-tight tabular-nums text-white transition-all duration-300 group-hover:translate-x-1 group-hover:scale-[1.02] sm:text-4xl">{{ number_format($projectedMealAllowanceTotal, 2, ',', ' ') }} <span class="text-xl text-emerald-200">€</span></p>
+                        <p class="income-projection-value text-4xl font-black tracking-tight tabular-nums text-white transition-all duration-300 group-hover:translate-x-1 group-hover:scale-[1.04] sm:text-5xl">{{ number_format($projectedMealAllowanceTotal, 2, ',', ' ') }} <span class="text-xl text-emerald-200">€</span></p>
                         <p class="mt-1 text-[10px] font-semibold text-emerald-100">Estimativa mensal pelos dias elegíveis configurados</p>
                     </div>
                     <div class="flex items-end justify-between gap-3 border-t border-white/25 pt-3">
