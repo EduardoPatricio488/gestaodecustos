@@ -604,14 +604,21 @@ class XtbInvestmentImportHub extends Component
         $tesseract = $this->resolvePdfExecutable('tesseract');
 
         // Diagnóstico temporário do ambiente real do pedido Livewire.
-        $runtimePopplerRoot = getenv('LOCALAPPDATA')
-            ? rtrim(str_replace('\\', '/', getenv('LOCALAPPDATA')), '/').'/Microsoft/WinGet/Packages'
+        $runtimeUserProfile = getenv('USERPROFILE')
+            ?: ($_SERVER['USERPROFILE'] ?? null)
+            ?: ((getenv('HOMEDRIVE') && getenv('HOMEPATH')) ? getenv('HOMEDRIVE').getenv('HOMEPATH') : null);
+        $runtimeLocalAppData = getenv('LOCALAPPDATA')
+            ?: ($_SERVER['LOCALAPPDATA'] ?? null)
+            ?: ($runtimeUserProfile ? $runtimeUserProfile.'/AppData/Local' : null);
+        $runtimePopplerRoot = $runtimeLocalAppData
+            ? rtrim(str_replace('\\', '/', $runtimeLocalAppData), '/').'/Microsoft/WinGet/Packages'
             : null;
         Log::info('AforroNet executable runtime diagnostics', [
             'pid' => getmypid(),
             'php_binary' => basename(PHP_BINARY),
             'php_os_family' => PHP_OS_FAMILY,
-            'localappdata_available' => (bool) getenv('LOCALAPPDATA'),
+            'localappdata_available' => (bool) $runtimeLocalAppData,
+            'userprofile_available' => (bool) $runtimeUserProfile,
             'poppler_root_exists' => $runtimePopplerRoot ? is_dir($runtimePopplerRoot) : false,
             'pdftotext_found' => (bool) $pdftotext,
             'pdftoppm_found' => (bool) $pdftoppm,
@@ -795,10 +802,17 @@ class XtbInvestmentImportHub extends Component
             // Continua a procura nas pastas habituais.
         }
 
+        $userProfile = getenv('USERPROFILE')
+            ?: ($_SERVER['USERPROFILE'] ?? null)
+            ?: ((getenv('HOMEDRIVE') && getenv('HOMEPATH')) ? getenv('HOMEDRIVE').getenv('HOMEPATH') : null);
+        $localAppData = getenv('LOCALAPPDATA')
+            ?: ($_SERVER['LOCALAPPDATA'] ?? null)
+            ?: ($userProfile ? $userProfile.'\\AppData\\Local' : null);
+
         $roots = array_filter([
             getenv('ProgramFiles') ?: 'C:\\Program Files',
             getenv('ProgramFiles(x86)') ?: 'C:\\Program Files (x86)',
-            getenv('LOCALAPPDATA') ? getenv('LOCALAPPDATA'). '\\Microsoft\\WinGet\\Packages' : null,
+            $localAppData ? $localAppData.'\\Microsoft\\WinGet\\Packages' : null,
             getenv('ProgramData') ? getenv('ProgramData'). '\\chocolatey\\bin' : null,
         ]);
 
