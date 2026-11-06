@@ -788,11 +788,14 @@ class XtbInvestmentImportHub extends Component
                 continue;
             }
 
+            // O glob() do PHP no Windows pode interpretar barras invertidas
+            // como caracteres de escape. Usa sempre barras normais nos padrões.
+            $globRoot = rtrim(str_replace('\\\\', '/', $root), '/');
             $patterns = [
-                $root.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.$executable,
-                $root.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.'Library'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.$executable,
-                $root.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.'Library'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.$executable,
-                $root.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.$executable,
+                $globRoot.'/*/'.$executable,
+                $globRoot.'/*/Library/bin/'.$executable,
+                $globRoot.'/*/*/Library/bin/'.$executable,
+                $globRoot.'/*/bin/'.$executable,
             ];
 
             foreach ($patterns as $pattern) {
