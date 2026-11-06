@@ -2221,11 +2221,18 @@ class IncomeHub extends Component
 
             $start = Carbon::create((int) $this->statementExportYear, (int) $this->statementExportMonth, 1)->startOfMonth();
             $periodLabel = ucfirst($start->translatedFormat('F Y'));
+        } elseif ($period === 'specific_year') {
+            $this->validate([
+                'statementExportYear' => 'required|integer|between:2000,'.now()->year,
+            ]);
+
+            $start = Carbon::create((int) $this->statementExportYear, 1, 1)->startOfYear();
+            $periodLabel = 'Ano específico — '.$start->year;
         } else {
             abort(422, 'Período de exportação inválido.');
         }
 
-        $end = $period === 'previous_year'
+        $end = in_array($period, ['previous_year', 'specific_year'], true)
             ? $start->copy()->endOfYear()
             : $start->copy()->endOfMonth();
 
