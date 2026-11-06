@@ -405,18 +405,11 @@ class XtbInvestmentImportHub extends Component
                 throw new \RuntimeException('Não foi possível aceder ao ficheiro PDF carregado.');
             }
 
-            // O Poppler (pdftotext) está incluído na imagem Docker da aplicação.
-            $process = new \Symfony\Component\Process\Process(['pdftotext', '-layout', $pdfPath, '-']);
-            $process->setTimeout(30);
-            $process->run();
+            $text = $this->extractAforroNetPdfText($pdfPath);
+            $text = preg_replace('/\\s+/u', ' ', trim($text));
 
-            if (! $process->isSuccessful()) {
-                throw new \RuntimeException('Não foi possível extrair o texto do PDF. Confirma que o ficheiro não está protegido por palavra-passe.');
-            }
-
-            $text = preg_replace('/\s+/u', ' ', trim($process->getOutput()));
             if (mb_strlen($text) < 80) {
-                throw new \RuntimeException('O PDF não contém texto legível. Se for um documento digitalizado como imagem, será necessário aplicar OCR.');
+                throw new \\RuntimeException('Não foi possível ler conteúdo suficiente do PDF. Confirma que não está protegido por palavra-passe e que contém o extrato completo.');
             }
 
             if (! preg_match('/Data do Extrato:\s*(\d{2}-\d{2}-\d{4})/iu', $text, $dateMatch)) {
@@ -482,6 +475,79 @@ class XtbInvestmentImportHub extends Component
             $this->aforroNetPreviewReady = false;
             $this->aforroNetSubscriptions = [];
             $this->aforroNetPosition = [];
+        }
+    }
+
+    /**
+     * Extrai texto de PDFs digitais e aplica OCR quando o documento é digitalizado.
+     * Requer Poppler e Tesseract no PATH (incluídos na imagem Docker).
+     */
+    private function extractAforroNetPdfText(string $pdfPath): string
+    {
+        $processClass = \\Symfony\\Component\\Process\\Process::class;
+        $errors = [];
+
+        try {
+            $process = new $processClass(['pdftotext', '-layout', $pdfPath, '-']);
+            $process->setTimeout(45);
+            $process->run();
+
+            if ($process->isSuccessful() && mb_strlen(trim($process->getOutput())) >= 80) {
+                return $process->getOutput();
+            }
+            $errors[] = trim($process->getErrorOutput());
+        } catch (\\Throwable $exception) {
+            $errors[] = $exception->getMessage();
+        }
+
+        $temporaryDirectory = storage_path('app/private/aforronet-ocr/'.uniqid('pdf-', true));
+        if (! is_dir($temporaryDirectory) && ! mkdir($temporaryDirectory, 0775, true) && ! is_dir($temporaryDirectory)) {
+            throw new \\RuntimeException('Não foi possível preparar a leitura OCR do PDF.');
+        }
+
+        try {
+            $prefix = $temporaryDirectory.DIRECTORY_SEPARATOR.'page';
+            $render = new $processClass(['pdftoppm', '-r', '250', '-png', $pdfPath, $prefix]);
+            $render->setTimeout(90);
+            $render->run();
+
+            if (! $render->isSuccessful()) {
+                $errors[] = trim($render->getErrorOutput());
+                throw new \\RuntimeException('Não foi possível converter o PDF para imagens. Confirma se não está protegido por palavra-passe. '.implode(' ', array_filter($errors)));
+            }
+
+            $pages = glob($prefix.'-*.png') ?: [];
+            sort($pages, SORT_NATURAL);
+            if (count($pages) === 0) {
+                throw new \\RuntimeException('Não foram encontradas páginas no PDF para aplicar OCR.');
+            }
+
+            $extracted = [];
+            foreach ($pages as $page) {
+                $ocr = new $processClass(['tesseract', $page, 'stdout', '-l', 'por+eng', '--psm', '6']);
+                $ocr->setTimeout(60);
+                $ocr->run();
+
+                if ($ocr->isSuccessful() && trim($ocr->getOutput()) !== '') {
+                    $extracted[] = $ocr->getOutput();
+                } else {
+                    $errors[] = trim($ocr->getErrorOutput());
+                }
+            }
+
+            $result = implode("\\n", $extracted);
+            if (mb_strlen(trim($result)) < 80) {
+                throw new \\RuntimeException('O OCR não conseguiu reconhecer texto suficiente. Confirma se o PDF está legível e não protegido por palavra-passe. '.implode(' ', array_filter($errors)));
+            }
+
+            return $result;
+        } finally {
+            foreach (glob($temporaryDirectory.DIRECTORY_SEPARATOR.'*') ?: [] as $file) {
+                if (is_file($file)) {
+                    @unlink($file);
+                }
+            }
+            @rmdir($temporaryDirectory);
         }
     }
 
