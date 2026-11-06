@@ -9,11 +9,11 @@ use App\Models\RecurringIncome;
 use App\Models\SalaryDocument;
 use App\Models\SalaryPayment;
 use App\Models\Workspace;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 use App\Services\CurrencyService;
 use App\Services\PortugueseNetPayCalculator;
 use App\Services\SalaryPaymentAutomationService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth; // <--- FALTA ISTO
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -2243,7 +2243,16 @@ class IncomeHub extends Component
         $salaryPayments = SalaryPayment::with(['recurringIncome', 'bankAccount'])
             ->where('workspace_id', $workspace->id)
             ->when(! $isBusiness, fn ($q) => $q->where('user_id', $user->id))
-            ->whereBetween('paid_at', [$start->toDateString(), $end->toDateString()])
+            ->where(function ($query) use ($start, $end): void {
+                $query->whereBetween('paid_at', [$start->toDateString(), $end->toDateString()])
+                    ->orWhere(function ($pending) use ($start, $end): void {
+                        $pending->where('status', '!=', 'paid')
+                            ->whereRaw(
+                                '(payment_year * 100 + payment_month) between ? and ?',
+                                [$start->year * 100 + $start->month, $end->year * 100 + $end->month],
+                            );
+                    });
+            })
             ->orderBy('paid_at')
             ->orderBy('id')
             ->get();
