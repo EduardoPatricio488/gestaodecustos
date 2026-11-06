@@ -212,7 +212,7 @@
     <div class="relative p-6 rounded-[2rem] bg-gradient-to-br from-emerald-50 via-white to-teal-50
                 dark:from-emerald-950/70 dark:via-zinc-900 dark:to-teal-950/60
                 border border-emerald-300 dark:border-emerald-800 shadow-lg shadow-emerald-900/10
-                ring-1 ring-emerald-200/70 dark:ring-emerald-900/50 overflow-hidden group
+                ring-1 ring-emerald-200/70 dark:ring-emerald-900/50 overflow-visible group z-20
                 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400
                 hover:shadow-xl hover:shadow-emerald-900/15">
 
