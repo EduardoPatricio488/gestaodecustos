@@ -108,46 +108,6 @@
             <p class="mt-1 text-[11px] leading-relaxed text-zinc-500">Descarrega um PDF com os movimentos, salários, serviços extra e detalhes do período.</p>
         </div>
 
-        <div class="space-y-1">
-            <button
-                type="button"
-                wire:click="exportIncomeStatement('previous_month')"
-                @click="openStatementExport = false"
-                wire:loading.attr="disabled"
-                wire:target="exportIncomeStatement"
-                class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-emerald-50 disabled:opacity-50 dark:hover:bg-emerald-950/40"
-            >
-                <span class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
-                    <flux:icon name="calendar-days" class="size-4" />
-                </span>
-                <span class="min-w-0 flex-1">
-                    <span class="block text-xs font-bold text-zinc-800 dark:text-zinc-100">Último mês</span>
-                    <span class="block text-[10px] text-zinc-500">Mês civil anterior</span>
-                </span>
-                <flux:icon name="chevron-right" variant="micro" class="size-4 text-zinc-400" />
-            </button>
-
-            <button
-                type="button"
-                wire:click="exportIncomeStatement('previous_year')"
-                @click="openStatementExport = false"
-                wire:loading.attr="disabled"
-                wire:target="exportIncomeStatement"
-                class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-emerald-50 disabled:opacity-50 dark:hover:bg-emerald-950/40"
-            >
-                <span class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
-                    <flux:icon name="calendar-days" class="size-4" />
-                </span>
-                <span class="min-w-0 flex-1">
-                    <span class="block text-xs font-bold text-zinc-800 dark:text-zinc-100">Último ano</span>
-                    <span class="block text-[10px] text-zinc-500">Ano civil anterior</span>
-                </span>
-                <flux:icon name="chevron-right" variant="micro" class="size-4 text-zinc-400" />
-            </button>
-        </div>
-
-        <div class="my-3 border-t border-zinc-100 dark:border-zinc-800"></div>
-
         <div class="space-y-2">
             <p class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Mês específico</p>
             <div class="grid grid-cols-2 gap-2">
@@ -175,7 +135,29 @@
                 class="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 disabled:opacity-50"
             >
                 <flux:icon name="arrow-down-tray" class="size-4" />
-                Descarregar PDF
+                Descarregar PDF do mês
+            </button>
+        </div>
+
+        <div class="my-3 border-t border-zinc-100 dark:border-zinc-800"></div>
+
+        <div class="space-y-2">
+            <p class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Ano específico</p>
+            <select wire:model="statementExportYear" class="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-xs font-semibold text-zinc-800 outline-none focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
+                @foreach(range((int) now()->year, 2000) as $year)
+                    <option value="{{ $year }}">{{ $year }}</option>
+                @endforeach
+            </select>
+            <button
+                type="button"
+                wire:click="exportIncomeStatement('specific_year')"
+                @click="openStatementExport = false"
+                wire:loading.attr="disabled"
+                wire:target="exportIncomeStatement"
+                class="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-xs font-black uppercase tracking-widest text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950"
+            >
+                <flux:icon name="arrow-down-tray" class="size-4" />
+                Descarregar PDF do ano
             </button>
         </div>
 
