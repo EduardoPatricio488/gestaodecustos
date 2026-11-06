@@ -151,21 +151,67 @@
     @endphp
 
     <div class="space-y-7 mt-6">
-        <section class="relative overflow-hidden rounded-[2rem] border border-zinc-800 bg-[#030407] p-6 sm:p-9 text-white shadow-[0_24px_80px_-28px_rgba(0,0,0,0.95)]">
-            <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <section class="relative isolate overflow-hidden rounded-[2rem] border border-zinc-700/80 bg-[#030407] p-6 sm:p-9 lg:p-10 text-white shadow-[0_28px_90px_-35px_rgba(0,0,0,0.95)]">
+            <div class="pointer-events-none absolute -right-16 -top-20 size-72 rounded-full bg-indigo-500/[0.09] blur-3xl"></div>
+            <div class="pointer-events-none absolute -bottom-28 left-[35%] size-64 rounded-full bg-violet-500/[0.07] blur-3xl"></div>
+
+            <div class="relative z-10 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] items-center gap-8 xl:gap-12">
                 <div class="max-w-2xl">
-                    <div class="inline-flex items-center gap-2 rounded-full border border-indigo-300/20 bg-indigo-400/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-200">
-                        <flux:icon name="sparkles" class="size-3.5" /> Consultor Financeiro IA
+                    <div class="inline-flex items-center gap-2 rounded-full border border-indigo-300/25 bg-indigo-400/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-200">
+                        <span class="relative flex size-2">
+                            <span class="absolute inline-flex size-full animate-ping rounded-full bg-indigo-400 opacity-70"></span>
+                            <span class="relative inline-flex size-2 rounded-full bg-indigo-300"></span>
+                        </span>
+                        Consultor Financeiro IA
                     </div>
-                    <h2 class="mt-4 text-3xl sm:text-4xl font-black tracking-tight">A tua carteira, com uma estratégia.</h2>
-                    <p class="mt-3 max-w-xl text-sm leading-6 text-zinc-300">Uma visão conjunta dos teus investimentos e dos teus movimentos financeiros para perceberes o que tens, quanto poderás investir e onde deves ter atenção.</p>
+                    <h2 class="mt-5 text-3xl sm:text-4xl lg:text-[2.7rem] font-black tracking-tight leading-[1.08]">
+                        A tua carteira,<br class="hidden sm:block">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-violet-300 to-sky-300">com uma estratégia.</span>
+                    </h2>
+                    <p class="mt-4 max-w-xl text-sm sm:text-[15px] leading-7 text-zinc-300">
+                        Uma visão conjunta dos teus investimentos e dos teus movimentos financeiros para perceberes o que tens, quanto poderás investir e onde deves ter atenção.
+                    </p>
+                    <div class="mt-6 flex flex-wrap gap-2">
+                        <span class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold text-zinc-300"><flux:icon name="chart-pie" class="size-3.5 text-indigo-300" /> Investimentos</span>
+                        <span class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold text-zinc-300"><flux:icon name="arrow-left-right" class="size-3.5 text-violet-300" /> Movimentos</span>
+                        <span class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold text-zinc-300"><flux:icon name="target" class="size-3.5 text-sky-300" /> Estratégia</span>
+                    </div>
                 </div>
-                <div class="flex flex-col gap-2 min-w-[210px]">
-                    <flux:button type="button" wire:click="analyzePortfolio" variant="primary" class="h-12 rounded-xl bg-indigo-500 hover:bg-indigo-400 font-black" wire:loading.attr="disabled" wire:target="analyzePortfolio">
-                        <span wire:loading.remove wire:target="analyzePortfolio"><flux:icon name="sparkles" class="size-4 mr-2" /> Analisar a minha carteira</span>
-                        <span wire:loading wire:target="analyzePortfolio">A analisar...</span>
-                    </flux:button>
-                    <p class="text-center text-[10px] text-zinc-400">A análise usa os dados registados no Finance Pro.</p>
+
+                <div class="w-full rounded-[1.6rem] border border-white/10 bg-white/[0.045] p-5 sm:p-6 shadow-2xl shadow-black/40 backdrop-blur-sm">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Análise personalizada</p>
+                            <p class="mt-1 text-sm font-bold text-white">Transforma dados em decisões.</p>
+                        </div>
+                        <div class="flex size-10 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-300 ring-1 ring-indigo-400/20">
+                            <flux:icon name="sparkles" class="size-5" />
+                        </div>
+                    </div>
+
+                    <button type="button" wire:click="analyzePortfolio" wire:loading.attr="disabled" wire:target="analyzePortfolio"
+                        class="group relative flex min-h-[58px] w-full items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-600 px-5 py-4 text-sm font-black text-white shadow-[0_12px_35px_-10px_rgba(99,102,241,0.8)] ring-1 ring-white/20 transition duration-300 hover:-translate-y-0.5 hover:scale-[1.015] hover:shadow-[0_18px_45px_-10px_rgba(129,92,246,0.85)] active:translate-y-0 active:scale-[0.99] disabled:cursor-wait disabled:opacity-75">
+                        <span class="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full"></span>
+                        <span wire:loading.remove wire:target="analyzePortfolio" class="relative inline-flex items-center gap-2">
+                            <flux:icon name="sparkles" class="size-5" /> Analisar a minha carteira
+                            <flux:icon name="arrow-right" class="size-4 transition-transform group-hover:translate-x-1" />
+                        </span>
+                        <span wire:loading wire:target="analyzePortfolio" class="relative inline-flex items-center gap-2">
+                            <flux:icon name="loader-circle" class="size-5 animate-spin" /> A analisar a tua carteira...
+                        </span>
+                    </button>
+                    <div wire:loading wire:target="analyzePortfolio" class="mt-3 flex items-center gap-2 text-[10px] font-semibold text-indigo-200">
+                        <span class="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10"><span class="block h-full w-1/3 animate-[pulse_1.2s_ease-in-out_infinite] rounded-full bg-indigo-300"></span></span>
+                        A cruzar os teus dados financeiros
+                    </div>
+                    <p class="mt-3 text-center text-[10px] leading-5 text-zinc-400">A análise usa os dados registados no Finance Pro.</p>
+
+                    @if($portfolioAnalysisCompleted)
+                        <a href="#portfolio-ai-analysis" class="mt-4 flex items-center justify-between gap-3 rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-3 py-3 text-left transition hover:bg-emerald-400/15">
+                            <span class="flex items-center gap-2 text-xs font-bold text-emerald-300"><flux:icon name="check-circle" class="size-4 shrink-0" /> Análise concluída! Está no fim da página.</span>
+                            <span class="shrink-0 text-[10px] font-black uppercase tracking-wider text-emerald-200">Ver <flux:icon name="arrow-down" class="inline size-3.5" /></span>
+                        </a>
+                    @endif
                 </div>
             </div>
         </section>
@@ -280,7 +326,7 @@
             </div>
         </section>
 
-        <section class="rounded-[1.75rem] border border-indigo-500/20 bg-indigo-500/[0.03] p-6 sm:p-7">
+        <section id="portfolio-ai-analysis" class="scroll-mt-8 rounded-[1.75rem] border border-indigo-500/20 bg-indigo-500/[0.03] p-6 sm:p-7">
             <div class="flex items-center gap-3 mb-4">
                 <div class="size-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><span class="text-xs font-black tracking-tight" aria-hidden="true">IA</span></div>
                 <div><h3 class="text-lg font-black dark:text-white">Opinião do consultor IA</h3><p class="text-xs text-zinc-500">Diagnóstico, riscos e próximos passos</p></div>
