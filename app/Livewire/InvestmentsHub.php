@@ -5,6 +5,8 @@ namespace App\Livewire;
 use App\Models\Investment;
 use App\Models\BankAccount;
 use App\Models\InvestmentIncome;
+use App\Models\Income;
+use App\Models\Expense;
 use App\Services\DebtInstrumentCalculator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -82,6 +84,8 @@ class InvestmentsHub extends Component
     public $tab = 'portfolio';
 
     public $companyAnalysis = null;
+
+    public ?string $portfolioAdvisorAnalysis = null;
 
     public string $aiProvider = 'openrouter';
 
@@ -370,6 +374,156 @@ class InvestmentsHub extends Component
         $analysis['market_data'] = $market;
         $this->companyAnalysis = $analysis;
         $this->dispatch('companyAnalyzed', $analysis);
+    }
+
+
+    /**
+     * Gera uma leitura global da carteira e da capacidade financeira do utilizador.
+     * A análise usa apenas movimentos e posições existentes no workspace.
+     */
+    private function buildPortfolioAdvisorData(): array
+    {
+        $user = Auth::user();
+        $workspaceId = $user->current_workspace_id;
+        $isPersonalWorkspace = $user->currentWorkspace?->type === 'personal';
+        $from = now()->subDays(90)->startOfDay();
+        $to = now()->endOfDay();
+
+        $assets = Investment::where('workspace_id', $workspaceId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
+            ->get()
+            ->map(function ($asset) {
+                $cost = ((float) $asset->quantity * (float) $asset->average_price) + (float) ($asset->fees ?? 0);
+                $price = (float) ($asset->current_price ?: $asset->average_price);
+                $value = (float) $asset->quantity * $price;
+
+                return [
+                    'name' => $asset->name ?: $asset->symbol ?: 'Ativo sem nome',
+                    'symbol' => $asset->symbol,
+                    'type' => $asset->type ?: 'Outro',
+                    'quantity' => (float) $asset->quantity,
+                    'cost' => $cost,
+                    'value' => $value,
+                    'profit' => $value - $cost,
+                    'profit_percent' => $cost > 0 ? (($value - $cost) / $cost) * 100 : 0,
+                ];
+            });
+
+        $invested = (float) $assets->sum('cost');
+        $currentValue = (float) $assets->sum('value');
+        $profit = $currentValue - $invested;
+        $topAsset = $assets->sortByDesc('value')->first();
+        $composition = $assets->groupBy('type')->map(fn ($group, $type) => [
+            'type' => $type,
+            'value' => (float) $group->sum('value'),
+            'percentage' => $currentValue > 0 ? round(($group->sum('value') / $currentValue) * 100, 1) : 0,
+        ])->values()->all();
+
+        $incomeQuery = Income::where('workspace_id', $workspaceId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
+            ->whereBetween('received_at', [$from->toDateString(), $to->toDateString()]);
+        $expenseQuery = Expense::where('workspace_id', $workspaceId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
+            ->whereBetween('spent_at', [$from->toDateString(), $to->toDateString()]);
+
+        $incomeCount = (clone $incomeQuery)->count();
+        $expenseCount = (clone $expenseQuery)->count();
+        $income90 = (float) (clone $incomeQuery)->sum('amount_converted');
+        $expense90 = (float) (clone $expenseQuery)->sum('amount_converted');
+        $monthlyIncome = $income90 / 3;
+        $monthlyExpense = $expense90 / 3;
+        $monthlySurplus = $monthlyIncome - $monthlyExpense;
+
+        return [
+            'period_days' => 90,
+            'income_records' => $incomeCount,
+            'expense_records' => $expenseCount,
+            'monthly_income' => $monthlyIncome,
+            'monthly_expenses' => $monthlyExpense,
+            'monthly_surplus' => $monthlySurplus,
+            'suggested_monthly_min' => max(0, $monthlySurplus * 0.20),
+            'suggested_monthly_max' => max(0, $monthlySurplus * 0.30),
+            'invested' => $invested,
+            'current_value' => $currentValue,
+            'profit' => $profit,
+            'profit_percent' => $invested > 0 ? ($profit / $invested) * 100 : 0,
+            'asset_count' => $assets->count(),
+            'composition' => $composition,
+            'top_asset' => $topAsset,
+            'top_asset_percentage' => $topAsset && $currentValue > 0 ? round(($topAsset['value'] / $currentValue) * 100, 1) : 0,
+            'assets' => $assets->values()->all(),
+        ];
+    }
+
+    public function analyzePortfolio(): void
+    {
+        $data = $this->buildPortfolioAdvisorData();
+        $apiKey = config('services.openrouter.api_key');
+
+        if (blank($apiKey)) {
+            $this->portfolioAdvisorAnalysis = 'O consultor IA ainda não está configurado neste ambiente. Os indicadores e cálculos apresentados nesta página continuam disponíveis, mas a opinião personalizada por IA requer uma chave OpenRouter válida.';
+            return;
+        }
+
+        $context = [
+            'currency' => Auth::user()->currentWorkspace?->currency ?? 'EUR',
+            'portfolio' => [
+                'invested' => round($data['invested'], 2),
+                'current_value' => round($data['current_value'], 2),
+                'profit' => round($data['profit'], 2),
+                'profit_percent' => round($data['profit_percent'], 2),
+                'asset_count' => $data['asset_count'],
+                'composition' => $data['composition'],
+                'largest_position_share_percent' => $data['top_asset_percentage'],
+                'positions' => array_map(fn ($asset) => [
+                    'name' => $asset['name'],
+                    'symbol' => $asset['symbol'],
+                    'type' => $asset['type'],
+                    'current_value' => round($asset['value'], 2),
+                    'profit' => round($asset['profit'], 2),
+                    'profit_percent' => round($asset['profit_percent'], 2),
+                ], $data['assets']),
+            ],
+            'cashflow_last_90_days' => [
+                'monthly_average_income' => round($data['monthly_income'], 2),
+                'monthly_average_expenses' => round($data['monthly_expenses'], 2),
+                'monthly_average_surplus' => round($data['monthly_surplus'], 2),
+                'income_records' => $data['income_records'],
+                'expense_records' => $data['expense_records'],
+                'suggested_investment_range' => [
+                    'minimum' => round($data['suggested_monthly_min'], 2),
+                    'maximum' => round($data['suggested_monthly_max'], 2),
+                ],
+            ],
+        ];
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.$apiKey,
+            'Content-Type' => 'application/json',
+            'HTTP-Referer' => config('app.url'),
+            'X-Title' => config('app.name'),
+        ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
+            ->timeout((int) config('limits.ai.request_timeout_seconds', 45))
+            ->post('https://openrouter.ai/api/v1/chat/completions', [
+                'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                'messages' => [
+                    ['role' => 'system', 'content' => 'És um consultor de educação financeira prudente, claro e rigoroso. Analisa exclusivamente os dados fornecidos. Nunca inventes preços, rendimentos, despesas, taxas, previsões ou características dos ativos. Distingue factos de hipóteses. Não prometas retornos nem dês ordens de compra/venda. Se faltarem dados, diz explicitamente. Recomenda manter primeiro uma reserva de emergência adequada e não investir dinheiro necessário a curto prazo. Responde em português de Portugal, com títulos curtos e recomendações práticas.'],
+                    ['role' => 'user', 'content' => "Analisa a minha carteira e a minha capacidade de investimento com estes dados reais da aplicação:\n".json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n\nOrganiza a resposta em: 1) diagnóstico geral; 2) pontos fortes; 3) riscos e concentração; 4) capacidade mensal para investir, explicando que 20%-30% do excedente é apenas uma referência inicial e não uma garantia; 5) próximos passos concretos; 6) dados em falta. Se não existirem movimentos suficientes nos últimos 90 dias, não apresentes o excedente como rendimento disponível confirmado."],
+                ],
+                'temperature' => 0.2,
+                'max_tokens' => 1800,
+            ]);
+
+        if (! $response->successful()) {
+            Log::warning('InvestmentsHub: falha na análise do consultor de investimentos', ['status' => $response->status()]);
+            $this->portfolioAdvisorAnalysis = 'Não foi possível obter a análise IA neste momento. Confirma a configuração do fornecedor de IA e tenta novamente.';
+            return;
+        }
+
+        $this->portfolioAdvisorAnalysis = trim((string) ($response->json('choices.0.message.content') ?? ''));
+        if ($this->portfolioAdvisorAnalysis === '') {
+            $this->portfolioAdvisorAnalysis = 'A IA não devolveu uma análise válida. Tenta novamente.';
+        }
     }
 
     public function switchTab($tab): void
@@ -710,11 +864,13 @@ class InvestmentsHub extends Component
             ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
             ->where('status', '!=', 'archived')->orderBy('name')->get();
 
+        $advisorData = $this->buildPortfolioAdvisorData();
+
         return view('livewire.investments-hub', ['bankAccounts' => $bankAccounts, 'myAssets' => $myAssets, 'totalInvested' => $totalInvested, 'currentValue' => $displayValue, 'totalProfit' => $displayProfit, 'totalPnlPct' => $totalPnlPct, 'composition' => $composition, 'bestPerformer' => $myAssets->sortByDesc('pnl_percent')->first(), 'worstPerformer' => $myAssets->sortBy('pnl_percent')->first(), 'highestExposure' => $myAssets->sortByDesc('current_value')->first(), 'marketData' => $this->buildMarketTicker(), 'estimatedTax' => $totalEstimatedTax, 'recentIncomes' => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
                 ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
                 ->with('investment')->latest('reference_date')->take(10)->get(), 'totalIncomeNet' => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
                 ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
-                ->sum('net_amount'), 'companyAnalysis' => $this->companyAnalysis, 'tab' => $this->tab]);
+                ->sum('net_amount'), 'companyAnalysis' => $this->companyAnalysis, 'advisorData' => $advisorData, 'portfolioAdvisorAnalysis' => $this->portfolioAdvisorAnalysis, 'tab' => $this->tab]);
     }
 
     private function buildMarketTicker(): array
