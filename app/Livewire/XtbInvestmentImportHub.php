@@ -26,6 +26,7 @@ class XtbInvestmentImportHub extends Component
     public array $aforroNetPosition = [];
     public bool $aforroNetPreviewReady = false;
     public bool $isAnalyzingAforroNet = false;
+    public ?string $aforroNetDiagnostic = null;
     public bool $isImportingAforroNet = false;
     public array $positions = [];
     public array $reportSummary = [];
@@ -395,6 +396,7 @@ class XtbInvestmentImportHub extends Component
     public function analyzeAforroNetFile(): void
     {
         $this->authorizeImport();
+        $this->aforroNetDiagnostic = null;
         $this->validate([
             'aforroNetFile' => 'required|file|mimes:pdf|max:10240',
         ]);
@@ -578,6 +580,7 @@ class XtbInvestmentImportHub extends Component
     private function extractAforroNetPdfText(string $pdfPath): string
     {
         $candidates = [];
+        $candidateSources = [];
         $errors = [];
 
         // Recolhe todas as extrações digitais disponíveis. Não aceita uma
@@ -589,6 +592,7 @@ class XtbInvestmentImportHub extends Component
                 $text = trim($document->getText());
                 if (mb_strlen($text) >= 80) {
                     $candidates[] = $text;
+                    $candidateSources[] = 'Smalot';
                 }
             }
         } catch (\Throwable $exception) {
@@ -609,6 +613,7 @@ class XtbInvestmentImportHub extends Component
                     $output = trim($process->getOutput());
                     if ($process->isSuccessful() && mb_strlen($output) >= 80) {
                         $candidates[] = $output;
+                        $candidateSources[] = $options[0] === '-layout' ? 'Poppler layout' : 'Poppler raw';
                     } else {
                         $errors[] = trim($process->getErrorOutput());
                     }
@@ -685,6 +690,10 @@ class XtbInvestmentImportHub extends Component
                         }
                     }
                     $ocrCandidate = trim(implode("\n", $ocrText));
+                    if (mb_strlen($ocrCandidate) >= 80) {
+                        $candidates[] = $ocrCandidate;
+                        $candidateSources[] = 'OCR';
+                    }
                     if (mb_strlen($ocrCandidate) >= 80 && $scoreText($ocrCandidate) > $bestScore) {
                         $bestText = $ocrCandidate;
                         $bestScore = $scoreText($ocrCandidate);
@@ -703,6 +712,22 @@ class XtbInvestmentImportHub extends Component
         if (mb_strlen(trim($bestText)) < 80) {
             throw new \RuntimeException('Não foi possível extrair texto suficiente do PDF. '.implode(' ', array_filter($errors)));
         }
+
+        // Diagnóstico visível apenas com indicadores técnicos; nunca inclui texto
+        // extraído, nomes, NIF, IBAN, números de conta ou números de subscrição.
+        $diagnosticParts = [];
+        foreach ($candidates as $index => $candidate) {
+            $upper = mb_strtoupper(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $candidate) ?: $candidate);
+            $compact = trim(preg_replace('/\\s+/', ' ', preg_replace('/[^A-Z0-9]+/', ' ', $upper)));
+            $diagnosticParts[] = ($candidateSources[$index] ?? 'Leitor')
+                . ':AFORRO='.(str_contains($compact, 'AFORRO') ? 'sim' : 'nao')
+                . ',CAF='.(preg_match('/\\bCAF\\b/', $compact) ? 'sim' : 'nao')
+                . ',SERIE_E='.(preg_match('/\\bSERIE\\s*E\\b/', $compact) ? 'sim' : 'nao')
+                . ',SERIE_DETETADA='.($this->detectAforroNetSeries($candidate) ?? 'nao');
+        }
+        $this->aforroNetDiagnostic = 'Leitores: '.implode(' | ', $diagnosticParts)
+            .'. Selecionado: '.($candidateSources[array_search($bestText, $candidates, true)] ?? 'desconhecido')
+            .'.';
 
         Log::info('AforroNet PDF extraction selected', [
             'user_id' => auth()->id(),
@@ -880,7 +905,7 @@ class XtbInvestmentImportHub extends Component
             });
 
             $this->dispatch('toast', variant: 'success', text: count($this->aforroNetSubscriptions).' subscrições Série E sincronizadas individualmente.');
-            $this->reset(['aforroNetFile', 'aforroNetFile', 'aforroNetPosition', 'aforroNetSubscriptions', 'aforroNetPreviewReady']);
+            $this->reset(['aforroNetFile', 'aforroNetPosition', 'aforroNetSubscriptions', 'aforroNetPreviewReady', 'aforroNetDiagnostic']);
         } catch (\Throwable $exception) {
             Log::error('AforroNet investment import failed', ['user_id' => $user->id, 'message' => $exception->getMessage()]);
             $this->dispatch('toast', variant: 'danger', text: $exception->getMessage());
