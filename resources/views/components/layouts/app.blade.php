@@ -1290,9 +1290,6 @@ $hasStoreAccess = $hasLockInAccess;
                     <flux:sidebar.item icon="arrow-up-tray" :href="route('hub.import')" :current="request()->routeIs('hub.import')" wire:navigate.hover>
                         Importar Extrato {!! $badge($counts['imports']) !!}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="hand-raised" :href="route('hub.debts')" wire:navigate.hover>
-                        Dívidas {!! $badge($counts['debts']) !!}
-                    </flux:sidebar.item>
                     <flux:sidebar.item icon="users" :href="route('hub.split')" wire:navigate.hover>
                         Dividir Despesas {!! $badge($counts['splits']) !!}
                     </flux:sidebar.item>
@@ -1301,9 +1298,6 @@ $hasStoreAccess = $hasLockInAccess;
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="chart-pie" :href="route('hub.expense-forecast')" wire:navigate.hover>
                         Previsão Despesas
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="chart-bar-square" :href="route('hub.investments')" wire:navigate.hover>
-                        Investimentos {!! $badge($counts['investments']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="credit-card" :href="route('hub.subscriptions')" wire:navigate.hover>
                         Assinaturas {!! $badge($counts['subscriptions']) !!}
