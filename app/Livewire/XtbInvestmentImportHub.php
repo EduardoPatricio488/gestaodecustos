@@ -399,24 +399,24 @@ class XtbInvestmentImportHub extends Component
         $this->validate(['aforroNetText' => 'required|string|min:80|max:20000']);
 
         try {
-            $text = preg_replace('/\\s+/u', ' ', trim($this->aforroNetText));
-            if (! preg_match('/Data do Extrato:\\s*(\\d{2}-\\d{2}-\\d{4})/iu', $text, $dateMatch)) {
-                throw new \\RuntimeException('Data do extrato não encontrada.');
+            $text = preg_replace('/\s+/u', ' ', trim($this->aforroNetText));
+            if (! preg_match('/Data do Extrato:\s*(\d{2}-\d{2}-\d{4})/iu', $text, $dateMatch)) {
+                throw new \RuntimeException('Data do extrato não encontrada.');
             }
-            if (! preg_match('/Certificados de Aforro\\s+Série\\s+([A-Z])\\s+([\\d.]+)\\s+([\\d.,]+)/iu', $text, $totalMatch)) {
-                throw new \\RuntimeException('Total da série não encontrado.');
+            if (! preg_match('/Certificados de Aforro\s+Série\s+([A-Z])\s+([\d.]+)\s+([\d.,]+)/iu', $text, $totalMatch)) {
+                throw new \RuntimeException('Total da série não encontrado.');
             }
 
             $series = strtoupper($totalMatch[1]);
             if ($series !== 'E') {
-                throw new \\RuntimeException('Este importador automático está preparado para a Série E.');
+                throw new \RuntimeException('Este importador automático está preparado para a Série E.');
             }
 
             $subscriptions = [];
-            preg_match_all('/(\\d{2}-\\d{2}-\\d{4})\\s+(\\d{6,})\\s+([\\d.,]+)\\s+([\\d.]+)\\s+([\\d.,]+)/u', $text, $rows, PREG_SET_ORDER);
+            preg_match_all('/(\d{2}-\d{2}-\d{4})\s+(\d{6,})\s+([\d.,]+)\s+([\d.]+)\s+([\d.,]+)/u', $text, $rows, PREG_SET_ORDER);
             foreach ($rows as $row) {
                 $subscriptions[] = [
-                    'operation_date' => \\Illuminate\\Support\\Carbon::createFromFormat('d-m-Y', $row[1])->toDateString(),
+                    'operation_date' => \Illuminate\Support\Carbon::createFromFormat('d-m-Y', $row[1])->toDateString(),
                     'subscription_number' => $row[2],
                     'current_price' => $this->parsePortugueseNumber($row[3]),
                     'quantity' => $this->parsePortugueseNumber($row[4]),
@@ -425,7 +425,7 @@ class XtbInvestmentImportHub extends Component
             }
 
             if (count($subscriptions) === 0) {
-                throw new \\RuntimeException('Não foram encontradas linhas individuais de subscrição.');
+                throw new \RuntimeException('Não foram encontradas linhas individuais de subscrição.');
             }
 
             $units = array_sum(array_column($subscriptions, 'quantity'));
@@ -434,15 +434,15 @@ class XtbInvestmentImportHub extends Component
             $reportedValue = $this->parsePortugueseNumber($totalMatch[3]);
 
             if (abs($units - $reportedUnits) > 0.00001 || abs($value - $reportedValue) > 0.02) {
-                throw new \\RuntimeException('A soma das subscrições individuais não coincide com o total do extrato.');
+                throw new \RuntimeException('A soma das subscrições individuais não coincide com o total do extrato.');
             }
 
             foreach ($subscriptions as $subscription) {
                 if ($subscription['quantity'] <= 0 || $subscription['current_price'] <= 0 || $subscription['current_value'] <= 0) {
-                    throw new \\RuntimeException('O extrato contém uma subscrição com valores inválidos.');
+                    throw new \RuntimeException('O extrato contém uma subscrição com valores inválidos.');
                 }
                 if (abs(($subscription['quantity'] * $subscription['current_price']) - $subscription['current_value']) > 0.03) {
-                    throw new \\RuntimeException('O valor unitário e o total de uma subscrição não coincidem.');
+                    throw new \RuntimeException('O valor unitário e o total de uma subscrição não coincidem.');
                 }
             }
 
@@ -457,7 +457,7 @@ class XtbInvestmentImportHub extends Component
             ];
             $this->aforroNetPreviewReady = true;
             $this->dispatch('toast', variant: 'success', text: count($subscriptions).' subscrições identificadas e validadas.');
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             Log::warning('AforroNet pasted statement analysis failed', ['user_id' => auth()->id(), 'message' => $exception->getMessage()]);
             $this->addError('aforroNetText', $exception->getMessage());
             $this->aforroNetPreviewReady = false;
@@ -492,10 +492,10 @@ class XtbInvestmentImportHub extends Component
                     ['type' => 'investimentos', 'balance' => 0, 'currency' => 'EUR', 'color' => '#0f766e', 'include_in_total' => false, 'status' => 'active', 'description' => 'Certificados de Aforro importados do AforroNet']
                 );
 
-                $reportDate = \\Illuminate\\Support\\Carbon::createFromFormat('d-m-Y', $this->aforroNetPosition['report_date'])->startOfDay();
+                $reportDate = \Illuminate\Support\Carbon::createFromFormat('d-m-Y', $this->aforroNetPosition['report_date'])->startOfDay();
 
                 foreach ($this->aforroNetSubscriptions as $subscription) {
-                    $operationDate = \\Illuminate\\Support\\Carbon::parse($subscription['operation_date']);
+                    $operationDate = \Illuminate\Support\Carbon::parse($subscription['operation_date']);
                     $nextCapitalization = $operationDate->copy();
                     do {
                         $nextCapitalization->addMonthsNoOverflow(3);
@@ -510,7 +510,7 @@ class XtbInvestmentImportHub extends Component
                         ->first();
 
                     if ($existing && $existing->valuation_date && $existing->valuation_date->gt($reportDate)) {
-                        throw new \\RuntimeException('O extrato é mais antigo do que os dados já guardados para a subscrição '.$subscription['subscription_number'].'.');
+                        throw new \RuntimeException('O extrato é mais antigo do que os dados já guardados para a subscrição '.$subscription['subscription_number'].'.');
                     }
 
                     $data = [
@@ -549,7 +549,7 @@ class XtbInvestmentImportHub extends Component
 
             $this->dispatch('toast', variant: 'success', text: count($this->aforroNetSubscriptions).' subscrições Série E sincronizadas individualmente.');
             $this->reset(['aforroNetFile', 'aforroNetText', 'aforroNetPosition', 'aforroNetSubscriptions', 'aforroNetPreviewReady']);
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             Log::error('AforroNet investment import failed', ['user_id' => $user->id, 'message' => $exception->getMessage()]);
             $this->dispatch('toast', variant: 'danger', text: $exception->getMessage());
         } finally {
