@@ -520,7 +520,13 @@ class InvestmentsHub extends Component
         }
 
         $this->isAnalyzingPortfolio = true;
-        $portfolioModel = 'google/gemma-4-26b-a4b-it:free';
+        // O router gratuito escolhe o modelo disponível; a lista seguinte funciona como fallback automático em caso de erro/limite do fornecedor.
+        $portfolioModel = 'openrouter/free';
+        $portfolioFallbackModels = [
+            'dots-studio/dots-3-note-preview:free',
+            'xingchen-agi/xing4.0-29b-a4b:free',
+            'recursive/flint-v1.0:free',
+        ];
 
         // A análise completa pode demorar mais em modelos gratuitos do OpenRouter.
         if (function_exists('set_time_limit')) {
@@ -582,6 +588,7 @@ class InvestmentsHub extends Component
                 'X-Title' => config('app.name'),
             ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 10))->timeout((int) config('limits.ai.request_timeout_seconds', 90))->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => $portfolioModel,
+                'models' => $portfolioFallbackModels,
                 'messages' => [
                     ['role' => 'system', 'content' => $systemPrompt],
                     ['role' => 'user', 'content' => $userPrompt],
@@ -599,7 +606,7 @@ class InvestmentsHub extends Component
                 $this->portfolioAdvisorAnalysis = match ($response->status()) {
                     401, 403 => 'A chave OpenRouter foi rejeitada. Confirma se OPENROUTER_API_KEY está correta e se a conta tem acesso ao modelo configurado.',
                     402 => 'A conta OpenRouter não tem saldo ou créditos disponíveis para executar esta análise.',
-                    429 => 'O serviço de IA está temporariamente limitado por excesso de pedidos. Aguarda um pouco e tenta novamente.',
+                    429 => 'Os modelos gratuitos estão temporariamente sem capacidade nos fornecedores. A aplicação tentou o encaminhamento alternativo; aguarda alguns minutos ou configura uma chave própria de fornecedor (BYOK) no OpenRouter.',
                     default => 'O serviço OpenRouter respondeu com o erro HTTP '.$response->status().'. Consulta o registo de Laravel para mais detalhes e tenta novamente.',
                 };
                 return;
@@ -664,6 +671,7 @@ class InvestmentsHub extends Component
                     'X-Title' => config('app.name'),
                 ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 10))->timeout((int) config('limits.ai.request_timeout_seconds', 90))->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => $portfolioModel,
+                    'models' => $portfolioFallbackModels,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
                         ['role' => 'user', 'content' => $userPrompt],
@@ -704,7 +712,7 @@ class InvestmentsHub extends Component
                 'workspace_id' => Auth::user()->current_workspace_id,
                 'analysis' => $analysisText,
                 'snapshot' => $context,
-                'model' => $portfolioModel,
+                'model' => $response->json('model') ?: $portfolioModel,
             ]);
 
             $this->selectedPortfolioAnalysisId = $saved->id;
