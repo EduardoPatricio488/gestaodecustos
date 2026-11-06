@@ -2440,7 +2440,7 @@ class IncomeHub extends Component
         $projectedSalaryHistoryPayments = SalaryPayment::with(['recurringIncome', 'bankAccount'])
             ->where('workspace_id', $workspaceId)
             ->where('user_id', $user->id)
-            ->whereIn('recurring_income_id', $projectedContractIds)
+            ->whereIn('recurring_income_id', $salaryContractIds)
             ->orderByDesc('payment_year')
             ->orderByDesc('payment_month')
             ->orderByDesc('paid_at')
