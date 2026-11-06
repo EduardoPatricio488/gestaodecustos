@@ -200,65 +200,16 @@
             </span>
         </div>
 
-        <style>
-            @keyframes income-card-float {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-3px); }
-            }
-            @keyframes income-card-orbit {
-                from { transform: rotate(0deg) scale(1); }
-                to { transform: rotate(360deg) scale(1); }
-            }
-            @keyframes income-card-pulse {
-                0%, 100% { opacity: .28; transform: scale(.94); }
-                50% { opacity: .62; transform: scale(1.08); }
-            }
-            @keyframes income-card-shine {
-                0%, 62% { transform: translateX(-170%) skewX(-18deg); opacity: 0; }
-                70% { opacity: .8; }
-                88%, 100% { transform: translateX(520%) skewX(-18deg); opacity: 0; }
-            }
-            .income-projection-card {
-                transform-style: preserve-3d;
-                backface-visibility: hidden;
-                animation: income-card-float 6s ease-in-out infinite;
-                will-change: transform, box-shadow;
-            }
-            .income-projection-card--meal { animation-delay: -3s; }
-            .income-projection-card:hover,
-            .income-projection-card:focus-visible {
-                animation-play-state: paused;
-                transform: perspective(1100px) translateY(-10px) rotateX(5deg) rotateY(-3deg) scale(1.025) !important;
-            }
-            .income-projection-card--meal:hover,
-            .income-projection-card--meal:focus-visible {
-                transform: perspective(1100px) translateY(-10px) rotateX(5deg) rotateY(3deg) scale(1.025) !important;
-            }
-            .income-projection-orbit { transform-origin: center; animation: income-card-orbit 28s linear infinite; }
-            .income-projection-aura { animation: income-card-pulse 5s ease-in-out infinite; }
-            .income-projection-shine { animation: income-card-shine 8s ease-in-out infinite; }
-            .income-projection-content { transform: translateZ(34px); transform-style: preserve-3d; }
-            .income-projection-value { text-shadow: 0 4px 24px rgba(0,0,0,.28); transform: translateZ(18px); }
-            @media (prefers-reduced-motion: reduce) {
-                .income-projection-card, .income-projection-orbit, .income-projection-aura, .income-projection-shine {
-                    animation: none !important;
-                }
-                .income-projection-card:hover, .income-projection-card:focus-visible,
-                .income-projection-card--meal:hover, .income-projection-card--meal:focus-visible {
-                    transform: none !important;
-                }
-            }
-        </style>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             {{-- CARTÃO: SALÁRIO LÍQUIDO --}}
-            <article style="background: linear-gradient(145deg, #17264a 0%, #0b1220 52%, #21143d 100%); color: #ffffff; transform-style: preserve-3d; perspective: 1100px;" role="button" tabindex="0" aria-label="Consultar histórico do salário líquido" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="income-projection-card group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.75rem] border border-slate-700 p-6 text-white shadow-[0_16px_30px_-12px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.16)] transition-all duration-500 ease-out hover:-translate-y-2 hover:rotate-[-0.7deg] hover:scale-[1.018] hover:border-indigo-200 hover:shadow-[0_32px_70px_-18px_rgba(99,102,241,0.65),inset_0_1px_0_rgba(255,255,255,0.24)] active:translate-y-0 active:scale-[0.995] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transform-none motion-reduce:transition-none sm:p-7">
+            <article style="background: linear-gradient(145deg, #17264a 0%, #0b1220 52%, #21143d 100%); color: #ffffff; transform-style: preserve-3d; perspective: 1100px;" role="button" tabindex="0" aria-label="Consultar histórico do salário líquido" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.75rem] border border-slate-700 p-6 text-white shadow-[0_16px_30px_-12px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.16)] transition-all duration-500 ease-out hover:-translate-y-2 hover:rotate-[-0.7deg] hover:scale-[1.018] hover:border-indigo-200 hover:shadow-[0_32px_70px_-18px_rgba(99,102,241,0.65),inset_0_1px_0_rgba(255,255,255,0.24)] active:translate-y-0 active:scale-[0.995] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transform-none motion-reduce:transition-none sm:p-7">
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-violet-500/10 opacity-70 transition-opacity duration-500 group-hover:opacity-100"></div>
-                <div class="pointer-events-none absolute -right-10 -top-16 size-56 rounded-full border border-indigo-300/20 income-projection-orbit group-hover:scale-110 group-hover:rotate-12"></div>
-                <div class="pointer-events-none absolute -right-2 -top-8 size-40 rounded-full border border-indigo-200/20 income-projection-orbit group-hover:scale-110"></div>
-                <div class="pointer-events-none absolute bottom-0 right-0 h-32 w-48 bg-indigo-500/25 opacity-60 blur-2xl income-projection-aura group-hover:scale-150 group-hover:opacity-100"></div>
+                <div class="pointer-events-none absolute -right-10 -top-16 size-56 rounded-full border border-indigo-300/15 transition duration-700 group-hover:scale-110 group-hover:rotate-12"></div>
+                <div class="pointer-events-none absolute -right-2 -top-8 size-40 rounded-full border border-indigo-200/15 transition duration-700 group-hover:scale-110"></div>
+                <div class="pointer-events-none absolute bottom-0 right-0 h-32 w-48 bg-indigo-500/15 opacity-60 blur-2xl transition-all duration-700 group-hover:scale-150 group-hover:opacity-100"></div>
                 <div class="pointer-events-none absolute -inset-px rounded-[1.75rem] bg-gradient-to-br from-indigo-400/0 via-indigo-300/0 to-violet-400/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-                <div class="pointer-events-none absolute inset-y-0 -left-1/2 z-10 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent income-projection-shine"></div>
-                <div class="income-projection-content relative flex h-full min-h-44 flex-col justify-between">
+                <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[450%]"></div>
+                <div style="transform: translateZ(22px); transform-style: preserve-3d;" class="relative flex h-full min-h-44 flex-col justify-between transition-transform duration-500 group-hover:[transform:translateZ(34px)]">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <div class="flex items-center gap-2">
@@ -275,7 +226,7 @@
                         </div>
                     </div>
                     <div class="py-4">
-                        <p class="income-projection-value text-4xl font-black tracking-tight tabular-nums text-white transition-all duration-300 group-hover:translate-x-1 group-hover:scale-[1.04] sm:text-5xl">{{ number_format($projectedSalaryNetTotal, 2, ',', ' ') }} <span class="text-xl text-indigo-200">€</span></p>
+                        <p class="text-3xl font-black tracking-tight tabular-nums text-white transition-all duration-300 group-hover:translate-x-1 group-hover:scale-[1.02] sm:text-4xl">{{ number_format($projectedSalaryNetTotal, 2, ',', ' ') }} <span class="text-xl text-indigo-200">€</span></p>
                         <p class="mt-1 text-[10px] font-semibold text-slate-200">Estimativa deste mês, sem alimentação; inclui serviços do mês anterior no salário</p>
                     </div>
                     <div class="flex items-end justify-between gap-3 border-t border-white/25 pt-3">
@@ -300,14 +251,14 @@
             </article>
 
             {{-- CARTÃO: SUBSÍDIO DE ALIMENTAÇÃO --}}
-            <article style="background: linear-gradient(145deg, #087052 0%, #052e24 52%, #03251f 100%); color: #ffffff; transform-style: preserve-3d; perspective: 1100px;" role="button" tabindex="0" aria-label="Consultar histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="income-projection-card income-projection-card--meal group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.75rem] border border-emerald-800 p-6 text-white shadow-xl shadow-black/40 transition-all duration-500 ease-out hover:-translate-y-2 hover:rotate-[0.7deg] hover:scale-[1.018] hover:border-emerald-200 hover:shadow-[0_32px_70px_-18px_rgba(16,185,129,0.6),inset_0_1px_0_rgba(255,255,255,0.24)] active:translate-y-0 active:scale-[0.995] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transform-none motion-reduce:transition-none sm:p-7">
+            <article style="background: linear-gradient(145deg, #087052 0%, #052e24 52%, #03251f 100%); color: #ffffff; transform-style: preserve-3d; perspective: 1100px;" role="button" tabindex="0" aria-label="Consultar histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.75rem] border border-emerald-800 p-6 text-white shadow-xl shadow-black/40 transition-all duration-500 ease-out hover:-translate-y-2 hover:rotate-[0.7deg] hover:scale-[1.018] hover:border-emerald-200 hover:shadow-[0_32px_70px_-18px_rgba(16,185,129,0.6),inset_0_1px_0_rgba(255,255,255,0.24)] active:translate-y-0 active:scale-[0.995] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transform-none motion-reduce:transition-none sm:p-7">
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-transparent to-teal-300/10 opacity-70 transition-opacity duration-500 group-hover:opacity-100"></div>
-                <div class="pointer-events-none absolute -right-10 -top-16 size-56 rounded-full border border-emerald-200/20 income-projection-orbit group-hover:scale-110 group-hover:-rotate-12"></div>
-                <div class="pointer-events-none absolute -right-2 -top-8 size-40 rounded-full border border-emerald-200/20 income-projection-orbit group-hover:scale-110"></div>
-                <div class="pointer-events-none absolute bottom-0 right-0 h-32 w-48 bg-emerald-400/25 opacity-60 blur-2xl income-projection-aura group-hover:scale-150 group-hover:opacity-100"></div>
+                <div class="pointer-events-none absolute -right-10 -top-16 size-56 rounded-full border border-emerald-200/15 transition duration-700 group-hover:scale-110 group-hover:-rotate-12"></div>
+                <div class="pointer-events-none absolute -right-2 -top-8 size-40 rounded-full border border-emerald-200/15 transition duration-700 group-hover:scale-110"></div>
+                <div class="pointer-events-none absolute bottom-0 right-0 h-32 w-48 bg-emerald-400/15 opacity-60 blur-2xl transition-all duration-700 group-hover:scale-150 group-hover:opacity-100"></div>
                 <div class="pointer-events-none absolute -inset-px rounded-[1.75rem] bg-gradient-to-br from-emerald-300/0 via-teal-200/0 to-lime-300/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-                <div class="pointer-events-none absolute inset-y-0 -left-1/2 z-10 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent income-projection-shine"></div>
-                <div class="income-projection-content relative flex h-full min-h-44 flex-col justify-between">
+                <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[450%]"></div>
+                <div style="transform: translateZ(22px); transform-style: preserve-3d;" class="relative flex h-full min-h-44 flex-col justify-between transition-transform duration-500 group-hover:[transform:translateZ(34px)]">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <div class="flex items-center gap-2">
@@ -324,7 +275,7 @@
                         </div>
                     </div>
                     <div class="py-4">
-                        <p class="income-projection-value text-4xl font-black tracking-tight tabular-nums text-white transition-all duration-300 group-hover:translate-x-1 group-hover:scale-[1.04] sm:text-5xl">{{ number_format($projectedMealAllowanceTotal, 2, ',', ' ') }} <span class="text-xl text-emerald-200">€</span></p>
+                        <p class="text-3xl font-black tracking-tight tabular-nums text-white transition-all duration-300 group-hover:translate-x-1 group-hover:scale-[1.02] sm:text-4xl">{{ number_format($projectedMealAllowanceTotal, 2, ',', ' ') }} <span class="text-xl text-emerald-200">€</span></p>
                         <p class="mt-1 text-[10px] font-semibold text-emerald-100">Estimativa mensal pelos dias elegíveis configurados</p>
                     </div>
                     <div class="flex items-end justify-between gap-3 border-t border-white/25 pt-3">
