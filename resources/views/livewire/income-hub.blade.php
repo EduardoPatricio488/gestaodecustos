@@ -83,6 +83,108 @@
     Receita Extra
 </flux:button>
 
+{{-- EXPORTAÇÃO DO EXTRATO DE RECEITAS --}}
+<div x-data="{ openStatementExport: false }" class="relative">
+    <flux:button
+        type="button"
+        variant="outline"
+        @click="openStatementExport = !openStatementExport"
+        class="rounded-2xl px-5 font-black uppercase tracking-widest"
+    >
+        <flux:icon name="arrow-down-tray" class="size-4" />
+        Exportar PDF
+        <flux:icon name="chevron-down" variant="micro" class="size-3 transition-transform" x-bind:class="openStatementExport ? 'rotate-180' : ''" />
+    </flux:button>
+
+    <div
+        x-show="openStatementExport"
+        x-cloak
+        x-transition
+        @click.outside="openStatementExport = false"
+        class="absolute right-0 z-50 mt-3 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-2xl dark:border-zinc-700 dark:bg-zinc-900"
+    >
+        <div class="mb-3">
+            <p class="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-white">Exportar extrato</p>
+            <p class="mt-1 text-[11px] leading-relaxed text-zinc-500">Descarrega um PDF com os movimentos, salários, serviços extra e detalhes do período.</p>
+        </div>
+
+        <div class="space-y-1">
+            <button
+                type="button"
+                wire:click="exportIncomeStatement('previous_month')"
+                @click="openStatementExport = false"
+                wire:loading.attr="disabled"
+                wire:target="exportIncomeStatement"
+                class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-emerald-50 disabled:opacity-50 dark:hover:bg-emerald-950/40"
+            >
+                <span class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                    <flux:icon name="calendar-days" class="size-4" />
+                </span>
+                <span class="min-w-0 flex-1">
+                    <span class="block text-xs font-bold text-zinc-800 dark:text-zinc-100">Último mês</span>
+                    <span class="block text-[10px] text-zinc-500">Mês civil anterior</span>
+                </span>
+                <flux:icon name="chevron-right" variant="micro" class="size-4 text-zinc-400" />
+            </button>
+
+            <button
+                type="button"
+                wire:click="exportIncomeStatement('previous_year')"
+                @click="openStatementExport = false"
+                wire:loading.attr="disabled"
+                wire:target="exportIncomeStatement"
+                class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-emerald-50 disabled:opacity-50 dark:hover:bg-emerald-950/40"
+            >
+                <span class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
+                    <flux:icon name="calendar-range" class="size-4" />
+                </span>
+                <span class="min-w-0 flex-1">
+                    <span class="block text-xs font-bold text-zinc-800 dark:text-zinc-100">Último ano</span>
+                    <span class="block text-[10px] text-zinc-500">Ano civil anterior</span>
+                </span>
+                <flux:icon name="chevron-right" variant="micro" class="size-4 text-zinc-400" />
+            </button>
+        </div>
+
+        <div class="my-3 border-t border-zinc-100 dark:border-zinc-800"></div>
+
+        <div class="space-y-2">
+            <p class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Mês específico</p>
+            <div class="grid grid-cols-2 gap-2">
+                <select wire:model="statementExportMonth" class="h-10 min-w-0 rounded-xl border border-zinc-200 bg-zinc-50 px-2 text-xs font-semibold text-zinc-800 outline-none focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
+                    @foreach([
+                        1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
+                        5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+                        9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
+                    ] as $monthNumber => $monthName)
+                        <option value="{{ $monthNumber }}">{{ $monthName }}</option>
+                    @endforeach
+                </select>
+                <select wire:model="statementExportYear" class="h-10 min-w-0 rounded-xl border border-zinc-200 bg-zinc-50 px-2 text-xs font-semibold text-zinc-800 outline-none focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
+                    @foreach(range((int) now()->year, 2000) as $year)
+                        <option value="{{ $year }}">{{ $year }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <button
+                type="button"
+                wire:click="exportIncomeStatement('specific_month')"
+                @click="openStatementExport = false"
+                wire:loading.attr="disabled"
+                wire:target="exportIncomeStatement"
+                class="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 disabled:opacity-50"
+            >
+                <flux:icon name="file-pdf" class="size-4" />
+                Descarregar PDF
+            </button>
+        </div>
+
+        <p wire:loading wire:target="exportIncomeStatement" class="mt-3 text-center text-[10px] font-semibold text-emerald-600">
+            A preparar o extrato...
+        </p>
+    </div>
+</div>
+
 
 
 
