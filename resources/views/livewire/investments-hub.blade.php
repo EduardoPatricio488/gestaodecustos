@@ -230,7 +230,7 @@
                 <p class="text-xs text-zinc-500 mt-1">Leitura simples da diversificação atual</p>
                 <div class="mt-6 flex items-center gap-3">
                     <div class="size-12 rounded-2xl flex items-center justify-center {{ $topShare >= 60 ? 'bg-amber-500/10 text-amber-500' : 'bg-indigo-500/10 text-indigo-500' }}">
-                        <flux:icon name="shield-alert" class="size-6" />
+                        <span class="text-xl font-black" aria-hidden="true">!</span>
                     </div>
                     <div>
                         <p class="font-black dark:text-white">{{ $riskLabel }}</p>
