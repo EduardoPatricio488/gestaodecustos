@@ -520,7 +520,7 @@ class InvestmentsHub extends Component
         }
 
         $this->isAnalyzingPortfolio = true;
-        $portfolioModel = 'meta-llama/llama-3.3-70b-instruct:free';
+        $portfolioModel = 'google/gemma-4-26b-a4b-it:free';
 
         // A análise completa pode demorar mais em modelos gratuitos do OpenRouter.
         if (function_exists('set_time_limit')) {
