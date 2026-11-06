@@ -100,12 +100,12 @@
 ══════════════════════════════════════════════════════════════ --}}
 <div x-show="tab === 'overview'" x-cloak class="space-y-6">
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-        <div>
-            <p class="text-sm font-black text-zinc-900 dark:text-white">Filtrar por banco</p>
-            <p class="text-xs text-zinc-500">Os indicadores, gráficos e totais acompanham o banco selecionado.</p>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-zinc-900/70 px-3 py-2">
+        <div class="min-w-0">
+            <p class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Filtrar por banco</p>
+            <p class="text-[10px] text-zinc-400 dark:text-zinc-500">Os indicadores, gráficos e totais acompanham o banco selecionado.</p>
         </div>
-        <select wire:model.live="accountFilter" class="w-full sm:w-72 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white">
+        <select wire:model.live="accountFilter" class="w-full sm:w-64 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-emerald-500">
             <option value="all">Todos os bancos</option>
             @foreach($bankFilters as $bankName)
                 <option value="{{ $bankName }}">{{ $bankName }}</option>
@@ -397,8 +397,7 @@
                     <p class="text-[11px]">Sem valores em trânsito</p>
                     <button wire:click="openTransitModal" class="mt-2 text-[10px] font-bold text-emerald-600 hover:underline">Adicionar</button>
                 </div>
-            @endif
-        </div>
+            @endif        </div>
 
         {{-- ALERTAS --}}
         <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6">
@@ -797,8 +796,7 @@
                             <th class="px-4 py-3 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider">Nome</th>
                             <th class="px-4 py-3 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider">Origem / Destino</th>
                             <th class="px-4 py-3 text-left text-[10px] font-black text-zinc-400 uppercase tracking-wider">Data Prevista</th>
-                            <th class="px-4 py-3 text-right text-[10px] font-black text-zinc-400 uppercase tracking-wider">Valor</th>
-                            <th class="px-4 py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider">Ações</th>
+                            <th class="px-4 py-3 text-right text-[10px] font-black text-zinc-400 uppercase tracking-wider">Valor</th>                            <th class="px-4 py-3 text-center text-[10px] font-black text-zinc-400 uppercase tracking-wider">Ações</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -1197,7 +1195,6 @@
             <p class="text-2xl font-black text-zinc-900 dark:text-white privacy-target">{{ number_format($liquidity['invested'], 2, ',', '.') }} €</p>
             <p class="text-[10px] text-zinc-400 mt-1">Conversão estimada: dias a semanas</p>
         </div>
-
         <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6">
             <div class="size-10 rounded-xl {{ $liquidity['low_liquidity_warning'] ? 'bg-red-100 dark:bg-red-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30' }} flex items-center justify-center mb-3">
                 <flux:icon name="calendar" class="size-5 {{ $liquidity['low_liquidity_warning'] ? 'text-red-600' : 'text-emerald-600' }}" />
@@ -1597,8 +1594,7 @@
                                 <option value="pending">Pendente</option>
                                 <option value="failed">Falhada</option>
                             </select>
-                        </div>
-                    </div>
+                        </div>                    </div>
 
                 {{-- FORMULÁRIO DE RESERVA --}}
                 @elseif($modalType === 'reserve')
