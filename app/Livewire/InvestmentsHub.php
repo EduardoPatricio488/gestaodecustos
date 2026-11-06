@@ -533,7 +533,7 @@ class InvestmentsHub extends Component
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => config('app.name'),
-            ])->connectTimeout(10)->timeout(60)->post('https://openrouter.ai/api/v1/chat/completions', [
+            ])->connectTimeout(5)->timeout(25)->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
                 'messages' => [
                     ['role' => 'system', 'content' => 'És um consultor de educação financeira prudente, claro e rigoroso. Analisa exclusivamente os dados fornecidos. Nunca inventes preços, rendimentos, despesas, taxas, previsões ou características dos ativos. Distingue factos de hipóteses. Não prometas retornos nem dês ordens de compra/venda. Se faltarem dados, diz explicitamente. Recomenda manter primeiro uma reserva de emergência adequada e não investir dinheiro necessário a curto prazo. Responde em português de Portugal, com títulos curtos e recomendações práticas.'],
@@ -567,13 +567,19 @@ class InvestmentsHub extends Component
             if ($this->portfolioAdvisorAnalysis !== '') {
                 $this->portfolioAnalysisCompleted = true;
             }
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::warning('InvestmentsHub: timeout ou falha de ligação ao consultor IA', [
+                'message' => $e->getMessage(),
+            ]);
+
+            $this->portfolioAdvisorAnalysis = 'A IA demorou demasiado tempo a responder ou a ligação foi interrompida. Tenta novamente dentro de alguns instantes.';
         } catch (\Throwable $e) {
             Log::error('InvestmentsHub: exceção ao analisar carteira', [
                 'message' => $e->getMessage(),
                 'exception' => get_class($e),
             ]);
 
-            $this->portfolioAdvisorAnalysis = 'Ocorreu um erro ao contactar o consultor IA: '.$e->getMessage();
+            $this->portfolioAdvisorAnalysis = 'Ocorreu um erro ao contactar o consultor IA. Consulta os registos da aplicação para identificar a causa.';
         } finally {
             $this->isAnalyzingPortfolio = false;
         }
