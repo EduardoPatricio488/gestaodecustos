@@ -602,6 +602,25 @@ class XtbInvestmentImportHub extends Component
         $pdftotext = $this->resolvePdfExecutable('pdftotext');
         $pdftoppm = $this->resolvePdfExecutable('pdftoppm');
         $tesseract = $this->resolvePdfExecutable('tesseract');
+
+        // Diagnóstico temporário do ambiente real do pedido Livewire.
+        $runtimePopplerRoot = getenv('LOCALAPPDATA')
+            ? rtrim(str_replace('\\\\', '/', getenv('LOCALAPPDATA')), '/').'/Microsoft/WinGet/Packages'
+            : null;
+        Log::info('AforroNet executable runtime diagnostics', [
+            'pid' => getmypid(),
+            'php_binary' => basename(PHP_BINARY),
+            'php_os_family' => PHP_OS_FAMILY,
+            'localappdata_available' => (bool) getenv('LOCALAPPDATA'),
+            'poppler_root_exists' => $runtimePopplerRoot ? is_dir($runtimePopplerRoot) : false,
+            'pdftotext_found' => (bool) $pdftotext,
+            'pdftoppm_found' => (bool) $pdftoppm,
+            'tesseract_found' => (bool) $tesseract,
+            'pdftotext_glob_count' => $runtimePopplerRoot
+                ? count(glob($runtimePopplerRoot.'/*/*/Library/bin/pdftotext.exe') ?: [])
+                : 0,
+        ]);
+
         $ocrStatus = ($pdftoppm && $tesseract) ? 'disponivel, ainda nao executado' : 'indisponivel';
         $processClass = \Symfony\Component\Process\Process::class;
 
