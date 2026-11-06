@@ -7,6 +7,7 @@ use App\Services\AI\AiReviewService;
 use App\Services\DailyReportService;
 use App\Services\MonthlyReportService;
 use App\Services\NotificationService;
+use App\Services\Investments\AforroNetSeriesEUpdater;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::call(function () {
@@ -94,7 +95,7 @@ Schedule::command('salary:process-monthly-payments')
 Schedule::call(function () {
     try {
         app(AforroNetSeriesEUpdater::class)->run();
-    } catch (\\Throwable $exception) {
-        \\Illuminate\\Support\\Facades\\Log::warning('AforroNet automatic update skipped', ['message' => $exception->getMessage()]);
+    } catch (\Throwable $exception) {
+        \Illuminate\Support\Facades\Log::warning('AforroNet automatic update skipped', ['message' => $exception->getMessage()]);
     }
 })->dailyAt('09:10')->withoutOverlapping(30);
