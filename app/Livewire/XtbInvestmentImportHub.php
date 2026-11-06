@@ -437,7 +437,7 @@ class XtbInvestmentImportHub extends Component
             if (! $reportDate) {
                 throw new \RuntimeException('Não foi possível identificar uma data no cabeçalho do extrato AforroNet.');
             }
-            if (! preg_match('/Certificados\\s+de\\s+Aforro\\s+Série\\s+([A-Z])(?:\\s+Unidades\\s+Valor)?\\s+([\\d.]+)\\s+([\\d.,]+)/iu', $text, $totalMatch)) {
+            if (! preg_match('/Certificados\s+de\s+Aforro\s+Série\s+([A-Z])(?:\s+Unidades\s+Valor)?\s+([\d.]+)\s+([\d.,]+)/iu', $text, $totalMatch)) {
                 throw new \RuntimeException('Não encontrei o total da Série no PDF.');
             }
 
