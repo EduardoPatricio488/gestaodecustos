@@ -45,6 +45,10 @@ class IncomeHub extends Component
 
     public int $serviceQuantity = 1;
 
+    public array $serviceFixedPrices = [];
+
+    public array $serviceQuickQuantities = [];
+
     public string $extraDestination = 'cash';
 
     // Destino do dinheiro: conta bancária ou dinheiro físico (vazio = físico)
@@ -587,6 +591,10 @@ class IncomeHub extends Component
 
         if ($salary) {
             $this->amount = round((float) $this->serviceUnitAmount * $this->serviceQuantity, 2);
+            $metadata = $salary->metadata ?? [];
+            $metadata['service_unit_price'] = round((float) $this->serviceUnitAmount, 2);
+            $salary->metadata = $metadata;
+            $salary->save();
         }
 
         $extra = $this->editingSalaryExtraIncomeId
@@ -833,7 +841,7 @@ class IncomeHub extends Component
         $this->dispatch('toast', variant: 'success', text: $user->xpToastText(30, 'rendimento fixo configurado'));
     }
 
-    public function openExtraModal(?int $salaryId = null)
+    public function openExtraModal(?int $salaryId = null, ?int $quantity = null)
     {
         $this->reset(['description', 'amount', 'tax_estimate', 'notes', 'bankAccountId', 'extraSalaryId', 'serviceUnitAmount', 'editingSalaryExtraIncomeId']);
         $this->serviceQuantity = 1;
@@ -845,12 +853,14 @@ class IncomeHub extends Component
 
         if ($salaryId) {
             $user = auth()->user();
-            $this->extraSalaryId = RecurringIncome::where('workspace_id', $user->current_workspace_id)
+            $salary = RecurringIncome::where('workspace_id', $user->current_workspace_id)
                 ->where('user_id', $user->id)
                 ->where('source', 'emprego')
                 ->whereNull('metadata->income_type')
-                ->findOrFail($salaryId)
-                ->id;
+                ->findOrFail($salaryId);
+            $this->extraSalaryId = $salary->id;
+            $this->serviceUnitAmount = (float) ($salary->metadata['service_unit_price'] ?? '');
+            $this->serviceQuantity = max(1, $quantity ?? 1);
             $this->extraDestination = 'salary';
         }
 
@@ -860,6 +870,50 @@ class IncomeHub extends Component
         // 2. Disparamos o evento para o Alpine.js abrir a animação
         // Usamos um pequeno delay interno ou apenas o dispatch
         $this->dispatch('modal-show-receita-extra');
+    }
+
+    public function saveServiceFixedPrice(int $salaryId): void
+    {
+        $user = auth()->user();
+        $salary = RecurringIncome::where('workspace_id', $user->current_workspace_id)
+            ->where('user_id', $user->id)
+            ->where('source', 'emprego')
+            ->whereNull('metadata->income_type')
+            ->findOrFail($salaryId);
+
+        $field = 'serviceFixedPrices.'.$salaryId;
+        $this->validate([$field => 'required|numeric|min:0.01|max:1000000']);
+
+        $metadata = $salary->metadata ?? [];
+        $metadata['service_unit_price'] = round((float) $this->serviceFixedPrices[$salaryId], 2);
+        $salary->metadata = $metadata;
+        $salary->save();
+
+        $this->dispatch('toast', variant: 'success', text: 'Preço fixo por serviço guardado.');
+    }
+
+    public function addMoreServices(int $salaryId): void
+    {
+        $user = auth()->user();
+        $salary = RecurringIncome::where('workspace_id', $user->current_workspace_id)
+            ->where('user_id', $user->id)
+            ->where('source', 'emprego')
+            ->whereNull('metadata->income_type')
+            ->findOrFail($salaryId);
+
+        $price = (float) ($salary->metadata['service_unit_price'] ?? 0);
+        if ($price <= 0) {
+            $this->dispatch('toast', variant: 'error', text: 'Define primeiro o preço fixo por serviço.');
+            return;
+        }
+
+        $quantity = (int) ($this->serviceQuickQuantities[$salaryId] ?? 1);
+        if ($quantity < 1 || $quantity > 1000) {
+            $this->dispatch('toast', variant: 'error', text: 'A quantidade deve estar entre 1 e 1000 serviços.');
+            return;
+        }
+
+        $this->openExtraModal($salaryId, $quantity);
     }
 
     public function editSalaryExtraIncome(int $incomeId): void
