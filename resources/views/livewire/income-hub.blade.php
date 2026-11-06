@@ -243,12 +243,12 @@
                                 <span class="shrink-0 font-bold tabular-nums text-white">{{ number_format($thisMonthIncomeTotal, 2, ',', ' ') }} €</span>
                             </div>
                             <div class="flex items-start justify-between gap-3">
-                                <span class="text-zinc-300">Salários já pagos</span>
-                                <span class="shrink-0 font-bold tabular-nums text-white">{{ number_format($thisMonthPaidSalaryTotal, 2, ',', ' ') }} €</span>
+                                <span class="text-zinc-300">Salário líquido + subsídio de alimentação</span>
+                                <span class="shrink-0 font-bold tabular-nums text-white">{{ number_format($thisMonthPaidSalaryTotal + $thisMonthPendingSalaryTotal, 2, ',', ' ') }} €</span>
                             </div>
                             <div class="flex items-start justify-between gap-3">
-                                <span class="text-zinc-300">Salários recorrentes ativos sem pagamento registado</span>
-                                <span class="shrink-0 font-bold tabular-nums text-white">{{ number_format($thisMonthPendingSalaryTotal, 2, ',', ' ') }} €</span>
+                                <span class="text-zinc-300">Prémios e serviços extra</span>
+                                <span class="shrink-0 font-bold tabular-nums text-white">{{ number_format($thisMonthSalaryExtras, 2, ',', ' ') }} €</span>
                             </div>
                         </div>
                         <div class="mt-3 border-t border-zinc-700 pt-3">
@@ -257,7 +257,7 @@
                                 <span class="text-xs font-black tabular-nums text-emerald-300">{{ number_format($thisMonthReceived, 2, ',', ' ') }} €</span>
                             </div>
                         </div>
-                        <p class="mt-2 text-[9px] leading-relaxed text-zinc-400">Os salários recorrentes sem pagamento registado são incluídos como estimativa. O subsídio de alimentação é somado quando está configurado no contrato.</p>
+                        <p class="mt-2 text-[9px] leading-relaxed text-zinc-400">Inclui o salário líquido, o subsídio de alimentação e os prémios/serviços extra registados este mês. Os salários sem pagamento registado são estimativas.</p>
                     </div>
                 </div>
             </div>
