@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Investment;
+use App\Models\BankAccount;
 use App\Models\InvestmentIncome;
 use App\Services\DebtInstrumentCalculator;
 use Illuminate\Support\Facades\Auth;
@@ -47,6 +48,8 @@ class InvestmentsHub extends Component
     public $provider;
 
     public $broker;
+
+    public ?int $bank_account_id = null;
 
     public $operation_date;
 
@@ -377,7 +380,7 @@ class InvestmentsHub extends Component
     public function setType(string $newType): void
     {
         $this->type = $newType;
-        $this->reset(['exchange', 'network', 'provider', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type']);
+        $this->reset(['exchange', 'network', 'provider', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type', 'bank_account_id']);
         if ($newType === 'Divida') {
             $this->average_price = 1.00;
             $this->fees = 0;
@@ -611,8 +614,9 @@ class InvestmentsHub extends Component
 
     public function createAsset(): void
     {
-        $this->reset(['symbol', 'name', 'isin', 'quantity', 'average_price', 'fees', 'total_amount', 'exchange', 'network', 'provider', 'broker', 'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type']);
+        $this->reset(['symbol', 'name', 'isin', 'quantity', 'average_price', 'fees', 'total_amount', 'exchange', 'network', 'provider', 'broker', 'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type', 'bank_account_id']);
         $this->type = 'Acao';
+        $this->bank_account_id = null;
         $this->fees = 0;
         $this->operation_date = now()->toDateString();
         $this->dispatch('modal-show-add-investment');
@@ -628,6 +632,7 @@ class InvestmentsHub extends Component
             $this->{$field} = $asset->{$field};
         }
         $this->operation_date = $asset->operation_date?->toDateString();
+        $this->bank_account_id = $asset->bank_account_id;
         $this->total_amount = round((float) $asset->quantity * (float) $asset->average_price + (float) ($asset->fees ?? 0), 2);
         $this->capitalization_date = $asset->capitalization_date?->toDateString();
         $this->product_type = $asset->product_type ?? 'CA';
@@ -636,8 +641,9 @@ class InvestmentsHub extends Component
 
     public function save(): void
     {
-        $this->validate(['symbol' => 'required|string|max:20', 'isin' => 'nullable|string|max:12', 'broker' => 'nullable|string|max:100', 'operation_date' => 'nullable|date', 'quantity' => 'required|numeric|gt:0', 'product_type' => 'nullable|in:CA,CT', 'average_price' => 'required|numeric|gt:0', 'fees' => 'nullable|numeric|min:0', 'interest_rate' => 'nullable|numeric|min:0', 'capitalization_date' => 'nullable|date']);
-        $data = ['user_id' => Auth::id(), 'workspace_id' => Auth::user()->current_workspace_id, 'symbol' => strtoupper(trim($this->symbol)), 'name' => $this->name ?: strtoupper(trim($this->symbol)), 'isin' => $this->isin ? strtoupper(trim($this->isin)) : null, 'type' => $this->type, 'exchange' => $this->exchange, 'network' => $this->network, 'provider' => $this->provider, 'broker' => $this->broker, 'operation_date' => $this->operation_date ?: null, 'quantity' => (float) $this->quantity, 'average_price' => (float) $this->average_price, 'fees' => (float) ($this->fees ?? 0), 'interest_rate' => $this->type === 'Divida' ? (float) ($this->interest_rate ?? 0) : null, 'loyalty_bonus' => $this->type === 'Divida' ? (float) ($this->loyalty_bonus ?? 0) : null, 'capitalization_date' => $this->type === 'Divida' ? ($this->capitalization_date ?: null) : null, 'issuer' => $this->issuer, 'series' => $this->series, 'product_type' => $this->type === 'Divida' ? $this->product_type : null];
+        $this->validate(['bank_account_id' => 'required|integer|exists:bank_accounts,id', 'symbol' => 'required|string|max:20', 'isin' => 'nullable|string|max:12', 'broker' => 'nullable|string|max:100', 'operation_date' => 'nullable|date', 'quantity' => 'required|numeric|gt:0', 'product_type' => 'nullable|in:CA,CT', 'average_price' => 'required|numeric|gt:0', 'fees' => 'nullable|numeric|min:0', 'interest_rate' => 'nullable|numeric|min:0', 'capitalization_date' => 'nullable|date']);
+        $account = BankAccount::where('workspace_id', Auth::user()->current_workspace_id)->when(Auth::user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', Auth::id()))->findOrFail($this->bank_account_id);
+        $data = ['user_id' => Auth::id(), 'workspace_id' => Auth::user()->current_workspace_id, 'bank_account_id' => $account->id, 'symbol' => strtoupper(trim($this->symbol)), 'name' => $this->name ?: strtoupper(trim($this->symbol)), 'isin' => $this->isin ? strtoupper(trim($this->isin)) : null, 'type' => $this->type, 'exchange' => $this->exchange, 'network' => $this->network, 'provider' => $this->provider, 'broker' => $this->broker, 'operation_date' => $this->operation_date ?: null, 'quantity' => (float) $this->quantity, 'average_price' => (float) $this->average_price, 'fees' => (float) ($this->fees ?? 0), 'interest_rate' => $this->type === 'Divida' ? (float) ($this->interest_rate ?? 0) : null, 'loyalty_bonus' => $this->type === 'Divida' ? (float) ($this->loyalty_bonus ?? 0) : null, 'capitalization_date' => $this->type === 'Divida' ? ($this->capitalization_date ?: null) : null, 'issuer' => $this->issuer, 'series' => $this->series, 'product_type' => $this->type === 'Divida' ? $this->product_type : null];
         if ($this->editingId) {
             Investment::where('workspace_id', Auth::user()->current_workspace_id)
                 ->when(Auth::user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', Auth::id()))
@@ -651,7 +657,7 @@ class InvestmentsHub extends Component
             $user->awardXp(25, 'investimento registado');
             $msg = 'Novo capital registado com sucesso! '.$user->xpToastText(25, 'investimento registado');
         }
-        $this->reset(['symbol', 'name', 'isin', 'quantity', 'average_price', 'fees', 'total_amount', 'exchange', 'network', 'provider', 'broker', 'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type']);
+        $this->reset(['symbol', 'name', 'isin', 'quantity', 'average_price', 'fees', 'total_amount', 'exchange', 'network', 'provider', 'broker', 'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type', 'bank_account_id']);
         $this->dispatch('modal-close-add-investment');
         $this->dispatch('toast', text: $msg);
     }
@@ -694,7 +700,11 @@ class InvestmentsHub extends Component
         $displayProfit = $this->showNetValues ? ($totalProfit - $totalEstimatedTax) : $totalProfit;
         $composition = $myAssets->groupBy('type')->map(fn ($group) => ['total' => $group->sum('current_value'), 'percent' => $currentPortfolioValue > 0 ? round(($group->sum('current_value') / $currentPortfolioValue) * 100, 1) : 0]);
 
-        return view('livewire.investments-hub', ['myAssets' => $myAssets, 'totalInvested' => $totalInvested, 'currentValue' => $displayValue, 'totalProfit' => $displayProfit, 'totalPnlPct' => $totalPnlPct, 'composition' => $composition, 'bestPerformer' => $myAssets->sortByDesc('pnl_percent')->first(), 'worstPerformer' => $myAssets->sortBy('pnl_percent')->first(), 'highestExposure' => $myAssets->sortByDesc('current_value')->first(), 'marketData' => $this->buildMarketTicker(), 'estimatedTax' => $totalEstimatedTax, 'recentIncomes' => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
+        $bankAccounts = BankAccount::where('workspace_id', $user->current_workspace_id)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
+            ->where('status', '!=', 'archived')->orderBy('name')->get();
+
+        return view('livewire.investments-hub', ['bankAccounts' => $bankAccounts, 'myAssets' => $myAssets, 'totalInvested' => $totalInvested, 'currentValue' => $displayValue, 'totalProfit' => $displayProfit, 'totalPnlPct' => $totalPnlPct, 'composition' => $composition, 'bestPerformer' => $myAssets->sortByDesc('pnl_percent')->first(), 'worstPerformer' => $myAssets->sortBy('pnl_percent')->first(), 'highestExposure' => $myAssets->sortByDesc('current_value')->first(), 'marketData' => $this->buildMarketTicker(), 'estimatedTax' => $totalEstimatedTax, 'recentIncomes' => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
                 ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
                 ->with('investment')->latest('reference_date')->take(10)->get(), 'totalIncomeNet' => InvestmentIncome::where('workspace_id', Auth::user()->current_workspace_id)
                 ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))

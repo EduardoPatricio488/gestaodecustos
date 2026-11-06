@@ -100,6 +100,19 @@
 ══════════════════════════════════════════════════════════════ --}}
 <div x-show="tab === 'overview'" x-cloak class="space-y-6">
 
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+        <div>
+            <p class="text-sm font-black text-zinc-900 dark:text-white">Filtrar por banco</p>
+            <p class="text-xs text-zinc-500">Os indicadores, gráficos e totais acompanham o banco selecionado.</p>
+        </div>
+        <select wire:model.live="accountFilter" class="w-full sm:w-72 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white">
+            <option value="all">Todos os bancos</option>
+            @foreach($bankFilters as $bankName)
+                <option value="{{ $bankName }}">{{ $bankName }}</option>
+            @endforeach
+        </select>
+    </div>
+
     {{-- CARDS DE RESUMO --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
 
@@ -1591,6 +1604,13 @@
                 @elseif($modalType === 'reserve')
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
+                            <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Conta bancária *</label>
+                            <select wire:model="res_bank_account_id" class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white">
+                                <option value="">Selecionar conta</option>
+                                @foreach($accounts as $account)<option value="{{ $account->id }}">{{ $account->bank_name ?: $account->name }} — {{ $account->name }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div class="col-span-2">
                             <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Nome da Reserva *</label>
                             <input wire:model="res_name" type="text" placeholder="Ex: IRS, Férias, Emergência"
                                    class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500">
@@ -1630,6 +1650,13 @@
                 {{-- FORMULÁRIO DE TRÂNSITO --}}
                 @elseif($modalType === 'transit')
                     <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Conta bancária *</label>
+                            <select wire:model="trs_bank_account_id" class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white">
+                                <option value="">Selecionar conta</option>
+                                @foreach($accounts as $account)<option value="{{ $account->id }}">{{ $account->bank_name ?: $account->name }} — {{ $account->name }}</option>@endforeach
+                            </select>
+                        </div>
                         <div class="col-span-2">
                             <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Nome / Descrição *</label>
                             <input wire:model="trs_name" type="text" placeholder="Ex: Pagamento Stripe Pendente"
@@ -1678,6 +1705,13 @@
                 @elseif($modalType === 'credit')
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
+                            <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Conta bancária *</label>
+                            <select wire:model="crd_bank_account_id" class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white">
+                                <option value="">Selecionar conta</option>
+                                @foreach($accounts as $account)<option value="{{ $account->id }}">{{ $account->bank_name ?: $account->name }} — {{ $account->name }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div class="col-span-2">
                             <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Nome / Quem deve *</label>
                             <input wire:model="crd_name" type="text" placeholder="Ex: João Silva, Cliente XYZ"
                                    class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -1710,6 +1744,13 @@
                 {{-- FORMULÁRIO DE PATRIMÓNIO --}}
                 @elseif($modalType === 'patrimony')
                     <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Conta bancária *</label>
+                            <select wire:model="pat_bank_account_id" class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white">
+                                <option value="">Selecionar conta</option>
+                                @foreach($accounts as $account)<option value="{{ $account->id }}">{{ $account->bank_name ?: $account->name }} — {{ $account->name }}</option>@endforeach
+                            </select>
+                        </div>
                         <div>
                             <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Tipo de Ativo *</label>
                             <select wire:model="pat_type" class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500">

@@ -15,6 +15,7 @@ class BankPatrimony extends Model
     protected $fillable = [
         'workspace_id',
         'user_id',
+        'bank_account_id',
         'type',
         'name',
         'value',
@@ -43,6 +44,11 @@ class BankPatrimony extends Model
         'other_asset' => ['label' => 'Outro Ativo',    'icon' => 'cube',         'color' => '#6b7280'],
         'liability' => ['label' => 'Passivo',        'icon' => 'minus-circle', 'color' => '#ef4444'],
     ];
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
 
     public function user(): BelongsTo
     {

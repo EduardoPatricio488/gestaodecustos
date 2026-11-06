@@ -376,6 +376,18 @@
                         </button>
                     </div>
 
+                    {{-- CONTA BANCÁRIA --}}
+                    <div>
+                        <flux:label class="text-[9px] font-black uppercase tracking-[0.25em] mb-2 ml-1 text-zinc-200">Conta bancária</flux:label>
+                        <select wire:model="bank_account_id" class="w-full rounded-2xl bg-zinc-900 border border-white/10 text-white px-3 py-3 text-sm">
+                            <option value="">Selecionar conta...</option>
+                            @foreach($this->bankAccounts as $account)
+                                <option value="{{ $account->id }}">{{ $account->bank_name ?: $account->name }} — {{ $account->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('bank_account_id') <p class="text-red-400 text-[10px] mt-1 font-bold">{{ $message }}</p> @enderror
+                    </div>
+
                     {{-- ENTIDADE --}}
                     <div>
                         <flux:label class="text-[9px] font-black uppercase tracking-[0.25em] mb-2 ml-1 text-zinc-200">Entidade / Pessoa</flux:label>

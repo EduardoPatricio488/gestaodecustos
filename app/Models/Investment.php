@@ -14,6 +14,7 @@ class Investment extends Model
         'issuer', 'series', 'interest_rate', 'loyalty_bonus', 'capitalization_date',
         'user_id',
         'workspace_id',
+        'bank_account_id',
         'name',
         'symbol',
         'isin',
@@ -41,6 +42,11 @@ class Investment extends Model
         'loyalty_bonus' => 'float',
         'capitalization_date' => 'date',
     ];
+
+    public function bankAccount()
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
 
     public function incomes()
     {

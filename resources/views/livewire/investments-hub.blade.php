@@ -1445,6 +1445,17 @@
                         @endif
                     </div>
 
+                    <div class="rounded-2xl border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/40 dark:bg-indigo-950/20 p-4 space-y-2">
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-zinc-500">Conta bancária / Corretora *</label>
+                        <select wire:model="bank_account_id" class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-3 text-sm text-zinc-900 dark:text-white">
+                            <option value="">Selecionar conta associada</option>
+                            @foreach($bankAccounts as $bankAccount)
+                                <option value="{{ $bankAccount->id }}">{{ $bankAccount->bank_name ?: $bankAccount->name }} — {{ $bankAccount->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('bank_account_id') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
+                    </div>
+
                     {{-- PASSO 3: DADOS DA TRANSAÇÃO --}}
                     <div class="space-y-6">
                         <div class="flex items-center gap-3">

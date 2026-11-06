@@ -17,12 +17,15 @@ use App\Models\RecurringIncome;
 use App\Models\Workspace;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class BancoService
 {
     private int $workspaceId;
 
     private int $userId;
+
+    private ?string $bankName;
 
     private bool $isBusinessWorkspace;
 
@@ -54,10 +57,11 @@ class BancoService
 
     private array $monthlyFlowCache = [];
 
-    public function __construct(int $workspaceId, int $userId)
+    public function __construct(int $workspaceId, int $userId, ?string $bankName = null)
     {
         $this->workspaceId = $workspaceId;
         $this->userId = $userId;
+        $this->bankName = $bankName;
         $this->isBusinessWorkspace = in_array((string) Workspace::whereKey($workspaceId)->value('type'), ['business', 'company'], true);
     }
 
@@ -559,7 +563,32 @@ class BancoService
      */
     private function personalScope($query)
     {
-        return $this->isBusinessWorkspace ? $query : $query->where('user_id', $this->userId);
+        $query = $this->isBusinessWorkspace ? $query : $query->where('user_id', $this->userId);
+
+        if ($this->bankName !== null && $this->bankName !== '') {
+            $table = $query->getModel()->getTable();
+
+            if ($table === 'bank_accounts') {
+                $query->where('bank_name', $this->bankName);
+            } elseif ($table === 'bank_transfers') {
+                $query->where(function ($transferQuery) {
+                    $transferQuery->whereHas('fromAccount', fn ($accountQuery) => $accountQuery->where('bank_name', $this->bankName))
+                        ->orWhereHas('toAccount', fn ($accountQuery) => $accountQuery->where('bank_name', $this->bankName));
+                });
+            } elseif (Schema::hasColumn($table, 'bank_account_id')) {
+                $accountIds = BankAccount::query()
+                    ->where('workspace_id', $this->workspaceId)
+                    ->where('bank_name', $this->bankName)
+                    ->when(! $this->isBusinessWorkspace, fn ($accounts) => $accounts->where('user_id', $this->userId))
+                    ->select('id');
+
+                $query->whereIn($table.'.bank_account_id', $accountIds);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
+        }
+
+        return $query;
     }
 
     private function monthKeyExpression(string $column): string

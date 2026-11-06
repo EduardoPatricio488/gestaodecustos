@@ -14,6 +14,7 @@ class Debt extends Model
     protected $fillable = [
         'workspace_id',
         'user_id',
+        'bank_account_id',
         'type',
         'person_name',
         'amount',
@@ -29,6 +30,11 @@ class Debt extends Model
         'amount' => 'decimal:2',
         'is_paid' => 'boolean',
     ];
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
 
     public function user(): BelongsTo
     {
