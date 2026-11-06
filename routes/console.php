@@ -88,3 +88,13 @@ Schedule::command('salary:process-monthly-payments')
     ->dailyAt('08:45')
     ->withoutOverlapping(60)
     ->onOneServer();
+
+
+// Atualiza diariamente as capitalizações trimestrais dos Certificados de Aforro Série E.
+Schedule::call(function () {
+    try {
+        app(AforroNetSeriesEUpdater::class)->run();
+    } catch (\\Throwable $exception) {
+        \\Illuminate\\Support\\Facades\\Log::warning('AforroNet automatic update skipped', ['message' => $exception->getMessage()]);
+    }
+})->dailyAt('09:10')->withoutOverlapping(30);
