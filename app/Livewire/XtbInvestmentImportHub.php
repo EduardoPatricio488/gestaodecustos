@@ -412,8 +412,23 @@ class XtbInvestmentImportHub extends Component
                 throw new \RuntimeException('Não foi possível ler conteúdo suficiente do PDF. Confirma que não está protegido por palavra-passe e que contém o extrato completo.');
             }
 
-            if (! preg_match('/Data do Extrato:\s*(\d{2}-\d{2}-\d{4})/iu', $text, $dateMatch)) {
-                throw new \RuntimeException('Não encontrei a data do extrato no PDF. Confirma que carregaste a declaração completa do AforroNet.');
+            // Os PDFs do AforroNet podem apresentar a data com rótulos e
+            // separadores diferentes consoante a versão da declaração.
+            $datePatterns = [
+                '/Data\\s+do\\s+Extrato\\s*:?\\s*(\\d{2}[.\\/-]\\d{2}[.\\/-]\\d{4})/iu',
+                '/Data\\s+(?:de\\s+)?(?:emiss[aã]o|refer[eê]ncia)\\s*:?\\s*(\\d{2}[.\\/-]\\d{2}[.\\/-]\\d{4})/iu',
+                '/Extrato\\s+(?:emitido\\s+)?em\\s*:?\\s*(\\d{2}[.\\/-]\\d{2}[.\\/-]\\d{4})/iu',
+            ];
+            $reportDate = null;
+            foreach ($datePatterns as $pattern) {
+                if (preg_match($pattern, $text, $dateMatch)) {
+                    $reportDate = str_replace(['/', '.'], '-', $dateMatch[1]);
+                    break;
+                }
+            }
+
+            if (! $reportDate) {
+                throw new \\RuntimeException('Não encontrei a data do extrato no PDF. A leitura do documento funcionou, mas o formato da data não corresponde aos formatos reconhecidos.');
             }
             if (! preg_match('/Certificados de Aforro\s+Série\s+([A-Z])\s+([\d.]+)\s+([\d.,]+)/iu', $text, $totalMatch)) {
                 throw new \RuntimeException('Não encontrei o total da Série no PDF.');
@@ -465,7 +480,7 @@ class XtbInvestmentImportHub extends Component
                 'quantity' => $units,
                 'current_value' => $value,
                 'profit' => $value - $units,
-                'report_date' => $dateMatch[1],
+                'report_date' => $reportDate,
             ];
             $this->aforroNetPreviewReady = true;
             $this->dispatch('toast', variant: 'success', text: count($subscriptions).' subscrições identificadas e validadas a partir do PDF.');
