@@ -730,6 +730,9 @@
                         <p class="mt-1 text-xl font-black tabular-nums text-amber-700 dark:text-amber-300">{{ number_format($contractPrizesTotal, 2, ',', ' ') }} {{ $workspaceCurrency }}</p>
                         <p class="text-[10px] font-medium text-zinc-500">{{ $contractPrizesThisYear->count() }} prémio{{ $contractPrizesThisYear->count() === 1 ? '' : 's' }} recebido{{ $contractPrizesThisYear->count() === 1 ? '' : 's' }} este ano</p>
                         <p class="mt-3 text-[10px] text-zinc-500">Prémio configurado no contrato: {{ in_array($job->metadata['bonus']['type'] ?? null, ['one_off', 'monthly', 'annual'], true) ? number_format((float) ($job->metadata['bonus']['net'] ?? 0), 2, ',', ' ').' '.$workspaceCurrency.' líquidos' : 'Nenhum' }}</p>
+                        <button type="button" wire:click="openSalaryIncomeHistory({{ $job->id }})" class="mt-3 rounded-lg border border-amber-200 bg-white px-2.5 py-1.5 text-[8px] font-black uppercase text-amber-700 transition hover:border-amber-500 dark:border-amber-900/50 dark:bg-zinc-900 dark:text-amber-300">
+                            Ver histórico ({{ $contractPrizesThisYear->count() }})
+                        </button>
                     </div>
                 </div>
                 <p class="mt-3 text-[10px] text-zinc-500 dark:text-zinc-400">Os serviços selecionados para o salário são pagos no mês seguinte à data de realização.</p>
