@@ -450,6 +450,7 @@ class IncomeHub extends Component
                 'irs_jovem_start_year' => $this->recIrsJovemStartYear ?: null,
                 'calculated_ss' => $monthlyBonusPayroll['social_security'] ?? $this->calculatedSS,
                 'calculated_sa' => $this->calculatedSA,
+                'service_unit_price' => $existingSalary?->metadata['service_unit_price'] ?? null,
             ],
         ];
         if ($bonusData !== null) {
