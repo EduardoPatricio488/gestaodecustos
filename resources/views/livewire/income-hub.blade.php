@@ -202,22 +202,26 @@
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             {{-- CARTÃO: SALÁRIO LÍQUIDO --}}
-            <article style="background-color: #0b1220; color: #ffffff;" role="button" tabindex="0" aria-label="Consultar histórico do salário líquido" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.75rem] border border-slate-700 p-6 text-white shadow-xl shadow-black/40 transition-all duration-500 hover:-translate-y-1 hover:border-indigo-400 hover:shadow-2xl hover:shadow-indigo-950/40 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transition-none sm:p-7">
+            <article style="background-color: #0b1220; color: #ffffff;" role="button" tabindex="0" aria-label="Consultar histórico do salário líquido" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.75rem] border border-slate-700 p-6 text-white shadow-xl shadow-black/40 transition-all duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.012] hover:border-indigo-300 hover:shadow-[0_24px_65px_-18px_rgba(99,102,241,0.55)] active:translate-y-0 active:scale-[0.995] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transform-none motion-reduce:transition-none sm:p-7">
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-violet-500/10 opacity-70 transition-opacity duration-500 group-hover:opacity-100"></div>
                 <div class="pointer-events-none absolute -right-10 -top-16 size-56 rounded-full border border-indigo-300/15 transition duration-700 group-hover:scale-110 group-hover:rotate-12"></div>
                 <div class="pointer-events-none absolute -right-2 -top-8 size-40 rounded-full border border-indigo-200/15 transition duration-700 group-hover:scale-110"></div>
-                <div class="pointer-events-none absolute bottom-0 right-0 h-32 w-48 bg-indigo-500/10 opacity-60 blur-2xl transition duration-500 group-hover:opacity-100"></div>
+                <div class="pointer-events-none absolute bottom-0 right-0 h-32 w-48 bg-indigo-500/15 opacity-60 blur-2xl transition-all duration-700 group-hover:scale-150 group-hover:opacity-100"></div>
+                <div class="pointer-events-none absolute -inset-px rounded-[1.75rem] bg-gradient-to-br from-indigo-400/0 via-indigo-300/0 to-violet-400/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
                 <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[450%]"></div>
                 <div class="relative flex h-full min-h-44 flex-col justify-between">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <div class="flex items-center gap-2">
-                                <span class="size-1.5 rounded-full bg-indigo-300 shadow-[0_0_10px_rgba(165,180,252,0.9)]"></span>
+                                <span class="relative flex size-2 items-center justify-center">
+                                    <span class="absolute inline-flex size-full rounded-full bg-indigo-300 opacity-60 transition-transform duration-500 group-hover:scale-[2.2] group-hover:opacity-0"></span>
+                                    <span class="relative size-1.5 rounded-full bg-indigo-300 shadow-[0_0_12px_rgba(165,180,252,1)]"></span>
+                                </span>
                                 <p class="text-[10px] font-black uppercase tracking-[0.22em] text-indigo-200">Rendimento do trabalho</p>
                             </div>
                             <h3 class="mt-2 text-lg font-bold tracking-tight text-white transition-colors duration-300 group-hover:text-indigo-100">Salário líquido</h3>
                         </div>
-                        <div class="flex size-11 items-center justify-center rounded-2xl border border-indigo-300/20 bg-indigo-400/10 shadow-inner backdrop-blur-sm transition-all duration-500 group-hover:rotate-[-8deg] group-hover:scale-110 group-hover:border-indigo-300/50 group-hover:bg-indigo-400/20 group-hover:shadow-lg group-hover:shadow-indigo-500/20">
+                        <div class="flex size-11 items-center justify-center rounded-2xl border border-indigo-300/20 bg-indigo-400/10 shadow-inner backdrop-blur-sm transition-all duration-500 group-hover:-translate-y-1 group-hover:rotate-[-10deg] group-hover:scale-125 group-hover:border-indigo-200/70 group-hover:bg-indigo-400/25 group-hover:shadow-xl group-hover:shadow-indigo-500/30">
                             <flux:icon name="briefcase" variant="outline" class="size-5 text-indigo-200 transition-transform duration-500 group-hover:scale-110" />
                         </div>
                     </div>
@@ -242,26 +246,31 @@
                         </div>
                     </div>
                 </div>
-                <div class="pointer-events-none absolute bottom-0 left-0 h-1 w-full origin-left scale-x-0 bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-300 transition-transform duration-700 group-hover:scale-x-100"></div>
+                <div class="pointer-events-none absolute bottom-0 left-0 h-1.5 w-full origin-left scale-x-0 bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-300 shadow-[0_0_18px_rgba(129,140,248,0.8)] transition-transform duration-700 ease-out group-hover:scale-x-100"></div>
+                <div class="pointer-events-none absolute bottom-3 right-5 translate-y-2 text-[8px] font-black uppercase tracking-[0.2em] text-indigo-200 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">Ver histórico <span class="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span></div>
             </article>
 
             {{-- CARTÃO: SUBSÍDIO DE ALIMENTAÇÃO --}}
-            <article style="background-color: #052e24; color: #ffffff;" role="button" tabindex="0" aria-label="Consultar histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.75rem] border border-emerald-800 p-6 text-white shadow-xl shadow-black/40 transition-all duration-500 hover:-translate-y-1 hover:border-emerald-400 hover:shadow-2xl hover:shadow-emerald-950/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transition-none sm:p-7">
+            <article style="background-color: #052e24; color: #ffffff;" role="button" tabindex="0" aria-label="Consultar histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.75rem] border border-emerald-800 p-6 text-white shadow-xl shadow-black/40 transition-all duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.012] hover:border-emerald-300 hover:shadow-[0_24px_65px_-18px_rgba(16,185,129,0.5)] active:translate-y-0 active:scale-[0.995] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transform-none motion-reduce:transition-none sm:p-7">
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-transparent to-teal-300/10 opacity-70 transition-opacity duration-500 group-hover:opacity-100"></div>
                 <div class="pointer-events-none absolute -right-10 -top-16 size-56 rounded-full border border-emerald-200/15 transition duration-700 group-hover:scale-110 group-hover:-rotate-12"></div>
                 <div class="pointer-events-none absolute -right-2 -top-8 size-40 rounded-full border border-emerald-200/15 transition duration-700 group-hover:scale-110"></div>
-                <div class="pointer-events-none absolute bottom-0 right-0 h-32 w-48 bg-emerald-400/10 opacity-60 blur-2xl transition duration-500 group-hover:opacity-100"></div>
+                <div class="pointer-events-none absolute bottom-0 right-0 h-32 w-48 bg-emerald-400/15 opacity-60 blur-2xl transition-all duration-700 group-hover:scale-150 group-hover:opacity-100"></div>
+                <div class="pointer-events-none absolute -inset-px rounded-[1.75rem] bg-gradient-to-br from-emerald-300/0 via-teal-200/0 to-lime-300/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
                 <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[450%]"></div>
                 <div class="relative flex h-full min-h-44 flex-col justify-between">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <div class="flex items-center gap-2">
-                                <span class="size-1.5 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.9)]"></span>
+                                <span class="relative flex size-2 items-center justify-center">
+                                    <span class="absolute inline-flex size-full rounded-full bg-emerald-300 opacity-60 transition-transform duration-500 group-hover:scale-[2.2] group-hover:opacity-0"></span>
+                                    <span class="relative size-1.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,1)]"></span>
+                                </span>
                                 <p class="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200">Benefício mensal</p>
                             </div>
                             <h3 class="mt-2 text-lg font-bold tracking-tight text-white transition-colors duration-300 group-hover:text-emerald-100">Subsídio de alimentação</h3>
                         </div>
-                        <div class="flex size-11 items-center justify-center rounded-2xl border border-amber-200/20 bg-amber-400/10 shadow-inner backdrop-blur-sm transition-all duration-500 group-hover:rotate-[8deg] group-hover:scale-110 group-hover:border-amber-200/50 group-hover:bg-amber-400/20 group-hover:shadow-lg group-hover:shadow-amber-500/20">
+                        <div class="flex size-11 items-center justify-center rounded-2xl border border-amber-200/20 bg-amber-400/10 shadow-inner backdrop-blur-sm transition-all duration-500 group-hover:-translate-y-1 group-hover:rotate-[10deg] group-hover:scale-125 group-hover:border-amber-100/70 group-hover:bg-amber-400/25 group-hover:shadow-xl group-hover:shadow-amber-500/30">
                             <flux:icon name="cake" variant="outline" class="size-5 text-amber-100 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6" />
                         </div>
                     </div>
@@ -286,7 +295,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="pointer-events-none absolute bottom-0 left-0 h-1 w-full origin-left scale-x-0 bg-gradient-to-r from-emerald-300 via-teal-300 to-emerald-200 transition-transform duration-700 group-hover:scale-x-100"></div>
+                <div class="pointer-events-none absolute bottom-0 left-0 h-1.5 w-full origin-left scale-x-0 bg-gradient-to-r from-emerald-300 via-teal-300 to-emerald-200 shadow-[0_0_18px_rgba(52,211,153,0.8)] transition-transform duration-700 ease-out group-hover:scale-x-100"></div>
+                <div class="pointer-events-none absolute bottom-3 right-5 translate-y-2 text-[8px] font-black uppercase tracking-[0.2em] text-emerald-200 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">Ver histórico <span class="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span></div>
             </article>
         </div>
 
