@@ -9,8 +9,8 @@ return [
     'ai' => [
         'requests_per_minute' => (int) env('AI_RATE_LIMIT', 20),
         'monthly_tokens' => (int) env('AI_MONTHLY_TOKEN_LIMIT', 100000),
-        'request_timeout_seconds' => (int) env('AI_REQUEST_TIMEOUT', 30),
-        'connect_timeout_seconds' => (int) env('AI_CONNECT_TIMEOUT', 5),
+        'request_timeout_seconds' => (int) env('AI_REQUEST_TIMEOUT', 90),
+        'connect_timeout_seconds' => (int) env('AI_CONNECT_TIMEOUT', 10),
     ],
 
     'uploads' => [
