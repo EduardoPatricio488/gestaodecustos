@@ -172,42 +172,54 @@
                 <div class="flex items-start gap-4">
                     <div class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-2xl dark:bg-teal-900/60">🏦</div>
                     <div>
-                        <p class="text-[10px] font-black uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Importação de poupança</p>
-                        <h2 class="mt-1 text-2xl font-black text-zinc-950 dark:text-white">Certificados de Aforro</h2>
-                        <p class="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">Basta carregares o teu último extrato mensal do AforroNet em PDF. O Finance Pro lê a data do extrato, a série, o número de unidades e o valor atualizado dos teus Certificados de Aforro. Não precisas de enviar extratos antigos nem o histórico completo.</p>
+                        <p class="text-[10px] font-black uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Importação e valorização automática</p>
+                        <h2 class="mt-1 text-2xl font-black text-zinc-950 dark:text-white">Certificados de Aforro — Série E</h2>
+                        <p class="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">Cola o texto do extrato uma única vez. O Finance Pro guarda cada subscrição separadamente e atualiza as capitalizações trimestrais com as taxas históricas disponíveis, sem precisares de importar o extrato todos os meses.</p>
                     </div>
                 </div>
-                <div class="mt-5 rounded-2xl border border-teal-200/80 bg-white/80 p-4 text-xs leading-relaxed text-teal-900 dark:border-teal-800 dark:bg-zinc-900/70 dark:text-teal-200"><strong>Importante:</strong> sempre que tiveres um novo extrato mensal, carrega apenas o mais recente. A posição AforroNet existente será atualizada, sem criar duplicados.</div>
+                <div class="mt-5 rounded-2xl border border-teal-200/80 bg-white/80 p-4 text-xs leading-relaxed text-teal-900 dark:border-teal-800 dark:bg-zinc-900/70 dark:text-teal-200"><strong>Nota:</strong> a valorização automática só avança quando existe uma taxa publicada para o trimestre. Se a fonte de taxas estiver indisponível ou desatualizada, o saldo não é alterado.</div>
             </section>
 
             <section class="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
-                <form wire:submit="analyzeAforroNet" class="space-y-5">
-                    <label class="flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 px-5 py-8 text-center transition hover:border-teal-500 hover:bg-teal-50/50 dark:border-zinc-700 dark:bg-zinc-950/40 dark:hover:bg-teal-950/20">
-                        <input type="file" wire:model="aforroNetFile" accept=".pdf,application/pdf" class="sr-only">
-                        <span class="mb-3 flex size-14 items-center justify-center rounded-2xl bg-white text-3xl text-teal-700 shadow-sm dark:bg-zinc-900">📄</span>
-                        <span class="text-sm font-bold text-zinc-800 dark:text-zinc-100">Seleciona o último extrato mensal</span>
-                        <span class="mt-1 text-xs text-zinc-500">PDF · máximo 10 MB</span>
-                        @if($aforroNetFile)<span class="mt-4 rounded-full bg-teal-100 px-3 py-1.5 text-xs font-bold text-teal-800 dark:bg-teal-900/40 dark:text-teal-200">{{ $aforroNetFile->getClientOriginalName() }}</span>@endif
-                    </label>
-                    @error('aforroNetFile') <p class="text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
-                    <div wire:loading wire:target="aforroNetFile" class="text-xs font-semibold text-teal-700">A carregar extrato...</div>
-                    <button type="submit" wire:loading.attr="disabled" wire:target="analyzeAforroNet,aforroNetFile" class="w-full rounded-xl bg-teal-700 px-5 py-3.5 text-sm font-black text-white transition hover:bg-teal-800 disabled:opacity-60">
-                        <span wire:loading.remove wire:target="analyzeAforroNet">Ler extrato mensal</span><span wire:loading wire:target="analyzeAforroNet">A analisar PDF...</span>
+                <form wire:submit="analyzeAforroNetText" class="space-y-4">
+                    <label class="block text-sm font-bold text-zinc-800 dark:text-zinc-100">Texto do extrato AforroNet</label>
+                    <textarea wire:model="aforroNetText" rows="11" class="w-full rounded-2xl border border-zinc-300 bg-zinc-50 p-4 font-mono text-xs leading-relaxed text-zinc-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200" placeholder="Cola aqui o texto completo do extrato, incluindo o resumo e o detalhe de saldos por produtos..."></textarea>
+                    @error('aforroNetText') <p class="text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
+                    <button type="submit" wire:loading.attr="disabled" wire:target="analyzeAforroNetText" class="w-full rounded-xl bg-teal-700 px-5 py-3.5 text-sm font-black text-white transition hover:bg-teal-800 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="analyzeAforroNetText">Analisar extrato e validar subscrições</span><span wire:loading wire:target="analyzeAforroNetText">A validar dados...</span>
                     </button>
                 </form>
             </section>
 
             @if($aforroNetPreviewReady)
                 <section class="overflow-hidden rounded-3xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-                    <div class="border-b border-zinc-100 p-5 dark:border-zinc-800"><h3 class="font-black text-zinc-900 dark:text-white">Pré-visualização do extrato</h3><p class="mt-1 text-xs text-zinc-500">Data do extrato: {{ $aforroNetPosition['report_date'] }}</p></div>
-                    <div class="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4">
-                        <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-950"><p class="text-[10px] font-bold uppercase text-zinc-500">Produto</p><p class="mt-2 font-black text-zinc-900 dark:text-white">{{ $aforroNetPosition['name'] }}</p></div>
+                    <div class="border-b border-zinc-100 p-5 dark:border-zinc-800">
+                        <h3 class="font-black text-zinc-900 dark:text-white">Pré-visualização das subscrições</h3>
+                        <p class="mt-1 text-xs text-zinc-500">Extrato de {{ $aforroNetPosition['report_date'] }} · {{ count($aforroNetSubscriptions) }} subscrições individuais</p>
+                    </div>
+                    <div class="grid gap-3 p-5 sm:grid-cols-3">
                         <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-950"><p class="text-[10px] font-bold uppercase text-zinc-500">Unidades</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ number_format($aforroNetPosition['quantity'], 0, ',', ' ') }}</p></div>
                         <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-950"><p class="text-[10px] font-bold uppercase text-zinc-500">Valor atual</p><p class="mt-2 text-xl font-black text-teal-700 dark:text-teal-300">{{ number_format($aforroNetPosition['current_value'], 2, ',', ' ') }} €</p></div>
-                        <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-950"><p class="text-[10px] font-bold uppercase text-zinc-500">Valorização estimada</p><p class="mt-2 text-xl font-black text-emerald-600">+{{ number_format($aforroNetPosition['profit'], 2, ',', ' ') }} €</p></div>
+                        <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-950"><p class="text-[10px] font-bold uppercase text-zinc-500">Valorização acumulada</p><p class="mt-2 text-xl font-black text-emerald-600">+{{ number_format($aforroNetPosition['profit'], 2, ',', ' ') }} €</p></div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[700px] text-left text-sm">
+                            <thead class="bg-zinc-50 text-[10px] uppercase tracking-wider text-zinc-500 dark:bg-zinc-950"><tr><th class="px-5 py-3">Data</th><th class="px-5 py-3">N.º subscrição</th><th class="px-5 py-3 text-right">Unidades</th><th class="px-5 py-3 text-right">Valor unitário</th><th class="px-5 py-3 text-right">Valor atual</th></tr></thead>
+                            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                @foreach($aforroNetSubscriptions as $subscription)
+                                    <tr>
+                                        <td class="px-5 py-4">{{ \Illuminate\Support\Carbon::parse($subscription['operation_date'])->format('d/m/Y') }}</td>
+                                        <td class="px-5 py-4 font-semibold">{{ $subscription['subscription_number'] }}</td>
+                                        <td class="px-5 py-4 text-right tabular-nums">{{ number_format($subscription['quantity'], 0, ',', ' ') }}</td>
+                                        <td class="px-5 py-4 text-right tabular-nums">{{ number_format($subscription['current_price'], 5, ',', ' ') }} €</td>
+                                        <td class="px-5 py-4 text-right font-black tabular-nums">{{ number_format($subscription['current_value'], 2, ',', ' ') }} €</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                     <div class="flex flex-col gap-3 border-t border-zinc-100 p-5 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
-                        <p class="text-xs text-zinc-500">O valor atual é lido do extrato. O custo de aquisição é considerado a 1,00 € por unidade.</p>
+                        <p class="text-xs text-zinc-500">A soma das subscrições foi validada contra o total do extrato. O capital de aquisição é 1,00 € por unidade.</p>
                         <div class="flex gap-3">
                             <button type="button" wire:click="clearAforroNet" class="rounded-xl px-4 py-2 text-xs font-bold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
                             <button type="button" wire:click="importAforroNetPosition" wire:loading.attr="disabled" wire:target="importAforroNetPosition" class="rounded-xl bg-teal-700 px-5 py-2.5 text-xs font-black text-white hover:bg-teal-800 disabled:opacity-60">
