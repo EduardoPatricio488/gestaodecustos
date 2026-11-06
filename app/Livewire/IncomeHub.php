@@ -2361,32 +2361,45 @@ class IncomeHub extends Component
             ->sum('net_received');
 
         $thisMonth = now();
+        // Recebimentos do mês: salário líquido + subsídio de alimentação + serviços/prémios.
+        // As receitas associadas a contratos são somadas separadamente para evitar duplicações.
         $thisMonthIncomeTotal = (float) Income::where('workspace_id', $workspaceId)
             ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
             ->whereMonth('received_at', $thisMonth->month)
             ->whereYear('received_at', $thisMonth->year)
+            ->whereNull('salary_recurring_income_id')
             ->sum(DB::raw('COALESCE(amount_converted, amount)'));
+
         $paidSalaryPayments = SalaryPayment::where('workspace_id', $workspaceId)
             ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
             ->where('status', 'paid')
             ->whereMonth('paid_at', $thisMonth->month)
             ->whereYear('paid_at', $thisMonth->year)
-            ->get(['recurring_income_id', 'net_received']);
-        $thisMonthPaidSalaryTotal = (float) $paidSalaryPayments->sum('net_received');
+            ->get(['recurring_income_id', 'net_received', 'meal_allowance']);
+
+        $thisMonthPaidSalaryNet = (float) $paidSalaryPayments->sum(function (SalaryPayment $payment): float {
+            // O subsídio já está incluído no líquido quando é pago em cartão.
+            $contract = RecurringIncome::find($payment->recurring_income_id);
+            $mealCard = ($contract?->metadata['meal_allowance_destination'] ?? null) === 'meal_card';
+
+            return (float) $payment->net_received + ($mealCard ? 0 : (float) $payment->meal_allowance);
+        });
 
         $receivedSalaryContracts = $projectedSalaryContracts
             ->reject(fn (RecurringIncome $income) => $paidSalaryPayments->contains('recurring_income_id', $income->id));
-        $thisMonthPendingSalaryTotal = (float) $receivedSalaryContracts->sum(function (RecurringIncome $income): float {
+        $thisMonthPendingSalaryNet = (float) $receivedSalaryContracts->sum(function (RecurringIncome $income): float {
             $metadata = $income->metadata ?? [];
-            $salaryAmount = (float) $income->amount;
-            if (! empty($metadata['meal_card_income_id'])) {
-                $salaryAmount += (float) ($metadata['calculated_sa'] ?? 0);
-            }
 
-            return $salaryAmount;
+            return (float) $income->amount + (float) ($metadata['calculated_sa'] ?? 0);
         });
 
-        $thisMonthReceived = $thisMonthIncomeTotal + $thisMonthPaidSalaryTotal + $thisMonthPendingSalaryTotal;
+        $thisMonthSalaryExtras = (float) $salaryExtraIncomes
+            ->filter(fn (Income $income) => $income->received_at?->month === $thisMonth->month
+                && $income->received_at?->year === $thisMonth->year)
+            ->sum(fn (Income $income) => (float) ($income->amount_converted ?? $income->amount));
+
+        $thisMonthSalaryTotal = $thisMonthPaidSalaryNet + $thisMonthPendingSalaryNet;
+        $thisMonthReceived = $thisMonthIncomeTotal + $thisMonthSalaryTotal + $thisMonthSalaryExtras;
 
         // Média mensal (últimos 6 meses) — inclui salário fixo
         $monthlyTotals = collect();
