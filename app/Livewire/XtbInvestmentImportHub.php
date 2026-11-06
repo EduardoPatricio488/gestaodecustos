@@ -215,7 +215,11 @@ class XtbInvestmentImportHub extends Component
     private function rowIsEmpty(array $row): bool
     {
         foreach ($row as $value) {
-            if (trim((string) $value) !== '') {
+            if ($value instanceof \\DateTimeInterface) {
+                return false;
+            }
+
+            if ($value !== null && trim((string) $value) !== '') {
                 return false;
             }
         }
