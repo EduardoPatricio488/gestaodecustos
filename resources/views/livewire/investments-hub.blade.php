@@ -162,7 +162,7 @@
                     <p class="mt-3 max-w-xl text-sm leading-6 text-zinc-300">Uma visão conjunta dos teus investimentos e dos teus movimentos financeiros para perceberes o que tens, quanto poderás investir e onde deves ter atenção.</p>
                 </div>
                 <div class="flex flex-col gap-2 min-w-[210px]">
-                    <flux:button wire:click="analyzePortfolio" variant="primary" class="h-12 rounded-xl bg-indigo-500 hover:bg-indigo-400 font-black" wire:loading.attr="disabled" wire:target="analyzePortfolio">
+                    <flux:button type="button" wire:click="analyzePortfolio" variant="primary" class="h-12 rounded-xl bg-indigo-500 hover:bg-indigo-400 font-black" wire:loading.attr="disabled" wire:target="analyzePortfolio">
                         <span wire:loading.remove wire:target="analyzePortfolio"><flux:icon name="sparkles" class="size-4 mr-2" /> Analisar a minha carteira</span>
                         <span wire:loading wire:target="analyzePortfolio">A analisar...</span>
                     </flux:button>
