@@ -1,8 +1,8 @@
 <?php
 
-namespace App\\Imports;
+namespace App\Imports;
 
-use Maatwebsite\\Excel\\Concerns\\ToArray;
+use Maatwebsite\Excel\Concerns\ToArray;
 
 class XtbReportImport implements ToArray
 {
