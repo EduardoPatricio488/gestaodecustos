@@ -193,6 +193,13 @@
                         @endif
                     </label>
                     @error('aforroNetFile') <p class="text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
+                    @if($aforroNetDiagnostic)
+                        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200">
+                            <p class="font-black">Diagnóstico técnico (sem dados pessoais)</p>
+                            <p class="mt-2 break-words">{{ $aforroNetDiagnostic }}</p>
+                            <p class="mt-2 text-[11px] opacity-80">Copia esta informação e envia-a na conversa. Não contém o conteúdo do extrato.</p>
+                        </div>
+                    @endif
                     <div wire:loading wire:target="aforroNetFile" class="text-xs font-semibold text-teal-700 dark:text-teal-300">A carregar PDF...</div>
                     <button type="submit" wire:loading.attr="disabled" wire:target="analyzeAforroNetFile,aforroNetFile" class="w-full rounded-xl bg-teal-700 px-5 py-3.5 text-sm font-black text-white transition hover:bg-teal-800 disabled:opacity-60">
                         <span wire:loading.remove wire:target="analyzeAforroNetFile">Analisar PDF e validar subscrições</span><span wire:loading wire:target="analyzeAforroNetFile">A analisar documento...</span>
