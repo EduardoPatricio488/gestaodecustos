@@ -708,24 +708,40 @@ class XtbInvestmentImportHub extends Component
                 } else {
                     $pages = glob($prefix.'-*.png') ?: [];
                     sort($pages, SORT_NATURAL);
-                    $ocrModes = ['--psm', '6'];
-                    $ocrText = [];
-                    foreach ($pages as $page) {
-                        $ocr = new $processClass([$tesseract, $page, 'stdout', '-l', 'por+eng', ...$ocrModes]);
-                        $ocr->setTimeout(60);
-                        $ocr->run();
-                        if ($ocr->isSuccessful() && trim($ocr->getOutput()) !== '') {
-                            $ocrText[] = $ocr->getOutput();
+                    // Os extratos têm tabelas e cabeçalhos com disposição variável.
+                    // Testa vários modos de segmentação para reduzir perdas de rótulos.
+                    $ocrPageModes = [6, 4, 11, 3];
+                    foreach ($ocrPageModes as $psm) {
+                        $ocrText = [];
+                        foreach ($pages as $page) {
+                            $ocr = new $processClass([
+                                $tesseract,
+                                $page,
+                                'stdout',
+                                '-l',
+                                'por+eng',
+                                '--psm',
+                                (string) $psm,
+                            ]);
+                            $ocr->setTimeout(60);
+                            $ocr->run();
+                            if ($ocr->isSuccessful() && trim($ocr->getOutput()) !== '') {
+                                $ocrText[] = $ocr->getOutput();
+                            }
                         }
-                    }
-                    $ocrCandidate = trim(implode("\n", $ocrText));
-                    if (mb_strlen($ocrCandidate) >= 80) {
+
+                        $ocrCandidate = trim(implode("\n", $ocrText));
+                        if (mb_strlen($ocrCandidate) < 80) {
+                            continue;
+                        }
+
                         $candidates[] = $ocrCandidate;
-                        $candidateSources[] = 'OCR';
-                    }
-                    if (mb_strlen($ocrCandidate) >= 80 && $scoreText($ocrCandidate) > $bestScore) {
-                        $bestText = $ocrCandidate;
-                        $bestScore = $scoreText($ocrCandidate);
+                        $candidateSources[] = 'OCR PSM '.$psm;
+                        $ocrScore = $scoreText($ocrCandidate);
+                        if ($ocrScore > $bestScore) {
+                            $bestText = $ocrCandidate;
+                            $bestScore = $ocrScore;
+                        }
                     }
                 }
             } catch (\Throwable $exception) {
