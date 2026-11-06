@@ -215,7 +215,7 @@ class XtbInvestmentImportHub extends Component
     private function rowIsEmpty(array $row): bool
     {
         foreach ($row as $value) {
-            if ($value instanceof \\DateTimeInterface) {
+            if ($value instanceof \DateTimeInterface) {
                 return false;
             }
 
