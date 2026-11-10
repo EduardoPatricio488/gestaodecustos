@@ -121,15 +121,15 @@
             <div class="absolute inset-0 size-2.5 rounded-full bg-sky-400/30 blur-md"></div>
         </div>
         <div class="flex flex-col">
-            <span class="text-[10px] font-black uppercase text-sky-300 tracking-[0.22em]">Notícias 24h</span>
+            <span class="text-xs font-black uppercase text-sky-300 tracking-[0.22em]">Notícias 24h</span>
         </div>
     </div>
 
-    <div class="relative flex-1 overflow-hidden h-8 z-10">
+    <div class="relative flex-1 overflow-hidden h-9 z-10">
         <div class="ticker-ultra flex items-center gap-20 whitespace-nowrap" :style="`animation-duration: ${speed}s`">
             @forelse($this->news24h as $news)
                 <div class="ticker-text-ultra flex items-center gap-3">
-                    <span class="text-[9px] font-black tracking-widest {{ $news['region'] === 'PT' ? 'text-emerald-400' : 'text-sky-400' }}">
+                    <span class="text-[10px] font-black tracking-widest {{ $news['region'] === 'PT' ? 'text-emerald-400' : 'text-sky-400' }}">
                         {{ $news['region'] === 'PT' ? 'PORTUGAL' : 'MUNDO' }}
                     </span>
                     <a href="{{ $news['url'] }}" target="_blank" rel="noopener noreferrer"
@@ -137,7 +137,7 @@
                        title="{{ $news['source'] }} • {{ $news['published_label'] }}">
                         {{ $news['title'] }}
                     </a>
-                    <span class="text-[9px] text-zinc-500 font-semibold">{{ $news['source'] }} · {{ $news['published_label'] }}</span>
+                    <span class="text-[10px] text-zinc-500 font-semibold">{{ $news['source'] }} · {{ $news['published_label'] }}</span>
                     <span class="mono-separator">/</span>
                 </div>
             @empty
@@ -146,14 +146,14 @@
             @if(count($this->news24h) > 0)
                 @foreach($this->news24h as $news)
                     <div class="ticker-text-ultra flex items-center gap-3" aria-hidden="true">
-                        <span class="text-[9px] font-black tracking-widest {{ $news['region'] === 'PT' ? 'text-emerald-400' : 'text-sky-400' }}">
+                        <span class="text-[10px] font-black tracking-widest {{ $news['region'] === 'PT' ? 'text-emerald-400' : 'text-sky-400' }}">
                             {{ $news['region'] === 'PT' ? 'PORTUGAL' : 'MUNDO' }}
                         </span>
                         <span class="mono-item normal-case tracking-normal">{{ $news['title'] }}</span>
                         @if(!empty($news['summary']))
                             <span class="text-zinc-400 normal-case tracking-normal font-medium">— {{ $news['summary'] }}</span>
                         @endif
-                        <span class="text-[9px] text-zinc-500 font-semibold">{{ $news['source'] }} · {{ $news['published_label'] }}</span>
+                        <span class="text-[10px] text-zinc-500 font-semibold">{{ $news['source'] }} · {{ $news['published_label'] }}</span>
                         <span class="mono-separator">/</span>
                     </div>
                 @endforeach
@@ -191,7 +191,7 @@
 .ticker-text-ultra {
     display: flex;
     align-items: center;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.14em;
