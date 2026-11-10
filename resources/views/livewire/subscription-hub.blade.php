@@ -39,9 +39,21 @@
             <div class="absolute -right-10 -top-10 size-40 bg-brand-500/10 blur-3xl rounded-full"></div>
             <div class="relative z-10 flex h-full flex-col justify-between gap-8">
                 <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-brand-400 mb-2">Custo mensal equivalente</p>
+                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-brand-400 mb-2">Custo mensal pessoal</p>
                     <h3 class="text-5xl font-black tracking-tighter italic text-white">{{ number_format($totalMonthly, 2, ',', ' ') }} <small class="text-xl not-italic ml-1">E U R</small></h3>
                     <p class="mt-3 text-xs font-bold text-zinc-400 uppercase tracking-widest">{{ number_format($totalAnnual, 2, ',', ' ') }} EUR / ano</p>
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3">
+                            <p class="text-[9px] font-black uppercase tracking-widest text-amber-300">Pago pela empresa / mês</p>
+                            <p class="mt-1 text-xl font-black text-amber-200">{{ number_format($companyPaidMonthly, 2, ',', ' ') }} EUR</p>
+                            <p class="text-[10px] text-amber-200/70">{{ number_format($companyPaidAnnual, 2, ',', ' ') }} EUR / ano</p>
+                        </div>
+                        <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400">Total de assinaturas / mês</p>
+                            <p class="mt-1 text-xl font-black text-white">{{ number_format($totalMonthlyIncludingCompany, 2, ',', ' ') }} EUR</p>
+                            <p class="text-[10px] text-zinc-400">Inclui valores pagos pela empresa</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="grid grid-cols-3 gap-3">
                     <div class="rounded-2xl bg-white/5 p-4 border border-white/10"><p class="text-[9px] uppercase tracking-widest text-zinc-500 font-black">Ativas</p><p class="text-2xl font-black">{{ $activeCount }}</p></div>
