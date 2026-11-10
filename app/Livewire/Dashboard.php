@@ -1104,6 +1104,11 @@ class Dashboard extends Component
             ->get();
 
         $dashboardSalaryLabels = $dashboardSalaryContracts->pluck('description')->filter()->implode(' · ');
+        $accountOverview['salary_contract_count'] = $dashboardSalaryContracts->count();
+        $accountOverview['salary_net_projected'] = $dashboardProjectedSalaryNet;
+        $accountOverview['meal_allowance_projected'] = $dashboardMealAllowanceMonthlyProjection;
+        $accountOverview['meal_allowance_annual'] = $dashboardMealAllowanceAnnualProjection;
+        $accountOverview['salary_payments_count'] = $projectedSalaryHistoryPayments->count();
 
         return view('livewire.dashboard', [
             'currentWs' => $currentWs,
