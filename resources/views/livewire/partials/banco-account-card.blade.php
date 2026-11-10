@@ -7,11 +7,17 @@
     {{-- Header --}}
     <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
-            <div class="size-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                 style="background-color: {{ $acc->color ?? '#6366f1' }}20; border: 1.5px solid {{ $acc->color ?? '#6366f1' }}30">
-                <flux:icon name="{{ $acc->icon ?? 'building-library' }}" class="size-5"
-                           style="color: {{ $acc->color ?? '#6366f1' }}" />
-            </div>
+            @if(str_contains(mb_strtolower($acc->bank_name ?? ''), 'santander'))
+                <div class="size-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-white border border-red-100 shadow-sm" title="Santander">
+                    <span class="text-2xl font-black leading-none text-[#EC0000]" style="font-family: Arial, sans-serif;">S</span>
+                </div>
+            @else
+                <div class="size-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
+                     style="background-color: {{ $acc->color ?? '#6366f1' }}20; border: 1.5px solid {{ $acc->color ?? '#6366f1' }}30">
+                    <flux:icon name="{{ $acc->icon ?? 'building-library' }}" class="size-5"
+                               style="color: {{ $acc->color ?? '#6366f1' }}" />
+                </div>
+            @endif
             <div class="min-w-0">
                 <p class="text-sm font-black text-zinc-900 dark:text-white truncate leading-tight">{{ $acc->name }}</p>
                 <p class="text-[10px] text-zinc-400 leading-tight mt-0.5">{{ $acc->bank_name ?? ucfirst($acc->type) }}</p>
