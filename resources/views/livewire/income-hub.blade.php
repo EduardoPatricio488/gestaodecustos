@@ -623,18 +623,16 @@
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div class="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <div class="flex items-center gap-1.5">
-                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Salários ativos</p>
                 <flux:tooltip toggleable content="Número de contratos salariais que se encontram atualmente ativos.">
-                    <button type="button" class="inline-flex size-3.5 items-center justify-center rounded-full border border-current text-[9px] font-black leading-none text-zinc-400 transition hover:text-indigo-500 focus:text-indigo-500" aria-label="Informação sobre salários ativos">i</button>
+                    <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Salários ativos</p>
                 </flux:tooltip>
             </div>
             <p class="mt-1 text-2xl font-black text-indigo-600">{{ $salaryActiveCount }}</p>
         </div>
         <div class="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <div class="flex items-center gap-1.5">
-                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total mensal líquido estimado</p>
                 <flux:tooltip toggleable content="Soma dos valores líquidos mensais previstos para os contratos salariais ativos. É uma estimativa com base nos valores atualmente configurados.">
-                    <button type="button" class="inline-flex size-3.5 items-center justify-center rounded-full border border-current text-[9px] font-black leading-none text-zinc-400 transition hover:text-indigo-500 focus:text-indigo-500" aria-label="Informação sobre o total mensal líquido estimado">i</button>
+                    <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total mensal líquido estimado</p>
                 </flux:tooltip>
             </div>
             <p class="mt-1 text-2xl font-black text-emerald-600">{{ number_format($salaryMonthlyTotal, 2, ',', ' ') }} €</p>
