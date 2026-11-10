@@ -575,6 +575,10 @@ class IncomeHub extends Component
         // CARREGAR ENTRADAS EXTRAS
         $this->totalExtras = Income::where('workspace_id', $this->workspaceId)
             ->sum(DB::raw('COALESCE(amount_converted, amount)'));
+
+        if (request()->boolean('open_extra')) {
+            $this->openExtraModal();
+        }
     }
 
     #[Computed]
