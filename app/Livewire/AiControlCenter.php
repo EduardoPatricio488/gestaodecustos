@@ -8,6 +8,7 @@ use App\Models\AiMemory;
 use App\Services\AI\ContextEngine;
 use App\Services\AI\FinancialHealthScoreService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -16,6 +17,27 @@ use Livewire\Component;
 class AiControlCenter extends Component
 {
     public string $feedback = '';
+
+    public function mount(): void
+    {
+        $workspace = app(ContextEngine::class)->resolveWorkspace(auth()->user());
+
+        if (! $workspace) {
+            return;
+        }
+
+        // Garante que os insights elegíveis também são criados ao abrir o Centro,
+        // mesmo que o diagnóstico CFO tenha sido gerado antes desta atualização.
+        try {
+            app(\App\Services\AI\ProactiveAiService::class)->analyze($workspace);
+        } catch (\Throwable $exception) {
+            Log::error('AI Control Center observer failed', [
+                'user_id' => auth()->id(),
+                'workspace_id' => $workspace->id,
+                'message' => $exception->getMessage(),
+            ]);
+        }
+    }
 
     #[On('cfo-report-generated')]
     public function refreshAfterCfoReport(): void
