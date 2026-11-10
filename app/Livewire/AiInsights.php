@@ -87,12 +87,43 @@ class AiInsights extends Component
             // Só utiliza números fornecidos pelo backend, nunca conclusões inventadas pelo modelo.
             $financialSnapshot = (array) ($result['snapshot'] ?? []);
             $memoryValue = [
+                'schema_version' => 2,
                 'period' => $financialSnapshot['period'] ?? now()->format('Y-m'),
                 'currency' => $financialSnapshot['currency'] ?? 'EUR',
-                'income_recurring' => (float) ($financialSnapshot['income_recurring'] ?? 0),
-                'income_actual' => (float) ($financialSnapshot['income_actual'] ?? $financialSnapshot['income'] ?? 0),
-                'expenses' => (float) ($financialSnapshot['expenses'] ?? 0),
-                'investment_value' => (float) ($financialSnapshot['investment_value'] ?? 0),
+                'workspace_kind' => $financialSnapshot['kind'] ?? 'personal',
+                'income' => [
+                    'recurring' => (float) ($financialSnapshot['income_recurring'] ?? 0),
+                    'actual' => (float) ($financialSnapshot['income_actual'] ?? $financialSnapshot['income'] ?? 0),
+                    'projected' => (float) ($financialSnapshot['income_projected'] ?? $financialSnapshot['income'] ?? 0),
+                ],
+                'expenses' => [
+                    'actual' => (float) ($financialSnapshot['expenses'] ?? 0),
+                    'top_categories' => (array) ($financialSnapshot['top_categories'] ?? []),
+                ],
+                'savings' => [
+                    'actual' => (float) ($financialSnapshot['savings_actual'] ?? 0),
+                    'projected' => (float) ($financialSnapshot['savings_projected'] ?? $financialSnapshot['savings'] ?? 0),
+                    'actual_rate' => (float) ($financialSnapshot['savings_rate_actual'] ?? 0),
+                    'projected_rate' => (float) ($financialSnapshot['savings_rate'] ?? 0),
+                ],
+                'investments' => [
+                    'current_value' => (float) ($financialSnapshot['investment_value'] ?? 0),
+                    'invested_cost' => (float) ($financialSnapshot['investment_cost'] ?? 0),
+                    'profit_loss' => (float) ($financialSnapshot['investment_profit_loss'] ?? 0),
+                    'profit_loss_percent' => $financialSnapshot['investment_profit_loss_percent'] ?? null,
+                    'holdings' => array_slice((array) ($financialSnapshot['investments'] ?? []), 0, 50),
+                ],
+                'budget' => (array) ($financialSnapshot['budget'] ?? []),
+                'goals' => (array) ($financialSnapshot['goals'] ?? []),
+                'subscriptions' => [
+                    'active_count' => (int) ($financialSnapshot['active_subscriptions'] ?? 0),
+                    'monthly_cost' => (float) ($financialSnapshot['active_subscription_cost'] ?? 0),
+                ],
+                'comparison' => [
+                    'previous' => (array) ($financialSnapshot['previous'] ?? []),
+                    'changes' => (array) ($financialSnapshot['changes'] ?? []),
+                ],
+                'data_quality' => $financialSnapshot['data_quality'] ?? 'deterministic_backend_calculation',
                 'updated_at' => now()->toIso8601String(),
                 'source' => 'cfo_executive_report_snapshot',
             ];
