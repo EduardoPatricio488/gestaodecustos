@@ -640,23 +640,33 @@ class Dashboard extends Component
 
         $totalMonthExpenses = $monthTotals['expenses'];
         $totalMonthIncome = $monthTotals['income'] + ($isCurrentDashboardPeriod ? $fixedIncome : 0);
-        $portfolioValue = 0;
-        $myInvestments = Cache::remember("dashboard:investments:v2:{$currentWs->id}:{$user->id}", 60, fn () => Investment::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->get(['id', 'workspace_id', 'symbol', 'quantity', 'current_price'])->map(fn ($investment) => ['symbol' => $investment->symbol, 'quantity' => (float) $investment->quantity, 'current_price' => (float) $investment->current_price])->values()->all());
+        // Resumo de investimentos: usa as mesmas cotações guardadas no portefólio,
+        // sem preços fixos ou valores de mercado inventados na Dashboard.
+        $myInvestments = Cache::remember("dashboard:investments:v3:{$currentWs->id}:{$user->id}", 60, fn () => Investment::where('workspace_id', $currentWs->id)
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->get(['id', 'workspace_id', 'symbol', 'name', 'type', 'quantity', 'average_price', 'current_price', 'fees', 'updated_at'])
+            ->map(fn ($investment) => [
+                'symbol' => $investment->symbol,
+                'name' => $investment->name,
+                'type' => $investment->type,
+                'quantity' => (float) $investment->quantity,
+                'average_price' => (float) $investment->average_price,
+                'current_price' => (float) ($investment->current_price ?: $investment->average_price),
+                'fees' => (float) ($investment->fees ?? 0),
+                'updated_at' => $investment->updated_at?->timestamp,
+            ])->values()->all());
 
-        foreach ($myInvestments as $inv) {
-            $symbol = strtolower((string) data_get($inv, 'symbol', ''));
-            $currentPrice = (float) data_get($inv, 'current_price', 0);
-            $quantity = (float) data_get($inv, 'quantity', 0);
-            $price = match ($symbol) {
-                'btc' => $this->marketPrices['bitcoin']['eur'] ?? $currentPrice,
-                'eth' => $this->marketPrices['ethereum']['eur'] ?? $currentPrice,
-                'sol' => $this->marketPrices['solana']['eur'] ?? $currentPrice,
-                'sp500', 'spx' => 5222.68,
-                'nvda' => 945.30,
-                default => $currentPrice,
-            };
-            $portfolioValue += ($quantity * $price);
-        }
+        $portfolioValue = round(collect($myInvestments)->sum(fn (array $investment): float => $investment['quantity'] * $investment['current_price']), 2);
+        $dashboardInvestmentsTotalInvested = round(collect($myInvestments)->sum(fn (array $investment): float => ($investment['quantity'] * $investment['average_price']) + $investment['fees']), 2);
+        $dashboardInvestmentsProfit = round($portfolioValue - $dashboardInvestmentsTotalInvested, 2);
+        $dashboardInvestmentsProfitPercent = $dashboardInvestmentsTotalInvested > 0
+            ? round(($dashboardInvestmentsProfit / $dashboardInvestmentsTotalInvested) * 100, 2)
+            : 0;
+        $dashboardInvestmentsCount = count($myInvestments);
+        $dashboardInvestmentsLastUpdatedTimestamp = collect($myInvestments)->max('updated_at');
+        $dashboardInvestmentsLastUpdated = $dashboardInvestmentsLastUpdatedTimestamp
+            ? \\Carbon\\Carbon::createFromTimestamp($dashboardInvestmentsLastUpdatedTimestamp)->format('d/m/Y · H:i')
+            : null;
 
         $subscriptionsMonthlyCost = (float) Cache::remember(
             "dashboard:subscriptions-monthly:{$currentWs->id}:{$user->id}", 60,
@@ -1012,6 +1022,11 @@ class Dashboard extends Component
             'totalIncomeMonth' => $projectedIncome,
             'netBalance' => $totalMonthIncome - $totalMonthExpenses,
             'portfolioValue' => $portfolioValue,
+            'dashboardInvestmentsTotalInvested' => $dashboardInvestmentsTotalInvested,
+            'dashboardInvestmentsProfit' => $dashboardInvestmentsProfit,
+            'dashboardInvestmentsProfitPercent' => $dashboardInvestmentsProfitPercent,
+            'dashboardInvestmentsCount' => $dashboardInvestmentsCount,
+            'dashboardInvestmentsLastUpdated' => $dashboardInvestmentsLastUpdated,
             'totalSaved' => $totalSaved,
             'projectedExpenses' => $projectedExpenses,
             'projectedIncome' => $projectedIncome,
