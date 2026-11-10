@@ -632,8 +632,8 @@ class Dashboard extends Component
 
         $monthTotals = Cache::remember("dashboard:period-totals:{$currentWs->id}:{$user->id}:{$this->dashboardPeriodType}:{$periodStart->toDateString()}", 60, function () use ($currentWs, $periodStart, $periodEnd, $user) {
             return [
-                'expenses' => (float) Expense::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('spent_at', [$monthStart, $monthEnd])->sum('amount'),
-                'income' => (float) Income::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('received_at', [$monthStart, $monthEnd])->sum('amount'),
+                'expenses' => (float) Expense::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('spent_at', [$periodStart, $periodEnd])->sum('amount'),
+                'income' => (float) Income::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('received_at', [$periodStart, $periodEnd])->sum('amount'),
                 'budget' => (float) Category::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->sum('budget_limit'),
             ];
         });
