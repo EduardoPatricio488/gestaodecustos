@@ -810,7 +810,7 @@
                         </p>
                     </div>
                     <p class="text-[10px] leading-relaxed text-zinc-500">
-                        Cálculo baseado no saldo bancário atual, salários por receber e dívidas com vencimento até ao fim do mês.
+                        Considera as contas incluídas no saldo global, salários por receber e dívidas com vencimento até ao fim do mês. Subscrições sem conta bancária associada não entram nesta previsão.
                     </p>
                 </div>
 
