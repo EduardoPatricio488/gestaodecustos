@@ -42,6 +42,21 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class Dashboard extends Component
 {
+    public function refreshAccountOverview(): void
+    {
+        $user = Auth::user();
+        $currentWs = $user?->currentWorkspace;
+
+        if (! $user || ! $currentWs) {
+            return;
+        }
+
+        Cache::forget("dashboard:account-overview:v1:{$currentWs->id}:{$user->id}");
+        Cache::forget("dashboard:investments:v3:{$currentWs->id}:{$user->id}");
+
+        $this->dispatch('account-overview-refreshed');
+    }
+
     public function formatInsight($text)
     {
         $map = [
