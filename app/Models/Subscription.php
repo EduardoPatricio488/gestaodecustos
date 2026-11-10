@@ -26,6 +26,7 @@ class Subscription extends Model
         'notes',
         'notify_before_billing',
         'notify_days_before',
+        'paid_by_company',
     ];
 
     protected $casts = [
@@ -34,6 +35,7 @@ class Subscription extends Model
         'started_at' => 'date',
         'renewal_date' => 'date',
         'notify_before_billing' => 'boolean',
+        'paid_by_company' => 'boolean',
     ];
 
     public function user(): BelongsTo
