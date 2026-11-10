@@ -868,16 +868,38 @@ class Dashboard extends Component
             ->orderBy('name')
             ->first(['id', 'name', 'bank_name', 'iban', 'account_number', 'swift', 'holder_name', 'balance']);
 
-        $dashboardBankCardCurrentBalance = $dashboardBankCardAccount
-            ? round(
+        if ($dashboardBankCardAccount && $isCurrentDashboardPeriod) {
+            $dashboardBankCardCurrentBalance = round(
                 (float) $dashboardBankCardAccount->balance
                 + (float) ($dashboardBankCardAccount->current_balance_income_total ?? 0)
                 - (float) ($dashboardBankCardAccount->current_balance_expense_total ?? 0),
                 2
-            )
-            : $totalBankBalance;
-
-        $dashboardBankCardBalance = round($dashboardBankCardCurrentBalance + $dashboardProjectedSalaryNet, 2);
+            );
+            $dashboardBankCardSalaryAmount = $dashboardProjectedSalaryNet;
+            $dashboardBankCardBalance = round($dashboardBankCardCurrentBalance + $dashboardBankCardSalaryAmount, 2);
+        } elseif ($dashboardBankCardAccount) {
+            // Para períodos passados, reconstrói o saldo no fim do período selecionado.
+            $accountIncomeUntilPeriod = (float) Income::where('workspace_id', $currentWs->id)
+                ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                ->where('bank_account_id', $dashboardBankCardAccount->id)
+                ->where('received_at', '<=', $periodEnd)
+                ->sum(DB::raw('COALESCE(amount_converted, amount)'));
+            $accountExpensesUntilPeriod = (float) Expense::where('workspace_id', $currentWs->id)
+                ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                ->where('bank_account_id', $dashboardBankCardAccount->id)
+                ->where('spent_at', '<=', $periodEnd)
+                ->sum(DB::raw('COALESCE(amount_converted, amount)'));
+            $dashboardBankCardCurrentBalance = round(
+                (float) $dashboardBankCardAccount->balance + $accountIncomeUntilPeriod - $accountExpensesUntilPeriod,
+                2
+            );
+            $dashboardBankCardSalaryAmount = 0.0;
+            $dashboardBankCardBalance = $dashboardBankCardCurrentBalance;
+        } else {
+            $dashboardBankCardCurrentBalance = $totalBankBalance;
+            $dashboardBankCardSalaryAmount = $isCurrentDashboardPeriod ? $dashboardProjectedSalaryNet : 0.0;
+            $dashboardBankCardBalance = round($dashboardBankCardCurrentBalance + $dashboardBankCardSalaryAmount, 2);
+        }
 
         $dashboardSalaryContracts->each(function (RecurringIncome $income): void {
             $metadata = $income->metadata ?? [];
@@ -920,6 +942,8 @@ class Dashboard extends Component
             'dashboardBankCardAccount' => $dashboardBankCardAccount,
             'dashboardBankCardCurrentBalance' => $dashboardBankCardCurrentBalance,
             'dashboardBankCardBalance' => $dashboardBankCardBalance,
+            'dashboardBankCardSalaryAmount' => $dashboardBankCardSalaryAmount,
+            'isCurrentDashboardPeriod' => $isCurrentDashboardPeriod,
             'dashboardProjectedMealAllowance' => $dashboardProjectedMealAllowance,
             'dashboardSalaryLabels' => $dashboardSalaryLabels,
             'dashboardSalaryContracts' => $dashboardSalaryContracts,
