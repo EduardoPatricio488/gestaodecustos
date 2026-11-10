@@ -673,7 +673,7 @@
             <div class="relative z-10">
                 <div class="mb-6 flex items-center justify-between">
                     <div class="flex size-12 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-400">
-                        <flux:icon name="vault" variant="solid" class="size-6" />
+                        <flux:icon name="banknotes" variant="solid" class="size-6" />
                     </div>
                     <span class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-emerald-300">Visão global</span>
                 </div>
