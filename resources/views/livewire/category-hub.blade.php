@@ -1193,7 +1193,8 @@
                                     </div>
                                 </div>
                             @endif
-                            <div class="flex w-full flex-row items-center gap-4 rounded-xl bg-white p-3 dark:bg-zinc-900">
+                            @php($hasDocumentImagePreview = ($document && str_starts_with($document->getMimeType() ?? '', 'image/')) || ($pendingDocumentPath && str_starts_with($pendingDocumentMime ?? '', 'image/')))
+                            <div class="flex w-full flex-row items-center gap-4 {{ $hasDocumentImagePreview ? 'rounded-xl bg-white p-3 dark:bg-zinc-900' : 'p-0' }}">
                                 @if($document && str_starts_with($document->getMimeType() ?? '', 'image/'))
                                     <a href="{{ $document->temporaryUrl() }}" target="_blank" rel="noopener" class="block h-20 w-20 shrink-0 sm:h-24 sm:w-24">
                                         <img src="{{ $document->temporaryUrl() }}" alt="Fatura carregada — clicar para ampliar" class="h-full w-full rounded-lg border border-zinc-200 bg-white object-contain dark:border-zinc-700 dark:bg-zinc-950">
