@@ -155,153 +155,6 @@
     </div>
 @endif
 
-{{-- NOTÍCIAS 24H --}}
-<div
-    x-data="{ speed: 260 }"
-    class="news24h-card relative flex items-center gap-5 w-full min-h-[62px] py-2.5 px-4 rounded-2xl border border-sky-400/20 bg-gradient-to-r from-zinc-950 via-slate-950 to-zinc-950 backdrop-blur-2xl shadow-xl shadow-sky-950/20 group overflow-hidden select-none transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/50 hover:shadow-2xl hover:shadow-sky-900/30">
-
-    <div class="absolute inset-0 pointer-events-none opacity-25 bg-gradient-to-r from-sky-600/40 via-indigo-500/20 to-cyan-400/10 animate-bgFlow"></div>
-    <div class="news24h-shine absolute inset-y-0 -left-1/2 w-1/3 pointer-events-none"></div>
-    <div class="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-sky-300/70 to-transparent"></div>
-    <div class="absolute -right-10 -top-14 size-36 rounded-full bg-sky-500/10 blur-3xl pointer-events-none"></div>
-
-    <div class="relative flex items-center gap-3 shrink-0 z-10 px-3.5 py-2.5 rounded-xl border border-sky-300/25 bg-gradient-to-br from-sky-500/20 via-blue-500/10 to-indigo-500/20 shadow-lg shadow-sky-950/30">
-        <div class="relative flex items-center justify-center">
-            <div class="size-3 rounded-full bg-sky-300 animate-pulse shadow-[0_0_12px_rgba(125,211,252,0.9)]"></div>
-            <div class="absolute inset-0 size-3 rounded-full bg-sky-300/40 blur-md animate-ping"></div>
-        </div>
-        <div class="flex flex-col gap-0.5">
-            <span class="text-sm font-black uppercase text-white tracking-[0.16em] leading-none drop-shadow-[0_0_8px_rgba(56,189,248,0.55)]">Notícias 24h</span>
-            <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-sky-300/80">Últimas notícias</span>
-        </div>
-        <span class="ml-1 px-2 py-1 rounded-md bg-sky-300/15 border border-sky-300/25 text-[9px] font-black tracking-wider text-sky-200">LIVE</span>
-    </div>
-
-    <div class="relative flex-1 overflow-hidden h-9 z-10">
-        <div class="ticker-ultra flex items-center gap-20 whitespace-nowrap" :style="`animation-duration: ${speed}s`">
-            @forelse($this->news24h as $news)
-                <div class="ticker-text-ultra flex items-center gap-3">
-                    <span class="text-[10px] font-black tracking-widest {{ $news['region'] === 'PT' ? 'text-emerald-400' : 'text-sky-400' }}">
-                        {{ $news['region'] === 'PT' ? 'PORTUGAL' : 'MUNDO' }}
-                    </span>
-                    <a href="{{ $news['url'] }}" target="_blank" rel="noopener noreferrer"
-                       class="mono-item normal-case tracking-normal hover:text-sky-300 transition-colors"
-                       title="{{ $news['source'] }} • {{ $news['published_label'] }}">
-                        {{ $news['title'] }}
-                    </a>
-                    <span class="text-[10px] text-zinc-500 font-semibold">{{ $news['source'] }} · {{ $news['published_label'] }}</span>
-                    <span class="mono-separator">/</span>
-                </div>
-            @empty
-                <span class="mono-empty italic uppercase">A obter notícias recentes de Portugal e do mundo...</span>
-            @endforelse
-            @if(count($this->news24h) > 0)
-                @foreach($this->news24h as $news)
-                    <div class="ticker-text-ultra flex items-center gap-3" aria-hidden="true">
-                        <span class="text-[10px] font-black tracking-widest {{ $news['region'] === 'PT' ? 'text-emerald-400' : 'text-sky-400' }}">
-                            {{ $news['region'] === 'PT' ? 'PORTUGAL' : 'MUNDO' }}
-                        </span>
-                        <span class="mono-item normal-case tracking-normal">{{ $news['title'] }}</span>
-                        @if(!empty($news['summary']))
-                            <span class="text-zinc-400 normal-case tracking-normal font-medium">— {{ $news['summary'] }}</span>
-                        @endif
-                        <span class="text-[10px] text-zinc-500 font-semibold">{{ $news['source'] }} · {{ $news['published_label'] }}</span>
-                        <span class="mono-separator">/</span>
-                    </div>
-                @endforeach
-            @endif
-        </div>
-    </div>
-</div>
-
-<style>
-@keyframes tickerUltra {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-}
-
-@keyframes bgFlow {
-    0%   { transform: translateX(-30%); }
-    100% { transform: translateX(30%); }
-}
-
-.animate-bgFlow {
-    animation: bgFlow 12s linear infinite;
-}
-
-.news24h-card {
-    isolation: isolate;
-}
-
-.news24h-shine {
-    background: linear-gradient(105deg, transparent 15%, rgba(125, 211, 252, 0.10) 48%, transparent 82%);
-    transform: skewX(-18deg);
-    animation: news24hShine 8s ease-in-out infinite;
-}
-
-@keyframes news24hShine {
-    0%, 65%, 100% { left: -45%; opacity: 0; }
-    72% { opacity: 1; }
-    90% { left: 120%; opacity: 0.7; }
-}
-
-.news24h-card:hover .news24h-shine {
-    animation-duration: 3s;
-}
-
-.ticker-ultra {
-    display: inline-flex;
-    animation: tickerUltra linear infinite;
-    will-change: transform;
-}
-
-.group:hover .ticker-ultra {
-    animation-play-state: paused;
-}
-
-/* Texto monocromático premium */
-.ticker-text-ultra {
-    display: flex;
-    align-items: center;
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: #d4d4d8;
-}
-
-/* Notícias monocromáticas */
-.mono-item {
-    color: #f4f4f5;
-    font-family: "Inter", "Segoe UI", Arial, sans-serif;
-    font-size: 16px;
-    font-weight: 650;
-    letter-spacing: -0.015em;
-    text-shadow: 0 0 4px rgba(0,0,0,0.4);
-}
-
-/* Barra separadora maior */
-.mono-separator {
-    margin: 0 2.5rem;
-    color: #3f3f46;
-    opacity: 0.7;
-    font-weight: 900;
-    font-size: 11px;
-}
-
-/* Fallback */
-.mono-empty {
-    color: #71717a;
-    letter-spacing: 0.25em;
-}
-</style>
-
-
-
-
-
-
-
 {{-- 3. HEADER PRINCIPAL COM CLIMA DINÂMICO E MODAL DETALHADO --}}
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-4"
      x-data="{
@@ -456,6 +309,147 @@
             </div>
         </div>
     </div>
+
+{{-- NOTÍCIAS 24H --}}
+<div
+    x-data="{ speed: 260 }"
+    class="news24h-card relative flex items-center gap-5 w-full min-h-[62px] py-2.5 px-4 rounded-2xl border border-sky-400/20 bg-gradient-to-r from-zinc-950 via-slate-950 to-zinc-950 backdrop-blur-2xl shadow-xl shadow-sky-950/20 group overflow-hidden select-none transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/50 hover:shadow-2xl hover:shadow-sky-900/30">
+
+    <div class="absolute inset-0 pointer-events-none opacity-25 bg-gradient-to-r from-sky-600/40 via-indigo-500/20 to-cyan-400/10 animate-bgFlow"></div>
+    <div class="news24h-shine absolute inset-y-0 -left-1/2 w-1/3 pointer-events-none"></div>
+    <div class="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-sky-300/70 to-transparent"></div>
+    <div class="absolute -right-10 -top-14 size-36 rounded-full bg-sky-500/10 blur-3xl pointer-events-none"></div>
+
+    <div class="relative flex items-center gap-3 shrink-0 z-10 px-3.5 py-2.5 rounded-xl border border-sky-300/25 bg-gradient-to-br from-sky-500/20 via-blue-500/10 to-indigo-500/20 shadow-lg shadow-sky-950/30">
+        <div class="relative flex items-center justify-center">
+            <div class="size-3 rounded-full bg-sky-300 animate-pulse shadow-[0_0_12px_rgba(125,211,252,0.9)]"></div>
+            <div class="absolute inset-0 size-3 rounded-full bg-sky-300/40 blur-md animate-ping"></div>
+        </div>
+        <div class="flex flex-col gap-0.5">
+            <span class="text-sm font-black uppercase text-white tracking-[0.16em] leading-none drop-shadow-[0_0_8px_rgba(56,189,248,0.55)]">Notícias 24h</span>
+            <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-sky-300/80">Últimas notícias</span>
+        </div>
+        <span class="ml-1 px-2 py-1 rounded-md bg-sky-300/15 border border-sky-300/25 text-[9px] font-black tracking-wider text-sky-200">LIVE</span>
+    </div>
+
+    <div class="relative flex-1 overflow-hidden h-9 z-10">
+        <div class="ticker-ultra flex items-center gap-20 whitespace-nowrap" :style="`animation-duration: ${speed}s`">
+            @forelse($this->news24h as $news)
+                <div class="ticker-text-ultra flex items-center gap-3">
+                    <span class="text-[10px] font-black tracking-widest {{ $news['region'] === 'PT' ? 'text-emerald-400' : 'text-sky-400' }}">
+                        {{ $news['region'] === 'PT' ? 'PORTUGAL' : 'MUNDO' }}
+                    </span>
+                    <a href="{{ $news['url'] }}" target="_blank" rel="noopener noreferrer"
+                       class="mono-item normal-case tracking-normal hover:text-sky-300 transition-colors"
+                       title="{{ $news['source'] }} • {{ $news['published_label'] }}">
+                        {{ $news['title'] }}
+                    </a>
+                    <span class="text-[10px] text-zinc-500 font-semibold">{{ $news['source'] }} · {{ $news['published_label'] }}</span>
+                    <span class="mono-separator">/</span>
+                </div>
+            @empty
+                <span class="mono-empty italic uppercase">A obter notícias recentes de Portugal e do mundo...</span>
+            @endforelse
+            @if(count($this->news24h) > 0)
+                @foreach($this->news24h as $news)
+                    <div class="ticker-text-ultra flex items-center gap-3" aria-hidden="true">
+                        <span class="text-[10px] font-black tracking-widest {{ $news['region'] === 'PT' ? 'text-emerald-400' : 'text-sky-400' }}">
+                            {{ $news['region'] === 'PT' ? 'PORTUGAL' : 'MUNDO' }}
+                        </span>
+                        <span class="mono-item normal-case tracking-normal">{{ $news['title'] }}</span>
+                        @if(!empty($news['summary']))
+                            <span class="text-zinc-400 normal-case tracking-normal font-medium">— {{ $news['summary'] }}</span>
+                        @endif
+                        <span class="text-[10px] text-zinc-500 font-semibold">{{ $news['source'] }} · {{ $news['published_label'] }}</span>
+                        <span class="mono-separator">/</span>
+                    </div>
+                @endforeach
+            @endif
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes tickerUltra {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@keyframes bgFlow {
+    0%   { transform: translateX(-30%); }
+    100% { transform: translateX(30%); }
+}
+
+.animate-bgFlow {
+    animation: bgFlow 12s linear infinite;
+}
+
+.news24h-card {
+    isolation: isolate;
+}
+
+.news24h-shine {
+    background: linear-gradient(105deg, transparent 15%, rgba(125, 211, 252, 0.10) 48%, transparent 82%);
+    transform: skewX(-18deg);
+    animation: news24hShine 8s ease-in-out infinite;
+}
+
+@keyframes news24hShine {
+    0%, 65%, 100% { left: -45%; opacity: 0; }
+    72% { opacity: 1; }
+    90% { left: 120%; opacity: 0.7; }
+}
+
+.news24h-card:hover .news24h-shine {
+    animation-duration: 3s;
+}
+
+.ticker-ultra {
+    display: inline-flex;
+    animation: tickerUltra linear infinite;
+    will-change: transform;
+}
+
+.group:hover .ticker-ultra {
+    animation-play-state: paused;
+}
+
+/* Texto monocromático premium */
+.ticker-text-ultra {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #d4d4d8;
+}
+
+/* Notícias monocromáticas */
+.mono-item {
+    color: #f4f4f5;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    text-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
+
+/* Barra separadora maior */
+.mono-separator {
+    margin: 0 2.5rem;
+    color: #3f3f46;
+    opacity: 0.7;
+    font-weight: 900;
+    font-size: 11px;
+}
+
+/* Fallback */
+.mono-empty {
+    color: #71717a;
+    letter-spacing: 0.25em;
+}
+</style>
 
     {{-- MODAL DETALHADO: conteúdo centrado e sem botão X duplicado/fora do modal --}}
     <flux:modal name="weather-details" position="center" :closable="false" class="!min-w-0 !w-[calc(100vw-2rem)] !max-w-[450px] !p-0 !overflow-hidden" wire:ignore.self>
