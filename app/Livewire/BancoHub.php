@@ -40,6 +40,7 @@ class BancoHub extends Component
     public string $acc_description = '';
     public string $acc_bank_name = '';
     public string $acc_iban = '';
+    public string $acc_account_number = '';
     public string $acc_swift = '';
     public string $acc_holder = '';
     public bool $acc_is_business = false;
@@ -94,7 +95,7 @@ class BancoHub extends Component
     protected function rules(): array
     {
         return match ($this->modalType) {
-            'account' => ['acc_name' => 'required|string|max:100', 'acc_type' => 'required|string', 'acc_balance' => 'required|numeric', 'acc_currency' => 'required|string|max:10', 'acc_color' => 'required|string', 'acc_iban' => 'nullable|string|max:34', 'acc_swift' => 'nullable|string|max:11'],
+            'account' => ['acc_name' => 'required|string|max:100', 'acc_type' => 'required|string', 'acc_balance' => 'required|numeric', 'acc_currency' => 'required|string|max:10', 'acc_color' => 'required|string', 'acc_iban' => 'nullable|string|max:34', 'acc_account_number' => 'nullable|string|max:30', 'acc_swift' => 'nullable|string|max:11'],
             'transfer' => ['tr_from_id' => 'required|integer|different:tr_to_id', 'tr_to_id' => 'required|integer', 'tr_amount' => 'required|numeric|min:0.01', 'tr_date' => 'required|date'],
             'reserve' => ['res_name' => 'required|string|max:100', 'res_amount' => 'required|numeric|min:0', 'res_bank_account_id' => 'required|integer'],
             'transit' => ['trs_name' => 'required|string|max:100', 'trs_amount' => 'required|numeric|min:0.01', 'trs_direction' => 'required|in:in,out', 'trs_bank_account_id' => 'required|integer'],
@@ -129,6 +130,7 @@ class BancoHub extends Component
             $this->acc_description = $account->description ?? '';
             $this->acc_bank_name = $account->bank_name ?? '';
             $this->acc_iban = $account->iban ?? '';
+            $this->acc_account_number = $account->account_number ?? '';
             $this->acc_swift = $account->swift ?? '';
             $this->acc_holder = $account->holder_name ?? '';
             $this->acc_is_business = (bool) $account->is_business;
@@ -186,6 +188,16 @@ class BancoHub extends Component
 
             if (preg_match('/TITULAR\\s+(.+?)(?=\\s+(?:IBAN|BIC|SWIFT|DATA|CONTA)\\b|$)/u', $text, $holderMatch)) {
                 $this->acc_holder = trim($holderMatch[1]);
+            }
+
+            if (preg_match('/\\bCONTA\\s*:?[ \\t]*([0-9][0-9 ]{7,24}?)(?=\\s+(?:IBAN|BIC|SWIFT|TITULAR|DATA)\\b|$)/u', $text, $accountMatch)) {
+                $this->acc_account_number = trim($accountMatch[1]);
+            }
+
+            if ($bank === 'Santander') {
+                $this->acc_swift = 'TOTAPTPL';
+                $holderName = trim(mb_convert_case(mb_strtolower($this->acc_holder), MB_CASE_TITLE, 'UTF-8'));
+                $this->acc_name = 'Santander'.($holderName !== '' ? ' - '.$holderName : '');
             }
 
             $this->acc_currency = 'EUR';
@@ -353,6 +365,7 @@ class BancoHub extends Component
             'description' => $this->acc_description ?: null,
             'bank_name' => $this->acc_bank_name ?: null,
             'iban' => $this->acc_iban ?: null,
+            'account_number' => $this->acc_account_number ?: null,
             'swift' => $this->acc_swift ?: null,
             'holder_name' => $this->acc_holder ?: null,
             'is_business' => $this->acc_is_business,
@@ -472,7 +485,7 @@ class BancoHub extends Component
         $this->acc_icon = 'building-library';
         $this->acc_status = 'active';
         $this->acc_description = '';
-        $this->acc_bank_name = $this->acc_iban = $this->acc_swift = $this->acc_holder = '';
+        $this->acc_bank_name = $this->acc_iban = $this->acc_account_number = $this->acc_swift = $this->acc_holder = '';
         $this->ibanProof = null;
         $this->accountEntryMode = 'manual';
         $this->ibanProofMessage = '';
