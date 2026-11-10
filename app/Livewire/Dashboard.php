@@ -874,7 +874,9 @@ class Dashboard extends Component
         if ($dashboardBankCardAccount) {
             // O saldo introduzido no registo é o saldo de referência na data de abertura/registo.
             // Só somamos movimentos ocorridos a partir dessa data, evitando contar movimentos anteriores.
-            $bankBalanceReferenceDate = ($dashboardBankCardAccount->opened_at ?? $dashboardBankCardAccount->created_at)?->toDateString();
+            // O saldo base é o valor introduzido quando a conta foi registada no Finance Pro.
+            // Não usar opened_at: essa data pode ser anterior à introdução do saldo.
+            $bankBalanceReferenceDate = $dashboardBankCardAccount->created_at?->toDateString();
             $bankBalancePeriodEnd = $isCurrentDashboardPeriod ? now()->endOfDay() : $periodEnd->copy()->endOfDay();
 
             if ($bankBalanceReferenceDate && \\Carbon\\Carbon::parse($bankBalanceReferenceDate)->startOfDay()->greaterThan($bankBalancePeriodEnd)) {
