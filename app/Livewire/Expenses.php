@@ -44,6 +44,11 @@ class Expenses extends Component
 
     public function scanInvoiceAndDetectCategory(): void
     {
+        if (auth()->user()->isViewer()) {
+            $this->scannerError = 'Apenas utilizadores com permissões de edição podem criar despesas.';
+            return;
+        }
+
         $this->scannerError = '';
 
         $this->validate([
