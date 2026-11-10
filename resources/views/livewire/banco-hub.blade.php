@@ -479,7 +479,7 @@
                     @foreach($personalAccounts->take(5) as $acc)
                         <div class="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group">
                             <div class="size-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: {{ $acc->color ?? '#6366f1' }}20">
-                                <flux:icon name="{{ $acc->icon ?? 'building-library' }}" class="size-4" style="color: {{ $acc->color ?? '#6366f1' }}" />
+                                <flux:icon name="{{ ($acc->icon === 'landmark' ? 'building-library' : ($acc->icon ?? 'building-library')) }}" class="size-4" style="color: {{ $acc->color ?? '#6366f1' }}" />
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-[12px] font-bold text-zinc-800 dark:text-zinc-200 truncate">{{ $acc->name }}</p>
