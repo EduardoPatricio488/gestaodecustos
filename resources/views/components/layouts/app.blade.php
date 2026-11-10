@@ -1246,17 +1246,8 @@ $hasStoreAccess = $hasLockInAccess;
                         :href="route('hub.incomes')"
                         :current="request()->routeIs('hub.incomes')"
                         wire:navigate.hover
-                        class="!bg-emerald-50/90 dark:!bg-emerald-950/45 !text-emerald-900 dark:!text-emerald-100 !font-black !rounded-xl !py-3.5 !px-3 !border-2 !border-emerald-500/80 dark:!border-emerald-400/70 shadow-md shadow-emerald-900/10 dark:shadow-emerald-950/40 ring-1 ring-emerald-500/20 dark:ring-emerald-400/20 hover:!bg-emerald-100 dark:hover:!bg-emerald-900/60 hover:!border-emerald-600 dark:hover:!border-emerald-300 hover:shadow-lg transition-all duration-200"
                     >
-                        <span class="flex items-center gap-2.5 w-full">
-                            <span class="flex items-center gap-2 font-black tracking-tight">
-                                <span class="size-2 rounded-full bg-emerald-600 dark:bg-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
-                                Receitas
-                            </span>
-                            <span class="ml-auto text-[10px] font-black bg-white text-emerald-800 dark:bg-emerald-400/20 dark:text-emerald-100 px-2.5 py-1 rounded-full border border-emerald-300 dark:border-emerald-400/30 shadow-sm">
-                                {{ $counts['incomes'] }}
-                            </span>
-                        </span>
+                        Receitas {!! $badge($counts['incomes']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="chart-bar-square" :href="route('hub.investments')" wire:navigate.hover>
                         Investimentos {!! $badge($counts['investments']) !!}
