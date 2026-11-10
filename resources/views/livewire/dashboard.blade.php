@@ -694,13 +694,11 @@
                             <h3 class="mt-1 text-base font-black text-white">Detalhes da conta</h3>
                             <p class="mt-0.5 text-[10px] text-red-100/75">{{ $dashboardBankCardAccount?->bank_name ?: 'Conta bancária selecionada' }}</p>
                         </div>
-                        <div class="relative grid grid-cols-2 gap-x-5 gap-y-1.5">
-                            <div class="min-w-0 py-0.5"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Saldo da conta</p><p class="mt-0.5 text-[11px] font-black tabular-nums">{{ number_format($dashboardBankCardCurrentBalance, 2, ',', ' ') }} €</p></div>
-                            <div class="min-w-0 py-0.5"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Salário incluído</p><p class="mt-0.5 text-[11px] font-black tabular-nums">{{ number_format($dashboardBankCardSalaryAmount, 2, ',', ' ') }} €</p></div>
-                            <div class="min-w-0 py-0.5"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Titular</p><p class="mt-0.5 truncate text-[9px] font-bold">{{ $dashboardBankCardAccount?->holder_name ?: 'Não indicado' }}</p></div>
-                            <div class="min-w-0 py-0.5"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Conta</p><p class="mt-0.5 text-[9px] font-bold">{{ $dashboardBankCardAccount?->account_number ? '•••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->account_number), -4) : 'Não indicada' }}</p></div>
-                            <div class="min-w-0 py-0.5"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">SWIFT / BIC</p><p class="mt-0.5 truncate text-[9px] font-bold">{{ $dashboardBankCardAccount?->swift ?: '—' }}</p></div>
-                            <div class="col-span-2 min-w-0 py-0.5"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">IBAN</p><p class="mt-0.5 truncate text-[9px] font-bold tracking-wider">{{ $dashboardBankCardAccount?->iban ? substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), 0, 4).' •••• •••• •••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), -4) : 'Não registado' }}</p></div>
+                        <div class="relative grid grid-cols-2 gap-x-5 gap-y-2.5">
+                            <div class="min-w-0 py-1"><p class="text-[9px] font-bold uppercase tracking-wider text-red-100/70">Titular</p><p class="mt-1 truncate text-[13px] font-bold">{{ $dashboardBankCardAccount?->holder_name ?: 'Não indicado' }}</p></div>
+                            <div class="min-w-0 py-1"><p class="text-[9px] font-bold uppercase tracking-wider text-red-100/70">Conta</p><p class="mt-1 text-[13px] font-bold">{{ $dashboardBankCardAccount?->account_number ? '•••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->account_number), -4) : 'Não indicada' }}</p></div>
+                            <div class="min-w-0 py-1"><p class="text-[9px] font-bold uppercase tracking-wider text-red-100/70">SWIFT / BIC</p><p class="mt-1 truncate text-[13px] font-bold">{{ $dashboardBankCardAccount?->swift ?: '—' }}</p></div>
+                            <div class="col-span-2 min-w-0 py-1"><p class="text-[9px] font-bold uppercase tracking-wider text-red-100/70">IBAN</p><p class="mt-1 truncate text-[13px] font-bold tracking-wider">{{ $dashboardBankCardAccount?->iban ? substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), 0, 4).' •••• •••• •••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), -4) : 'Não registado' }}</p></div>
                         </div>
                     </div>
                 </div>
@@ -710,7 +708,7 @@
             </article>
 
             {{-- CARTÃO DE SUBSÍDIO DE ALIMENTAÇÃO: FRENTE E VERSO --}}
-            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="relative mx-auto aspect-[1.586/1] w-full max-w-[430px] cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 85.6 / 54;">
+            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="relative mx-auto aspect-[1.82/1] w-full max-w-[430px] cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.82 / 1;">
                 <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
                     <div class="absolute inset-0 overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-4 text-white shadow-2xl shadow-emerald-950/25 transition-shadow duration-500 group-hover:shadow-emerald-950/40 sm:p-5" style="backface-visibility: hidden;">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:-rotate-12 group-hover:scale-110"></div>
