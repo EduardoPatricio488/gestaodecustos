@@ -1093,7 +1093,6 @@
                             @endif
                         </div>
                         <div x-show="!transportPassMode" x-cloak class="space-y-5">
-                    @endif
 
                     {{-- Valor e Data --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1208,6 +1207,7 @@
         <textarea wire:model="description" rows="2" class="w-full resize-none rounded-2xl border-0 bg-white px-4 py-3 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white"></textarea>
     </label>
 </div>
+                        </div>
                     @endif
                 </div>
 
