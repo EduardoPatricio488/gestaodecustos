@@ -1,5 +1,5 @@
 <div class="dashboard-component-root">
-<div class="dashboard-page space-y-8 pb-10">
+<div class="dashboard-page space-y-12 pb-10">
     {{-- CSS dentro da root div para evitar o erro de Multiple Root Elements --}}
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -1449,12 +1449,7 @@
 
 
 
-    {{-- RODAPÉ DISCRETO --}}
-    <footer class="pt-20 pb-6 text-center border-t border-zinc-100 dark:border-zinc-800 mt-20">
-        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">
-            © {{ date('Y') }} {{ config('app.name') }} · Terminal de Gestão Inteligente
-        </p>
-    </footer>
+
 
     {{-- ESTILO DA SCROLLBAR --}}
     <style>
@@ -2365,5 +2360,11 @@
             </div>
         </div>
     </div>
+    {{-- RODAPÉ DISCRETO --}}
+    <footer class="pt-8 pb-6 text-center border-t border-zinc-100 dark:border-zinc-800 mt-8">
+        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">
+            © {{ date('Y') }} {{ config('app.name') }} · Terminal de Gestão Inteligente
+        </p>
+    </footer>
 </div>
 </div>
