@@ -1680,201 +1680,146 @@
     @endphp
 
     {{-- 11. TERMINAL DE OPERAÇÕES 24H (BLACK OPS ⭐) --}}
-    <div id="dashboard-resumo-conta" class="scroll-mt-28 relative overflow-hidden bg-zinc-950 text-white rounded-[3rem] border border-zinc-800 shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] mt-16 transition-all duration-700 group">
-
-        {{-- BLOB DE FUNDO (Luz tática) --}}
-        <div class="absolute -top-24 -left-24 size-96 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
-
-        {{-- BLOQUEIO VISUAL (OVERLAY STEALTH) --}}
-        @if(!$isPremium)
-            <div class="absolute inset-0 z-30 flex flex-col items-center justify-center p-8 bg-zinc-950/80 backdrop-blur-2xl transition-all duration-1000">
-                <div class="size-20 bg-zinc-900 rounded-[2rem] flex items-center justify-center mb-6 border border-zinc-800 shadow-2xl animate-bounce">
-                    <span class="text-4xl text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">⭐</span>
+    <div id="dashboard-resumo-conta" class="scroll-mt-28 relative mt-12 overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
+        <div class="border-b border-zinc-200 p-6 dark:border-zinc-800 md:p-8">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Painel geral da conta</p>
+                    <h2 class="mt-1 text-2xl font-black tracking-tight text-zinc-900 dark:text-white">Resumo da Conta</h2>
+                    <p class="mt-1 text-sm text-zinc-500">Visão 360º · {{ $currentWs->name }} · Todos os registos guardados</p>
                 </div>
-                <h3 class="text-2xl font-black uppercase italic tracking-tighter text-white">Resumo Restrito</h3>
-                <p class="text-zinc-500 text-xs font-bold uppercase tracking-[0.3em] mt-2">Requer Plano Pro ou Business</p>
-
-                <a href="{{ route('hub.pricing') }}" wire:navigate
-                   class="mt-10 flex items-center justify-center bg-white text-zinc-950 px-12 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-zinc-200 transition-all hover:scale-105 active:scale-95">
-                   Desbloquear Resumo ⭐
-                </a>
-            </div>
-        @endif
-
-        {{-- CONTEÚDO TÁTICO --}}
-        <div class="relative z-10 p-10 md:p-14 transition-all duration-1000 {{ !$isPremium ? 'blur-3xl opacity-5' : '' }}">
-
-            {{-- HEADER DO TERMINAL --}}
-            <div class="flex flex-col md:flex-row justify-between items-center gap-8 mb-14 pb-10 border-b border-white/5">
-                <div class="flex items-center gap-6">
-                    <div class="p-5 bg-zinc-900 rounded-3xl border border-zinc-800 shadow-inner relative">
-                        <flux:icon name="user-circle" variant="solid" class="size-8 text-emerald-500" />
-                        <div class="absolute -top-1 -right-1 size-3 bg-emerald-500 rounded-full animate-ping"></div>
-                    </div>
-                    <div>
-                        <h2 class="text-3xl font-black uppercase italic tracking-tighter dark:text-white leading-none">Resumo da Conta</h2>
-                        <p class="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 mt-2">Visão 360º · {{ $currentWs->name }}</p>
-                    </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">Atualizado {{ now()->format('H:i') }}</span>
+                    <span class="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">{{ $accountOverview['account_count'] }} contas bancárias</span>
                 </div>
-
-                <div class="flex items-center gap-8 bg-zinc-900/40 p-5 rounded-[2rem] border border-zinc-800 backdrop-blur-md">
-                    <div class="text-right">
-                        <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Evolução</p>
-                        <p class="text-2xl font-black text-emerald-400 tracking-tighter">+{{ $report['xp_today'] ?? 0 }} XP</p>
-                    </div>
-                    <div class="h-10 w-px bg-zinc-800"></div>
-                    <div class="text-right">
-                        <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Status</p>
-                        <span class="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-lg uppercase tracking-widest italic border border-emerald-500/20">Synced</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
-
-                {{-- COLUNA 1: VISÃO FINANCEIRA (4/12) --}}
-                <div class="lg:col-span-4 space-y-8">
-                    <h4 class="text-[11px] font-black uppercase text-zinc-500 tracking-[0.3em] flex items-center gap-3">
-                        <span class="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span> Visão Financeira
-                    </h4>
-
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center bg-white/2 p-5 rounded-[1.5rem] border border-white/5">
-                            <span class="text-xs font-bold text-zinc-400">Saldo Líquido (Mês)</span>
-                            <span class="text-sm font-black {{ $netBalance >= 0 ? 'text-emerald-400' : 'text-red-400' }}">{{ $currentWs->money($netBalance) }}</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-white/2 p-5 rounded-[1.5rem] border border-white/5">
-                            <span class="text-xs font-bold text-zinc-400">Património Total</span>
-                            <span class="text-sm font-black text-white">{{ $currentWs->money($totalPatrimony) }}</span>
-                        </div>
-                        <div class="flex justify-between items-center bg-white/2 p-5 rounded-[1.5rem] border border-white/5">
-                            <span class="text-xs font-bold text-zinc-400">Poupança Total</span>
-                            <span class="text-sm font-black text-emerald-400">{{ $currentWs->money($totalSaved) }}</span>
-                        </div>
-
-                        @if($topExpenseCategory)
-                            <div class="pt-6 mt-6 border-t border-white/5 flex justify-between items-center text-white px-2">
-                                <span class="text-[10px] font-black uppercase opacity-40 tracking-widest">Maior Gasto: {{ $topExpenseCategory['name'] }}</span>
-                                <span class="text-xl font-black italic tracking-tighter">{{ $currentWs->money($topExpenseCategory['total']) }}</span>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-
-                {{-- COLUNA 2: CONTAS & COMPROMISSOS (5/12) --}}
-                <div class="lg:col-span-5 space-y-8 bg-white/2 p-8 rounded-[3rem] border border-white/5 shadow-inner backdrop-blur-xl">
-                    <h4 class="text-[11px] font-black uppercase text-zinc-500 tracking-[0.3em] flex items-center gap-3">
-                        <span class="size-2 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></span> Contas & Compromissos
-                    </h4>
-
-                    <div class="space-y-3">
-                        @forelse($topBankAccounts as $acc)
-                            <div class="flex items-center justify-between p-4 bg-zinc-950 border border-white/5 rounded-[1.5rem]">
-                                <div class="flex items-center gap-3">
-                                    <div class="size-9 rounded-xl flex items-center justify-center" style="background-color: {{ $acc['color'] }}20">
-                                        <flux:icon name="{{ $acc['icon'] }}" class="size-4" style="color: {{ $acc['color'] }}" />
-                                    </div>
-                                    <span class="text-xs font-bold text-zinc-300 uppercase tracking-tight">{{ $acc['name'] }}</span>
-                                </div>
-                                <span class="text-sm font-black text-white">{{ $currentWs->money($acc['balance']) }}</span>
-                            </div>
-                        @empty
-                            <div class="py-8 text-center border border-dashed border-white/5 rounded-[2rem]">
-                                <p class="text-[10px] text-zinc-600 font-black uppercase tracking-widest italic">Sem contas registadas</p>
-                            </div>
-                        @endforelse
-                    </div>
-
-                    <div class="pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div class="p-4 bg-zinc-950 border border-white/5 rounded-[1.5rem]">
-                            <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Assinaturas/Mês</p>
-                            <p class="text-sm font-black text-zinc-200">{{ $currentWs->money($subscriptionsMonthlyCost) }}</p>
-                        </div>
-                        <div class="p-4 bg-zinc-950 border border-white/5 rounded-[1.5rem]">
-                            <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">A Pagar</p>
-                            <p class="text-sm font-black text-orange-400">{{ $currentWs->money($pendingDebtsToPay) }}</p>
-                        </div>
-                        <div class="p-4 bg-zinc-950 border border-white/5 rounded-[1.5rem]">
-                            <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">A Receber</p>
-                            <p class="text-sm font-black text-emerald-400">{{ $currentWs->money($pendingDebtsToReceive) }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- COLUNA 3: SAÚDE & ATIVIDADE (3/12) --}}
-                <div class="lg:col-span-3 space-y-8">
-                    <h4 class="text-[11px] font-black uppercase text-zinc-500 tracking-[0.3em] flex items-center gap-3">
-                        <span class="size-2 rounded-full bg-indigo-500 shadow-[0_0_8px_#6366f1]"></span> Saúde & Atividade
-                    </h4>
-
-                    <div class="space-y-6">
-                        <div class="flex items-center justify-between p-5 bg-white/2 rounded-[1.5rem] border border-white/5">
-                            <div class="flex items-center gap-4">
-                                <flux:icon name="heart" variant="solid" class="size-5 text-indigo-400" />
-                                <span class="text-xs font-bold text-zinc-300 uppercase tracking-tight">Saúde Financeira</span>
-                            </div>
-                            <span class="text-lg font-black text-white italic">{{ $overallScore }}%</span>
-                        </div>
-
-                        <div class="flex items-center justify-between p-5 bg-white/2 rounded-[1.5rem] border border-white/5">
-                            <div class="flex items-center gap-4">
-                                <flux:icon name="check-badge" variant="solid" class="size-5 text-indigo-400" />
-                                <span class="text-xs font-bold text-zinc-300 uppercase tracking-tight">Lembretes</span>
-                            </div>
-                            <span class="text-lg font-black text-white italic">{{ $report['reminders_count'] ?? 0 }}</span>
-                        </div>
-
-                        <div class="flex items-center justify-between p-5 bg-white/2 rounded-[1.5rem] border border-white/5">
-                            <div class="flex items-center gap-4">
-                                <flux:icon name="globe-alt" variant="solid" class="size-5 text-indigo-400" />
-                                <span class="text-xs font-bold text-zinc-300 uppercase tracking-tight">Interações</span>
-                            </div>
-                            <span class="text-lg font-black text-white italic">{{ $report['social_count'] ?? 0 }}</span>
-                        </div>
-
-                        <div class="p-6 rounded-[2rem] bg-gradient-to-br from-indigo-600/10 via-white/2 to-transparent border border-indigo-500/20 shadow-2xl">
-                            <flux:icon name="sparkles" variant="solid" class="size-5 text-indigo-400 mb-4 animate-pulse" />
-                            <p class="text-xs font-medium text-zinc-300 leading-relaxed italic">
-                                @if(!$isPremium)
-                                    "..."
-                                @elseif($projectedBalance < 0)
-                                    "Atenção: a projeção de fim de mês está negativa em {{ $currentWs->money(abs($projectedBalance)) }}. Considera rever os gastos."
-                                @elseif($overallScore >= 70)
-                                    "Excelente gestão este mês. A tua saúde financeira está em {{ $overallScore }}%, acima da média recomendada."
-                                @else
-                                    "A tua saúde financeira está em {{ $overallScore }}%. Reduzir gastos supérfluos pode melhorar este número rapidamente."
-                                @endif
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
 
-        {{-- RODAPÉ TÉCNICO --}}
-        <div class="relative z-10 bg-zinc-900/50 px-10 py-6 border-t border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4 opacity-40">
-            <div class="flex items-center gap-4">
-                <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-[0.2em]">CONTA: #{{ auth()->id() }}</span>
-                <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-[0.2em]">PLANO: {{ strtoupper(auth()->user()->currentPlanSlug()) }}</span>
-            </div>
-            <p class="text-[9px] font-black text-zinc-500 uppercase tracking-[0.4em] italic text-center md:text-right">Finance Pro Intelligent Hub · Atualizado às {{ now()->format('H:i:s') }}</p>
+        <div class="space-y-8 p-5 md:p-8">
+            {{-- Indicadores principais --}}
+            <section>
+                <div class="mb-4 flex items-center justify-between">
+                    <h3 class="text-sm font-extrabold text-zinc-800 dark:text-zinc-100">Situação financeira</h3>
+                    <span class="text-xs text-zinc-500">Valores acumulados e atuais</span>
+                </div>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-500/20 dark:bg-emerald-500/5">
+                        <p class="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Saldo em contas</p>
+                        <p class="mt-2 text-2xl font-black text-emerald-800 dark:text-emerald-300">{{ $currentWs->money($totalBankBalance) }}</p>
+                        <p class="mt-1 text-xs text-emerald-700/70 dark:text-emerald-400/70">Contas incluídas no património</p>
+                    </div>
+                    <div class="rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/5">
+                        <p class="text-xs font-semibold text-blue-700 dark:text-blue-400">Investimentos · valor atual</p>
+                        <p class="mt-2 text-2xl font-black text-blue-800 dark:text-blue-300">{{ $currentWs->money($accountOverview['investment_value']) }}</p>
+                        <p class="mt-1 text-xs text-blue-700/70 dark:text-blue-400/70">{{ $accountOverview['investment_count'] }} ativos registados</p>
+                    </div>
+                    <div class="rounded-2xl border border-violet-200 bg-violet-50 p-4 dark:border-violet-500/20 dark:bg-violet-500/5">
+                        <p class="text-xs font-semibold text-violet-700 dark:text-violet-400">Poupanças em objetivos</p>
+                        <p class="mt-2 text-2xl font-black text-violet-800 dark:text-violet-300">{{ $currentWs->money($accountOverview['goal_saved']) }}</p>
+                        <p class="mt-1 text-xs text-violet-700/70 dark:text-violet-400/70">Meta total: {{ $currentWs->money($accountOverview['goal_target']) }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                        <p class="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Património total</p>
+                        <p class="mt-2 text-2xl font-black text-zinc-900 dark:text-white">{{ $currentWs->money($totalPatrimony) }}</p>
+                        <p class="mt-1 text-xs text-zinc-500">Contas + investimentos + objetivos</p>
+                    </div>
+                </div>
+            </section>
+
+            {{-- Receitas e despesas --}}
+            <section>
+                <h3 class="mb-4 text-sm font-extrabold text-zinc-800 dark:text-zinc-100">Movimentos registados · histórico completo</h3>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-sm font-semibold text-zinc-600 dark:text-zinc-400">Receitas</span>
+                            <span class="rounded-lg bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">{{ number_format($accountOverview['income_count'], 0, ',', '.') }} registos</span>
+                        </div>
+                        <p class="mt-2 text-2xl font-black text-emerald-600">{{ $currentWs->money($accountOverview['income_total']) }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-sm font-semibold text-zinc-600 dark:text-zinc-400">Despesas</span>
+                            <span class="rounded-lg bg-rose-50 px-2 py-1 text-xs font-bold text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{{ number_format($accountOverview['expense_count'], 0, ',', '.') }} registos</span>
+                        </div>
+                        <p class="mt-2 text-2xl font-black text-rose-600">{{ $currentWs->money($accountOverview['expense_total']) }}</p>
+                    </div>
+                </div>
+            </section>
+
+            {{-- Contas bancárias --}}
+            <section>
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <h3 class="text-sm font-extrabold text-zinc-800 dark:text-zinc-100">Contas bancárias</h3>
+                    <span class="text-xs text-zinc-500">{{ $accountOverview['account_count'] }} registadas</span>
+                </div>
+                <div class="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                    @forelse($accountOverview['accounts'] as $account)
+                        <div class="flex flex-col gap-2 border-b border-zinc-100 p-4 last:border-0 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm font-bold text-zinc-800 dark:text-zinc-100">{{ $account['name'] }}</p>
+                                <p class="text-xs text-zinc-500">{{ $account['bank'] ?: 'Banco não indicado' }} · {{ ucfirst(str_replace('_', ' ', $account['type'] ?: 'conta')) }} · {{ $account['currency'] }}</p>
+                            </div>
+                            <div class="sm:text-right">
+                                <p class="text-base font-black text-zinc-900 dark:text-white">{{ $currentWs->money($account['balance']) }}</p>
+                                <p class="text-[11px] {{ $account['included'] ? 'text-emerald-600' : 'text-amber-600' }}">{{ $account['included'] ? 'Incluída no património' : 'Excluída do património' }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="p-5 text-sm text-zinc-500">Ainda não existem contas bancárias registadas.</p>
+                    @endforelse
+                </div>
+            </section>
+
+            {{-- Investimentos --}}
+            <section>
+                <h3 class="mb-4 text-sm font-extrabold text-zinc-800 dark:text-zinc-100">Investimentos</h3>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-900"><p class="text-xs text-zinc-500">Capital investido</p><p class="mt-2 text-lg font-black text-zinc-900 dark:text-white">{{ $currentWs->money($accountOverview['investment_invested']) }}</p></div>
+                    <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-900"><p class="text-xs text-zinc-500">Valor atual</p><p class="mt-2 text-lg font-black text-zinc-900 dark:text-white">{{ $currentWs->money($accountOverview['investment_value']) }}</p></div>
+                    <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-900"><p class="text-xs text-zinc-500">Lucro / prejuízo</p><p class="mt-2 text-lg font-black {{ $accountOverview['investment_profit'] >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">{{ $currentWs->money($accountOverview['investment_profit']) }}</p></div>
+                </div>
+            </section>
+
+            {{-- Compromissos e entradas recorrentes --}}
+            <section>
+                <h3 class="mb-4 text-sm font-extrabold text-zinc-800 dark:text-zinc-100">Compromissos e valores recorrentes</h3>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-xs text-zinc-500">Assinaturas ativas</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $accountOverview['subscription_count'] }}</p><p class="mt-1 text-xs text-zinc-500">Custo pessoal/mês: {{ $currentWs->money($accountOverview['subscription_personal_monthly']) }}</p></div>
+                    <div class="rounded-2xl border border-amber-200 p-4 dark:border-amber-500/20"><p class="text-xs text-amber-700 dark:text-amber-400">Pago pela empresa/mês</p><p class="mt-2 text-xl font-black text-amber-700 dark:text-amber-400">{{ $currentWs->money($accountOverview['subscription_company_monthly']) }}</p><p class="mt-1 text-xs text-zinc-500">Separado das despesas pessoais</p></div>
+                    <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-xs text-zinc-500">Rendimentos recorrentes ativos</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $accountOverview['recurring_count'] }}</p><p class="mt-1 text-xs text-zinc-500">Valor mensal registado: {{ $currentWs->money($accountOverview['recurring_monthly']) }}</p></div>
+                    <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-xs text-zinc-500">Orçamentos definidos</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $accountOverview['category_count'] }}</p><p class="mt-1 text-xs text-zinc-500">Limites: {{ $currentWs->money($accountOverview['budget_total']) }}</p></div>
+                </div>
+            </section>
+
+            {{-- Dívidas e objetivos --}}
+            <section class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div class="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
+                    <h3 class="text-sm font-extrabold text-zinc-800 dark:text-zinc-100">Dívidas por liquidar</h3>
+                    <p class="mt-3 text-xs text-zinc-500">A pagar</p><p class="text-xl font-black text-rose-600">{{ $currentWs->money($accountOverview['debt_pay']) }}</p>
+                    <p class="mt-3 text-xs text-zinc-500">A receber</p><p class="text-xl font-black text-emerald-600">{{ $currentWs->money($accountOverview['debt_receive']) }}</p>
+                    <p class="mt-2 text-xs text-zinc-500">{{ $accountOverview['debt_count'] }} registos pendentes</p>
+                </div>
+                <div class="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
+                    <h3 class="text-sm font-extrabold text-zinc-800 dark:text-zinc-100">Objetivos de poupança</h3>
+                    <p class="mt-3 text-xs text-zinc-500">Montante acumulado</p><p class="text-xl font-black text-violet-600">{{ $currentWs->money($accountOverview['goal_saved']) }}</p>
+                    <p class="mt-3 text-xs text-zinc-500">Objetivo total</p><p class="text-xl font-black text-zinc-900 dark:text-white">{{ $currentWs->money($accountOverview['goal_target']) }}</p>
+                    <p class="mt-2 text-xs text-zinc-500">{{ $accountOverview['goal_count'] }} objetivos criados</p>
+                </div>
+            </section>
+
+            {{-- Atividade e organização --}}
+            <section>
+                <h3 class="mb-4 text-sm font-extrabold text-zinc-800 dark:text-zinc-100">Atividade e organização</h3>
+                <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-900"><p class="text-xs text-zinc-500">Lembretes por concluir</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $accountOverview['reminder_open'] }}</p></div>
+                    <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-900"><p class="text-xs text-zinc-500">Lembretes concluídos</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $accountOverview['reminder_done'] }}</p></div>
+                    <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-900"><p class="text-xs text-zinc-500">Atividades registadas</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $accountOverview['activity_count'] }}</p><p class="mt-1 text-xs text-zinc-500">{{ number_format($accountOverview['activity_km'], 1, ',', '.') }} km · {{ $accountOverview['activity_minutes'] }} min</p></div>
+                    <div class="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-900"><p class="text-xs text-zinc-500">Saúde financeira</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $overallScore }}%</p><p class="mt-1 text-xs text-zinc-500">Saldo do período: {{ $currentWs->money($netBalance) }}</p></div>
+                </div>
+            </section>
         </div>
     </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     {{-- RODAPÉ DISCRETO --}}
     <footer class="pt-20 pb-6 text-center border-t border-zinc-100 dark:border-zinc-800 mt-20">
