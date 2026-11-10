@@ -545,6 +545,7 @@ class SubscriptionHub extends Component
         };
 
         $activeSubs = $allSubs->where('status', 'active');
+        $companyPaidActiveSubs = $activeSubs->where('paid_by_company', true);
         $billableActiveSubs = $activeSubs->where('paid_by_company', false);
         $planSlug = $user->currentPlanSlug();
         $platformPlan = $planSlug !== 'free' ? SubscriptionPlan::where('slug', $planSlug)->first() : null;
@@ -570,7 +571,10 @@ class SubscriptionHub extends Component
         }
 
         $totalMonthly = $billableActiveSubs->sum('monthly_equivalent') + ($platformEntry->monthly_equivalent ?? 0);
+        $companyPaidMonthly = $companyPaidActiveSubs->sum('monthly_equivalent');
+        $totalMonthlyIncludingCompany = $totalMonthly + $companyPaidMonthly;
         $alreadyPaid = $billableActiveSubs->where('billing_day', '<', now()->day)->sum('monthly_equivalent');
+        $companyPaidAlreadyPaid = $companyPaidActiveSubs->where('billing_day', '<', now()->day)->sum('monthly_equivalent');
         if ($platformEntry && $platformEntry->billing_day <= now()->day) {
             $alreadyPaid += $platformEntry->monthly_equivalent;
         }
@@ -586,6 +590,10 @@ class SubscriptionHub extends Component
             'subscriptions' => $subs->values(),
             'totalMonthly' => $totalMonthly,
             'totalAnnual' => $totalMonthly * 12,
+            'companyPaidMonthly' => $companyPaidMonthly,
+            'companyPaidAnnual' => $companyPaidMonthly * 12,
+            'totalMonthlyIncludingCompany' => $totalMonthlyIncludingCompany,
+            'companyPaidAlreadyPaid' => $companyPaidAlreadyPaid,
             'upcoming' => max($totalMonthly - $alreadyPaid, 0),
             'nextSub' => $nextSub,
             'activeCount' => $activeCount,
