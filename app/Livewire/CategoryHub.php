@@ -631,7 +631,7 @@ PROMPT;
         } elseif ($this->pendingDocumentPath) {
             $disk = Storage::disk('public');
             if (! $disk->exists($this->pendingDocumentPath)) {
-                throw new \\RuntimeException('O documento temporário da fatura já não está disponível. Anexa-o novamente.');
+                throw new \RuntimeException('O documento temporário da fatura já não está disponível. Anexa-o novamente.');
             }
 
             $extension = pathinfo($this->pendingDocumentPath, PATHINFO_EXTENSION);
@@ -639,7 +639,7 @@ PROMPT;
 
             // Copia primeiro para o destino definitivo; não apaga o anexo anterior antes de guardar.
             if (! $disk->copy($this->pendingDocumentPath, $finalPath)) {
-                throw new \\RuntimeException('Não foi possível preparar o documento da fatura para guardar.');
+                throw new \RuntimeException('Não foi possível preparar o documento da fatura para guardar.');
             }
 
             $data['receipt_path'] = $finalPath;
