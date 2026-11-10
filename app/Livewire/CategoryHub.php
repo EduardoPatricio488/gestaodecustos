@@ -176,7 +176,9 @@ class CategoryHub extends Component
                 }
             }
 
-            $this->amount = $toNumber($result['amount'] ?? null);
+            $this->amount = $toNumber($result['amount'] ?? null)
+                ?? $toNumber($result['gross_amount'] ?? null)
+                ?? $toNumber($result['net_amount'] ?? null);
             $this->spent_at = $result['date'] ?? now()->format('Y-m-d');
             $store = trim((string) ($result['store'] ?? ''));
             $description = trim((string) ($result['description'] ?? ''));
@@ -199,6 +201,9 @@ class CategoryHub extends Component
             }
 
             $this->pendingDocumentPath = $pendingScan['document_path'] ?? null;
+            if ($this->pendingDocumentPath) {
+                session()->put('pending_expense_scan_preview:'.auth()->user()->current_workspace_id.':'.auth()->id(), $this->pendingDocumentPath);
+            }
             $this->pendingDocumentName = $pendingScan['document_name'] ?? null;
             $this->pendingDocumentMime = $pendingScan['document_mime'] ?? null;
             $this->scanSuccess = true;
@@ -540,13 +545,18 @@ PROMPT;
             return;
         }
 
-        $this->validate([
-            'amount' => 'required|numeric|min:0.01',
-            'spent_at' => 'required|date',
-            'subcategory' => 'required',
-            'document' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:20480',
-            'meta.vat_amount' => 'nullable|numeric|min:0|lte:amount',
-        ]);
+        try {
+            $this->validate([
+                'amount' => 'required|numeric|min:0.01',
+                'spent_at' => 'required|date',
+                'subcategory' => 'required',
+                'document' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:20480',
+                'meta.vat_amount' => 'nullable|numeric|min:0',
+            ]);
+        } catch (ValidationException $e) {
+            $this->dispatch('toast', variant: 'error', text: 'Não foi possível confirmar: verifica os campos obrigatórios assinalados.');
+            throw $e;
+        }
 
         if ($this->bankAccountId) {
             $accountQuery = BankAccount::where('workspace_id', auth()->user()->current_workspace_id);
@@ -641,8 +651,13 @@ PROMPT;
             $msg = 'Nova despesa adicionada! '.$user->xpToastText(20, 'despesa registada');
         }
 
-        $this->trackPriceHistory($expense, $category);
-        app(PriceComparisonService::class)->recordFromExpense($expense, $category);
+        try {
+            $this->trackPriceHistory($expense, $category);
+            app(PriceComparisonService::class)->recordFromExpense($expense, $category);
+        } catch (\Throwable $analyticsError) {
+            Log::warning('Expense saved but optional price analytics failed: '.$analyticsError->getMessage());
+        }
+        session()->forget('pending_expense_scan_preview:'.auth()->user()->current_workspace_id.':'.auth()->id());
 
         $this->reset(['amount', 'description', 'subcategory', 'receipt', 'document', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId']);
         $this->spent_at = now()->format('Y-m-d');
@@ -817,4 +832,7 @@ PROMPT;
                 : null,
         ]);
     }
-}
+
+            if (blank($this->subcategory)) {
+                $this->subcategory = in_array('Geral', $this->subcategories, true) ? 'Geral' : ($this->subcategories[0] ?? 'Outros');
+            }}
