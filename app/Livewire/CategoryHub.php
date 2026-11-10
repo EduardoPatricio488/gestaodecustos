@@ -124,6 +124,50 @@ class CategoryHub extends Component
         $this->currency = auth()->user()->currentWorkspace->currency ?? 'EUR';
         $this->setHubConfig();
 
+        $pendingScan = session()->pull('pending_expense_scan:'.auth()->user()->current_workspace_id.':'.auth()->id());
+
+        if (request()->boolean('open_scan_review') && is_array($pendingScan)) {
+            $suggestedSubcategory = mb_strtolower(trim((string) ($pendingScan['subcategory'] ?? '')));
+            $matchedSubcategory = null;
+
+            foreach ($this->subcategories as $availableSubcategory) {
+                if ($suggestedSubcategory !== '' && (
+                    Str::contains(mb_strtolower($availableSubcategory), $suggestedSubcategory) ||
+                    Str::contains($suggestedSubcategory, mb_strtolower($availableSubcategory))
+                )) {
+                    $matchedSubcategory = $availableSubcategory;
+                    break;
+                }
+            }
+
+            $matchedSubcategory ??= $this->subcategories[0] ?? 'Geral';
+
+            $this->amount = (float) ($pendingScan['amount'] ?? 0);
+            $this->spent_at = $pendingScan['date'] ?? now()->format('Y-m-d');
+            $this->description = trim((string) ($pendingScan['store'] ?? ''));
+            $this->subcategory = $matchedSubcategory;
+            $this->meta = array_filter([
+                'numero_fatura' => $pendingScan['invoice_number'] ?? null,
+                'nif_emitente' => $pendingScan['nif_emitter'] ?? null,
+                'iva' => $pendingScan['tax'] ?? null,
+            ], fn ($value) => $value !== null && $value !== '');
+
+            $this->scannedData = [
+                'amount' => $this->amount,
+                'date' => $this->spent_at,
+                'store' => $this->description,
+                'subcategory' => $matchedSubcategory,
+                'invoice_number' => $pendingScan['invoice_number'] ?? null,
+                'nif_emitter' => $pendingScan['nif_emitter'] ?? null,
+                'tax' => $pendingScan['tax'] ?? null,
+                'notes' => $pendingScan['notes'] ?? null,
+                'items' => [],
+                'meta' => [],
+            ];
+
+            $this->dispatch('open-review-modal');
+        }
+
         $categoryQuery = Category::where('name', $this->dbName)
             ->where('workspace_id', auth()->user()->current_workspace_id);
         if (auth()->user()->currentWorkspace?->type === 'personal') {
