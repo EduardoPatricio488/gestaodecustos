@@ -12,6 +12,7 @@ use App\Models\Income;
 use App\Models\Investment;
 use App\Models\Reminder;
 use App\Models\RecurringIncome;
+use App\Models\SalaryPayment;
 use App\Models\SocialNotification;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
@@ -748,6 +749,32 @@ class Dashboard extends Component
             return max(0, (float) $income->amount - (empty($metadata['meal_card_income_id']) ? $mealAllowance : 0));
         }), 2);
         $dashboardProjectedMealAllowance = round($dashboardSalaryContracts->sum(fn (RecurringIncome $income): float => (float) ($income->metadata['calculated_sa'] ?? 0)), 2);
+        $dashboardSalaryContracts->each(function (RecurringIncome $income): void {
+            $metadata = $income->metadata ?? [];
+            $mealAllowance = (float) ($metadata['calculated_sa'] ?? 0);
+            $income->setAttribute(
+                'projected_salary_net',
+                round(max(0, (float) $income->amount - (empty($metadata['meal_card_income_id']) ? $mealAllowance : 0)), 2),
+            );
+        });
+
+        $dashboardSalaryContractIds = $dashboardSalaryContracts->modelKeys();
+        $projectedSalaryHistoryPayments = SalaryPayment::with(['recurringIncome', 'bankAccount'])
+            ->where('workspace_id', $currentWs->id)
+            ->where('user_id', $user->id)
+            ->whereIn('recurring_income_id', $dashboardSalaryContractIds)
+            ->orderByDesc('payment_year')
+            ->orderByDesc('payment_month')
+            ->orderByDesc('paid_at')
+            ->get();
+
+        $projectedSalaryHistoryExtras = Income::with('bankAccount')
+            ->where('workspace_id', $currentWs->id)
+            ->where('user_id', $user->id)
+            ->whereIn('salary_recurring_income_id', $dashboardSalaryContractIds)
+            ->latest('received_at')
+            ->get();
+
         $dashboardSalaryLabels = $dashboardSalaryContracts->pluck('description')->filter()->implode(' · ');
 
         return view('livewire.dashboard', [
@@ -755,6 +782,9 @@ class Dashboard extends Component
             'dashboardProjectedSalaryNet' => $dashboardProjectedSalaryNet,
             'dashboardProjectedMealAllowance' => $dashboardProjectedMealAllowance,
             'dashboardSalaryLabels' => $dashboardSalaryLabels,
+            'dashboardSalaryContracts' => $dashboardSalaryContracts,
+            'projectedSalaryHistoryPayments' => $projectedSalaryHistoryPayments,
+            'projectedSalaryHistoryExtras' => $projectedSalaryHistoryExtras,
             'userWorkspaces' => $user->workspaces,
             'overallScore' => $overallScore,
             'overallScoreTrend' => $overallScoreTrend,
