@@ -65,6 +65,15 @@ class AiInsights extends Component
             $this->lastGeneratedAt = now()->toIso8601String();
             Cache::put($this->cacheKey(), ['text' => $this->aiAnalysis, 'at' => $this->lastGeneratedAt], now()->addDays(7));
 
+            // Atualiza o Insight Center com alertas determinísticos relevantes para este snapshot.
+            try {
+                app(\App\Services\AI\ProactiveAiService::class)->analyze($workspace);
+            } catch (\Throwable $observerException) {
+                Log::warning('CFO report observer failed', ['message' => $observerException->getMessage()]);
+            }
+
+            $this->dispatch('cfo-report-generated');
+
             if (method_exists($user, 'addXp') && Cache::add($this->xpKey($workspace->id), true, now()->endOfDay())) {
                 $user->addXp(150);
             }
