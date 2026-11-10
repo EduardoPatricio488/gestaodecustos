@@ -874,7 +874,7 @@
                     <div class="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-5 dark:border-violet-500/20 dark:from-violet-500/10 dark:to-zinc-900">
                         <div class="flex items-center justify-between gap-2">
                             <p class="text-[11px] font-extrabold uppercase tracking-wider text-violet-700 dark:text-violet-300">Valor atual</p>
-                            <span class="flex size-8 items-center justify-center rounded-xl bg-violet-600/10 text-violet-700 dark:text-violet-300"><flux:icon name="wallet" class="size-4" /></span>
+                            <span class="flex size-8 items-center justify-center rounded-xl bg-violet-600/10 text-sm font-black text-violet-700 dark:text-violet-300">€</span>
                         </div>
                         <p class="mt-3 break-words text-2xl font-black tracking-tight tabular-nums text-zinc-950 dark:text-white sm:text-3xl" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($portfolioValue) }}</p>
                         <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Valor de mercado da carteira</p>
@@ -883,7 +883,7 @@
                     <div class="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 dark:border-zinc-700 dark:bg-zinc-800/40">
                         <div class="flex items-center justify-between gap-2">
                             <p class="text-[11px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Capital investido</p>
-                            <span class="flex size-8 items-center justify-center rounded-xl bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"><flux:icon name="landmark" class="size-4" /></span>
+                            <span class="flex size-8 items-center justify-center rounded-xl bg-zinc-200 text-sm font-black text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">€</span>
                         </div>
                         <p class="mt-3 break-words text-2xl font-black tracking-tight tabular-nums text-zinc-900 dark:text-white sm:text-3xl" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($dashboardInvestmentsTotalInvested) }}</p>
                         <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Montante aplicado na carteira</p>
@@ -893,7 +893,7 @@
                         <div class="flex items-center justify-between gap-2">
                             <p class="text-[11px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">Lucro / prejuízo</p>
                             <span class="flex size-8 items-center justify-center rounded-xl {{ $dashboardInvestmentsProfit >= 0 ? 'bg-emerald-600/10 text-emerald-700 dark:text-emerald-300' : 'bg-rose-600/10 text-rose-700 dark:text-rose-300' }}">
-                                <flux:icon name="{{ $dashboardInvestmentsProfit >= 0 ? 'trending-up' : 'trending-down' }}" class="size-4" />
+                                <span class="text-lg font-black">{{ $dashboardInvestmentsProfit >= 0 ? '↗' : '↘' }}</span>
                             </span>
                         </div>
                         <p class="mt-3 break-words text-2xl font-black tracking-tight tabular-nums {{ $dashboardInvestmentsProfit >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300' }}" :class="privacyMode ? 'blur-md select-none' : ''">
@@ -910,7 +910,7 @@
                     <div class="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-5 dark:border-indigo-500/20 dark:bg-indigo-500/5">
                         <div class="flex items-center justify-between gap-2">
                             <p class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Ativos na carteira</p>
-                            <span class="flex size-8 items-center justify-center rounded-xl bg-indigo-600/10 text-indigo-700 dark:text-indigo-300"><flux:icon name="layers" class="size-4" /></span>
+                            <span class="flex size-8 items-center justify-center rounded-xl bg-indigo-600/10 text-sm font-black text-indigo-700 dark:text-indigo-300">#</span>
                         </div>
                         <p class="mt-3 text-3xl font-black tracking-tight tabular-nums text-zinc-950 dark:text-white">{{ $dashboardInvestmentsCount }}</p>
                         <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Instrumentos de investimento</p>
