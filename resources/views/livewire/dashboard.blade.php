@@ -775,7 +775,9 @@
                     <span aria-hidden="true" class="text-[22px] font-semibold leading-none">↻</span>
                 </button>
             </article>
+            </div>
 
+            <div class="min-w-0 space-y-3">
             {{-- CARTÃO DE SUBSÍDIO DE ALIMENTAÇÃO: FRENTE E VERSO --}}
             <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="dashboard-card-shell group relative aspect-[1.95/1] w-full min-w-0 cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.95 / 1;">
                 <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
