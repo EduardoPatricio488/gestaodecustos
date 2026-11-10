@@ -1169,13 +1169,11 @@
                         @if($document || $pendingDocumentPath || $savedDocumentPath)
                             @if($savedDocumentPath)
                                 <div class="flex w-full flex-row items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900 dark:bg-emerald-950/20">
-                                    <a href="{{ Storage::disk('public')->url($savedDocumentPath) }}" target="_blank" rel="noopener" class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-emerald-200 bg-white dark:border-emerald-800 dark:bg-zinc-950">
-                                        @if(in_array(strtolower(pathinfo($savedDocumentPath, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'webp'], true))
+                                    @if(in_array(strtolower(pathinfo($savedDocumentPath, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'webp'], true))
+                                        <a href="{{ Storage::disk('public')->url($savedDocumentPath) }}" target="_blank" rel="noopener" class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-emerald-200 bg-white dark:border-emerald-800 dark:bg-zinc-950">
                                             <img src="{{ Storage::disk('public')->url($savedDocumentPath) }}" alt="Documento já guardado — abrir" class="h-full w-full object-contain">
-                                        @else
-                                            <span class="text-xs font-black text-red-600">PDF</span>
-                                        @endif
-                                    </a>
+                                        </a>
+                                    @endif
                                     <div class="min-w-0 flex-1 space-y-1 text-left">
                                         <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300">Documento já associado a esta despesa</p>
                                         <a href="{{ Storage::disk('public')->url($savedDocumentPath) }}" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-600 hover:underline">Abrir documento guardado</a>
