@@ -225,9 +225,11 @@
 
 /* Notícias monocromáticas */
 .mono-item {
-    color: #e5e5e5;
+    color: #f4f4f5;
+    font-family: Georgia, "Times New Roman", serif;
     font-size: 16px;
-    font-weight: 800;
+    font-weight: 700;
+    letter-spacing: 0.01em;
     text-shadow: 0 0 4px rgba(0,0,0,0.4);
 }
 
