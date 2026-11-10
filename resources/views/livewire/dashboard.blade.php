@@ -990,7 +990,7 @@
                         </div>
                     @else
                         <div class="rounded-2xl border border-dashed border-sky-200 bg-white/60 px-4 py-8 text-center dark:border-slate-700 dark:bg-slate-900/40">
-                            <flux:icon name="chart-no-axes-combined" class="mx-auto size-7 text-sky-500" />
+                            <flux:icon name="chart-bar" class="mx-auto size-7 text-sky-500" />
                             <p class="mt-2 text-xs font-bold text-zinc-700 dark:text-zinc-200">Ainda não tens investimentos registados.</p>
                             <p class="mt-1 text-[10px] text-zinc-500">Adiciona ativos na área de investimentos para veres aqui a composição da carteira.</p>
                         </div>
