@@ -641,7 +641,12 @@
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             {{-- CARTÃO BANCÁRIO: SALDO + SALÁRIO --}}
-            <article role="button" tabindex="0" aria-label="Consultar histórico do salário e saldo bancário" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="group relative isolate min-h-60 cursor-pointer overflow-hidden rounded-[1.6rem] border border-red-300/25 bg-gradient-to-br from-[#ed1c24] via-[#b5121b] to-[#650b13] p-6 text-white shadow-2xl shadow-red-950/30 transition-all duration-500 hover:-translate-y-1 hover:border-red-200/70 hover:shadow-red-950/50 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transition-none sm:p-7">
+            <article x-data="{ activeTab: 'summary' }" class="group relative isolate min-h-60 overflow-hidden rounded-[1.6rem] border border-red-300/25 bg-gradient-to-br from-[#ed1c24] via-[#b5121b] to-[#650b13] p-6 text-white shadow-2xl shadow-red-950/30 transition-all duration-500 hover:-translate-y-1 hover:border-red-200/70 hover:shadow-red-950/50 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transition-none sm:p-7">
+                <div class="relative z-20 mb-4 flex w-fit gap-1 rounded-xl border border-white/20 bg-black/15 p-1 backdrop-blur-sm">
+                    <button type="button" @click="activeTab = 'summary'" :class="activeTab === 'summary' ? 'bg-white text-red-700 shadow' : 'text-white/75 hover:bg-white/10'" class="rounded-lg px-3 py-1.5 text-[9px] font-black uppercase tracking-wider transition">Resumo</button>
+                    <button type="button" @click="activeTab = 'history'" :class="activeTab === 'history' ? 'bg-white text-red-700 shadow' : 'text-white/75 hover:bg-white/10'" class="rounded-lg px-3 py-1.5 text-[9px] font-black uppercase tracking-wider transition">Histórico</button>
+                </div>
+                <div x-show="activeTab === 'summary'" x-cloak>
                 <div class="pointer-events-none absolute -right-14 -top-20 size-64 rounded-full border border-white/15 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110"></div>
                 <div class="pointer-events-none absolute -right-3 -top-12 size-44 rounded-full border border-white/10"></div>
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10"></div>
@@ -697,10 +702,39 @@
                     </p>
                     </div>
                 </div>
+                </div>
+                <div x-show="activeTab === 'history'" x-cloak class="relative z-10 space-y-3">
+                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-red-100/80">Movimentos · {{ $dashboardPeriodLabel }}</p>
+                    <div class="max-h-64 space-y-2 overflow-y-auto pr-1">
+                        @forelse($dashboardBankCardIncomes as $movement)
+                            <div class="flex items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/10 p-3">
+                                <div class="min-w-0"><p class="truncate text-[10px] font-bold text-white">{{ $movement->description ?: 'Entrada bancária' }}</p><p class="mt-1 text-[9px] text-red-100/70">{{ $movement->received_at?->format('d/m/Y') }}</p></div>
+                                <p class="shrink-0 text-xs font-black text-emerald-200">+ {{ number_format((float) ($movement->amount_converted ?? $movement->amount), 2, ',', ' ') }} €</p>
+                            </div>
+                        @empty
+                        @endforelse
+                        @forelse($dashboardBankCardExpenses as $movement)
+                            <div class="flex items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/10 p-3">
+                                <div class="min-w-0"><p class="truncate text-[10px] font-bold text-white">{{ $movement->description ?: 'Despesa bancária' }}</p><p class="mt-1 text-[9px] text-red-100/70">{{ $movement->spent_at?->format('d/m/Y') }}</p></div>
+                                <p class="shrink-0 text-xs font-black text-red-200">− {{ number_format((float) ($movement->amount_converted ?? $movement->amount), 2, ',', ' ') }} €</p>
+                            </div>
+                        @empty
+                        @endforelse
+                        @if($dashboardBankCardIncomes->isEmpty() && $dashboardBankCardExpenses->isEmpty())
+                            <p class="rounded-xl border border-white/15 bg-white/10 p-4 text-[10px] text-red-100/80">Não existem movimentos bancários registados neste período.</p>
+                        @endif
+                    </div>
+                    <p class="text-[9px] text-red-100/65">O histórico apresenta movimentos associados a esta conta bancária.</p>
+                </div>
             </article>
 
             {{-- CARTÃO BANCÁRIO: SUBSÍDIO DE ALIMENTAÇÃO --}}
-            <article role="button" tabindex="0" aria-label="Consultar histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-6 text-white shadow-2xl shadow-emerald-950/25 transition-all duration-500 hover:-translate-y-1 hover:border-emerald-300/60 hover:shadow-emerald-950/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transition-none sm:p-7">
+            <article x-data="{ activeTab: 'summary' }" class="group relative isolate min-h-56 overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-6 text-white shadow-2xl shadow-emerald-950/25 transition-all duration-500 hover:-translate-y-1 hover:border-emerald-300/60 hover:shadow-emerald-950/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transition-none sm:p-7">
+                <div class="relative z-20 mb-4 flex w-fit gap-1 rounded-xl border border-white/20 bg-black/15 p-1 backdrop-blur-sm">
+                    <button type="button" @click="activeTab = 'summary'" :class="activeTab === 'summary' ? 'bg-white text-emerald-800 shadow' : 'text-white/75 hover:bg-white/10'" class="rounded-lg px-3 py-1.5 text-[9px] font-black uppercase tracking-wider transition">Resumo</button>
+                    <button type="button" @click="activeTab = 'history'" :class="activeTab === 'history' ? 'bg-white text-emerald-800 shadow' : 'text-white/75 hover:bg-white/10'" class="rounded-lg px-3 py-1.5 text-[9px] font-black uppercase tracking-wider transition">Histórico</button>
+                </div>
+                <div x-show="activeTab === 'summary'" x-cloak>
                 <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:-rotate-12 group-hover:scale-110"></div>
                 <div class="pointer-events-none absolute -right-2 -top-12 size-44 rounded-full border border-emerald-100/10"></div>
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-emerald-300/10 via-transparent to-white/5"></div>
@@ -719,6 +753,21 @@
                         <div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Atribuído por</p><p class="mt-1 truncate text-[11px] font-semibold text-white">@forelse($dashboardSalaryContracts as $projectedContract){{ $loop->first ? '' : ' · ' }}{{ $projectedContract->description }}@empty Sem subsídio configurado @endforelse</p></div>
                         <div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Projeção anual</p><p class="mt-1 text-xs font-bold text-white">{{ number_format($dashboardProjectedMealAllowance * 11, 2, ',', ' ') }} €</p></div>
                     </div>
+                </div>
+                </div>
+                <div x-show="activeTab === 'history'" x-cloak class="relative z-10 space-y-3">
+                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-100/80">Registos · {{ $dashboardPeriodLabel }}</p>
+                    <div class="max-h-64 space-y-2 overflow-y-auto pr-1">
+                        @forelse($projectedSalaryHistoryPayments as $payment)
+                            <div class="flex items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/10 p-3">
+                                <div class="min-w-0"><p class="truncate text-[10px] font-bold text-white">{{ $payment->recurringIncome?->description ?? 'Subsídio de alimentação' }}</p><p class="mt-1 text-[9px] text-emerald-100/70">{{ str_pad((string) $payment->payment_month, 2, '0', STR_PAD_LEFT) }}/{{ $payment->payment_year }} · {{ $payment->paid_at?->format('d/m/Y') ?? 'Sem data de pagamento' }}</p></div>
+                                <div class="shrink-0 text-right"><p class="text-xs font-black text-white">{{ number_format((float) $payment->meal_allowance, 2, ',', ' ') }} €</p><p class="text-[8px] font-bold uppercase {{ $payment->status === 'paid' ? 'text-emerald-200' : 'text-amber-200' }}">{{ $payment->status === 'paid' ? 'Pago' : 'Pendente' }}</p></div>
+                            </div>
+                        @empty
+                            <p class="rounded-xl border border-white/15 bg-white/10 p-4 text-[10px] text-emerald-100/80">Ainda não existem registos de subsídio de alimentação neste histórico.</p>
+                        @endforelse
+                    </div>
+                    <p class="text-[9px] text-emerald-100/65">Os valores são retirados dos registos de pagamento salarial guardados na aplicação.</p>
                 </div>
             </article>
         </div>
