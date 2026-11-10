@@ -167,10 +167,6 @@
     </div>
 </div>
 
-<div class="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-
-
 {{-- 3. HEADER PRINCIPAL COM CLIMA DINÂMICO E MODAL DETALHADO --}}
 <div class="flex flex-col items-stretch gap-8 pt-4"
      x-data="{
