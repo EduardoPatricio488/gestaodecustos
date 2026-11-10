@@ -1475,7 +1475,7 @@
                         </button>
                         <button type="button" wire:click="$set('accountEntryMode', 'proof')"
                             class="rounded-lg px-3 py-2 text-[11px] font-bold transition {{ $accountEntryMode === 'proof' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500' }}">
-                            Comprovativo de IBAN
+                            Importar Comprovativo de IBAN
                         </button>
                     </div>
 
