@@ -1327,7 +1327,6 @@
             </div>
             <p class="text-[9px] font-black text-zinc-500 uppercase tracking-[0.4em] italic text-center md:text-right">Finance Pro Intelligent Hub · Atualizado às {{ now()->format('H:i:s') }}</p>
         </div>
-    </div>
 
 
 
