@@ -37,16 +37,19 @@ class AiControlCenter extends Component
         $data['feedback_at'] = now()->toIso8601String();
         $insight->update(['data' => $data]);
         $this->feedback = $value;
+        $this->dispatch('toast', variant: 'success', text: 'Obrigado pelo teu feedback. A IA vai ter isso em conta.');
     }
 
     public function forgetMemory(int $id): void
     {
         AiMemory::query()->whereKey($id)->where('user_id', auth()->id())->delete();
+        $this->dispatch('toast', variant: 'success', text: 'Memória apagada.');
     }
 
     public function clearMemories(): void
     {
         AiMemory::query()->where('user_id', auth()->id())->delete();
+        $this->dispatch('toast', variant: 'success', text: 'Toda a memória da IA foi apagada.');
     }
 
     private function insightQuery()
@@ -82,6 +85,13 @@ class AiControlCenter extends Component
             }
         })->latest()->limit(30)->get();
 
-        return view('livewire.ai-control-center', compact('health', 'insights', 'actions', 'memories', 'workspace'));
+        $stats = [
+            'unread' => $insights->whereNull('read_at')->count(),
+            'critical' => $insights->whereIn('priority', ['critical', 'high'])->count(),
+            'pending_actions' => $actions->where('status', 'pending')->count(),
+            'completed_actions' => $actions->where('status', 'completed')->count(),
+        ];
+
+        return view('livewire.ai-control-center', compact('health', 'insights', 'actions', 'memories', 'workspace', 'stats'));
     }
 }
