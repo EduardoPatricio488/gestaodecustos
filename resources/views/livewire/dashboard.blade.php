@@ -631,7 +631,7 @@
                 <p class="px-3 pb-2 pt-1 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">Criar novo registo</p>
                 <a href="{{ route('expenses', ['open_new' => 1]) }}" wire:navigate x-on:click="openQuickCreate = false"
                     class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-rose-50 dark:hover:bg-rose-950/30">
-                    <span class="flex size-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300"><flux:icon name="receipt" class="size-4" /></span>
+                    <span class="flex size-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300"><span class="text-sm font-black leading-none">▤</span></span>
                     <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova despesa</span>
                 </a>
                 <a href="{{ route('hub.subscriptions', ['open_extra' => 1]) }}" wire:navigate x-on:click="openQuickCreate = false"
