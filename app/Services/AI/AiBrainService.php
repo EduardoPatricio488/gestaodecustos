@@ -175,8 +175,8 @@ class AiBrainService
     }
 
     /**
-     * Gera o relatório executivo com uma única chamada ao modelo, sem histórico,
-     * memórias ou ciclo de ferramentas do AI Copilot.
+     * Gera um relatório executivo completo numa única chamada, reutilizando o
+     * contexto financeiro rico do AI Brain mas sem histórico nem ciclo de tools.
      */
     public function generateExecutiveReport(User $user, Workspace $workspace): array
     {
@@ -184,20 +184,28 @@ class AiBrainService
         $this->assertMonthlyTokenBudget($user, $workspace);
 
         $snapshot = $this->intelligence->snapshot($workspace);
-        $snapshotJson = json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $context = $this->contextEngine->build($user, [
+            'module' => 'ai-insights',
+            'route' => 'ai',
+            'path' => request()->path(),
+            'period' => now()->format('Y-m'),
+        ]);
+        $memories = $this->memories($user, $workspace);
+        $intent = $this->intentDetector->detect('diagnóstico financeiro executivo mensal');
+        $systemPrompt = $this->systemPrompt($context, $snapshot, $memories, $intent);
 
         $messages = [
             [
                 'role' => 'system',
-                'content' => 'És o CFO Inteligente do Finance Pro. Responde sempre em Português de Portugal. Produz um relatório executivo mensal claro e útil. Usa exclusivamente os dados JSON fornecidos pelo backend: não inventes valores, transações, tendências ou funcionalidades. Distingue FACTOS, INFERÊNCIAS e RECOMENDAÇÕES. Se não existirem dados suficientes, diz isso explicitamente. Compara com o período anterior apenas quando os dados de comparação existirem. Termina com exatamente 3 ações práticas e proporcionais aos dados. Usa títulos curtos e evita introduções longas.',
+                'content' => $systemPrompt."\n\nMODO DE RELATÓRIO: não executes nem solicites ferramentas. Estás apenas a analisar os dados já fornecidos pelo backend.",
             ],
             [
                 'role' => 'user',
-                'content' => "Gera o meu relatório financeiro executivo para ".now()->translatedFormat('F Y').". Analisa rendimentos, despesas, saldo, investimentos e evolução face ao período anterior, apenas quando existirem dados. Dados verificados pelo backend:\n".$snapshotJson,
+                'content' => "Prepara um diagnóstico financeiro executivo completo para ".now()->translatedFormat('F Y').".\n\nOrganiza a resposta com estas secções, sem omitir uma secção quando existirem dados relevantes:\n1. RESUMO EXECUTIVO — estado geral e principal conclusão.\n2. INDICADORES FINANCEIROS — receitas recorrentes, receitas efetivamente registadas, despesas, poupança prevista e real, taxas e património/investimentos quando disponíveis.\n3. ANÁLISE DE DESPESAS — categorias, orçamento, ritmo diário e previsão de fim do mês.\n4. INVESTIMENTOS E PATRIMÓNIO — valor atual, composição apenas se fornecida, riscos e limitações dos dados.\n5. EVOLUÇÃO MENSAL — comparação com o mês anterior apenas quando exista base comparável.\n6. FACTOS — lista objetiva dos números confirmados.\n7. INFERÊNCIAS E RISCOS — separa claramente interpretações de factos e não tires conclusões a partir de dados em falta.\n8. RECOMENDAÇÕES — exatamente 3 ações concretas, ordenadas por prioridade e adequadas à situação real.\n\nExplica explicitamente quando um valor é orçamentado/recorrente e ainda não foi recebido/registado. Não confundas ausência de despesas registadas com prova de ausência de consumo. Não inventes composição de carteira, saldo de caixa, transações ou evolução. Usa tabelas ou listas curtas quando melhorarem a leitura. Mantém detalhe suficiente para ser um relatório útil, não uma resposta curta.",
             ],
         ];
 
-        $response = $this->provider($messages, null, true);
+        $response = $this->provider($messages, null, true, 2800);
         $content = trim((string) data_get($response, 'choices.0.message.content', ''));
 
         if ($content === '') {
@@ -273,7 +281,7 @@ class AiBrainService
         return null;
     }
 
-    private function provider(array $messages, ?string $forcedTool = null, bool $disableTools = false): array
+    private function provider(array $messages, ?string $forcedTool = null, bool $disableTools = false, int $maxTokens = 1600): array
     {
         $apiKey = config('services.openrouter.api_key');
         if (blank($apiKey)) {
@@ -283,7 +291,7 @@ class AiBrainService
             'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
             'messages' => $messages,
             'tool_choice' => $disableTools ? 'none' : ($forcedTool ? ['type' => 'function', 'function' => ['name' => $forcedTool]] : 'auto'),
-            'max_tokens' => 1600,
+            'max_tokens' => max(256, min(4000, $maxTokens)),
         ];
         if (! $disableTools) {
             $payload['tools'] = $this->tools->definitions();
