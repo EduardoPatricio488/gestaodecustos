@@ -732,8 +732,29 @@ class Dashboard extends Component
         $totalSaved = (float) Cache::remember("dashboard:total-saved:{$currentWs->id}:{$user->id}", 60, fn () => Goal::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->sum('current_amount'));
         $totalPatrimony = $totalBankBalance + $portfolioValue + $totalSaved;
 
+        $dashboardSalaryContracts = RecurringIncome::where('workspace_id', $currentWs->id)
+            ->where('user_id', $user->id)
+            ->where('source', 'emprego')
+            ->where('is_active', true)
+            ->get()
+            ->reject(fn (RecurringIncome $income) => ($income->metadata['income_type'] ?? null) === 'meal_card_allowance')
+            ->filter(fn (RecurringIncome $income) => ($income->metadata['contract_status'] ?? 'active') === 'active')
+            ->values();
+
+        $dashboardProjectedSalaryNet = round($dashboardSalaryContracts->sum(function (RecurringIncome $income): float {
+            $metadata = $income->metadata ?? [];
+            $mealAllowance = (float) ($metadata['calculated_sa'] ?? 0);
+
+            return max(0, (float) $income->amount - (empty($metadata['meal_card_income_id']) ? $mealAllowance : 0));
+        }), 2);
+        $dashboardProjectedMealAllowance = round($dashboardSalaryContracts->sum(fn (RecurringIncome $income): float => (float) ($income->metadata['calculated_sa'] ?? 0)), 2);
+        $dashboardSalaryLabels = $dashboardSalaryContracts->pluck('description')->filter()->implode(' · ');
+
         return view('livewire.dashboard', [
             'currentWs' => $currentWs,
+            'dashboardProjectedSalaryNet' => $dashboardProjectedSalaryNet,
+            'dashboardProjectedMealAllowance' => $dashboardProjectedMealAllowance,
+            'dashboardSalaryLabels' => $dashboardSalaryLabels,
             'userWorkspaces' => $user->workspaces,
             'overallScore' => $overallScore,
             'overallScoreTrend' => $overallScoreTrend,
