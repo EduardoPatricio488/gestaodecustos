@@ -641,9 +641,8 @@
         </div>
         <div class="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <div class="flex items-center gap-1.5">
-                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total anual estimado (Total líquido + Subsídio alimentação)</p>
                 <flux:tooltip toggleable content="Previsão do rendimento líquido dos contratos salariais ativos para um ano completo. Tem em conta o número de pagamentos anuais definido em cada contrato, incluindo subsídios quando aplicável.">
-                    <button type="button" class="inline-flex size-3.5 items-center justify-center rounded-full border border-current text-[9px] font-black leading-none text-zinc-400 transition hover:text-indigo-500 focus:text-indigo-500" aria-label="Informação sobre o total anual estimado">i</button>
+                    <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total anual estimado (Total líquido + Subsídio alimentação)</p>
                 </flux:tooltip>
             </div>
             <p class="mt-1 text-2xl font-black text-amber-600">{{ number_format($salaryAnnualTotal, 2, ',', ' ') }} €</p>
