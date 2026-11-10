@@ -684,6 +684,10 @@
                         $selectedMonthYear = (int) substr($dashboardSelectedMonth, 0, 4);
                         $selectedMonthNumber = (int) substr($dashboardSelectedMonth, 5, 2);
                     @endphp
+                    <div class="mb-3 grid grid-cols-2 gap-2">
+                        <button type="button" wire:click="$set('dashboardSelectedMonth', '{{ now()->format('Y-m') }}'); $set('dashboardPeriodType', 'month')" @click="openPeriodFilter = false" class="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2.5 text-[11px] font-black text-brand-700 transition hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">Mês atual</button>
+                        <button type="button" wire:click="$set('dashboardSelectedYear', '{{ now()->format('Y') }}'); $set('dashboardPeriodType', 'year')" @click="openPeriodFilter = false" class="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2.5 text-[11px] font-black text-brand-700 transition hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">Ano atual</button>
+                    </div>
                     <div class="mb-3 flex items-center justify-between">
                         <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Consultar outro período</p>
                         <span class="rounded-full bg-brand-50 px-2.5 py-1 text-[10px] font-black text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">{{ $dashboardPeriodType === 'year' ? $dashboardSelectedYear : $dashboardSelectedMonth }}</span>
