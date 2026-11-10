@@ -607,10 +607,10 @@
 
 
     {{-- 6. SECÇÃO DE INTELIGÊNCIA E PREVISÃO --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 gap-6">
 
         {{-- CARD: PREVISÃO INTELIGENTE (ESTILO BLACK GLASS) --}}
-        <div class="lg:col-span-2 relative overflow-hidden bg-zinc-950 text-white rounded-[2.5rem] shadow-2xl border border-zinc-800 group">
+        <div class="relative overflow-hidden bg-zinc-950 text-white rounded-[2.5rem] shadow-2xl border border-zinc-800 group">
             {{-- Efeito de Luz IA ao fundo --}}
             <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 blur-[100px] rounded-full -mr-20 -mt-20"></div>
 
@@ -667,30 +667,6 @@
             </div>
         </div>
 
-        {{-- CARD: SCORE DE SAÚDE (ESTILO CIRCULAR/VISUAL) --}}
-        <div class="glass-card relative overflow-hidden bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col items-center justify-center p-8 text-center group">
-            <div class="relative size-32 mb-4 flex items-center justify-center">
-                {{-- SVG Circular Progress Subtil --}}
-                <svg class="absolute inset-0 size-full -rotate-90">
-                    <circle cx="64" cy="64" r="58" stroke="currentColor" stroke-width="8" fill="transparent" class="text-zinc-100 dark:text-zinc-800" />
-                    <circle cx="64" cy="64" r="58" stroke="currentColor" stroke-width="8" fill="transparent"
-                        class="{{ $overallScore > 70 ? 'text-emerald-500' : ($overallScore > 40 ? 'text-amber-500' : 'text-red-500') }} transition-all duration-1000"
-                        stroke-dasharray="364.4"
-                        stroke-dashoffset="{{ 364.4 - (364.4 * $overallScore) / 100 }}"
-                        stroke-linecap="round" />
-                </svg>
-                <span class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white tracking-tighter">{{ $overallScore }}%</span>
-            </div>
-
-            <h4 class="text-xs font-black uppercase text-zinc-500 tracking-widest">Saúde Financeira</h4>
-            <p class="text-[10px] text-zinc-400 mt-2 font-medium">Baseado no teu rácio de poupança e cumprimento de orçamentos.</p>
-
-            <div class="mt-6 w-full px-4">
-                <a href="{{ route('hub.budget') }}" wire:navigate>
-                    <flux:button variant="ghost" size="sm" class="w-full rounded-xl text-[10px] font-black uppercase tracking-widest">Ver análise detalhada</flux:button>
-                </a>
-            </div>
-        </div>
     </div>
 
     {{-- BANNER CFO INTELIGENTE (DESTAQUE MÁXIMO) --}}
@@ -872,6 +848,26 @@
             {{-- Barra de Progresso Estilizada --}}
             <div class="relative h-3 w-full bg-zinc-200/50 dark:bg-zinc-800 rounded-full overflow-hidden border border-zinc-100 dark:border-zinc-700 shadow-inner">
                 <div class="h-full bg-brand-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(59,130,246,0.6)]" style="width: {{ (auth()->user()->xp % 1000) / 10 }}%"></div>
+            </div>
+
+            {{-- Saúde Financeira integrada na Experiência Financeira --}}
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-zinc-200/70 dark:border-zinc-700/70 pt-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-xl {{ $overallScore > 70 ? 'bg-emerald-500/10 text-emerald-500' : ($overallScore > 40 ? 'bg-amber-500/10 text-amber-500' : 'bg-red-500/10 text-red-500') }}">
+                        <flux:icon name="heart" variant="solid" class="size-5" />
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Saúde Financeira</span>
+                            <span class="text-sm font-black {{ $overallScore > 70 ? 'text-emerald-500' : ($overallScore > 40 ? 'text-amber-500' : 'text-red-500') }}">{{ $overallScore }}%</span>
+                        </div>
+                        <p class="text-[10px] text-zinc-400 font-medium">Baseado no teu rácio de poupança e cumprimento de orçamentos.</p>
+                    </div>
+                </div>
+                <a href="{{ route('hub.budget') }}" wire:navigate class="inline-flex items-center justify-center gap-2 self-start sm:self-auto rounded-xl px-3 py-2 text-[9px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-500/10 hover:bg-brand-500/15 transition-colors whitespace-nowrap">
+                    Ver análise detalhada
+                    <flux:icon name="arrow-up-right" variant="micro" class="size-3.5" />
+                </a>
             </div>
         </div>
 
