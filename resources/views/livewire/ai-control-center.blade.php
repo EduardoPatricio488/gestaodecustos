@@ -174,8 +174,8 @@
         <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             @forelse($actions as $action)
                 @php
-                    $statusLabel = ['pending' => 'A aguardar confirmação', 'completed' => 'Concluída', 'failed' => 'Falhou', 'cancelled' => 'Cancelada', 'rejected' => 'Recusada'][$action->status] ?? ucfirst(str_replace('_', ' ', $action->status));
-                    $statusClass = $action->status === 'completed' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : ($action->status === 'pending' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300');
+                    $statusLabel = ['pending' => 'A aguardar confirmação', 'awaiting_confirmation' => 'A aguardar confirmação', 'completed' => 'Concluída', 'failed' => 'Falhou', 'cancelled' => 'Cancelada', 'rejected' => 'Recusada'][$action->status] ?? ucfirst(str_replace('_', ' ', $action->status));
+                    $statusClass = $action->status === 'completed' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : (in_array($action->status, ['pending', 'awaiting_confirmation'], true) ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300');
                 @endphp
                 <div class="flex flex-col gap-3 border-b border-zinc-100 p-5 last:border-0 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex min-w-0 items-start gap-3">
