@@ -101,6 +101,7 @@
             scannerOpen: false,
             reviewOpen: false,
             formOpen: false,
+            transportPassMode: false,
             scannerPreview: null,
             uploadingFile: false,
             confirmAndSave() {
@@ -1191,7 +1192,7 @@
                     <button type="submit"
                         class="flex-[2] h-12 rounded-2xl font-black uppercase tracking-widest shadow-lg text-white active:scale-95 transition-all"
                         style="background-color: var(--cat-color); box-shadow: 0 10px 20px -5px color-mix(in srgb, var(--cat-color), transparent 50%);">
-                        <span wire:loading.remove wire:target="save">{{ $editingId ? 'Atualizar' : 'Confirmar Gasto' }}</span>
+                        <span wire:loading.remove wire:target="save">{{ $slug === 'transporte' && $transportPassMode ? 'Criar Assinatura' : ($editingId ? 'Atualizar' : 'Confirmar Gasto') }}</span>
                         <span wire:loading wire:target="save">A gravar...</span>
                     </button>
                 </div>
