@@ -658,7 +658,7 @@
             {{-- CARTÃO BANCÁRIO: FRENTE E VERSO --}}
             <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do saldo bancário" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="relative mx-auto aspect-[1.82/1] w-full max-w-[430px] cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.82 / 1;">
                 <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
-                    <div class="absolute inset-0 overflow-hidden rounded-[1.6rem] border border-red-300/25 bg-gradient-to-br from-[#ed1c24] via-[#b5121b] to-[#650b13] p-4 text-white shadow-2xl shadow-red-950/30 transition-shadow duration-500 group-hover:shadow-red-950/50 sm:p-5" style="backface-visibility: hidden;">
+                    <div class="absolute inset-0 overflow-hidden rounded-[1.6rem] border p-4 text-white shadow-2xl transition-shadow duration-500 sm:p-5" style="backface-visibility: hidden; background: linear-gradient(135deg, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 0%, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 72%, #000 28%) 100%); border-color: color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 65%, white 35%);">
                         <div class="pointer-events-none absolute -right-14 -top-20 size-64 rounded-full border border-white/15 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110"></div>
                 <div class="pointer-events-none absolute -right-3 -top-12 size-44 rounded-full border border-white/10"></div>
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10"></div>
@@ -687,7 +687,7 @@
 
                 </div>
                     </div>
-                    <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-red-200/40 bg-gradient-to-br from-[#8e1019] via-[#650b13] to-[#31070b] p-4 text-white shadow-2xl sm:p-5" style="transform: rotateY(180deg); backface-visibility: hidden;">
+                    <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border p-4 text-white shadow-2xl sm:p-5" style="transform: rotateY(180deg); backface-visibility: hidden; background: linear-gradient(135deg, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 82%, #000 18%) 0%, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 48%, #000 52%) 100%); border-color: color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 65%, white 35%);">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10"></div>
                         <div class="relative">
                             <p class="text-[9px] font-black uppercase tracking-[0.25em] text-red-100/70">Finance Pro · Verso do cartão</p>
