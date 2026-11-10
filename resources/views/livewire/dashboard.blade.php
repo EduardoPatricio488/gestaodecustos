@@ -155,13 +155,6 @@
     </div>
 @endif
 
-{{-- SAUDAÇÃO PRINCIPAL --}}
-<div class="px-1 pt-1 pb-2">
-    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase italic leading-none">
-        {{ $this->greeting }}, <span style="color: {{ auth()->user()->profile_color }}">{{ $firstName }}</span>
-    </h1>
-</div>
-
 {{-- NOTÍCIAS 24H --}}
 <div
     x-data="{ speed: 260 }"
@@ -419,6 +412,9 @@
         </div>
 
         <div class="text-left">
+            <h1 class="mb-2 text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase italic leading-none">
+                {{ $this->greeting }}, <span style="color: {{ auth()->user()->profile_color }}">{{ $firstName }}</span>
+            </h1>
             <div class="flex items-center gap-3">
 
 
