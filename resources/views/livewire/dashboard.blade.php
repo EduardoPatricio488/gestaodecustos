@@ -15,6 +15,56 @@
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
         }
+
+        /* Movimento subtil e contínuo para os cartões da dashboard */
+        .dashboard-card-surface {
+            isolation: isolate;
+            transition: filter .6s ease, box-shadow .6s ease;
+        }
+        .dashboard-card-surface::after {
+            content: "";
+            position: absolute;
+            inset: -45% auto -45% -65%;
+            width: 42%;
+            pointer-events: none;
+            z-index: 1;
+            transform: skewX(-20deg);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent);
+            animation: dashboardCardShine 8s ease-in-out infinite;
+        }
+        .dashboard-card-surface > .relative {
+            z-index: 2;
+        }
+        .dashboard-card-flipper > div:first-child > .pointer-events-none:first-child {
+            animation: dashboardCardFloat 9s ease-in-out infinite alternate;
+        }
+        .dashboard-card-flipper > div:nth-child(2) > .pointer-events-none:first-child {
+            animation: dashboardCardFloat 11s ease-in-out infinite alternate-reverse;
+        }
+        @keyframes dashboardCardShine {
+            0%, 58% { left: -65%; opacity: 0; }
+            66% { opacity: 1; }
+            88%, 100% { left: 125%; opacity: 0; }
+        }
+        @keyframes dashboardCardFloat {
+            from { transform: translate3d(0, 0, 0) scale(1); }
+            to { transform: translate3d(-10px, 8px, 0) scale(1.08); }
+        }
+        .dashboard-card-shell {
+            transition: transform .65s cubic-bezier(.2,.8,.2,1), filter .65s ease;
+        }
+        .dashboard-card-shell:hover {
+            transform: translateY(-5px);
+            filter: drop-shadow(0 18px 24px rgba(0,0,0,.18));
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .dashboard-card-surface::after,
+            .dashboard-card-flipper > div:first-child > .pointer-events-none:first-child,
+            .dashboard-card-flipper > div:nth-child(2) > .pointer-events-none:first-child {
+                animation: none !important;
+            }
+            .dashboard-card-shell { transition: none !important; }
+        }
         @media (prefers-reduced-motion: reduce) {
             .dashboard-card-flipper { transition-duration: 0.01ms !important; }
         }
@@ -656,9 +706,9 @@
 
         <div class="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
             {{-- CARTÃO BANCÁRIO: FRENTE E VERSO --}}
-            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do saldo bancário" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="relative mx-auto aspect-[1.95/1] w-full max-w-[430px] cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.95 / 1;">
+            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do saldo bancário" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="dashboard-card-shell group relative mx-auto aspect-[1.95/1] w-full max-w-[430px] cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.95 / 1;">
                 <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
-                    <div class="absolute inset-0 overflow-hidden rounded-[1.6rem] border p-4 text-white shadow-2xl transition-shadow duration-500 sm:p-5" style="backface-visibility: hidden; background: linear-gradient(135deg, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 0%, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 72%, #000 28%) 100%); border-color: color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 65%, white 35%);">
+                    <div class="dashboard-card-surface absolute inset-0 overflow-hidden rounded-[1.6rem] border p-4 text-white shadow-2xl transition-shadow duration-500 sm:p-5" style="backface-visibility: hidden; background: linear-gradient(135deg, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 0%, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 72%, #000 28%) 100%); border-color: color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 65%, white 35%);">
                         <div class="pointer-events-none absolute -right-14 -top-20 size-64 rounded-full border border-white/15 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110"></div>
                 <div class="pointer-events-none absolute -right-3 -top-12 size-44 rounded-full border border-white/10"></div>
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10"></div>
@@ -687,7 +737,7 @@
 
                 </div>
                     </div>
-                    <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border p-4 text-white shadow-2xl sm:p-5" style="transform: rotateY(180deg); backface-visibility: hidden; background: linear-gradient(135deg, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 82%, #000 18%) 0%, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 48%, #000 52%) 100%); border-color: color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 65%, white 35%);">
+                    <div class="dashboard-card-surface absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border p-4 text-white shadow-2xl sm:p-5" style="transform: rotateY(180deg); backface-visibility: hidden; background: linear-gradient(135deg, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 82%, #000 18%) 0%, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 48%, #000 52%) 100%); border-color: color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 65%, white 35%);">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10"></div>
                         <div class="relative transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
                             <p class="text-[9px] font-black uppercase tracking-[0.25em] text-red-100/70">Finance Pro · Verso do cartão</p>
@@ -708,9 +758,9 @@
             </article>
 
             {{-- CARTÃO DE SUBSÍDIO DE ALIMENTAÇÃO: FRENTE E VERSO --}}
-            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="relative mx-auto aspect-[1.95/1] w-full max-w-[430px] cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.95 / 1;">
+            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="dashboard-card-shell group relative mx-auto aspect-[1.95/1] w-full max-w-[430px] cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.95 / 1;">
                 <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
-                    <div class="absolute inset-0 overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-4 text-white shadow-2xl shadow-emerald-950/25 transition-shadow duration-500 group-hover:shadow-emerald-950/40 sm:p-5" style="backface-visibility: hidden;">
+                    <div class="dashboard-card-surface absolute inset-0 overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-4 text-white shadow-2xl shadow-emerald-950/25 transition-shadow duration-500 group-hover:shadow-emerald-950/40 sm:p-5" style="backface-visibility: hidden;">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:-rotate-12 group-hover:scale-110"></div>
                 <div class="pointer-events-none absolute -right-2 -top-12 size-44 rounded-full border border-emerald-100/10"></div>
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-emerald-300/10 via-transparent to-white/5"></div>
@@ -725,7 +775,7 @@
                     <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-3"><div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Atribuído por</p><p class="mt-1 truncate text-[11px] font-semibold text-white">@forelse($dashboardSalaryContracts as $projectedContract){{ $loop->first ? '' : ' · ' }}{{ $projectedContract->description }}@empty Sem subsídio configurado @endforelse</p></div><div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Projeção anual</p><p class="mt-1 text-xs font-bold text-white">{{ number_format($dashboardProjectedMealAllowance * 11, 2, ',', ' ') }} €</p></div></div>
                 </div>
                     </div>
-                    <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-emerald-200/30 bg-gradient-to-br from-[#064b3d] via-[#03352c] to-[#011c17] p-3.5 text-white shadow-2xl sm:p-4" style="transform: rotateY(180deg); backface-visibility: hidden;">
+                    <div class="dashboard-card-surface absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-emerald-200/30 bg-gradient-to-br from-[#064b3d] via-[#03352c] to-[#011c17] p-3.5 text-white shadow-2xl sm:p-4" style="transform: rotateY(180deg); backface-visibility: hidden;">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10"></div>
                         <div class="relative transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
                             <p class="text-[9px] font-black uppercase tracking-[0.25em] text-emerald-100/70">Finance Pro · Verso do cartão</p>
