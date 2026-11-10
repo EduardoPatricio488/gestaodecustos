@@ -656,14 +656,14 @@
 
         <div class="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
             {{-- CARTÃO BANCÁRIO: FRENTE E VERSO --}}
-            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do saldo bancário" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="relative mx-auto aspect-[1.586/1] w-full max-w-[430px] cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 85.6 / 54;">
+            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do saldo bancário" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="relative mx-auto aspect-[1.82/1] w-full max-w-[430px] cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.82 / 1;">
                 <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
                     <div class="absolute inset-0 overflow-hidden rounded-[1.6rem] border border-red-300/25 bg-gradient-to-br from-[#ed1c24] via-[#b5121b] to-[#650b13] p-4 text-white shadow-2xl shadow-red-950/30 transition-shadow duration-500 group-hover:shadow-red-950/50 sm:p-5" style="backface-visibility: hidden;">
                         <div class="pointer-events-none absolute -right-14 -top-20 size-64 rounded-full border border-white/15 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110"></div>
                 <div class="pointer-events-none absolute -right-3 -top-12 size-44 rounded-full border border-white/10"></div>
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10"></div>
                 <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-1000 group-hover:translate-x-[450%]"></div>
-                <div class="relative flex min-h-48 flex-col justify-between gap-4">
+                <div class="relative flex min-h-0 flex-col justify-between gap-3">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-[9px] font-black uppercase tracking-[0.25em] text-red-100/80">Finance Pro · Carteira bancária</p>
@@ -691,16 +691,16 @@
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10"></div>
                         <div class="relative">
                             <p class="text-[9px] font-black uppercase tracking-[0.25em] text-red-100/70">Finance Pro · Verso do cartão</p>
-                            <h3 class="mt-2 text-lg font-black text-white">Detalhes da conta</h3>
-                            <p class="mt-1 text-xs text-red-100/75">{{ $dashboardBankCardAccount?->bank_name ?: 'Conta bancária selecionada' }}</p>
+                            <h3 class="mt-1 text-base font-black text-white">Detalhes da conta</h3>
+                            <p class="mt-0.5 text-[10px] text-red-100/75">{{ $dashboardBankCardAccount?->bank_name ?: 'Conta bancária selecionada' }}</p>
                         </div>
-                        <div class="relative grid grid-cols-2 gap-2">
-                            <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Saldo da conta</p><p class="mt-1 text-xs font-black tabular-nums">{{ number_format($dashboardBankCardCurrentBalance, 2, ',', ' ') }} €</p></div>
+                        <div class="relative grid grid-cols-2 gap-x-5 gap-y-1.5">
+                            <div class="min-w-0 py-0.5"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Saldo da conta</p><p class="mt-0.5 text-[11px] font-black tabular-nums">{{ number_format($dashboardBankCardCurrentBalance, 2, ',', ' ') }} €</p></div>
                             <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Salário incluído</p><p class="mt-1 text-xs font-black tabular-nums">{{ number_format($dashboardBankCardSalaryAmount, 2, ',', ' ') }} €</p></div>
-                            <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Titular</p><p class="mt-1 truncate text-[10px] font-bold">{{ $dashboardBankCardAccount?->holder_name ?: 'Não indicado' }}</p></div>
-                            <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Conta</p><p class="mt-1 text-[10px] font-bold">{{ $dashboardBankCardAccount?->account_number ? '•••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->account_number), -4) : 'Não indicada' }}</p></div>
+                            <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Titular</p><p class="mt-0.5 truncate text-[9px] font-bold">{{ $dashboardBankCardAccount?->holder_name ?: 'Não indicado' }}</p></div>
+                            <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Conta</p><p class="mt-0.5 text-[9px] font-bold">{{ $dashboardBankCardAccount?->account_number ? '•••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->account_number), -4) : 'Não indicada' }}</p></div>
                             <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">SWIFT / BIC</p><p class="mt-1 truncate text-[10px] font-bold">{{ $dashboardBankCardAccount?->swift ?: '—' }}</p></div>
-                            <div class="col-span-2 rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">IBAN</p><p class="mt-1 truncate text-[10px] font-bold tracking-wider">{{ $dashboardBankCardAccount?->iban ? substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), 0, 4).' •••• •••• •••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), -4) : 'Não registado' }}</p></div>
+                            <div class="col-span-2 min-w-0 py-0.5"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">IBAN</p><p class="mt-1 truncate text-[10px] font-bold tracking-wider">{{ $dashboardBankCardAccount?->iban ? substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), 0, 4).' •••• •••• •••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), -4) : 'Não registado' }}</p></div>
                         </div>
                     </div>
                 </div>
@@ -727,7 +727,7 @@
                     <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-3"><div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Atribuído por</p><p class="mt-1 truncate text-[11px] font-semibold text-white">@forelse($dashboardSalaryContracts as $projectedContract){{ $loop->first ? '' : ' · ' }}{{ $projectedContract->description }}@empty Sem subsídio configurado @endforelse</p></div><div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Projeção anual</p><p class="mt-1 text-xs font-bold text-white">{{ number_format($dashboardProjectedMealAllowance * 11, 2, ',', ' ') }} €</p></div></div>
                 </div>
                     </div>
-                    <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-emerald-200/30 bg-gradient-to-br from-[#064b3d] via-[#03352c] to-[#011c17] p-4 text-white shadow-2xl sm:p-5" style="transform: rotateY(180deg); backface-visibility: hidden;">
+                    <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-emerald-200/30 bg-gradient-to-br from-[#064b3d] via-[#03352c] to-[#011c17] p-3.5 text-white shadow-2xl sm:p-4" style="transform: rotateY(180deg); backface-visibility: hidden;">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10"></div>
                         <div class="relative">
                             <p class="text-[9px] font-black uppercase tracking-[0.25em] text-emerald-100/70">Finance Pro · Verso do cartão</p>
