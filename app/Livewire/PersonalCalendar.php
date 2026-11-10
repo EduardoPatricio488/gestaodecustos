@@ -124,6 +124,7 @@ class PersonalCalendar extends Component
 
         $subscriptions = Subscription::where('workspace_id', $workspaceId)
             ->where('is_active', true)
+            ->where('paid_by_company', false)
             ->get()
             ->map(function ($subscription) use ($start) {
                 $day = max(1, min($start->daysInMonth, (int) ($subscription->billing_day ?: 1)));
