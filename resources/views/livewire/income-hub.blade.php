@@ -175,7 +175,189 @@
         </div>
     </div>
 
-    {{-- Os cartões de salário e subsídio de alimentação passaram para o Dashboard. --}}
+    {{-- ================================================================== --}}
+    {{-- PROJEÇÃO DE SALÁRIO E ALIMENTAÇÃO · CARTÕES DINÂMICOS --}}
+    <section x-data="{ showSalaryHistory: false, showMealHistory: false }" class="space-y-4">
+        <div class="flex items-end justify-between gap-3 px-1">
+            <div>
+                <div class="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 dark:border-emerald-900/50 dark:bg-emerald-950/40">
+                    <span class="relative flex size-2">
+                        <span class="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-50 motion-reduce:animate-none"></span>
+                        <span class="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
+                    </span>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Resumo mensal</span>
+                </div>
+                <h2 class="flex items-center gap-2 text-2xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
+                    <span class="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20 transition duration-300 hover:rotate-[-6deg] hover:scale-110 motion-reduce:transform-none">
+                        <flux:icon name="chart-bar" variant="micro" class="size-5" />
+                    </span>
+                    <span class="font-serif text-black dark:text-black">Total Projetado</span>
+                </h2>
+            </div>
+            <span class="hidden items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:inline-flex">
+                <flux:icon name="calendar-days" variant="micro" class="size-3.5 text-emerald-500" />
+                {{ now()->translatedFormat('F Y') }}
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {{-- CARTÃO BANCÁRIO: SALÁRIO LÍQUIDO --}}
+            <article role="button" tabindex="0" aria-label="Consultar histórico do salário líquido" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.6rem] border border-indigo-300/20 bg-gradient-to-br from-[#18264a] via-[#111a32] to-[#080e1d] p-6 text-white shadow-2xl shadow-indigo-950/25 transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/60 hover:shadow-indigo-950/40 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transition-none sm:p-7">
+                <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110"></div>
+                <div class="pointer-events-none absolute -right-2 -top-12 size-44 rounded-full border border-indigo-200/10"></div>
+                <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-indigo-400/10 via-transparent to-white/5"></div>
+                <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-[450%]"></div>
+                <div class="relative flex min-h-44 flex-col justify-between">
+                    <div class="flex items-start justify-between">
+                        <div><p class="text-[9px] font-black uppercase tracking-[0.28em] text-indigo-200/80">Finance Pro · Conta de rendimento</p><p class="mt-1 text-sm font-bold tracking-wide text-white">SALÁRIO LÍQUIDO</p></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] font-black italic tracking-[0.18em] text-white/80">FP</span><div class="flex size-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm"><flux:icon name="briefcase" variant="outline" class="size-5 text-indigo-100" /></div></div>
+                    </div>
+                    <div class="flex items-center gap-3 py-2">
+                        <div class="relative h-9 w-12 overflow-hidden rounded-md border border-amber-100/40 bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 shadow-inner"><span class="absolute left-1/2 top-0 h-full w-px bg-amber-800/25"></span><span class="absolute left-0 top-1/2 h-px w-full bg-amber-800/25"></span><span class="absolute left-1/4 top-0 h-full w-px bg-amber-800/20"></span><span class="absolute right-1/4 top-0 h-full w-px bg-amber-800/20"></span></div>
+                        <flux:icon name="wifi" variant="outline" class="size-5 rotate-90 text-white/65" /><span class="ml-auto text-[9px] font-bold uppercase tracking-[0.18em] text-indigo-100/65">Resumo mensal</span>
+                    </div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-[0.2em] text-indigo-200/75">Valor projetado</p><p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-4xl">{{ number_format($projectedSalaryNetTotal, 2, ',', ' ') }} <span class="text-xl text-indigo-200">€</span></p></div>
+                    <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-3">
+                        <div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-indigo-200/65">Titular / contrato</p><p class="mt-1 truncate text-[11px] font-semibold text-white">@forelse($projectedSalaryContracts as $projectedContract){{ $loop->first ? '' : ' · ' }}{{ $projectedContract->description }}@empty Sem salário ativo registado @endforelse</p></div>
+                        <div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-indigo-200/65">Projeção anual</p><p class="mt-1 text-xs font-bold tabular-nums text-white">{{ number_format($projectedSalaryAnnualTotal, 2, ',', ' ') }} €</p></div>
+                    </div>
+                </div>
+            </article>
+
+            {{-- CARTÃO BANCÁRIO: SUBSÍDIO DE ALIMENTAÇÃO --}}
+            <article role="button" tabindex="0" aria-label="Consultar histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-6 text-white shadow-2xl shadow-emerald-950/25 transition-all duration-500 hover:-translate-y-1 hover:border-emerald-300/60 hover:shadow-emerald-950/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transition-none sm:p-7">
+                <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:-rotate-12 group-hover:scale-110"></div>
+                <div class="pointer-events-none absolute -right-2 -top-12 size-44 rounded-full border border-emerald-100/10"></div>
+                <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-emerald-300/10 via-transparent to-white/5"></div>
+                <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-[450%]"></div>
+                <div class="relative flex min-h-44 flex-col justify-between">
+                    <div class="flex items-start justify-between">
+                        <div><p class="text-[9px] font-black uppercase tracking-[0.28em] text-emerald-100/80">Finance Pro · Cartão benefício</p><p class="mt-1 text-sm font-bold tracking-wide text-white">SUBSÍDIO DE ALIMENTAÇÃO</p></div>
+                        <div class="flex items-center gap-2"><span class="text-[10px] font-black italic tracking-[0.18em] text-white/80">FP</span><div class="flex size-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm"><flux:icon name="cake" variant="outline" class="size-5 text-emerald-100" /></div></div>
+                    </div>
+                    <div class="flex items-center gap-3 py-2">
+                        <div class="relative h-9 w-12 overflow-hidden rounded-md border border-amber-100/40 bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 shadow-inner"><span class="absolute left-1/2 top-0 h-full w-px bg-amber-800/25"></span><span class="absolute left-0 top-1/2 h-px w-full bg-amber-800/25"></span><span class="absolute left-1/4 top-0 h-full w-px bg-amber-800/20"></span><span class="absolute right-1/4 top-0 h-full w-px bg-amber-800/20"></span></div>
+                        <flux:icon name="wifi" variant="outline" class="size-5 rotate-90 text-white/65" /><span class="ml-auto text-[9px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Benefício mensal</span>
+                    </div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-100/75">Valor projetado</p><p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-4xl">{{ number_format($projectedMealAllowanceTotal, 2, ',', ' ') }} <span class="text-xl text-emerald-200">€</span></p></div>
+                    <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-3">
+                        <div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Atribuído por</p><p class="mt-1 truncate text-[11px] font-semibold text-white">@forelse($projectedSalaryContracts as $projectedContract){{ $loop->first ? '' : ' · ' }}{{ $projectedContract->description }}@empty Sem subsídio configurado @endforelse</p></div>
+                        <div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Projeção anual</p><p class="mt-1 text-xs font-bold text-white">{{ number_format($projectedMealAllowanceTotal * 11, 2, ',', ' ') }} €</p></div>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+
+        {{-- MODAL: HISTÓRICO DO SALÁRIO --}}
+        <div x-show="showSalaryHistory" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 p-3 backdrop-blur-sm sm:p-6" @click.self="showSalaryHistory = false" @keydown.escape.window="showSalaryHistory = false">
+            <div x-show="showSalaryHistory" x-transition.scale class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
+                <div class="flex items-center justify-between gap-4 border-b border-zinc-100 bg-gradient-to-r from-indigo-50 to-white p-5 dark:border-zinc-800 dark:from-indigo-950/40 dark:to-zinc-900 sm:p-6">
+                    <div class="flex items-center gap-3">
+                        <span class="flex size-11 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"><flux:icon name="briefcase" class="size-5" /></span>
+                        <div><h3 class="text-lg font-black text-zinc-900 dark:text-white">Histórico do salário líquido</h3><p class="text-xs text-zinc-500">Contratos, pagamentos, serviços e prémios associados</p></div>
+                    </div>
+                    <button type="button" @click="showSalaryHistory = false" class="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label="Fechar"><flux:icon name="x-mark" class="size-5" /></button>
+                </div>
+                <div class="min-h-0 flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div class="rounded-2xl border border-indigo-100 bg-indigo-50 p-4 dark:border-indigo-900/50 dark:bg-indigo-950/30"><p class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-300">Projeção mensal</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($projectedSalaryNetTotal, 2, ',', ' ') }} €</p><p class="mt-1 text-[10px] text-zinc-500">Salário líquido estimado, sem subsídio de alimentação</p></div>
+                        <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"><p class="text-[10px] font-black uppercase tracking-wider text-zinc-500">Projeção anual</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($projectedSalaryAnnualTotal, 2, ',', ' ') }} €</p><p class="mt-1 text-[10px] text-zinc-500">Projeção mensal multiplicada por 12</p></div>
+                        <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"><p class="text-[10px] font-black uppercase tracking-wider text-zinc-500">Registos de pagamento</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ $projectedSalaryHistoryPayments->count() }}</p><p class="mt-1 text-[10px] text-zinc-500">Pagamentos guardados no histórico</p></div>
+                    </div>
+                    <div class="rounded-2xl border border-indigo-100 p-4 dark:border-indigo-900/50">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Como é calculado este cartão?</h4>
+                        <div class="mt-3 space-y-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
+                            <p>O valor mensal soma o líquido estimado de cada contrato de trabalho ativo. Quando o subsídio de alimentação já está configurado separadamente, esse valor é retirado do montante do contrato para não ser contado duas vezes.</p>
+                            <p>Acrescentam-se os serviços ou prémios do mês anterior que estejam marcados para integrar o salário deste mês. A estimativa anual apresentada no cartão corresponde ao valor mensal projetado × 12; não representa uma previsão de todos os subsídios anuais.</p>
+                            <p><strong>Importante:</strong> uma projeção não significa que o dinheiro já tenha sido recebido. Para confirmar um recebimento, consulta o estado e a data de cada pagamento abaixo.</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-500">Contratos considerados na projeção</h4>
+                        @forelse($projectedSalaryContracts as $contract)
+                            <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
+                                <div class="flex flex-wrap items-start justify-between gap-2"><div><p class="text-sm font-bold text-zinc-900 dark:text-white">{{ $contract->description }}</p><p class="mt-1 text-[10px] text-zinc-500">{{ $contract->metadata['position'] ?? 'Função não indicada' }} · {{ $contract->metadata['contract_type'] ?? 'Tipo de contrato não indicado' }}</p></div><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[9px] font-black uppercase text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Ativo</span></div>
+                                <div class="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3"><div><p class="text-[10px] text-zinc-500">Valor configurado</p><p class="mt-1 font-bold text-zinc-900 dark:text-white">{{ number_format((float) $contract->amount, 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">Líquido considerado</p><p class="mt-1 font-bold text-indigo-600 dark:text-indigo-300">{{ number_format((float) $contract->projected_salary_net, 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">Início</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">{{ $contract->metadata['start_date'] ?? 'Não indicado' }}</p></div></div>
+                            </div>
+                        @empty
+                            <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Não existem contratos ativos para calcular o salário projetado.</p>
+                        @endforelse
+                    </div>
+                    <div class="space-y-3">
+                        <div><h4 class="text-xs font-black uppercase tracking-wider text-zinc-500">Histórico de pagamentos salariais</h4><p class="mt-1 text-[10px] text-zinc-500">Inclui pagamentos pagos e pendentes registados na aplicação.</p></div>
+                        @forelse($projectedSalaryHistoryPayments as $payment)
+                            <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
+                                <div class="flex flex-wrap items-center justify-between gap-2"><div><p class="text-sm font-bold text-zinc-900 dark:text-white">{{ $payment->recurringIncome?->description ?? 'Pagamento salarial' }}</p><p class="mt-1 text-[10px] text-zinc-500">Período: {{ str_pad((string) $payment->payment_month, 2, '0', STR_PAD_LEFT) }}/{{ $payment->payment_year }} · {{ $payment->paid_at?->format('d/m/Y') ?? 'Sem data de pagamento' }}</p></div><span class="rounded-full px-2.5 py-1 text-[9px] font-black uppercase {{ $payment->status === 'paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' }}">{{ $payment->status === 'paid' ? 'Pago' : 'Pendente' }}</span></div>
+                                <div class="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4"><div><p class="text-[10px] text-zinc-500">Salário bruto</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">{{ number_format((float) $payment->salary_base_gross, 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">Segurança Social</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">− {{ number_format((float) $payment->social_security, 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">IRS</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">− {{ number_format((float) $payment->irs, 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">Líquido recebido</p><p class="mt-1 font-black text-emerald-600 dark:text-emerald-300">{{ number_format((float) $payment->net_received, 2, ',', ' ') }} €</p></div></div>
+                                <p class="mt-3 text-[10px] text-zinc-500">Subsídio de alimentação: {{ number_format((float) $payment->meal_allowance, 2, ',', ' ') }} € · Outros complementos: {{ number_format((float) $payment->other_complements, 2, ',', ' ') }} € · Descontos adicionais: {{ number_format((float) $payment->other_deductions, 2, ',', ' ') }} €</p>
+                                @if($payment->notes)<p class="mt-2 rounded-lg bg-zinc-50 p-2 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">Nota: {{ $payment->notes }}</p>@endif
+                            </div>
+                        @empty
+                            <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Ainda não existem pagamentos salariais guardados. Os valores dos cartões são projeções dos contratos ativos.</p>
+                        @endforelse
+                    </div>
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-500">Serviços extra e prémios associados</h4>
+                        @forelse($projectedSalaryHistoryExtras as $extra)
+                            <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-700"><div><p class="text-xs font-bold text-zinc-900 dark:text-white">{{ $extra->description }}</p><p class="mt-1 text-[10px] text-zinc-500">{{ $extra->received_at?->format('d/m/Y') ?? 'Sem data' }} · {{ $extra->added_to_salary ? 'Integrado no próximo salário' : 'Registado como entrada independente' }}</p></div><p class="text-sm font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format((float) ($extra->amount_converted ?? $extra->amount), 2, ',', ' ') }} €</p></div>
+                        @empty
+                            <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Não existem serviços extra ou prémios associados a estes contratos.</p>
+                        @endforelse
+                    </div>
+                </div>
+                <div class="border-t border-zinc-100 p-4 text-right dark:border-zinc-800"><button type="button" @click="showSalaryHistory = false" class="rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900">Fechar histórico</button></div>
+            </div>
+        </div>
+
+        {{-- MODAL: HISTÓRICO DO SUBSÍDIO DE ALIMENTAÇÃO --}}
+        <div x-show="showMealHistory" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 p-3 backdrop-blur-sm sm:p-6" @click.self="showMealHistory = false" @keydown.escape.window="showMealHistory = false">
+            <div x-show="showMealHistory" x-transition.scale class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
+                <div class="flex items-center justify-between gap-4 border-b border-zinc-100 bg-gradient-to-r from-emerald-50 to-white p-5 dark:border-zinc-800 dark:from-emerald-950/40 dark:to-zinc-900 sm:p-6">
+                    <div class="flex items-center gap-3"><span class="flex size-11 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"><flux:icon name="cake" class="size-5" /></span><div><h3 class="text-lg font-black text-zinc-900 dark:text-white">Histórico do subsídio de alimentação</h3><p class="text-xs text-zinc-500">Valores configurados e subsídios registados nos pagamentos</p></div></div>
+                    <button type="button" @click="showMealHistory = false" class="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label="Fechar"><flux:icon name="x-mark" class="size-5" /></button>
+                </div>
+                <div class="min-h-0 flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30"><p class="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Projeção mensal</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($projectedMealAllowanceTotal, 2, ',', ' ') }} €</p><p class="mt-1 text-[10px] text-zinc-500">Soma dos valores mensais configurados</p></div>
+                        <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"><p class="text-[10px] font-black uppercase tracking-wider text-zinc-500">Projeção anual</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($projectedMealAllowanceTotal * 11, 2, ',', ' ') }} €</p><p class="mt-1 text-[10px] text-zinc-500">Estimativa mensal × 11 meses</p></div>
+                        <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"><p class="text-[10px] font-black uppercase tracking-wider text-zinc-500">Registos salariais</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ $projectedSalaryHistoryPayments->count() }}</p><p class="mt-1 text-[10px] text-zinc-500">Com detalhe do subsídio registado</p></div>
+                    </div>
+                    <div class="rounded-2xl border border-emerald-100 p-4 dark:border-emerald-900/50">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Como é calculado este cartão?</h4>
+                        <div class="mt-3 space-y-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
+                            <p>O valor mensal é a soma do campo de subsídio de alimentação configurado em cada contrato ativo. Nos contratos MIND, por exemplo, o cálculo pode resultar do valor diário multiplicado pelos dias de trabalho elegíveis definidos no contrato.</p>
+                            <p>A estimativa anual apresentada no cartão usa 11 meses, assumindo que o subsídio não é pago no mês de férias. É uma estimativa de configuração e não uma confirmação de pagamento.</p>
+                            <p>Quando o destino é cartão de refeição, o subsídio é apresentado separadamente do salário transferido para a conta bancária. O valor efetivamente pago deve ser confirmado no histórico salarial e no respetivo registo.</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-500">Configuração por contrato ativo</h4>
+                        @forelse($projectedSalaryContracts as $contract)
+                            <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
+                                <div class="flex flex-wrap items-start justify-between gap-2"><div><p class="text-sm font-bold text-zinc-900 dark:text-white">{{ $contract->description }}</p><p class="mt-1 text-[10px] text-zinc-500">Destino: {{ ($contract->metadata['meal_allowance_destination'] ?? '') === 'meal_card' ? 'Cartão de refeição' : 'Dinheiro / transferência' }}</p></div><p class="text-sm font-black text-emerald-600 dark:text-emerald-300">{{ number_format((float) ($contract->metadata['calculated_sa'] ?? 0), 2, ',', ' ') }} € / mês</p></div>
+                                <div class="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4"><div><p class="text-[10px] text-zinc-500">Valor diário</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">{{ number_format((float) ($contract->metadata['meal_allowance'] ?? 0), 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">Dias configurados</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">{{ (int) ($contract->metadata['working_days'] ?? 0) }}</p></div><div><p class="text-[10px] text-zinc-500">Frequência</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">Mensal</p></div><div><p class="text-[10px] text-zinc-500">Estado</p><p class="mt-1 font-semibold text-emerald-600 dark:text-emerald-300">Ativo</p></div></div>
+                            </div>
+                        @empty
+                            <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Não existem subsídios configurados em contratos ativos.</p>
+                        @endforelse
+                    </div>
+                    <div class="space-y-3">
+                        <div><h4 class="text-xs font-black uppercase tracking-wider text-zinc-500">Histórico de subsídios registados</h4><p class="mt-1 text-[10px] text-zinc-500">Valores guardados nos registos mensais de salário, incluindo pagamentos pendentes.</p></div>
+                        @forelse($projectedSalaryHistoryPayments as $payment)
+                            <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
+                                <div class="flex flex-wrap items-center justify-between gap-2"><div><p class="text-sm font-bold text-zinc-900 dark:text-white">{{ $payment->recurringIncome?->description ?? 'Subsídio de alimentação' }}</p><p class="mt-1 text-[10px] text-zinc-500">Período: {{ str_pad((string) $payment->payment_month, 2, '0', STR_PAD_LEFT) }}/{{ $payment->payment_year }} · {{ $payment->paid_at?->format('d/m/Y') ?? 'Sem data de pagamento' }}</p></div><span class="rounded-full px-2.5 py-1 text-[9px] font-black uppercase {{ $payment->status === 'paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' }}">{{ $payment->status === 'paid' ? 'Pago' : 'Pendente' }}</span></div>
+                                <div class="mt-3 flex flex-wrap items-end justify-between gap-3"><div><p class="text-[10px] text-zinc-500">Subsídio registado</p><p class="mt-1 text-lg font-black text-emerald-600 dark:text-emerald-300">{{ number_format((float) $payment->meal_allowance, 2, ',', ' ') }} €</p></div><p class="text-[10px] text-zinc-500">O estado indica se o pagamento salarial associado foi marcado como pago.</p></div>
+                            </div>
+                        @empty
+                            <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Ainda não existem registos mensais de pagamento com subsídio de alimentação.</p>
+                        @endforelse
+                    </div>
+                </div>
+                <div class="border-t border-zinc-100 p-4 text-right dark:border-zinc-800"><button type="button" @click="showMealHistory = false" class="rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900">Fechar histórico</button></div>
+            </div>
+        </div>
+    </section>
 
     {{-- CARDS DE ESTATÍSTICAS · ULTRA PREMIUM                           --}}
 {{-- ================================================================== --}}
