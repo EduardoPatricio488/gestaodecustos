@@ -108,51 +108,60 @@
 
 
 
-{{-- IA INSIGHTS TICKER — MONOCROMÁTICO PREMIUM --}}
+{{-- NOTÍCIAS 24H — RESUMO COM IA --}}
 <div
-    x-data="{ speed: 400 }"
-    class="relative flex items-center gap-5 w-full p-3.5 rounded-2xl border border-white/5
-           bg-zinc-950 backdrop-blur-2xl shadow-xl group overflow-hidden select-none">
+    x-data="{ speed: 260 }"
+    class="relative flex items-center gap-5 w-full p-3.5 rounded-2xl border border-white/5 bg-zinc-950 backdrop-blur-2xl shadow-xl group overflow-hidden select-none">
 
-    {{-- FUNDO DINÂMICO DE NOTÍCIAS --}}
-    <div class="absolute inset-0 pointer-events-none opacity-[0.18] bg-gradient-to-r
-                from-emerald-600/40 via-emerald-400/20 to-transparent animate-bgFlow"></div>
+    <div class="absolute inset-0 pointer-events-none opacity-[0.18] bg-gradient-to-r from-sky-600/40 via-indigo-400/20 to-transparent animate-bgFlow"></div>
 
-    {{-- IA INDICATOR --}}
     <div class="flex items-center gap-3 shrink-0 pl-1 z-10">
         <div class="relative flex items-center justify-center">
-            <div class="size-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            <div class="absolute inset-0 size-2.5 rounded-full bg-emerald-400/30 blur-md"></div>
+            <div class="size-2.5 rounded-full bg-sky-400 animate-pulse"></div>
+            <div class="absolute inset-0 size-2.5 rounded-full bg-sky-400/30 blur-md"></div>
         </div>
-        <span class="text-[10px] font-black uppercase text-emerald-400 tracking-[0.3em]">
-            IA Insights
-        </span>
+        <div class="flex flex-col">
+            <span class="text-[10px] font-black uppercase text-sky-300 tracking-[0.22em]">Notícias 24h</span>
+            <span class="text-[8px] font-bold uppercase text-zinc-500 tracking-widest">Resumo por IA</span>
+        </div>
     </div>
 
-    {{-- Ticker Container --}}
-    <div class="relative flex-1 overflow-hidden h-6 z-10">
+    <div class="relative flex-1 overflow-hidden h-8 z-10">
         <div class="ticker-ultra flex items-center gap-20 whitespace-nowrap" :style="`animation-duration: ${speed}s`">
-
-            {{-- 1ª Cópia --}}
-            <div class="ticker-text-ultra">
-                @forelse($this->aiInsights as $insight)
-                    <span class="mono-item">{{ $insight }}</span>
+            @forelse($this->news24h as $news)
+                <div class="ticker-text-ultra flex items-center gap-3">
+                    <span class="text-[9px] font-black tracking-widest {{ $news['region'] === 'PT' ? 'text-emerald-400' : 'text-sky-400' }}">
+                        {{ $news['region'] === 'PT' ? 'PORTUGAL' : 'MUNDO' }}
+                    </span>
+                    <a href="{{ $news['url'] }}" target="_blank" rel="noopener noreferrer"
+                       class="mono-item normal-case tracking-normal hover:text-sky-300 transition-colors"
+                       title="{{ $news['source'] }} • {{ $news['published_label'] }}">
+                        {{ $news['title'] }}
+                    </a>
+                    @if(!empty($news['summary']))
+                        <span class="text-zinc-400 normal-case tracking-normal font-medium">— {{ $news['summary'] }}</span>
+                    @endif
+                    <span class="text-[9px] text-zinc-500 font-semibold">{{ $news['source'] }} · {{ $news['published_label'] }}</span>
                     <span class="mono-separator">/</span>
-                @empty
-                    <span class="mono-empty italic uppercase">A analisar fluxos financeiros...</span>
-                @endforelse
-            </div>
-
-            {{-- 2ª Cópia --}}
-            <div class="ticker-text-ultra">
-                @forelse($this->aiInsights as $insight)
-                    <span class="mono-item">{{ $insight }}</span>
-                    <span class="mono-separator">/</span>
-                @empty
-                    <span class="mono-empty italic uppercase">A analisar fluxos financeiros...</span>
-                @endforelse
-            </div>
-
+                </div>
+            @empty
+                <span class="mono-empty italic uppercase">A obter notícias recentes de Portugal e do mundo...</span>
+            @endforelse
+            @if(count($this->news24h) > 0)
+                @foreach($this->news24h as $news)
+                    <div class="ticker-text-ultra flex items-center gap-3" aria-hidden="true">
+                        <span class="text-[9px] font-black tracking-widest {{ $news['region'] === 'PT' ? 'text-emerald-400' : 'text-sky-400' }}">
+                            {{ $news['region'] === 'PT' ? 'PORTUGAL' : 'MUNDO' }}
+                        </span>
+                        <span class="mono-item normal-case tracking-normal">{{ $news['title'] }}</span>
+                        @if(!empty($news['summary']))
+                            <span class="text-zinc-400 normal-case tracking-normal font-medium">— {{ $news['summary'] }}</span>
+                        @endif
+                        <span class="text-[9px] text-zinc-500 font-semibold">{{ $news['source'] }} · {{ $news['published_label'] }}</span>
+                        <span class="mono-separator">/</span>
+                    </div>
+                @endforeach
+            @endif
         </div>
     </div>
 </div>
