@@ -49,6 +49,18 @@ class CategoryHub extends Component
     // Destino do pagamento: conta bancária ou dinheiro físico (vazio = físico)
     public $bankAccountId = '';
 
+    public bool $transportPassMode = false;
+
+    public $transportPassName = 'Passe mensal';
+
+    public $transportPassAmount;
+
+    public $transportPassStartedAt;
+
+    public $transportPassPaymentMethod = 'card';
+
+    public bool $transportPassPaidByCompany = false;
+
     public $receipt;
 
     public $budgetLimit;
@@ -371,6 +383,12 @@ PROMPT;
     {
         $this->reset(['amount', 'description', 'subcategory', 'receipt', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId']);
         $this->spent_at = now()->format('Y-m-d');
+        $this->transportPassMode = false;
+        $this->transportPassName = 'Passe mensal';
+        $this->transportPassAmount = null;
+        $this->transportPassStartedAt = now()->format('Y-m-d');
+        $this->transportPassPaymentMethod = 'card';
+        $this->transportPassPaidByCompany = false;
     }
 
     public function openScannerModal(): void
@@ -436,6 +454,11 @@ PROMPT;
     // ─────────────────────────────────────────────────────────────────
     public function save(): void
     {
+        if ($this->slug === 'transporte' && $this->transportPassMode) {
+            $this->saveTransportPass();
+            return;
+        }
+
         $this->validate([
             'amount' => 'required|numeric|min:0.01',
             'spent_at' => 'required|date',
@@ -518,6 +541,70 @@ PROMPT;
 
         $this->dispatch('modal-close-add-expense');
         $this->dispatch('toast', variant: 'success', text: $msg);
+    }
+
+    private function saveTransportPass(): void
+    {
+        $this->validate([
+            'transportPassName' => 'required|string|max:120',
+            'transportPassAmount' => 'required|numeric|min:0.01',
+            'transportPassStartedAt' => 'required|date',
+            'transportPassPaymentMethod' => 'required|in:card,direct_debit,bank_transfer,paypal,cash',
+            'transportPassPaidByCompany' => 'boolean',
+        ]);
+
+        $user = auth()->user();
+        $workspaceId = $user->current_workspace_id;
+
+        $categoryQuery = Category::where('workspace_id', $workspaceId)->where('name', 'Transporte');
+        if ($user->currentWorkspace?->type === 'personal') {
+            $categoryQuery->where('user_id', $user->id);
+        }
+
+        $category = $categoryQuery->first();
+        if (! $category) {
+            $category = Category::create([
+                'name' => 'Transporte',
+                'workspace_id' => $workspaceId,
+                'user_id' => $user->id,
+                'icon' => 'bus',
+                'color' => '#0ea5e9',
+            ]);
+        }
+
+        $startDate = Carbon::parse($this->transportPassStartedAt);
+
+        \App\Models\Subscription::create([
+            'user_id' => $user->id,
+            'workspace_id' => $workspaceId,
+            'category_id' => $category->id,
+            'name' => trim($this->transportPassName),
+            'amount' => $this->transportPassAmount,
+            'billing_day' => $startDate->day,
+            'cycle' => 'monthly',
+            'status' => 'active',
+            'is_active' => true,
+            'payment_method' => $this->transportPassPaymentMethod,
+            'started_at' => $startDate->toDateString(),
+            'renewal_date' => $startDate->copy()->addMonthNoOverflow()->toDateString(),
+            'notes' => $this->transportPassPaidByCompany
+                ? 'Passe de transporte pago pela empresa. Excluído dos cálculos financeiros pessoais.'
+                : 'Passe mensal de transporte.',
+            'notify_before_billing' => false,
+            'paid_by_company' => $this->transportPassPaidByCompany,
+        ]);
+
+        $user->awardXp(20, 'passe mensal registado');
+        $this->reset(['transportPassAmount', 'transportPassPaidByCompany']);
+        $this->transportPassName = 'Passe mensal';
+        $this->transportPassStartedAt = now()->format('Y-m-d');
+        $this->transportPassPaymentMethod = 'card';
+        $this->transportPassMode = false;
+        $this->dispatch('modal-close-add-expense');
+        $message = $this->transportPassPaidByCompany
+            ? 'Passe registado. Como é pago pela empresa, não entra nas tuas contas.'
+            : 'Passe mensal adicionado às assinaturas.';
+        $this->dispatch('toast', variant: 'success', text: $message);
     }
 
     // ─────────────────────────────────────────────────────────────────
