@@ -25,7 +25,7 @@
     </div>
     <div
         x-data="{ open: false, activeTab: 'category' }"
-        x-on:open-expense-category-picker.window="open = true; activeTab = 'category'"
+        x-on:open-expense-category-picker.window="open = true; activeTab = 'scanner'"
         x-on:keydown.escape.window="open = false"
         x-show="open"
         x-cloak
@@ -48,13 +48,13 @@
             </div>
 
             <div class="grid grid-cols-2 gap-2 p-3 sm:px-6 border-b border-zinc-100 dark:border-zinc-800">
-                <button type="button" x-on:click="activeTab = 'category'" x-bind:class="activeTab === 'category' ? 'bg-brand-600 text-white shadow-lg' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" class="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all">
-                    <flux:icon name="tag" class="size-4" />
-                    Escolher categoria
-                </button>
                 <button type="button" x-on:click="activeTab = 'scanner'" x-bind:class="activeTab === 'scanner' ? 'bg-brand-600 text-white shadow-lg' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" class="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all">
                     <flux:icon name="sparkles" class="size-4" />
                     Scanner de fatura
+                </button>
+                <button type="button" x-on:click="activeTab = 'category'" x-bind:class="activeTab === 'category' ? 'bg-brand-600 text-white shadow-lg' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" class="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all">
+                    <flux:icon name="tag" class="size-4" />
+                    Escolher categoria
                 </button>
             </div>
 
