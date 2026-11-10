@@ -35,6 +35,18 @@ class SubscriptionHub extends Component
 
     public $notes;
 
+    public bool $transportPassMode = false;
+
+    public $transportPassName = 'Passe mensal';
+
+    public $transportPassAmount;
+
+    public $transportPassStartedAt;
+
+    public $transportPassPaymentMethod = 'card';
+
+    public bool $transportPassPaidByCompany = false;
+
     public bool $notify_before_billing = false;
 
     public $notify_days_before;
@@ -296,6 +308,12 @@ class SubscriptionHub extends Component
     public function openExtraModal()
     {
         $this->reset(['name', 'amount', 'billing_day', 'category_id', 'billing_cycle', 'payment_method', 'status', 'started_at', 'renewal_date', 'notes', 'notify_before_billing', 'notify_days_before', 'editingId']);
+        $this->transportPassMode = false;
+        $this->transportPassName = 'Passe mensal';
+        $this->transportPassAmount = null;
+        $this->transportPassStartedAt = now()->format('Y-m-d');
+        $this->transportPassPaymentMethod = 'card';
+        $this->transportPassPaidByCompany = false;
         $this->showExtraModal = true;
     }
 
@@ -315,6 +333,11 @@ class SubscriptionHub extends Component
 
     public function save()
     {
+        if ($this->transportPassMode) {
+            $this->saveTransportPass();
+            return;
+        }
+
         $data = $this->validate([
             'name' => 'required',
             'amount' => 'required|numeric',
@@ -374,6 +397,69 @@ class SubscriptionHub extends Component
         $this->dispatch('toast', text: $msg);
     }
 
+    private function saveTransportPass(): void
+    {
+        $this->validate([
+            'transportPassName' => 'required|string|max:120',
+            'transportPassAmount' => 'required|numeric|min:0.01',
+            'transportPassStartedAt' => 'required|date',
+            'transportPassPaymentMethod' => 'required|in:card,direct_debit,bank_transfer,paypal,cash',
+            'transportPassPaidByCompany' => 'boolean',
+        ]);
+
+        $user = auth()->user();
+        $workspaceId = $user->current_workspace_id;
+        $paidByCompany = (bool) $this->transportPassPaidByCompany;
+
+        $categoryQuery = Category::where('workspace_id', $workspaceId)->where('name', 'Transporte');
+        if ($user->currentWorkspace?->type === 'personal') {
+            $categoryQuery->where('user_id', $user->id);
+        }
+
+        $category = $categoryQuery->first();
+        if (! $category) {
+            $category = Category::create([
+                'name' => 'Transporte',
+                'workspace_id' => $workspaceId,
+                'user_id' => $user->id,
+                'icon' => 'truck',
+                'color' => '#0ea5e9',
+                'hidden_from_sidebar' => true,
+            ]);
+        }
+
+        $startDate = Carbon::parse($this->transportPassStartedAt);
+        Subscription::create([
+            'user_id' => $user->id,
+            'workspace_id' => $workspaceId,
+            'category_id' => $category->id,
+            'name' => trim($this->transportPassName),
+            'amount' => $this->transportPassAmount,
+            'billing_day' => $startDate->day,
+            'cycle' => 'monthly',
+            'status' => 'active',
+            'is_active' => true,
+            'payment_method' => $this->transportPassPaymentMethod,
+            'started_at' => $startDate->toDateString(),
+            'renewal_date' => $startDate->copy()->addMonthNoOverflow()->toDateString(),
+            'notes' => $paidByCompany
+                ? 'Passe de transporte pago pela empresa. Excluído dos cálculos financeiros pessoais.'
+                : 'Passe mensal de transporte.',
+            'notify_before_billing' => false,
+            'paid_by_company' => $paidByCompany,
+        ]);
+
+        \Illuminate\Support\Facades\Cache::forget("dashboard:subscriptions-monthly:{$workspaceId}:{$user->id}");
+        $user->awardXp(20, 'passe mensal registado');
+        $this->reset(['transportPassAmount', 'transportPassPaidByCompany']);
+        $this->transportPassMode = false;
+        $this->dispatch('modal-close-add-sub');
+        $message = $paidByCompany
+            ? 'Passe registado. Como é pago pela empresa, não entra nas tuas contas.'
+            : 'Passe mensal adicionado às assinaturas.';
+        $this->dispatch('toast', text: $message);
+    }
+
     public function delete($id)
     {
         $sub = Subscription::where('workspace_id', auth()->user()->current_workspace_id)
@@ -406,7 +492,7 @@ class SubscriptionHub extends Component
             'Streaming (Vídeo/TV)', 'Música & Podcasts', 'Software & SaaS', 'Gaming',
             'Fitness & Ginásio', 'Cloud & Armazenamento', 'Notícias & Revistas',
             'Educação & Cursos', 'VPN & Segurança', 'Seguros & Finanças',
-            'Serviços Casa (Net/TV)', 'Outros',
+            'Serviços Casa (Net/TV)', 'Transporte', 'Outros',
         ];
 
         foreach ($subCatNames as $name) {
