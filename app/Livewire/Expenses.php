@@ -17,6 +17,17 @@ class Expenses extends Component
 
     public ?int $filterCategory = null;
 
+    public bool $openCreateAfterCategory = false;
+
+    public function mount(): void
+    {
+        $this->openCreateAfterCategory = request()->boolean('open_new');
+
+        if ($this->openCreateAfterCategory) {
+            $this->dispatch('open-expense-category-picker');
+        }
+    }
+
     /**
      * Reseta a paginação ao pesquisar.
      */
@@ -57,7 +68,10 @@ class Expenses extends Component
             ->whereKey($categoryId)
             ->firstOrFail();
 
-        $this->redirect(route('hub.category', ['slug' => $category->slug]), navigate: true);
+        $this->redirect(route('hub.category', [
+            'slug' => $category->slug,
+            'open_new' => $this->openCreateAfterCategory ? 1 : null,
+        ]), navigate: true);
     }
 
     /**
