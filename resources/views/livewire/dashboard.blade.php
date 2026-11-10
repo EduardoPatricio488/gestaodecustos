@@ -606,11 +606,37 @@
 
     {{-- Cartões de salário e subsídio de alimentação, com histórico --}}
     <section x-data="{ showSalaryHistory: false, showMealHistory: false }" class="space-y-4">
-        <div class="flex items-end justify-between gap-3 px-1">
-            <span class="hidden items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:inline-flex">
-                <flux:icon name="calendar-days" variant="micro" class="size-3.5 text-emerald-500" />
-                {{ now()->translatedFormat('F Y') }}
-            </span>
+        <div x-data="{ openPeriodFilter: false }" class="flex flex-wrap items-center justify-between gap-3 px-1">
+            <div class="relative">
+                <button type="button" @click="openPeriodFilter = !openPeriodFilter" class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-black uppercase tracking-wider text-zinc-600 shadow-sm transition hover:border-brand-400 hover:text-brand-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+                    <flux:icon name="calendar-days" variant="micro" class="size-4 text-emerald-500" />
+                    {{ $dashboardPeriodLabel }}
+                    <flux:icon name="chevron-down" variant="micro" class="size-3.5 transition-transform" />
+                </button>
+                <div x-cloak x-show="openPeriodFilter" @click.outside="openPeriodFilter = false" x-transition class="absolute left-0 top-full z-40 mt-2 w-72 rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+                    <p class="mb-3 text-[10px] font-black uppercase tracking-widest text-zinc-400">Consultar outro período</p>
+                    <div class="mb-3 grid grid-cols-2 gap-2">
+                        <button type="button" wire:click="$set('dashboardPeriodType', 'month')" @click="openPeriodFilter = false" class="rounded-lg px-3 py-2 text-xs font-bold transition {{ $dashboardPeriodType === 'month' ? 'bg-brand-600 text-white' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' }}">Por mês</button>
+                        <button type="button" wire:click="$set('dashboardPeriodType', 'year')" @click="openPeriodFilter = false" class="rounded-lg px-3 py-2 text-xs font-bold transition {{ $dashboardPeriodType === 'year' ? 'bg-brand-600 text-white' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' }}">Por ano</button>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">{{ $dashboardPeriodType === 'year' ? 'Ano' : 'Mês' }}</label>
+                        @if($dashboardPeriodType === 'year')
+                            <select wire:model.live="dashboardSelectedYear" class="w-full rounded-xl border-zinc-200 bg-zinc-50 text-sm font-semibold dark:border-zinc-700 dark:bg-zinc-800">
+                                @for($year = now()->year; $year >= 2000; $year--)
+                                    <option value="{{ $year }}">{{ $year }}</option>
+                                @endfor
+                            </select>
+                        @else
+                            <input type="month" wire:model.live="dashboardSelectedMonth" max="{{ now()->format('Y-m') }}" class="w-full rounded-xl border-zinc-200 bg-zinc-50 text-sm font-semibold dark:border-zinc-700 dark:bg-zinc-800" />
+                        @endif
+                        <button type="button" wire:click="$refresh" @click="openPeriodFilter = false" class="w-full rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-500">Aplicar filtro</button>
+                    </div>
+                </div>
+            </div>
+            @if($dashboardPeriodType !== 'month' || $dashboardSelectedMonth !== now()->format('Y-m'))
+                <button type="button" wire:click="$set('dashboardSelectedMonth', '{{ now()->format('Y-m') }}'); $set('dashboardPeriodType', 'month')" class="text-[10px] font-bold uppercase tracking-wider text-brand-600 hover:underline">Voltar ao mês atual</button>
+            @endif
         </div>
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
