@@ -72,6 +72,8 @@ class CategoryHub extends Component
 
     public ?string $pendingDocumentMime = null;
 
+    public ?string $savedDocumentPath = null;
+
     public $budgetLimit;
 
     public $editingBudget = false;
@@ -473,7 +475,7 @@ PROMPT;
 
     public function openCreateModal(): void
     {
-        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'document', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId', 'pendingDocumentPath', 'pendingDocumentName', 'pendingDocumentMime']);
+        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'document', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId', 'pendingDocumentPath', 'pendingDocumentName', 'pendingDocumentMime', 'savedDocumentPath']);
         $this->spent_at = now()->format('Y-m-d');
         $this->transportPassMode = false;
         $this->transportPassName = 'Passe mensal';
@@ -499,6 +501,13 @@ PROMPT;
             ->findOrFail($id);
 
         $this->editingId = $expense->id;
+        $this->savedDocumentPath = $expense->receipt_path && Storage::disk('public')->exists($expense->receipt_path)
+            ? $expense->receipt_path
+            : null;
+        $this->pendingDocumentPath = null;
+        $this->pendingDocumentName = null;
+        $this->pendingDocumentMime = null;
+        $this->document = null;
         $this->amount = $expense->amount;
         $this->spent_at = $expense->spent_at->format('Y-m-d');
         $this->subcategory = trim($expense->subcategory);
@@ -675,7 +684,7 @@ PROMPT;
         }
         session()->forget('pending_expense_scan_preview:'.auth()->user()->current_workspace_id.':'.auth()->id());
 
-        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'document', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId']);
+        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'document', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId', 'pendingDocumentPath', 'pendingDocumentName', 'pendingDocumentMime', 'savedDocumentPath']);
         $this->spent_at = now()->format('Y-m-d');
 
         $this->dispatch('modal-close-add-expense');
