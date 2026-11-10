@@ -1010,12 +1010,19 @@ class Dashboard extends Component
             ->get();
 
         // Valores efetivamente registados no cartão para o mês/ano selecionado.
-        $dashboardMealCardPayments = $projectedSalaryHistoryPayments->filter(
-            fn (SalaryPayment $payment): bool => ($payment->recurringIncome?->metadata['meal_allowance_destination'] ?? null) === 'meal_card'
-        );
-        if ($dashboardMealCardPayments->isNotEmpty()) {
-            $dashboardProjectedMealAllowance = round((float) $dashboardMealCardPayments->sum('meal_allowance'), 2);
-        }
+        $dashboardMealCardPayments = $projectedSalaryHistoryPayments->filter(function (SalaryPayment $payment): bool {
+            $metadata = $payment->recurringIncome?->metadata ?? [];
+            if (($metadata['meal_allowance_destination'] ?? null) !== 'meal_card') {
+                return false;
+            }
+
+            $paymentDate = Carbon::create((int) $payment->payment_year, (int) $payment->payment_month, 1);
+            $startDate = $metadata['start_date'] ?? $payment->recurringIncome?->created_at?->toDateString();
+            $endDate = $metadata['end_date'] ?? null;
+
+            return (! $startDate || Carbon::parse($startDate)->startOfMonth()->lessThanOrEqualTo($paymentDate))
+                && (! $endDate || Carbon::parse($endDate)->endOfMonth()->greaterThanOrEqualTo($paymentDate));
+        });
 
         if ($dashboardMealCardPayments->isNotEmpty()) {
             $dashboardProjectedMealAllowance = round((float) $dashboardMealCardPayments->sum('meal_allowance'), 2);
