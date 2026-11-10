@@ -1196,7 +1196,22 @@
                         @if($isScanning)
                             <div class="flex items-center gap-2 rounded-xl bg-brand-100 px-3 py-3 text-xs font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-300"><span class="size-4 animate-spin rounded-full border-2 border-brand-600/20 border-t-brand-600"></span>A IA está a ler a fatura e a preencher os campos...</div>
                         @endif
-                        @if($document || $pendingDocumentPath)
+                        @if($document || $pendingDocumentPath || $savedDocumentPath)
+                            @if($savedDocumentPath)
+                                <div class="flex w-full flex-row items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900 dark:bg-emerald-950/20">
+                                    <a href="{{ Storage::disk('public')->url($savedDocumentPath) }}" target="_blank" rel="noopener" class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-emerald-200 bg-white dark:border-emerald-800 dark:bg-zinc-950">
+                                        @if(in_array(strtolower(pathinfo($savedDocumentPath, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'webp'], true))
+                                            <img src="{{ Storage::disk('public')->url($savedDocumentPath) }}" alt="Documento já guardado — abrir" class="h-full w-full object-contain">
+                                        @else
+                                            <span class="text-xs font-black text-red-600">PDF</span>
+                                        @endif
+                                    </a>
+                                    <div class="min-w-0 flex-1 space-y-1 text-left">
+                                        <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300">Documento já associado a esta despesa</p>
+                                        <a href="{{ Storage::disk('public')->url($savedDocumentPath) }}" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-600 hover:underline">Abrir documento guardado</a>
+                                    </div>
+                                </div>
+                            @endif
                             <div class="flex w-full flex-row items-center gap-4 rounded-xl bg-white p-3 dark:bg-zinc-900">
                                 @if($document && str_starts_with($document->getMimeType() ?? '', 'image/'))
                                     <a href="{{ $document->temporaryUrl() }}" target="_blank" rel="noopener" class="block h-20 w-20 shrink-0 sm:h-24 sm:w-24">
