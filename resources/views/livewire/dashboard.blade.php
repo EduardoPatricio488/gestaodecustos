@@ -108,7 +108,7 @@
 
 
 
-{{-- NOTÍCIAS 24H — RESUMO COM IA --}}
+{{-- NOTÍCIAS 24H --}}
 <div
     x-data="{ speed: 260 }"
     class="relative flex items-center gap-5 w-full p-3.5 rounded-2xl border border-white/5 bg-zinc-950 backdrop-blur-2xl shadow-xl group overflow-hidden select-none">
@@ -122,7 +122,6 @@
         </div>
         <div class="flex flex-col">
             <span class="text-[10px] font-black uppercase text-sky-300 tracking-[0.22em]">Notícias 24h</span>
-            <span class="text-[8px] font-bold uppercase text-zinc-500 tracking-widest">Resumo por IA</span>
         </div>
     </div>
 
@@ -138,9 +137,6 @@
                        title="{{ $news['source'] }} • {{ $news['published_label'] }}">
                         {{ $news['title'] }}
                     </a>
-                    @if(!empty($news['summary']))
-                        <span class="text-zinc-400 normal-case tracking-normal font-medium">— {{ $news['summary'] }}</span>
-                    @endif
                     <span class="text-[9px] text-zinc-500 font-semibold">{{ $news['source'] }} · {{ $news['published_label'] }}</span>
                     <span class="mono-separator">/</span>
                 </div>
