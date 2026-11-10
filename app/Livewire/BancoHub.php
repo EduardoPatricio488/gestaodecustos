@@ -472,7 +472,10 @@ class BancoHub extends Component
         $this->acc_icon = 'building-library';
         $this->acc_status = 'active';
         $this->acc_description = '';
-        $this->acc_bank_name = $this->acc_iban = $this->acc_swift = $this->acc_holder = '';\n        $this->ibanProof = null;\n        $this->accountEntryMode = 'manual';\n        $this->ibanProofMessage = '';
+        $this->acc_bank_name = $this->acc_iban = $this->acc_swift = $this->acc_holder = '';
+        $this->ibanProof = null;
+        $this->accountEntryMode = 'manual';
+        $this->ibanProofMessage = '';
         $this->acc_is_business = false;
         $this->acc_include = true;
         $this->acc_alert_below = null;
