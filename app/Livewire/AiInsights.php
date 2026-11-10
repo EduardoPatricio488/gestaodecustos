@@ -60,8 +60,7 @@ class AiInsights extends Component
         }
 
         try {
-            $conversation = $brain->conversation($user, $workspace);
-            $result = $brain->chat($user, 'Gera um diagnóstico financeiro mensal executivo. Usa exclusivamente os dados determinísticos do backend. Identifica a principal pressão financeira, explica a evolução face ao período anterior e dá 3 ações práticas. Distingue FACTOS, INFERÊNCIAS e RECOMENDAÇÕES. Não inventes valores nem funcionalidades.', $conversation, ['module' => 'ai-insights', 'route' => 'ai', 'path' => request()->path(), 'period' => now()->format('Y-m')]);
+            $result = $brain->generateExecutiveReport($user, $workspace);
             $this->aiAnalysis = $result['content'] ?? 'Não foi possível gerar o diagnóstico.';
             $this->lastGeneratedAt = now()->toIso8601String();
             Cache::put($this->cacheKey(), ['text' => $this->aiAnalysis, 'at' => $this->lastGeneratedAt], now()->addDays(7));
@@ -71,14 +70,25 @@ class AiInsights extends Component
             }
 
             if ($user->email) {
-                try {
-                    $snapshot = app(FinancialIntelligenceService::class)->snapshot($workspace);
-                    Mail::to($user->email)->send(new CfoReportMail($user, $this->aiAnalysis, ['earned' => (float) data_get($snapshot, 'income', 0), 'spent' => (float) data_get($snapshot, 'expenses', 0), 'healthScore' => app(FinancialHealthScoreService::class)->personal($workspace)['score']]));
-                    $this->dispatch('toast', variant: 'success', text: 'Relatório gerado e enviado para o teu email! 📧');
-                } catch (\Throwable $mailException) {
-                    Log::warning('CfoReportMail failed', ['message' => $mailException->getMessage()]);
-                    $this->dispatch('toast', variant: 'success', text: 'Relatório gerado! O email não ficou disponível.');
-                }
+                $mailUser = $user;
+                $mailAnalysis = $this->aiAnalysis;
+                $mailSnapshot = $result['snapshot'] ?? [];
+                $mailHealthScore = app(FinancialHealthScoreService::class)->personal($workspace)['score'];
+
+                // Envia o email depois de devolver o relatório à página, sem bloquear o pedido Livewire.
+                app()->terminating(function () use ($mailUser, $mailAnalysis, $mailSnapshot, $mailHealthScore): void {
+                    try {
+                        Mail::to($mailUser->email)->send(new CfoReportMail($mailUser, $mailAnalysis, [
+                            'earned' => (float) data_get($mailSnapshot, 'income', 0),
+                            'spent' => (float) data_get($mailSnapshot, 'expenses', 0),
+                            'healthScore' => $mailHealthScore,
+                        ]));
+                    } catch (\Throwable $mailException) {
+                        Log::warning('CfoReportMail failed', ['message' => $mailException->getMessage()]);
+                    }
+                });
+
+                $this->dispatch('toast', variant: 'success', text: 'Relatório gerado! O envio do email será processado em segundo plano. 📧');
             }
         } catch (\Throwable $e) {
             report($e);
