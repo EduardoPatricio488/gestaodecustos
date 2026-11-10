@@ -839,6 +839,51 @@
 
         </div>
 
+        {{-- RESUMO DE INVESTIMENTOS --}} 
+        <section class="mt-5 overflow-hidden rounded-2xl border border-violet-200/70 bg-gradient-to-br from-white via-violet-50/70 to-indigo-50/80 shadow-sm dark:border-violet-500/20 dark:from-zinc-900 dark:via-violet-950/20 dark:to-indigo-950/20">
+            <div class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                <div class="flex min-w-0 items-center gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-600/20">
+                        <flux:icon name="chart-no-axes-combined" class="size-5" />
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="text-sm font-black text-zinc-900 dark:text-white">Resumo dos investimentos</h3>
+                            <span class="rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">Portefólio</span>
+                        </div>
+                        <p class="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">
+                            {{ $dashboardInvestmentsCount }} {{ $dashboardInvestmentsCount === 1 ? 'ativo' : 'ativos' }}
+                            ·
+                            {{ $dashboardInvestmentsLastUpdated ? 'Atualizado em '.$dashboardInvestmentsLastUpdated : 'Sem atualização registada' }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
+                    <div class="col-span-2 min-w-0 sm:col-span-1">
+                        <p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Valor atual</p>
+                        <p class="mt-1 truncate text-xl font-black tabular-nums text-zinc-900 dark:text-white" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($portfolioValue) }}</p>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Capital investido</p>
+                        <p class="mt-1 truncate text-sm font-extrabold tabular-nums text-zinc-800 dark:text-zinc-100" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($dashboardInvestmentsTotalInvested) }}</p>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Lucro / prejuízo</p>
+                        <p class="mt-1 truncate text-sm font-extrabold tabular-nums {{ $dashboardInvestmentsProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}" :class="privacyMode ? 'blur-md select-none' : ''">
+                            {{ $dashboardInvestmentsProfit >= 0 ? '+' : '' }}{{ $currentWs->money($dashboardInvestmentsProfit) }}
+                            <span class="text-[10px]">({{ number_format($dashboardInvestmentsProfitPercent, 2, ',', ' ') }}%)</span>
+                        </p>
+                    </div>
+                </div>
+
+                <a href="{{ route('hub.investments') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-white shadow-md shadow-violet-600/20 transition hover:-translate-y-0.5 hover:bg-violet-500">
+                    Ver investimentos
+                    <flux:icon name="arrow-up-right" class="size-3.5" />
+                </a>
+            </div>
+        </section>
+
         {{-- MODAL DO CARTÃO BANCÁRIO --}}
         <div x-data="{ activeModalTab: 'summary' }" x-show="showSalaryHistory" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 p-3 backdrop-blur-sm sm:p-6" @click.self="showSalaryHistory = false" @keydown.escape.window="showSalaryHistory = false; activeModalTab = 'summary'">
             <div x-show="showSalaryHistory" x-transition.scale class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
