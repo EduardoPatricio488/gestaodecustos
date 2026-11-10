@@ -176,6 +176,12 @@ class CategoryHub extends Component
                 }
             }
 
+            if (blank($this->subcategory)) {
+                $this->subcategory = in_array('Geral', $this->subcategories, true)
+                    ? 'Geral'
+                    : ($this->subcategories[0] ?? 'Outros');
+            }
+
             $this->amount = $toNumber($result['amount'] ?? null)
                 ?? $toNumber($result['gross_amount'] ?? null)
                 ?? $toNumber($result['net_amount'] ?? null);
@@ -832,7 +838,3 @@ PROMPT;
                 : null,
         ]);
     }
-
-            if (blank($this->subcategory)) {
-                $this->subcategory = in_array('Geral', $this->subcategories, true) ? 'Geral' : ($this->subcategories[0] ?? 'Outros');
-            }}
