@@ -179,7 +179,7 @@ class BancoHub extends Component
                 $this->acc_bank_name = $bank;
                 $this->acc_name = 'Conta '.$bank;
                 $this->acc_color = $bank === 'Santander' ? '#EC0000' : $this->acc_color;
-                $this->acc_icon = 'landmark';
+                $this->acc_icon = 'building-library';
             }
 
             if (preg_match('/\\b([A-Z]{4}PT[A-Z0-9]{2}(?:[A-Z0-9]{3})?)\\b/u', $text, $swiftMatch)) {
