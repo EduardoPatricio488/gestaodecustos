@@ -614,25 +614,53 @@
         </div>
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {{-- CARTÃO BANCÁRIO: SALÁRIO LÍQUIDO --}}
-            <article role="button" tabindex="0" aria-label="Consultar histórico do salário líquido" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.6rem] border border-indigo-300/20 bg-gradient-to-br from-[#18264a] via-[#111a32] to-[#080e1d] p-6 text-white shadow-2xl shadow-indigo-950/25 transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/60 hover:shadow-indigo-950/40 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transition-none sm:p-7">
-                <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110"></div>
-                <div class="pointer-events-none absolute -right-2 -top-12 size-44 rounded-full border border-indigo-200/10"></div>
-                <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-indigo-400/10 via-transparent to-white/5"></div>
-                <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-[450%]"></div>
-                <div class="relative flex min-h-44 flex-col justify-between">
-                    <div class="flex items-start justify-between">
-                        <div><p class="text-[9px] font-black uppercase tracking-[0.28em] text-indigo-200/80">Finance Pro · Conta de rendimento</p><p class="mt-1 text-sm font-bold tracking-wide text-white">SALÁRIO LÍQUIDO</p></div>
-                        <div class="flex items-center gap-2"><span class="text-[10px] font-black italic tracking-[0.18em] text-white/80">FP</span><div class="flex size-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm"><flux:icon name="briefcase" variant="outline" class="size-5 text-indigo-100" /></div></div>
+            {{-- CARTÃO BANCÁRIO: SALDO + SALÁRIO --}}
+            <article role="button" tabindex="0" aria-label="Consultar histórico do salário e saldo bancário" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="group relative isolate min-h-60 cursor-pointer overflow-hidden rounded-[1.6rem] border border-red-300/25 bg-gradient-to-br from-[#ed1c24] via-[#b5121b] to-[#650b13] p-6 text-white shadow-2xl shadow-red-950/30 transition-all duration-500 hover:-translate-y-1 hover:border-red-200/70 hover:shadow-red-950/50 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950 motion-reduce:transition-none sm:p-7">
+                <div class="pointer-events-none absolute -right-14 -top-20 size-64 rounded-full border border-white/15 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110"></div>
+                <div class="pointer-events-none absolute -right-3 -top-12 size-44 rounded-full border border-white/10"></div>
+                <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10"></div>
+                <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-1000 group-hover:translate-x-[450%]"></div>
+                <div class="relative flex min-h-48 flex-col justify-between gap-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-[9px] font-black uppercase tracking-[0.25em] text-red-100/80">Finance Pro · Carteira bancária</p>
+                            <p class="mt-1 truncate text-lg font-black tracking-wide text-white">{{ $dashboardBankCardAccount?->bank_name ?: 'Contas bancárias' }}</p>
+                        </div>
+                        <div class="flex size-11 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-sm font-black italic tracking-wider text-white shadow-inner backdrop-blur-sm">FP</div>
                     </div>
-                    <div class="flex items-center gap-3 py-2">
-                        <div class="relative h-9 w-12 overflow-hidden rounded-md border border-amber-100/40 bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 shadow-inner"><span class="absolute left-1/2 top-0 h-full w-px bg-amber-800/25"></span><span class="absolute left-0 top-1/2 h-px w-full bg-amber-800/25"></span><span class="absolute left-1/4 top-0 h-full w-px bg-amber-800/20"></span><span class="absolute right-1/4 top-0 h-full w-px bg-amber-800/20"></span></div>
-                        <flux:icon name="wifi" variant="outline" class="size-5 rotate-90 text-white/65" /><span class="ml-auto text-[9px] font-bold uppercase tracking-[0.18em] text-indigo-100/65">Resumo mensal</span>
+                    <div class="flex items-center gap-3">
+                        <div class="relative h-9 w-12 overflow-hidden rounded-md border border-amber-100/50 bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 shadow-inner">
+                            <span class="absolute left-1/2 top-0 h-full w-px bg-amber-800/25"></span>
+                            <span class="absolute left-0 top-1/2 h-px w-full bg-amber-800/25"></span>
+                            <span class="absolute left-1/4 top-0 h-full w-px bg-amber-800/20"></span>
+                            <span class="absolute right-1/4 top-0 h-full w-px bg-amber-800/20"></span>
+                        </div>
+                        <flux:icon name="wifi" variant="outline" class="size-5 rotate-90 text-white/75" />
+                        <span class="ml-auto text-[9px] font-bold uppercase tracking-[0.18em] text-red-100/80">Saldo previsto</span>
                     </div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-[0.2em] text-indigo-200/75">Valor projetado</p><p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-4xl">{{ number_format($dashboardProjectedSalaryNet, 2, ',', ' ') }} <span class="text-xl text-indigo-200">€</span></p></div>
-                    <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-3">
-                        <div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-indigo-200/65">Titular / contrato</p><p class="mt-1 truncate text-[11px] font-semibold text-white">@forelse($dashboardSalaryContracts as $projectedContract){{ $loop->first ? '' : ' · ' }}{{ $projectedContract->description }}@empty Sem salário ativo registado @endforelse</p></div>
-                        <div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-indigo-200/65">Projeção anual</p><p class="mt-1 text-xs font-bold tabular-nums text-white">{{ number_format(($dashboardProjectedSalaryNet * 12), 2, ',', ' ') }} €</p></div>
+                    <div>
+                        <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-red-100/80">Saldo atual + salário líquido</p>
+                        <p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-4xl">{{ number_format($dashboardBankCardBalance, 2, ',', ' ') }} <span class="text-xl text-red-100">€</span></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 border-t border-white/20 pt-3">
+                        <div class="min-w-0">
+                            <p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">Saldo bancário</p>
+                            <p class="mt-1 truncate text-[11px] font-bold tabular-nums text-white">{{ number_format($dashboardBankCardCurrentBalance, 2, ',', ' ') }} €</p>
+                        </div>
+                        <div class="min-w-0 text-right">
+                            <p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">Salário líquido</p>
+                            <p class="mt-1 truncate text-[11px] font-bold tabular-nums text-white">+ {{ number_format($dashboardProjectedSalaryNet, 2, ',', ' ') }} €</p>
+                        </div>
+                    </div>
+                    <div class="flex items-end justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">Titular</p>
+                            <p class="mt-1 truncate text-[10px] font-bold uppercase tracking-wide text-white">{{ $dashboardBankCardAccount?->holder_name ?: 'Titular não indicado' }}</p>
+                        </div>
+                        <div class="shrink-0 text-right">
+                            <p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">IBAN</p>
+                            <p class="mt-1 text-[10px] font-bold tracking-wider text-white">{{ $dashboardBankCardAccount?->iban ? '•••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), -4) : 'Não registado' }}</p>
+                        </div>
                     </div>
                 </div>
             </article>
