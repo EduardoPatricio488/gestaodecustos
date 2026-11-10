@@ -46,24 +46,37 @@
 
     <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
         @forelse($articles as $article)
-            <article wire:key="news-{{ $article['id'] }}" class="group flex h-full flex-col rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-sky-300 hover:shadow-xl hover:shadow-sky-950/5 dark:border-zinc-800 dark:bg-zinc-900">
-                <div class="mb-4 flex items-center justify-between gap-3">
-                    <span class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[9px] font-black uppercase tracking-widest {{ $article['region'] === 'PT' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300' : 'bg-sky-50 text-sky-700 dark:bg-sky-400/10 dark:text-sky-300' }}">
-                        <span class="size-1.5 rounded-full {{ $article['region'] === 'PT' ? 'bg-emerald-500' : 'bg-sky-500' }}"></span>
-                        {{ $article['region'] === 'PT' ? 'Portugal' : 'Mundo' }}
-                    </span>
-                    <span class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{{ $article['published_label'] }}</span>
-                </div>
-
-                <h3 class="flex-1 text-base font-extrabold leading-snug text-zinc-900 transition-colors group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-300 sm:text-lg">
-                    {{ $article['title'] }}
-                </h3>
-
-                <div class="mt-5 flex items-center justify-between gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-                    <span class="truncate text-xs font-bold text-zinc-500 dark:text-zinc-400">{{ $article['source'] ?: 'Fonte noticiosa' }}</span>
-                    <a href="{{ $article['url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-sky-50 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-sky-700 transition hover:bg-sky-600 hover:text-white dark:bg-sky-400/10 dark:text-sky-300 dark:hover:bg-sky-500 dark:hover:text-white">
-                        Ler notícia <flux:icon name="arrow-up-right" class="size-3.5" />
+            <article wire:key="news-{{ $article['id'] }}" class="group flex h-full flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-sky-300 hover:shadow-xl hover:shadow-sky-950/5 dark:border-zinc-800 dark:bg-zinc-900">
+                @if(!empty($article['image']))
+                    <a href="{{ $article['url'] }}" target="_blank" rel="noopener noreferrer" class="relative block h-48 overflow-hidden bg-zinc-100 dark:bg-zinc-800 sm:h-56">
+                        <img src="{{ $article['image'] }}" alt="{{ $article['title'] }}" loading="lazy" referrerpolicy="no-referrer" class="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent"></div>
                     </a>
+                @endif
+
+                <div class="flex flex-1 flex-col p-5">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <span class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[9px] font-black uppercase tracking-widest {{ $article['region'] === 'PT' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300' : 'bg-sky-50 text-sky-700 dark:bg-sky-400/10 dark:text-sky-300' }}">
+                            <span class="size-1.5 rounded-full {{ $article['region'] === 'PT' ? 'bg-emerald-500' : 'bg-sky-500' }}"></span>
+                            {{ $article['region'] === 'PT' ? 'Portugal' : 'Mundo' }}
+                        </span>
+                        <span class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{{ $article['published_label'] }}</span>
+                    </div>
+
+                    <h3 class="text-base font-extrabold leading-snug text-zinc-900 transition-colors group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-300 sm:text-lg">
+                        {{ $article['title'] }}
+                    </h3>
+
+                    @if(!empty($article['summary']))
+                        <p class="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{{ $article['summary'] }}</p>
+                    @endif
+
+                    <div class="mt-auto flex items-center justify-between gap-3 border-t border-zinc-100 pt-4 mt-5 dark:border-zinc-800">
+                        <span class="truncate text-xs font-bold text-zinc-500 dark:text-zinc-400">{{ $article['source'] ?: 'Fonte noticiosa' }}</span>
+                        <a href="{{ $article['url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-sky-50 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-sky-700 transition hover:bg-sky-600 hover:text-white dark:bg-sky-400/10 dark:text-sky-300 dark:hover:bg-sky-500 dark:hover:text-white">
+                            Ler notícia <flux:icon name="arrow-up-right" class="size-3.5" />
+                        </a>
+                    </div>
                 </div>
             </article>
         @empty
