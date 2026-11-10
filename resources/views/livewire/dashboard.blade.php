@@ -641,7 +641,7 @@
                 </a>
                 <a href="{{ route('hub.incomes', ['open_extra' => 1]) }}" wire:navigate x-on:click="openQuickCreate = false"
                     class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
-                    <span class="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300"><flux:icon name="banknote" class="size-4" /></span>
+                    <span class="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300"><span class="text-sm font-black leading-none">€</span></span>
                     <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova receita extra</span>
                 </a>
             </div>
