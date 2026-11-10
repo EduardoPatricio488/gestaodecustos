@@ -1690,6 +1690,19 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">Atualizado {{ now()->format('H:i') }}</span>
+                    <button
+                        type="button"
+                        wire:click="refreshAccountOverview"
+                        wire:loading.attr="disabled"
+                        wire:target="refreshAccountOverview"
+                        class="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100 disabled:cursor-wait disabled:opacity-60 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20"
+                        title="Atualizar os dados do resumo da conta"
+                    >
+                        <span wire:loading.remove wire:target="refreshAccountOverview" aria-hidden="true">↻</span>
+                        <span wire:loading wire:target="refreshAccountOverview" class="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+                        <span wire:loading.remove wire:target="refreshAccountOverview">Atualizar dados</span>
+                        <span wire:loading wire:target="refreshAccountOverview">A atualizar...</span>
+                    </button>
                     <span class="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">{{ $accountOverview['account_count'] }} contas bancárias</span>
                 </div>
             </div>
