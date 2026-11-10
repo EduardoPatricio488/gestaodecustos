@@ -901,7 +901,7 @@ class Dashboard extends Component
             $contractStart = Carbon::parse($metadata['start_date'] ?? $income->created_at?->toDateString() ?? $periodStart->toDateString())->startOfMonth();
             $contractEnd = ! empty($metadata['end_date'])
                 ? Carbon::parse($metadata['end_date'])->endOfMonth()
-                : $periodEnd->copy()->endOfMonth();
+                : $periodEnd->copy()->endOfYear();
             $rangeStart = $contractStart->greaterThan($periodStart->copy()->startOfYear())
                 ? $contractStart
                 : $periodStart->copy()->startOfYear();
