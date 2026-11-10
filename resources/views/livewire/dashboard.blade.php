@@ -876,7 +876,7 @@
         </div>
 
         {{-- RESUMO DE INVESTIMENTOS --}}
-        <section id="dashboard-investimentos" class="dashboard-investments-summary col-span-full relative mt-6 w-full min-w-0 overflow-hidden rounded-[2rem] border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-blue-50 shadow-lg shadow-sky-950/10 dark:border-sky-400/20 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/40">
+        <section x-data="{ investmentsExpanded: false }" id="dashboard-investimentos" class="dashboard-investments-summary col-span-full relative mt-6 w-full min-w-0 overflow-hidden rounded-[2rem] border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-blue-50 shadow-lg shadow-sky-950/10 dark:border-sky-400/20 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/40">
             <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-300 via-blue-400 to-cyan-300"></div>
             <div class="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-sky-400/15 blur-3xl"></div>
 
@@ -898,10 +898,15 @@
                             </p>
                         </div>
                     </div>
-                    <a href="{{ route('hub.investments') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-[11px] font-black text-white shadow-md shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-400">
-                        Ver investimentos
-                        <flux:icon name="arrow-up-right" class="size-4" />
-                    </a>
+                    <div class="flex shrink-0 items-center gap-2">
+                        <a href="{{ route('hub.investments') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-[11px] font-black text-white shadow-md shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-400">
+                            Ver investimentos
+                            <flux:icon name="arrow-up-right" class="size-4" />
+                        </a>
+                        <button type="button" @click="investmentsExpanded = !investmentsExpanded" :aria-expanded="investmentsExpanded.toString()" aria-label="Mostrar composição dos investimentos" title="Mostrar composição dos investimentos" class="flex size-10 items-center justify-center rounded-xl border border-sky-300/60 bg-white/80 text-sky-700 shadow-sm transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-sky-400/30 dark:bg-slate-800 dark:text-sky-300 dark:hover:bg-slate-700">
+                            <flux:icon name="chevron-down" class="size-5 transition-transform duration-300" ::class="{ 'rotate-180': investmentsExpanded }" />
+                        </button>
+                    </div>
                 </div>
 
                 <div class="mt-4 grid grid-cols-2 gap-y-4 border-t border-zinc-100 pt-4 dark:border-zinc-800 sm:grid-cols-4 sm:gap-0">
@@ -935,6 +940,61 @@
                         <p class="mt-1 text-xl font-black leading-tight tracking-tight tabular-nums text-zinc-950 dark:text-white sm:text-2xl">{{ $dashboardInvestmentsCount }}</p>
                         <p class="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">Instrumentos</p>
                     </div>
+                </div>
+
+                <div x-show="investmentsExpanded" x-cloak x-transition.opacity.duration.250ms class="mt-5 border-t border-sky-100 pt-5 dark:border-slate-700">
+                    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h4 class="text-xs font-black uppercase tracking-wider text-sky-900 dark:text-sky-200">Composição da carteira</h4>
+                            <p class="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">Detalhe por ativo, com valores calculados a partir das quantidades e cotações guardadas.</p>
+                        </div>
+                        <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-bold text-sky-800 dark:bg-sky-400/10 dark:text-sky-200">{{ $dashboardInvestmentsCount }} {{ $dashboardInvestmentsCount === 1 ? 'posição' : 'posições' }}</span>
+                    </div>
+
+                    @if(count($dashboardInvestments) > 0)
+                        <div class="space-y-3">
+                            @foreach($dashboardInvestments as $investment)
+                                @php
+                                    $investmentCurrentValue = round($investment['quantity'] * $investment['current_price'], 2);
+                                    $investmentInvestedValue = round(($investment['quantity'] * $investment['average_price']) + $investment['fees'], 2);
+                                    $investmentProfit = round($investmentCurrentValue - $investmentInvestedValue, 2);
+                                    $investmentProfitPercent = $investmentInvestedValue > 0 ? ($investmentProfit / $investmentInvestedValue) * 100 : 0;
+                                @endphp
+                                <article wire:key="dashboard-investment-{{ $loop->index }}" class="rounded-2xl border border-sky-100 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+                                    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                        <div class="min-w-0">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <h5 class="text-sm font-black text-zinc-900 dark:text-white">{{ $investment['name'] ?: ($investment['symbol'] ?: 'Ativo sem nome') }}</h5>
+                                                @if($investment['symbol'])
+                                                    <span class="rounded-md bg-sky-100 px-2 py-0.5 text-[10px] font-extrabold uppercase text-sky-800 dark:bg-sky-400/10 dark:text-sky-200">{{ $investment['symbol'] }}</span>
+                                                @endif
+                                                @if($investment['type'])
+                                                    <span class="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400">{{ $investment['type'] }}</span>
+                                                @endif
+                                            </div>
+                                            <p class="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                                                {{ rtrim(rtrim(number_format($investment['quantity'], 8, ',', ' '), '0'), ',') }} unidades
+                                                <span class="mx-1">·</span>
+                                                Cotação atual: <span class="font-semibold text-zinc-700 dark:text-zinc-200" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($investment['current_price']) }}</span>
+                                            </p>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4 lg:min-w-[580px]">
+                                            <div><p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Capital aplicado</p><p class="mt-1 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($investmentInvestedValue) }}</p></div>
+                                            <div><p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Valor atual</p><p class="mt-1 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($investmentCurrentValue) }}</p></div>
+                                            <div><p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Lucro / prejuízo</p><p class="mt-1 text-xs font-black tabular-nums {{ $investmentProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}" :class="privacyMode ? 'blur-md select-none' : ''">{{ $investmentProfit >= 0 ? '+' : '' }}{{ $currentWs->money($investmentProfit) }}</p></div>
+                                            <div><p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Rentabilidade</p><p class="mt-1 text-xs font-black tabular-nums {{ $investmentProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}" :class="privacyMode ? 'blur-md select-none' : ''">{{ $investmentProfit >= 0 ? '+' : '' }}{{ number_format($investmentProfitPercent, 2, ',', ' ') }}%</p></div>
+                                        </div>
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="rounded-2xl border border-dashed border-sky-200 bg-white/60 px-4 py-8 text-center dark:border-slate-700 dark:bg-slate-900/40">
+                            <flux:icon name="chart-no-axes-combined" class="mx-auto size-7 text-sky-500" />
+                            <p class="mt-2 text-xs font-bold text-zinc-700 dark:text-zinc-200">Ainda não tens investimentos registados.</p>
+                            <p class="mt-1 text-[10px] text-zinc-500">Adiciona ativos na área de investimentos para veres aqui a composição da carteira.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </section>
