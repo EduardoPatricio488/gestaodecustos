@@ -1232,6 +1232,75 @@
 
     </div>
 
+    {{-- NOVOS INDICADORES FINANCEIROS --}}
+    <section id="dashboard-novos-indicadores" class="scroll-mt-28 mt-8 space-y-4">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">Análise de desempenho</p>
+                <h2 class="mt-1 text-xl font-black tracking-tight text-zinc-900 dark:text-white">Indicadores financeiros</h2>
+                <p class="mt-1 text-xs text-zinc-500">Métricas calculadas automaticamente para {{ $dashboardPeriodLabel }}.</p>
+            </div>
+            <span class="w-fit rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[10px] font-bold text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
+                {{ $dashboardPeriodType === 'year' ? 'Comparação anual' : 'Comparação mensal' }}
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <article class="group relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-emerald-500/20 dark:from-emerald-950/30 dark:to-zinc-900">
+                <div class="absolute -right-6 -top-6 size-20 rounded-full bg-emerald-400/10 blur-xl transition group-hover:scale-150"></div>
+                <p class="relative text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Taxa de poupança</p>
+                <p class="relative mt-3 text-2xl font-black tabular-nums {{ $indicatorSavingsRate !== null && $indicatorSavingsRate >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-400' }}">
+                    <span :class="privacyMode ? 'blur-md select-none' : ''">{{ $indicatorSavingsRate !== null ? number_format($indicatorSavingsRate, 1, ',', '.') . '%' : '—' }}</span>
+                </p>
+                <p class="relative mt-1 text-[10px] text-zinc-500">Receitas que ficam depois das despesas</p>
+            </article>
+
+            <article class="group relative overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-blue-500/20 dark:from-blue-950/30 dark:to-zinc-900">
+                <div class="absolute -right-6 -top-6 size-20 rounded-full bg-blue-400/10 blur-xl transition group-hover:scale-150"></div>
+                <p class="relative text-[10px] font-black uppercase tracking-wider text-blue-700 dark:text-blue-400">Orçamento utilizado</p>
+                <p class="relative mt-3 text-2xl font-black tabular-nums text-blue-700 dark:text-blue-300">
+                    <span :class="privacyMode ? 'blur-md select-none' : ''">{{ $indicatorBudgetUsage !== null ? number_format($indicatorBudgetUsage, 1, ',', '.') . '%' : '—' }}</span>
+                </p>
+                @if($indicatorBudgetUsage !== null)
+                    <div class="relative mt-2 h-1.5 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-950">
+                        <div class="h-full rounded-full {{ $indicatorBudgetUsage > 100 ? 'bg-rose-500' : 'bg-blue-500' }} transition-all duration-700" style="width: {{ min(100, max(0, $indicatorBudgetUsage)) }}%"></div>
+                    </div>
+                    <p class="relative mt-1 text-[10px] {{ $indicatorBudgetUsage > 100 ? 'text-rose-600' : 'text-zinc-500' }}">{{ $indicatorBudgetUsage > 100 ? 'Limites ultrapassados' : 'Face aos limites definidos' }}</p>
+                @else
+                    <p class="relative mt-1 text-[10px] text-zinc-500">Ainda não existem limites de orçamento</p>
+                @endif
+            </article>
+
+            <article class="group relative overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-4 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-violet-500/20 dark:from-violet-950/30 dark:to-zinc-900">
+                <div class="absolute -right-6 -top-6 size-20 rounded-full bg-violet-400/10 blur-xl transition group-hover:scale-150"></div>
+                <p class="relative text-[10px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-400">Despesa média diária</p>
+                <p class="relative mt-3 text-2xl font-black tabular-nums text-violet-700 dark:text-violet-300">
+                    <span :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($indicatorDailyAverage) }}</span>
+                </p>
+                <p class="relative mt-1 text-[10px] text-zinc-500">Média dos {{ $indicatorDaysElapsed }} dias decorridos</p>
+            </article>
+
+            <article class="group relative overflow-hidden rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50 to-white p-4 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-rose-500/20 dark:from-rose-950/30 dark:to-zinc-900">
+                <div class="absolute -right-6 -top-6 size-20 rounded-full bg-rose-400/10 blur-xl transition group-hover:scale-150"></div>
+                <p class="relative text-[10px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-400">Variação das despesas</p>
+                <p class="relative mt-3 text-2xl font-black tabular-nums {{ $indicatorExpenseChange === null ? 'text-zinc-500' : ($indicatorExpenseChange > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400') }}">
+                    <span :class="privacyMode ? 'blur-md select-none' : ''">{{ $indicatorExpenseChange !== null ? (($indicatorExpenseChange > 0 ? '+' : '') . number_format($indicatorExpenseChange, 1, ',', '.') . '%') : '—' }}</span>
+                </p>
+                <p class="relative mt-1 text-[10px] text-zinc-500">{{ $dashboardPeriodType === 'year' ? 'Face ao ano anterior' : 'Face ao mês anterior' }}</p>
+            </article>
+
+            <article class="group relative overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-4 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-amber-500/20 dark:from-amber-950/30 dark:to-zinc-900">
+                <div class="absolute -right-6 -top-6 size-20 rounded-full bg-amber-400/10 blur-xl transition group-hover:scale-150"></div>
+                <p class="relative text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">Variação das receitas</p>
+                <p class="relative mt-3 text-2xl font-black tabular-nums {{ $indicatorIncomeChange === null ? 'text-zinc-500' : ($indicatorIncomeChange >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400') }}">
+                    <span :class="privacyMode ? 'blur-md select-none' : ''">{{ $indicatorIncomeChange !== null ? (($indicatorIncomeChange > 0 ? '+' : '') . number_format($indicatorIncomeChange, 1, ',', '.') . '%') : '—' }}</span>
+                </p>
+                <p class="relative mt-1 text-[10px] text-zinc-500">{{ $dashboardPeriodType === 'year' ? 'Face ao ano anterior' : 'Face ao mês anterior' }}</p>
+            </article>
+        </div>
+        <p class="text-[10px] leading-relaxed text-zinc-400">A taxa de poupança considera as receitas e despesas do período. A comparação utiliza o mês ou ano imediatamente anterior. Quando não existe histórico ou orçamento suficiente, o indicador apresenta —.</p>
+    </section>
+
     {{-- BANNER CFO INTELIGENTE (DESTAQUE MÁXIMO) --}}
 <a href="{{ route('ai') }}" wire:navigate
    class="group relative flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden
