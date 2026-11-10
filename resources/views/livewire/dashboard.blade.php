@@ -845,7 +845,7 @@
             <div class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
                 <div class="flex min-w-0 items-center gap-3">
                     <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-600/20">
-                        <flux:icon name="chart-no-axes-combined" class="size-5" />
+                        <flux:icon name="chart-bar" class="size-5" />
                     </div>
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2">
