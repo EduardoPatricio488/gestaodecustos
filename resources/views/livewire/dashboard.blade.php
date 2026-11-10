@@ -663,7 +663,7 @@
                 <div class="pointer-events-none absolute -right-3 -top-12 size-44 rounded-full border border-white/10"></div>
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10"></div>
                 <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-1000 group-hover:translate-x-[450%]"></div>
-                <div class="relative flex min-h-0 flex-col justify-between gap-3">
+                <div class="relative flex min-h-0 flex-col justify-between gap-3 transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-[9px] font-black uppercase tracking-[0.25em] text-red-100/80">Finance Pro · Carteira bancária</p>
@@ -689,12 +689,12 @@
                     </div>
                     <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border p-4 text-white shadow-2xl sm:p-5" style="transform: rotateY(180deg); backface-visibility: hidden; background: linear-gradient(135deg, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 82%, #000 18%) 0%, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 48%, #000 52%) 100%); border-color: color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 65%, white 35%);">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10"></div>
-                        <div class="relative">
+                        <div class="relative transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
                             <p class="text-[9px] font-black uppercase tracking-[0.25em] text-red-100/70">Finance Pro · Verso do cartão</p>
                             <h3 class="mt-1 text-base font-black text-white">Detalhes da conta</h3>
                             <p class="mt-0.5 text-[10px] text-red-100/75">{{ $dashboardBankCardAccount?->bank_name ?: 'Conta bancária selecionada' }}</p>
                         </div>
-                        <div class="relative grid grid-cols-2 gap-x-5 gap-y-2.5">
+                        <div class="relative grid grid-cols-2 gap-x-5 gap-y-2.5 transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
                             <div class="min-w-0 py-1"><p class="text-[9px] font-bold uppercase tracking-wider text-red-100/70">Titular</p><p class="mt-1 truncate text-[13px] font-bold">{{ $dashboardBankCardAccount?->holder_name ?: 'Não indicado' }}</p></div>
                             <div class="min-w-0 py-1"><p class="text-[9px] font-bold uppercase tracking-wider text-red-100/70">Conta</p><p class="mt-1 text-[13px] font-bold">{{ $dashboardBankCardAccount?->account_number ? '•••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->account_number), -4) : 'Não indicada' }}</p></div>
                             <div class="min-w-0 py-1"><p class="text-[9px] font-bold uppercase tracking-wider text-red-100/70">SWIFT / BIC</p><p class="mt-1 truncate text-[13px] font-bold">{{ $dashboardBankCardAccount?->swift ?: '—' }}</p></div>
@@ -715,7 +715,7 @@
                 <div class="pointer-events-none absolute -right-2 -top-12 size-44 rounded-full border border-emerald-100/10"></div>
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-emerald-300/10 via-transparent to-white/5"></div>
                 <div class="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-[450%]"></div>
-                <div class="relative flex min-h-44 flex-col justify-between">
+                <div class="relative flex min-h-44 flex-col justify-between transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
                     <div class="flex items-start justify-between">
                         <div><p class="text-[9px] font-black uppercase tracking-[0.28em] text-emerald-100/80">Finance Pro · Cartão benefício</p><p class="mt-1 text-sm font-bold tracking-wide text-white">SUBSÍDIO DE ALIMENTAÇÃO</p></div>
                         <div class="flex items-center gap-2"><span class="text-[10px] font-black italic tracking-[0.18em] text-white/80">FP</span><div class="flex size-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm"><flux:icon name="cake" variant="outline" class="size-5 text-emerald-100" /></div></div>
@@ -727,23 +727,23 @@
                     </div>
                     <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-emerald-200/30 bg-gradient-to-br from-[#064b3d] via-[#03352c] to-[#011c17] p-3.5 text-white shadow-2xl sm:p-4" style="transform: rotateY(180deg); backface-visibility: hidden;">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10"></div>
-                        <div class="relative">
+                        <div class="relative transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
                             <p class="text-[9px] font-black uppercase tracking-[0.25em] text-emerald-100/70">Finance Pro · Verso do cartão</p>
                             <h3 class="mt-2 text-lg font-black text-white">Detalhes do benefício</h3>
                             <p class="mt-1 text-xs text-emerald-100/75">Configuração dos contratos ativos</p>
                         </div>
-                        <div class="relative grid grid-cols-2 gap-3">
+                        <div class="relative grid grid-cols-2 gap-3 transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
                             <div class="rounded-xl border border-white/15 bg-black/15 p-3"><p class="text-[8px] font-bold uppercase tracking-wider text-emerald-100/65">Valor mensal</p><p class="mt-1 text-base font-black tabular-nums">{{ number_format($dashboardProjectedMealAllowance, 2, ',', ' ') }} €</p></div>
                             <div class="rounded-xl border border-white/15 bg-black/15 p-3"><p class="text-[8px] font-bold uppercase tracking-wider text-emerald-100/65">Projeção anual</p><p class="mt-1 text-base font-black tabular-nums">{{ number_format($dashboardProjectedMealAllowance * 11, 2, ',', ' ') }} €</p></div>
                         </div>
-                        <div class="relative space-y-2">
+                        <div class="relative space-y-2 transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
                             @forelse($dashboardSalaryContracts as $contract)
                                 <div class="flex items-center justify-between gap-3 border-t border-white/10 pt-2"><span class="truncate text-[10px] font-semibold text-emerald-50">{{ $contract->description }}</span><span class="shrink-0 text-[10px] font-black tabular-nums">{{ number_format((float) ($contract->metadata['calculated_sa'] ?? 0), 2, ',', ' ') }} €</span></div>
                             @empty
                                 <p class="text-xs text-emerald-100/70">Sem subsídio configurado nos contratos ativos.</p>
                             @endforelse
                         </div>
-                        <div class="relative flex items-center justify-between gap-2 border-t border-white/15 pt-3"><span class="text-[9px] font-bold uppercase tracking-wider text-emerald-100/75">Clica para abrir resumo e histórico</span><flux:icon name="arrow-up-right" class="size-4 text-emerald-100" /></div>
+                        <div class="relative flex items-center justify-between gap-2 border-t border-white/15 pt-3 transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''"><span class="text-[9px] font-bold uppercase tracking-wider text-emerald-100/75">Clica para abrir resumo e histórico</span><flux:icon name="arrow-up-right" class="size-4 text-emerald-100" /></div>
                     </div>
                 </div>
                 <button type="button" @click.stop="flipped = !flipped" :aria-label="flipped ? 'Mostrar frente do cartão' : 'Virar cartão'" :aria-pressed="flipped.toString()" title="Virar cartão" class="absolute bottom-3 right-3 z-30 flex size-8 items-center justify-center rounded-full border border-white/25 bg-black/20 text-white shadow-lg backdrop-blur-sm transition duration-300 hover:rotate-[-45deg] hover:bg-black/35 focus:outline-none focus:ring-2 focus:ring-white/70">
