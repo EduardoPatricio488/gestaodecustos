@@ -13,7 +13,7 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class NewsHub extends Component
 {
-    public string $regionFilter = 'ALL';
+    public string $topicFilter = 'ALL';
 
     public string $search = '';
 
@@ -24,23 +24,33 @@ class NewsHub extends Component
         $workspaceId = $user?->current_workspace_id ?? 'none';
 
         return Cache::flexible("dashboard:news-24h:{$workspaceId}", [300, 900], function () {
-            $feeds = [
-                'PT' => 'https://news.google.com/rss/search?q=not%C3%ADcias+Portugal+when%3A1d&hl=pt-PT&gl=PT&ceid=PT%3Apt-PT',
-                'INT' => 'https://news.google.com/rss/search?q=not%C3%ADcias+internacionais+when%3A1d&hl=pt-PT&gl=PT&ceid=PT%3Apt-PT',
+            $topics = [
+                'PT' => 'notícias Portugal',
+                'INT' => 'notícias internacionais',
+                'FOOTBALL' => 'futebol Liga Portugal Champions League seleção',
+                'SPORTS' => 'desporto modalidades atletismo ténis basquetebol',
+                'ECONOMY' => 'economia mercados empresas finanças',
+                'TECH' => 'tecnologia inteligência artificial inovação cibersegurança',
+                'POLITICS' => 'política Governo eleições parlamento',
+                'SCIENCE' => 'ciência investigação descobertas espaço',
+                'ENTERTAINMENT' => 'entretenimento cultura cinema música televisão',
             ];
+
+            $feeds = collect($topics)->mapWithKeys(fn ($query, $topic) => [
+                $topic => 'https://news.google.com/rss/search?q='.rawurlencode($query.' when:1d').'&hl=pt-PT&gl=PT&ceid=PT:pt-PT',
+            ])->all();
 
             $articles = [];
 
             try {
                 $responses = Http::pool(function (Pool $pool) use ($feeds) {
-                    return [
-                        'PT' => $pool->as('PT')->connectTimeout(3)->timeout(7)->withHeaders(['User-Agent' => 'FinanceProNews/1.0'])->get($feeds['PT']),
-                        'INT' => $pool->as('INT')->connectTimeout(3)->timeout(7)->withHeaders(['User-Agent' => 'FinanceProNews/1.0'])->get($feeds['INT']),
-                    ];
+                    foreach ($feeds as $topic => $url) {
+                        $pool->as($topic)->connectTimeout(3)->timeout(7)->withHeaders(['User-Agent' => 'FinanceProNews/1.0'])->get($url);
+                    }
                 });
 
-                foreach (['PT', 'INT'] as $region) {
-                    $response = $responses[$region] ?? null;
+                foreach (array_keys($feeds) as $topic) {
+                    $response = $responses[$topic] ?? null;
                     if (! $response || ! $response->successful()) {
                         continue;
                     }
@@ -91,8 +101,8 @@ class NewsHub extends Component
                         $summary = mb_substr($summary, 0, 320);
 
                         $articles[] = [
-                            'id' => $region.'-'.count($articles),
-                            'region' => $region,
+                            'id' => $topic.'-'.count($articles),
+                            'topic' => $topic,
                             'title' => trim((string) $item->title),
                             'summary' => $summary,
                             'image' => $imageUrl,
@@ -127,11 +137,11 @@ class NewsHub extends Component
     public function render()
     {
         $articles = collect($this->news)
-            ->when($this->regionFilter !== 'ALL', fn ($items) => $items->where('region', $this->regionFilter))
+            ->when($this->topicFilter !== 'ALL', fn ($items) => $items->where('topic', $this->topicFilter))
             ->when(trim($this->search) !== '', function ($items) {
                 $term = mb_strtolower(trim($this->search));
 
-                return $items->filter(fn ($article) => str_contains(mb_strtolower($article['title'].' '.$article['source']), $term));
+                return $items->filter(fn ($article) => str_contains(mb_strtolower($article['title'].' '.$article['source'].' '.$article['summary']), $term));
             })
             ->values();
 
