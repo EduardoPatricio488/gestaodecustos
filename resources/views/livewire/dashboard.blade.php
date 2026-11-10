@@ -322,6 +322,7 @@
     </div>
 </div>
 
+<div class="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 {{-- 4. SELETOR DE ESPAÇO (WORKSPACE SWITCHER) --}}
 @php
     // Definimos a variável aqui para evitar o erro de 'Undefined variable'
@@ -368,6 +369,69 @@
         </a>
     </div>
 @endif
+
+@php
+    $user = auth()->user();
+    $hasProAccess = $user->isPaidPlan();
+@endphp
+
+
+
+{{-- TERMINAL DE ACÇÕES ESTRATÉGICAS --}}
+<div class="sm:ml-auto flex min-w-0 max-w-full items-center justify-start gap-1.5 bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-x-auto no-scrollbar">
+
+    {{-- BOTÃO IA PRO --}}
+    @if($hasProAccess)
+        <a href="{{ route('ai') }}" wire:navigate
+            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-950 text-brand-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-800 hover:bg-brand-600 hover:text-white transition-all shadow-lg active:scale-95 shrink-0">
+            <flux:icon name="sparkles" class="size-4 group-hover:rotate-12 transition-transform shrink-0" />
+            <span class="hidden sm:inline">IA PRO</span>
+        </a>
+    @else
+        <a href="{{ route('hub.pricing') }}" wire:navigate
+            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-200 dark:border-zinc-700 opacity-60 shrink-0">
+            <flux:icon name="lock-closed" variant="micro" class="size-3" />
+            <span class="hidden sm:inline">IA PRO</span>
+        </a>
+    @endif
+
+    <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0"></div>
+
+    {{-- BOTÃO RELATÓRIO PDF --}}
+    @if($hasProAccess)
+        <flux:modal.trigger name="export-pdf-modal">
+            <button type="button"
+                class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-black uppercase text-[10px] tracking-widest border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
+                <flux:icon name="document-arrow-down" class="size-4 group-hover:-translate-y-0.5 transition-transform shrink-0" />
+                <span class="hidden sm:inline">Relatório</span>
+            </button>
+        </flux:modal.trigger>
+    @else
+        <a href="{{ route('hub.pricing') }}" wire:navigate
+            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-widest border border-zinc-200 dark:border-zinc-700 opacity-60 shrink-0">
+            <flux:icon name="lock-closed" variant="micro" class="size-3" />
+            <span class="hidden sm:inline">Relatório</span>
+        </a>
+    @endif
+
+    <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0"></div>
+
+    {{-- GRUPO DE NAVEGAÇÃO (DESPESAS E RECEITAS) --}}
+    <div class="flex gap-1.5 shrink-0">
+        <a href="{{ route('expenses') }}" wire:navigate
+            class="flex items-center justify-center gap-2 px-3 sm:px-5 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-black uppercase text-[10px] tracking-widest border border-rose-100 dark:border-rose-900/50 hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
+            <flux:icon name="minus-circle" variant="micro" class="size-4 shrink-0" />
+            <span class="hidden sm:inline">Despesas</span>
+        </a>
+
+        <a href="{{ route('incomes.index') }}" wire:navigate
+            class="flex items-center justify-center gap-2 px-3 sm:px-5 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 font-black uppercase text-[10px] tracking-widest border border-emerald-100 dark:border-emerald-900/50 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
+            <flux:icon name="plus-circle" variant="micro" class="size-4 shrink-0" />
+            <span class="hidden sm:inline">Receitas</span>
+        </a>
+    </div>
+</div>
+</div>
 
 <style>
 @keyframes tickerUltra {
@@ -522,67 +586,7 @@
 
 
 
-@php
-    $user = auth()->user();
-    $hasProAccess = $user->isPaidPlan();
-@endphp
 
-
-
-{{-- TERMINAL DE ACÇÕES ESTRATÉGICAS --}}
-<div class="flex items-center justify-center sm:justify-start gap-1.5 bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-x-auto no-scrollbar">
-
-    {{-- BOTÃO IA PRO --}}
-    @if($hasProAccess)
-        <a href="{{ route('ai') }}" wire:navigate
-            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-950 text-brand-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-800 hover:bg-brand-600 hover:text-white transition-all shadow-lg active:scale-95 shrink-0">
-            <flux:icon name="sparkles" class="size-4 group-hover:rotate-12 transition-transform shrink-0" />
-            <span class="hidden sm:inline">IA PRO</span>
-        </a>
-    @else
-        <a href="{{ route('hub.pricing') }}" wire:navigate
-            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-200 dark:border-zinc-700 opacity-60 shrink-0">
-            <flux:icon name="lock-closed" variant="micro" class="size-3" />
-            <span class="hidden sm:inline">IA PRO</span>
-        </a>
-    @endif
-
-    <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0"></div>
-
-    {{-- BOTÃO RELATÓRIO PDF --}}
-    @if($hasProAccess)
-        <flux:modal.trigger name="export-pdf-modal">
-            <button type="button"
-                class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-black uppercase text-[10px] tracking-widest border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
-                <flux:icon name="document-arrow-down" class="size-4 group-hover:-translate-y-0.5 transition-transform shrink-0" />
-                <span class="hidden sm:inline">Relatório</span>
-            </button>
-        </flux:modal.trigger>
-    @else
-        <a href="{{ route('hub.pricing') }}" wire:navigate
-            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-widest border border-zinc-200 dark:border-zinc-700 opacity-60 shrink-0">
-            <flux:icon name="lock-closed" variant="micro" class="size-3" />
-            <span class="hidden sm:inline">Relatório</span>
-        </a>
-    @endif
-
-    <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0"></div>
-
-    {{-- GRUPO DE NAVEGAÇÃO (DESPESAS E RECEITAS) --}}
-    <div class="flex gap-1.5 shrink-0">
-        <a href="{{ route('expenses') }}" wire:navigate
-            class="flex items-center justify-center gap-2 px-3 sm:px-5 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-black uppercase text-[10px] tracking-widest border border-rose-100 dark:border-rose-900/50 hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
-            <flux:icon name="minus-circle" variant="micro" class="size-4 shrink-0" />
-            <span class="hidden sm:inline">Despesas</span>
-        </a>
-
-        <a href="{{ route('incomes.index') }}" wire:navigate
-            class="flex items-center justify-center gap-2 px-3 sm:px-5 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 font-black uppercase text-[10px] tracking-widest border border-emerald-100 dark:border-emerald-900/50 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
-            <flux:icon name="plus-circle" variant="micro" class="size-4 shrink-0" />
-            <span class="hidden sm:inline">Receitas</span>
-        </a>
-    </div>
-</div>
 
 
 
