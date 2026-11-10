@@ -1563,7 +1563,12 @@
                             </select>
                         </div>
 
-                        <div class="col-span-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Número de Conta</label>
+                            <input wire:model="acc_account_number" type="text" placeholder="Ex: 0003 54530704020"
+                                   class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
                             <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">IBAN</label>
                             <input wire:model="acc_iban" type="text" placeholder="PT50 XXXX XXXX XXXX XXXX XXXX X"
                                    class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -1575,7 +1580,7 @@
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">BIC / SWIFT</label>
-                            <input wire:model="acc_swift" type="text" placeholder="Código SWIFT"
+                            <input wire:model="acc_swift" type="text" placeholder="TOTAPTPL"
                                    class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         </div>
 
