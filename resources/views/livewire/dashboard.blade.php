@@ -199,14 +199,15 @@
     <div class="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-sky-300/70 to-transparent"></div>
     <div class="absolute -right-10 -top-14 size-36 rounded-full bg-sky-500/10 blur-3xl pointer-events-none"></div>
 
-    <a href="{{ route('hub.news') }}" wire:navigate title="Abrir a página dedicada de notícias" class="relative flex items-center gap-3 shrink-0 z-10 px-3.5 py-2.5 rounded-xl border border-sky-300/25 bg-gradient-to-br from-sky-500/20 via-blue-500/10 to-indigo-500/20 shadow-lg shadow-sky-950/30 cursor-pointer transition hover:border-sky-200/60 hover:brightness-110">
+    <a href="{{ route('hub.news') }}" wire:navigate title="Clica para abrir a página dedicada de notícias" aria-label="Abrir Notícias 24h" class="relative flex items-center gap-3 shrink-0 z-20 px-4 py-3 rounded-xl border-2 border-sky-300/60 bg-gradient-to-br from-sky-500/35 via-blue-500/25 to-indigo-500/35 shadow-lg shadow-sky-500/20 cursor-pointer transition-all duration-200 hover:scale-[1.04] hover:border-sky-200 hover:from-sky-400/45 hover:to-indigo-400/40 hover:shadow-xl hover:shadow-sky-400/30 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
         <div class="relative flex items-center justify-center">
             <div class="size-3 rounded-full bg-sky-300 animate-pulse shadow-[0_0_12px_rgba(125,211,252,0.9)]"></div>
             <div class="absolute inset-0 size-3 rounded-full bg-sky-300/40 blur-md animate-ping"></div>
         </div>
         <div class="flex flex-col gap-0.5">
             <span class="text-sm font-black uppercase text-white tracking-[0.16em] leading-none drop-shadow-[0_0_8px_rgba(56,189,248,0.55)]">Notícias 24h</span>
-            <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-sky-300/80">Últimas notícias</span>
+            <span class="text-[9px] font-bold uppercase tracking-[0.16em] text-sky-200">Últimas notícias</span>
+            <span class="mt-1 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-white">VER NOTÍCIAS <span aria-hidden="true">→</span></span>
         </div>
         <span class="ml-1 px-2 py-1 rounded-md bg-sky-300/15 border border-sky-300/25 text-[9px] font-black tracking-wider text-sky-200">LIVE</span>
     </a>
