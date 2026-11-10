@@ -804,30 +804,50 @@
                             <div class="absolute inset-0 size-3 rounded-full {{ $projectionStatus == 'critical' ? 'bg-red-500' : ($projectionStatus == 'warning' ? 'bg-amber-500' : 'bg-emerald-500') }} animate-ping"></div>
                         </div>
                         <p class="text-xs font-bold text-zinc-300">
-                            @if($projectionStatus == 'critical') Risco de saldo negativo detetado. Considera adiar compras.
-                            @elseif($projectionStatus == 'warning') Poupança ligeiramente abaixo da meta mensal.
-                            @else Gestão exemplar. O teu ritmo médio é de <b class="text-white">{{ $currentWs->money($totalMonth / max(now()->day, 1)) }}/dia</b>. @endif
+                            @if($projectionStatus == 'critical') A previsão aponta para saldo negativo no fim do mês. Revê os pagamentos previstos.
+                            @elseif($projectionStatus == 'warning') O saldo final previsto fica abaixo de 10% do saldo bancário atual.
+                            @else Com os movimentos previstos, deverás manter saldo positivo até ao fim do mês. @endif
                         </p>
                     </div>
+                    <p class="text-[10px] leading-relaxed text-zinc-500">
+                        Cálculo baseado no saldo bancário atual, salários por receber e dívidas com vencimento até ao fim do mês.
+                    </p>
                 </div>
 
                 {{-- Mini Métricas de Apoio --}}
-                <div class="flex flex-col justify-center gap-6 border-l border-white/10 pl-10 min-w-[200px]">
+                <div class="grid grid-cols-2 content-center gap-x-5 gap-y-6 border-l border-white/10 pl-8 min-w-[220px]">
                     <div>
-                        <p class="text-[9px] font-black uppercase text-zinc-500 tracking-widest mb-1">Gasto Projetado</p>
-                        <p class="text-2xl font-black text-zinc-200">
+                        <p class="text-[9px] font-black uppercase text-zinc-500 tracking-widest mb-1">Saldo Atual</p>
+                        <p class="text-xl font-black text-zinc-200">
+                            <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500">
+                                {{ $currentWs->money($totalBankBalance) }}
+                            </span>
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black uppercase text-zinc-500 tracking-widest mb-1">Entradas Previstas</p>
+                        <p class="text-xl font-black text-emerald-400">
+                            <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500">
+                                {{ $currentWs->money($projectedIncome) }}
+                            </span>
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black uppercase text-zinc-500 tracking-widest mb-1">Saídas Previstas</p>
+                        <p class="text-xl font-black text-red-300">
                             <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500">
                                 {{ $currentWs->money($projectedExpenses) }}
                             </span>
                         </p>
                     </div>
                     <div>
-                        <p class="text-[9px] font-black uppercase text-zinc-500 tracking-widest mb-1">Receita Prevista</p>
-                        <p class="text-2xl font-black text-emerald-500">
+                        <p class="text-[9px] font-black uppercase text-zinc-500 tracking-widest mb-1">Margem Diária</p>
+                        <p class="text-xl font-black text-sky-300">
                             <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500">
-                                {{ $currentWs->money($totalIncomeMonth) }}
+                                {{ $currentWs->money($projectionDailyAvailable) }}
                             </span>
                         </p>
+                        <p class="col-span-2 text-[9px] leading-relaxed text-zinc-500">Saldo previsto dividido pelos dias restantes do mês.</p>
                     </div>
                 </div>
             </div>
