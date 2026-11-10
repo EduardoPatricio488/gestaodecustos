@@ -1,3 +1,4 @@
+<div class="dashboard-component-root">
 <div class="dashboard-page space-y-8 pb-10">
     {{-- CSS dentro da root div para evitar o erro de Multiple Root Elements --}}
     <style>
@@ -2364,4 +2365,5 @@
             </div>
         </div>
     </div>
+</div>
 </div>
