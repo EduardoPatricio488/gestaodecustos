@@ -376,7 +376,7 @@
 <div x-data="{ open: false }" class="relative shrink-0">
     <button type="button" @click="open = !open" @keydown.escape.window="open = false" :aria-expanded="open.toString()" aria-label="Abrir menu de ações"
         class="flex size-12 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-700 shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-400 hover:text-brand-600 hover:shadow-xl dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
-        <flux:icon name="grid-2x2" class="size-5" />
+        <flux:icon name="ellipsis-horizontal" class="size-5" />
         <span class="absolute -right-1 -top-1 flex size-3 rounded-full bg-brand-500 ring-2 ring-white dark:ring-zinc-900"></span>
     </button>
     <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false"
