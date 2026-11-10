@@ -567,7 +567,7 @@
 @endphp
 
 {{-- TERMINAL DE ACÇÕES ESTRATÉGICAS --}}
-<div class="flex items-center justify-center sm:justify-start gap-1.5 bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-x-auto no-scrollbar">
+<div class="relative z-40 flex flex-wrap items-center justify-center sm:justify-start gap-1.5 bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-visible">
 
     {{-- BOTÃO IA PRO --}}
     @if($hasProAccess)
@@ -622,12 +622,12 @@
         <div x-data="{ openQuickCreate: false }" class="relative">
             <button type="button" x-on:click="openQuickCreate = !openQuickCreate" x-on:keydown.escape.window="openQuickCreate = false"
                 :aria-expanded="openQuickCreate.toString()" aria-label="Adicionar novo registo"
-                class="group flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-lg shadow-brand-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:shadow-xl active:scale-95">
+                class="group flex size-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-700 hover:scale-105 hover:shadow-xl active:scale-95">
                 <flux:icon name="plus" class="size-5 transition-transform duration-200" x-bind:class="openQuickCreate ? 'rotate-45' : ''" />
             </button>
 
             <div x-cloak x-show="openQuickCreate" x-transition.origin.top.right x-on:click.outside="openQuickCreate = false"
-                class="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+                class="absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
                 <p class="px-3 pb-2 pt-1 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">Criar novo registo</p>
                 <a href="{{ route('expenses', ['open_new' => 1]) }}" wire:navigate x-on:click="openQuickCreate = false"
                     class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-rose-50 dark:hover:bg-rose-950/30">
