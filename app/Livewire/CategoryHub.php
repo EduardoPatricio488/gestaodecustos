@@ -165,7 +165,7 @@ class CategoryHub extends Component
                 'meta' => [],
             ];
 
-            $this->dispatch('open-review-modal');
+            $this->dispatch('open-scanned-expense-form');
         }
 
         $categoryQuery = Category::where('name', $this->dbName)
