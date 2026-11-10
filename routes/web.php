@@ -312,6 +312,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/calendario', PersonalCalendar::class)->name('hub.calendar');
     Route::get('/lembretes', RemindersHub::class)->name('hub.reminders');
 
+    Route::get('/expenses/pending-scan/preview', function () {
+        $user = auth()->user();
+        $key = 'pending_expense_scan_preview:'.$user->current_workspace_id.':'.$user->id;
+        $path = session()->get($key);
+
+        abort_unless(
+            is_string($path)
+                && str_starts_with($path, 'expenses/pending-scans/')
+                && \Illuminate\Support\Facades\Storage::disk('public')->exists($path),
+            404
+        );
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->response(
+            $path,
+            null,
+            ['Cache-Control' => 'private, no-store']
+        );
+    })->name('expenses.pending-scan.preview');
+
     Route::get('/expenses', Expenses::class)->name('expenses');
     Route::get('/despesas-pessoais', Expenses::class)->name('expenses.index');
     Route::get('/expenses/create', ManageExpense::class)->name('expenses.create');
