@@ -553,6 +553,7 @@ PROMPT;
             'transportPassPaidByCompany' => 'boolean',
         ]);
 
+        $paidByCompany = (bool) $this->transportPassPaidByCompany;
         $user = auth()->user();
         $workspaceId = $user->current_workspace_id;
 
@@ -587,11 +588,11 @@ PROMPT;
             'payment_method' => $this->transportPassPaymentMethod,
             'started_at' => $startDate->toDateString(),
             'renewal_date' => $startDate->copy()->addMonthNoOverflow()->toDateString(),
-            'notes' => $this->transportPassPaidByCompany
+            'notes' => $paidByCompany
                 ? 'Passe de transporte pago pela empresa. Excluído dos cálculos financeiros pessoais.'
                 : 'Passe mensal de transporte.',
             'notify_before_billing' => false,
-            'paid_by_company' => $this->transportPassPaidByCompany,
+            'paid_by_company' => $paidByCompany,
         ]);
 
         $user->awardXp(20, 'passe mensal registado');
@@ -601,7 +602,7 @@ PROMPT;
         $this->transportPassPaymentMethod = 'card';
         $this->transportPassMode = false;
         $this->dispatch('modal-close-add-expense');
-        $message = $this->transportPassPaidByCompany
+        $message = $paidByCompany
             ? 'Passe registado. Como é pago pela empresa, não entra nas tuas contas.'
             : 'Passe mensal adicionado às assinaturas.';
         $this->dispatch('toast', variant: 'success', text: $message);
