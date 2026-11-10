@@ -105,12 +105,6 @@
             scannerPreview: null,
             uploadingFile: false,
             confirmAndSave() {
-                if (!$wire.bankAccountId && !$wire.transportPassMode) {
-                    const value = Number($wire.amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    if (!confirm(`Confirmas que tens ${value}€ disponíveis em dinheiro físico? Pretendes continuar?`)) {
-                        return;
-                    }
-                }
                 $wire.save();
             },
         }"
@@ -1067,6 +1061,16 @@
 
                 {{-- BODY (Scrollable) --}}
                 <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-6 space-y-5">
+                    @if($errors->any())
+                        <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+                            <p class="mb-2 font-black">Não foi possível confirmar a despesa:</p>
+                            <ul class="list-inside list-disc space-y-1">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
                     @if(str_starts_with((string) $slug, 'transporte'))
                         <div class="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 dark:bg-zinc-900 p-1">
@@ -1197,7 +1201,10 @@
                                 @if($document && str_starts_with($document->getMimeType() ?? '', 'image/'))
                                     <img src="{{ $document->temporaryUrl() }}" alt="Pré-visualização da fatura" class="h-24 w-20 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
                                 @elseif($pendingDocumentPath && str_starts_with($pendingDocumentMime ?? '', 'image/'))
-                                    <img src="{{ Storage::disk('public')->url($pendingDocumentPath) }}" alt="Pré-visualização da fatura" class="h-24 w-20 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
+                                    <a href="{{ route('expenses.pending-scan.preview') }}" target="_blank" rel="noopener" class="block w-full">
+                                        <img src="{{ route('expenses.pending-scan.preview') }}" alt="Fatura carregada — clicar para ampliar" class="max-h-80 w-full rounded-xl border border-zinc-200 bg-white object-contain dark:border-zinc-700 dark:bg-zinc-950">
+                                        <span class="mt-2 block text-center text-[10px] font-bold text-brand-600">Ver fotografia em tamanho real</span>
+                                    </a>
                                 @else
                                     <div class="flex size-16 items-center justify-center rounded-lg bg-red-50 text-xs font-black text-red-600 dark:bg-red-950/30">PDF</div>
                                 @endif
