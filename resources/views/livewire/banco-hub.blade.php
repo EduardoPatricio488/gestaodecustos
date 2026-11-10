@@ -1498,8 +1498,19 @@
                                     <li>Carrega aqui o ficheiro PDF.</li>
                                 </ol>
                             </div>
-                            <input type="file" wire:model="ibanProof" accept="application/pdf,.pdf"
-                                class="block w-full text-xs text-zinc-600 dark:text-zinc-300 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:file:bg-emerald-700">
+                            <label for="iban-proof-upload" class="group flex min-h-44 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-emerald-400 bg-white px-5 py-6 text-center shadow-sm transition-all duration-200 hover:border-emerald-600 hover:bg-emerald-50 hover:shadow-lg hover:shadow-emerald-500/10 dark:border-emerald-700 dark:bg-zinc-900 dark:hover:border-emerald-500 dark:hover:bg-emerald-950/40">
+                                <input id="iban-proof-upload" type="file" wire:model="ibanProof" accept="application/pdf,.pdf" class="sr-only">
+                                <span class="mb-3 flex size-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 transition-transform duration-200 group-hover:scale-110 dark:bg-emerald-900/50 dark:text-emerald-300">
+                                    <flux:icon name="cloud-arrow-up" class="size-8" />
+                                </span>
+                                <span class="text-sm font-black text-emerald-800 dark:text-emerald-300">Clique para selecionar o comprovativo</span>
+                                <span class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Escolhe um ficheiro PDF no teu dispositivo</span>
+                                <span class="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-black text-white shadow-md shadow-emerald-600/20 transition group-hover:bg-emerald-700">
+                                    <flux:icon name="folder-open" class="size-4" />
+                                    Escolher ficheiro
+                                </span>
+                                <span class="mt-2 text-[10px] font-medium text-zinc-400">Formato aceite: PDF · Máximo 5 MB</span>
+                            </label>
                             <div wire:loading wire:target="ibanProof" class="text-[10px] font-bold text-emerald-600">A analisar comprovativo...</div>
                             @error('ibanProof') <p class="text-[10px] text-red-500">{{ $message }}</p> @enderror
                             @if($ibanProofMessage)
