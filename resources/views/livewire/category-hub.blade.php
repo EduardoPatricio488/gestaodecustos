@@ -105,7 +105,7 @@
             scannerPreview: null,
             uploadingFile: false,
             confirmAndSave() {
-                if (!$wire.bankAccountId) {
+                if (!$wire.bankAccountId && !$wire.transportPassMode) {
                     const value = Number($wire.amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     if (!confirm(`Confirmas que tens ${value}€ disponíveis em dinheiro físico? Pretendes continuar?`)) {
                         return;
@@ -120,7 +120,7 @@
                 window.history.replaceState({}, '', window.location.pathname);
             }
         "
-        x-on:open-add-expense-modal.window="scannerOpen = false; reviewOpen = false; formOpen = true;"
+        x-on:open-add-expense-modal.window="scannerOpen = false; reviewOpen = false; transportPassMode = false; $wire.set('transportPassMode', false); formOpen = true;"
         x-on:modal-close-add-expense.window="formOpen = false"
         x-on:scan-completed.window="scannerOpen = false; setTimeout(() => reviewOpen = true, 250);"
         x-on:open-review-modal.window="scannerOpen = false; setTimeout(() => reviewOpen = true, 250);"
@@ -156,7 +156,7 @@
 
                 <button type="button"
                     wire:click="openCreateModal"
-                    @click="scannerOpen = false; reviewOpen = false; formOpen = true"
+                    @click="scannerOpen = false; reviewOpen = false; transportPassMode = false; formOpen = true"
                     class="flex items-center justify-center gap-2 px-4 h-10 sm:h-11 rounded-xl sm:rounded-2xl text-white font-black uppercase text-[10px] sm:text-sm shadow-lg transition-all hover:scale-[1.02]"
                     style="background-color: var(--cat-color);">
                     <flux:icon name="plus" class="size-4" />
@@ -1068,6 +1068,33 @@
                 {{-- BODY (Scrollable) --}}
                 <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-6 space-y-5">
 
+                    @if($slug === 'transporte')
+                        <div class="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 dark:bg-zinc-900 p-1">
+                            <button type="button" @click="transportPassMode = false; $wire.set('transportPassMode', false)" :class="!transportPassMode ? 'bg-white dark:bg-zinc-800 text-sky-600 shadow-sm' : 'text-zinc-500'" class="h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Despesa</button>
+                            <button type="button" @click="transportPassMode = true; $wire.set('transportPassMode', true)" :class="transportPassMode ? 'bg-white dark:bg-zinc-800 text-sky-600 shadow-sm' : 'text-zinc-500'" class="h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Passe mensal</button>
+                        </div>
+                        <div x-show="transportPassMode" x-cloak x-transition class="space-y-5">
+                            <div class="rounded-2xl border border-sky-200 bg-sky-50 p-4 dark:border-sky-900/50 dark:bg-sky-950/30">
+                                <div class="flex items-center gap-2 text-sky-700 dark:text-sky-300"><flux:icon name="ticket" class="size-5" /><p class="text-xs font-black uppercase tracking-widest">Registar passe de transporte</p></div>
+                                <p class="mt-1 text-xs text-sky-700/80 dark:text-sky-300/80">Será criada automaticamente uma assinatura com cobrança mensal.</p>
+                            </div>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Nome / Tipo de passe</span><input wire:model="transportPassName" type="text" placeholder="Ex.: Passe Navegante" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-bold shadow-inner dark:bg-zinc-900 dark:text-white"></label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valor mensal (€)</span><input wire:model="transportPassAmount" type="number" min="0.01" step="0.01" placeholder="40,00" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-lg font-black text-sky-600 shadow-inner dark:bg-zinc-900"></label>
+                                <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Data de início</span><input wire:model="transportPassStartedAt" type="date" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-bold shadow-inner dark:bg-zinc-900 dark:text-white"></label>
+                            </div>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Forma de pagamento</span><select wire:model="transportPassPaymentMethod" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-bold shadow-inner dark:bg-zinc-900 dark:text-white"><option value="card">Cartão</option><option value="direct_debit">Débito direto</option><option value="bank_transfer">Transferência bancária</option><option value="paypal">PayPal</option><option value="cash">Numerário</option></select></label>
+                            <label class="flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                                <span><span class="block text-xs font-black uppercase tracking-widest text-zinc-800 dark:text-white">Pago pela empresa?</span><span class="mt-1 block text-xs text-zinc-500">A empresa suporta o custo deste passe?</span></span>
+                                <input type="checkbox" wire:model.live="transportPassPaidByCompany" class="size-5 rounded border-zinc-300 text-sky-600 focus:ring-sky-500">
+                            </label>
+                            @if($transportPassPaidByCompany)
+                                <div class="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-700/50 dark:bg-amber-950/30"><flux:icon name="information-circle" class="mt-0.5 size-5 shrink-0 text-amber-600" /><p class="text-xs font-bold leading-relaxed text-amber-800 dark:text-amber-200">Este passe ficará registado nas Assinaturas, mas não será contabilizado nas tuas despesas, previsões ou totais financeiros do site, porque é pago pela empresa.</p></div>
+                            @endif
+                        </div>
+                        <div x-show="!transportPassMode" x-cloak class="space-y-5">
+                    @endif
+
                     {{-- Valor e Data --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <label class="block space-y-2">
@@ -1181,6 +1208,11 @@
         <textarea wire:model="description" rows="2" class="w-full resize-none rounded-2xl border-0 bg-white px-4 py-3 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white"></textarea>
     </label>
 </div>
+                </div>
+
+                    @if($slug === 'transporte')
+                        </div>
+                    @endif
                 </div>
 
                 {{-- FOOTER (Igual às Assinaturas) --}}
