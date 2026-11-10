@@ -606,50 +606,6 @@
 
 
 
-    {{-- 2. BARRA DE NÍVEL E XP (DESIGN INTEGRADO) --}}
-    <div class="group relative flex items-center gap-6 bg-gradient-to-r from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-5 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden">
-        {{-- Efeito Decorativo de Fundo --}}
-        <div class="absolute -right-10 -top-10 size-40 bg-brand-500/5 blur-3xl rounded-full group-hover:bg-brand-500/10 transition-all duration-700"></div>
-
-        {{-- Badge de Nível --}}
-        <div class="relative flex-shrink-0">
-            <div class="flex flex-col items-center justify-center w-20 h-20 rounded-[1.8rem] bg-brand-600 text-white shadow-2xl shadow-brand-500/40 relative z-10">
-                <span class="text-[9px] font-black uppercase opacity-60 tracking-tighter">Nível</span>
-                <span class="text-3xl font-black leading-none">{{ auth()->user()->level }}</span>
-            </div>
-            {{-- Indicador de Progresso Circular em volta do nível (CSS Subtil) --}}
-            <div class="absolute inset-0 rounded-[1.8rem] border-2 border-brand-500/20 scale-110"></div>
-        </div>
-
-        <div class="flex-1 space-y-3">
-            <div class="flex justify-between items-end">
-                <div>
-                    <h4 class="text-xs font-black uppercase text-zinc-500 tracking-[0.15em]">Experiência Financeira</h4>
-                    <p class="text-[10px] text-zinc-400 font-bold mt-0.5">Faltam {{ 1000 - (auth()->user()->xp % 1000) }} XP para o próximo escalão</p>
-                </div>
-                <div class="text-right">
-                    <span class="text-xs font-black text-brand-600 dark:text-brand-400 uppercase italic">{{ (auth()->user()->xp % 1000) / 10 }}%</span>
-                </div>
-            </div>
-
-            {{-- Barra de Progresso Estilizada --}}
-            <div class="relative h-3 w-full bg-zinc-200/50 dark:bg-zinc-800 rounded-full overflow-hidden border border-zinc-100 dark:border-zinc-700 shadow-inner">
-                <div class="h-full bg-brand-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(59,130,246,0.6)]" style="width: {{ (auth()->user()->xp % 1000) / 10 }}%"></div>
-            </div>
-        </div>
-
-        {{-- Medalhas/Badges --}}
-        <div class="hidden lg:flex items-center gap-3 pl-6 border-l border-zinc-200 dark:border-zinc-800">
-           @forelse(collect(auth()->user()->badges ?? [])->take(3) as $badge)
-                <div title="{{ $badge->name }}" class="size-10 rounded-2xl flex items-center justify-center text-xl shadow-lg hover:scale-110 transition-transform cursor-help" style="background: {{ $badge->color }}15; border: 1px solid {{ $badge->color }}30;">
-                    {{ $badge->icon }}
-                </div>
-            @empty
-                <span class="text-[10px] text-zinc-400 uppercase font-black italic w-24 text-center leading-tight">Sem medalhas este mês</span>
-            @endforelse
-        </div>
-    </div>
-
     {{-- 6. SECÇÃO DE INTELIGÊNCIA E PREVISÃO --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -885,6 +841,51 @@
     </div>
 
 
+
+
+    {{-- 2. BARRA DE NÍVEL E XP (DESIGN INTEGRADO) --}}
+    <div class="group relative flex items-center gap-6 bg-gradient-to-r from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-5 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden">
+        {{-- Efeito Decorativo de Fundo --}}
+        <div class="absolute -right-10 -top-10 size-40 bg-brand-500/5 blur-3xl rounded-full group-hover:bg-brand-500/10 transition-all duration-700"></div>
+
+        {{-- Badge de Nível --}}
+        <div class="relative flex-shrink-0">
+            <div class="flex flex-col items-center justify-center w-20 h-20 rounded-[1.8rem] bg-brand-600 text-white shadow-2xl shadow-brand-500/40 relative z-10">
+                <span class="text-[9px] font-black uppercase opacity-60 tracking-tighter">Nível</span>
+                <span class="text-3xl font-black leading-none">{{ auth()->user()->level }}</span>
+            </div>
+            {{-- Indicador de Progresso Circular em volta do nível (CSS Subtil) --}}
+            <div class="absolute inset-0 rounded-[1.8rem] border-2 border-brand-500/20 scale-110"></div>
+        </div>
+
+        <div class="flex-1 space-y-3">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h4 class="text-xs font-black uppercase text-zinc-500 tracking-[0.15em]">Experiência Financeira</h4>
+                    <p class="text-[10px] text-zinc-400 font-bold mt-0.5">Faltam {{ 1000 - (auth()->user()->xp % 1000) }} XP para o próximo escalão</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-black text-brand-600 dark:text-brand-400 uppercase italic">{{ (auth()->user()->xp % 1000) / 10 }}%</span>
+                </div>
+            </div>
+
+            {{-- Barra de Progresso Estilizada --}}
+            <div class="relative h-3 w-full bg-zinc-200/50 dark:bg-zinc-800 rounded-full overflow-hidden border border-zinc-100 dark:border-zinc-700 shadow-inner">
+                <div class="h-full bg-brand-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(59,130,246,0.6)]" style="width: {{ (auth()->user()->xp % 1000) / 10 }}%"></div>
+            </div>
+        </div>
+
+        {{-- Medalhas/Badges --}}
+        <div class="hidden lg:flex items-center gap-3 pl-6 border-l border-zinc-200 dark:border-zinc-800">
+           @forelse(collect(auth()->user()->badges ?? [])->take(3) as $badge)
+                <div title="{{ $badge->name }}" class="size-10 rounded-2xl flex items-center justify-center text-xl shadow-lg hover:scale-110 transition-transform cursor-help" style="background: {{ $badge->color }}15; border: 1px solid {{ $badge->color }}30;">
+                    {{ $badge->icon }}
+                </div>
+            @empty
+                <span class="text-[10px] text-zinc-400 uppercase font-black italic w-24 text-center leading-tight">Sem medalhas este mês</span>
+            @endforelse
+        </div>
+    </div>
 
 
     {{-- 8. MOVIMENTOS RECENTES (ESTILO TIMELINE) --}}
