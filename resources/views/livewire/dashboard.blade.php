@@ -705,6 +705,7 @@
         </div>
 
         <div class="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
+            <div class="min-w-0 space-y-3">
             {{-- CARTÃO BANCÁRIO: FRENTE E VERSO --}}
             <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do saldo bancário" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="dashboard-card-shell group relative aspect-[1.95/1] w-full min-w-0 cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.95 / 1;">
                 <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
@@ -730,10 +731,7 @@
                         <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-red-100/80">{{ $isCurrentDashboardPeriod ? 'Saldo atual + salário líquido' : 'Saldo no fim do período' }}</p>
                         <p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-4xl">{{ number_format($dashboardBankCardBalance, 2, ',', ' ') }} <span class="text-xl text-red-100">€</span></p>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 border-t border-white/20 pt-3">
-                        <div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">Saldo bancário</p><p class="mt-1 truncate text-[11px] font-bold tabular-nums text-white">{{ number_format($dashboardBankCardCurrentBalance, 2, ',', ' ') }} €</p></div>
-                        <div class="min-w-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">{{ $isCurrentDashboardPeriod ? 'Salário líquido' : 'Período consultado' }}</p><p class="mt-1 truncate text-[11px] font-bold tabular-nums text-white">{{ $isCurrentDashboardPeriod ? '+ '.number_format($dashboardBankCardSalaryAmount, 2, ',', ' ').' €' : $dashboardPeriodLabel }}</p></div>
-                    </div>
+
 
                 </div>
                     </div>
@@ -756,7 +754,19 @@
                     <span aria-hidden="true" class="text-[22px] font-semibold leading-none">↻</span>
                 </button>
             </article>
+            <div class="grid grid-cols-2 gap-3 rounded-2xl border border-zinc-200 bg-white/80 p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/70">
+                <div class="min-w-0 transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
+                    <p class="text-[9px] font-bold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">Saldo bancário</p>
+                    <p class="mt-1 truncate text-sm font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($dashboardBankCardCurrentBalance, 2, ',', ' ') }} €</p>
+                </div>
+                <div class="min-w-0 text-right transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
+                    <p class="text-[9px] font-bold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">{{ $isCurrentDashboardPeriod ? 'Salário líquido' : 'Período consultado' }}</p>
+                    <p class="mt-1 truncate text-sm font-black tabular-nums text-zinc-900 dark:text-white">{{ $isCurrentDashboardPeriod ? '+ '.number_format($dashboardBankCardSalaryAmount, 2, ',', ' ').' €' : $dashboardPeriodLabel }}</p>
+                </div>
+            </div>
+            </div>
 
+            <div class="min-w-0 space-y-3">
             {{-- CARTÃO DE SUBSÍDIO DE ALIMENTAÇÃO: FRENTE E VERSO --}}
             <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="dashboard-card-shell group relative aspect-[1.95/1] w-full min-w-0 cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.95 / 1;">
                 <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
@@ -772,7 +782,7 @@
                     </div>
                     <div class="flex items-center gap-3 py-2"><div class="relative h-9 w-12 overflow-hidden rounded-md border border-amber-100/40 bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 shadow-inner"><span class="absolute left-1/2 top-0 h-full w-px bg-amber-800/25"></span><span class="absolute left-0 top-1/2 h-px w-full bg-amber-800/25"></span><span class="absolute left-1/4 top-0 h-full w-px bg-amber-800/20"></span><span class="absolute right-1/4 top-0 h-full w-px bg-amber-800/20"></span></div><flux:icon name="wifi" variant="outline" class="size-5 rotate-90 text-white/65" /><span class="ml-auto text-[9px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Benefício mensal</span></div>
                     <div><p class="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-100/75">Valor projetado</p><p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-4xl">{{ number_format($dashboardProjectedMealAllowance, 2, ',', ' ') }} <span class="text-xl text-emerald-200">€</span></p></div>
-                    <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-3"><div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Atribuído por</p><p class="mt-1 truncate text-[11px] font-semibold text-white">@forelse($dashboardSalaryContracts as $projectedContract){{ $loop->first ? '' : ' · ' }}{{ $projectedContract->description }}@empty Sem subsídio configurado @endforelse</p></div><div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Projeção anual</p><p class="mt-1 text-xs font-bold text-white">{{ number_format($dashboardProjectedMealAllowance * 11, 2, ',', ' ') }} €</p></div></div>
+
                 </div>
                     </div>
                     <div class="dashboard-card-surface absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-emerald-200/30 bg-gradient-to-br from-[#064b3d] via-[#03352c] to-[#011c17] p-3.5 text-white shadow-2xl sm:p-4" style="transform: rotateY(180deg); backface-visibility: hidden;">
@@ -800,6 +810,17 @@
                     <span aria-hidden="true" class="text-[22px] font-semibold leading-none">↻</span>
                 </button>
             </article>
+            <div class="grid grid-cols-2 gap-3 rounded-2xl border border-zinc-200 bg-white/80 p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/70">
+                <div class="min-w-0 transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
+                    <p class="text-[9px] font-bold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">Atribuído por</p>
+                    <p class="mt-1 truncate text-sm font-black text-zinc-900 dark:text-white">MIND</p>
+                </div>
+                <div class="min-w-0 text-right transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
+                    <p class="text-[9px] font-bold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">Projeção anual</p>
+                    <p class="mt-1 truncate text-sm font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($dashboardProjectedMealAllowance * 11, 2, ',', ' ') }} €</p>
+                </div>
+            </div>
+            </div>
         </div>
 
         {{-- MODAL DO CARTÃO BANCÁRIO --}}
