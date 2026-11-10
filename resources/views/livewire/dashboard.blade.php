@@ -162,7 +162,7 @@
          class="relative group px-1">
 
         {{-- Setas de navegação (Apenas PC) --}}
-        <button @click="scrollPrev" class="absolute -left-1 top-1/2 -translate-y-1/2 z-20 size-8 flex items-center justify-center bg-white/90 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex">
+        <button x-on:click="scrollPrev" class="absolute -left-1 top-1/2 -translate-y-1/2 z-20 size-8 flex items-center justify-center bg-white/90 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex">
             <flux:icon name="chevron-left" class="size-3 text-zinc-600 dark:text-zinc-300" />
         </button>
 
@@ -182,7 +182,7 @@
             @endforeach
         </div>
 
-        <button @click="scrollNext" class="absolute -right-1 top-1/2 -translate-y-1/2 z-20 size-8 flex items-center justify-center bg-white/90 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex">
+        <button x-on:click="scrollNext" class="absolute -right-1 top-1/2 -translate-y-1/2 z-20 size-8 flex items-center justify-center bg-white/90 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex">
             <flux:icon name="chevron-right" class="size-3 text-zinc-600 dark:text-zinc-300" />
         </button>
     </div>
@@ -501,7 +501,7 @@
                 <p x-show="loading" class="pt-2 text-xs font-semibold text-zinc-400" role="status">A carregar dados meteorológicos…</p>
                 <p x-show="locationMessage && !loading" x-text="locationMessage" class="pt-2 text-xs text-amber-300"></p>
                 <p x-show="error && !loading" x-text="error" class="pt-2 text-xs text-red-300" role="alert"></p>
-                <button x-show="error && !loading" @click="loadWeather()" type="button" class="mt-2 rounded-full border border-white/15 px-4 py-2 text-xs font-bold hover:bg-white/10">Tentar novamente</button>
+                <button x-show="error && !loading" x-on:click="loadWeather()" type="button" class="mt-2 rounded-full border border-white/15 px-4 py-2 text-xs font-bold hover:bg-white/10">Tentar novamente</button>
             </div>
 
             <div class="relative z-10 flex items-center justify-center gap-5 py-7">
@@ -620,26 +620,26 @@
         </a>
 
         <div x-data="{ openQuickCreate: false }" class="relative">
-            <button type="button" @click="openQuickCreate = !openQuickCreate" @keydown.escape.window="openQuickCreate = false"
+            <button type="button" x-on:click="openQuickCreate = !openQuickCreate" x-on:keydown.escape.window="openQuickCreate = false"
                 :aria-expanded="openQuickCreate.toString()" aria-label="Adicionar novo registo"
                 class="group flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-lg shadow-brand-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:shadow-xl active:scale-95">
                 <flux:icon name="plus" class="size-5 transition-transform duration-200" :class="openQuickCreate ? 'rotate-45' : ''" />
             </button>
 
-            <div x-cloak x-show="openQuickCreate" x-transition.origin.top.right @click.outside="openQuickCreate = false"
+            <div x-cloak x-show="openQuickCreate" x-transition.origin.top.right x-on:click.outside="openQuickCreate = false"
                 class="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
                 <p class="px-3 pb-2 pt-1 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">Criar novo registo</p>
-                <a href="{{ route('expenses', ['open_new' => 1]) }}" wire:navigate @click="openQuickCreate = false"
+                <a href="{{ route('expenses', ['open_new' => 1]) }}" wire:navigate x-on:click="openQuickCreate = false"
                     class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-rose-50 dark:hover:bg-rose-950/30">
                     <span class="flex size-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300"><flux:icon name="receipt" class="size-4" /></span>
                     <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova despesa</span>
                 </a>
-                <a href="{{ route('hub.subscriptions', ['open_extra' => 1]) }}" wire:navigate @click="openQuickCreate = false"
+                <a href="{{ route('hub.subscriptions', ['open_extra' => 1]) }}" wire:navigate x-on:click="openQuickCreate = false"
                     class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-violet-50 dark:hover:bg-violet-950/30">
                     <span class="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300"><flux:icon name="arrow-path" class="size-4" /></span>
                     <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova subscrição</span>
                 </a>
-                <a href="{{ route('hub.incomes', ['open_extra' => 1]) }}" wire:navigate @click="openQuickCreate = false"
+                <a href="{{ route('hub.incomes', ['open_extra' => 1]) }}" wire:navigate x-on:click="openQuickCreate = false"
                     class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
                     <span class="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300"><flux:icon name="banknote" class="size-4" /></span>
                     <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova receita extra</span>
@@ -736,20 +736,20 @@
     <section id="dashboard-salario-alimentacao" x-data="{ showSalaryHistory: false, showMealHistory: false }" class="scroll-mt-28 space-y-4">
         <div x-data="{ openPeriodFilter: false }" class="flex flex-wrap items-center justify-between gap-3 px-1">
             <div class="relative">
-                <button type="button" @click="openPeriodFilter = !openPeriodFilter" class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-black uppercase tracking-wider text-zinc-600 shadow-sm transition hover:border-brand-400 hover:text-brand-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+                <button type="button" x-on:click="openPeriodFilter = !openPeriodFilter" class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-black uppercase tracking-wider text-zinc-600 shadow-sm transition hover:border-brand-400 hover:text-brand-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
                     <flux:icon name="calendar-days" variant="micro" class="size-4 text-emerald-500" />
                     {{ $dashboardPeriodLabel }}
                     <flux:icon name="chevron-down" variant="micro" class="size-3.5 transition-transform" />
                 </button>
-                <div x-cloak x-show="openPeriodFilter" @click.outside="openPeriodFilter = false" x-transition class="absolute left-0 top-full z-40 mt-2 w-[min(92vw,24rem)] rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+                <div x-cloak x-show="openPeriodFilter" x-on:click.outside="openPeriodFilter = false" x-transition class="absolute left-0 top-full z-40 mt-2 w-[min(92vw,24rem)] rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
                     @php
                         $periodMonthNames = [1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril', 5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto', 9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'];
                         $selectedMonthYear = (int) substr($dashboardSelectedMonth, 0, 4);
                         $selectedMonthNumber = (int) substr($dashboardSelectedMonth, 5, 2);
                     @endphp
                     <div class="mb-3 grid grid-cols-2 gap-2">
-                        <button type="button" wire:click="$set('dashboardSelectedMonth', '{{ now()->format('Y-m') }}'); $set('dashboardPeriodType', 'month')" @click="openPeriodFilter = false" class="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2.5 text-[11px] font-black text-brand-700 transition hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">Mês atual</button>
-                        <button type="button" wire:click="$set('dashboardSelectedYear', '{{ now()->format('Y') }}'); $set('dashboardPeriodType', 'year')" @click="openPeriodFilter = false" class="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2.5 text-[11px] font-black text-brand-700 transition hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">Ano atual</button>
+                        <button type="button" wire:click="$set('dashboardSelectedMonth', '{{ now()->format('Y-m') }}'); $set('dashboardPeriodType', 'month')" x-on:click="openPeriodFilter = false" class="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2.5 text-[11px] font-black text-brand-700 transition hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">Mês atual</button>
+                        <button type="button" wire:click="$set('dashboardSelectedYear', '{{ now()->format('Y') }}'); $set('dashboardPeriodType', 'year')" x-on:click="openPeriodFilter = false" class="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2.5 text-[11px] font-black text-brand-700 transition hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">Ano atual</button>
                     </div>
                     <div class="mb-3 flex items-center justify-between">
                         <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Consultar outro período</p>
@@ -782,7 +782,7 @@
                             @endforeach
                         </div>
                     @endif
-                    <button type="button" wire:click="$refresh" @click="openPeriodFilter = false" class="mt-4 w-full rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-500">Aplicar filtro</button>
+                    <button type="button" wire:click="$refresh" x-on:click="openPeriodFilter = false" class="mt-4 w-full rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-500">Aplicar filtro</button>
                 </div>
             </div>
             <div class="mt-2 flex flex-wrap items-center gap-2">
@@ -801,7 +801,7 @@
         <div class="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
             <div class="min-w-0 space-y-3">
             {{-- CARTÃO BANCÁRIO: FRENTE E VERSO --}}
-            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do saldo bancário" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="dashboard-card-shell group relative aspect-[1.95/1] w-full min-w-0 cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.95 / 1;">
+            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do saldo bancário" x-on:click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="dashboard-card-shell group relative aspect-[1.95/1] w-full min-w-0 cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.95 / 1;">
                 <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
                     <div class="dashboard-card-surface absolute inset-0 overflow-hidden rounded-[1.6rem] border p-4 text-white shadow-2xl transition-shadow duration-500 sm:p-5" style="backface-visibility: hidden; background: linear-gradient(135deg, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 0%, color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 72%, #000 28%) 100%); border-color: color-mix(in srgb, {{ $dashboardBankCardAccount?->color ?: '#ed1c24' }} 65%, white 35%);">
                         <div class="pointer-events-none absolute -right-14 -top-20 size-64 rounded-full border border-white/15 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110"></div>
@@ -855,7 +855,7 @@
 
             <div class="min-w-0 space-y-3">
             {{-- CARTÃO DE SUBSÍDIO DE ALIMENTAÇÃO: FRENTE E VERSO --}}
-            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="dashboard-card-shell group relative aspect-[1.95/1] w-full min-w-0 cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.95 / 1;">
+            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do subsídio de alimentação" x-on:click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="dashboard-card-shell group relative aspect-[1.95/1] w-full min-w-0 cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 1.95 / 1;">
                 <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
                     <div class="dashboard-card-surface absolute inset-0 overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-4 text-white shadow-2xl shadow-emerald-950/25 transition-shadow duration-500 group-hover:shadow-emerald-950/40 sm:p-5" style="backface-visibility: hidden;">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:-rotate-12 group-hover:scale-110"></div>
@@ -931,7 +931,7 @@
                             Ver investimentos
                             <flux:icon name="arrow-up-right" class="size-4" />
                         </a>
-                        <button type="button" @click="investmentsExpanded = !investmentsExpanded" :aria-expanded="investmentsExpanded.toString()" aria-label="Mostrar composição dos investimentos" title="Mostrar composição dos investimentos" class="flex size-10 items-center justify-center rounded-xl border border-sky-300/60 bg-white/80 text-sky-700 shadow-sm transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-sky-400/30 dark:bg-slate-800 dark:text-sky-300 dark:hover:bg-slate-700">
+                        <button type="button" x-on:click="investmentsExpanded = !investmentsExpanded" :aria-expanded="investmentsExpanded.toString()" aria-label="Mostrar composição dos investimentos" title="Mostrar composição dos investimentos" class="flex size-10 items-center justify-center rounded-xl border border-sky-300/60 bg-white/80 text-sky-700 shadow-sm transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-sky-400/30 dark:bg-slate-800 dark:text-sky-300 dark:hover:bg-slate-700">
                             <flux:icon name="chevron-down" class="size-5 transition-transform duration-300" ::class="{ 'rotate-180': investmentsExpanded }" />
                         </button>
                     </div>
@@ -1028,15 +1028,15 @@
         </section>
 
         {{-- MODAL DO CARTÃO BANCÁRIO --}}
-        <div x-data="{ activeModalTab: 'summary' }" x-show="showSalaryHistory" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 p-3 backdrop-blur-sm sm:p-6" @click.self="showSalaryHistory = false" @keydown.escape.window="showSalaryHistory = false; activeModalTab = 'summary'">
+        <div x-data="{ activeModalTab: 'summary' }" x-show="showSalaryHistory" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 p-3 backdrop-blur-sm sm:p-6" @click.self="showSalaryHistory = false" x-on:keydown.escape.window="showSalaryHistory = false; activeModalTab = 'summary'">
             <div x-show="showSalaryHistory" x-transition.scale class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
                 <div class="flex items-center justify-between gap-4 border-b border-zinc-100 bg-gradient-to-r from-red-50 to-white p-5 dark:border-zinc-800 dark:from-red-950/30 dark:to-zinc-900 sm:p-6">
                     <div class="flex items-center gap-3"><span class="flex size-11 items-center justify-center rounded-2xl bg-red-600 text-white shadow-lg shadow-red-600/20"><flux:icon name="wallet" class="size-5" /></span><div><h3 class="text-lg font-black text-zinc-900 dark:text-white">Detalhes do saldo bancário</h3><p class="text-xs text-zinc-500">Conta, projeção e movimentos associados</p></div></div>
-                    <button type="button" @click="showSalaryHistory = false; activeModalTab = 'summary'" class="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label="Fechar"><flux:icon name="x-mark" class="size-5" /></button>
+                    <button type="button" x-on:click="showSalaryHistory = false; activeModalTab = 'summary'" class="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label="Fechar"><flux:icon name="x-mark" class="size-5" /></button>
                 </div>
                 <div class="flex gap-2 border-b border-zinc-100 px-5 pt-4 dark:border-zinc-800 sm:px-6">
-                    <button type="button" @click="activeModalTab = 'summary'" :class="activeModalTab === 'summary' ? 'border-red-600 text-red-600 dark:text-red-300' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'" class="border-b-2 px-3 pb-3 text-xs font-black uppercase tracking-wider transition">Resumo</button>
-                    <button type="button" @click="activeModalTab = 'history'" :class="activeModalTab === 'history' ? 'border-red-600 text-red-600 dark:text-red-300' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'" class="border-b-2 px-3 pb-3 text-xs font-black uppercase tracking-wider transition">Histórico</button>
+                    <button type="button" x-on:click="activeModalTab = 'summary'" :class="activeModalTab === 'summary' ? 'border-red-600 text-red-600 dark:text-red-300' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'" class="border-b-2 px-3 pb-3 text-xs font-black uppercase tracking-wider transition">Resumo</button>
+                    <button type="button" x-on:click="activeModalTab = 'history'" :class="activeModalTab === 'history' ? 'border-red-600 text-red-600 dark:text-red-300' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'" class="border-b-2 px-3 pb-3 text-xs font-black uppercase tracking-wider transition">Histórico</button>
                 </div>
                 <div x-show="activeModalTab === 'summary'" x-cloak class="min-h-0 flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -1088,20 +1088,20 @@
                         <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Não existem movimentos bancários registados nesta conta e período.</p>
                     @endif
                 </div>
-                <div class="border-t border-zinc-100 p-4 text-right dark:border-zinc-800"><button type="button" @click="showSalaryHistory = false; activeModalTab = 'summary'" class="rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900">Fechar</button></div>
+                <div class="border-t border-zinc-100 p-4 text-right dark:border-zinc-800"><button type="button" x-on:click="showSalaryHistory = false; activeModalTab = 'summary'" class="rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900">Fechar</button></div>
             </div>
         </div>
 
         {{-- MODAL DO CARTÃO DE SUBSÍDIO DE ALIMENTAÇÃO --}}
-        <div x-data="{ activeModalTab: 'summary' }" x-show="showMealHistory" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 p-3 backdrop-blur-sm sm:p-6" @click.self="showMealHistory = false" @keydown.escape.window="showMealHistory = false; activeModalTab = 'summary'">
+        <div x-data="{ activeModalTab: 'summary' }" x-show="showMealHistory" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 p-3 backdrop-blur-sm sm:p-6" @click.self="showMealHistory = false" x-on:keydown.escape.window="showMealHistory = false; activeModalTab = 'summary'">
             <div x-show="showMealHistory" x-transition.scale class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
                 <div class="flex items-center justify-between gap-4 border-b border-zinc-100 bg-gradient-to-r from-emerald-50 to-white p-5 dark:border-zinc-800 dark:from-emerald-950/40 dark:to-zinc-900 sm:p-6">
                     <div class="flex items-center gap-3"><span class="flex size-11 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"><flux:icon name="cake" class="size-5" /></span><div><h3 class="text-lg font-black text-zinc-900 dark:text-white">Detalhes do subsídio de alimentação</h3><p class="text-xs text-zinc-500">Projeção, contratos e pagamentos associados</p></div></div>
-                    <button type="button" @click="showMealHistory = false; activeModalTab = 'summary'" class="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label="Fechar"><flux:icon name="x-mark" class="size-5" /></button>
+                    <button type="button" x-on:click="showMealHistory = false; activeModalTab = 'summary'" class="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label="Fechar"><flux:icon name="x-mark" class="size-5" /></button>
                 </div>
                 <div class="flex gap-2 border-b border-zinc-100 px-5 pt-4 dark:border-zinc-800 sm:px-6">
-                    <button type="button" @click="activeModalTab = 'summary'" :class="activeModalTab === 'summary' ? 'border-emerald-600 text-emerald-700 dark:text-emerald-300' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'" class="border-b-2 px-3 pb-3 text-xs font-black uppercase tracking-wider transition">Resumo</button>
-                    <button type="button" @click="activeModalTab = 'history'" :class="activeModalTab === 'history' ? 'border-emerald-600 text-emerald-700 dark:text-emerald-300' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'" class="border-b-2 px-3 pb-3 text-xs font-black uppercase tracking-wider transition">Histórico</button>
+                    <button type="button" x-on:click="activeModalTab = 'summary'" :class="activeModalTab === 'summary' ? 'border-emerald-600 text-emerald-700 dark:text-emerald-300' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'" class="border-b-2 px-3 pb-3 text-xs font-black uppercase tracking-wider transition">Resumo</button>
+                    <button type="button" x-on:click="activeModalTab = 'history'" :class="activeModalTab === 'history' ? 'border-emerald-600 text-emerald-700 dark:text-emerald-300' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'" class="border-b-2 px-3 pb-3 text-xs font-black uppercase tracking-wider transition">Histórico</button>
                 </div>
                 <div x-show="activeModalTab === 'summary'" x-cloak class="min-h-0 flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -1140,7 +1140,7 @@
                         <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Ainda não existem registos mensais de pagamento com subsídio de alimentação.</p>
                     @endforelse
                 </div>
-                <div class="border-t border-zinc-100 p-4 text-right dark:border-zinc-800"><button type="button" @click="showMealHistory = false; activeModalTab = 'summary'" class="rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900">Fechar</button></div>
+                <div class="border-t border-zinc-100 p-4 text-right dark:border-zinc-800"><button type="button" x-on:click="showMealHistory = false; activeModalTab = 'summary'" class="rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900">Fechar</button></div>
             </div>
         </div>
     </section>
@@ -1997,7 +1997,7 @@
          x-cloak
          class="fixed inset-0 z-[300] flex items-center justify-center p-4">
 
-        <div class="absolute inset-0 bg-zinc-950/80 backdrop-blur-xl" @click="open = false"></div>
+        <div class="absolute inset-0 bg-zinc-950/80 backdrop-blur-xl" x-on:click="open = false"></div>
 
         <div x-show="open"
              x-transition:enter="transition ease-out duration-300 transform"
