@@ -14,7 +14,9 @@ use App\Services\BusinessAccessService;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Smalot\PdfParser\Parser;
 
 #[Layout('components.layouts.app')]
 class BancoHub extends Component
