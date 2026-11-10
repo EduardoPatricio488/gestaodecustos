@@ -665,7 +665,7 @@ class Dashboard extends Component
         $dashboardInvestmentsCount = count($myInvestments);
         $dashboardInvestmentsLastUpdatedTimestamp = collect($myInvestments)->max('updated_at');
         $dashboardInvestmentsLastUpdated = $dashboardInvestmentsLastUpdatedTimestamp
-            ? \\Carbon\\Carbon::createFromTimestamp($dashboardInvestmentsLastUpdatedTimestamp)->format('d/m/Y · H:i')
+            ? now()->setTimestamp($dashboardInvestmentsLastUpdatedTimestamp)->format('d/m/Y · H:i')
             : null;
 
         $subscriptionsMonthlyCost = (float) Cache::remember(
