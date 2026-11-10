@@ -77,7 +77,7 @@ class NewsHub extends Component
 
                         $descriptionHtml = html_entity_decode($description, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-                        if ($imageUrl === '' && preg_match('/<img[^>]+src=["\\']([^"\\']+)["\\']/i', $descriptionHtml, $imageMatch)) {
+                        if ($imageUrl === '' && preg_match("~<img[^>]+src=['\\\"]([^'\\\"]+)['\\\"]~i", $descriptionHtml, $imageMatch)) {
                             $imageUrl = trim($imageMatch[1]);
                         }
 
