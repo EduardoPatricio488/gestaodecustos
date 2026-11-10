@@ -4,6 +4,21 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* Cartões bancários: proporção física 85,6 × 54 mm e rotação manual suave */
+        .dashboard-card-flipper {
+            transform-style: preserve-3d;
+            transition: transform 1.35s cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+            will-change: transform;
+        }
+        .dashboard-card-flipper.is-flipped { transform: rotateY(180deg); }
+        .dashboard-card-face {
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .dashboard-card-flipper { transition-duration: 0.01ms !important; }
+        }
+
         /* Garante que os modais (não-flyout) desta página ficam sempre centrados no ecrã */
         .dashboard-page [data-flux-modal] > dialog:not([data-flux-flyout]) {
             position: fixed !important;
@@ -639,11 +654,11 @@
             @endif
         </div>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
             {{-- CARTÃO BANCÁRIO: FRENTE E VERSO --}}
-            <article role="button" tabindex="0" aria-label="Abrir detalhes e histórico do saldo bancário" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="group min-h-60 cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1200px;">
-                <div class="relative min-h-60 rounded-[1.6rem] transition-transform duration-700 ease-in-out group-hover:[transform:rotateY(180deg)] motion-reduce:transition-none" style="transform-style: preserve-3d;">
-                    <div class="absolute inset-0 overflow-hidden rounded-[1.6rem] border border-red-300/25 bg-gradient-to-br from-[#ed1c24] via-[#b5121b] to-[#650b13] p-6 text-white shadow-2xl shadow-red-950/30 transition-shadow duration-500 group-hover:shadow-red-950/50 sm:p-7" style="backface-visibility: hidden;">
+            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do saldo bancário" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="relative mx-auto aspect-[1.586/1] w-full max-w-[430px] cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 85.6 / 54;">
+                <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
+                    <div class="absolute inset-0 overflow-hidden rounded-[1.6rem] border border-red-300/25 bg-gradient-to-br from-[#ed1c24] via-[#b5121b] to-[#650b13] p-4 text-white shadow-2xl shadow-red-950/30 transition-shadow duration-500 group-hover:shadow-red-950/50 sm:p-5" class="dashboard-card-face" style="backface-visibility: hidden;">
                         <div class="pointer-events-none absolute -right-14 -top-20 size-64 rounded-full border border-white/15 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110"></div>
                 <div class="pointer-events-none absolute -right-3 -top-12 size-44 rounded-full border border-white/10"></div>
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10"></div>
@@ -677,7 +692,7 @@
                     <p class="truncate text-[8px] font-semibold tracking-[0.16em] text-red-100/75">IBAN {{ $dashboardBankCardAccount?->iban ? substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), 0, 4).' •••• •••• •••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), -4) : 'não registado' }}</p>
                 </div>
                     </div>
-                    <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-red-200/40 bg-gradient-to-br from-[#8e1019] via-[#650b13] to-[#31070b] p-6 text-white shadow-2xl sm:p-7" style="transform: rotateY(180deg); backface-visibility: hidden;">
+                    <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-red-200/40 bg-gradient-to-br from-[#8e1019] via-[#650b13] to-[#31070b] p-4 text-white shadow-2xl sm:p-5" class="dashboard-card-face" style="transform: rotateY(180deg); backface-visibility: hidden;">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10"></div>
                         <div class="relative">
                             <p class="text-[9px] font-black uppercase tracking-[0.25em] text-red-100/70">Finance Pro · Verso do cartão</p>
@@ -693,12 +708,16 @@
                         <div class="relative flex items-center justify-between gap-2 border-t border-white/15 pt-3"><span class="text-[9px] font-bold uppercase tracking-wider text-red-100/75">Clica para abrir resumo e histórico</span><flux:icon name="arrow-up-right" class="size-4 text-red-100" /></div>
                     </div>
                 </div>
+                <button type="button" @click.stop="flipped = !flipped" :aria-pressed="flipped.toString()" class="absolute -bottom-10 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-2 rounded-full border border-zinc-300/70 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-700 shadow-lg transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
+                    <span x-text="flipped ? 'Ver frente' : 'Virar cartão'"></span>
+                    <span aria-hidden="true">↻</span>
+                </button>
             </article>
 
             {{-- CARTÃO DE SUBSÍDIO DE ALIMENTAÇÃO: FRENTE E VERSO --}}
-            <article role="button" tabindex="0" aria-label="Abrir detalhes e histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="group min-h-56 cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1200px;">
-                <div class="relative min-h-56 rounded-[1.6rem] transition-transform duration-700 ease-in-out group-hover:[transform:rotateY(180deg)] motion-reduce:transition-none" style="transform-style: preserve-3d;">
-                    <div class="absolute inset-0 overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-6 text-white shadow-2xl shadow-emerald-950/25 transition-shadow duration-500 group-hover:shadow-emerald-950/40 sm:p-7" style="backface-visibility: hidden;">
+            <article x-data="{ flipped: false }" role="button" tabindex="0" aria-label="Abrir detalhes e histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="relative mx-auto aspect-[1.586/1] w-full max-w-[430px] cursor-pointer rounded-[1.6rem] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-950" style="perspective: 1400px; aspect-ratio: 85.6 / 54;">
+                <div class="dashboard-card-flipper relative h-full w-full rounded-[1.6rem]" :class="{ 'is-flipped': flipped }">
+                    <div class="absolute inset-0 overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-4 text-white shadow-2xl shadow-emerald-950/25 transition-shadow duration-500 group-hover:shadow-emerald-950/40 sm:p-5" class="dashboard-card-face" style="backface-visibility: hidden;">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:-rotate-12 group-hover:scale-110"></div>
                 <div class="pointer-events-none absolute -right-2 -top-12 size-44 rounded-full border border-emerald-100/10"></div>
                 <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-emerald-300/10 via-transparent to-white/5"></div>
@@ -713,7 +732,7 @@
                     <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-3"><div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Atribuído por</p><p class="mt-1 truncate text-[11px] font-semibold text-white">@forelse($dashboardSalaryContracts as $projectedContract){{ $loop->first ? '' : ' · ' }}{{ $projectedContract->description }}@empty Sem subsídio configurado @endforelse</p></div><div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Projeção anual</p><p class="mt-1 text-xs font-bold text-white">{{ number_format($dashboardProjectedMealAllowance * 11, 2, ',', ' ') }} €</p></div></div>
                 </div>
                     </div>
-                    <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-emerald-200/30 bg-gradient-to-br from-[#064b3d] via-[#03352c] to-[#011c17] p-6 text-white shadow-2xl sm:p-7" style="transform: rotateY(180deg); backface-visibility: hidden;">
+                    <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-emerald-200/30 bg-gradient-to-br from-[#064b3d] via-[#03352c] to-[#011c17] p-4 text-white shadow-2xl sm:p-5" class="dashboard-card-face" style="transform: rotateY(180deg); backface-visibility: hidden;">
                         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10"></div>
                         <div class="relative">
                             <p class="text-[9px] font-black uppercase tracking-[0.25em] text-emerald-100/70">Finance Pro · Verso do cartão</p>
@@ -734,6 +753,10 @@
                         <div class="relative flex items-center justify-between gap-2 border-t border-white/15 pt-3"><span class="text-[9px] font-bold uppercase tracking-wider text-emerald-100/75">Clica para abrir resumo e histórico</span><flux:icon name="arrow-up-right" class="size-4 text-emerald-100" /></div>
                     </div>
                 </div>
+                <button type="button" @click.stop="flipped = !flipped" :aria-pressed="flipped.toString()" class="absolute -bottom-10 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-2 rounded-full border border-zinc-300/70 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-700 shadow-lg transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
+                    <span x-text="flipped ? 'Ver frente' : 'Virar cartão'"></span>
+                    <span aria-hidden="true">↻</span>
+                </button>
             </article>
         </div>
 
