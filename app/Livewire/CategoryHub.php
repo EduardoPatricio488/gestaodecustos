@@ -595,7 +595,7 @@ PROMPT;
             'paid_by_company' => $paidByCompany,
         ]);
 
-        \\Illuminate\\Support\\Facades\\Cache::forget(\"dashboard:subscriptions-monthly:{$workspaceId}:{$user->id}\");
+        \Illuminate\Support\Facades\Cache::forget("dashboard:subscriptions-monthly:{$workspaceId}:{$user->id}");
         $user->awardXp(20, 'passe mensal registado');
         $this->reset(['transportPassAmount', 'transportPassPaidByCompany']);
         $this->transportPassName = 'Passe mensal';
