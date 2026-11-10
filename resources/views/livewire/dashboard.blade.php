@@ -722,6 +722,14 @@
                     <button type="button" wire:click="$refresh" @click="openPeriodFilter = false" class="mt-4 w-full rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-500">Aplicar filtro</button>
                 </div>
             </div>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+                <button type="button" wire:click="$set('dashboardSelectedMonth', '{{ now()->format('Y-m') }}'); $set('dashboardPeriodType', 'month')" class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[10px] font-black uppercase tracking-wider transition {{ $dashboardPeriodType === 'month' && $dashboardSelectedMonth === now()->format('Y-m') ? 'border-brand-500 bg-brand-600 text-white shadow-sm' : 'border-zinc-200 bg-white text-zinc-600 hover:border-brand-400 hover:text-brand-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300' }}">
+                    <flux:icon name="calendar" variant="micro" class="size-3.5" /> Mês atual
+                </button>
+                <button type="button" wire:click="$set('dashboardSelectedYear', '{{ now()->format('Y') }}'); $set('dashboardPeriodType', 'year')" class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[10px] font-black uppercase tracking-wider transition {{ $dashboardPeriodType === 'year' && (int) $dashboardSelectedYear === now()->year ? 'border-brand-500 bg-brand-600 text-white shadow-sm' : 'border-zinc-200 bg-white text-zinc-600 hover:border-brand-400 hover:text-brand-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300' }}">
+                    <flux:icon name="calendar-days" variant="micro" class="size-3.5" /> Ano atual
+                </button>
+            </div>
             @if($dashboardPeriodType !== 'month' || $dashboardSelectedMonth !== now()->format('Y-m'))
                 <button type="button" wire:click="$set('dashboardSelectedMonth', '{{ now()->format('Y-m') }}'); $set('dashboardPeriodType', 'month')" class="text-[10px] font-bold uppercase tracking-wider text-brand-600 hover:underline">Voltar ao mês atual</button>
             @endif
