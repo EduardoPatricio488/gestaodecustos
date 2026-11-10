@@ -372,6 +372,11 @@
     </div>
 @endif
 
+@php
+    $user = auth()->user();
+    $hasProAccess = $user->isPaidPlan();
+@endphp
+
 <div x-data="{ open: false }" class="relative shrink-0">
     <button type="button" @click="open = !open" @keydown.escape.window="open = false" :aria-expanded="open.toString()" aria-label="Abrir menu de ações"
         class="flex size-12 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-700 shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-400 hover:text-brand-600 hover:shadow-xl dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
@@ -419,10 +424,7 @@
 </div>
     </div>
 
-@php
-    $user = auth()->user();
-    $hasProAccess = $user->isPaidPlan();
-@endphp
+
 
 
 
