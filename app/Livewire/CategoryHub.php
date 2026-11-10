@@ -10,6 +10,7 @@ use App\Services\PriceComparisonService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -62,6 +63,8 @@ class CategoryHub extends Component
     public bool $transportPassPaidByCompany = false;
 
     public $receipt;
+
+    public $document;
 
     public $budgetLimit;
 
@@ -429,7 +432,7 @@ PROMPT;
 
     public function openCreateModal(): void
     {
-        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId']);
+        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'document', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId']);
         $this->spent_at = now()->format('Y-m-d');
         $this->transportPassMode = false;
         $this->transportPassName = 'Passe mensal';
@@ -511,6 +514,7 @@ PROMPT;
             'amount' => 'required|numeric|min:0.01',
             'spent_at' => 'required|date',
             'subcategory' => 'required',
+            'document' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:20480',
         ]);
 
         if ($this->bankAccountId) {
@@ -566,6 +570,20 @@ PROMPT;
             'bank_account_id' => $this->bankAccountId ?: null,
             'metadata' => ! empty($this->meta) ? $this->meta : null,
         ];
+
+        if ($this->document) {
+            $existingExpense = $this->editingId
+                ? Expense::where('workspace_id', auth()->user()->current_workspace_id)
+                    ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+                    ->find($this->editingId)
+                : null;
+
+            if ($existingExpense?->receipt_path) {
+                Storage::disk('public')->delete($existingExpense->receipt_path);
+            }
+
+            $data['receipt_path'] = $this->document->store('expenses/receipts', 'public');
+        }
 
         $user = auth()->user();
 
