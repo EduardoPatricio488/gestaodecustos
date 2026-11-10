@@ -853,6 +853,66 @@ class Dashboard extends Component
         $totalSaved = (float) Cache::remember("dashboard:total-saved:{$currentWs->id}:{$user->id}", 60, fn () => Goal::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->sum('current_amount'));
         $totalPatrimony = $totalBankBalance + $portfolioValue + $totalSaved;
 
+        // Inventário completo dos registos introduzidos nesta conta.
+        $accountOverview = Cache::remember("dashboard:account-overview:v1:{$currentWs->id}:{$user->id}", 60, function () use ($currentWs, $user): array {
+            $scope = fn ($query) => $query->where('workspace_id', $currentWs->id)
+                ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id));
+
+            $expenses = $scope(Expense::query());
+            $incomes = $scope(Income::query());
+            $goals = $scope(Goal::query());
+            $debts = $scope(Debt::query());
+            $subscriptions = $scope(Subscription::query());
+            $recurring = $scope(RecurringIncome::query());
+            $reminders = $scope(Reminder::query());
+            $activities = $scope(FitnessActivity::query());
+            $accounts = $scope(BankAccount::query())->withCurrentBalanceTotals()->get();
+
+            $subscriptionRows = $subscriptions->get(['amount', 'cycle', 'status', 'is_active', 'paid_by_company']);
+            $activeSubscriptions = $subscriptionRows->filter(fn ($item) => ($item->status ?: ($item->is_active ? 'active' : 'paused')) === 'active');
+            $personalSubscriptionsMonthly = $activeSubscriptions->where('paid_by_company', false)->sum(fn ($item) => SubscriptionCycleService::toMonthly((float) $item->amount, $item->cycle));
+            $companySubscriptionsMonthly = $activeSubscriptions->where('paid_by_company', true)->sum(fn ($item) => SubscriptionCycleService::toMonthly((float) $item->amount, $item->cycle));
+
+            return [
+                'income_count' => (clone $incomes)->count(),
+                'income_total' => (float) (clone $incomes)->sum('amount'),
+                'expense_count' => (clone $expenses)->count(),
+                'expense_total' => (float) (clone $expenses)->sum('amount'),
+                'account_count' => $accounts->count(),
+                'accounts' => $accounts->map(fn ($account) => [
+                    'name' => $account->name,
+                    'bank' => $account->bank_name,
+                    'type' => $account->type,
+                    'currency' => $account->currency ?: 'EUR',
+                    'balance' => (float) $account->current_balance,
+                    'base_balance' => (float) $account->balance,
+                    'included' => (bool) $account->include_in_total,
+                ])->values()->all(),
+                'investment_count' => count($myInvestments),
+                'investment_invested' => (float) $dashboardInvestmentsTotalInvested,
+                'investment_value' => (float) $portfolioValue,
+                'investment_profit' => (float) $dashboardInvestmentsProfit,
+                'goal_count' => (clone $goals)->count(),
+                'goal_target' => (float) (clone $goals)->sum('target_amount'),
+                'goal_saved' => (float) (clone $goals)->sum('current_amount'),
+                'debt_count' => (clone $debts)->where('is_paid', false)->count(),
+                'debt_pay' => (float) (clone $debts)->where('type', 'owe')->where('is_paid', false)->sum('amount'),
+                'debt_receive' => (float) (clone $debts)->where('type', 'owed')->where('is_paid', false)->sum('amount'),
+                'subscription_count' => $activeSubscriptions->count(),
+                'subscription_personal_monthly' => (float) $personalSubscriptionsMonthly,
+                'subscription_company_monthly' => (float) $companySubscriptionsMonthly,
+                'recurring_count' => (clone $recurring)->where('is_active', true)->count(),
+                'recurring_monthly' => (float) (clone $recurring)->where('is_active', true)->sum('amount'),
+                'reminder_open' => (clone $reminders)->where('is_completed', false)->count(),
+                'reminder_done' => (clone $reminders)->where('is_completed', true)->count(),
+                'activity_count' => (clone $activities)->count(),
+                'activity_km' => (float) (clone $activities)->sum('distance_km'),
+                'activity_minutes' => (int) (clone $activities)->sum('duration_minutes'),
+                'category_count' => $scope(Category::query())->count(),
+                'budget_total' => (float) $scope(Category::query())->sum('budget_limit'),
+            ];
+        });
+
         $dashboardSalaryContracts = RecurringIncome::where('workspace_id', $currentWs->id)
             ->where('user_id', $user->id)
             ->where('source', 'emprego')
@@ -1094,6 +1154,7 @@ class Dashboard extends Component
             'projectionStatus' => $projectionStatus,
             'totalBankBalance' => $totalBankBalance,
             'totalPatrimony' => $totalPatrimony,
+            'accountOverview' => $accountOverview,
             'topBankAccounts' => $topBankAccounts,
             'topExpenseCategory' => $topExpenseCategory,
             'subscriptionsMonthlyCost' => $subscriptionsMonthlyCost,
