@@ -607,10 +607,10 @@
 
 
     {{-- 6. SECÇÃO DE INTELIGÊNCIA E PREVISÃO --}}
-    <div class="grid grid-cols-1 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {{-- CARD: PREVISÃO INTELIGENTE (ESTILO BLACK GLASS) --}}
-        <div class="relative overflow-hidden bg-zinc-950 text-white rounded-[2.5rem] shadow-2xl border border-zinc-800 group">
+        <div class="lg:col-span-2 relative overflow-hidden bg-zinc-950 text-white rounded-[2.5rem] shadow-2xl border border-zinc-800 group">
             {{-- Efeito de Luz IA ao fundo --}}
             <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 blur-[100px] rounded-full -mr-20 -mt-20"></div>
 
@@ -663,6 +663,38 @@
                             </span>
                         </p>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- CARD: PATRIMÓNIO TOTAL --}}
+        <div class="relative flex flex-col justify-between overflow-hidden rounded-[2.5rem] border border-emerald-500/20 bg-gradient-to-br from-emerald-950 via-zinc-950 to-zinc-900 p-7 text-white shadow-2xl group">
+            <div class="absolute -right-12 -top-12 size-44 rounded-full bg-emerald-500/10 blur-3xl transition-all duration-700 group-hover:bg-emerald-400/20"></div>
+            <div class="relative z-10">
+                <div class="mb-6 flex items-center justify-between">
+                    <div class="flex size-12 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-400">
+                        <flux:icon name="vault" variant="solid" class="size-6" />
+                    </div>
+                    <span class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-emerald-300">Visão global</span>
+                </div>
+                <p class="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-300/70">Património Total</p>
+                <h3 class="mt-2 text-4xl font-black tracking-tighter text-white">
+                    <span :class="privacyMode ? 'blur-xl select-none' : ''" class="inline-block transition-all duration-500">{{ $currentWs->money($totalPatrimony) }}</span>
+                </h3>
+                <p class="mt-2 text-xs font-medium leading-relaxed text-zinc-400">O valor acumulado entre contas, investimentos e objetivos de poupança.</p>
+            </div>
+            <div class="relative z-10 mt-8 space-y-4 border-t border-white/10 pt-5">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="flex items-center gap-2 text-xs font-semibold text-zinc-300"><span class="size-2 rounded-full bg-sky-400"></span> Contas bancárias</span>
+                    <span class="text-sm font-black text-white"><span :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($totalBankBalance) }}</span></span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <span class="flex items-center gap-2 text-xs font-semibold text-zinc-300"><span class="size-2 rounded-full bg-violet-400"></span> Investimentos</span>
+                    <span class="text-sm font-black text-white"><span :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($portfolioValue) }}</span></span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <span class="flex items-center gap-2 text-xs font-semibold text-zinc-300"><span class="size-2 rounded-full bg-emerald-400"></span> Objetivos de poupança</span>
+                    <span class="text-sm font-black text-white"><span :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($totalSaved) }}</span></span>
                 </div>
             </div>
         </div>
