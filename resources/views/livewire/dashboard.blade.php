@@ -271,6 +271,7 @@
      x-init="init()"
 >
     <div class="flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex min-w-0 items-center gap-4">
         {{-- Avatar Dinâmico --}}
         <div class="size-16 rounded-[1.5rem] flex items-center justify-center text-4xl shadow-2xl shrink-0 transition-all duration-500"
              style="background-color: {{ auth()->user()->profile_color }}15; border: 2px solid {{ auth()->user()->profile_color }}30;">
@@ -320,6 +321,7 @@
                     </button>
                 </flux:modal.trigger>
             </div>
+        </div>
         </div>
 <div class="flex min-w-0 flex-wrap items-center justify-start gap-3 sm:ml-auto sm:justify-end">
 {{-- SELETOR DE ESPAÇO --}}
