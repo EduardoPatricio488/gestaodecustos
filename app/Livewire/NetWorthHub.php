@@ -162,6 +162,7 @@ class NetWorthHub extends Component
         $activeSubscriptions = Subscription::where('workspace_id', $workspaceId)
             ->where('user_id', $user->id)
             ->where('is_active', true)
+            ->where('paid_by_company', false)
             ->get();
 
         // O plano da própria plataforma é uma assinatura real, mas não fica gravado na tabela
