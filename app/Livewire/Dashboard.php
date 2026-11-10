@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Carbon\Carbon;
 use App\Models\BankAccount;
 use App\Models\Category;
 use App\Models\Debt;
@@ -889,7 +890,7 @@ class Dashboard extends Component
             $bankBalanceReferenceDate = $dashboardBankCardAccount->created_at?->toDateString();
             $bankBalancePeriodEnd = $isCurrentDashboardPeriod ? now()->endOfDay() : $periodEnd->copy()->endOfDay();
 
-            if ($bankBalanceReferenceDate && \\Carbon\\Carbon::parse($bankBalanceReferenceDate)->startOfDay()->greaterThan($bankBalancePeriodEnd)) {
+            if ($bankBalanceReferenceDate && Carbon::parse($bankBalanceReferenceDate)->startOfDay()->greaterThan($bankBalancePeriodEnd)) {
                 $dashboardBankCardCurrentBalance = 0.0;
             } else {
                 $accountIncomeUntilPeriod = (float) Income::where('workspace_id', $currentWs->id)
