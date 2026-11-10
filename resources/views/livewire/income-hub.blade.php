@@ -175,9 +175,7 @@
         </div>
     </div>
 
-    {{-- ================================================================== --}}
-    {{-- PROJEÇÃO DE SALÁRIO E ALIMENTAÇÃO · CARTÕES DINÂMICOS --}}
-    
+    {{-- Os cartões de salário e subsídio de alimentação passaram para o Dashboard. --}}
 
     {{-- CARDS DE ESTATÍSTICAS · ULTRA PREMIUM                           --}}
 {{-- ================================================================== --}}
