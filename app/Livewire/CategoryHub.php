@@ -66,6 +66,12 @@ class CategoryHub extends Component
 
     public $document;
 
+    public ?string $pendingDocumentPath = null;
+
+    public ?string $pendingDocumentName = null;
+
+    public ?string $pendingDocumentMime = null;
+
     public $budgetLimit;
 
     public $editingBudget = false;
@@ -145,44 +151,58 @@ class CategoryHub extends Component
         $pendingScan = session()->pull('pending_expense_scan:'.auth()->user()->current_workspace_id.':'.auth()->id());
 
         if (request()->boolean('open_scan_review') && is_array($pendingScan)) {
-            $suggestedSubcategory = mb_strtolower(trim((string) ($pendingScan['subcategory'] ?? '')));
-            $matchedSubcategory = null;
+            $result = $pendingScan['data'] ?? $pendingScan;
+            $toNumber = static function ($value): ?float {
+                if ($value === null || $value === '') return null;
+                if (is_string($value)) {
+                    $value = str_replace([' ', "\u{00A0}", '€'], '', $value);
+                    if (preg_match('/^\d{1,3}(\.\d{3})+(,\d+)?$/', $value)) {
+                        $value = str_replace(['.', ','], ['', '.'], $value);
+                    } else {
+                        $value = str_replace(',', '.', $value);
+                    }
+                }
+                return is_numeric($value) ? (float) $value : null;
+            };
 
+            $suggestedSubcategory = mb_strtolower(trim((string) ($result['subcategory'] ?? '')));
             foreach ($this->subcategories as $availableSubcategory) {
                 if ($suggestedSubcategory !== '' && (
                     Str::contains(mb_strtolower($availableSubcategory), $suggestedSubcategory) ||
                     Str::contains($suggestedSubcategory, mb_strtolower($availableSubcategory))
                 )) {
-                    $matchedSubcategory = $availableSubcategory;
+                    $this->subcategory = $availableSubcategory;
                     break;
                 }
             }
 
-            $matchedSubcategory ??= $this->subcategories[0] ?? 'Geral';
+            $this->amount = $toNumber($result['amount'] ?? null);
+            $this->spent_at = $result['date'] ?? now()->format('Y-m-d');
+            $store = trim((string) ($result['store'] ?? ''));
+            $description = trim((string) ($result['description'] ?? ''));
+            $this->description = $description !== '' ? $description : $store;
 
-            $this->amount = (float) ($pendingScan['amount'] ?? 0);
-            $this->spent_at = $pendingScan['date'] ?? now()->format('Y-m-d');
-            $this->description = trim((string) ($pendingScan['store'] ?? ''));
-            $this->subcategory = $matchedSubcategory;
-            $this->meta = array_filter([
-                'numero_fatura' => $pendingScan['invoice_number'] ?? null,
-                'nif_emitente' => $pendingScan['nif_emitter'] ?? null,
-                'iva' => $pendingScan['tax'] ?? null,
-            ], fn ($value) => $value !== null && $value !== '');
-
-            $this->scannedData = [
-                'amount' => $this->amount,
-                'date' => $this->spent_at,
-                'store' => $this->description,
-                'subcategory' => $matchedSubcategory,
-                'invoice_number' => $pendingScan['invoice_number'] ?? null,
-                'nif_emitter' => $pendingScan['nif_emitter'] ?? null,
-                'tax' => $pendingScan['tax'] ?? null,
-                'notes' => $pendingScan['notes'] ?? null,
-                'items' => [],
-                'meta' => [],
+            $numericKeys = ['quantity', 'unit_price', 'vat_rate', 'gross_amount', 'net_amount', 'vat_amount', 'amount_tendered', 'change_amount'];
+            $metaKeys = [
+                'item_name', 'time', 'quantity', 'unit', 'unit_price', 'vat_rate',
+                'gross_amount', 'net_amount', 'vat_amount', 'tax_incidence',
+                'amount_tendered', 'change_amount', 'payment_condition', 'payment_method',
+                'company_nif', 'customer_nif', 'invoice_number', 'notes',
             ];
+            foreach ($metaKeys as $key) {
+                $value = $result[$key] ?? null;
+                if ($value !== null && $value !== '') {
+                    $this->meta[$key] = in_array($key, $numericKeys, true)
+                        ? $toNumber($value)
+                        : trim((string) $value);
+                }
+            }
 
+            $this->pendingDocumentPath = $pendingScan['document_path'] ?? null;
+            $this->pendingDocumentName = $pendingScan['document_name'] ?? null;
+            $this->pendingDocumentMime = $pendingScan['document_mime'] ?? null;
+            $this->scanSuccess = true;
+            $this->scannedData = $result;
             $this->dispatch('open-scanned-expense-form');
         }
 
@@ -442,7 +462,7 @@ PROMPT;
 
     public function openCreateModal(): void
     {
-        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'document', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId']);
+        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'document', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId', 'pendingDocumentPath', 'pendingDocumentName', 'pendingDocumentMime']);
         $this->spent_at = now()->format('Y-m-d');
         $this->transportPassMode = false;
         $this->transportPassName = 'Passe mensal';
@@ -583,7 +603,7 @@ PROMPT;
             'metadata' => ! empty($this->meta) ? $this->meta : null,
         ];
 
-        if ($this->document) {
+        if ($this->document || $this->pendingDocumentPath) {
             $existingExpense = $this->editingId
                 ? Expense::where('workspace_id', auth()->user()->current_workspace_id)
                     ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
@@ -594,7 +614,17 @@ PROMPT;
                 Storage::disk('public')->delete($existingExpense->receipt_path);
             }
 
-            $data['receipt_path'] = $this->document->store('expenses/receipts', 'public');
+            if ($this->document) {
+                $data['receipt_path'] = $this->document->store('expenses/receipts', 'public');
+            } else {
+                $extension = pathinfo($this->pendingDocumentPath, PATHINFO_EXTENSION);
+                $finalPath = 'expenses/receipts/'.Str::uuid().($extension ? '.'.$extension : '');
+                if (! Storage::disk('public')->exists($this->pendingDocumentPath)) {
+                    throw new \RuntimeException('O documento temporário da fatura já não está disponível. Anexa-o novamente.');
+                }
+                Storage::disk('public')->move($this->pendingDocumentPath, $finalPath);
+                $data['receipt_path'] = $finalPath;
+            }
         }
 
         $user = auth()->user();
