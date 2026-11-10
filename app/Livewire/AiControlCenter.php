@@ -122,7 +122,7 @@ class AiControlCenter extends Component
         $stats = [
             'unread' => $insights->whereNull('read_at')->count(),
             'critical' => $insights->whereIn('priority', ['critical', 'high'])->count(),
-            'pending_actions' => $actions->where('status', 'pending')->count(),
+            'pending_actions' => $actions->whereIn('status', ['pending', 'awaiting_confirmation'])->count(),
             'completed_actions' => $actions->where('status', 'completed')->count(),
         ];
 
