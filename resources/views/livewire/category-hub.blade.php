@@ -1068,7 +1068,7 @@
                 {{-- BODY (Scrollable) --}}
                 <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-6 space-y-5">
 
-                    @if($slug === 'transporte')
+                    @if(str_starts_with((string) $slug, 'transporte'))
                         <div class="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 dark:bg-zinc-900 p-1">
                             <button type="button" @click="transportPassMode = false; $wire.set('transportPassMode', false)" :class="!transportPassMode ? 'bg-white dark:bg-zinc-800 text-sky-600 shadow-sm' : 'text-zinc-500'" class="h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Despesa</button>
                             <button type="button" @click="transportPassMode = true; $wire.set('transportPassMode', true)" :class="transportPassMode ? 'bg-white dark:bg-zinc-800 text-sky-600 shadow-sm' : 'text-zinc-500'" class="h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Passe mensal</button>
