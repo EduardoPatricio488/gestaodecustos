@@ -840,48 +840,87 @@
 
         </div>
 
-        {{-- RESUMO DE INVESTIMENTOS --}} 
-        <section class="mt-5 overflow-hidden rounded-2xl border border-violet-200/70 bg-gradient-to-br from-white via-violet-50/70 to-indigo-50/80 shadow-sm dark:border-violet-500/20 dark:from-zinc-900 dark:via-violet-950/20 dark:to-indigo-950/20">
-            <div class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-                <div class="flex min-w-0 items-center gap-3">
-                    <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-600/20">
-                        <flux:icon name="chart-bar" class="size-5" />
-                    </div>
-                    <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <h3 class="text-sm font-black text-zinc-900 dark:text-white">Resumo dos investimentos</h3>
-                            <span class="rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">Portefólio</span>
+        {{-- RESUMO DE INVESTIMENTOS --}}
+        <section class="relative mt-6 w-full overflow-hidden rounded-3xl border border-violet-200/80 bg-white shadow-lg shadow-violet-950/5 dark:border-violet-500/20 dark:bg-zinc-900">
+            <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-violet-600 via-indigo-500 to-fuchsia-500"></div>
+            <div class="pointer-events-none absolute -right-24 -top-28 size-80 rounded-full bg-violet-500/10 blur-3xl"></div>
+            <div class="pointer-events-none absolute -bottom-32 left-1/3 size-72 rounded-full bg-indigo-500/10 blur-3xl"></div>
+
+            <div class="relative p-5 sm:p-7 lg:p-8">
+                <div class="flex flex-col gap-5 border-b border-zinc-100 pb-6 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex min-w-0 items-center gap-4">
+                        <div class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-600/25">
+                            <flux:icon name="chart-bar" class="size-6" />
                         </div>
-                        <p class="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">
-                            {{ $dashboardInvestmentsCount }} {{ $dashboardInvestmentsCount === 1 ? 'ativo' : 'ativos' }}
-                            ·
-                            {{ $dashboardInvestmentsLastUpdated ? 'Atualizado em '.$dashboardInvestmentsLastUpdated : 'Sem atualização registada' }}
-                        </p>
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="text-lg font-black tracking-tight text-zinc-950 dark:text-white sm:text-xl">Resumo dos investimentos</h3>
+                                <span class="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">Portefólio</span>
+                            </div>
+                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                {{ $dashboardInvestmentsCount }} {{ $dashboardInvestmentsCount === 1 ? 'ativo' : 'ativos' }}
+                                <span class="mx-1 text-zinc-300 dark:text-zinc-700">•</span>
+                                {{ $dashboardInvestmentsLastUpdated ? 'Última atualização: '.$dashboardInvestmentsLastUpdated : 'Ainda sem atualização registada' }}
+                            </p>
+                        </div>
                     </div>
+                    <a href="{{ route('hub.investments') }}" class="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-xs font-black text-white shadow-lg shadow-violet-600/20 transition hover:-translate-y-0.5 hover:bg-violet-500 sm:w-auto">
+                        Ver carteira de investimentos
+                        <flux:icon name="arrow-up-right" class="size-4" />
+                    </a>
                 </div>
 
-                <div class="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
-                    <div class="col-span-2 min-w-0 sm:col-span-1">
-                        <p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Valor atual</p>
-                        <p class="mt-1 truncate text-xl font-black tabular-nums text-zinc-900 dark:text-white" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($portfolioValue) }}</p>
+                <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div class="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-5 dark:border-violet-500/20 dark:from-violet-500/10 dark:to-zinc-900">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-[11px] font-extrabold uppercase tracking-wider text-violet-700 dark:text-violet-300">Valor atual</p>
+                            <span class="flex size-8 items-center justify-center rounded-xl bg-violet-600/10 text-violet-700 dark:text-violet-300"><flux:icon name="wallet" class="size-4" /></span>
+                        </div>
+                        <p class="mt-3 break-words text-2xl font-black tracking-tight tabular-nums text-zinc-950 dark:text-white sm:text-3xl" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($portfolioValue) }}</p>
+                        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Valor de mercado da carteira</p>
                     </div>
-                    <div class="min-w-0">
-                        <p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Capital investido</p>
-                        <p class="mt-1 truncate text-sm font-extrabold tabular-nums text-zinc-800 dark:text-zinc-100" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($dashboardInvestmentsTotalInvested) }}</p>
+
+                    <div class="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 dark:border-zinc-700 dark:bg-zinc-800/40">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-[11px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Capital investido</p>
+                            <span class="flex size-8 items-center justify-center rounded-xl bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"><flux:icon name="landmark" class="size-4" /></span>
+                        </div>
+                        <p class="mt-3 break-words text-2xl font-black tracking-tight tabular-nums text-zinc-900 dark:text-white sm:text-3xl" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($dashboardInvestmentsTotalInvested) }}</p>
+                        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Montante aplicado na carteira</p>
                     </div>
-                    <div class="min-w-0">
-                        <p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Lucro / prejuízo</p>
-                        <p class="mt-1 truncate text-sm font-extrabold tabular-nums {{ $dashboardInvestmentsProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}" :class="privacyMode ? 'blur-md select-none' : ''">
+
+                    <div class="rounded-2xl border {{ $dashboardInvestmentsProfit >= 0 ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-500/20 dark:bg-emerald-500/5' : 'border-rose-200 bg-rose-50/70 dark:border-rose-500/20 dark:bg-rose-500/5' }} p-5">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-[11px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">Lucro / prejuízo</p>
+                            <span class="flex size-8 items-center justify-center rounded-xl {{ $dashboardInvestmentsProfit >= 0 ? 'bg-emerald-600/10 text-emerald-700 dark:text-emerald-300' : 'bg-rose-600/10 text-rose-700 dark:text-rose-300' }}">
+                                <flux:icon name="{{ $dashboardInvestmentsProfit >= 0 ? 'trending-up' : 'trending-down' }}" class="size-4" />
+                            </span>
+                        </div>
+                        <p class="mt-3 break-words text-2xl font-black tracking-tight tabular-nums {{ $dashboardInvestmentsProfit >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300' }}" :class="privacyMode ? 'blur-md select-none' : ''">
                             {{ $dashboardInvestmentsProfit >= 0 ? '+' : '' }}{{ $currentWs->money($dashboardInvestmentsProfit) }}
-                            <span class="text-[10px]">({{ number_format($dashboardInvestmentsProfitPercent, 2, ',', ' ') }}%)</span>
                         </p>
+                        <div class="mt-2 flex items-center gap-2">
+                            <span class="rounded-full px-2.5 py-1 text-xs font-black tabular-nums {{ $dashboardInvestmentsProfit >= 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300' }}" :class="privacyMode ? 'blur-md select-none' : ''">
+                                {{ $dashboardInvestmentsProfit >= 0 ? '+' : '' }}{{ number_format($dashboardInvestmentsProfitPercent, 2, ',', ' ') }}%
+                            </span>
+                            <span class="text-xs text-zinc-500 dark:text-zinc-400">Rentabilidade</span>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-5 dark:border-indigo-500/20 dark:bg-indigo-500/5">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Ativos na carteira</p>
+                            <span class="flex size-8 items-center justify-center rounded-xl bg-indigo-600/10 text-indigo-700 dark:text-indigo-300"><flux:icon name="layers" class="size-4" /></span>
+                        </div>
+                        <p class="mt-3 text-3xl font-black tracking-tight tabular-nums text-zinc-950 dark:text-white">{{ $dashboardInvestmentsCount }}</p>
+                        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Instrumentos de investimento</p>
                     </div>
                 </div>
 
-                <a href="{{ route('hub.investments') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-white shadow-md shadow-violet-600/20 transition hover:-translate-y-0.5 hover:bg-violet-500">
-                    Ver investimentos
-                    <flux:icon name="arrow-up-right" class="size-3.5" />
-                </a>
+                <div class="mt-5 flex flex-col gap-2 rounded-xl bg-zinc-50 px-4 py-3 text-xs text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
+                    <span class="flex items-center gap-2"><span class="size-2 rounded-full bg-emerald-500"></span> Valores com base nos preços guardados na tua carteira</span>
+                    <span>Consulta os investimentos para ver os detalhes de cada ativo</span>
+                </div>
             </div>
         </section>
 
