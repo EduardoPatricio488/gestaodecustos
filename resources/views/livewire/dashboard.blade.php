@@ -748,9 +748,8 @@
                         <div class="relative flex items-center justify-between gap-2 border-t border-white/15 pt-3"><span class="text-[9px] font-bold uppercase tracking-wider text-emerald-100/75">Clica para abrir resumo e histórico</span><flux:icon name="arrow-up-right" class="size-4 text-emerald-100" /></div>
                     </div>
                 </div>
-                <button type="button" @click.stop="flipped = !flipped" :aria-pressed="flipped.toString()" class="absolute -bottom-10 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-2 rounded-full border border-zinc-300/70 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-700 shadow-lg transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
-                    <span x-text="flipped ? 'Ver frente' : 'Virar cartão'"></span>
-                    <span aria-hidden="true">↻</span>
+                <button type="button" @click.stop="flipped = !flipped" :aria-label="flipped ? 'Mostrar frente do cartão' : 'Virar cartão'" :aria-pressed="flipped.toString()" title="Virar cartão" class="absolute bottom-3 right-3 z-30 flex size-8 items-center justify-center rounded-full border border-white/25 bg-black/20 text-white shadow-lg backdrop-blur-sm transition duration-300 hover:rotate-[-45deg] hover:bg-black/35 focus:outline-none focus:ring-2 focus:ring-white/70">
+                    <flux:icon name="rotate-cw" variant="outline" class="size-4" />
                 </button>
             </article>
         </div>
