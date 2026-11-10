@@ -1202,8 +1202,6 @@
                                     <a href="{{ route('expenses.pending-scan.preview') }}" target="_blank" rel="noopener" class="block h-20 w-20 shrink-0 sm:h-24 sm:w-24">
                                         <img src="{{ route('expenses.pending-scan.preview') }}" alt="Fatura carregada — clicar para ampliar" class="h-full w-full rounded-lg border border-zinc-200 bg-white object-contain dark:border-zinc-700 dark:bg-zinc-950">
                                     </a>
-                                @else
-                                    <a href="{{ $document ? $document->temporaryUrl() : route('expenses.pending-scan.preview') }}" target="_blank" rel="noopener" class="block h-20 w-20 shrink-0 sm:h-24 sm:w-24" aria-label="Abrir documento PDF"></a>
                                 @endif
                                 <div class="min-w-0 flex-1 space-y-1 text-left">
                                     <p class="truncate text-xs font-bold text-zinc-700 dark:text-zinc-200">{{ $document?->getClientOriginalName() ?? $pendingDocumentName }}</p>
