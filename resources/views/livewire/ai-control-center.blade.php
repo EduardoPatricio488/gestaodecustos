@@ -26,7 +26,7 @@
 
     @if(!$workspace)
         <div class="rounded-3xl border border-dashed border-zinc-300 bg-white p-10 text-center dark:border-zinc-700 dark:bg-zinc-900">
-            <flux:icon name="layers" class="mx-auto size-9 text-zinc-400" />
+            <flux:icon name="sparkles" class="mx-auto size-9 text-zinc-400" />
             <h2 class="mt-3 font-bold text-zinc-900 dark:text-white">Sem workspace ativo</h2>
             <p class="mt-1 text-sm text-zinc-500">Seleciona ou cria um workspace para veres a análise financeira da IA.</p>
         </div>
@@ -36,7 +36,7 @@
             <article class="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-400">Saúde financeira</span>
-                    <span class="rounded-xl bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"><flux:icon name="activity" class="size-4" /></span>
+                    <span class="rounded-xl bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"><flux:icon name="sparkles" class="size-4" /></span>
                 </div>
                 <div class="mt-4 flex items-end gap-2">
                     <span class="text-4xl font-black tracking-tight text-zinc-900 dark:text-white">{{ $health['score'] ?? 0 }}</span>
@@ -65,7 +65,7 @@
             <article class="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-400">Ações da IA</span>
-                    <span class="rounded-xl bg-sky-50 p-2 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400"><flux:icon name="zap" class="size-4" /></span>
+                    <span class="rounded-xl bg-sky-50 p-2 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400"><flux:icon name="sparkles" class="size-4" /></span>
                 </div>
                 <p class="mt-4 text-4xl font-black tracking-tight text-zinc-900 dark:text-white">{{ $actions->count() }}</p>
                 <p class="mt-1 text-sm text-zinc-500">Operações recentes registadas</p>
@@ -75,7 +75,7 @@
             <article class="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-400">Memória ativa</span>
-                    <span class="rounded-xl bg-violet-50 p-2 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400"><flux:icon name="brain" class="size-4" /></span>
+                    <span class="rounded-xl bg-violet-50 p-2 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400"><flux:icon name="sparkles" class="size-4" /></span>
                 </div>
                 <p class="mt-4 text-4xl font-black tracking-tight text-zinc-900 dark:text-white">{{ $memories->count() }}</p>
                 <p class="mt-1 text-sm text-zinc-500">Informações guardadas para futuras interações</p>
@@ -89,7 +89,7 @@
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 <div class="flex items-center gap-2">
-                    <span class="rounded-xl bg-amber-50 p-2 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"><flux:icon name="lightbulb" class="size-4" /></span>
+                    <span class="rounded-xl bg-amber-50 p-2 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"><flux:icon name="sparkles" class="size-4" /></span>
                     <h2 class="text-xl font-black text-zinc-900 dark:text-white">Insight Center</h2>
                 </div>
                 <p class="mt-2 text-sm text-zinc-500">Alertas e oportunidades detetados a partir dos dados financeiros.</p>
@@ -146,7 +146,7 @@
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 <div class="flex items-center gap-2">
-                    <span class="rounded-xl bg-sky-50 p-2 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400"><flux:icon name="zap" class="size-4" /></span>
+                    <span class="rounded-xl bg-sky-50 p-2 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400"><flux:icon name="sparkles" class="size-4" /></span>
                     <h2 class="text-xl font-black text-zinc-900 dark:text-white">Action Center</h2>
                 </div>
                 <p class="mt-2 text-sm text-zinc-500">Histórico das operações iniciadas pela IA e respetivo estado.</p>
@@ -161,7 +161,7 @@
                 @endphp
                 <div class="flex flex-col gap-3 border-b border-zinc-100 p-5 last:border-0 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex min-w-0 items-start gap-3">
-                        <span class="mt-0.5 rounded-xl bg-zinc-100 p-2 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300"><flux:icon name="command" class="size-4" /></span>
+                        <span class="mt-0.5 rounded-xl bg-zinc-100 p-2 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300"><flux:icon name="sparkles" class="size-4" /></span>
                         <div class="min-w-0">
                             <p class="truncate text-sm font-bold text-zinc-900 dark:text-white">{{ str($action->tool_name)->replace('_', ' ')->headline() }}</p>
                             <p class="mt-1 text-xs text-zinc-500">{{ str($action->action_type)->replace('_', ' ')->headline() }} · {{ $action->created_at?->format('d/m/Y H:i') }}</p>
@@ -174,7 +174,7 @@
                 </div>
             @empty
                 <div class="px-6 py-10 text-center">
-                    <span class="mx-auto flex size-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400"><flux:icon name="list-checks" class="size-6" /></span>
+                    <span class="mx-auto flex size-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400"><flux:icon name="sparkles" class="size-6" /></span>
                     <h3 class="mt-4 font-bold text-zinc-900 dark:text-white">Ainda não existem ações registadas</h3>
                     <p class="mx-auto mt-1 max-w-lg text-sm leading-6 text-zinc-500">Quando a IA preparar uma operação que exija confirmação ou executar uma ação autorizada, o respetivo registo aparecerá aqui. A análise e consulta de dados, por si só, não contam como ações.</p>
                 </div>
@@ -187,7 +187,7 @@
         <div class="flex flex-col gap-4 border-b border-zinc-100 p-5 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between md:p-6">
             <div>
                 <div class="flex items-center gap-2">
-                    <span class="rounded-xl bg-violet-50 p-2 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400"><flux:icon name="brain" class="size-4" /></span>
+                    <span class="rounded-xl bg-violet-50 p-2 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400"><flux:icon name="sparkles" class="size-4" /></span>
                     <h2 class="text-xl font-black text-zinc-900 dark:text-white">Memória da IA</h2>
                 </div>
                 <p class="mt-2 text-sm text-zinc-500">Informação persistente que ajuda a IA a manter contexto entre conversas. Podes consultar e apagar o que estiver guardado.</p>
@@ -218,7 +218,7 @@
                 </div>
             @empty
                 <div class="py-8 text-center">
-                    <span class="mx-auto flex size-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400"><flux:icon name="brain" class="size-6" /></span>
+                    <span class="mx-auto flex size-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400"><flux:icon name="sparkles" class="size-6" /></span>
                     <h3 class="mt-4 font-bold text-zinc-900 dark:text-white">Ainda não existem memórias permanentes</h3>
                     <p class="mx-auto mt-1 max-w-lg text-sm leading-6 text-zinc-500">A IA ainda não guardou informação persistente neste workspace. Quando existirem memórias, poderás revê-las e removê-las individualmente.</p>
                 </div>
