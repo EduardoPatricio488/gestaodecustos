@@ -132,6 +132,10 @@ class CategoryHub extends Component
         $category = $categoryQuery->first();
 
         $this->budgetLimit = $category ? (float) $category->budget_limit : 0;
+
+        if (request()->boolean('open_new')) {
+            $this->dispatch('open-add-expense-modal');
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────
