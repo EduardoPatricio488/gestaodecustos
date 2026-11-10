@@ -61,10 +61,41 @@ class NewsHub extends Component
                             continue;
                         }
 
+                        $description = trim((string) ($item->description ?? ''));
+                        $media = $item->children('media', true);
+                        $imageUrl = trim((string) ($item->enclosure['url'] ?? ''));
+                        $thumbnail = $media->thumbnail ?? null;
+                        $mediaContent = $media->content ?? null;
+
+                        if ($imageUrl === '' && $thumbnail) {
+                            $imageUrl = trim((string) ($thumbnail->attributes()['url'] ?? ''));
+                        }
+
+                        if ($imageUrl === '' && $mediaContent) {
+                            $imageUrl = trim((string) ($mediaContent->attributes()['url'] ?? ''));
+                        }
+
+                        $descriptionHtml = html_entity_decode($description, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+                        if ($imageUrl === '' && preg_match('/<img[^>]+src=["\\']([^"\\']+)["\\']/i', $descriptionHtml, $imageMatch)) {
+                            $imageUrl = trim($imageMatch[1]);
+                        }
+
+                        $imageUrl = filter_var($imageUrl, FILTER_VALIDATE_URL)
+                            && in_array(strtolower((string) parse_url($imageUrl, PHP_URL_SCHEME)), ['http', 'https'], true)
+                                ? $imageUrl
+                                : null;
+
+                        $summary = trim(preg_replace('/\\s+/', ' ', strip_tags($descriptionHtml)));
+                        $summary = html_entity_decode($summary, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                        $summary = mb_substr($summary, 0, 320);
+
                         $articles[] = [
                             'id' => $region.'-'.count($articles),
                             'region' => $region,
                             'title' => trim((string) $item->title),
+                            'summary' => $summary,
+                            'image' => $imageUrl,
                             'source' => trim((string) ($item->source ?? '')),
                             'url' => trim((string) $item->link),
                             'published_at' => $publishedAt->toIso8601String(),
