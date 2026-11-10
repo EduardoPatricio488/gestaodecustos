@@ -504,6 +504,8 @@ class IncomeHub extends Component
                         'income_type' => 'meal_card_allowance',
                         'linked_salary_id' => $salary->id,
                         'linked_salary_description' => $this->recDescription,
+                        'start_date' => $this->recStartDate ?: null,
+                        'end_date' => $this->recEndDate ?: null,
                     ],
                 ];
 
