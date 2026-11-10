@@ -169,6 +169,54 @@
 
 <div class="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
+{{-- 4. SELETOR DE ESPAÇO (WORKSPACE SWITCHER) --}}
+@php
+    // Definimos a variável aqui para evitar o erro de 'Undefined variable'
+    $isBusiness = auth()->user()->isBusinessPlan();
+@endphp
+
+@if($isBusiness && $userWorkspaces->count() >= 1)
+    <div class="flex items-center gap-2 sm:gap-4 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl w-fit border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+
+        {{-- Label: Escondemos o texto "Espaços" no mobile para não ficar vertical --}}
+        <div class="px-2 sm:px-3 py-1 text-[9px] font-black uppercase text-zinc-500 tracking-widest border-r border-zinc-200 dark:border-zinc-800 flex items-center gap-2 shrink-0">
+            <flux:icon name="building-office-2" variant="micro" class="size-3 text-violet-500 shrink-0" />
+            <span class="hidden sm:inline">Espaços</span>
+        </div>
+
+        <div class="flex gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar items-center">
+            @foreach($userWorkspaces as $ws)
+                @php $isActive = ($ws->id == $currentWs->id); @endphp
+                <button
+                    wire:click="switchWorkspace({{ $ws->id }})"
+                    wire:loading.class="opacity-50 cursor-wait"
+                    wire:target="switchWorkspace({{ $ws->id }})"
+                    class="group flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all duration-200 shrink-0
+                    {{ $isActive
+                        ? 'bg-white dark:bg-zinc-800 shadow-md text-brand-600 font-black'
+                        : 'text-zinc-500 hover:bg-white dark:hover:bg-zinc-800' }}"
+                >
+                    <div class="size-1.5 rounded-full shrink-0
+                        {{ $isActive ? 'bg-brand-500 shadow-[0_0_8px_#3b82f6]' : 'bg-zinc-300' }}">
+                    </div>
+
+                    {{-- No telemóvel mostra apenas a 1ª Letra, no PC mostra o nome todo --}}
+                    <span class="hidden sm:inline text-xs uppercase tracking-tighter">{{ $ws->name }}</span>
+                    <span class="sm:hidden text-[10px] font-black uppercase">{{ substr($ws->name, 0, 1) }}</span>
+                </button>
+            @endforeach
+        </div>
+
+        {{-- Botão Adicionar (+) --}}
+        <a href="{{ route('hub.business.gateway', ['new' => 1]) }}"
+           wire:navigate
+           class="flex items-center justify-center size-8 rounded-xl bg-zinc-200/60 dark:bg-zinc-800 text-zinc-400 hover:text-brand-500 transition-all shrink-0">
+            <flux:icon name="plus" class="size-4" />
+        </a>
+    </div>
+@endif
+
+
 {{-- 3. HEADER PRINCIPAL COM CLIMA DINÂMICO E MODAL DETALHADO --}}
 <div class="flex flex-col items-stretch gap-8 pt-4"
      x-data="{
@@ -323,53 +371,6 @@
             </div>
         </div>
     </div>
-
-{{-- 4. SELETOR DE ESPAÇO (WORKSPACE SWITCHER) --}}
-@php
-    // Definimos a variável aqui para evitar o erro de 'Undefined variable'
-    $isBusiness = auth()->user()->isBusinessPlan();
-@endphp
-
-@if($isBusiness && $userWorkspaces->count() >= 1)
-    <div class="flex items-center gap-2 sm:gap-4 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl w-fit border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
-
-        {{-- Label: Escondemos o texto "Espaços" no mobile para não ficar vertical --}}
-        <div class="px-2 sm:px-3 py-1 text-[9px] font-black uppercase text-zinc-500 tracking-widest border-r border-zinc-200 dark:border-zinc-800 flex items-center gap-2 shrink-0">
-            <flux:icon name="building-office-2" variant="micro" class="size-3 text-violet-500 shrink-0" />
-            <span class="hidden sm:inline">Espaços</span>
-        </div>
-
-        <div class="flex gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar items-center">
-            @foreach($userWorkspaces as $ws)
-                @php $isActive = ($ws->id == $currentWs->id); @endphp
-                <button
-                    wire:click="switchWorkspace({{ $ws->id }})"
-                    wire:loading.class="opacity-50 cursor-wait"
-                    wire:target="switchWorkspace({{ $ws->id }})"
-                    class="group flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all duration-200 shrink-0
-                    {{ $isActive
-                        ? 'bg-white dark:bg-zinc-800 shadow-md text-brand-600 font-black'
-                        : 'text-zinc-500 hover:bg-white dark:hover:bg-zinc-800' }}"
-                >
-                    <div class="size-1.5 rounded-full shrink-0
-                        {{ $isActive ? 'bg-brand-500 shadow-[0_0_8px_#3b82f6]' : 'bg-zinc-300' }}">
-                    </div>
-
-                    {{-- No telemóvel mostra apenas a 1ª Letra, no PC mostra o nome todo --}}
-                    <span class="hidden sm:inline text-xs uppercase tracking-tighter">{{ $ws->name }}</span>
-                    <span class="sm:hidden text-[10px] font-black uppercase">{{ substr($ws->name, 0, 1) }}</span>
-                </button>
-            @endforeach
-        </div>
-
-        {{-- Botão Adicionar (+) --}}
-        <a href="{{ route('hub.business.gateway', ['new' => 1]) }}"
-           wire:navigate
-           class="flex items-center justify-center size-8 rounded-xl bg-zinc-200/60 dark:bg-zinc-800 text-zinc-400 hover:text-brand-500 transition-all shrink-0">
-            <flux:icon name="plus" class="size-4" />
-        </a>
-    </div>
-@endif
 
 @php
     $user = auth()->user();
