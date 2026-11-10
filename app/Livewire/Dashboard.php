@@ -902,7 +902,7 @@ class Dashboard extends Component
                 'subscription_personal_monthly' => (float) $personalSubscriptionsMonthly,
                 'subscription_company_monthly' => (float) $companySubscriptionsMonthly,
                 'recurring_count' => (clone $recurring)->where('is_active', true)->count(),
-                'recurring_monthly' => (float) (clone $recurring)->where('is_active', true)->sum('amount'),
+                'recurring_total' => (float) (clone $recurring)->where('is_active', true)->sum('amount'),
                 'reminder_open' => (clone $reminders)->where('is_completed', false)->count(),
                 'reminder_done' => (clone $reminders)->where('is_completed', true)->count(),
                 'activity_count' => (clone $activities)->count(),
