@@ -515,6 +515,7 @@ PROMPT;
             'spent_at' => 'required|date',
             'subcategory' => 'required',
             'document' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:20480',
+            'meta.vat_amount' => 'nullable|numeric|min:0|lte:amount',
         ]);
 
         if ($this->bankAccountId) {
@@ -563,6 +564,7 @@ PROMPT;
             'category_id' => $category->id,
             'subcategory' => ($this->subcategory === 'Outro') ? $this->customSubcategory : $this->subcategory,
             'amount' => $this->amount,
+            'vat_amount' => is_numeric($this->meta['vat_amount'] ?? null) ? (float) $this->meta['vat_amount'] : 0,
             'currency' => $this->currency,
             'description' => $this->description,
             'spent_at' => $this->spent_at,
