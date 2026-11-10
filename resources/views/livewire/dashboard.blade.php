@@ -226,6 +226,7 @@
 /* Notícias monocromáticas */
 .mono-item {
     color: #e5e5e5;
+    font-size: 14px;
     font-weight: 800;
     text-shadow: 0 0 4px rgba(0,0,0,0.4);
 }
