@@ -901,6 +901,27 @@ class Dashboard extends Component
             $dashboardBankCardBalance = round($dashboardBankCardCurrentBalance + $dashboardBankCardSalaryAmount, 2);
         }
 
+        // Movimentos apresentados no separador Histórico do cartão bancário.
+        $dashboardBankCardIncomes = $dashboardBankCardAccount
+            ? Income::where('workspace_id', $currentWs->id)
+                ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                ->where('bank_account_id', $dashboardBankCardAccount->id)
+                ->whereBetween('received_at', [$periodStart, $periodEnd])
+                ->orderByDesc('received_at')
+                ->limit(30)
+                ->get()
+            : collect();
+
+        $dashboardBankCardExpenses = $dashboardBankCardAccount
+            ? Expense::where('workspace_id', $currentWs->id)
+                ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                ->where('bank_account_id', $dashboardBankCardAccount->id)
+                ->whereBetween('spent_at', [$periodStart, $periodEnd])
+                ->orderByDesc('spent_at')
+                ->limit(30)
+                ->get()
+            : collect();
+
         $dashboardSalaryContracts->each(function (RecurringIncome $income): void {
             $metadata = $income->metadata ?? [];
             $mealAllowance = (float) ($metadata['calculated_sa'] ?? 0);
@@ -943,6 +964,8 @@ class Dashboard extends Component
             'dashboardBankCardCurrentBalance' => $dashboardBankCardCurrentBalance,
             'dashboardBankCardBalance' => $dashboardBankCardBalance,
             'dashboardBankCardSalaryAmount' => $dashboardBankCardSalaryAmount,
+            'dashboardBankCardIncomes' => $dashboardBankCardIncomes,
+            'dashboardBankCardExpenses' => $dashboardBankCardExpenses,
             'isCurrentDashboardPeriod' => $isCurrentDashboardPeriod,
             'dashboardProjectedMealAllowance' => $dashboardProjectedMealAllowance,
             'dashboardSalaryLabels' => $dashboardSalaryLabels,
