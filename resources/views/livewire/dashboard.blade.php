@@ -1235,11 +1235,6 @@
     {{-- NOVOS INDICADORES FINANCEIROS --}}
     <section id="dashboard-novos-indicadores" class="scroll-mt-28 mt-8 space-y-4">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-brand-600 dark:text-brand-400">Análise de desempenho</p>
-                <h2 class="mt-1 text-xl font-black tracking-tight text-zinc-900 dark:text-white">Indicadores financeiros</h2>
-                <p class="mt-1 text-xs text-zinc-500">Métricas calculadas automaticamente para {{ $dashboardPeriodLabel }}.</p>
-            </div>
             <span class="w-fit rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[10px] font-bold text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
                 {{ $dashboardPeriodType === 'year' ? 'Comparação anual' : 'Comparação mensal' }}
             </span>
