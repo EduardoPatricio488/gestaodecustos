@@ -85,6 +85,11 @@ class ProactiveAiService
             $candidates[] = $this->candidate('risk', 'medium', 'Margem de poupança reduzida', sprintf('A taxa de poupança deste mês está em %.1f%%.', $snapshot['savings_rate']), 'savings', $period, 84, 80, ['hub' => 'budget'], impact: 78, relevance: 88, urgency: 70);
         }
 
+        if (($snapshot['income_recurring'] ?? 0) > 0 && ($snapshot['income_actual'] ?? 0) <= 0) {
+            $amount = $this->money((float) $snapshot['income_recurring'], (string) ($snapshot['currency'] ?? 'EUR'));
+            $candidates[] = $this->candidate('observation', 'low', 'Rendimento recorrente ainda não registado', "Tens {$amount} de rendimento recorrente previsto, mas ainda não existem entradas reais registadas neste mês. Confirma se já recebeste esse valor e regista a entrada para que o saldo e a poupança reais fiquem corretos.", 'revenue', $period, 86, 72, ['hub' => 'incomes'], impact: 66, relevance: 82, urgency: 48);
+        }
+
         foreach (($snapshot['goals'] ?? []) as $goal) {
             if (($goal['target'] ?? 0) > 0 && ($goal['progress_percent'] ?? 0) < 50 && ! empty($goal['deadline'])) {
                 $deadline = Carbon::parse($goal['deadline']);
@@ -125,6 +130,7 @@ class ProactiveAiService
             'expenses' => route('expenses'),
             'budget' => route('hub.budget'),
             'goals' => route('hub.goals'),
+            'incomes' => route('hub.incomes'),
             'business.pnl' => route('hub.business.pnl'),
             'business.dashboard' => route('hub.business.dashboard'),
             'business.invoices' => route('hub.business.invoices'),
