@@ -23,5 +23,104 @@
         </div>
         <div class="p-6 bg-zinc-50/50 dark:bg-zinc-950/20 border-t border-zinc-100 dark:border-zinc-800">{{ $expenses->links() }}</div>
     </div>
-    <div x-data="{ open: false }" x-on:open-expense-category-picker.window="open = true" x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" aria-modal="true" role="dialog"><div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60 backdrop-blur-sm" x-on:click="open = false"></div><div x-show="open" x-transition class="relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl"><div class="flex items-center justify-between px-6 py-5 border-b border-zinc-100 dark:border-zinc-800"><div><p class="text-[9px] font-black uppercase tracking-[0.2em] text-brand-500">Novo movimento</p><h2 class="mt-1 text-xl font-black italic tracking-tight text-zinc-900 dark:text-white">Escolhe uma categoria</h2><p class="mt-1 text-xs font-medium text-zinc-500">Seleciona onde queres registar a nova despesa.</p></div><button type="button" x-on:click="open = false" class="p-2 rounded-xl text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"><flux:icon name="x-mark" class="size-5" /></button></div><div class="max-h-[60vh] overflow-y-auto p-6">@if($categories->isNotEmpty())<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">@foreach($categories as $category)<button type="button" wire:click="selectCategory({{ $category->id }})" wire:loading.attr="disabled" x-on:click="open = false" class="group flex min-h-28 flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 text-center"><span class="flex size-12 items-center justify-center rounded-2xl text-white shadow-md" style="background: {{ $category->color ?? '#71717a' }};"><flux:icon name="{{ $category->icon ?? 'tag' }}" class="size-5" /></span><span class="text-xs font-black uppercase tracking-tight text-zinc-800 dark:text-zinc-100">{{ $category->name }}</span></button>@endforeach</div>@else<div class="py-12 text-center"><h3 class="mt-4 text-base font-black text-zinc-900 dark:text-white">Sem categorias disponíveis</h3><p class="mt-1 text-sm text-zinc-500">Cria uma categoria primeiro para registar uma despesa.</p></div>@endif</div></div></div>
+    <div
+        x-data="{ open: false, activeTab: 'category' }"
+        x-on:open-expense-category-picker.window="open = true; activeTab = 'category'"
+        x-on:keydown.escape.window="open = false"
+        x-show="open"
+        x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        aria-modal="true"
+        role="dialog"
+    >
+        <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60 backdrop-blur-sm" x-on:click="open = false"></div>
+
+        <div x-show="open" x-transition class="relative w-full max-w-2xl max-h-[88vh] overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
+            <div class="flex items-start justify-between gap-4 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800">
+                <div>
+                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-brand-500">Novo movimento</p>
+                    <h2 class="mt-1 text-xl font-black italic tracking-tight text-zinc-900 dark:text-white">Nova despesa</h2>
+                    <p class="mt-1 text-xs font-medium text-zinc-500">Digitaliza uma fatura com IA ou escolhe manualmente a categoria.</p>
+                </div>
+                <button type="button" x-on:click="open = false" class="p-2 rounded-xl text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    <flux:icon name="x-mark" class="size-5" />
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 p-3 sm:px-6 border-b border-zinc-100 dark:border-zinc-800">
+                <button type="button" x-on:click="activeTab = 'category'" x-bind:class="activeTab === 'category' ? 'bg-brand-600 text-white shadow-lg' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" class="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all">
+                    <flux:icon name="tag" class="size-4" />
+                    Escolher categoria
+                </button>
+                <button type="button" x-on:click="activeTab = 'scanner'" x-bind:class="activeTab === 'scanner' ? 'bg-brand-600 text-white shadow-lg' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" class="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all">
+                    <flux:icon name="sparkles" class="size-4" />
+                    Scanner de fatura
+                </button>
+            </div>
+
+            <div class="max-h-[65vh] overflow-y-auto p-4 sm:p-6">
+                <div x-show="activeTab === 'category'">
+                    <p class="mb-4 text-xs font-medium text-zinc-500">Seleciona a categoria onde queres registar a despesa.</p>
+                    @if($categories->isNotEmpty())
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            @foreach($categories as $category)
+                                <button type="button" wire:click="selectCategory({{ $category->id }})" wire:loading.attr="disabled" x-on:click="open = false" class="group flex min-h-28 flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 text-center transition-all hover:-translate-y-0.5 hover:border-brand-500/50 hover:shadow-lg">
+                                    <span class="flex size-12 items-center justify-center rounded-2xl text-white shadow-md" style="background: {{ $category->color ?? '#71717a' }};">
+                                        <flux:icon name="{{ $category->icon ?? 'tag' }}" class="size-5" />
+                                    </span>
+                                    <span class="text-xs font-black uppercase tracking-tight text-zinc-800 dark:text-zinc-100">{{ $category->name }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="py-12 text-center">
+                            <h3 class="mt-4 text-base font-black text-zinc-900 dark:text-white">Sem categorias disponíveis</h3>
+                            <p class="mt-1 text-sm text-zinc-500">Cria uma categoria primeiro para registar uma despesa.</p>
+                        </div>
+                    @endif
+                </div>
+
+                <div x-show="activeTab === 'scanner'" x-cloak class="space-y-5">
+                    <div class="rounded-2xl border border-brand-500/20 bg-brand-500/5 p-4">
+                        <div class="flex items-start gap-3">
+                            <div class="rounded-xl bg-brand-500/10 p-2 text-brand-500"><flux:icon name="sparkles" class="size-5" /></div>
+                            <div>
+                                <p class="text-sm font-black text-zinc-900 dark:text-white">Classificação automática por IA</p>
+                                <p class="mt-1 text-xs leading-relaxed text-zinc-500">A IA lê a fatura, identifica o estabelecimento, o valor e a data, e escolhe a categoria mais adequada entre as tuas categorias existentes.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if($scannerError)
+                        <div class="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">
+                            <flux:icon name="exclamation-triangle" class="size-4 shrink-0" />
+                            <span>{{ $scannerError }}</span>
+                        </div>
+                    @endif
+
+                    <div class="rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 p-5 sm:p-7 text-center">
+                        <input type="file" wire:model="scannerReceipt" accept="image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
+                        @if($scannerReceipt)
+                            <div class="mt-4 flex flex-col items-center gap-2">
+                                <img src="{{ $scannerReceipt->temporaryUrl() }}" alt="Pré-visualização da fatura" class="max-h-44 rounded-xl border border-zinc-200 dark:border-zinc-700 object-contain shadow-lg" />
+                                <span class="text-[10px] font-bold text-emerald-600">Fatura carregada com sucesso</span>
+                            </div>
+                        @else
+                            <p class="mt-3 text-xs font-bold text-zinc-500">Seleciona uma fotografia ou imagem da fatura</p>
+                            <p class="mt-1 text-[10px] text-zinc-400">JPG, PNG ou WEBP · Máximo 20 MB</p>
+                        @endif
+                        <div wire:loading wire:target="scannerReceipt" class="mt-3 text-xs font-bold text-brand-500">A carregar imagem...</div>
+                    </div>
+
+                    <div class="flex flex-col-reverse sm:flex-row gap-3">
+                        <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500">Cancelar</button>
+                        <button type="button" wire:click="scanInvoiceAndDetectCategory" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:opacity-50">
+                            <span wire:loading.remove wire:target="scanInvoiceAndDetectCategory"><flux:icon name="sparkles" class="size-4" /> Analisar fatura e detetar categoria</span>
+                            <span wire:loading wire:target="scanInvoiceAndDetectCategory">A analisar com IA...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
