@@ -684,12 +684,7 @@
                         <div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">Saldo bancário</p><p class="mt-1 truncate text-[11px] font-bold tabular-nums text-white">{{ number_format($dashboardBankCardCurrentBalance, 2, ',', ' ') }} €</p></div>
                         <div class="min-w-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">{{ $isCurrentDashboardPeriod ? 'Salário líquido' : 'Período consultado' }}</p><p class="mt-1 truncate text-[11px] font-bold tabular-nums text-white">{{ $isCurrentDashboardPeriod ? '+ '.number_format($dashboardBankCardSalaryAmount, 2, ',', ' ').' €' : $dashboardPeriodLabel }}</p></div>
                     </div>
-                    <div class="grid grid-cols-3 gap-2 border-t border-white/15 pt-3">
-                        <div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.14em] text-red-100/70">Titular</p><p class="mt-1 truncate text-[9px] font-bold uppercase tracking-wide text-white">{{ $dashboardBankCardAccount?->holder_name ?: 'Não indicado' }}</p></div>
-                        <div class="min-w-0 text-center"><p class="text-[8px] font-bold uppercase tracking-[0.14em] text-red-100/70">Conta</p><p class="mt-1 truncate text-[9px] font-bold tracking-wider text-white">{{ $dashboardBankCardAccount?->account_number ? '•••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->account_number), -4) : '—' }}</p></div>
-                        <div class="min-w-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.14em] text-red-100/70">SWIFT / BIC</p><p class="mt-1 truncate text-[9px] font-bold tracking-wider text-white">{{ $dashboardBankCardAccount?->swift ?: '—' }}</p></div>
-                    </div>
-                    <p class="truncate text-[8px] font-semibold tracking-[0.16em] text-red-100/75">IBAN {{ $dashboardBankCardAccount?->iban ? substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), 0, 4).' •••• •••• •••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), -4) : 'não registado' }}</p>
+
                 </div>
                     </div>
                     <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[1.6rem] border border-red-200/40 bg-gradient-to-br from-[#8e1019] via-[#650b13] to-[#31070b] p-4 text-white shadow-2xl sm:p-5" style="transform: rotateY(180deg); backface-visibility: hidden;">
@@ -699,18 +694,18 @@
                             <h3 class="mt-2 text-lg font-black text-white">Detalhes da conta</h3>
                             <p class="mt-1 text-xs text-red-100/75">{{ $dashboardBankCardAccount?->bank_name ?: 'Conta bancária selecionada' }}</p>
                         </div>
-                        <div class="relative grid grid-cols-2 gap-3">
-                            <div class="rounded-xl border border-white/15 bg-black/15 p-3"><p class="text-[8px] font-bold uppercase tracking-wider text-red-100/65">Saldo da conta</p><p class="mt-1 text-base font-black tabular-nums">{{ number_format($dashboardBankCardCurrentBalance, 2, ',', ' ') }} €</p></div>
-                            <div class="rounded-xl border border-white/15 bg-black/15 p-3"><p class="text-[8px] font-bold uppercase tracking-wider text-red-100/65">Salário incluído</p><p class="mt-1 text-base font-black tabular-nums">{{ number_format($dashboardBankCardSalaryAmount, 2, ',', ' ') }} €</p></div>
-                            <div class="rounded-xl border border-white/15 bg-black/15 p-3"><p class="text-[8px] font-bold uppercase tracking-wider text-red-100/65">Titular</p><p class="mt-1 truncate text-xs font-bold">{{ $dashboardBankCardAccount?->holder_name ?: 'Não indicado' }}</p></div>
-                            <div class="rounded-xl border border-white/15 bg-black/15 p-3"><p class="text-[8px] font-bold uppercase tracking-wider text-red-100/65">Conta</p><p class="mt-1 text-xs font-bold">{{ $dashboardBankCardAccount?->account_number ? '•••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->account_number), -4) : 'Não indicada' }}</p></div>
+                        <div class="relative grid grid-cols-2 gap-2">
+                            <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Saldo da conta</p><p class="mt-1 text-xs font-black tabular-nums">{{ number_format($dashboardBankCardCurrentBalance, 2, ',', ' ') }} €</p></div>
+                            <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Salário incluído</p><p class="mt-1 text-xs font-black tabular-nums">{{ number_format($dashboardBankCardSalaryAmount, 2, ',', ' ') }} €</p></div>
+                            <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Titular</p><p class="mt-1 truncate text-[10px] font-bold">{{ $dashboardBankCardAccount?->holder_name ?: 'Não indicado' }}</p></div>
+                            <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">Conta</p><p class="mt-1 text-[10px] font-bold">{{ $dashboardBankCardAccount?->account_number ? '•••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->account_number), -4) : 'Não indicada' }}</p></div>
+                            <div class="rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">SWIFT / BIC</p><p class="mt-1 truncate text-[10px] font-bold">{{ $dashboardBankCardAccount?->swift ?: '—' }}</p></div>
+                            <div class="col-span-2 rounded-lg border border-white/15 bg-black/15 px-3 py-2"><p class="text-[7px] font-bold uppercase tracking-wider text-red-100/65">IBAN</p><p class="mt-1 truncate text-[10px] font-bold tracking-wider">{{ $dashboardBankCardAccount?->iban ? substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), 0, 4).' •••• •••• •••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), -4) : 'Não registado' }}</p></div>
                         </div>
-                        <div class="relative flex items-center justify-between gap-2 border-t border-white/15 pt-3"><span class="text-[9px] font-bold uppercase tracking-wider text-red-100/75">Clica para abrir resumo e histórico</span><flux:icon name="arrow-up-right" class="size-4 text-red-100" /></div>
                     </div>
                 </div>
-                <button type="button" @click.stop="flipped = !flipped" :aria-pressed="flipped.toString()" class="absolute -bottom-10 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-2 rounded-full border border-zinc-300/70 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-700 shadow-lg transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
-                    <span x-text="flipped ? 'Ver frente' : 'Virar cartão'"></span>
-                    <span aria-hidden="true">↻</span>
+                <button type="button" @click.stop="flipped = !flipped" :aria-label="flipped ? 'Mostrar frente do cartão' : 'Virar cartão'" :aria-pressed="flipped.toString()" title="Virar cartão" class="absolute bottom-3 right-3 z-30 flex size-8 items-center justify-center rounded-full border border-white/25 bg-black/20 text-white shadow-lg backdrop-blur-sm transition duration-300 hover:rotate-[-45deg] hover:bg-black/35 focus:outline-none focus:ring-2 focus:ring-white/70">
+                    <flux:icon name="rotate-cw" variant="outline" class="size-4" />
                 </button>
             </article>
 
