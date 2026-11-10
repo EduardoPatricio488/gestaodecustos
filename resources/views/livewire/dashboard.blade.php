@@ -226,10 +226,10 @@
 /* Notícias monocromáticas */
 .mono-item {
     color: #f4f4f5;
-    font-family: "Roboto Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
     font-size: 16px;
-    font-weight: 700;
-    letter-spacing: 0.015em;
+    font-weight: 650;
+    letter-spacing: -0.015em;
     text-shadow: 0 0 4px rgba(0,0,0,0.4);
 }
 
