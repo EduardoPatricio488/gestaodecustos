@@ -1242,12 +1242,15 @@ $hasStoreAccess = $hasLockInAccess;
 
                 <flux:sidebar.group heading="Finanças">
                     <flux:sidebar.item
-                        icon="arrow-trending-up"
                         :href="route('hub.incomes')"
                         :current="request()->routeIs('hub.incomes')"
                         wire:navigate.hover
+                        class="relative justify-center text-center rounded-xl border border-zinc-200/80 dark:border-zinc-700/70 bg-zinc-100/70 dark:bg-zinc-800/50 hover:bg-zinc-200/70 dark:hover:bg-zinc-700/60 transition-all"
                     >
-                        Receitas {!! $badge($counts['incomes']) !!}
+                        <span class="w-full text-center font-semibold tracking-wide">Receitas</span>
+                        @if(($counts['incomes'] ?? 0) > 0)
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5 rounded-full text-zinc-600 dark:text-zinc-300">{{ $counts['incomes'] }}</span>
+                        @endif
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="chart-bar-square" :href="route('hub.investments')" wire:navigate.hover>
                         Investimentos {!! $badge($counts['investments']) !!}
