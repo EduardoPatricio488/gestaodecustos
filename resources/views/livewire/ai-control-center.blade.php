@@ -217,10 +217,14 @@
         <div class="space-y-3 p-5 md:p-6">
             @forelse($memories as $memory)
                 @php
-                    $memoryContent = $memory->value;
-                    if (is_array($memoryContent)) {
-                        $memoryContent = $memoryContent['value'] ?? json_encode($memoryContent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                    }
+                    $memoryContent = is_array($memory->value) ? $memory->value : [];
+                    $isFinancialMemory = $memory->type === 'financial_context' && !empty($memoryContent);
+                    $memoryCurrency = $memoryContent['currency'] ?? 'EUR';
+                    $money = fn ($amount) => number_format((float) $amount, 2, ',', '.').' '.$memoryCurrency;
+                    $periodLabel = !empty($memoryContent['period'])
+                        ? \Illuminate\Support\Carbon::createFromFormat('Y-m', $memoryContent['period'])->translatedFormat('F Y')
+                        : null;
+                    $holdings = (array) data_get($memoryContent, 'investments.holdings', []);
                 @endphp
                 <div class="flex items-start justify-between gap-4 rounded-2xl border border-zinc-100 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-950/50">
                     <div class="min-w-0">
@@ -229,8 +233,69 @@
                             <span class="text-zinc-300 dark:text-zinc-700">·</span>
                             <span class="text-[10px] font-bold text-zinc-400">{{ str($memory->key)->replace('_', ' ') }}</span>
                         </div>
-                        <p class="mt-2 break-words text-sm leading-6 text-zinc-700 dark:text-zinc-200">{{ is_scalar($memoryContent) ? $memoryContent : 'Conteúdo guardado' }}</p>
-                        <p class="mt-2 text-[10px] text-zinc-400">Importância {{ $memory->importance }}/100 @if($memory->last_used_at) · Utilizada {{ $memory->last_used_at->diffForHumans() }}@endif</p>
+                        @if($isFinancialMemory)
+                            <div class="mt-4 space-y-4">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="text-xs font-bold text-zinc-500">{{ $periodLabel ? ucfirst($periodLabel) : 'Snapshot financeiro' }}</span>
+                                    <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">Snapshot calculado pelo backend</span>
+                                </div>
+                                <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                                    @foreach([['Rendimento recorrente', data_get($memoryContent, 'income.recurring', 0)], ['Rendimento recebido', data_get($memoryContent, 'income.actual', 0)], ['Despesas registadas', data_get($memoryContent, 'expenses.actual', 0)], ['Poupança efetiva', data_get($memoryContent, 'savings.actual', 0)]] as [$metricLabel, $metricValue])
+                                        <div class="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+                                            <p class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{{ $metricLabel }}</p>
+                                            <p class="mt-1 text-lg font-black text-zinc-900 dark:text-white">{{ $money($metricValue) }}</p>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                                    <div class="flex flex-wrap items-center justify-between gap-3">
+                                        <div>
+                                            <p class="text-xs font-bold uppercase tracking-wide text-zinc-400">Carteira de investimentos</p>
+                                            <p class="mt-1 text-xl font-black text-zinc-900 dark:text-white">{{ $money(data_get($memoryContent, 'investments.current_value', 0)) }}</p>
+                                            <p class="mt-1 text-[11px] text-zinc-400">Capital investido: {{ $money(data_get($memoryContent, 'investments.invested_cost', 0)) }}</p>
+                                        </div>
+                                        @php $portfolioPnl = (float) data_get($memoryContent, 'investments.profit_loss', 0); @endphp
+                                        <div class="text-right">
+                                            <p class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">Lucro / prejuízo não realizado</p>
+                                            <p class="mt-1 text-sm font-black {{ $portfolioPnl >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">{{ $portfolioPnl >= 0 ? '+' : '' }}{{ $money($portfolioPnl) }}</p>
+                                            @if(data_get($memoryContent, 'investments.profit_loss_percent') !== null)
+                                                <p class="text-xs text-zinc-400">{{ number_format((float) data_get($memoryContent, 'investments.profit_loss_percent'), 2, ',', '.') }}%</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @if(count($holdings))
+                                        <div class="mt-4 overflow-x-auto">
+                                            <table class="w-full min-w-[620px] text-left text-xs">
+                                                <thead class="text-[10px] uppercase tracking-wide text-zinc-400">
+                                                    <tr><th class="pb-2 pr-3">Ativo</th><th class="pb-2 pr-3 text-right">Quantidade</th><th class="pb-2 pr-3 text-right">Preço atual</th><th class="pb-2 pr-3 text-right">Valor atual</th><th class="pb-2 text-right">Lucro / prejuízo</th></tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                                    @foreach($holdings as $holding)
+                                                        @php $holdingPnl = (float) ($holding['profit_loss'] ?? 0); @endphp
+                                                        <tr>
+                                                            <td class="py-2 pr-3"><span class="font-bold text-zinc-800 dark:text-zinc-200">{{ $holding['name'] ?? 'Ativo' }}</span>@if(!empty($holding['symbol'])) <span class="text-zinc-400">{{ $holding['symbol'] }}</span>@endif</td>
+                                                            <td class="py-2 pr-3 text-right tabular-nums">{{ number_format((float) ($holding['quantity'] ?? 0), 4, ',', '.') }}</td>
+                                                            <td class="py-2 pr-3 text-right tabular-nums">{{ number_format((float) ($holding['current_price'] ?? 0), 4, ',', '.') }}</td>
+                                                            <td class="py-2 pr-3 text-right tabular-nums">{{ $money($holding['current_value'] ?? 0) }}</td>
+                                                            <td class="py-2 text-right font-bold tabular-nums {{ $holdingPnl >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">{{ $holdingPnl >= 0 ? '+' : '' }}{{ $money($holdingPnl) }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @else
+                                        <p class="mt-3 text-xs text-zinc-500">Não existem posições individuais registadas nesta memória.</p>
+                                    @endif
+                                </div>
+                                <details class="rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                    <summary class="cursor-pointer px-3 py-2 text-xs font-bold text-zinc-500">Ver dados técnicos guardados</summary>
+                                    <pre class="max-h-72 overflow-auto whitespace-pre-wrap break-words border-t border-zinc-100 p-3 text-[10px] leading-5 text-zinc-500 dark:border-zinc-800">{{ json_encode($memoryContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}</pre>
+                                </details>
+                            </div>
+                        @else
+                            <p class="mt-2 break-words text-sm leading-6 text-zinc-700 dark:text-zinc-200">{{ is_scalar($memoryContent) ? $memoryContent : json_encode($memoryContent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}</p>
+                        @endif
+                        <p class="mt-3 text-[10px] text-zinc-400">Importância {{ $memory->importance }}/100 @if($memory->last_used_at) · Utilizada {{ $memory->last_used_at->diffForHumans() }}@endif @if($memory->expires_at) · Expira {{ $memory->expires_at->format('d/m/Y') }}@endif</p>
                     </div>
                     <flux:button wire:click="forgetMemory({{ $memory->id }})" wire:confirm="Apagar esta memória?" variant="ghost" size="sm">Apagar</flux:button>
                 </div>
