@@ -867,38 +867,40 @@ class Dashboard extends Component
         $dashboardBankCardAccount = BankAccount::where('workspace_id', $currentWs->id)
             ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
             ->where('include_in_total', true)
-            ->withCurrentBalanceTotals()
             ->orderByRaw("CASE WHEN LOWER(COALESCE(bank_name, '')) LIKE ? THEN 0 ELSE 1 END", ['%santander%'])
             ->orderBy('name')
-            ->first(['id', 'name', 'bank_name', 'iban', 'account_number', 'swift', 'holder_name', 'balance', 'color']);
+            ->first(['id', 'name', 'bank_name', 'iban', 'account_number', 'swift', 'holder_name', 'balance', 'color', 'opened_at', 'created_at']);
 
-        if ($dashboardBankCardAccount && $isCurrentDashboardPeriod) {
-            $dashboardBankCardCurrentBalance = round(
-                (float) $dashboardBankCardAccount->balance
-                + (float) ($dashboardBankCardAccount->current_balance_income_total ?? 0)
-                - (float) ($dashboardBankCardAccount->current_balance_expense_total ?? 0),
-                2
-            );
-            $dashboardBankCardSalaryAmount = $dashboardProjectedSalaryNet;
+        if ($dashboardBankCardAccount) {
+            // O saldo introduzido no registo é o saldo de referência na data de abertura/registo.
+            // Só somamos movimentos ocorridos a partir dessa data, evitando contar movimentos anteriores.
+            $bankBalanceReferenceDate = ($dashboardBankCardAccount->opened_at ?? $dashboardBankCardAccount->created_at)?->toDateString();
+            $bankBalancePeriodEnd = $isCurrentDashboardPeriod ? now()->endOfDay() : $periodEnd->copy()->endOfDay();
+
+            if ($bankBalanceReferenceDate && \\Carbon\\Carbon::parse($bankBalanceReferenceDate)->startOfDay()->greaterThan($bankBalancePeriodEnd)) {
+                $dashboardBankCardCurrentBalance = 0.0;
+            } else {
+                $accountIncomeUntilPeriod = (float) Income::where('workspace_id', $currentWs->id)
+                    ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                    ->where('bank_account_id', $dashboardBankCardAccount->id)
+                    ->when($bankBalanceReferenceDate, fn ($q) => $q->whereDate('received_at', '>=', $bankBalanceReferenceDate))
+                    ->where('received_at', '<=', $bankBalancePeriodEnd)
+                    ->sum(DB::raw('COALESCE(amount_converted, amount)'));
+                $accountExpensesUntilPeriod = (float) Expense::where('workspace_id', $currentWs->id)
+                    ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                    ->where('bank_account_id', $dashboardBankCardAccount->id)
+                    ->when($bankBalanceReferenceDate, fn ($q) => $q->whereDate('spent_at', '>=', $bankBalanceReferenceDate))
+                    ->where('spent_at', '<=', $bankBalancePeriodEnd)
+                    ->sum(DB::raw('COALESCE(amount_converted, amount)'));
+
+                $dashboardBankCardCurrentBalance = round(
+                    (float) $dashboardBankCardAccount->balance + $accountIncomeUntilPeriod - $accountExpensesUntilPeriod,
+                    2
+                );
+            }
+
+            $dashboardBankCardSalaryAmount = $isCurrentDashboardPeriod ? $dashboardProjectedSalaryNet : 0.0;
             $dashboardBankCardBalance = round($dashboardBankCardCurrentBalance + $dashboardBankCardSalaryAmount, 2);
-        } elseif ($dashboardBankCardAccount) {
-            // Para períodos passados, reconstrói o saldo no fim do período selecionado.
-            $accountIncomeUntilPeriod = (float) Income::where('workspace_id', $currentWs->id)
-                ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
-                ->where('bank_account_id', $dashboardBankCardAccount->id)
-                ->where('received_at', '<=', $periodEnd)
-                ->sum(DB::raw('COALESCE(amount_converted, amount)'));
-            $accountExpensesUntilPeriod = (float) Expense::where('workspace_id', $currentWs->id)
-                ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
-                ->where('bank_account_id', $dashboardBankCardAccount->id)
-                ->where('spent_at', '<=', $periodEnd)
-                ->sum(DB::raw('COALESCE(amount_converted, amount)'));
-            $dashboardBankCardCurrentBalance = round(
-                (float) $dashboardBankCardAccount->balance + $accountIncomeUntilPeriod - $accountExpensesUntilPeriod,
-                2
-            );
-            $dashboardBankCardSalaryAmount = 0.0;
-            $dashboardBankCardBalance = $dashboardBankCardCurrentBalance;
         } else {
             $dashboardBankCardCurrentBalance = $totalBankBalance;
             $dashboardBankCardSalaryAmount = $isCurrentDashboardPeriod ? $dashboardProjectedSalaryNet : 0.0;
