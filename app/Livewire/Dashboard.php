@@ -836,6 +836,28 @@ class Dashboard extends Component
             return max(0, (float) $income->amount - (empty($metadata['meal_card_income_id']) ? $mealAllowance : 0));
         }), 2);
         $dashboardProjectedMealAllowance = round($dashboardSalaryContracts->sum(fn (RecurringIncome $income): float => (float) ($income->metadata['calculated_sa'] ?? 0)), 2);
+
+        // Cartão bancário do dashboard: saldo real da conta + salário líquido projetado.
+        // O saldo real exclui rendimentos recorrentes ainda não recebidos, para não duplicar o salário.
+        $dashboardBankCardAccount = BankAccount::where('workspace_id', $currentWs->id)
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->where('include_in_total', true)
+            ->withCurrentBalanceTotals()
+            ->orderByRaw("CASE WHEN LOWER(COALESCE(bank_name, '')) LIKE ? THEN 0 ELSE 1 END", ['%santander%'])
+            ->orderBy('name')
+            ->first(['id', 'name', 'bank_name', 'iban', 'account_number', 'swift', 'holder_name', 'balance']);
+
+        $dashboardBankCardCurrentBalance = $dashboardBankCardAccount
+            ? round(
+                (float) $dashboardBankCardAccount->balance
+                + (float) ($dashboardBankCardAccount->current_balance_income_total ?? 0)
+                - (float) ($dashboardBankCardAccount->current_balance_expense_total ?? 0),
+                2
+            )
+            : $totalBankBalance;
+
+        $dashboardBankCardBalance = round($dashboardBankCardCurrentBalance + $dashboardProjectedSalaryNet, 2);
+
         $dashboardSalaryContracts->each(function (RecurringIncome $income): void {
             $metadata = $income->metadata ?? [];
             $mealAllowance = (float) ($metadata['calculated_sa'] ?? 0);
@@ -867,6 +889,10 @@ class Dashboard extends Component
         return view('livewire.dashboard', [
             'currentWs' => $currentWs,
             'dashboardProjectedSalaryNet' => $dashboardProjectedSalaryNet,
+
+            'dashboardBankCardAccount' => $dashboardBankCardAccount,
+            'dashboardBankCardCurrentBalance' => $dashboardBankCardCurrentBalance,
+            'dashboardBankCardBalance' => $dashboardBankCardBalance,
             'dashboardProjectedMealAllowance' => $dashboardProjectedMealAllowance,
             'dashboardSalaryLabels' => $dashboardSalaryLabels,
             'dashboardSalaryContracts' => $dashboardSalaryContracts,
