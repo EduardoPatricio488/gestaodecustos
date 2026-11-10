@@ -1189,8 +1189,26 @@
                     <section class="space-y-3 rounded-2xl border border-dashed border-brand-300 bg-brand-50/50 p-4 dark:border-brand-800 dark:bg-brand-950/20">
                         <div class="flex items-center gap-2"><flux:icon name="paper-clip" class="size-4 text-brand-600" /><h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300">Documento da compra</h4></div>
                         <input wire:model="document" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-xs file:font-bold file:text-white">
-                        <p class="text-[10px] text-zinc-500">PDF ou imagem. O ficheiro fica guardado associado a este registo (máximo 20 MB).</p>
-                        @if($document)<p class="text-xs font-bold text-emerald-600">Ficheiro selecionado: {{ $document->getClientOriginalName() }}</p>@endif
+                        <p class="text-[10px] text-zinc-500">Anexa a fatura ou recibo. A IA vai analisar automaticamente e preencher os campos. O documento fica guardado com a despesa (máximo 20 MB).</p>
+                        <div wire:loading wire:target="document" class="flex items-center gap-2 text-xs font-bold text-brand-600"><span class="size-3 animate-spin rounded-full border-2 border-brand-600/20 border-t-brand-600"></span>A carregar documento...</div>
+                        @if($isScanning)
+                            <div class="flex items-center gap-2 rounded-xl bg-brand-100 px-3 py-3 text-xs font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-300"><span class="size-4 animate-spin rounded-full border-2 border-brand-600/20 border-t-brand-600"></span>A IA está a ler a fatura e a preencher os campos...</div>
+                        @endif
+                        @if($document)
+                            <div class="flex items-start gap-3 rounded-xl bg-white p-3 dark:bg-zinc-900">
+                                @if(str_starts_with($document->getMimeType() ?? '', 'image/'))
+                                    <img src="{{ $document->temporaryUrl() }}" alt="Pré-visualização da fatura" class="h-24 w-20 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
+                                @else
+                                    <div class="flex size-16 items-center justify-center rounded-lg bg-red-50 text-xs font-black text-red-600 dark:bg-red-950/30">PDF</div>
+                                @endif
+                                <div class="min-w-0 flex-1">
+                                    <p class="break-all text-xs font-bold text-zinc-700 dark:text-zinc-200">{{ $document->getClientOriginalName() }}</p>
+                                    <p class="mt-1 text-[10px] text-zinc-500">Fica associado a esta despesa quando carregares em Confirmar Gasto.</p>
+                                    @if($scanSuccess)<p class="mt-2 text-xs font-bold text-emerald-600">✓ Fatura analisada. Campos preenchidos pela IA.</p>@endif
+                                </div>
+                            </div>
+                        @endif
+                        @if($scanError)<p class="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 dark:bg-red-950/30">{{ $scanError }}</p>@endif
                         @error('document')<p class="text-xs font-bold text-red-500">{{ $message }}</p>@enderror
                     </section>
 
