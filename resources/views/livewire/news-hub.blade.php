@@ -76,9 +76,9 @@
 
                 <div class="flex flex-1 flex-col p-5">
                     <div class="mb-4 flex items-center justify-between gap-3">
-                        <span class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[9px] font-black uppercase tracking-widest {{ $article['region'] === 'PT' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300' : 'bg-sky-50 text-sky-700 dark:bg-sky-400/10 dark:text-sky-300' }}">
-                            <span class="size-1.5 rounded-full {{ $article['region'] === 'PT' ? 'bg-emerald-500' : 'bg-sky-500' }}"></span>
-                            {{ $article['region'] === 'PT' ? 'Portugal' : 'Mundo' }}
+                        <span class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[9px] font-black uppercase tracking-widest {{ $article['topic'] === 'PT' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300' : 'bg-sky-50 text-sky-700 dark:bg-sky-400/10 dark:text-sky-300' }}">
+                            <span class="size-1.5 rounded-full {{ $article['topic'] === 'PT' ? 'bg-emerald-500' : 'bg-sky-500' }}"></span>
+                            {{ $newsTopics[$article['topic']] ?? 'Notícias' }}
                         </span>
                         <span class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{{ $article['published_label'] }}</span>
                     </div>
