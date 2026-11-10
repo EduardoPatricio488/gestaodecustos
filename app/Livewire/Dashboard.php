@@ -1085,6 +1085,7 @@ class Dashboard extends Component
             'dashboardInvestmentsProfitPercent' => $dashboardInvestmentsProfitPercent,
             'dashboardInvestmentsCount' => $dashboardInvestmentsCount,
             'dashboardInvestmentsLastUpdated' => $dashboardInvestmentsLastUpdated,
+            'dashboardInvestments' => $myInvestments,
             'totalSaved' => $totalSaved,
             'projectedExpenses' => $projectedExpenses,
             'projectedIncome' => $projectedIncome,
