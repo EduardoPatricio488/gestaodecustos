@@ -225,6 +225,11 @@
                         ? \Illuminate\Support\Carbon::createFromFormat('Y-m', $memoryContent['period'])->translatedFormat('F Y')
                         : null;
                     $holdings = (array) data_get($memoryContent, 'investments.holdings', []);
+                    $recurringIncome = data_get($memoryContent, 'income.recurring', $memoryContent['income_recurring'] ?? 0);
+                    $actualIncome = data_get($memoryContent, 'income.actual', $memoryContent['income_actual'] ?? 0);
+                    $actualExpenses = data_get($memoryContent, 'expenses.actual', $memoryContent['expenses'] ?? 0);
+                    $actualSavings = data_get($memoryContent, 'savings.actual', $memoryContent['savings_actual'] ?? 0);
+                    $portfolioValue = data_get($memoryContent, 'investments.current_value', $memoryContent['investment_value'] ?? 0);
                 @endphp
                 <div class="flex items-start justify-between gap-4 rounded-2xl border border-zinc-100 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-950/50">
                     <div class="min-w-0">
@@ -240,7 +245,7 @@
                                     <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">Snapshot calculado pelo backend</span>
                                 </div>
                                 <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                                    @foreach([['Rendimento recorrente', data_get($memoryContent, 'income.recurring', 0)], ['Rendimento recebido', data_get($memoryContent, 'income.actual', 0)], ['Despesas registadas', data_get($memoryContent, 'expenses.actual', 0)], ['Poupança efetiva', data_get($memoryContent, 'savings.actual', 0)]] as [$metricLabel, $metricValue])
+                                    @foreach([['Rendimento recorrente', $recurringIncome], ['Rendimento recebido', $actualIncome], ['Despesas registadas', $actualExpenses], ['Poupança efetiva', $actualSavings]] as [$metricLabel, $metricValue])
                                         <div class="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
                                             <p class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{{ $metricLabel }}</p>
                                             <p class="mt-1 text-lg font-black text-zinc-900 dark:text-white">{{ $money($metricValue) }}</p>
@@ -251,12 +256,12 @@
                                     <div class="flex flex-wrap items-center justify-between gap-3">
                                         <div>
                                             <p class="text-xs font-bold uppercase tracking-wide text-zinc-400">Carteira de investimentos</p>
-                                            <p class="mt-1 text-xl font-black text-zinc-900 dark:text-white">{{ $money(data_get($memoryContent, 'investments.current_value', 0)) }}</p>
+                                            <p class="mt-1 text-xl font-black text-zinc-900 dark:text-white">{{ $money($portfolioValue) }}</p>
                                             <p class="mt-1 text-[11px] text-zinc-400">Capital investido: {{ $money(data_get($memoryContent, 'investments.invested_cost', 0)) }}</p>
                                         </div>
                                         @php $portfolioPnl = (float) data_get($memoryContent, 'investments.profit_loss', 0); @endphp
                                         <div class="text-right">
-                                            <p class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">Lucro / prejuízo não realizado</p>
+                                            <p class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">Variação face ao preço médio (não realizada)</p>
                                             <p class="mt-1 text-sm font-black {{ $portfolioPnl >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">{{ $portfolioPnl >= 0 ? '+' : '' }}{{ $money($portfolioPnl) }}</p>
                                             @if(data_get($memoryContent, 'investments.profit_loss_percent') !== null)
                                                 <p class="text-xs text-zinc-400">{{ number_format((float) data_get($memoryContent, 'investments.profit_loss_percent'), 2, ',', '.') }}%</p>
