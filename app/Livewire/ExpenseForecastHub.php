@@ -116,8 +116,8 @@ class ExpenseForecastHub extends Component
 
         $subscriptionsByCategory = Subscription::where('workspace_id', $workspaceId)
             ->where('user_id', auth()->id())
-            ->get(['category_id', 'amount', 'cycle', 'status', 'is_active'])
-            ->filter(fn ($sub) => ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')
+            ->get(['category_id', 'amount', 'cycle', 'status', 'is_active', 'paid_by_company'])
+            ->filter(fn ($sub) => ! $sub->paid_by_company && ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')
             ->groupBy('category_id')
             ->map(fn ($subs) => (float) $subs->sum(fn ($sub) => SubscriptionCycleService::toMonthly((float) $sub->amount, $sub->cycle)));
 
