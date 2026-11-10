@@ -605,8 +605,8 @@
 
     <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0"></div>
 
-    {{-- GRUPO DE NAVEGAÇÃO (DESPESAS E RECEITAS) --}}
-    <div class="flex gap-1.5 shrink-0">
+    {{-- GRUPO DE NAVEGAÇÃO (DESPESAS, RECEITAS E CRIAÇÃO RÁPIDA) --}}
+    <div class="flex items-center gap-1.5 shrink-0">
         <a href="{{ route('expenses') }}" wire:navigate
             class="flex items-center justify-center gap-2 px-3 sm:px-5 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-black uppercase text-[10px] tracking-widest border border-rose-100 dark:border-rose-900/50 hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
             <flux:icon name="minus-circle" variant="micro" class="size-4 shrink-0" />
@@ -618,6 +618,34 @@
             <flux:icon name="plus-circle" variant="micro" class="size-4 shrink-0" />
             <span class="hidden sm:inline">Receitas</span>
         </a>
+
+        <div x-data="{ openQuickCreate: false }" class="relative">
+            <button type="button" @click="openQuickCreate = !openQuickCreate" @keydown.escape.window="openQuickCreate = false"
+                :aria-expanded="openQuickCreate.toString()" aria-label="Adicionar novo registo"
+                class="group flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-lg shadow-brand-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:shadow-xl active:scale-95">
+                <flux:icon name="plus" class="size-5 transition-transform duration-200" ::class="openQuickCreate ? 'rotate-45' : ''" />
+            </button>
+
+            <div x-cloak x-show="openQuickCreate" x-transition.origin.top.right @click.outside="openQuickCreate = false"
+                class="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+                <p class="px-3 pb-2 pt-1 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">Criar novo registo</p>
+                <a href="{{ route('expenses', ['open_new' => 1]) }}" wire:navigate @click="openQuickCreate = false"
+                    class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-rose-50 dark:hover:bg-rose-950/30">
+                    <span class="flex size-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300"><flux:icon name="receipt" class="size-4" /></span>
+                    <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova despesa</span>
+                </a>
+                <a href="{{ route('hub.subscriptions', ['open_extra' => 1]) }}" wire:navigate @click="openQuickCreate = false"
+                    class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-violet-50 dark:hover:bg-violet-950/30">
+                    <span class="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300"><flux:icon name="repeat" class="size-4" /></span>
+                    <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova subscrição</span>
+                </a>
+                <a href="{{ route('hub.incomes', ['open_extra' => 1]) }}" wire:navigate @click="openQuickCreate = false"
+                    class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
+                    <span class="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300"><flux:icon name="banknote" class="size-4" /></span>
+                    <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova receita extra</span>
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
