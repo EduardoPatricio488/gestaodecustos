@@ -894,7 +894,9 @@ class Dashboard extends Component
         $dashboardProjectedMealAllowance = $this->dashboardPeriodType === 'year' ? 0.0 : $dashboardMealAllowanceMonthlyProjection;
 
         // Projeção anual limitada aos meses em que o contrato esteve em vigor (máximo de 11 meses).
-        $dashboardMealAllowanceAnnualProjection = round($dashboardMealAllowanceContracts->sum(function (RecurringIncome $income) use ($periodStart, $periodEnd): float {
+        $dashboardMealAllowanceAnnualProjection = round($dashboardSalaryContracts
+            ->filter(fn (RecurringIncome $income): bool => ($income->metadata['meal_allowance_destination'] ?? null) === 'meal_card')
+            ->sum(function (RecurringIncome $income) use ($periodStart, $periodEnd): float {
             $metadata = $income->metadata ?? [];
             $contractStart = Carbon::parse($metadata['start_date'] ?? $income->created_at?->toDateString() ?? $periodStart->toDateString())->startOfMonth();
             $contractEnd = ! empty($metadata['end_date'])
