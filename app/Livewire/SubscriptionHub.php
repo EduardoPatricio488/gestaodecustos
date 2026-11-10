@@ -75,6 +75,13 @@ class SubscriptionHub extends Component
 
     public ?string $stripePlanError = null;
 
+    public function mount(): void
+    {
+        if (request()->boolean('open_extra')) {
+            $this->openExtraModal();
+        }
+    }
+
     public function edit($id)
     {
         $this->editingId = $id;
