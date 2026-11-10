@@ -652,15 +652,23 @@
                             <p class="mt-1 truncate text-[11px] font-bold tabular-nums text-white">+ {{ number_format($dashboardProjectedSalaryNet, 2, ',', ' ') }} €</p>
                         </div>
                     </div>
-                    <div class="flex items-end justify-between gap-3">
+                    <div class="grid grid-cols-3 gap-2 border-t border-white/15 pt-3">
                         <div class="min-w-0">
-                            <p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">Titular</p>
-                            <p class="mt-1 truncate text-[10px] font-bold uppercase tracking-wide text-white">{{ $dashboardBankCardAccount?->holder_name ?: 'Titular não indicado' }}</p>
+                            <p class="text-[8px] font-bold uppercase tracking-[0.14em] text-red-100/70">Titular</p>
+                            <p class="mt-1 truncate text-[9px] font-bold uppercase tracking-wide text-white">{{ $dashboardBankCardAccount?->holder_name ?: 'Não indicado' }}</p>
                         </div>
-                        <div class="shrink-0 text-right">
-                            <p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">IBAN</p>
-                            <p class="mt-1 text-[10px] font-bold tracking-wider text-white">{{ $dashboardBankCardAccount?->iban ? '•••• '.substr(preg_replace('/\s+/', '', $dashboardBankCardAccount->iban), -4) : 'Não registado' }}</p>
+                        <div class="min-w-0 text-center">
+                            <p class="text-[8px] font-bold uppercase tracking-[0.14em] text-red-100/70">Conta</p>
+                            <p class="mt-1 truncate text-[9px] font-bold tracking-wider text-white">{{ $dashboardBankCardAccount?->account_number ? '•••• '.substr(preg_replace('/\\s+/', '', $dashboardBankCardAccount->account_number), -4) : '—' }}</p>
                         </div>
+                        <div class="min-w-0 text-right">
+                            <p class="text-[8px] font-bold uppercase tracking-[0.14em] text-red-100/70">SWIFT / BIC</p>
+                            <p class="mt-1 truncate text-[9px] font-bold tracking-wider text-white">{{ $dashboardBankCardAccount?->swift ?: '—' }}</p>
+                        </div>
+                    </div>
+                    <p class="truncate text-[8px] font-semibold tracking-[0.16em] text-red-100/75">
+                        IBAN {{ $dashboardBankCardAccount?->iban ? substr(preg_replace('/\\s+/', '', $dashboardBankCardAccount->iban), 0, 4).' •••• •••• •••• '.substr(preg_replace('/\\s+/', '', $dashboardBankCardAccount->iban), -4) : 'não registado' }}
+                    </p>
                     </div>
                 </div>
             </article>
