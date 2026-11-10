@@ -84,6 +84,22 @@
         </section>
     @endif
 
+    @if(!empty($latestDiagnosis['text']))
+        <section class="overflow-hidden rounded-3xl border border-violet-200 bg-white shadow-sm dark:border-violet-900/70 dark:bg-zinc-900">
+            <div class="flex flex-col gap-2 border-b border-violet-100 bg-violet-50/70 px-5 py-4 dark:border-violet-900/50 dark:bg-violet-950/30 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-2">
+                    <flux:icon name="sparkles" class="size-4 text-violet-600 dark:text-violet-300" />
+                    <h2 class="font-black text-zinc-900 dark:text-white">Último diagnóstico CFO</h2>
+                </div>
+                @if(!empty($latestDiagnosis['at']))
+                    <span class="text-xs text-zinc-500">Gerado em {{ \Illuminate\Support\Carbon::parse($latestDiagnosis['at'])->format('d/m/Y H:i') }}</span>
+                @endif
+            </div>
+            <div class="whitespace-pre-line px-5 py-5 text-sm leading-7 text-zinc-700 dark:text-zinc-300">{{ $latestDiagnosis['text'] }}</div>
+            <div class="border-t border-zinc-100 px-5 py-3 text-[11px] text-zinc-400 dark:border-zinc-800">Relatório gerado pelo CFO Inteligente. É apresentado como diagnóstico e não como alerta automático.</div>
+        </section>
+    @endif
+
     {{-- Insight Center --}}
     <section class="space-y-4">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
