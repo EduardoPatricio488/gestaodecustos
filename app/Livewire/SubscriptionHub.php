@@ -490,7 +490,7 @@ class SubscriptionHub extends Component
         }
 
         $activeCount = $activeSubs->count() + ($platformEntry ? 1 : 0);
-        $nextSub = $activeSubs->values()->push($platformEntry)->filter()->sortBy('days_until_billing')->first();
+        $nextSub = $billableActiveSubs->values()->push($platformEntry)->filter()->sortBy('days_until_billing')->first();
 
         $platformPayments = $platformPlan
             ? Payment::where('user_id', $user->id)->where('plan_type', $planSlug)->latest('paid_at')->get()
