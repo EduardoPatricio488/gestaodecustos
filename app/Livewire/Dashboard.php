@@ -936,6 +936,11 @@ class Dashboard extends Component
             ->where('workspace_id', $currentWs->id)
             ->where('user_id', $user->id)
             ->whereIn('recurring_income_id', $dashboardSalaryContractIds)
+            ->when($this->dashboardPeriodType === 'year', fn ($q) => $q->where('payment_year', (int) $this->dashboardSelectedYear))
+            ->when($this->dashboardPeriodType === 'month', function ($q): void {
+                [$selectedYear, $selectedMonth] = array_map('intval', explode('-', $this->dashboardSelectedMonth));
+                $q->where('payment_year', $selectedYear)->where('payment_month', $selectedMonth);
+            })
             ->orderByDesc('payment_year')
             ->orderByDesc('payment_month')
             ->orderByDesc('paid_at')
