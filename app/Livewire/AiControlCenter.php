@@ -9,12 +9,19 @@ use App\Services\AI\ContextEngine;
 use App\Services\AI\FinancialHealthScoreService;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class AiControlCenter extends Component
 {
     public string $feedback = '';
+
+    #[On('cfo-report-generated')]
+    public function refreshAfterCfoReport(): void
+    {
+        // O evento força a atualização do diagnóstico, dos insights e dos contadores.
+    }
 
     public function markRead(int $id): void
     {
