@@ -122,7 +122,18 @@ class AiBrainService
                 }
             }
 
-            $final = $final ?: 'Não consegui concluir a análise com os dados disponíveis.';
+            if (blank($final)) {
+                $messages[] = [
+                    'role' => 'user',
+                    'content' => 'Conclui agora a resposta ao pedido original usando exclusivamente os dados e resultados já disponíveis nesta conversa. Não chames mais ferramentas. Se faltarem dados, indica claramente quais são e apresenta apenas conclusões que possas fundamentar.',
+                ];
+
+                $completion = $this->provider($messages, null, true);
+                $response = $completion;
+                $final = trim((string) data_get($completion, 'choices.0.message.content', ''));
+            }
+
+            $final = $final ?: 'A IA não conseguiu produzir uma resposta final. Tenta novamente.';
             $assistantMessage = $conversation->messages()->create([
                 'user_id' => $user->id,
                 'role' => 'assistant',
@@ -225,7 +236,7 @@ class AiBrainService
         return null;
     }
 
-    private function provider(array $messages, ?string $forcedTool = null): array
+    private function provider(array $messages, ?string $forcedTool = null, bool $disableTools = false): array
     {
         $apiKey = config('services.openrouter.api_key');
         if (blank($apiKey)) {
@@ -235,7 +246,7 @@ class AiBrainService
             'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
             'messages' => $messages,
             'tools' => $this->tools->definitions(),
-            'tool_choice' => $forcedTool ? ['type' => 'function', 'function' => ['name' => $forcedTool]] : 'auto',
+            'tool_choice' => $disableTools ? 'none' : ($forcedTool ? ['type' => 'function', 'function' => ['name' => $forcedTool]] : 'auto'),
             'max_tokens' => 1600,
         ];
         $response = Http::withHeaders(['Authorization' => 'Bearer '.$apiKey, 'Content-Type' => 'application/json', 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
