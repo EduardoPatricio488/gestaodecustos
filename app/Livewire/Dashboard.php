@@ -68,6 +68,12 @@ class Dashboard extends Component
 
     public $inviteCodeInput = '';
 
+    public string $dashboardPeriodType = 'month';
+
+    public string $dashboardSelectedMonth = '';
+
+    public string $dashboardSelectedYear = '';
+
     public $exportStart;
 
     public $exportEnd;
@@ -444,8 +450,8 @@ class Dashboard extends Component
                 if ($topCat && $topCat['total'] > 0) {
                     $insights[] = 'GASTOS: '.strtoupper($topCat['name']).' lidera despesas ('.number_format($topCat['total'], 0, ',', ' ').'€)';
                 }
-                $earned = Income::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('received_at', [$monthStart, $monthEnd])->sum('amount');
-                $spent = Expense::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('spent_at', [$monthStart, $monthEnd])->sum('amount');
+                $earned = Income::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('received_at', [$periodStart, $periodEnd])->sum('amount');
+                $spent = Expense::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('spent_at', [$periodStart, $periodEnd])->sum('amount');
                 if ($spent > $earned) {
                     $insights[] = 'ALERTA: Gastos superiores às receitas.';
                 }
@@ -600,16 +606,31 @@ class Dashboard extends Component
             return view('livewire.dashboard-loading');
         }
 
-        $monthStart = now()->startOfMonth();
-        $monthEnd = now()->endOfMonth();
-        $sixMonthsStart = now()->subMonths(5)->startOfMonth();
+        $this->dashboardSelectedMonth = $this->dashboardSelectedMonth ?: now()->format('Y-m');
+        $this->dashboardSelectedYear = $this->dashboardSelectedYear ?: now()->format('Y');
+
+        $selectedDate = $this->dashboardPeriodType === 'year'
+            ? now()->setDate((int) $this->dashboardSelectedYear, 1, 1)
+            : now()->createFromFormat('Y-m', $this->dashboardSelectedMonth)->startOfMonth();
+
+        $monthStart = $selectedDate->copy()->startOfMonth();
+        $monthEnd = $selectedDate->copy()->endOfMonth();
+        $periodStart = $this->dashboardPeriodType === 'year'
+            ? $selectedDate->copy()->startOfYear()
+            : $monthStart->copy();
+        $periodEnd = $this->dashboardPeriodType === 'year'
+            ? $selectedDate->copy()->endOfYear()
+            : $monthEnd->copy();
+        $isCurrentDashboardPeriod = $periodStart->isSameDay(now()->startOfMonth())
+            && $this->dashboardPeriodType === 'month';
+        $sixMonthsStart = $periodEnd->copy()->subMonths(5)->startOfMonth();
 
         $fixedIncome = (float) Cache::remember(
             "dashboard:fixed-income:{$currentWs->id}:{$user->id}", 60,
             fn () => $user->recurringIncomes()->where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->where('is_active', true)->sum('amount')
         );
 
-        $monthTotals = Cache::remember("dashboard:month-totals:{$currentWs->id}:{$user->id}:{$monthStart->toDateString()}", 60, function () use ($currentWs, $monthStart, $monthEnd, $user) {
+        $monthTotals = Cache::remember("dashboard:period-totals:{$currentWs->id}:{$user->id}:{$this->dashboardPeriodType}:{$periodStart->toDateString()}", 60, function () use ($currentWs, $periodStart, $periodEnd, $user) {
             return [
                 'expenses' => (float) Expense::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('spent_at', [$monthStart, $monthEnd])->sum('amount'),
                 'income' => (float) Income::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereBetween('received_at', [$monthStart, $monthEnd])->sum('amount'),
@@ -618,7 +639,7 @@ class Dashboard extends Component
         });
 
         $totalMonthExpenses = $monthTotals['expenses'];
-        $totalMonthIncome = $monthTotals['income'] + $fixedIncome;
+        $totalMonthIncome = $monthTotals['income'] + ($isCurrentDashboardPeriod ? $fixedIncome : 0);
         $portfolioValue = 0;
         $myInvestments = Cache::remember("dashboard:investments:v2:{$currentWs->id}:{$user->id}", 60, fn () => Investment::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->get(['id', 'workspace_id', 'symbol', 'quantity', 'current_price'])->map(fn ($investment) => ['symbol' => $investment->symbol, 'quantity' => (float) $investment->quantity, 'current_price' => (float) $investment->current_price])->values()->all());
 
@@ -781,10 +802,10 @@ class Dashboard extends Component
             ->sortByDesc('balance')->take(3)->values()->all()
         );
 
-        $topExpenseCategory = Cache::remember("dashboard:top-category:{$currentWs->id}:{$user->id}:{$monthStart->toDateString()}", 60, function () use ($currentWs, $monthStart, $monthEnd, $user) {
+        $topExpenseCategory = Cache::remember("dashboard:top-category:{$currentWs->id}:{$user->id}:{$periodStart->toDateString()}:{$periodEnd->toDateString()}", 60, function () use ($currentWs, $periodStart, $periodEnd, $user) {
             $row = Expense::where('workspace_id', $currentWs->id)
                 ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
-                ->whereBetween('spent_at', [$monthStart, $monthEnd])
+                ->whereBetween('spent_at', [$periodStart, $periodEnd])
                 ->select('category_id', DB::raw('SUM(amount) as total'))
                 ->groupBy('category_id')
                 ->orderByDesc('total')
@@ -797,11 +818,11 @@ class Dashboard extends Component
             return ['name' => $row->category->name, 'total' => (float) $row->total];
         });
 
-        $last6 = collect(Cache::remember("dashboard:last6:{$currentWs->id}:{$user->id}:{$sixMonthsStart->toDateString()}:{$monthEnd->toDateString()}", 60, fn () => $this->buildSixMonthSeries($currentWs->id, $sixMonthsStart, $monthEnd, $fixedIncome)->toArray()));
-        $byCategory = collect(Cache::remember("dashboard:category-budgets:{$currentWs->id}:{$user->id}:{$monthStart->toDateString()}", 60, fn () => $this->buildCategoryBudgets($currentWs->id, $monthStart, $monthEnd)->toArray()))->map(fn ($item) => (object) $item);
+        $last6 = collect(Cache::remember("dashboard:last6:{$currentWs->id}:{$user->id}:{$sixMonthsStart->toDateString()}:{$monthEnd->toDateString()}", 60, fn () => $this->buildSixMonthSeries($currentWs->id, $sixMonthsStart, $periodEnd, $isCurrentDashboardPeriod ? $fixedIncome : 0)->toArray()));
+        $byCategory = collect(Cache::remember("dashboard:category-budgets:{$currentWs->id}:{$user->id}:{$periodStart->toDateString()}:{$periodEnd->toDateString()}", 60, fn () => $this->buildCategoryBudgets($currentWs->id, $periodStart, $periodEnd)->toArray()))->map(fn ($item) => (object) $item);
         $overallScore = $this->calculateScore($totalMonthExpenses, $totalMonthIncome, $monthTotals['budget']);
 
-        $prevMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
+        $prevMonthStart = $periodStart->copy()->subDay()->startOfMonth();
         $prevMonthEnd = $prevMonthStart->copy()->endOfMonth();
         $prevMonthTotals = Cache::remember("dashboard:month-totals:{$currentWs->id}:{$user->id}:{$prevMonthStart->toDateString()}", 60, function () use ($currentWs, $prevMonthStart, $prevMonthEnd, $user) {
             return [
@@ -810,7 +831,7 @@ class Dashboard extends Component
                 'budget' => (float) Category::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->sum('budget_limit'),
             ];
         });
-        $prevOverallScore = $this->calculateScore($prevMonthTotals['expenses'], $prevMonthTotals['income'] + $fixedIncome, $prevMonthTotals['budget']);
+        $prevOverallScore = $this->calculateScore($prevMonthTotals['expenses'], $prevMonthTotals['income'] + ($isCurrentDashboardPeriod ? $fixedIncome : 0), $prevMonthTotals['budget']);
         $overallScoreTrend = $overallScore - $prevOverallScore;
 
         $financeScore = Cache::remember("dashboard:finance-score:{$currentWs->id}:{$user->id}", 60, fn () => app(FinanceScoreService::class)->calculate($currentWs));
@@ -889,6 +910,12 @@ class Dashboard extends Component
         return view('livewire.dashboard', [
             'currentWs' => $currentWs,
             'dashboardProjectedSalaryNet' => $dashboardProjectedSalaryNet,
+            'dashboardPeriodType' => $this->dashboardPeriodType,
+            'dashboardSelectedMonth' => $this->dashboardSelectedMonth,
+            'dashboardSelectedYear' => $this->dashboardSelectedYear,
+            'dashboardPeriodLabel' => $this->dashboardPeriodType === 'year'
+                ? $periodStart->translatedFormat('Y')
+                : ($isCurrentDashboardPeriod ? 'Mês atual' : $periodStart->translatedFormat('F Y')),
 
             'dashboardBankCardAccount' => $dashboardBankCardAccount,
             'dashboardBankCardCurrentBalance' => $dashboardBankCardCurrentBalance,
