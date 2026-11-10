@@ -297,7 +297,7 @@ class AiToolRegistry
 
     private function subscriptions(User $user, Workspace $workspace): array
     {
-        $items = Subscription::where('workspace_id', $workspace->id)->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->where('is_active', true)->get();
+        $items = Subscription::where('workspace_id', $workspace->id)->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->where('is_active', true)->where('paid_by_company', false)->get();
 
         return [
             'count' => $items->count(),
