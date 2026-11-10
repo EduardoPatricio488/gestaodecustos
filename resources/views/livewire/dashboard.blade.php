@@ -623,7 +623,7 @@
             <button type="button" x-on:click="openQuickCreate = !openQuickCreate" x-on:keydown.escape.window="openQuickCreate = false"
                 :aria-expanded="openQuickCreate.toString()" aria-label="Adicionar novo registo"
                 class="group flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-lg shadow-brand-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:shadow-xl active:scale-95">
-                <flux:icon name="plus" class="size-5 transition-transform duration-200" :class="openQuickCreate ? 'rotate-45' : ''" />
+                <flux:icon name="plus" class="size-5 transition-transform duration-200" x-bind:class="openQuickCreate ? 'rotate-45' : ''" />
             </button>
 
             <div x-cloak x-show="openQuickCreate" x-transition.origin.top.right x-on:click.outside="openQuickCreate = false"
