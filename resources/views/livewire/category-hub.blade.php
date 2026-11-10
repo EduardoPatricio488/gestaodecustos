@@ -1196,7 +1196,6 @@
                                 @endif
                                 <div class="min-w-0 flex-1 space-y-1 text-left">
                                     <p class="truncate text-xs font-bold text-zinc-700 dark:text-zinc-200">{{ $document?->getClientOriginalName() ?? $pendingDocumentName }}</p>
-                                    <p class="text-[10px] leading-relaxed text-zinc-500">Documento recebido diretamente do Scanner de fatura. Fica associado à despesa quando carregares em Confirmar Gasto.</p>
                                     @if($scanSuccess)<p class="pt-1 text-xs font-bold text-emerald-600">✓ Fatura analisada. Campos preenchidos pela IA.</p>@endif
                                 </div>
                             </div>
