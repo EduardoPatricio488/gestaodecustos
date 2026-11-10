@@ -23,7 +23,7 @@ class NewsHub extends Component
         $user = auth()->user();
         $workspaceId = $user?->current_workspace_id ?? 'none';
 
-        return Cache::flexible("dashboard:news-24h:{$workspaceId}", [300, 900], function () {
+        return Cache::flexible("dashboard:news-24h:v2:{$workspaceId}", [300, 900], function () {
             $topics = [
                 'PT' => 'notícias Portugal',
                 'INT' => 'notícias internacionais',
@@ -130,7 +130,7 @@ class NewsHub extends Component
     public function refreshNews(): void
     {
         $workspaceId = auth()->user()?->current_workspace_id ?? 'none';
-        Cache::forget("dashboard:news-24h:{$workspaceId}");
+        Cache::forget("dashboard:news-24h:v2:{$workspaceId}");
         unset($this->news);
     }
 
