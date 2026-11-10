@@ -1096,118 +1096,122 @@
 
                     <div x-show="!transportPassMode" x-cloak class="space-y-5">
 
-                    {{-- Valor e Data --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <label class="block space-y-2">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valor da Transação</span>
-                            <input wire:model.live.blur="amount" type="number" step="0.01" placeholder="0.00"
-                                class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-black text-brand-600 shadow-inner outline-none ring-0 transition focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-900">
-                        </label>
-                        <label class="block space-y-2">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Data do Gasto</span>
-                            <input wire:model="spent_at" type="date"
-                                class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-bold shadow-inner outline-none ring-0 transition focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-900 dark:text-white">
-                        </label>
-                    </div>
-
-                    {{-- Origem do pagamento --}}
-                    <label class="block space-y-2">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Pago com</span>
-                        <select wire:model.live="bankAccountId" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-bold shadow-inner outline-none ring-0 transition focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-900 dark:text-white">
-                            <option value="">💵 Dinheiro Físico</option>
-                            @foreach($this->bankAccounts as $acc)
-                                <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-
-                    @php
-                        $selectedAccount = $bankAccountId ? $this->bankAccounts->firstWhere('id', (int) $bankAccountId) : null;
-                        $insufficientBank = $selectedAccount && (float) $amount > (float) $selectedAccount->current_balance;
-                    @endphp
-                    @if($insufficientBank)
-                        <div class="flex items-start gap-2.5 p-3 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40">
-                            <flux:icon name="exclamation-triangle" class="size-4 text-red-500 shrink-0 mt-0.5" />
-                            <p class="text-[11px] font-bold text-red-600 dark:text-red-400">
-                                Saldo insuficiente em "{{ $selectedAccount->name }}": disponível {{ number_format($selectedAccount->current_balance, 2, ',', '.') }}€, valor do gasto {{ number_format((float) $amount, 2, ',', '.') }}€.
-                            </p>
+                    {{-- DADOS DA COMPRA --}}
+                    <section class="space-y-4">
+                        <div class="flex items-center gap-2 border-b border-zinc-100 pb-2 dark:border-zinc-800">
+                            <flux:icon name="shopping-bag" class="size-4 text-brand-600" />
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Dados da compra</h4>
                         </div>
-                    @endif
-                    <label class="block space-y-2">
-    <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Subcategoria</span>
-    <select wire:model.live="subcategory" class="w-full h-14 rounded-2xl border-0 bg-zinc-50 px-4 text-sm font-bold shadow-inner outline-none ring-0 transition focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-900 dark:text-white">
-        <option value="">Selecionar...</option>
-        @foreach($subcategories as $sub)
-            <option value="{{ $sub }}">{{ $sub }}</option>
-        @endforeach
-    </select>
-</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <label class="block space-y-2 sm:col-span-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">O que comprei</span>
+                                <input wire:model="meta.item_name" type="text" placeholder="Ex.: compras de supermercado, combustível..." class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
+                            </label>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Data da compra</span>
+                                <input wire:model="spent_at" type="date" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
+                            </label>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Hora</span>
+                                <input wire:model="meta.time" type="time" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
+                            </label>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Quantidade</span>
+                                <input wire:model="meta.quantity" type="number" min="0" step="0.001" placeholder="1" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
+                            </label>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Unidade</span>
+                                <select wire:model="meta.unit" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
+                                    <option value="">Selecionar unidade...</option><option value="unidade">Unidade</option><option value="kg">Kg</option><option value="g">g</option><option value="litro">Litro</option><option value="ml">ml</option><option value="metro">Metro</option><option value="hora">Hora</option><option value="servico">Serviço</option><option value="outro">Outro</option>
+                                </select>
+                            </label>
+                            <label class="block space-y-2 sm:col-span-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Local / Estabelecimento</span>
+                                <input wire:model="meta.local" type="text" placeholder="Nome da loja, fornecedor ou estabelecimento" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
+                            </label>
+                        </div>
+                        <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Descrição</span>
+                            <textarea wire:model="description" rows="2" placeholder="Detalhes adicionais da compra..." class="w-full resize-none rounded-xl border-0 bg-zinc-50 px-4 py-3 text-sm font-bold dark:bg-zinc-900 dark:text-white"></textarea>
+                        </label>
+                        <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Subcategoria</span>
+                            <select wire:model.live="subcategory" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
+                                <option value="">Selecionar...</option>
+                                @foreach($subcategories as $sub)<option value="{{ $sub }}">{{ $sub }}</option>@endforeach
+                            </select>
+                        </label>
+                        <div x-show="$wire.subcategory === 'Outro'" x-cloak x-transition>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-brand-600">Especificar subcategoria</span>
+                                <input wire:model="customSubcategory" type="text" placeholder="Indica a subcategoria" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
+                            </label>
+                        </div>
+                    </section>
 
-{{-- 2. CAMPO EXTRA (Aparece apenas se selecionar 'Outro') --}}
-<div x-show="$wire.subcategory === 'Outro'" x-cloak x-transition class="mt-4 animate-in slide-in-from-top-2">
-    <label class="block space-y-2">
-        <span class="text-[10px] font-black uppercase tracking-widest text-brand-600 italic">Especificar Subcategoria</span>
-        <input wire:model="customSubcategory" type="text" placeholder="Ex: Mercado de Rua, Suplementos..."
-               class="w-full h-12 rounded-xl border-2 border-brand-500/20 bg-brand-500/5 px-4 text-sm font-bold outline-none focus:border-brand-500 transition-all dark:text-white">
-    </label>
-</div>
+                    {{-- VALORES E IVA --}}
+                    <section class="space-y-4 rounded-2xl border border-zinc-100 bg-zinc-50/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+                        <div class="flex items-center gap-2 border-b border-zinc-200 pb-2 dark:border-zinc-800"><flux:icon name="calculator" class="size-4 text-brand-600" /><h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valores e IVA</h4></div>
+                        <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valor da Transação</span>
+                            <div class="relative">
+                                <input wire:model.live.blur="amount" type="number" min="0.01" step="0.01" placeholder="0,00" class="w-full h-14 rounded-xl border-0 bg-white px-4 pr-12 text-lg font-black text-brand-600 shadow-inner dark:bg-zinc-950">
+                                <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm font-black text-zinc-400">€</span>
+                            </div>
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Preço unitário (€)</span><input wire:model="meta.unit_price" type="number" min="0" step="0.0001" placeholder="0,00" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"></label>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">IVA (%)</span>
+                                <select wire:model="meta.vat_rate" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"><option value="">Não indicado</option><option value="0">0%</option><option value="6">6%</option><option value="13">13%</option><option value="23">23%</option></select>
+                            </label>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valor ilíquido (€)</span><input wire:model="meta.gross_amount" type="number" min="0" step="0.01" placeholder="0,00" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"></label>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valor líquido (€)</span><input wire:model="meta.net_amount" type="number" min="0" step="0.01" placeholder="0,00" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"></label>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valor do IVA (€)</span><input wire:model="meta.vat_amount" type="number" min="0" step="0.01" placeholder="0,00" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"></label>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Incidências</span><input wire:model="meta.tax_incidence" type="text" placeholder="Ex.: Continente, Madeira, Açores..." class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"></label>
+                        </div>
+                    </section>
 
-                    {{-- Detalhes Específicos (Dinâmicos por Categoria) --}}
-<div class="rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-5 space-y-5">
+                    {{-- PAGAMENTO --}}
+                    <section class="space-y-4">
+                        <div class="flex items-center gap-2 border-b border-zinc-100 pb-2 dark:border-zinc-800"><flux:icon name="wallet" class="size-4 text-brand-600" /><h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Pagamento</h4></div>
+                        <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Condição de pagamento</span>
+                            <select wire:model="meta.payment_condition" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white"><option value="">Selecionar...</option><option value="Pronto pagamento">Pronto pagamento</option><option value="A prazo">A prazo</option><option value="Pagamento parcial">Pagamento parcial</option><option value="Pagamento diferido">Pagamento diferido</option></select>
+                        </label>
+                        <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Pago com / Conta</span>
+                            <select wire:model.live="bankAccountId" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white"><option value="">💵 Dinheiro físico</option>@foreach($this->bankAccounts as $acc)<option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>@endforeach</select>
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valor entregue (€)</span><input wire:model="meta.amount_tendered" type="number" min="0" step="0.01" placeholder="0,00" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white"></label>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Troco (€)</span><input wire:model="meta.change_amount" type="number" min="0" step="0.01" placeholder="0,00" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white"></label>
+                        </div>
+                    </section>
 
-    {{-- Cabeçalho Dinâmico da Secção --}}
-    <div class="flex items-center gap-3 border-b border-zinc-200/50 dark:border-zinc-800 pb-3">
-        <flux:icon name="{{ $categoryFields[$slug]['icon'] ?? 'adjustments-horizontal' }}" class="size-4" style="color: var(--cat-color);" />
-        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-            @if($slug === 'carro')
-                Detalhes Específicos do Veículo
-            @else
-                Detalhes Específicos do Gasto
-            @endif
-        </span>
-    </div>
+                    {{-- IDENTIFICAÇÃO FISCAL --}}
+                    <section class="space-y-4">
+                        <div class="flex items-center gap-2 border-b border-zinc-100 pb-2 dark:border-zinc-800"><flux:icon name="identification" class="size-4 text-brand-600" /><h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Identificação fiscal</h4></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">NIF da empresa</span><input wire:model="meta.company_nif" type="text" inputmode="numeric" maxlength="9" placeholder="NIF do estabelecimento" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white"></label>
+                            <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Contribuinte</span><input wire:model="meta.customer_nif" type="text" inputmode="numeric" maxlength="9" placeholder="NIF indicado na fatura" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white"></label>
+                        </div>
+                    </section>
 
-    <label class="block space-y-2">
-        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Local / Estabelecimento</span>
-        <input wire:model="meta.local" type="text" placeholder="Ex: loja, fornecedor, oficina ou serviço..."
-            class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white">
-    </label>
+                    {{-- DOCUMENTO --}}
+                    <section class="space-y-3 rounded-2xl border border-dashed border-brand-300 bg-brand-50/50 p-4 dark:border-brand-800 dark:bg-brand-950/20">
+                        <div class="flex items-center gap-2"><flux:icon name="paper-clip" class="size-4 text-brand-600" /><h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300">Documento da compra</h4></div>
+                        <input wire:model="document" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-xs file:font-bold file:text-white">
+                        <p class="text-[10px] text-zinc-500">PDF ou imagem. O ficheiro fica guardado associado a este registo (máximo 20 MB).</p>
+                        @if($document)<p class="text-xs font-bold text-emerald-600">Ficheiro selecionado: {{ $document->getClientOriginalName() }}</p>@endif
+                        @error('document')<p class="text-xs font-bold text-red-500">{{ $message }}</p>@enderror
+                    </section>
 
-    {{-- Renderização dos Campos Adicionais (KM, Próx. Inspeção, Local, etc) --}}
-    @if(isset($categoryFields[$slug]))
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            @foreach($categoryFields[$slug]['fields'] as $field)
-                @if($field['type'] === 'select')
-                    <label class="block space-y-2">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">{{ $field['label'] }}</span>
-                        <select wire:model="meta.{{ $field['name'] }}" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white">
-                            <option value="">Escolher...</option>
-                            @foreach($field['options'] as $option)
-                                <option value="{{ $option }}">{{ $option }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                @elseif($field['type'] === 'checkbox')
-                    <label class="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 cursor-pointer">
-                        <span class="text-xs font-bold text-zinc-500">{{ $field['label'] }}</span>
-                        <input type="checkbox" wire:model="meta.{{ $field['name'] }}" class="rounded border-zinc-300 text-brand-600 focus:ring-brand-600">
-                    </label>
-                @else
-                    <label class="block space-y-2">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">{{ $field['label'] }}</span>
-                        <input wire:model="meta.{{ $field['name'] }}" type="{{ $field['type'] }}" placeholder="{{ $field['placeholder'] ?? '' }}"
-                            class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white">
-                    </label>
-                @endif
-            @endforeach
-        </div>
-    @endif
-
-    {{-- Notas gerais mantidas no fim para contexto extra --}}
-    <label class="block space-y-2 pt-2">
-        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Notas / Observações</span>
-        <textarea wire:model="description" rows="2" class="w-full resize-none rounded-2xl border-0 bg-white px-4 py-3 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white"></textarea>
-    </label>
+                    {{-- DETALHES ESPECÍFICOS DA CATEGORIA --}}
+                    <section class="rounded-2xl bg-zinc-50 p-5 space-y-5 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
+                        <div class="flex items-center gap-2 border-b border-zinc-200/50 pb-3 dark:border-zinc-800"><flux:icon name="{{ $categoryFields[$slug]['icon'] ?? 'adjustments-horizontal' }}" class="size-4" style="color: var(--cat-color);" /><h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Detalhes específicos do gasto</h4></div>
+                        @if(isset($categoryFields[$slug]))
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                @foreach($categoryFields[$slug]['fields'] as $field)
+                                    @if($field['type'] === 'select')
+                                        <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">{{ $field['label'] }}</span><select wire:model="meta.{{ $field['name'] }}" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"><option value="">Escolher...</option>@foreach($field['options'] as $option)<option value="{{ $option }}">{{ $option }}</option>@endforeach</select></label>
+                                    @elseif($field['type'] === 'checkbox')
+                                        <label class="flex items-center justify-between rounded-xl border border-zinc-100 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950"><span class="text-xs font-bold text-zinc-500">{{ $field['label'] }}</span><input type="checkbox" wire:model="meta.{{ $field['name'] }}" class="rounded border-zinc-300 text-brand-600"></label>
+                                    @else
+                                        <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">{{ $field['label'] }}</span><input wire:model="meta.{{ $field['name'] }}" type="{{ $field['type'] }}" placeholder="{{ $field['placeholder'] ?? '' }}" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"></label>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
+                        <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Notas / Observações</span><textarea wire:model="meta.notes" rows="2" class="w-full resize-none rounded-xl border-0 bg-white px-4 py-3 text-sm font-bold dark:bg-zinc-950 dark:text-white"></textarea></label>
+                    </section>
 </div>
                     </div>
                 </div>
