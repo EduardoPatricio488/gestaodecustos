@@ -111,7 +111,7 @@
 {{-- NOTÍCIAS 24H --}}
 <div
     x-data="{ speed: 260 }"
-    class="news24h-card relative flex items-center gap-5 w-[90%] mx-auto min-h-[62px] py-2.5 px-4 rounded-2xl border border-sky-400/20 bg-gradient-to-r from-zinc-950 via-slate-950 to-zinc-950 backdrop-blur-2xl shadow-xl shadow-sky-950/20 group overflow-hidden select-none transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/50 hover:shadow-2xl hover:shadow-sky-900/30">
+    class="news24h-card relative flex items-center gap-5 w-full min-h-[62px] py-2.5 px-4 rounded-2xl border border-sky-400/20 bg-gradient-to-r from-zinc-950 via-slate-950 to-zinc-950 backdrop-blur-2xl shadow-xl shadow-sky-950/20 group overflow-hidden select-none transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/50 hover:shadow-2xl hover:shadow-sky-900/30">
 
     <div class="absolute inset-0 pointer-events-none opacity-25 bg-gradient-to-r from-sky-600/40 via-indigo-500/20 to-cyan-400/10 animate-bgFlow"></div>
     <div class="news24h-shine absolute inset-y-0 -left-1/2 w-1/3 pointer-events-none"></div>
