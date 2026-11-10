@@ -192,14 +192,14 @@
 {{-- NOTÍCIAS 24H --}}
 <div
     x-data="{ speed: 300 }"
-    class="news24h-card relative flex items-center gap-5 w-full min-h-[62px] py-2.5 px-4 rounded-2xl border border-sky-400/20 bg-gradient-to-r from-zinc-950 via-slate-950 to-zinc-950 backdrop-blur-2xl shadow-xl shadow-sky-950/20 group overflow-hidden select-none transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/50 hover:shadow-2xl hover:shadow-sky-900/30">
+    class="news24h-card relative flex items-center gap-5 w-full min-h-[54px] py-1.5 px-4 rounded-2xl border border-sky-400/20 bg-gradient-to-r from-zinc-950 via-slate-950 to-zinc-950 backdrop-blur-2xl shadow-xl shadow-sky-950/20 group overflow-hidden select-none transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/50 hover:shadow-2xl hover:shadow-sky-900/30">
 
     <div class="absolute inset-0 pointer-events-none opacity-25 bg-gradient-to-r from-sky-600/40 via-indigo-500/20 to-cyan-400/10 animate-bgFlow"></div>
     <div class="news24h-shine absolute inset-y-0 -left-1/2 w-1/3 pointer-events-none"></div>
     <div class="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-sky-300/70 to-transparent"></div>
     <div class="absolute -right-10 -top-14 size-36 rounded-full bg-sky-500/10 blur-3xl pointer-events-none"></div>
 
-    <a href="{{ route('hub.news') }}" wire:navigate title="Clica para abrir a página dedicada de notícias" aria-label="Abrir Notícias 24h" class="relative flex items-center gap-3 shrink-0 z-20 px-4 py-3 rounded-xl border-2 border-sky-300/60 bg-gradient-to-br from-sky-500/35 via-blue-500/25 to-indigo-500/35 shadow-lg shadow-sky-500/20 cursor-pointer transition-all duration-200 hover:scale-[1.04] hover:border-sky-200 hover:from-sky-400/45 hover:to-indigo-400/40 hover:shadow-xl hover:shadow-sky-400/30 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+    <a href="{{ route('hub.news') }}" wire:navigate title="Clica para abrir a página dedicada de notícias" aria-label="Abrir Notícias 24h" class="relative flex items-center gap-3 shrink-0 z-20 px-3.5 py-2 rounded-xl border-2 border-sky-300/60 bg-gradient-to-br from-sky-500/35 via-blue-500/25 to-indigo-500/35 shadow-lg shadow-sky-500/20 cursor-pointer transition-all duration-200 hover:scale-[1.04] hover:border-sky-200 hover:from-sky-400/45 hover:to-indigo-400/40 hover:shadow-xl hover:shadow-sky-400/30 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
         <div class="relative flex items-center justify-center">
             <div class="size-3 rounded-full bg-sky-300 animate-pulse shadow-[0_0_12px_rgba(125,211,252,0.9)]"></div>
             <div class="absolute inset-0 size-3 rounded-full bg-sky-300/40 blur-md animate-ping"></div>
@@ -211,7 +211,7 @@
         <span class="ml-1 px-2 py-1 rounded-md bg-sky-300/15 border border-sky-300/25 text-[9px] font-black tracking-wider text-sky-200">LIVE</span>
     </a>
 
-    <div class="relative flex-1 overflow-hidden h-9 z-10">
+    <div class="relative flex-1 overflow-hidden h-8 z-10">
         <div class="ticker-ultra flex items-center gap-20 whitespace-nowrap" :style="`animation-duration: ${speed}s`">
             @forelse($this->news24h as $news)
                 <div class="ticker-text-ultra flex items-center gap-3">
