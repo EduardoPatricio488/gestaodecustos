@@ -623,7 +623,7 @@
             <button type="button" @click="openQuickCreate = !openQuickCreate" @keydown.escape.window="openQuickCreate = false"
                 :aria-expanded="openQuickCreate.toString()" aria-label="Adicionar novo registo"
                 class="group flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-lg shadow-brand-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:shadow-xl active:scale-95">
-                <flux:icon name="plus" class="size-5 transition-transform duration-200" ::class="openQuickCreate ? 'rotate-45' : ''" />
+                <flux:icon name="plus" class="size-5 transition-transform duration-200" :class="openQuickCreate ? 'rotate-45' : ''" />
             </button>
 
             <div x-cloak x-show="openQuickCreate" x-transition.origin.top.right @click.outside="openQuickCreate = false"
@@ -636,7 +636,7 @@
                 </a>
                 <a href="{{ route('hub.subscriptions', ['open_extra' => 1]) }}" wire:navigate @click="openQuickCreate = false"
                     class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-violet-50 dark:hover:bg-violet-950/30">
-                    <span class="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300"><flux:icon name="repeat" class="size-4" /></span>
+                    <span class="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300"><flux:icon name="arrow-path" class="size-4" /></span>
                     <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova subscrição</span>
                 </a>
                 <a href="{{ route('hub.incomes', ['open_extra' => 1]) }}" wire:navigate @click="openQuickCreate = false"
