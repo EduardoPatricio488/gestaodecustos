@@ -1,14 +1,14 @@
 <?php
 
-namespace App\\Livewire;
+namespace App\Livewire;
 
-use Illuminate\\Support\\Facades\\Cache;
-use Illuminate\\Support\\Facades\\Http;
-use Illuminate\\Http\\Client\\Pool;
-use Illuminate\\Support\\Facades\\Log;
-use Livewire\\Attributes\\Computed;
-use Livewire\\Attributes\\Layout;
-use Livewire\\Component;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\Pool;
+use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class NewsHub extends Component
@@ -52,8 +52,8 @@ class NewsHub extends Component
 
                     foreach ($xml->channel->item as $item) {
                         try {
-                            $publishedAt = \\Illuminate\\Support\\Carbon::parse((string) $item->pubDate);
-                        } catch (\\Throwable $e) {
+                            $publishedAt = \Illuminate\Support\Carbon::parse((string) $item->pubDate);
+                        } catch (\Throwable $e) {
                             continue;
                         }
 
@@ -72,7 +72,7 @@ class NewsHub extends Component
                         ];
                     }
                 }
-            } catch (\\Throwable $e) {
+            } catch (\Throwable $e) {
                 Log::warning('Falha ao obter notícias das últimas 24 horas: '.$e->getMessage());
             }
 
