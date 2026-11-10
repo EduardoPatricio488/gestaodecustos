@@ -665,7 +665,7 @@
                         <span class="ml-auto text-[9px] font-bold uppercase tracking-[0.18em] text-red-100/80">Saldo previsto</span>
                     </div>
                     <div>
-                        <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-red-100/80">Saldo atual + salário líquido</p>
+                        <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-red-100/80">{{ $isCurrentDashboardPeriod ? 'Saldo atual + salário líquido' : 'Saldo no fim do período' }}</p>
                         <p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-4xl">{{ number_format($dashboardBankCardBalance, 2, ',', ' ') }} <span class="text-xl text-red-100">€</span></p>
                     </div>
                     <div class="grid grid-cols-2 gap-3 border-t border-white/20 pt-3">
@@ -674,8 +674,8 @@
                             <p class="mt-1 truncate text-[11px] font-bold tabular-nums text-white">{{ number_format($dashboardBankCardCurrentBalance, 2, ',', ' ') }} €</p>
                         </div>
                         <div class="min-w-0 text-right">
-                            <p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">Salário líquido</p>
-                            <p class="mt-1 truncate text-[11px] font-bold tabular-nums text-white">+ {{ number_format($dashboardProjectedSalaryNet, 2, ',', ' ') }} €</p>
+                            <p class="text-[8px] font-bold uppercase tracking-[0.16em] text-red-100/70">{{ $isCurrentDashboardPeriod ? 'Salário líquido' : 'Período consultado' }}</p>
+                            <p class="mt-1 truncate text-[11px] font-bold tabular-nums text-white">{{ $isCurrentDashboardPeriod ? '+ '.number_format($dashboardBankCardSalaryAmount, 2, ',', ' ').' €' : $dashboardPeriodLabel }}</p>
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 border-t border-white/15 pt-3">
