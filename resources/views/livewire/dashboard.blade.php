@@ -206,8 +206,7 @@
         </div>
         <div class="flex flex-col gap-0.5">
             <span class="text-sm font-black uppercase text-white tracking-[0.16em] leading-none drop-shadow-[0_0_8px_rgba(56,189,248,0.55)]">Notícias 24h</span>
-            <span class="text-[9px] font-bold uppercase tracking-[0.16em] text-sky-200">Últimas notícias</span>
-            <span class="mt-1 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-white">VER NOTÍCIAS <span aria-hidden="true">→</span></span>
+            <span class="text-[9px] font-bold uppercase tracking-[0.16em] text-sky-200">Ver notícias</span>
         </div>
         <span class="ml-1 px-2 py-1 rounded-md bg-sky-300/15 border border-sky-300/25 text-[9px] font-black tracking-wider text-sky-200">LIVE</span>
     </a>
