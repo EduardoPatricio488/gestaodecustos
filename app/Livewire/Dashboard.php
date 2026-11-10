@@ -860,6 +860,52 @@ class Dashboard extends Component
         $prevOverallScore = $this->calculateScore($prevMonthTotals['expenses'], $prevMonthTotals['income'] + ($isCurrentDashboardPeriod ? $fixedIncome : 0), $prevMonthTotals['budget']);
         $overallScoreTrend = $overallScore - $prevOverallScore;
 
+        // Indicadores adicionais: comparam sempre períodos equivalentes.
+        $comparisonPeriodStart = $this->dashboardPeriodType === 'year'
+            ? $periodStart->copy()->subYear()->startOfYear()
+            : $periodStart->copy()->subMonth()->startOfMonth();
+        $comparisonPeriodEnd = $this->dashboardPeriodType === 'year'
+            ? $comparisonPeriodStart->copy()->endOfYear()
+            : $comparisonPeriodStart->copy()->endOfMonth();
+
+        $comparisonTotals = Cache::remember(
+            "dashboard:indicator-comparison:{$currentWs->id}:{$user->id}:{$this->dashboardPeriodType}:{$comparisonPeriodStart->toDateString()}",
+            60,
+            function () use ($currentWs, $comparisonPeriodStart, $comparisonPeriodEnd, $user): array {
+                $scope = fn ($query) => $query->where('workspace_id', $currentWs->id)
+                    ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id));
+
+                return [
+                    'expenses' => (float) $scope(Expense::query())->whereBetween('spent_at', [$comparisonPeriodStart, $comparisonPeriodEnd])->sum('amount'),
+                    'income' => (float) $scope(Income::query())->whereBetween('received_at', [$comparisonPeriodStart, $comparisonPeriodEnd])->sum('amount'),
+                ];
+            }
+        );
+
+        $indicatorIncome = (float) $totalMonthIncome;
+        $indicatorSavingsRate = $indicatorIncome > 0
+            ? round((($indicatorIncome - $totalMonthExpenses) / $indicatorIncome) * 100, 1)
+            : null;
+        $indicatorBudgetUsage = (float) $monthTotals['budget'] > 0
+            ? round(($totalMonthExpenses / (float) $monthTotals['budget']) * 100, 1)
+            : null;
+
+        $indicatorPeriodEnd = $periodEnd->lessThan(now()->endOfDay()) ? $periodEnd->copy() : now()->endOfDay();
+        $indicatorDaysElapsed = $periodStart->greaterThan($indicatorPeriodEnd)
+            ? 0
+            : max(1, (int) $periodStart->diffInDays($indicatorPeriodEnd) + 1);
+        $indicatorDailyAverage = $indicatorDaysElapsed > 0
+            ? round($totalMonthExpenses / $indicatorDaysElapsed, 2)
+            : 0.0;
+
+        $comparisonIncome = (float) $comparisonTotals['income'] + ($isCurrentDashboardPeriod ? $fixedIncome : 0);
+        $indicatorExpenseChange = (float) $comparisonTotals['expenses'] > 0
+            ? round((($totalMonthExpenses - (float) $comparisonTotals['expenses']) / (float) $comparisonTotals['expenses']) * 100, 1)
+            : null;
+        $indicatorIncomeChange = $comparisonIncome > 0
+            ? round((($indicatorIncome - $comparisonIncome) / $comparisonIncome) * 100, 1)
+            : null;
+
         $financeScore = Cache::remember("dashboard:finance-score:{$currentWs->id}:{$user->id}", 60, fn () => app(FinanceScoreService::class)->calculate($currentWs));
         $wellnessInsights = Cache::remember("dashboard:wellness:{$currentWs->id}:{$user->id}", 60, fn () => app(WellnessFinanceService::class)->getInsights($currentWs));
         $storeEntitlements = app(StoreEntitlementService::class);
@@ -1152,6 +1198,12 @@ class Dashboard extends Component
             'userWorkspaces' => $user->workspaces,
             'overallScore' => $overallScore,
             'overallScoreTrend' => $overallScoreTrend,
+            'indicatorSavingsRate' => $indicatorSavingsRate,
+            'indicatorBudgetUsage' => $indicatorBudgetUsage,
+            'indicatorDailyAverage' => $indicatorDailyAverage,
+            'indicatorExpenseChange' => $indicatorExpenseChange,
+            'indicatorIncomeChange' => $indicatorIncomeChange,
+            'indicatorDaysElapsed' => $indicatorDaysElapsed,
             'financeScore' => $financeScore,
             'wellnessInsights' => $wellnessInsights,
             'hasWidgetMercado' => $hasMarketWidget,
