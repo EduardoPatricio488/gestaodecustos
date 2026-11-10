@@ -568,7 +568,7 @@ PROMPT;
                 'name' => 'Transporte',
                 'workspace_id' => $workspaceId,
                 'user_id' => $user->id,
-                'icon' => 'bus',
+                'icon' => 'truck',
                 'color' => '#0ea5e9',
             ]);
         }
