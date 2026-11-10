@@ -109,7 +109,7 @@
 
 
 {{-- 3. HEADER PRINCIPAL COM CLIMA DINÂMICO E MODAL DETALHADO --}}
-<div class="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-4"
+<div class="flex flex-col items-stretch gap-8 pt-4"
      x-data="{
         loading: true,
         error: '',
