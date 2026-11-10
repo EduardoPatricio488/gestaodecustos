@@ -1197,21 +1197,23 @@
                             <div class="flex items-center gap-2 rounded-xl bg-brand-100 px-3 py-3 text-xs font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-300"><span class="size-4 animate-spin rounded-full border-2 border-brand-600/20 border-t-brand-600"></span>A IA está a ler a fatura e a preencher os campos...</div>
                         @endif
                         @if($document || $pendingDocumentPath)
-                            <div class="flex items-start gap-3 rounded-xl bg-white p-3 dark:bg-zinc-900">
+                            <div class="flex flex-col gap-3 rounded-xl bg-white p-3 sm:flex-row sm:items-start dark:bg-zinc-900">
                                 @if($document && str_starts_with($document->getMimeType() ?? '', 'image/'))
-                                    <img src="{{ $document->temporaryUrl() }}" alt="Pré-visualização da fatura" class="h-24 w-20 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
+                                    <div class="w-full shrink-0 sm:w-32">
+                                        <img src="{{ $document->temporaryUrl() }}" alt="Pré-visualização da fatura" class="h-36 w-full rounded-lg border border-zinc-200 bg-white object-contain dark:border-zinc-700 dark:bg-zinc-950">
+                                    </div>
                                 @elseif($pendingDocumentPath && str_starts_with($pendingDocumentMime ?? '', 'image/'))
-                                    <a href="{{ route('expenses.pending-scan.preview') }}" target="_blank" rel="noopener" class="block w-full">
-                                        <img src="{{ route('expenses.pending-scan.preview') }}" alt="Fatura carregada — clicar para ampliar" class="max-h-80 w-full rounded-xl border border-zinc-200 bg-white object-contain dark:border-zinc-700 dark:bg-zinc-950">
-                                        <span class="mt-2 block text-center text-[10px] font-bold text-brand-600">Ver fotografia em tamanho real</span>
+                                    <a href="{{ route('expenses.pending-scan.preview') }}" target="_blank" rel="noopener" class="block w-full shrink-0 sm:w-32">
+                                        <img src="{{ route('expenses.pending-scan.preview') }}" alt="Fatura carregada — clicar para ampliar" class="h-36 w-full rounded-lg border border-zinc-200 bg-white object-contain dark:border-zinc-700 dark:bg-zinc-950">
+                                        <span class="mt-1 block text-center text-[10px] font-bold text-brand-600">Ampliar fotografia</span>
                                     </a>
                                 @else
-                                    <div class="flex size-16 items-center justify-center rounded-lg bg-red-50 text-xs font-black text-red-600 dark:bg-red-950/30">PDF</div>
+                                    <div class="flex size-16 shrink-0 items-center justify-center rounded-lg bg-red-50 text-xs font-black text-red-600 dark:bg-red-950/30">PDF</div>
                                 @endif
-                                <div class="min-w-0 flex-1">
+                                <div class="min-w-0 flex-1 space-y-1">
                                     <p class="break-all text-xs font-bold text-zinc-700 dark:text-zinc-200">{{ $document?->getClientOriginalName() ?? $pendingDocumentName }}</p>
-                                    <p class="mt-1 text-[10px] text-zinc-500">Documento recebido diretamente do Scanner de fatura. Fica associado à despesa quando carregares em Confirmar Gasto.</p>
-                                    @if($scanSuccess)<p class="mt-2 text-xs font-bold text-emerald-600">✓ Fatura analisada. Campos preenchidos pela IA.</p>@endif
+                                    <p class="text-[10px] leading-relaxed text-zinc-500">Documento recebido diretamente do Scanner de fatura. Fica associado à despesa quando carregares em Confirmar Gasto.</p>
+                                    @if($scanSuccess)<p class="pt-1 text-xs font-bold text-emerald-600">✓ Fatura analisada. Campos preenchidos pela IA.</p>@endif
                                 </div>
                             </div>
                         @endif
