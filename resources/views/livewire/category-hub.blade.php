@@ -208,36 +208,6 @@
         @endif
     </div>
 
-    @if(isset($priceHistory) && $priceHistory->isNotEmpty())
-        <div class="px-2 mb-4">
-            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5">
-                <h3 class="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Histórico de Preços</h3>
-                @if(!empty($priceAnalysis['insight']))
-                    <p class="text-sm font-bold text-brand-600 mb-3 p-3 bg-brand-50 dark:bg-brand-950/30 rounded-xl">{{ $priceAnalysis['insight'] }}</p>
-                @endif
-                @if(!empty($priceAnalysis['by_merchant']))
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        @foreach($priceAnalysis['by_merchant'] as $m)
-                            <div class="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-xl">
-                                <p class="text-[10px] font-black text-zinc-400 uppercase">{{ $m['merchant'] }}</p>
-                                <p class="text-sm font-black dark:text-white">{{ number_format($m['avg_price'], 3, ',', '.') }}€ <span class="text-[10px] text-zinc-400">média</span></p>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-                <div class="space-y-2">
-                    @foreach($priceHistory as $ph)
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="font-bold dark:text-white">{{ $ph->merchant ?? '—' }}</span>
-                            <span class="font-black text-brand-600 tabular-nums">{{ number_format($ph->unit_price, 3, ',', '.') }}€/{{ $ph->unit_type ?? 'un' }}</span>
-                            <span class="text-[10px] text-zinc-400">{{ $ph->recorded_at->format('d/m') }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-    @endif
-
     {{-- ── WIDGETS DINÂMICOS ── --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 px-2">
 
