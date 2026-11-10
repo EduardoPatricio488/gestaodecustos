@@ -1116,9 +1116,7 @@
                                 <input wire:model="meta.quantity" type="number" min="0" step="0.001" placeholder="1" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
                             </label>
                             <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Unidade</span>
-                                <select wire:model="meta.unit" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
-                                    <option value="">Selecionar unidade...</option><option value="unidade">Unidade</option><option value="kg">Kg</option><option value="g">g</option><option value="litro">Litro</option><option value="ml">ml</option><option value="metro">Metro</option><option value="hora">Hora</option><option value="servico">Serviço</option><option value="outro">Outro</option>
-                                </select>
+                                <input wire:model="meta.unit" type="text" placeholder="Ex.: unidade, kg, litro, pack..." class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
                             </label>
                             <label class="block space-y-2 sm:col-span-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Local / Estabelecimento</span>
                                 <input wire:model="meta.local" type="text" placeholder="Nome da loja, fornecedor ou estabelecimento" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
@@ -1152,7 +1150,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Preço unitário (€)</span><input wire:model="meta.unit_price" type="number" min="0" step="0.0001" placeholder="0,00" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"></label>
                             <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">IVA (%)</span>
-                                <select wire:model="meta.vat_rate" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"><option value="">Não indicado</option><option value="0">0%</option><option value="6">6%</option><option value="13">13%</option><option value="23">23%</option></select>
+                                <input wire:model="meta.vat_rate" type="number" min="0" max="100" step="0.01" placeholder="Ex.: 6, 13 ou 23" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white">
                             </label>
                             <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valor ilíquido (€)</span><input wire:model="meta.gross_amount" type="number" min="0" step="0.01" placeholder="0,00" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"></label>
                             <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valor líquido (€)</span><input wire:model="meta.net_amount" type="number" min="0" step="0.01" placeholder="0,00" class="w-full h-12 rounded-xl border-0 bg-white px-4 text-sm font-bold dark:bg-zinc-950 dark:text-white"></label>
