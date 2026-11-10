@@ -96,11 +96,48 @@ class FinancialIntelligenceService
             ->where('is_active', true)
             ->get(['id', 'name', 'amount', 'cycle', 'renewal_date']);
 
-        $investmentValue = Investment::query()
+        $investmentRecords = Investment::query()
             ->where('workspace_id', $workspace->id)
             ->when($ownerId, fn ($q) => $q->where('user_id', $ownerId))
-            ->get(['quantity', 'current_price'])
-            ->sum(fn ($investment) => (float) $investment->quantity * (float) $investment->current_price);
+            ->orderBy('name')
+            ->get([
+                'id', 'name', 'symbol', 'isin', 'type', 'product_type', 'quantity',
+                'average_price', 'current_price', 'exchange', 'broker', 'provider',
+                'valuation_date', 'operation_date', 'fees',
+            ]);
+
+        $investments = $investmentRecords->map(function (Investment $investment): array {
+            $quantity = (float) $investment->quantity;
+            $averagePrice = (float) $investment->average_price;
+            $currentPrice = (float) $investment->current_price;
+            $investedValue = $quantity * $averagePrice;
+            $currentValue = $quantity * $currentPrice;
+            $profitLoss = $currentValue - $investedValue;
+
+            return [
+                'id' => (int) $investment->id,
+                'name' => (string) ($investment->name ?: $investment->symbol ?: 'Investimento sem nome'),
+                'symbol' => $investment->symbol,
+                'isin' => $investment->isin,
+                'type' => $investment->product_type ?: $investment->type,
+                'quantity' => round($quantity, 8),
+                'average_price' => round($averagePrice, 6),
+                'current_price' => round($currentPrice, 6),
+                'invested_value' => round($investedValue, 2),
+                'current_value' => round($currentValue, 2),
+                'profit_loss' => round($profitLoss, 2),
+                'profit_loss_percent' => $investedValue > 0 ? round(($profitLoss / $investedValue) * 100, 2) : null,
+                'exchange' => $investment->exchange,
+                'broker' => $investment->broker ?: $investment->provider,
+                'valuation_date' => optional($investment->valuation_date)->toDateString(),
+                'operation_date' => optional($investment->operation_date)->toDateString(),
+                'fees' => round((float) $investment->fees, 2),
+            ];
+        })->values();
+
+        $investmentValue = (float) $investments->sum('current_value');
+        $investmentCost = (float) $investments->sum('invested_value');
+        $investmentProfitLoss = $investmentValue - $investmentCost;
 
         $budget = app(BudgetService::class)->getMonthlyOverview($workspace, $period);
         $budgetCategories = app(BudgetService::class)->getCategoryBreakdown($workspace, $period)
@@ -146,6 +183,10 @@ class FinancialIntelligenceService
             'active_subscriptions' => $subscriptions->count(),
             'active_subscription_cost' => round((float) $subscriptions->sum(fn ($subscription) => SubscriptionCycleService::toMonthly((float) $subscription->amount, $subscription->cycle)), 2),
             'investment_value' => round((float) $investmentValue, 2),
+            'investment_cost' => round($investmentCost, 2),
+            'investment_profit_loss' => round($investmentProfitLoss, 2),
+            'investment_profit_loss_percent' => $investmentCost > 0 ? round(($investmentProfitLoss / $investmentCost) * 100, 2) : null,
+            'investments' => $investments->all(),
             'budget' => [
                 'total_budget' => round((float) $budget['total_budget'], 2),
                 'total_spent' => round((float) $budget['total_spent'], 2),
