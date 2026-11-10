@@ -7,6 +7,7 @@ use App\Models\AiInsight;
 use App\Models\AiMemory;
 use App\Services\AI\ContextEngine;
 use App\Services\AI\FinancialHealthScoreService;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -85,6 +86,10 @@ class AiControlCenter extends Component
             }
         })->latest()->limit(30)->get();
 
+        $latestDiagnosis = $workspace
+            ? Cache::get('ai-insights:'.auth()->id().':workspace:'.(auth()->user()?->current_workspace_id ?? 'none'))
+            : null;
+
         $stats = [
             'unread' => $insights->whereNull('read_at')->count(),
             'critical' => $insights->whereIn('priority', ['critical', 'high'])->count(),
@@ -92,6 +97,6 @@ class AiControlCenter extends Component
             'completed_actions' => $actions->where('status', 'completed')->count(),
         ];
 
-        return view('livewire.ai-control-center', compact('health', 'insights', 'actions', 'memories', 'workspace', 'stats'));
+        return view('livewire.ai-control-center', compact('health', 'insights', 'actions', 'memories', 'workspace', 'stats', 'latestDiagnosis'));
     }
 }
