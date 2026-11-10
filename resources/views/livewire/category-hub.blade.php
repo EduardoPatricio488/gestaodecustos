@@ -425,6 +425,7 @@
                         <th class="p-6">Subcategoria</th>
                         <th class="p-6">Local / Estabelecimento</th>
                         <th class="p-6">Observações</th>
+                        <th class="p-6 text-center w-24">Fatura</th>
                         <th class="p-6 text-right px-8 w-32">Montante</th>
                     </tr>
                 </thead>
@@ -608,6 +609,15 @@
                             <span class="text-xs text-zinc-400">—</span>
                             @endif
                         </td>
+                        <td class="p-6 align-middle text-center whitespace-nowrap">
+                            @if($expense->receipt_path && Storage::disk('public')->exists($expense->receipt_path))
+                                <a href="{{ Storage::disk('public')->url($expense->receipt_path) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-[10px] font-bold text-brand-700 transition hover:bg-brand-100 dark:border-brand-800 dark:bg-brand-950/30 dark:text-brand-300 dark:hover:bg-brand-950/60">
+                                    Ver fatura
+                                </a>
+                            @else
+                                <span class="text-xs text-zinc-400">—</span>
+                            @endif
+                        </td>
                         <td class="p-6 text-right px-8 align-middle whitespace-nowrap">
                             <span class="text-sm font-black text-red-500 tracking-wide italic block">-{{ number_format($expense->amount,2,',',' ') }}€</span>
 
@@ -622,7 +632,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="5" class="p-32 text-center text-zinc-400 italic font-medium">Sem movimentos registados neste Hub.</td></tr>
+                    <tr><td colspan="6" class="p-32 text-center text-zinc-400 italic font-medium">Sem movimentos registados neste Hub.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -645,6 +655,9 @@
                                     <p class="text-[11px] text-zinc-500 italic mt-1 line-clamp-1 max-w-[150px]">"{{ $expense->description }}"</p>
                                 @endif
                                 <div class="mt-1">@include('livewire.partials.bank-source-badge', ['record' => $expense])</div>
+                                @if($expense->receipt_path && Storage::disk('public')->exists($expense->receipt_path))
+                                    <a href="{{ Storage::disk('public')->url($expense->receipt_path) }}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-flex text-[10px] font-bold text-brand-600 hover:underline dark:text-brand-400">Ver fatura</a>
+                                @endif
                             </div>
                         </div>
                         <div class="text-right">
