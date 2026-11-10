@@ -856,7 +856,11 @@ class Dashboard extends Component
 
             return max(0, (float) $income->amount - (empty($metadata['meal_card_income_id']) ? $mealAllowance : 0));
         }), 2);
-        $dashboardProjectedMealAllowance = round($dashboardSalaryContracts->sum(fn (RecurringIncome $income): float => (float) ($income->metadata['calculated_sa'] ?? 0)), 2);
+        // O cartão de alimentação considera apenas contratos cujo destino é o cartão.
+        $dashboardMealAllowanceMonthlyProjection = round($dashboardSalaryContracts
+            ->filter(fn (RecurringIncome $income): bool => ($income->metadata['meal_allowance_destination'] ?? null) === 'meal_card')
+            ->sum(fn (RecurringIncome $income): float => (float) ($income->metadata['calculated_sa'] ?? 0)), 2);
+        $dashboardProjectedMealAllowance = $dashboardMealAllowanceMonthlyProjection;
 
         // Cartão bancário do dashboard: saldo real da conta + salário líquido projetado.
         // O saldo real exclui rendimentos recorrentes ainda não recebidos, para não duplicar o salário.
@@ -946,6 +950,20 @@ class Dashboard extends Component
             ->orderByDesc('paid_at')
             ->get();
 
+        // Valores efetivamente registados no cartão para o mês/ano selecionado.
+        $dashboardMealCardPayments = $projectedSalaryHistoryPayments->filter(
+            fn (SalaryPayment $payment): bool => ($payment->recurringIncome?->metadata['meal_allowance_destination'] ?? null) === 'meal_card'
+        );
+        if ($dashboardMealCardPayments->isNotEmpty()) {
+            $dashboardProjectedMealAllowance = round((float) $dashboardMealCardPayments->sum('meal_allowance'), 2);
+        }
+
+        $dashboardMealAllowanceAnnualProjection = $this->dashboardPeriodType === 'year'
+            ? ($dashboardMealCardPayments->isNotEmpty()
+                ? $dashboardProjectedMealAllowance
+                : round($dashboardMealAllowanceMonthlyProjection * 11, 2))
+            : round($dashboardMealAllowanceMonthlyProjection * 11, 2);
+
         $projectedSalaryHistoryExtras = Income::with('bankAccount')
             ->where('workspace_id', $currentWs->id)
             ->where('user_id', $user->id)
@@ -973,6 +991,8 @@ class Dashboard extends Component
             'dashboardBankCardExpenses' => $dashboardBankCardExpenses,
             'isCurrentDashboardPeriod' => $isCurrentDashboardPeriod,
             'dashboardProjectedMealAllowance' => $dashboardProjectedMealAllowance,
+            'dashboardMealAllowanceAnnualProjection' => $dashboardMealAllowanceAnnualProjection,
+            'dashboardMealAllowanceMonthlyProjection' => $dashboardMealAllowanceMonthlyProjection,
             'dashboardSalaryLabels' => $dashboardSalaryLabels,
             'dashboardSalaryContracts' => $dashboardSalaryContracts,
             'projectedSalaryHistoryPayments' => $projectedSalaryHistoryPayments,
