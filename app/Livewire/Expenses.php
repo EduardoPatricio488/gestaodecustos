@@ -34,7 +34,7 @@ class Expenses extends Component
 
         try {
             $this->validate([
-                'scannerReceipt' => 'required|image|mimes:jpg,jpeg,png,webp|max:20480',
+                'scannerReceipt' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:20480',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->scannerError = 'Ficheiro inválido: '.collect($e->errors())->flatten()->first();
@@ -50,26 +50,20 @@ class Expenses extends Component
         }
 
         $this->scannerError = '';
-
         $this->validate([
-            'scannerReceipt' => 'required|image|mimes:jpg,jpeg,png,webp|max:20480',
+            'scannerReceipt' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:20480',
         ]);
-
         $this->isScanningInvoice = true;
 
         try {
             $user = auth()->user();
             $workspace = $user->currentWorkspace;
-
             $categoriesQuery = Category::where('workspace_id', $user->current_workspace_id)
                 ->where('hidden_from_sidebar', false);
-
             if ($workspace?->type === 'personal') {
                 $categoriesQuery->where('user_id', $user->id);
             }
-
             $categories = $categoriesQuery->orderBy('name')->get(['id', 'name', 'slug']);
-
             if ($categories->isEmpty()) {
                 throw new \Exception('Não existem categorias disponíveis para classificar a fatura.');
             }
@@ -79,20 +73,25 @@ class Expenses extends Component
                 'slug' => $category->slug,
             ])->values()->all();
 
-            $imagePath = $this->scannerReceipt->getRealPath();
-            if (! $imagePath || ! file_exists($imagePath)) {
-                throw new \Exception('Não foi possível ler a imagem enviada.');
+            $filePath = $this->scannerReceipt->getRealPath();
+            if (! $filePath || ! file_exists($filePath)) {
+                throw new \Exception('Não foi possível ler o ficheiro enviado.');
             }
 
-            $imageData = base64_encode(file_get_contents($imagePath));
             $mimeType = $this->scannerReceipt->getMimeType() ?: 'image/jpeg';
+            $fileData = base64_encode(file_get_contents($filePath));
+            $contentPart = str_starts_with($mimeType, 'image/')
+                ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData]]
+                : ['type' => 'file', 'file' => ['filename' => $this->scannerReceipt->getClientOriginalName(), 'file_data' => 'data:'.$mimeType.';base64,'.$fileData]];
 
-            $prompt = "Analisa esta fatura/recibo português. Devolve APENAS JSON válido, sem markdown. ".
-                "Escolhe obrigatoriamente a categoria mais adequada da lista fornecida, sem inventar categorias. ".
-                "Extrai o valor total pago, data, estabelecimento, subcategoria sugerida, número da fatura, NIF do emitente e IVA. ".
-                "Se um dado não estiver visível usa null. A data deve ser YYYY-MM-DD. O valor deve ser decimal numérico. ".
-                "Categorias disponíveis: ".json_encode($categoryOptions, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)." ".
-                'Formato: {"category":"nome exato da categoria","amount":0.00,"date":"YYYY-MM-DD","store":"nome","subcategory":"tipo de despesa","invoice_number":null,"nif_emitter":null,"tax":null,"notes":null}';
+            $prompt = "Lê esta fatura/recibo português e extrai todos os campos visíveis. Devolve APENAS JSON válido. ".
+                "Nunca inventes nem calcules dados que não estejam impressos; usa null quando ausente/ilegível. ".
+                "Números decimais com ponto, data YYYY-MM-DD, hora HH:MM. Não confundas NIF do emitente com NIF do cliente. ".
+                "Escolhe obrigatoriamente category pelo nome exato de uma categoria desta lista: ".json_encode($categoryOptions, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
+                "amount é o total pago; gross_amount é o valor ilíquido; net_amount é a base/valor líquido; vat_amount é o valor do IVA. ".
+                'payment_condition deve ser "Pronto pagamento", "A prazo", "Pagamento parcial", "Pagamento diferido" ou null. '.
+                'payment_method deve ser "Dinheiro", "Multibanco", "Cartão", "MB Way", "Transferência" ou null. '.
+                'Devolve exatamente: {"category":null,"amount":null,"item_name":null,"date":null,"time":null,"quantity":null,"unit":null,"store":null,"description":null,"subcategory":null,"unit_price":null,"vat_rate":null,"gross_amount":null,"net_amount":null,"vat_amount":null,"tax_incidence":null,"amount_tendered":null,"change_amount":null,"payment_condition":null,"payment_method":null,"company_nif":null,"customer_nif":null,"invoice_number":null,"notes":null}';
 
             $apiKey = config('services.openrouter.api_key');
             if (blank($apiKey)) {
@@ -103,16 +102,13 @@ class Expenses extends Component
                 'Authorization' => 'Bearer '.$apiKey,
                 'Content-Type' => 'application/json',
             ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
-                ->timeout((int) config('limits.ai.request_timeout_seconds', 30))
+                ->timeout((int) config('limits.ai.request_timeout_seconds', 60))
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => 'google/gemini-2.5-flash',
-                    'max_tokens' => 1500,
+                    'max_tokens' => 3000,
                     'messages' => [[
                         'role' => 'user',
-                        'content' => [
-                            ['type' => 'text', 'text' => $prompt],
-                            ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$imageData]],
-                        ],
+                        'content' => [['type' => 'text', 'text' => $prompt], $contentPart],
                     ]],
                 ]);
 
@@ -120,11 +116,10 @@ class Expenses extends Component
                 throw new \Exception('A IA não conseguiu analisar a fatura: '.($response->json('error.message') ?? 'erro de comunicação.'));
             }
 
-            $raw = trim(preg_replace('/```json|```/i', '', (string) $response->json('choices.0.message.content')));
+            $raw = trim(preg_replace('/\x60{3}json|\x60{3}/i', '', (string) $response->json('choices.0.message.content')));
             if (! preg_match('/\{.*\}/s', $raw, $matches)) {
                 throw new \Exception('A IA não devolveu dados reconhecíveis.');
             }
-
             $result = json_decode($matches[0], true);
             if (! is_array($result) || json_last_error() !== JSON_ERROR_NONE) {
                 throw new \Exception('Não foi possível interpretar os dados extraídos da fatura.');
@@ -132,45 +127,45 @@ class Expenses extends Component
 
             $suggestedCategory = trim((string) ($result['category'] ?? ''));
             $category = $categories->first(fn ($item) => mb_strtolower(trim($item->name)) === mb_strtolower($suggestedCategory));
-
             if (! $category) {
                 throw new \Exception('A IA não conseguiu associar a fatura a uma categoria existente. Experimenta a escolha manual.');
             }
-
             if (blank($category->slug)) {
                 $category->slug = Category::uniqueSlugFor($category->name, $user->current_workspace_id, $category->id);
                 $category->saveQuietly();
             }
 
-            $amount = $result['amount'] ?? 0;
+            $amount = $result['amount'] ?? null;
             if (is_string($amount)) {
-                $amount = str_replace([' ', "\u{00A0}"], '', $amount);
+                $amount = str_replace([' ', "\u{00A0}", '€'], '', $amount);
                 if (preg_match('/^\d{1,3}(\.\d{3})+(,\d+)?$/', $amount)) {
                     $amount = str_replace(['.', ','], ['', '.'], $amount);
                 } else {
                     $amount = str_replace(',', '.', $amount);
                 }
-                $amount = (float) filter_var($amount, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+            }
+            $result['amount'] = is_numeric($amount) ? (float) $amount : null;
+
+            if (! empty($result['date'])) {
+                try {
+                    $result['date'] = \Carbon\Carbon::parse($result['date'])->format('Y-m-d');
+                } catch (\Throwable) {
+                    $result['date'] = null;
+                }
             }
 
-            try {
-                $date = ! empty($result['date']) ? \Carbon\Carbon::parse($result['date'])->format('Y-m-d') : now()->format('Y-m-d');
-            } catch (\Throwable) {
-                $date = now()->format('Y-m-d');
-            }
-
+            $pendingDocumentPath = $this->scannerReceipt->store('expenses/pending-scans', 'public');
             session()->put('pending_expense_scan:'.$user->current_workspace_id.':'.$user->id, [
-                'amount' => max(0, (float) $amount),
-                'date' => $date,
-                'store' => trim((string) ($result['store'] ?? '')),
-                'subcategory' => trim((string) ($result['subcategory'] ?? '')),
-                'invoice_number' => $result['invoice_number'] ?? null,
-                'nif_emitter' => $result['nif_emitter'] ?? null,
-                'tax' => is_numeric($result['tax'] ?? null) ? (float) $result['tax'] : null,
-                'notes' => $result['notes'] ?? null,
+                'data' => $result,
+                'document_path' => $pendingDocumentPath,
+                'document_name' => $this->scannerReceipt->getClientOriginalName(),
+                'document_mime' => $mimeType,
             ]);
 
-            $this->redirect(route('hub.category', ['slug' => $category->slug, 'open_scan_review' => 1]), navigate: true);
+            $this->redirect(route('hub.category', [
+                'slug' => $category->slug,
+                'open_scan_review' => 1,
+            ]), navigate: true);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Expenses invoice scanner: '.$e->getMessage());
             $this->scannerError = 'Não foi possível analisar a fatura. '.$e->getMessage();
