@@ -675,7 +675,7 @@
     <nav aria-label="Menu de Âncoras" class="sticky top-2 z-30 -mx-1 flex flex-col gap-2 rounded-2xl border border-zinc-200/80 bg-white/90 p-2.5 shadow-lg shadow-zinc-950/5 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/90 sm:mx-0 sm:flex-row sm:items-center sm:gap-3 sm:px-4">
         <div class="flex shrink-0 items-center gap-2 px-1 sm:border-r sm:border-zinc-200 sm:pr-3 dark:sm:border-zinc-800">
             <span class="flex size-8 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                <flux:icon name="list-tree" class="size-4" />
+                <flux:icon name="list" class="size-4" />
             </span>
             <span class="text-[10px] font-black uppercase tracking-widest text-zinc-700 dark:text-zinc-200">Menu de Âncoras</span>
         </div>
