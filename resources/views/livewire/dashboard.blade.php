@@ -1,5 +1,4 @@
-<div class="dashboard-component-root">
-<div class="dashboard-page space-y-16 pb-10">
+<div class="dashboard-page space-y-8 pb-10">
     {{-- CSS dentro da root div para evitar o erro de Multiple Root Elements --}}
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -112,7 +111,7 @@
 {{-- NOTÍCIAS 24H --}}
 <div
     x-data="{ speed: 260 }"
-    class="news24h-card relative flex items-center gap-5 w-[90%] max-w-full min-w-0 box-border mx-auto min-h-[62px] py-2.5 px-4 rounded-2xl border border-sky-400/20 bg-gradient-to-r from-zinc-950 via-slate-950 to-zinc-950 backdrop-blur-2xl shadow-xl shadow-sky-950/20 group overflow-hidden select-none transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/50 hover:shadow-2xl hover:shadow-sky-900/30">
+    class="news24h-card relative flex items-center gap-5 w-[90%] mx-auto min-h-[62px] py-2.5 px-4 rounded-2xl border border-sky-400/20 bg-gradient-to-r from-zinc-950 via-slate-950 to-zinc-950 backdrop-blur-2xl shadow-xl shadow-sky-950/20 group overflow-hidden select-none transition-all duration-300 hover:-translate-y-1 hover:border-sky-300/50 hover:shadow-2xl hover:shadow-sky-900/30">
 
     <div class="absolute inset-0 pointer-events-none opacity-25 bg-gradient-to-r from-sky-600/40 via-indigo-500/20 to-cyan-400/10 animate-bgFlow"></div>
     <div class="news24h-shine absolute inset-y-0 -left-1/2 w-1/3 pointer-events-none"></div>
@@ -168,8 +167,96 @@
     </div>
 </div>
 
+<style>
+@keyframes tickerUltra {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@keyframes bgFlow {
+    0%   { transform: translateX(-30%); }
+    100% { transform: translateX(30%); }
+}
+
+.animate-bgFlow {
+    animation: bgFlow 12s linear infinite;
+}
+
+.news24h-card {
+    isolation: isolate;
+}
+
+.news24h-shine {
+    background: linear-gradient(105deg, transparent 15%, rgba(125, 211, 252, 0.10) 48%, transparent 82%);
+    transform: skewX(-18deg);
+    animation: news24hShine 8s ease-in-out infinite;
+}
+
+@keyframes news24hShine {
+    0%, 65%, 100% { left: -45%; opacity: 0; }
+    72% { opacity: 1; }
+    90% { left: 120%; opacity: 0.7; }
+}
+
+.news24h-card:hover .news24h-shine {
+    animation-duration: 3s;
+}
+
+.ticker-ultra {
+    display: inline-flex;
+    animation: tickerUltra linear infinite;
+    will-change: transform;
+}
+
+.group:hover .ticker-ultra {
+    animation-play-state: paused;
+}
+
+/* Texto monocromático premium */
+.ticker-text-ultra {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #d4d4d8;
+}
+
+/* Notícias monocromáticas */
+.mono-item {
+    color: #f4f4f5;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    text-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
+
+/* Barra separadora maior */
+.mono-separator {
+    margin: 0 2.5rem;
+    color: #3f3f46;
+    opacity: 0.7;
+    font-weight: 900;
+    font-size: 11px;
+}
+
+/* Fallback */
+.mono-empty {
+    color: #71717a;
+    letter-spacing: 0.25em;
+}
+</style>
+
+
+
+
+
+
+
 {{-- 3. HEADER PRINCIPAL COM CLIMA DINÂMICO E MODAL DETALHADO --}}
-<div class="flex flex-col items-stretch gap-8 pt-4"
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-4"
      x-data="{
         loading: true,
         error: '',
@@ -270,8 +357,7 @@
      }"
      x-init="init()"
 >
-    <div class="flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex min-w-0 items-center gap-4">
+    <div class="flex items-center gap-5">
         {{-- Avatar Dinâmico --}}
         <div class="size-16 rounded-[1.5rem] flex items-center justify-center text-4xl shadow-2xl shrink-0 transition-all duration-500"
              style="background-color: {{ auth()->user()->profile_color }}15; border: 2px solid {{ auth()->user()->profile_color }}30;">
@@ -279,11 +365,10 @@
         </div>
 
         <div class="text-left">
-            <h1 class="mb-2 text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase italic leading-none">
-                {{ $this->greeting }}, <span style="color: {{ auth()->user()->profile_color }}">{{ $firstName }}</span>
-            </h1>
             <div class="flex items-center gap-3">
-
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase italic leading-none">
+                    {{ $this->greeting }}, <span style="color: {{ auth()->user()->profile_color }}">{{ $firstName }}</span>
+                </h1>
 
                 @if(session()->has('admin_impersonation'))
                     <form method="POST" action="{{ route('admin.stop-impersonating') }}">
@@ -322,195 +407,7 @@
                 </flux:modal.trigger>
             </div>
         </div>
-        </div>
-<div class="flex min-w-0 flex-wrap items-center justify-start gap-3 sm:ml-auto sm:justify-end">
-{{-- SELETOR DE ESPAÇO --}}
-@php
-    // Definimos a variável aqui para evitar o erro de 'Undefined variable'
-    $isBusiness = auth()->user()->isBusinessPlan();
-@endphp
-
-@if($isBusiness && $userWorkspaces->count() >= 1)
-    <div class="flex items-center gap-2 sm:gap-4 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl w-fit max-w-full border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
-
-        {{-- Label: Escondemos o texto "Espaços" no mobile para não ficar vertical --}}
-        <div class="px-2 sm:px-3 py-1 text-[9px] font-black uppercase text-zinc-500 tracking-widest border-r border-zinc-200 dark:border-zinc-800 flex items-center gap-2 shrink-0">
-            <flux:icon name="building-office-2" variant="micro" class="size-3 text-violet-500 shrink-0" />
-            <span class="hidden sm:inline">Espaços</span>
-        </div>
-
-        <div class="flex gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar items-center">
-            @foreach($userWorkspaces as $ws)
-                @php $isActive = ($ws->id == $currentWs->id); @endphp
-                <button
-                    wire:click="switchWorkspace({{ $ws->id }})"
-                    wire:loading.class="opacity-50 cursor-wait"
-                    wire:target="switchWorkspace({{ $ws->id }})"
-                    class="group flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all duration-200 shrink-0
-                    {{ $isActive
-                        ? 'bg-white dark:bg-zinc-800 shadow-md text-brand-600 font-black'
-                        : 'text-zinc-500 hover:bg-white dark:hover:bg-zinc-800' }}"
-                >
-                    <div class="size-1.5 rounded-full shrink-0
-                        {{ $isActive ? 'bg-brand-500 shadow-[0_0_8px_#3b82f6]' : 'bg-zinc-300' }}">
-                    </div>
-
-                    {{-- No telemóvel mostra apenas a 1ª Letra, no PC mostra o nome todo --}}
-                    <span class="hidden sm:inline text-xs uppercase tracking-tighter">{{ $ws->name }}</span>
-                    <span class="sm:hidden text-[10px] font-black uppercase">{{ substr($ws->name, 0, 1) }}</span>
-                </button>
-            @endforeach
-        </div>
-
-        {{-- Botão Adicionar (+) --}}
-        <a href="{{ route('hub.business.gateway', ['new' => 1]) }}"
-           wire:navigate
-           class="flex items-center justify-center size-8 rounded-xl bg-zinc-200/60 dark:bg-zinc-800 text-zinc-400 hover:text-brand-500 transition-all shrink-0">
-            <flux:icon name="plus" class="size-4" />
-        </a>
     </div>
-@endif
-
-@php
-    $user = auth()->user();
-    $hasProAccess = $user->isPaidPlan();
-@endphp
-
-<div x-data="{ open: false }" class="relative shrink-0">
-    <button type="button" @click="open = !open" @keydown.escape.window="open = false" :aria-expanded="open.toString()" aria-label="Abrir menu de ações"
-        class="flex size-12 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-700 shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-400 hover:text-brand-600 hover:shadow-xl dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
-        <flux:icon name="ellipsis-horizontal" class="size-5" />
-        <span class="absolute -right-1 -top-1 flex size-3 rounded-full bg-brand-500 ring-2 ring-white dark:ring-zinc-900"></span>
-    </button>
-    <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false"
-        class="absolute right-0 top-full z-[80] mt-3 w-60 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
-        <p class="px-3 pb-2 pt-1 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Ações rápidas</p>
-        @if($hasProAccess)
-            <a href="{{ route('ai') }}" wire:navigate @click="open = false" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">
-                <span class="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300"><flux:icon name="sparkles" class="size-4" /></span>
-                IA PRO
-            </a>
-        @else
-            <a href="{{ route('hub.pricing') }}" wire:navigate @click="open = false" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                <span class="flex size-9 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800"><flux:icon name="lock-closed" class="size-4" /></span>
-                IA PRO
-            </a>
-        @endif
-        @if($hasProAccess)
-            <flux:modal.trigger name="export-pdf-modal">
-                <button type="button" @click="open = false" class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">
-                    <span class="flex size-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300"><flux:icon name="document-arrow-down" class="size-4" /></span>
-                    Relatório
-                </button>
-            </flux:modal.trigger>
-        @else
-            <a href="{{ route('hub.pricing') }}" wire:navigate @click="open = false" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                <span class="flex size-9 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800"><flux:icon name="lock-closed" class="size-4" /></span>
-                Relatório
-            </a>
-        @endif
-        <div class="my-1 border-t border-zinc-100 dark:border-zinc-800"></div>
-        <a href="{{ route('expenses') }}" wire:navigate @click="open = false" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-zinc-700 transition hover:bg-rose-50 hover:text-rose-600 dark:text-zinc-200 dark:hover:bg-rose-950/30 dark:hover:text-rose-400">
-            <span class="flex size-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300"><flux:icon name="minus-circle" class="size-4" /></span>
-            Despesas
-        </a>
-        <a href="{{ route('incomes.index') }}" wire:navigate @click="open = false" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-zinc-700 transition hover:bg-emerald-50 hover:text-emerald-600 dark:text-zinc-200 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400">
-            <span class="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"><flux:icon name="plus-circle" class="size-4" /></span>
-            Receitas
-        </a>
-    </div>
-</div>
-</div>
-    </div>
-
-
-
-
-
-
-</div>
-
-<style>
-@keyframes tickerUltra {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-}
-
-@keyframes bgFlow {
-    0%   { transform: translateX(-30%); }
-    100% { transform: translateX(30%); }
-}
-
-.animate-bgFlow {
-    animation: bgFlow 12s linear infinite;
-}
-
-.news24h-card {
-    isolation: isolate;
-}
-
-.news24h-shine {
-    background: linear-gradient(105deg, transparent 15%, rgba(125, 211, 252, 0.10) 48%, transparent 82%);
-    transform: skewX(-18deg);
-    animation: news24hShine 8s ease-in-out infinite;
-}
-
-@keyframes news24hShine {
-    0%, 65%, 100% { left: -45%; opacity: 0; }
-    72% { opacity: 1; }
-    90% { left: 120%; opacity: 0.7; }
-}
-
-.news24h-card:hover .news24h-shine {
-    animation-duration: 3s;
-}
-
-.ticker-ultra {
-    display: inline-flex;
-    animation: tickerUltra linear infinite;
-    will-change: transform;
-}
-
-.group:hover .ticker-ultra {
-    animation-play-state: paused;
-}
-
-/* Texto monocromático premium */
-.ticker-text-ultra {
-    display: flex;
-    align-items: center;
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: #d4d4d8;
-}
-
-/* Notícias monocromáticas */
-.mono-item {
-    color: #f4f4f5;
-    font-family: "Inter", "Segoe UI", Arial, sans-serif;
-    font-size: 16px;
-    font-weight: 650;
-    letter-spacing: -0.015em;
-    text-shadow: 0 0 4px rgba(0,0,0,0.4);
-}
-
-/* Barra separadora maior */
-.mono-separator {
-    margin: 0 2.5rem;
-    color: #3f3f46;
-    opacity: 0.7;
-    font-weight: 900;
-    font-size: 11px;
-}
-
-/* Fallback */
-.mono-empty {
-    color: #71717a;
-    letter-spacing: 0.25em;
-}
-</style>
 
     {{-- MODAL DETALHADO: conteúdo centrado e sem botão X duplicado/fora do modal --}}
     <flux:modal name="weather-details" position="center" :closable="false" class="!min-w-0 !w-[calc(100vw-2rem)] !max-w-[450px] !p-0 !overflow-hidden" wire:ignore.self>
@@ -583,7 +480,65 @@
 
 
 
+@php
+    $user = auth()->user();
+    $hasProAccess = $user->isPaidPlan();
+@endphp
 
+{{-- TERMINAL DE ACÇÕES ESTRATÉGICAS --}}
+<div class="flex items-center justify-center sm:justify-start gap-1.5 bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-x-auto no-scrollbar">
+
+    {{-- BOTÃO IA PRO --}}
+    @if($hasProAccess)
+        <a href="{{ route('ai') }}" wire:navigate
+            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-950 text-brand-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-800 hover:bg-brand-600 hover:text-white transition-all shadow-lg active:scale-95 shrink-0">
+            <flux:icon name="sparkles" class="size-4 group-hover:rotate-12 transition-transform shrink-0" />
+            <span class="hidden sm:inline">IA PRO</span>
+        </a>
+    @else
+        <a href="{{ route('hub.pricing') }}" wire:navigate
+            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-[0.2em] border border-zinc-200 dark:border-zinc-700 opacity-60 shrink-0">
+            <flux:icon name="lock-closed" variant="micro" class="size-3" />
+            <span class="hidden sm:inline">IA PRO</span>
+        </a>
+    @endif
+
+    <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0"></div>
+
+    {{-- BOTÃO RELATÓRIO PDF --}}
+    @if($hasProAccess)
+        <flux:modal.trigger name="export-pdf-modal">
+            <button type="button"
+                class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-black uppercase text-[10px] tracking-widest border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
+                <flux:icon name="document-arrow-down" class="size-4 group-hover:-translate-y-0.5 transition-transform shrink-0" />
+                <span class="hidden sm:inline">Relatório</span>
+            </button>
+        </flux:modal.trigger>
+    @else
+        <a href="{{ route('hub.pricing') }}" wire:navigate
+            class="group flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 font-black uppercase text-[10px] tracking-widest border border-zinc-200 dark:border-zinc-700 opacity-60 shrink-0">
+            <flux:icon name="lock-closed" variant="micro" class="size-3" />
+            <span class="hidden sm:inline">Relatório</span>
+        </a>
+    @endif
+
+    <div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0"></div>
+
+    {{-- GRUPO DE NAVEGAÇÃO (DESPESAS E RECEITAS) --}}
+    <div class="flex gap-1.5 shrink-0">
+        <a href="{{ route('expenses') }}" wire:navigate
+            class="flex items-center justify-center gap-2 px-3 sm:px-5 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-black uppercase text-[10px] tracking-widest border border-rose-100 dark:border-rose-900/50 hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
+            <flux:icon name="minus-circle" variant="micro" class="size-4 shrink-0" />
+            <span class="hidden sm:inline">Despesas</span>
+        </a>
+
+        <a href="{{ route('incomes.index') }}" wire:navigate
+            class="flex items-center justify-center gap-2 px-3 sm:px-5 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 font-black uppercase text-[10px] tracking-widest border border-emerald-100 dark:border-emerald-900/50 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
+            <flux:icon name="plus-circle" variant="micro" class="size-4 shrink-0" />
+            <span class="hidden sm:inline">Receitas</span>
+        </a>
+    </div>
+</div>
 
 
 
@@ -602,145 +557,100 @@
 
 
 
-{{-- CARTÕES BANCÁRIOS: SALÁRIO LÍQUIDO E SUBSÍDIO DE ALIMENTAÇÃO --}}
-<section x-data="{ showSalaryHistory: false, showMealHistory: false }" class="space-y-4">
-<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-    <article role="button" tabindex="0" aria-label="Consultar histórico do salário líquido" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.6rem] border border-indigo-300/20 bg-gradient-to-br from-[#18264a] via-[#111a32] to-[#080e1d] p-6 text-white shadow-2xl shadow-indigo-950/25 transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/60 hover:shadow-indigo-950/40 sm:p-7">
-        <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110"></div>
-        <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-indigo-400/10 via-transparent to-white/5"></div>
-        <div class="relative flex min-h-44 flex-col justify-between">
-            <div class="flex items-start justify-between">
-                <div><p class="text-[9px] font-black uppercase tracking-[0.28em] text-indigo-200/80">Finance Pro · Conta de rendimento</p><p class="mt-1 text-sm font-bold tracking-wide text-white">SALÁRIO LÍQUIDO</p></div>
-                <div class="flex items-center gap-2"><span class="text-[10px] font-black italic tracking-[0.18em] text-white/80">FP</span><div class="flex size-9 items-center justify-center rounded-xl border border-white/15 bg-white/10"><flux:icon name="briefcase" variant="outline" class="size-5 text-indigo-100" /></div></div>
-            </div>
-            <div class="flex items-center gap-3 py-2"><div class="relative h-9 w-12 overflow-hidden rounded-md border border-amber-100/40 bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 shadow-inner"><span class="absolute left-1/2 top-0 h-full w-px bg-amber-800/25"></span><span class="absolute left-0 top-1/2 h-px w-full bg-amber-800/25"></span><span class="absolute left-1/4 top-0 h-full w-px bg-amber-800/20"></span><span class="absolute right-1/4 top-0 h-full w-px bg-amber-800/20"></span></div><flux:icon name="wifi" variant="outline" class="size-5 rotate-90 text-white/65" /><span class="ml-auto text-[9px] font-bold uppercase tracking-[0.18em] text-indigo-100/65">Resumo mensal</span></div>
-            <div><p class="text-[9px] font-bold uppercase tracking-[0.2em] text-indigo-200/75">Valor projetado</p><p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white sm:text-4xl">{{ number_format($dashboardProjectedSalaryNet, 2, ',', ' ') }} <span class="text-xl text-indigo-200">€</span></p></div>
-            <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-3"><div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-indigo-200/65">Titular / contrato</p><p class="mt-1 truncate text-[11px] font-semibold text-white">{{ $dashboardSalaryLabels ?: 'Sem salário ativo registado' }}</p></div><div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-indigo-200/65">Projeção anual</p><p class="mt-1 text-xs font-bold tabular-nums text-white">{{ number_format($dashboardProjectedSalaryNet * 12, 2, ',', ' ') }} €</p></div></div>
-        </div>
-    </article>
-    <article role="button" tabindex="0" aria-label="Consultar histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-6 text-white shadow-2xl shadow-emerald-950/25 transition-all duration-500 hover:-translate-y-1 hover:border-emerald-300/60 hover:shadow-emerald-950/40 sm:p-7">
-        <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:-rotate-12 group-hover:scale-110"></div>
-        <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-emerald-300/10 via-transparent to-white/5"></div>
-        <div class="relative flex min-h-44 flex-col justify-between">
-            <div class="flex items-start justify-between"><div><p class="text-[9px] font-black uppercase tracking-[0.28em] text-emerald-100/80">Finance Pro · Cartão benefício</p><p class="mt-1 text-sm font-bold tracking-wide text-white">SUBSÍDIO DE ALIMENTAÇÃO</p></div><div class="flex items-center gap-2"><span class="text-[10px] font-black italic tracking-[0.18em] text-white/80">FP</span><div class="flex size-9 items-center justify-center rounded-xl border border-white/15 bg-white/10"><flux:icon name="cake" variant="outline" class="size-5 text-emerald-100" /></div></div></div>
-            <div class="flex items-center gap-3 py-2"><div class="relative h-9 w-12 overflow-hidden rounded-md border border-amber-100/40 bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 shadow-inner"><span class="absolute left-1/2 top-0 h-full w-px bg-amber-800/25"></span><span class="absolute left-0 top-1/2 h-px w-full bg-amber-800/25"></span><span class="absolute left-1/4 top-0 h-full w-px bg-amber-800/20"></span><span class="absolute right-1/4 top-0 h-full w-px bg-amber-800/20"></span></div><flux:icon name="wifi" variant="outline" class="size-5 rotate-90 text-white/65" /><span class="ml-auto text-[9px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Benefício mensal</span></div>
-            <div><p class="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-100/75">Valor projetado</p><p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white sm:text-4xl">{{ number_format($dashboardProjectedMealAllowance, 2, ',', ' ') }} <span class="text-xl text-emerald-200">€</span></p></div>
-            <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-3"><div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Atribuído por</p><p class="mt-1 truncate text-[11px] font-semibold text-white">{{ $dashboardSalaryLabels ?: 'Sem subsídio configurado' }}</p></div><div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Projeção anual</p><p class="mt-1 text-xs font-bold text-white">{{ number_format($dashboardProjectedMealAllowance * 11, 2, ',', ' ') }} €</p></div></div>
-        </div>
-    </article>
-</div>
+{{-- 4. SELETOR DE ESPAÇO (WORKSPACE SWITCHER) --}}
+@php
+    // Definimos a variável aqui para evitar o erro de 'Undefined variable'
+    $isBusiness = auth()->user()->isBusinessPlan();
+@endphp
 
-        {{-- MODAL: HISTÓRICO DO SALÁRIO --}}
-        <div x-show="showSalaryHistory" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 p-3 backdrop-blur-sm sm:p-6" @click.self="showSalaryHistory = false" @keydown.escape.window="showSalaryHistory = false">
-            <div x-show="showSalaryHistory" x-transition.scale class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
-                <div class="flex items-center justify-between gap-4 border-b border-zinc-100 bg-gradient-to-r from-indigo-50 to-white p-5 dark:border-zinc-800 dark:from-indigo-950/40 dark:to-zinc-900 sm:p-6">
-                    <div class="flex items-center gap-3">
-                        <span class="flex size-11 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"><flux:icon name="briefcase" class="size-5" /></span>
-                        <div><h3 class="text-lg font-black text-zinc-900 dark:text-white">Histórico do salário líquido</h3><p class="text-xs text-zinc-500">Contratos, pagamentos, serviços e prémios associados</p></div>
+@if($isBusiness && $userWorkspaces->count() >= 1)
+    <div class="flex items-center gap-2 sm:gap-4 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl w-fit border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+
+        {{-- Label: Escondemos o texto "Espaços" no mobile para não ficar vertical --}}
+        <div class="px-2 sm:px-3 py-1 text-[9px] font-black uppercase text-zinc-500 tracking-widest border-r border-zinc-200 dark:border-zinc-800 flex items-center gap-2 shrink-0">
+            <flux:icon name="building-office-2" variant="micro" class="size-3 text-violet-500 shrink-0" />
+            <span class="hidden sm:inline">Espaços</span>
+        </div>
+
+        <div class="flex gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar items-center">
+            @foreach($userWorkspaces as $ws)
+                @php $isActive = ($ws->id == $currentWs->id); @endphp
+                <button
+                    wire:click="switchWorkspace({{ $ws->id }})"
+                    wire:loading.class="opacity-50 cursor-wait"
+                    wire:target="switchWorkspace({{ $ws->id }})"
+                    class="group flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all duration-200 shrink-0
+                    {{ $isActive
+                        ? 'bg-white dark:bg-zinc-800 shadow-md text-brand-600 font-black'
+                        : 'text-zinc-500 hover:bg-white dark:hover:bg-zinc-800' }}"
+                >
+                    <div class="size-1.5 rounded-full shrink-0
+                        {{ $isActive ? 'bg-brand-500 shadow-[0_0_8px_#3b82f6]' : 'bg-zinc-300' }}">
                     </div>
-                    <button type="button" @click="showSalaryHistory = false" class="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label="Fechar"><flux:icon name="x-mark" class="size-5" /></button>
+
+                    {{-- No telemóvel mostra apenas a 1ª Letra, no PC mostra o nome todo --}}
+                    <span class="hidden sm:inline text-xs uppercase tracking-tighter">{{ $ws->name }}</span>
+                    <span class="sm:hidden text-[10px] font-black uppercase">{{ substr($ws->name, 0, 1) }}</span>
+                </button>
+            @endforeach
+        </div>
+
+        {{-- Botão Adicionar (+) --}}
+        <a href="{{ route('hub.business.gateway', ['new' => 1]) }}"
+           wire:navigate
+           class="flex items-center justify-center size-8 rounded-xl bg-zinc-200/60 dark:bg-zinc-800 text-zinc-400 hover:text-brand-500 transition-all shrink-0">
+            <flux:icon name="plus" class="size-4" />
+        </a>
+    </div>
+@endif
+
+
+
+    {{-- 2. BARRA DE NÍVEL E XP (DESIGN INTEGRADO) --}}
+    <div class="group relative flex items-center gap-6 bg-gradient-to-r from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-5 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden">
+        {{-- Efeito Decorativo de Fundo --}}
+        <div class="absolute -right-10 -top-10 size-40 bg-brand-500/5 blur-3xl rounded-full group-hover:bg-brand-500/10 transition-all duration-700"></div>
+
+        {{-- Badge de Nível --}}
+        <div class="relative flex-shrink-0">
+            <div class="flex flex-col items-center justify-center w-20 h-20 rounded-[1.8rem] bg-brand-600 text-white shadow-2xl shadow-brand-500/40 relative z-10">
+                <span class="text-[9px] font-black uppercase opacity-60 tracking-tighter">Nível</span>
+                <span class="text-3xl font-black leading-none">{{ auth()->user()->level }}</span>
+            </div>
+            {{-- Indicador de Progresso Circular em volta do nível (CSS Subtil) --}}
+            <div class="absolute inset-0 rounded-[1.8rem] border-2 border-brand-500/20 scale-110"></div>
+        </div>
+
+        <div class="flex-1 space-y-3">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h4 class="text-xs font-black uppercase text-zinc-500 tracking-[0.15em]">Experiência Financeira</h4>
+                    <p class="text-[10px] text-zinc-400 font-bold mt-0.5">Faltam {{ 1000 - (auth()->user()->xp % 1000) }} XP para o próximo escalão</p>
                 </div>
-                <div class="min-h-0 flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
-                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <div class="rounded-2xl border border-indigo-100 bg-indigo-50 p-4 dark:border-indigo-900/50 dark:bg-indigo-950/30"><p class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-300">Projeção mensal</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($dashboardProjectedSalaryNet, 2, ',', ' ') }} €</p><p class="mt-1 text-[10px] text-zinc-500">Salário líquido estimado, sem subsídio de alimentação</p></div>
-                        <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"><p class="text-[10px] font-black uppercase tracking-wider text-zinc-500">Projeção anual</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format(($dashboardProjectedSalaryNet * 12), 2, ',', ' ') }} €</p><p class="mt-1 text-[10px] text-zinc-500">Projeção mensal multiplicada por 12</p></div>
-                        <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"><p class="text-[10px] font-black uppercase tracking-wider text-zinc-500">Registos de pagamento</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ $projectedSalaryHistoryPayments->count() }}</p><p class="mt-1 text-[10px] text-zinc-500">Pagamentos guardados no histórico</p></div>
-                    </div>
-                    <div class="rounded-2xl border border-indigo-100 p-4 dark:border-indigo-900/50">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Como é calculado este cartão?</h4>
-                        <div class="mt-3 space-y-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
-                            <p>O valor mensal soma o líquido estimado de cada contrato de trabalho ativo. Quando o subsídio de alimentação já está configurado separadamente, esse valor é retirado do montante do contrato para não ser contado duas vezes.</p>
-                            <p>Acrescentam-se os serviços ou prémios do mês anterior que estejam marcados para integrar o salário deste mês. A estimativa anual apresentada no cartão corresponde ao valor mensal projetado × 12; não representa uma previsão de todos os subsídios anuais.</p>
-                            <p><strong>Importante:</strong> uma projeção não significa que o dinheiro já tenha sido recebido. Para confirmar um recebimento, consulta o estado e a data de cada pagamento abaixo.</p>
-                        </div>
-                    </div>
-                    <div class="space-y-3">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-500">Contratos considerados na projeção</h4>
-                        @forelse($dashboardSalaryContracts as $contract)
-                            <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
-                                <div class="flex flex-wrap items-start justify-between gap-2"><div><p class="text-sm font-bold text-zinc-900 dark:text-white">{{ $contract->description }}</p><p class="mt-1 text-[10px] text-zinc-500">{{ $contract->metadata['position'] ?? 'Função não indicada' }} · {{ $contract->metadata['contract_type'] ?? 'Tipo de contrato não indicado' }}</p></div><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[9px] font-black uppercase text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Ativo</span></div>
-                                <div class="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3"><div><p class="text-[10px] text-zinc-500">Valor configurado</p><p class="mt-1 font-bold text-zinc-900 dark:text-white">{{ number_format((float) $contract->amount, 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">Líquido considerado</p><p class="mt-1 font-bold text-indigo-600 dark:text-indigo-300">{{ number_format((float) $contract->projected_salary_net, 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">Início</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">{{ $contract->metadata['start_date'] ?? 'Não indicado' }}</p></div></div>
-                            </div>
-                        @empty
-                            <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Não existem contratos ativos para calcular o salário projetado.</p>
-                        @endforelse
-                    </div>
-                    <div class="space-y-3">
-                        <div><h4 class="text-xs font-black uppercase tracking-wider text-zinc-500">Histórico de pagamentos salariais</h4><p class="mt-1 text-[10px] text-zinc-500">Inclui pagamentos pagos e pendentes registados na aplicação.</p></div>
-                        @forelse($projectedSalaryHistoryPayments as $payment)
-                            <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
-                                <div class="flex flex-wrap items-center justify-between gap-2"><div><p class="text-sm font-bold text-zinc-900 dark:text-white">{{ $payment->recurringIncome?->description ?? 'Pagamento salarial' }}</p><p class="mt-1 text-[10px] text-zinc-500">Período: {{ str_pad((string) $payment->payment_month, 2, '0', STR_PAD_LEFT) }}/{{ $payment->payment_year }} · {{ $payment->paid_at?->format('d/m/Y') ?? 'Sem data de pagamento' }}</p></div><span class="rounded-full px-2.5 py-1 text-[9px] font-black uppercase {{ $payment->status === 'paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' }}">{{ $payment->status === 'paid' ? 'Pago' : 'Pendente' }}</span></div>
-                                <div class="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4"><div><p class="text-[10px] text-zinc-500">Salário bruto</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">{{ number_format((float) $payment->salary_base_gross, 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">Segurança Social</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">− {{ number_format((float) $payment->social_security, 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">IRS</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">− {{ number_format((float) $payment->irs, 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">Líquido recebido</p><p class="mt-1 font-black text-emerald-600 dark:text-emerald-300">{{ number_format((float) $payment->net_received, 2, ',', ' ') }} €</p></div></div>
-                                <p class="mt-3 text-[10px] text-zinc-500">Subsídio de alimentação: {{ number_format((float) $payment->meal_allowance, 2, ',', ' ') }} € · Outros complementos: {{ number_format((float) $payment->other_complements, 2, ',', ' ') }} € · Descontos adicionais: {{ number_format((float) $payment->other_deductions, 2, ',', ' ') }} €</p>
-                                @if($payment->notes)<p class="mt-2 rounded-lg bg-zinc-50 p-2 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">Nota: {{ $payment->notes }}</p>@endif
-                            </div>
-                        @empty
-                            <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Ainda não existem pagamentos salariais guardados. Os valores dos cartões são projeções dos contratos ativos.</p>
-                        @endforelse
-                    </div>
-                    <div class="space-y-3">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-500">Serviços extra e prémios associados</h4>
-                        @forelse($projectedSalaryHistoryExtras as $extra)
-                            <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-700"><div><p class="text-xs font-bold text-zinc-900 dark:text-white">{{ $extra->description }}</p><p class="mt-1 text-[10px] text-zinc-500">{{ $extra->received_at?->format('d/m/Y') ?? 'Sem data' }} · {{ $extra->added_to_salary ? 'Integrado no próximo salário' : 'Registado como entrada independente' }}</p></div><p class="text-sm font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format((float) ($extra->amount_converted ?? $extra->amount), 2, ',', ' ') }} €</p></div>
-                        @empty
-                            <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Não existem serviços extra ou prémios associados a estes contratos.</p>
-                        @endforelse
-                    </div>
+                <div class="text-right">
+                    <span class="text-xs font-black text-brand-600 dark:text-brand-400 uppercase italic">{{ (auth()->user()->xp % 1000) / 10 }}%</span>
                 </div>
-                <div class="border-t border-zinc-100 p-4 text-right dark:border-zinc-800"><button type="button" @click="showSalaryHistory = false" class="rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900">Fechar histórico</button></div>
+            </div>
+
+            {{-- Barra de Progresso Estilizada --}}
+            <div class="relative h-3 w-full bg-zinc-200/50 dark:bg-zinc-800 rounded-full overflow-hidden border border-zinc-100 dark:border-zinc-700 shadow-inner">
+                <div class="h-full bg-brand-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(59,130,246,0.6)]" style="width: {{ (auth()->user()->xp % 1000) / 10 }}%"></div>
             </div>
         </div>
 
-        {{-- MODAL: HISTÓRICO DO SUBSÍDIO DE ALIMENTAÇÃO --}}
-        <div x-show="showMealHistory" x-cloak x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 p-3 backdrop-blur-sm sm:p-6" @click.self="showMealHistory = false" @keydown.escape.window="showMealHistory = false">
-            <div x-show="showMealHistory" x-transition.scale class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
-                <div class="flex items-center justify-between gap-4 border-b border-zinc-100 bg-gradient-to-r from-emerald-50 to-white p-5 dark:border-zinc-800 dark:from-emerald-950/40 dark:to-zinc-900 sm:p-6">
-                    <div class="flex items-center gap-3"><span class="flex size-11 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"><flux:icon name="cake" class="size-5" /></span><div><h3 class="text-lg font-black text-zinc-900 dark:text-white">Histórico do subsídio de alimentação</h3><p class="text-xs text-zinc-500">Valores configurados e subsídios registados nos pagamentos</p></div></div>
-                    <button type="button" @click="showMealHistory = false" class="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label="Fechar"><flux:icon name="x-mark" class="size-5" /></button>
+        {{-- Medalhas/Badges --}}
+        <div class="hidden lg:flex items-center gap-3 pl-6 border-l border-zinc-200 dark:border-zinc-800">
+           @forelse(collect(auth()->user()->badges ?? [])->take(3) as $badge)
+                <div title="{{ $badge->name }}" class="size-10 rounded-2xl flex items-center justify-center text-xl shadow-lg hover:scale-110 transition-transform cursor-help" style="background: {{ $badge->color }}15; border: 1px solid {{ $badge->color }}30;">
+                    {{ $badge->icon }}
                 </div>
-                <div class="min-h-0 flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
-                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30"><p class="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Projeção mensal</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($dashboardProjectedMealAllowance, 2, ',', ' ') }} €</p><p class="mt-1 text-[10px] text-zinc-500">Soma dos valores mensais configurados</p></div>
-                        <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"><p class="text-[10px] font-black uppercase tracking-wider text-zinc-500">Projeção anual</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($dashboardProjectedMealAllowance * 11, 2, ',', ' ') }} €</p><p class="mt-1 text-[10px] text-zinc-500">Estimativa mensal × 11 meses</p></div>
-                        <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"><p class="text-[10px] font-black uppercase tracking-wider text-zinc-500">Registos salariais</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ $projectedSalaryHistoryPayments->count() }}</p><p class="mt-1 text-[10px] text-zinc-500">Com detalhe do subsídio registado</p></div>
-                    </div>
-                    <div class="rounded-2xl border border-emerald-100 p-4 dark:border-emerald-900/50">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Como é calculado este cartão?</h4>
-                        <div class="mt-3 space-y-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
-                            <p>O valor mensal é a soma do campo de subsídio de alimentação configurado em cada contrato ativo. Nos contratos MIND, por exemplo, o cálculo pode resultar do valor diário multiplicado pelos dias de trabalho elegíveis definidos no contrato.</p>
-                            <p>A estimativa anual apresentada no cartão usa 11 meses, assumindo que o subsídio não é pago no mês de férias. É uma estimativa de configuração e não uma confirmação de pagamento.</p>
-                            <p>Quando o destino é cartão de refeição, o subsídio é apresentado separadamente do salário transferido para a conta bancária. O valor efetivamente pago deve ser confirmado no histórico salarial e no respetivo registo.</p>
-                        </div>
-                    </div>
-                    <div class="space-y-3">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-500">Configuração por contrato ativo</h4>
-                        @forelse($dashboardSalaryContracts as $contract)
-                            <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
-                                <div class="flex flex-wrap items-start justify-between gap-2"><div><p class="text-sm font-bold text-zinc-900 dark:text-white">{{ $contract->description }}</p><p class="mt-1 text-[10px] text-zinc-500">Destino: {{ ($contract->metadata['meal_allowance_destination'] ?? '') === 'meal_card' ? 'Cartão de refeição' : 'Dinheiro / transferência' }}</p></div><p class="text-sm font-black text-emerald-600 dark:text-emerald-300">{{ number_format((float) ($contract->metadata['calculated_sa'] ?? 0), 2, ',', ' ') }} € / mês</p></div>
-                                <div class="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4"><div><p class="text-[10px] text-zinc-500">Valor diário</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">{{ number_format((float) ($contract->metadata['meal_allowance'] ?? 0), 2, ',', ' ') }} €</p></div><div><p class="text-[10px] text-zinc-500">Dias configurados</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">{{ (int) ($contract->metadata['working_days'] ?? 0) }}</p></div><div><p class="text-[10px] text-zinc-500">Frequência</p><p class="mt-1 font-semibold text-zinc-800 dark:text-zinc-200">Mensal</p></div><div><p class="text-[10px] text-zinc-500">Estado</p><p class="mt-1 font-semibold text-emerald-600 dark:text-emerald-300">Ativo</p></div></div>
-                            </div>
-                        @empty
-                            <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Não existem subsídios configurados em contratos ativos.</p>
-                        @endforelse
-                    </div>
-                    <div class="space-y-3">
-                        <div><h4 class="text-xs font-black uppercase tracking-wider text-zinc-500">Histórico de subsídios registados</h4><p class="mt-1 text-[10px] text-zinc-500">Valores guardados nos registos mensais de salário, incluindo pagamentos pendentes.</p></div>
-                        @forelse($projectedSalaryHistoryPayments as $payment)
-                            <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
-                                <div class="flex flex-wrap items-center justify-between gap-2"><div><p class="text-sm font-bold text-zinc-900 dark:text-white">{{ $payment->recurringIncome?->description ?? 'Subsídio de alimentação' }}</p><p class="mt-1 text-[10px] text-zinc-500">Período: {{ str_pad((string) $payment->payment_month, 2, '0', STR_PAD_LEFT) }}/{{ $payment->payment_year }} · {{ $payment->paid_at?->format('d/m/Y') ?? 'Sem data de pagamento' }}</p></div><span class="rounded-full px-2.5 py-1 text-[9px] font-black uppercase {{ $payment->status === 'paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' }}">{{ $payment->status === 'paid' ? 'Pago' : 'Pendente' }}</span></div>
-                                <div class="mt-3 flex flex-wrap items-end justify-between gap-3"><div><p class="text-[10px] text-zinc-500">Subsídio registado</p><p class="mt-1 text-lg font-black text-emerald-600 dark:text-emerald-300">{{ number_format((float) $payment->meal_allowance, 2, ',', ' ') }} €</p></div><p class="text-[10px] text-zinc-500">O estado indica se o pagamento salarial associado foi marcado como pago.</p></div>
-                            </div>
-                        @empty
-                            <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Ainda não existem registos mensais de pagamento com subsídio de alimentação.</p>
-                        @endforelse
-                    </div>
-                </div>
-                <div class="border-t border-zinc-100 p-4 text-right dark:border-zinc-800"><button type="button" @click="showMealHistory = false" class="rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900">Fechar histórico</button></div>
-            </div>
+            @empty
+                <span class="text-[10px] text-zinc-400 uppercase font-black italic w-24 text-center leading-tight">Sem medalhas este mês</span>
+            @endforelse
         </div>
-</section>
+    </div>
 
-{{-- 6. SECÇÃO DE INTELIGÊNCIA E PREVISÃO --}}
+    {{-- 6. SECÇÃO DE INTELIGÊNCIA E PREVISÃO --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {{-- CARD: PREVISÃO INTELIGENTE (ESTILO BLACK GLASS) --}}
@@ -977,53 +887,7 @@
 
 
 
-    
-
-{{-- 2. BARRA DE NÍVEL E XP (DESIGN INTEGRADO) --}}
-    <div class="group relative flex items-center gap-6 bg-gradient-to-r from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-5 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden">
-        {{-- Efeito Decorativo de Fundo --}}
-        <div class="absolute -right-10 -top-10 size-40 bg-brand-500/5 blur-3xl rounded-full group-hover:bg-brand-500/10 transition-all duration-700"></div>
-
-        {{-- Badge de Nível --}}
-        <div class="relative flex-shrink-0">
-            <div class="flex flex-col items-center justify-center w-20 h-20 rounded-[1.8rem] bg-brand-600 text-white shadow-2xl shadow-brand-500/40 relative z-10">
-                <span class="text-[9px] font-black uppercase opacity-60 tracking-tighter">Nível</span>
-                <span class="text-3xl font-black leading-none">{{ auth()->user()->level }}</span>
-            </div>
-            {{-- Indicador de Progresso Circular em volta do nível (CSS Subtil) --}}
-            <div class="absolute inset-0 rounded-[1.8rem] border-2 border-brand-500/20 scale-110"></div>
-        </div>
-
-        <div class="flex-1 space-y-3">
-            <div class="flex justify-between items-end">
-                <div>
-                    <h4 class="text-xs font-black uppercase text-zinc-500 tracking-[0.15em]">Experiência Financeira</h4>
-                    <p class="text-[10px] text-zinc-400 font-bold mt-0.5">Faltam {{ 1000 - (auth()->user()->xp % 1000) }} XP para o próximo escalão</p>
-                </div>
-                <div class="text-right">
-                    <span class="text-xs font-black text-brand-600 dark:text-brand-400 uppercase italic">{{ (auth()->user()->xp % 1000) / 10 }}%</span>
-                </div>
-            </div>
-
-            {{-- Barra de Progresso Estilizada --}}
-            <div class="relative h-3 w-full bg-zinc-200/50 dark:bg-zinc-800 rounded-full overflow-hidden border border-zinc-100 dark:border-zinc-700 shadow-inner">
-                <div class="h-full bg-brand-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(59,130,246,0.6)]" style="width: {{ (auth()->user()->xp % 1000) / 10 }}%"></div>
-            </div>
-        </div>
-
-        {{-- Medalhas/Badges --}}
-        <div class="hidden lg:flex items-center gap-3 pl-6 border-l border-zinc-200 dark:border-zinc-800">
-           @forelse(collect(auth()->user()->badges ?? [])->take(3) as $badge)
-                <div title="{{ $badge->name }}" class="size-10 rounded-2xl flex items-center justify-center text-xl shadow-lg hover:scale-110 transition-transform cursor-help" style="background: {{ $badge->color }}15; border: 1px solid {{ $badge->color }}30;">
-                    {{ $badge->icon }}
-                </div>
-            @empty
-                <span class="text-[10px] text-zinc-400 uppercase font-black italic w-24 text-center leading-tight">Sem medalhas este mês</span>
-            @endforelse
-        </div>
-    </div>
-
-{{-- 8. MOVIMENTOS RECENTES (ESTILO TIMELINE) --}}
+    {{-- 8. MOVIMENTOS RECENTES (ESTILO TIMELINE) --}}
     <div class="glass-card bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden group">
         <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
             <div>
@@ -1436,6 +1300,7 @@
             </div>
             <p class="text-[9px] font-black text-zinc-500 uppercase tracking-[0.4em] italic text-center md:text-right">Finance Pro Intelligent Hub · Atualizado às {{ now()->format('H:i:s') }}</p>
         </div>
+    </div>
 
 
 
@@ -1451,7 +1316,12 @@
 
 
 
-
+    {{-- RODAPÉ DISCRETO --}}
+    <footer class="pt-20 pb-6 text-center border-t border-zinc-100 dark:border-zinc-800 mt-20">
+        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">
+            © {{ date('Y') }} {{ config('app.name') }} · Terminal de Gestão Inteligente
+        </p>
+    </footer>
 
     {{-- ESTILO DA SCROLLBAR --}}
     <style>
@@ -1571,11 +1441,4 @@
             </div>
         </div>
     </div>
-    {{-- RODAPÉ DISCRETO --}}
-    <footer class="pt-8 pb-6 text-center border-t border-zinc-100 dark:border-zinc-800 mt-12">
-        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">
-            © {{ date('Y') }} {{ config('app.name') }} · Terminal de Gestão Inteligente
-        </p>
-    </footer>
-</div>
 </div>
