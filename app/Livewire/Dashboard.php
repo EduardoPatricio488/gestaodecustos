@@ -866,7 +866,7 @@ class Dashboard extends Component
             ->withCurrentBalanceTotals()
             ->orderByRaw("CASE WHEN LOWER(COALESCE(bank_name, '')) LIKE ? THEN 0 ELSE 1 END", ['%santander%'])
             ->orderBy('name')
-            ->first(['id', 'name', 'bank_name', 'iban', 'account_number', 'swift', 'holder_name', 'balance']);
+            ->first(['id', 'name', 'bank_name', 'iban', 'account_number', 'swift', 'holder_name', 'balance', 'color']);
 
         if ($dashboardBankCardAccount && $isCurrentDashboardPeriod) {
             $dashboardBankCardCurrentBalance = round(
