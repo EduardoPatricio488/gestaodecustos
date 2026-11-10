@@ -619,28 +619,30 @@ PROMPT;
             'metadata' => ! empty($this->meta) ? $this->meta : null,
         ];
 
-        if ($this->document || $this->pendingDocumentPath) {
-            $existingExpense = $this->editingId
-                ? Expense::where('workspace_id', auth()->user()->current_workspace_id)
-                    ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
-                    ->find($this->editingId)
-                : null;
+        $existingExpense = $this->editingId
+            ? Expense::where('workspace_id', auth()->user()->current_workspace_id)
+                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+                ->find($this->editingId)
+            : null;
+        $previousReceiptPath = $existingExpense?->receipt_path;
 
-            if ($existingExpense?->receipt_path) {
-                Storage::disk('public')->delete($existingExpense->receipt_path);
+        if ($this->document) {
+            $data['receipt_path'] = $this->document->store('expenses/receipts', 'public');
+        } elseif ($this->pendingDocumentPath) {
+            $disk = Storage::disk('public');
+            if (! $disk->exists($this->pendingDocumentPath)) {
+                throw new \\RuntimeException('O documento temporário da fatura já não está disponível. Anexa-o novamente.');
             }
 
-            if ($this->document) {
-                $data['receipt_path'] = $this->document->store('expenses/receipts', 'public');
-            } else {
-                $extension = pathinfo($this->pendingDocumentPath, PATHINFO_EXTENSION);
-                $finalPath = 'expenses/receipts/'.Str::uuid().($extension ? '.'.$extension : '');
-                if (! Storage::disk('public')->exists($this->pendingDocumentPath)) {
-                    throw new \RuntimeException('O documento temporário da fatura já não está disponível. Anexa-o novamente.');
-                }
-                Storage::disk('public')->move($this->pendingDocumentPath, $finalPath);
-                $data['receipt_path'] = $finalPath;
+            $extension = pathinfo($this->pendingDocumentPath, PATHINFO_EXTENSION);
+            $finalPath = 'expenses/receipts/'.Str::uuid().($extension ? '.'.$extension : '');
+
+            // Copia primeiro para o destino definitivo; não apaga o anexo anterior antes de guardar.
+            if (! $disk->copy($this->pendingDocumentPath, $finalPath)) {
+                throw new \\RuntimeException('Não foi possível preparar o documento da fatura para guardar.');
             }
+
+            $data['receipt_path'] = $finalPath;
         }
 
         $user = auth()->user();
@@ -655,6 +657,14 @@ PROMPT;
             $expense = Expense::create($data);
             $user->awardXp(20, 'despesa registada');
             $msg = 'Nova despesa adicionada! '.$user->xpToastText(20, 'despesa registada');
+        }
+
+        // Só remove o anexo antigo depois de a despesa ter sido guardada com sucesso.
+        if ($previousReceiptPath && $expense->receipt_path && $previousReceiptPath !== $expense->receipt_path) {
+            Storage::disk('public')->delete($previousReceiptPath);
+        }
+        if ($this->pendingDocumentPath && $expense->receipt_path !== $this->pendingDocumentPath) {
+            Storage::disk('public')->delete($this->pendingDocumentPath);
         }
 
         try {
