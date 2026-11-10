@@ -182,7 +182,7 @@
                         <span class="mt-0.5 rounded-xl bg-zinc-100 p-2 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300"><flux:icon name="sparkles" class="size-4" /></span>
                         <div class="min-w-0">
                             <p class="truncate text-sm font-bold text-zinc-900 dark:text-white">{{ str($action->tool_name)->replace('_', ' ')->headline() }}</p>
-                            <p class="mt-1 text-xs text-zinc-500">{{ str($action->action_type)->replace('_', ' ')->headline() }} · {{ $action->created_at?->format('d/m/Y H:i') }}</p>
+                            <p class="mt-1 text-xs text-zinc-500">{{ $action->tool_name === 'generate_executive_report' ? 'Diagnóstico CFO' : str($action->action_type)->replace('_', ' ')->headline() }} · {{ $action->created_at?->format('d/m/Y H:i') }}</p>
                             @if($action->error_message)
                                 <p class="mt-1 text-xs text-rose-500">{{ $action->error_message }}</p>
                             @endif
@@ -272,7 +272,7 @@
                                         <div class="mt-4 overflow-x-auto">
                                             <table class="w-full min-w-[620px] text-left text-xs">
                                                 <thead class="text-[10px] uppercase tracking-wide text-zinc-400">
-                                                    <tr><th class="pb-2 pr-3">Ativo</th><th class="pb-2 pr-3 text-right">Quantidade</th><th class="pb-2 pr-3 text-right">Preço atual</th><th class="pb-2 pr-3 text-right">Valor atual</th><th class="pb-2 text-right">Lucro / prejuízo</th></tr>
+                                                    <tr><th class="pb-2 pr-3">Ativo</th><th class="pb-2 pr-3 text-right">Quantidade</th><th class="pb-2 pr-3 text-right">Preço registado</th><th class="pb-2 pr-3 text-right">Valor registado</th><th class="pb-2 text-right">Lucro / prejuízo</th></tr>
                                                 </thead>
                                                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                                                     @foreach($holdings as $holding)
