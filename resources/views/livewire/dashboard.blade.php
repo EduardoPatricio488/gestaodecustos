@@ -1279,28 +1279,6 @@
 
 
 
-    {{-- 5. GRID DE PERFORMANCE (STATS CARDS) --}}
-    <div id="dashboard-indicadores" class="scroll-mt-28 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
-        {{-- Card: Wellness Financeiro --}}
-        <div class="glass-card relative overflow-hidden bg-gradient-to-br from-orange-500 to-amber-600 p-5 rounded-[2rem] shadow-sm group lg:col-span-2">
-            <p class="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1">Wellness Financeiro</p>
-            <p class="text-sm font-bold text-white leading-snug">{{ $wellnessInsights['verdict'] }}</p>
-            @if($wellnessInsights['total_km'] > 0)
-                <div class="flex gap-4 mt-3">
-                    <span class="text-[10px] font-black text-white/80">{{ number_format($wellnessInsights['total_km'], 0) }} km</span>
-                    <span class="text-[10px] font-black text-white/80">{{ $wellnessInsights['activity_count'] }} atividades</span>
-                    @if($wellnessInsights['cost_per_km'])
-                        <span class="text-[10px] font-black text-white/80">{{ number_format($wellnessInsights['cost_per_km'], 2, ',', '.') }}€/km</span>
-                    @endif
-                </div>
-            @endif
-            <flux:icon name="bolt" class="absolute -right-2 -bottom-2 size-12 text-white/10" />
-        </div>
-    </div>
-
-
-
-
     {{-- 2. BARRA DE NÍVEL E XP (DESIGN INTEGRADO) --}}
     <div id="dashboard-experiencia" class="scroll-mt-28 group relative flex items-center gap-6 bg-gradient-to-r from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-5 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden">
         {{-- Efeito Decorativo de Fundo --}}
