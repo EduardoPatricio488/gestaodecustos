@@ -3,8 +3,22 @@
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .dashboard-page { scroll-behavior: smooth; }
-        .dashboard-page [id^="dashboard-"] { scroll-margin-top: 7rem; }
+        /* Scroll suave da página quando a dashboard está presente. */
+        html:has(.dashboard-page) {
+            scroll-behavior: smooth;
+        }
+        .dashboard-page {
+            scroll-behavior: smooth;
+        }
+        .dashboard-page [id^="dashboard-"] {
+            scroll-margin-top: 7rem;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html:has(.dashboard-page),
+            .dashboard-page {
+                scroll-behavior: auto;
+            }
+        }
 
         /* Cartões bancários: proporção física 85,6 × 54 mm e rotação manual suave */
         .dashboard-card-flipper {
