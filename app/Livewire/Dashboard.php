@@ -854,7 +854,7 @@ class Dashboard extends Component
         $totalPatrimony = $totalBankBalance + $portfolioValue + $totalSaved;
 
         // Inventário completo dos registos introduzidos nesta conta.
-        $accountOverview = Cache::remember("dashboard:account-overview:v1:{$currentWs->id}:{$user->id}", 60, function () use ($currentWs, $user): array {
+        $accountOverview = Cache::remember("dashboard:account-overview:v1:{$currentWs->id}:{$user->id}", 60, function () use ($currentWs, $user, $myInvestments, $dashboardInvestmentsTotalInvested, $portfolioValue, $dashboardInvestmentsProfit): array {
             $scope = fn ($query) => $query->where('workspace_id', $currentWs->id)
                 ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id));
 
