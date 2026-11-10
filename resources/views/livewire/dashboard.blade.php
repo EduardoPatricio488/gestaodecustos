@@ -608,8 +608,9 @@
 
 
 {{-- CARTÕES BANCÁRIOS: SALÁRIO LÍQUIDO E SUBSÍDIO DE ALIMENTAÇÃO --}}
-<section class="grid grid-cols-1 gap-4 md:grid-cols-2">
-    <a href="{{ route('incomes.index') }}" wire:navigate class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.6rem] border border-indigo-300/20 bg-gradient-to-br from-[#18264a] via-[#111a32] to-[#080e1d] p-6 text-white shadow-2xl shadow-indigo-950/25 transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/60 hover:shadow-indigo-950/40 sm:p-7">
+<section x-data="{ showSalaryHistory: false, showMealHistory: false }" class="space-y-4">
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <article role="button" tabindex="0" aria-label="Consultar histórico do salário líquido" @click="showSalaryHistory = true" @keydown.enter.prevent="showSalaryHistory = true" @keydown.space.prevent="showSalaryHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.6rem] border border-indigo-300/20 bg-gradient-to-br from-[#18264a] via-[#111a32] to-[#080e1d] p-6 text-white shadow-2xl shadow-indigo-950/25 transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300/60 hover:shadow-indigo-950/40 sm:p-7">
         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110"></div>
         <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-indigo-400/10 via-transparent to-white/5"></div>
         <div class="relative flex min-h-44 flex-col justify-between">
@@ -621,8 +622,8 @@
             <div><p class="text-[9px] font-bold uppercase tracking-[0.2em] text-indigo-200/75">Valor projetado</p><p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white sm:text-4xl">{{ number_format($dashboardProjectedSalaryNet, 2, ',', ' ') }} <span class="text-xl text-indigo-200">€</span></p></div>
             <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-3"><div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-indigo-200/65">Titular / contrato</p><p class="mt-1 truncate text-[11px] font-semibold text-white">{{ $dashboardSalaryLabels ?: 'Sem salário ativo registado' }}</p></div><div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-indigo-200/65">Projeção anual</p><p class="mt-1 text-xs font-bold tabular-nums text-white">{{ number_format($dashboardProjectedSalaryNet * 12, 2, ',', ' ') }} €</p></div></div>
         </div>
-    </a>
-    <a href="{{ route('incomes.index') }}" wire:navigate class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-6 text-white shadow-2xl shadow-emerald-950/25 transition-all duration-500 hover:-translate-y-1 hover:border-emerald-300/60 hover:shadow-emerald-950/40 sm:p-7">
+    </article>
+    <article role="button" tabindex="0" aria-label="Consultar histórico do subsídio de alimentação" @click="showMealHistory = true" @keydown.enter.prevent="showMealHistory = true" @keydown.space.prevent="showMealHistory = true" class="group relative isolate min-h-56 cursor-pointer overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-gradient-to-br from-[#075443] via-[#06382f] to-[#031e1a] p-6 text-white shadow-2xl shadow-emerald-950/25 transition-all duration-500 hover:-translate-y-1 hover:border-emerald-300/60 hover:shadow-emerald-950/40 sm:p-7">
         <div class="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full border border-white/10 transition-transform duration-700 group-hover:-rotate-12 group-hover:scale-110"></div>
         <div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-emerald-300/10 via-transparent to-white/5"></div>
         <div class="relative flex min-h-44 flex-col justify-between">
@@ -631,7 +632,7 @@
             <div><p class="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-100/75">Valor projetado</p><p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white sm:text-4xl">{{ number_format($dashboardProjectedMealAllowance, 2, ',', ' ') }} <span class="text-xl text-emerald-200">€</span></p></div>
             <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-3"><div class="min-w-0"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Atribuído por</p><p class="mt-1 truncate text-[11px] font-semibold text-white">{{ $dashboardSalaryLabels ?: 'Sem subsídio configurado' }}</p></div><div class="shrink-0 text-right"><p class="text-[8px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">Projeção anual</p><p class="mt-1 text-xs font-bold text-white">{{ number_format($dashboardProjectedMealAllowance * 11, 2, ',', ' ') }} €</p></div></div>
         </div>
-    </a>
+    </article>
 </section>
 
 {{-- 6. SECÇÃO DE INTELIGÊNCIA E PREVISÃO --}}
