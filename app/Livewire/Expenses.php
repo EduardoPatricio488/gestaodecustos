@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Expense;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
@@ -35,7 +36,7 @@ class Expenses extends Component
             $this->validate([
                 'scannerReceipt' => 'required|image|mimes:jpg,jpeg,png,webp|max:20480',
             ]);
-        } catch (\\Illuminate\\Validation\\ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             $this->scannerError = 'Ficheiro inválido: '.collect($e->errors())->flatten()->first();
             $this->scannerReceipt = null;
         }
@@ -65,7 +66,7 @@ class Expenses extends Component
             $categories = $categoriesQuery->orderBy('name')->get(['id', 'name', 'slug']);
 
             if ($categories->isEmpty()) {
-                throw new \\Exception('Não existem categorias disponíveis para classificar a fatura.');
+                throw new \Exception('Não existem categorias disponíveis para classificar a fatura.');
             }
 
             $categoryOptions = $categories->map(fn ($category) => [
@@ -75,7 +76,7 @@ class Expenses extends Component
 
             $imagePath = $this->scannerReceipt->getRealPath();
             if (! $imagePath || ! file_exists($imagePath)) {
-                throw new \\Exception('Não foi possível ler a imagem enviada.');
+                throw new \Exception('Não foi possível ler a imagem enviada.');
             }
 
             $imageData = base64_encode(file_get_contents($imagePath));
@@ -90,10 +91,10 @@ class Expenses extends Component
 
             $apiKey = config('services.openrouter.api_key');
             if (blank($apiKey)) {
-                throw new \\Exception('A chave da IA não está configurada.');
+                throw new \Exception('A chave da IA não está configurada.');
             }
 
-            $response = \\Illuminate\\Support\\Facades\\Http::withHeaders([
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
                 'Authorization' => 'Bearer '.$apiKey,
                 'Content-Type' => 'application/json',
             ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
@@ -111,24 +112,24 @@ class Expenses extends Component
                 ]);
 
             if (! $response->successful()) {
-                throw new \\Exception('A IA não conseguiu analisar a fatura: '.($response->json('error.message') ?? 'erro de comunicação.'));
+                throw new \Exception('A IA não conseguiu analisar a fatura: '.($response->json('error.message') ?? 'erro de comunicação.'));
             }
 
             $raw = trim(preg_replace('/```json|```/i', '', (string) $response->json('choices.0.message.content')));
-            if (! preg_match('/\\{.*\\}/s', $raw, $matches)) {
-                throw new \\Exception('A IA não devolveu dados reconhecíveis.');
+            if (! preg_match('/\{.*\}/s', $raw, $matches)) {
+                throw new \Exception('A IA não devolveu dados reconhecíveis.');
             }
 
             $result = json_decode($matches[0], true);
             if (! is_array($result) || json_last_error() !== JSON_ERROR_NONE) {
-                throw new \\Exception('Não foi possível interpretar os dados extraídos da fatura.');
+                throw new \Exception('Não foi possível interpretar os dados extraídos da fatura.');
             }
 
             $suggestedCategory = trim((string) ($result['category'] ?? ''));
             $category = $categories->first(fn ($item) => mb_strtolower(trim($item->name)) === mb_strtolower($suggestedCategory));
 
             if (! $category) {
-                throw new \\Exception('A IA não conseguiu associar a fatura a uma categoria existente. Experimenta a escolha manual.');
+                throw new \Exception('A IA não conseguiu associar a fatura a uma categoria existente. Experimenta a escolha manual.');
             }
 
             if (blank($category->slug)) {
@@ -138,8 +139,8 @@ class Expenses extends Component
 
             $amount = $result['amount'] ?? 0;
             if (is_string($amount)) {
-                $amount = str_replace([' ', "\\u{00A0}"], '', $amount);
-                if (preg_match('/^\\d{1,3}(\\.\\d{3})+(,\\d+)?$/', $amount)) {
+                $amount = str_replace([' ', "\u{00A0}"], '', $amount);
+                if (preg_match('/^\d{1,3}(\.\d{3})+(,\d+)?$/', $amount)) {
                     $amount = str_replace(['.', ','], ['', '.'], $amount);
                 } else {
                     $amount = str_replace(',', '.', $amount);
@@ -148,8 +149,8 @@ class Expenses extends Component
             }
 
             try {
-                $date = ! empty($result['date']) ? \\Carbon\\Carbon::parse($result['date'])->format('Y-m-d') : now()->format('Y-m-d');
-            } catch (\\Throwable) {
+                $date = ! empty($result['date']) ? \Carbon\Carbon::parse($result['date'])->format('Y-m-d') : now()->format('Y-m-d');
+            } catch (\Throwable) {
                 $date = now()->format('Y-m-d');
             }
 
@@ -165,8 +166,8 @@ class Expenses extends Component
             ]);
 
             $this->redirect(route('hub.category', ['slug' => $category->slug, 'open_scan_review' => 1]), navigate: true);
-        } catch (\\Throwable $e) {
-            \\Illuminate\\Support\\Facades\\Log::error('Expenses invoice scanner: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Expenses invoice scanner: '.$e->getMessage());
             $this->scannerError = 'Não foi possível analisar a fatura. '.$e->getMessage();
         } finally {
             $this->isScanningInvoice = false;
