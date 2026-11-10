@@ -477,11 +477,12 @@ class Dashboard extends Component
 
         return Cache::flexible("dashboard:news-24h:{$workspaceId}", [300, 900], function () {
             $feeds = [
-                'PT' => 'https://news.google.com/rss/search?q=Portugal+when%3A1d&hl=pt-PT&gl=PT&ceid=PT%3Apt-PT',
-                'INT' => 'https://news.google.com/rss/search?q=world+when%3A1d&hl=en-US&gl=US&ceid=US%3Aen',
+                'PT' => 'https://news.google.com/rss/search?q=not%C3%ADcias+Portugal+when%3A1d&hl=pt-PT&gl=PT&ceid=PT%3Apt-PT',
+                'INT' => 'https://news.google.com/rss/search?q=not%C3%ADcias+internacionais+when%3A1d&hl=pt-PT&gl=PT&ceid=PT%3Apt-PT',
             ];
 
             $articles = [];
+
             try {
                 $responses = Http::pool(function (Pool $pool) use ($feeds) {
                     return [
@@ -512,7 +513,6 @@ class Dashboard extends Component
                             continue;
                         }
 
-                        $description = trim(preg_replace('/\\s+/', ' ', strip_tags(html_entity_decode((string) $item->description, ENT_QUOTES | ENT_HTML5, 'UTF-8'))));
                         $articles[] = [
                             'id' => $region.'-'.count($articles),
                             'region' => $region,
@@ -521,8 +521,6 @@ class Dashboard extends Component
                             'url' => trim((string) $item->link),
                             'published_at' => $publishedAt->toIso8601String(),
                             'published_label' => $publishedAt->diffForHumans(),
-                            'description' => \Illuminate\Support\Str::limit($description, 500),
-                            'summary' => '',
                         ];
                     }
                 }
@@ -530,63 +528,13 @@ class Dashboard extends Component
                 Log::warning('Falha ao obter notícias das últimas 24 horas: '.$e->getMessage());
             }
 
-            $articles = collect($articles)->unique('url')->sortByDesc('published_at')->take(16)->values()->all();
-            if (empty($articles)) {
-                return [];
-            }
-
-            $apiKey = config('services.openrouter.api_key');
-            if (! $apiKey) {
-                return $articles;
-            }
-
-            try {
-                $input = array_map(fn ($article) => [
-                    'id' => $article['id'],
-                    'region' => $article['region'] === 'PT' ? 'Portugal' : 'Internacional',
-                    'source' => $article['source'],
-                    'title' => $article['title'],
-                    'description' => $article['description'],
-                ], $articles);
-
-                $response = Http::withHeaders([
-                    'Authorization' => 'Bearer '.$apiKey,
-                    'Content-Type' => 'application/json',
-                    'HTTP-Referer' => config('app.url'),
-                    'X-Title' => config('app.name'),
-                ])->connectTimeout(4)->timeout(18)->post('https://openrouter.ai/api/v1/chat/completions', [
-                    'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
-                    'temperature' => 0.2,
-                    'max_tokens' => 1800,
-                    'messages' => [
-                        [
-                            'role' => 'system',
-                            'content' => 'És editor de notícias. Resume cada notícia em português europeu, numa frase curta e factual. Usa apenas o título e descrição fornecidos; não acrescentes factos, datas, números ou contexto que não estejam no material. Mantém o sentido original. Devolve exclusivamente JSON válido no formato {"articles":[{"id":"...","summary":"..."}]}.',
-                        ],
-                        [
-                            'role' => 'user',
-                            'content' => 'Resume estas notícias recentes, mantendo os IDs exatamente iguais: '.json_encode($input, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                        ],
-                    ],
-                ]);
-
-                $content = trim((string) $response->json('choices.0.message.content', ''));
-                $content = preg_replace('/^\x60{3}(?:json)?\s*|\s*\x60{3}$/i', '', $content);
-                $decoded = json_decode($content, true);
-                $summaries = collect(data_get($decoded, 'articles', []))->keyBy('id');
-
-                foreach ($articles as &$article) {
-                    $summary = trim((string) data_get($summaries->get($article['id']), 'summary', ''));
-                    if ($summary !== '') {
-                        $article['summary'] = $summary;
-                    }
-                }
-                unset($article);
-            } catch (\Throwable $e) {
-                Log::warning('Falha ao resumir notícias com IA: '.$e->getMessage());
-            }
-
-            return $articles;
+            return collect($articles)
+                ->filter(fn ($article) => $article['title'] !== '' && $article['url'] !== '')
+                ->unique('url')
+                ->sortByDesc('published_at')
+                ->take(20)
+                ->values()
+                ->all();
         });
     }
 
