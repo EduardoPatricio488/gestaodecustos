@@ -702,7 +702,6 @@
                     </p>
                     </div>
                 </div>
-                </div>
                 <div x-show="activeTab === 'history'" x-cloak class="relative z-10 space-y-3">
                     <p class="text-[9px] font-black uppercase tracking-[0.2em] text-red-100/80">Movimentos · {{ $dashboardPeriodLabel }}</p>
                     <div class="max-h-64 space-y-2 overflow-y-auto pr-1">
