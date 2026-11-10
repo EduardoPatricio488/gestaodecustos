@@ -867,11 +867,55 @@ class Dashboard extends Component
 
             return max(0, (float) $income->amount - (empty($metadata['meal_card_income_id']) ? $mealAllowance : 0));
         }), 2);
-        // O cartão de alimentação considera apenas contratos cujo destino é o cartão.
-        $dashboardMealAllowanceMonthlyProjection = round($dashboardSalaryContracts
-            ->filter(fn (RecurringIncome $income): bool => ($income->metadata['meal_allowance_destination'] ?? null) === 'meal_card')
+        // O cartão de alimentação respeita as datas de início e fim do contrato
+        // que originou o subsídio, usando o período atualmente selecionado no dashboard.
+        $dashboardMealAllowanceContracts = $dashboardSalaryContracts->filter(function (RecurringIncome $income) use ($periodStart, $periodEnd): bool {
+            if (($income->metadata['meal_allowance_destination'] ?? null) !== 'meal_card') {
+                return false;
+            }
+
+            $metadata = $income->metadata ?? [];
+            $startDate = $metadata['start_date'] ?? $income->created_at?->toDateString();
+            $endDate = $metadata['end_date'] ?? null;
+
+            if ($startDate && Carbon::parse($startDate)->startOfDay()->greaterThan($periodEnd)) {
+                return false;
+            }
+
+            if ($endDate && Carbon::parse($endDate)->endOfDay()->lessThan($periodStart)) {
+                return false;
+            }
+
+            return true;
+        })->values();
+
+        $dashboardMealAllowanceMonthlyProjection = round($dashboardMealAllowanceContracts
             ->sum(fn (RecurringIncome $income): float => (float) ($income->metadata['calculated_sa'] ?? 0)), 2);
-        $dashboardProjectedMealAllowance = $dashboardMealAllowanceMonthlyProjection;
+        $dashboardProjectedMealAllowance = $this->dashboardPeriodType === 'year' ? 0.0 : $dashboardMealAllowanceMonthlyProjection;
+
+        // Projeção anual limitada aos meses em que o contrato esteve em vigor (máximo de 11 meses).
+        $dashboardMealAllowanceAnnualProjection = round($dashboardMealAllowanceContracts->sum(function (RecurringIncome $income) use ($periodStart, $periodEnd): float {
+            $metadata = $income->metadata ?? [];
+            $contractStart = Carbon::parse($metadata['start_date'] ?? $income->created_at?->toDateString() ?? $periodStart->toDateString())->startOfMonth();
+            $contractEnd = ! empty($metadata['end_date'])
+                ? Carbon::parse($metadata['end_date'])->endOfMonth()
+                : $periodEnd->copy()->endOfMonth();
+            $rangeStart = $contractStart->greaterThan($periodStart->copy()->startOfYear())
+                ? $contractStart
+                : $periodStart->copy()->startOfYear();
+            $rangeEnd = $contractEnd->lessThan($periodEnd->copy()->endOfYear())
+                ? $contractEnd
+                : $periodEnd->copy()->endOfYear();
+
+            if ($rangeEnd->lessThan($rangeStart)) {
+                return 0.0;
+            }
+
+            $activeMonths = (int) $rangeStart->copy()->startOfMonth()->diffInMonths($rangeEnd->copy()->startOfMonth()) + 1;
+            $projectedMonths = min(11, $activeMonths);
+
+            return (float) ($metadata['calculated_sa'] ?? 0) * $projectedMonths;
+        }), 2);
 
         // Cartão bancário do dashboard: saldo real da conta + salário líquido projetado.
         // O saldo real exclui rendimentos recorrentes ainda não recebidos, para não duplicar o salário.
@@ -973,11 +1017,15 @@ class Dashboard extends Component
             $dashboardProjectedMealAllowance = round((float) $dashboardMealCardPayments->sum('meal_allowance'), 2);
         }
 
-        $dashboardMealAllowanceAnnualProjection = $this->dashboardPeriodType === 'year'
-            ? ($dashboardMealCardPayments->isNotEmpty()
-                ? $dashboardProjectedMealAllowance
-                : round($dashboardMealAllowanceMonthlyProjection * 11, 2))
-            : round($dashboardMealAllowanceMonthlyProjection * 11, 2);
+        if ($dashboardMealCardPayments->isNotEmpty()) {
+            $dashboardProjectedMealAllowance = round((float) $dashboardMealCardPayments->sum('meal_allowance'), 2);
+
+            if ($this->dashboardPeriodType === 'year') {
+                $dashboardMealAllowanceAnnualProjection = $dashboardProjectedMealAllowance;
+            }
+        } elseif ($this->dashboardPeriodType === 'year') {
+            $dashboardProjectedMealAllowance = $dashboardMealAllowanceAnnualProjection;
+        }
 
         $projectedSalaryHistoryExtras = Income::with('bankAccount')
             ->where('workspace_id', $currentWs->id)
