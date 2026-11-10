@@ -1212,7 +1212,6 @@
                         @endif
                         <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Notas / Observações</span><textarea wire:model="meta.notes" rows="2" class="w-full resize-none rounded-xl border-0 bg-white px-4 py-3 text-sm font-bold dark:bg-zinc-950 dark:text-white"></textarea></label>
                     </section>
-</div>
                     </div>
                 </div>
 
