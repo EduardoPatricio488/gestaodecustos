@@ -3,6 +3,8 @@
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .dashboard-page { scroll-behavior: smooth; }
+        .dashboard-page [id^="dashboard-"] { scroll-margin-top: 7rem; }
 
         /* Cartões bancários: proporção física 85,6 × 54 mm e rotação manual suave */
         .dashboard-card-flipper {
@@ -669,8 +671,27 @@
     </div>
 @endif
 
+    {{-- MENU DE ÂNCORAS: navegação rápida pelas secções da dashboard --}}
+    <nav aria-label="Menu de Âncoras" class="sticky top-2 z-30 -mx-1 flex flex-col gap-2 rounded-2xl border border-zinc-200/80 bg-white/90 p-2.5 shadow-lg shadow-zinc-950/5 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/90 sm:mx-0 sm:flex-row sm:items-center sm:gap-3 sm:px-4">
+        <div class="flex shrink-0 items-center gap-2 px-1 sm:border-r sm:border-zinc-200 sm:pr-3 dark:sm:border-zinc-800">
+            <span class="flex size-8 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                <flux:icon name="list-tree" class="size-4" />
+            </span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-700 dark:text-zinc-200">Menu de Âncoras</span>
+        </div>
+        <div class="no-scrollbar flex min-w-0 items-center gap-1.5 overflow-x-auto pb-0.5 sm:flex-1">
+            <a href="#dashboard-salario-alimentacao" class="shrink-0 rounded-lg px-3 py-2 text-[10px] font-bold text-zinc-500 transition hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/10 dark:hover:text-violet-300">Salário e alimentação</a>
+            <a href="#dashboard-investimentos" class="shrink-0 rounded-lg px-3 py-2 text-[10px] font-bold text-zinc-500 transition hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/10 dark:hover:text-violet-300">Investimentos</a>
+            <a href="#dashboard-cfo" class="shrink-0 rounded-lg px-3 py-2 text-[10px] font-bold text-zinc-500 transition hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/10 dark:hover:text-violet-300">CFO Inteligente</a>
+            <a href="#dashboard-indicadores" class="shrink-0 rounded-lg px-3 py-2 text-[10px] font-bold text-zinc-500 transition hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/10 dark:hover:text-violet-300">Indicadores</a>
+            <a href="#dashboard-experiencia" class="shrink-0 rounded-lg px-3 py-2 text-[10px] font-bold text-zinc-500 transition hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/10 dark:hover:text-violet-300">Nível e XP</a>
+            <a href="#dashboard-movimentos" class="shrink-0 rounded-lg px-3 py-2 text-[10px] font-bold text-zinc-500 transition hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/10 dark:hover:text-violet-300">Movimentos</a>
+            <a href="#dashboard-resumo-conta" class="shrink-0 rounded-lg px-3 py-2 text-[10px] font-bold text-zinc-500 transition hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/10 dark:hover:text-violet-300">Resumo da conta</a>
+        </div>
+    </nav>
+
     {{-- Cartões de salário e subsídio de alimentação, com histórico --}}
-    <section x-data="{ showSalaryHistory: false, showMealHistory: false }" class="space-y-4">
+    <section id="dashboard-salario-alimentacao" x-data="{ showSalaryHistory: false, showMealHistory: false }" class="scroll-mt-28 space-y-4">
         <div x-data="{ openPeriodFilter: false }" class="flex flex-wrap items-center justify-between gap-3 px-1">
             <div class="relative">
                 <button type="button" @click="openPeriodFilter = !openPeriodFilter" class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-black uppercase tracking-wider text-zinc-600 shadow-sm transition hover:border-brand-400 hover:text-brand-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
@@ -841,7 +862,7 @@
         </div>
 
         {{-- RESUMO DE INVESTIMENTOS --}}
-        <section class="relative mt-6 w-full overflow-hidden rounded-[2rem] border border-violet-200/80 bg-white shadow-lg shadow-violet-950/5 dark:border-violet-500/20 dark:bg-zinc-900">
+        <section id="dashboard-investimentos" class="scroll-mt-28 relative mt-6 w-full overflow-hidden rounded-[2rem] border border-violet-200/80 bg-white shadow-lg shadow-violet-950/5 dark:border-violet-500/20 dark:bg-zinc-900">
             <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-600 via-indigo-500 to-fuchsia-500"></div>
             <div class="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-violet-500/10 blur-3xl"></div>
 
@@ -1023,7 +1044,7 @@
     </section>
 
     {{-- 6. SECÇÃO DE INTELIGÊNCIA E PREVISÃO --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div id="dashboard-cfo" class="scroll-mt-28 grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {{-- CARD: PREVISÃO INTELIGENTE (ESTILO BLACK GLASS) --}}
         <div class="lg:col-span-2 relative overflow-hidden bg-zinc-950 text-white rounded-[2.5rem] shadow-2xl border border-zinc-800 group">
@@ -1185,7 +1206,7 @@
 
 
     {{-- 5. GRID DE PERFORMANCE (STATS CARDS) --}}
-    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+    <div id="dashboard-indicadores" class="scroll-mt-28 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
 
         {{-- Card: Saldo Real --}}
         <div class="glass-card relative overflow-hidden bg-white dark:bg-zinc-900 p-5 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm group">
@@ -1288,7 +1309,7 @@
 
 
     {{-- 2. BARRA DE NÍVEL E XP (DESIGN INTEGRADO) --}}
-    <div class="group relative flex items-center gap-6 bg-gradient-to-r from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-5 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden">
+    <div id="dashboard-experiencia" class="scroll-mt-28 group relative flex items-center gap-6 bg-gradient-to-r from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 p-5 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden">
         {{-- Efeito Decorativo de Fundo --}}
         <div class="absolute -right-10 -top-10 size-40 bg-brand-500/5 blur-3xl rounded-full group-hover:bg-brand-500/10 transition-all duration-700"></div>
 
@@ -1353,7 +1374,7 @@
 
 
     {{-- 8. MOVIMENTOS RECENTES (ESTILO TIMELINE) --}}
-    <div class="glass-card bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden group">
+    <div id="dashboard-movimentos" class="scroll-mt-28 glass-card bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-sm overflow-hidden group">
         <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
             <div>
                 <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1">Fluxo de Caixa</h2>
@@ -1585,7 +1606,7 @@
     @endphp
 
     {{-- 11. TERMINAL DE OPERAÇÕES 24H (BLACK OPS ⭐) --}}
-    <div class="relative overflow-hidden bg-zinc-950 text-white rounded-[3rem] border border-zinc-800 shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] mt-16 transition-all duration-700 group">
+    <div id="dashboard-resumo-conta" class="scroll-mt-28 relative overflow-hidden bg-zinc-950 text-white rounded-[3rem] border border-zinc-800 shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] mt-16 transition-all duration-700 group">
 
         {{-- BLOB DE FUNDO (Luz tática) --}}
         <div class="absolute -top-24 -left-24 size-96 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
