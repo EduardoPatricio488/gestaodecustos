@@ -1787,9 +1787,20 @@
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-xs text-zinc-500">Assinaturas ativas</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $accountOverview['subscription_count'] }}</p><p class="mt-1 text-xs text-zinc-500">Custo pessoal/mês: {{ $currentWs->money($accountOverview['subscription_personal_monthly']) }}</p></div>
                     <div class="rounded-2xl border border-amber-200 p-4 dark:border-amber-500/20"><p class="text-xs text-amber-700 dark:text-amber-400">Pago pela empresa/mês</p><p class="mt-2 text-xl font-black text-amber-700 dark:text-amber-400">{{ $currentWs->money($accountOverview['subscription_company_monthly']) }}</p><p class="mt-1 text-xs text-zinc-500">Separado das despesas pessoais</p></div>
-                    <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-xs text-zinc-500">Rendimentos recorrentes ativos</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $accountOverview['recurring_count'] }}</p><p class="mt-1 text-xs text-zinc-500">Valor mensal registado: {{ $currentWs->money($accountOverview['recurring_monthly']) }}</p></div>
+                    <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-xs text-zinc-500">Rendimentos recorrentes ativos</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $accountOverview['recurring_count'] }}</p><p class="mt-1 text-xs text-zinc-500">Valor mensal registado: {{ $currentWs->money($accountOverview['recurring_total']) }}</p></div>
                     <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-xs text-zinc-500">Orçamentos definidos</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $accountOverview['category_count'] }}</p><p class="mt-1 text-xs text-zinc-500">Limites: {{ $currentWs->money($accountOverview['budget_total']) }}</p></div>
                 </div>
+            </section>
+
+            <section>
+                <h3 class="mb-4 text-sm font-extrabold text-zinc-800 dark:text-zinc-100">Salário e alimentação</h3>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-xs text-zinc-500">Contratos de salário ativos</p><p class="mt-2 text-xl font-black text-zinc-900 dark:text-white">{{ $accountOverview['salary_contract_count'] }}</p></div>
+                    <div class="rounded-2xl border border-emerald-200 p-4 dark:border-emerald-500/20"><p class="text-xs text-zinc-500">Salário líquido projetado/mês</p><p class="mt-2 text-xl font-black text-emerald-600">{{ $currentWs->money($accountOverview['salary_net_projected']) }}</p></div>
+                    <div class="rounded-2xl border border-amber-200 p-4 dark:border-amber-500/20"><p class="text-xs text-zinc-500">Subsídio alimentação/mês</p><p class="mt-2 text-xl font-black text-amber-600">{{ $currentWs->money($accountOverview['meal_allowance_projected']) }}</p></div>
+                    <div class="rounded-2xl border border-amber-200 p-4 dark:border-amber-500/20"><p class="text-xs text-zinc-500">Subsídio alimentação/ano</p><p class="mt-2 text-xl font-black text-amber-600">{{ $currentWs->money($accountOverview['meal_allowance_annual']) }}</p></div>
+                </div>
+                <p class="mt-2 text-xs text-zinc-500">Pagamentos salariais no período selecionado: {{ $accountOverview['salary_payments_count'] }}</p>
             </section>
 
             {{-- Dívidas e objetivos --}}
