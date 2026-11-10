@@ -1092,7 +1092,9 @@
                                 <div class="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-700/50 dark:bg-amber-950/30"><flux:icon name="information-circle" class="mt-0.5 size-5 shrink-0 text-amber-600" /><p class="text-xs font-bold leading-relaxed text-amber-800 dark:text-amber-200">Este passe ficará registado nas Assinaturas, mas não será contabilizado nas tuas despesas, previsões ou totais financeiros do site, porque é pago pela empresa.</p></div>
                             @endif
                         </div>
-                        <div x-show="!transportPassMode" x-cloak class="space-y-5">
+                    @endif
+
+                    <div x-show="!transportPassMode" x-cloak class="space-y-5">
 
                     {{-- Valor e Data --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1207,8 +1209,7 @@
         <textarea wire:model="description" rows="2" class="w-full resize-none rounded-2xl border-0 bg-white px-4 py-3 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-zinc-950 dark:text-white"></textarea>
     </label>
 </div>
-                        </div>
-                    @endif
+                    </div>
                 </div>
 
                 {{-- FOOTER (Igual às Assinaturas) --}}
