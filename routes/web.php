@@ -84,6 +84,7 @@ use App\Livewire\LockInHub;
 use App\Livewire\ManageExpense;
 use App\Livewire\ManageFamily;
 use App\Livewire\NetWorthHub;
+use App\Livewire\NewsHub;
 use App\Livewire\PersonalCalendar;
 use App\Livewire\Public\BankDashboard;
 use App\Livewire\Public\BankPortal;
@@ -282,6 +283,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->whereNumber('salaryDocument')
         ->name('salary-documents.preview');
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
+    Route::get('/noticias', NewsHub::class)->name('hub.news');
     Route::get('/atividades', ActivityFeed::class)->name('activity-log');
     Route::get('/planos', SubscriptionPlans::class)->name('hub.pricing');
     Route::get('/suporte', SupportHub::class)->name('support.hub');
