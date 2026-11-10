@@ -614,7 +614,7 @@ PROMPT;
         $this->trackPriceHistory($expense, $category);
         app(PriceComparisonService::class)->recordFromExpense($expense, $category);
 
-        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId']);
+        $this->reset(['amount', 'description', 'subcategory', 'receipt', 'document', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId']);
         $this->spent_at = now()->format('Y-m-d');
 
         $this->dispatch('modal-close-add-expense');
