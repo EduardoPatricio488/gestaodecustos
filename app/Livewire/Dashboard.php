@@ -11,6 +11,7 @@ use App\Models\Goal;
 use App\Models\Income;
 use App\Models\Investment;
 use App\Models\Reminder;
+use App\Models\RecurringIncome;
 use App\Models\SocialNotification;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
