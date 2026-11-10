@@ -1468,6 +1468,46 @@
 
                 {{-- FORMULÁRIO DE CONTA --}}
                 @if($modalType === 'account')
+                    <div class="grid grid-cols-2 gap-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 p-1">
+                        <button type="button" wire:click="$set('accountEntryMode', 'manual')"
+                            class="rounded-lg px-3 py-2 text-[11px] font-bold transition {{ $accountEntryMode === 'manual' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500' }}">
+                            Introduzir dados
+                        </button>
+                        <button type="button" wire:click="$set('accountEntryMode', 'proof')"
+                            class="rounded-lg px-3 py-2 text-[11px] font-bold transition {{ $accountEntryMode === 'proof' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500' }}">
+                            Comprovativo de IBAN
+                        </button>
+                    </div>
+
+                    @if($accountEntryMode === 'proof')
+                        <div class="rounded-2xl border border-dashed border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/20 p-4 space-y-3">
+                            <div class="flex items-center gap-2">
+                                <div class="size-9 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 font-black">S</div>
+                                <div>
+                                    <p class="text-xs font-black text-zinc-900 dark:text-white">Importar comprovativo bancário</p>
+                                    <p class="text-[10px] text-zinc-500">O Finance Pro identifica os dados no PDF.</p>
+                                </div>
+                            </div>
+                            <div class="text-[11px] text-zinc-600 dark:text-zinc-300 space-y-1">
+                                <p class="font-bold">Como obter o comprovativo no Santander:</p>
+                                <ol class="list-decimal pl-4 space-y-0.5">
+                                    <li>Abre a App Santander.</li>
+                                    <li>Entra na conta que pretendes adicionar.</li>
+                                    <li>Seleciona <strong>Comprovativo de IBAN</strong>.</li>
+                                    <li>Visualiza ou partilha o documento e guarda-o em PDF.</li>
+                                    <li>Carrega aqui o ficheiro PDF.</li>
+                                </ol>
+                            </div>
+                            <input type="file" wire:model="ibanProof" accept="application/pdf,.pdf"
+                                class="block w-full text-xs text-zinc-600 dark:text-zinc-300 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:file:bg-emerald-700">
+                            <div wire:loading wire:target="ibanProof" class="text-[10px] font-bold text-emerald-600">A analisar comprovativo...</div>
+                            @error('ibanProof') <p class="text-[10px] text-red-500">{{ $message }}</p> @enderror
+                            @if($ibanProofMessage)
+                                <p class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">{{ $ibanProofMessage }}</p>
+                            @endif
+                        </div>
+                    @endif
+
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
                             <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Nome da Conta *</label>
@@ -1492,7 +1532,7 @@
 
                         <div>
                             <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Saldo Atual *</label>
-                            <input wire:model="acc_balance" type="number" step="0.01" placeholder="0.00"
+                            <input wire:model="acc_balance" type="number" step="0.01" min="-999999999" placeholder="Introduz o saldo atual" required
                                    class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         </div>
 
@@ -1515,6 +1555,16 @@
                         <div class="col-span-2">
                             <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">IBAN</label>
                             <input wire:model="acc_iban" type="text" placeholder="PT50 XXXX XXXX XXXX XXXX XXXX X"
+                                   class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Titular</label>
+                            <input wire:model="acc_holder" type="text" placeholder="Nome do titular"
+                                   class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">BIC / SWIFT</label>
+                            <input wire:model="acc_swift" type="text" placeholder="Código SWIFT"
                                    class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         </div>
 
