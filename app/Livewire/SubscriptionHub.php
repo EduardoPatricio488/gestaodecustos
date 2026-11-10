@@ -459,6 +459,7 @@ class SubscriptionHub extends Component
         };
 
         $activeSubs = $allSubs->where('status', 'active');
+        $billableActiveSubs = $activeSubs->where('paid_by_company', false);
         $planSlug = $user->currentPlanSlug();
         $platformPlan = $planSlug !== 'free' ? SubscriptionPlan::where('slug', $planSlug)->first() : null;
         $platformEntry = null;
@@ -482,8 +483,8 @@ class SubscriptionHub extends Component
             ];
         }
 
-        $totalMonthly = $activeSubs->sum('monthly_equivalent') + ($platformEntry->monthly_equivalent ?? 0);
-        $alreadyPaid = $activeSubs->where('billing_day', '<', now()->day)->sum('monthly_equivalent');
+        $totalMonthly = $billableActiveSubs->sum('monthly_equivalent') + ($platformEntry->monthly_equivalent ?? 0);
+        $alreadyPaid = $billableActiveSubs->where('billing_day', '<', now()->day)->sum('monthly_equivalent');
         if ($platformEntry && $platformEntry->billing_day <= now()->day) {
             $alreadyPaid += $platformEntry->monthly_equivalent;
         }
