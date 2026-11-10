@@ -174,6 +174,43 @@ class AiBrainService
         }
     }
 
+    /**
+     * Gera o relatório executivo com uma única chamada ao modelo, sem histórico,
+     * memórias ou ciclo de ferramentas do AI Copilot.
+     */
+    public function generateExecutiveReport(User $user, Workspace $workspace): array
+    {
+        $this->assertAiAccess($user);
+        $this->assertMonthlyTokenBudget($user, $workspace);
+
+        $snapshot = $this->intelligence->snapshot($workspace);
+        $snapshotJson = json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        $messages = [
+            [
+                'role' => 'system',
+                'content' => 'És o CFO Inteligente do Finance Pro. Responde sempre em Português de Portugal. Produz um relatório executivo mensal claro e útil. Usa exclusivamente os dados JSON fornecidos pelo backend: não inventes valores, transações, tendências ou funcionalidades. Distingue FACTOS, INFERÊNCIAS e RECOMENDAÇÕES. Se não existirem dados suficientes, diz isso explicitamente. Compara com o período anterior apenas quando os dados de comparação existirem. Termina com exatamente 3 ações práticas e proporcionais aos dados. Usa títulos curtos e evita introduções longas.',
+            ],
+            [
+                'role' => 'user',
+                'content' => "Gera o meu relatório financeiro executivo para ".now()->translatedFormat('F Y').". Analisa rendimentos, despesas, saldo, investimentos e evolução face ao período anterior, apenas quando existirem dados. Dados verificados pelo backend:\n".$snapshotJson,
+            ],
+        ];
+
+        $response = $this->provider($messages, null, true);
+        $content = trim((string) data_get($response, 'choices.0.message.content', ''));
+
+        if ($content === '') {
+            throw new RuntimeException('O modelo não devolveu conteúdo para o relatório.');
+        }
+
+        return [
+            'content' => $content,
+            'snapshot' => $snapshot,
+            'tokens' => (int) data_get($response, 'usage.total_tokens', 0),
+        ];
+    }
+
     public function confirm(User $user, int $actionId): array
     {
         $workspace = $this->contextEngine->resolveWorkspace($user);
@@ -245,10 +282,12 @@ class AiBrainService
         $payload = [
             'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
             'messages' => $messages,
-            'tools' => $this->tools->definitions(),
             'tool_choice' => $disableTools ? 'none' : ($forcedTool ? ['type' => 'function', 'function' => ['name' => $forcedTool]] : 'auto'),
             'max_tokens' => 1600,
         ];
+        if (! $disableTools) {
+            $payload['tools'] = $this->tools->definitions();
+        }
         $response = Http::withHeaders(['Authorization' => 'Bearer '.$apiKey, 'Content-Type' => 'application/json', 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
             ->timeout((int) config('limits.ai.request_timeout_seconds', 30))
             ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
