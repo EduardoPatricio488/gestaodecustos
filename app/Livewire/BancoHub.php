@@ -19,7 +19,7 @@ use Livewire\WithPagination;
 #[Layout('components.layouts.app')]
 class BancoHub extends Component
 {
-    use WithPagination;
+    use WithFileUploads, WithPagination;
 
     public string $activeTab = 'overview';
     public bool $showModal = false;
@@ -27,7 +27,10 @@ class BancoHub extends Component
     public ?int $editingId = null;
     public string $acc_name = '';
     public string $acc_type = 'corrente';
-    public float $acc_balance = 0;
+    public ?float $acc_balance = null;
+    public $ibanProof = null;
+    public string $accountEntryMode = 'manual';
+    public string $ibanProofMessage = '';
     public string $acc_currency = 'EUR';
     public string $acc_color = '#6366f1';
     public string $acc_icon = 'building-library';
@@ -89,7 +92,7 @@ class BancoHub extends Component
     protected function rules(): array
     {
         return match ($this->modalType) {
-            'account' => ['acc_name' => 'required|string|max:100', 'acc_type' => 'required|string', 'acc_balance' => 'required|numeric', 'acc_currency' => 'required|string|max:10', 'acc_color' => 'required|string'],
+            'account' => ['acc_name' => 'required|string|max:100', 'acc_type' => 'required|string', 'acc_balance' => 'required|numeric', 'acc_currency' => 'required|string|max:10', 'acc_color' => 'required|string', 'acc_iban' => 'nullable|string|max:34', 'acc_swift' => 'nullable|string|max:11'],
             'transfer' => ['tr_from_id' => 'required|integer|different:tr_to_id', 'tr_to_id' => 'required|integer', 'tr_amount' => 'required|numeric|min:0.01', 'tr_date' => 'required|date'],
             'reserve' => ['res_name' => 'required|string|max:100', 'res_amount' => 'required|numeric|min:0', 'res_bank_account_id' => 'required|integer'],
             'transit' => ['trs_name' => 'required|string|max:100', 'trs_amount' => 'required|numeric|min:0.01', 'trs_direction' => 'required|in:in,out', 'trs_bank_account_id' => 'required|integer'],
@@ -109,6 +112,7 @@ class BancoHub extends Component
     public function openAccountModal(?int $id = null): void
     {
         $this->resetForm();
+        $this->accountEntryMode = 'manual';
         $this->modalType = 'account';
         if ($id) {
             $account = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)->findOrFail($id);
@@ -131,6 +135,67 @@ class BancoHub extends Component
             $this->acc_opened_at = $account->opened_at ? $account->opened_at->format('Y-m-d') : '';
         }
         $this->showModal = true;
+    }
+
+    public function updatedIbanProof(): void
+    {
+        $this->resetValidation('ibanProof');
+        $this->validate([
+            'ibanProof' => 'required|file|mimes:pdf|max:5120',
+        ], [
+            'ibanProof.mimes' => 'Carrega um comprovativo em formato PDF.',
+            'ibanProof.max' => 'O ficheiro não pode ultrapassar 5 MB.',
+        ]);
+
+        try {
+            $text = (new Parser())->parseFile($this->ibanProof->getRealPath())->getText();
+            $text = preg_replace('/\\s+/u', ' ', mb_strtoupper($text));
+
+            if (! preg_match('/PT(?:\\s*[0-9]){23}/u', $text, $ibanMatch)) {
+                throw new \\RuntimeException('Não foi possível encontrar um IBAN português no documento.');
+            }
+
+            $iban = preg_replace('/\\s+/', '', $ibanMatch[0]);
+            if (strlen($iban) !== 25) {
+                throw new \\RuntimeException('O IBAN extraído não tem um formato válido.');
+            }
+
+            $this->acc_iban = $iban;
+            $bankCode = substr($iban, 4, 4);
+            $bank = match ($bankCode) {
+                '0018' => 'Santander',
+                '0035' => 'Caixa Geral de Depósitos',
+                '0007' => 'Novo Banco',
+                '0033' => 'Millennium BCP',
+                '0010' => 'Banco BPI',
+                default => '',
+            };
+
+            if ($bank !== '') {
+                $this->acc_bank_name = $bank;
+                $this->acc_name = 'Conta '.$bank;
+                $this->acc_color = $bank === 'Santander' ? '#EC0000' : $this->acc_color;
+                $this->acc_icon = 'landmark';
+            }
+
+            if (preg_match('/\\b([A-Z]{4}PT[A-Z0-9]{2}(?:[A-Z0-9]{3})?)\\b/u', $text, $swiftMatch)) {
+                $this->acc_swift = $swiftMatch[1];
+            }
+
+            if (preg_match('/TITULAR\\s+(.+?)(?=\\s+(?:IBAN|BIC|SWIFT|DATA|CONTA)\\b|$)/u', $text, $holderMatch)) {
+                $this->acc_holder = trim($holderMatch[1]);
+            }
+
+            $this->acc_currency = 'EUR';
+            $this->accountEntryMode = 'manual';
+            $this->ibanProofMessage = 'Comprovativo lido. Confirma os dados e introduz o saldo atual da conta.';
+            $this->dispatch('toast', variant: 'success', text: 'Comprovativo analisado. Confirma os dados da conta.');
+        } catch (\\Throwable $exception) {
+            $this->ibanProofMessage = '';
+            $this->addError('ibanProof', $exception instanceof \\RuntimeException
+                ? $exception->getMessage()
+                : 'Não foi possível ler este PDF. Confirma que é um comprovativo de IBAN legível.');
+        }
     }
 
     public function openTransferModal(): void
@@ -399,13 +464,13 @@ class BancoHub extends Component
         $this->editingId = null;
         $this->acc_name = '';
         $this->acc_type = 'corrente';
-        $this->acc_balance = 0;
+        $this->acc_balance = null;
         $this->acc_currency = 'EUR';
         $this->acc_color = '#6366f1';
         $this->acc_icon = 'building-library';
         $this->acc_status = 'active';
         $this->acc_description = '';
-        $this->acc_bank_name = $this->acc_iban = $this->acc_swift = $this->acc_holder = '';
+        $this->acc_bank_name = $this->acc_iban = $this->acc_swift = $this->acc_holder = '';\n        $this->ibanProof = null;\n        $this->accountEntryMode = 'manual';\n        $this->ibanProofMessage = '';
         $this->acc_is_business = false;
         $this->acc_include = true;
         $this->acc_alert_below = null;
