@@ -99,15 +99,19 @@
                     @endif
 
                     <div class="rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 p-5 sm:p-7 text-center">
-                        <input type="file" wire:model="scannerReceipt" accept="image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
+                        <input type="file" wire:model="scannerReceipt" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
                         @if($scannerReceipt)
                             <div class="mt-4 flex flex-col items-center gap-2">
-                                <img src="{{ $scannerReceipt->temporaryUrl() }}" alt="Pré-visualização da fatura" class="max-h-44 rounded-xl border border-zinc-200 dark:border-zinc-700 object-contain shadow-lg" />
+                                @if(str_starts_with($scannerReceipt->getMimeType() ?? '', 'image/'))
+                                    <img src="{{ $scannerReceipt->temporaryUrl() }}" alt="Pré-visualização da fatura" class="max-h-44 rounded-xl border border-zinc-200 dark:border-zinc-700 object-contain shadow-lg" />
+                                @else
+                                    <div class="rounded-xl bg-red-50 px-6 py-4 text-xs font-black text-red-600 dark:bg-red-950/30">PDF carregado</div>
+                                @endif
                                 <span class="text-[10px] font-bold text-emerald-600">Fatura carregada com sucesso</span>
                             </div>
                         @else
-                            <p class="mt-3 text-xs font-bold text-zinc-500">Seleciona uma fotografia ou imagem da fatura</p>
-                            <p class="mt-1 text-[10px] text-zinc-400">JPG, PNG ou WEBP · Máximo 20 MB</p>
+                            <p class="mt-3 text-xs font-bold text-zinc-500">Seleciona uma fotografia, imagem ou PDF da fatura</p>
+                            <p class="mt-1 text-[10px] text-zinc-400">PDF, JPG, PNG ou WEBP · Máximo 20 MB</p>
                         @endif
                         <div wire:loading wire:target="scannerReceipt" class="mt-3 text-xs font-bold text-brand-500">A carregar imagem...</div>
                     </div>
