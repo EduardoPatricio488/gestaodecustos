@@ -652,35 +652,122 @@ class Dashboard extends Component
         ]);
         $pendingDebtsToPay = $pendingDebts['pay'];
         $pendingDebtsToReceive = $pendingDebts['receive'];
-        $projectedExpenses = $totalMonthExpenses + $subscriptionsMonthlyCost + $pendingDebtsToPay;
-        $projectedIncome = $totalMonthIncome + $pendingDebtsToReceive;
 
-        $totalBankBalance = (float) Cache::remember("dashboard:bank-balance:{$currentWs->id}:{$user->id}", 60, function () use ($currentWs, $user): float {
-            $baseBalance = (float) BankAccount::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->where('include_in_total', true)->sum('balance');
-            $incomeBalance = (float) Income::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereNotNull('bank_account_id')->sum('amount');
-            $expenseBalance = (float) Expense::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->whereNotNull('bank_account_id')->sum('amount');
+        // A projeção parte do saldo bancário atual. Só considera contas marcadas
+        // para integrar o património e movimentos futuros ainda não liquidados.
+        $includedBankAccountIds = BankAccount::where('workspace_id', $currentWs->id)
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->where('include_in_total', true)
+            ->pluck('id')
+            ->all();
 
-            return $baseBalance + $incomeBalance - $expenseBalance;
+        $totalBankBalance = (float) Cache::remember(
+            "dashboard:bank-balance:{$currentWs->id}:{$user->id}",
+            60,
+            function () use ($currentWs, $user, $includedBankAccountIds): float {
+                $baseBalance = (float) BankAccount::where('workspace_id', $currentWs->id)
+                    ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                    ->whereIn('id', $includedBankAccountIds)
+                    ->sum('balance');
+
+                $incomeBalance = (float) Income::where('workspace_id', $currentWs->id)
+                    ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                    ->whereIn('bank_account_id', $includedBankAccountIds)
+                    ->sum(DB::raw('COALESCE(amount_converted, amount)'));
+
+                $expenseBalance = (float) Expense::where('workspace_id', $currentWs->id)
+                    ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                    ->whereIn('bank_account_id', $includedBankAccountIds)
+                    ->sum(DB::raw('COALESCE(amount_converted, amount)'));
+
+                return round($baseBalance + $incomeBalance - $expenseBalance, 2);
+            }
+        );
+
+        $today = now()->startOfDay();
+        $forecastMonthEnd = now()->endOfMonth()->startOfDay();
+
+        // Salários deste mês ainda por receber, associados a uma conta incluída
+        // no saldo global. Os pagamentos já marcados como pagos já estão no saldo.
+        $pendingSalaryPayments = SalaryPayment::with('recurringIncome')
+            ->where('workspace_id', $currentWs->id)
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->where('payment_year', $today->year)
+            ->where('payment_month', $today->month)
+            ->where('status', '!=', 'paid')
+            ->whereNotNull('bank_account_id')
+            ->whereIn('bank_account_id', $includedBankAccountIds)
+            ->get();
+
+        $pendingSalaryIncome = (float) $pendingSalaryPayments->sum(function (SalaryPayment $payment): float {
+            $mealCard = ($payment->recurringIncome?->metadata['meal_allowance_destination'] ?? null) === 'meal_card';
+
+            return max(0, (float) $payment->net_received - ($mealCard ? (float) $payment->meal_allowance : 0));
         });
 
-        // O saldo bancário atual já inclui os movimentos registados até hoje.
-        // Para projetar o fim do mês, reconstruímos primeiro o saldo no início
-        // do mês e depois aplicamos apenas uma vez os totais previstos do mês.
-        $monthBankIncome = (float) Income::where('workspace_id', $currentWs->id)
+        // Se a automação ainda não criou o registo salarial deste mês, prevê o
+        // valor contratual uma única vez, desde que não exista já receita ligada.
+        $salaryContracts = RecurringIncome::where('workspace_id', $currentWs->id)
             ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->where('source', 'emprego')
+            ->where('is_active', true)
             ->whereNotNull('bank_account_id')
-            ->whereBetween('received_at', [$monthStart, now()->endOfDay()])
-            ->sum('amount');
+            ->whereIn('bank_account_id', $includedBankAccountIds)
+            ->get();
 
-        $monthBankExpenses = (float) Expense::where('workspace_id', $currentWs->id)
+        $salaryContractIds = $salaryContracts->modelKeys();
+        $salaryPaymentsThisMonth = SalaryPayment::where('workspace_id', $currentWs->id)
             ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
-            ->whereNotNull('bank_account_id')
-            ->whereBetween('spent_at', [$monthStart, now()->endOfDay()])
-            ->sum('amount');
+            ->where('payment_year', $today->year)
+            ->where('payment_month', $today->month)
+            ->pluck('recurring_income_id')
+            ->all();
 
-        $openingBankBalance = $totalBankBalance - $monthBankIncome + $monthBankExpenses;
-        $projectedBalance = $openingBankBalance + $projectedIncome - $projectedExpenses;
-        $projectionStatus = $projectedBalance < 0 ? 'critical' : ($projectedBalance < ($totalMonthIncome * 0.15) ? 'warning' : 'stable');
+        $salaryIncomeAlreadyRegistered = Income::where('workspace_id', $currentWs->id)
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->whereIn('salary_recurring_income_id', $salaryContractIds)
+            ->whereBetween('received_at', [$monthStart, $monthEnd])
+            ->pluck('salary_recurring_income_id')
+            ->all();
+
+        $unregisteredSalaryIncome = (float) $salaryContracts
+            ->reject(function (RecurringIncome $salary) use ($salaryPaymentsThisMonth, $salaryIncomeAlreadyRegistered, $today): bool {
+                $metadata = $salary->metadata ?? [];
+                $startDate = $metadata['start_date'] ?? null;
+                $endDate = $metadata['end_date'] ?? null;
+
+                return ($metadata['income_type'] ?? null) === 'meal_card_allowance'
+                    || ($metadata['contract_status'] ?? 'active') !== 'active'
+                    || in_array($salary->id, $salaryPaymentsThisMonth, true)
+                    || in_array($salary->id, $salaryIncomeAlreadyRegistered, true)
+                    || ($startDate && $today->toDateString() < $startDate)
+                    || ($endDate && $today->toDateString() > $endDate);
+            })
+            ->sum(fn (RecurringIncome $salary): float => (float) $salary->amount);
+
+        // Dívidas com vencimento até ao fim do mês e ainda sem movimento associado.
+        $futureDebts = Debt::where('workspace_id', $currentWs->id)
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->where('is_paid', false)
+            ->whereBetween('due_at', [$today->toDateString(), $forecastMonthEnd->toDateString()])
+            ->whereNotNull('bank_account_id')
+            ->whereIn('bank_account_id', $includedBankAccountIds)
+            ->whereNull('expense_id')
+            ->whereNull('income_id')
+            ->get(['type', 'amount']);
+
+        $futureDebtPayments = (float) $futureDebts->where('type', 'owe')->sum('amount');
+        $futureDebtReceipts = (float) $futureDebts->where('type', 'owed')->sum('amount');
+
+        $projectedIncome = round($pendingSalaryIncome + $unregisteredSalaryIncome + $futureDebtReceipts, 2);
+        $projectedExpenses = round($futureDebtPayments, 2);
+        $projectedBalance = round($totalBankBalance + $projectedIncome - $projectedExpenses, 2);
+
+        $daysRemaining = max(1, (int) $today->diffInDays($forecastMonthEnd) + 1);
+        $projectionDailyAvailable = round($projectedBalance / $daysRemaining, 2);
+        $projectionStatus = $projectedBalance < 0
+            ? 'critical'
+            : ($projectedBalance < max(0, $totalBankBalance * 0.10) ? 'warning' : 'stable');
 
         $topBankAccounts = Cache::remember("dashboard:top-accounts:{$currentWs->id}:{$user->id}", 60, fn () => BankAccount::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
             ->withCurrentBalanceTotals()
