@@ -862,20 +862,20 @@
         </div>
 
         {{-- RESUMO DE INVESTIMENTOS --}}
-        <section id="dashboard-investimentos" class="scroll-mt-28 relative mt-6 w-full overflow-hidden rounded-[2rem] border border-violet-200/80 bg-white shadow-lg shadow-violet-950/5 dark:border-violet-500/20 dark:bg-zinc-900">
-            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-600 via-indigo-500 to-fuchsia-500"></div>
-            <div class="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-violet-500/10 blur-3xl"></div>
+        <section id="dashboard-investimentos" class="dashboard-investments-summary col-span-full relative mt-6 w-full min-w-0 overflow-hidden rounded-[2rem] border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-blue-50 shadow-lg shadow-sky-950/10 dark:border-sky-400/20 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/40">
+            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-300 via-blue-400 to-cyan-300"></div>
+            <div class="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-sky-400/15 blur-3xl"></div>
 
             <div class="relative px-5 py-4 sm:px-7 sm:py-5">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex min-w-0 items-center gap-3">
-                        <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-600/20">
+                        <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 text-white shadow-md shadow-blue-500/20">
                             <flux:icon name="chart-bar" class="size-5" />
                         </div>
                         <div class="min-w-0">
                             <div class="flex flex-wrap items-center gap-2">
                                 <h3 class="text-base font-black tracking-tight text-zinc-950 dark:text-white sm:text-lg">Resumo dos investimentos</h3>
-                                <span class="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">Portefólio</span>
+                                <span class="rounded-full border border-sky-200 bg-sky-100 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-sky-800 dark:border-violet-500/20 dark:bg-sky-400/15 dark:text-violet-300">Portefólio</span>
                             </div>
                             <p class="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
                                 {{ $dashboardInvestmentsCount }} {{ $dashboardInvestmentsCount === 1 ? 'ativo' : 'ativos' }}
@@ -884,7 +884,7 @@
                             </p>
                         </div>
                     </div>
-                    <a href="{{ route('hub.investments') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-[11px] font-black text-white shadow-md shadow-violet-600/20 transition hover:-translate-y-0.5 hover:bg-violet-500">
+                    <a href="{{ route('hub.investments') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-[11px] font-black text-white shadow-md shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-400">
                         Ver investimentos
                         <flux:icon name="arrow-up-right" class="size-4" />
                     </a>
@@ -892,7 +892,7 @@
 
                 <div class="mt-4 grid grid-cols-2 gap-y-4 border-t border-zinc-100 pt-4 dark:border-zinc-800 sm:grid-cols-4 sm:gap-0">
                     <div class="min-w-0 pr-3 sm:border-r sm:border-zinc-200 sm:pr-5 dark:sm:border-zinc-700">
-                        <p class="text-[9px] font-extrabold uppercase tracking-widest text-violet-700 dark:text-violet-300">Valor atual</p>
+                        <p class="text-[9px] font-extrabold uppercase tracking-widest text-sky-800 dark:text-violet-300">Valor atual</p>
                         <p class="mt-1 break-words text-xl font-black leading-tight tracking-tight tabular-nums text-zinc-950 dark:text-white sm:text-2xl" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($portfolioValue) }}</p>
                         <p class="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">Valor de mercado</p>
                     </div>
@@ -917,7 +917,7 @@
                     </div>
 
                     <div class="min-w-0 border-t border-zinc-100 pl-3 pt-3 dark:border-zinc-800 sm:border-t-0 sm:pl-5 sm:pt-0">
-                        <p class="text-[9px] font-extrabold uppercase tracking-widest text-indigo-700 dark:text-indigo-300">Ativos na carteira</p>
+                        <p class="text-[9px] font-extrabold uppercase tracking-widest text-blue-700 dark:text-blue-300">Ativos na carteira</p>
                         <p class="mt-1 text-xl font-black leading-tight tracking-tight tabular-nums text-zinc-950 dark:text-white sm:text-2xl">{{ $dashboardInvestmentsCount }}</p>
                         <p class="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">Instrumentos</p>
                     </div>
