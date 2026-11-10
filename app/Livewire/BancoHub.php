@@ -154,12 +154,12 @@ class BancoHub extends Component
             $text = preg_replace('/\\s+/u', ' ', mb_strtoupper($text));
 
             if (! preg_match('/PT(?:\\s*[0-9]){23}/u', $text, $ibanMatch)) {
-                throw new \\RuntimeException('Não foi possível encontrar um IBAN português no documento.');
+                throw new \RuntimeException('Não foi possível encontrar um IBAN português no documento.');
             }
 
             $iban = preg_replace('/\\s+/', '', $ibanMatch[0]);
             if (strlen($iban) !== 25) {
-                throw new \\RuntimeException('O IBAN extraído não tem um formato válido.');
+                throw new \RuntimeException('O IBAN extraído não tem um formato válido.');
             }
 
             $this->acc_iban = $iban;
@@ -192,9 +192,9 @@ class BancoHub extends Component
             $this->accountEntryMode = 'manual';
             $this->ibanProofMessage = 'Comprovativo lido. Confirma os dados e introduz o saldo atual da conta.';
             $this->dispatch('toast', variant: 'success', text: 'Comprovativo analisado. Confirma os dados da conta.');
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->ibanProofMessage = '';
-            $this->addError('ibanProof', $exception instanceof \\RuntimeException
+            $this->addError('ibanProof', $exception instanceof \RuntimeException
                 ? $exception->getMessage()
                 : 'Não foi possível ler este PDF. Confirma que é um comprovativo de IBAN legível.');
         }
