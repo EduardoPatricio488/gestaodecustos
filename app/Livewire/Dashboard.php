@@ -885,6 +885,8 @@ class Dashboard extends Component
             'portfolioValue' => $portfolioValue,
             'totalSaved' => $totalSaved,
             'projectedExpenses' => $projectedExpenses,
+            'projectedIncome' => $projectedIncome,
+            'projectionDailyAvailable' => $projectionDailyAvailable,
             'projectedBalance' => $projectedBalance,
             'projectionStatus' => $projectionStatus,
             'totalBankBalance' => $totalBankBalance,
