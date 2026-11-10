@@ -607,21 +607,6 @@
     {{-- Cartões de salário e subsídio de alimentação, com histórico --}}
     <section x-data="{ showSalaryHistory: false, showMealHistory: false }" class="space-y-4">
         <div class="flex items-end justify-between gap-3 px-1">
-            <div>
-                <div class="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 dark:border-emerald-900/50 dark:bg-emerald-950/40">
-                    <span class="relative flex size-2">
-                        <span class="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-50 motion-reduce:animate-none"></span>
-                        <span class="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
-                    </span>
-                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Resumo mensal</span>
-                </div>
-                <h2 class="flex items-center gap-2 text-2xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-3xl">
-                    <span class="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20 transition duration-300 hover:rotate-[-6deg] hover:scale-110 motion-reduce:transform-none">
-                        <flux:icon name="chart-bar" variant="micro" class="size-5" />
-                    </span>
-                    <span class="font-serif text-black dark:text-black">Total Projetado</span>
-                </h2>
-            </div>
             <span class="hidden items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:inline-flex">
                 <flux:icon name="calendar-days" variant="micro" class="size-3.5 text-emerald-500" />
                 {{ now()->translatedFormat('F Y') }}
