@@ -705,7 +705,7 @@
                     </div>
                 </div>
                 <button type="button" @click.stop="flipped = !flipped" :aria-label="flipped ? 'Mostrar frente do cartão' : 'Virar cartão'" :aria-pressed="flipped.toString()" title="Virar cartão" class="absolute bottom-3 right-3 z-30 flex size-8 items-center justify-center rounded-full border border-white/25 bg-black/20 text-white shadow-lg backdrop-blur-sm transition duration-300 hover:rotate-[-45deg] hover:bg-black/35 focus:outline-none focus:ring-2 focus:ring-white/70">
-                    <flux:icon name="rotate-cw" variant="outline" class="size-4" />
+                    <span aria-hidden="true" class="text-[22px] font-semibold leading-none">↻</span>
                 </button>
             </article>
 
@@ -749,7 +749,7 @@
                     </div>
                 </div>
                 <button type="button" @click.stop="flipped = !flipped" :aria-label="flipped ? 'Mostrar frente do cartão' : 'Virar cartão'" :aria-pressed="flipped.toString()" title="Virar cartão" class="absolute bottom-3 right-3 z-30 flex size-8 items-center justify-center rounded-full border border-white/25 bg-black/20 text-white shadow-lg backdrop-blur-sm transition duration-300 hover:rotate-[-45deg] hover:bg-black/35 focus:outline-none focus:ring-2 focus:ring-white/70">
-                    <flux:icon name="rotate-cw" variant="outline" class="size-4" />
+                    <span aria-hidden="true" class="text-[22px] font-semibold leading-none">↻</span>
                 </button>
             </article>
         </div>
