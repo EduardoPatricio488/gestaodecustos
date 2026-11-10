@@ -736,10 +736,9 @@ class Dashboard extends Component
         $dashboardSalaryContracts = RecurringIncome::where('workspace_id', $currentWs->id)
             ->where('user_id', $user->id)
             ->where('source', 'emprego')
-            ->where('is_active', true)
             ->get()
             ->reject(fn (RecurringIncome $income) => ($income->metadata['income_type'] ?? null) === 'meal_card_allowance')
-            ->filter(fn (RecurringIncome $income) => ($income->metadata['contract_status'] ?? 'active') === 'active')
+            ->filter(fn (RecurringIncome $income) => ($income->metadata['contract_status'] ?? ($income->is_active ? 'active' : 'suspended')) === 'active')
             ->values();
 
         $dashboardProjectedSalaryNet = round($dashboardSalaryContracts->sum(function (RecurringIncome $income): float {
