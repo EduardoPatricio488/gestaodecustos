@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Mail\CfoReportMail;
+use App\Models\AiActionLog;
+use App\Models\AiMemory;
 use App\Services\AI\AiBrainService;
 use App\Services\AI\ContextEngine;
 use App\Services\AI\FinancialHealthScoreService;
@@ -65,11 +67,61 @@ class AiInsights extends Component
             $this->lastGeneratedAt = now()->toIso8601String();
             Cache::put($this->cacheKey(), ['text' => $this->aiAnalysis, 'at' => $this->lastGeneratedAt], now()->addDays(7));
 
+            // Regista a análise no Action Center: a geração do relatório é uma ação concluída da IA.
+            AiActionLog::create([
+                'user_id' => $user->id,
+                'workspace_id' => $workspace->id,
+                'tool_name' => 'generate_executive_report',
+                'action_type' => 'analysis',
+                'status' => 'completed',
+                'request_payload' => ['period' => now()->format('Y-m')],
+                'result_payload' => [
+                    'title' => 'Diagnóstico CFO gerado',
+                    'summary' => 'Relatório executivo financeiro criado com os dados disponíveis no workspace.',
+                    'tokens' => (int) ($result['tokens'] ?? 0),
+                ],
+                'completed_at' => now(),
+            ]);
+
+            // Guarda um snapshot factual e atualizado na memória persistente da IA.
+            // Só utiliza números fornecidos pelo backend, nunca conclusões inventadas pelo modelo.
+            $financialSnapshot = (array) ($result['snapshot'] ?? []);
+            $memoryValue = [
+                'period' => $financialSnapshot['period'] ?? now()->format('Y-m'),
+                'currency' => $financialSnapshot['currency'] ?? 'EUR',
+                'income_recurring' => (float) ($financialSnapshot['income_recurring'] ?? 0),
+                'income_actual' => (float) ($financialSnapshot['income_actual'] ?? $financialSnapshot['income'] ?? 0),
+                'expenses' => (float) ($financialSnapshot['expenses'] ?? 0),
+                'investment_value' => (float) ($financialSnapshot['investment_value'] ?? 0),
+                'updated_at' => now()->toIso8601String(),
+                'source' => 'cfo_executive_report_snapshot',
+            ];
+
+            AiMemory::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'workspace_id' => $workspace->id,
+                    'type' => 'financial_context',
+                    'key' => 'cfo_snapshot_'.str_replace('-', '_', (string) $memoryValue['period']),
+                ],
+                [
+                    'value' => $memoryValue,
+                    'importance' => 85,
+                    'is_active' => true,
+                    'last_used_at' => now(),
+                    'expires_at' => now()->addMonths(6),
+                ]
+            );
+
             // Atualiza o Insight Center com alertas determinísticos relevantes para este snapshot.
             try {
                 app(\App\Services\AI\ProactiveAiService::class)->analyze($workspace);
             } catch (\Throwable $observerException) {
-                Log::warning('CFO report observer failed', ['message' => $observerException->getMessage()]);
+                Log::error('CFO report observer failed', [
+                    'user_id' => $user->id,
+                    'workspace_id' => $workspace->id,
+                    'message' => $observerException->getMessage(),
+                ]);
             }
 
             $this->dispatch('cfo-report-generated');
