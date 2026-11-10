@@ -671,7 +671,7 @@ class Dashboard extends Component
 
         $subscriptionsMonthlyCost = (float) Cache::remember(
             "dashboard:subscriptions-monthly:{$currentWs->id}:{$user->id}", 60,
-            fn () => Subscription::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->get(['amount', 'cycle', 'status', 'is_active'])->filter(fn ($sub) => ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')->sum(fn ($sub) => SubscriptionCycleService::toMonthly((float) $sub->amount, $sub->cycle))
+            fn () => Subscription::where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->get(['amount', 'cycle', 'status', 'is_active', 'paid_by_company'])->filter(fn ($sub) => ! $sub->paid_by_company && ($sub->status ?: ($sub->is_active ? 'active' : 'paused')) === 'active')->sum(fn ($sub) => SubscriptionCycleService::toMonthly((float) $sub->amount, $sub->cycle))
         );
         $platformPlanSlug = $user->currentPlanSlug();
         if ($platformPlanSlug !== 'free') {
