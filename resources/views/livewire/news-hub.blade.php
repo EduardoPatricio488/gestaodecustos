@@ -31,11 +31,31 @@
         </div>
     </section>
 
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div class="flex flex-wrap items-center gap-2">
-            <button type="button" wire:click="$set('regionFilter', 'ALL')" class="rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wider transition {{ $regionFilter === 'ALL' ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/20' : 'border border-zinc-200 bg-white text-zinc-500 hover:border-sky-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300' }}">Todas</button>
-            <button type="button" wire:click="$set('regionFilter', 'PT')" class="rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wider transition {{ $regionFilter === 'PT' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'border border-zinc-200 bg-white text-zinc-500 hover:border-emerald-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300' }}">Portugal</button>
-            <button type="button" wire:click="$set('regionFilter', 'INT')" class="rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wider transition {{ $regionFilter === 'INT' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'border border-zinc-200 bg-white text-zinc-500 hover:border-blue-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300' }}">Mundo</button>
+    @php
+        $newsTopics = [
+            'ALL' => 'Todas',
+            'PT' => 'Portugal',
+            'INT' => 'Mundo',
+            'FOOTBALL' => 'Futebol',
+            'SPORTS' => 'Desporto',
+            'ECONOMY' => 'Economia',
+            'TECH' => 'Tecnologia',
+            'POLITICS' => 'Política',
+            'SCIENCE' => 'Ciência',
+            'ENTERTAINMENT' => 'Entretenimento',
+        ];
+    @endphp
+
+    <div class="space-y-4">
+        <div class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 [scrollbar-width:thin]">
+            @foreach($newsTopics as $topicKey => $topicLabel)
+                <button
+                    type="button"
+                    wire:click="$set('topicFilter', '{{ $topicKey }}')"
+                    wire:loading.attr="disabled"
+                    class="shrink-0 rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wider transition {{ $topicFilter === $topicKey ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/20' : 'border border-zinc-200 bg-white text-zinc-500 hover:border-sky-300 hover:text-sky-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:text-sky-300' }}"
+                >{{ $topicLabel }}</button>
+            @endforeach
         </div>
 
         <div class="relative w-full lg:max-w-sm">
