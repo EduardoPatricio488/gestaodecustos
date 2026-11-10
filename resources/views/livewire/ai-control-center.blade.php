@@ -144,6 +144,8 @@
                             <flux:button wire:click="markRead({{ $insight->id }})" size="sm" variant="ghost">Marcar lido</flux:button>
                         @endif
                         <flux:button wire:click="feedback({{ $insight->id }}, 'useful')" size="sm" variant="ghost">Útil</flux:button>
+                        <flux:button wire:click="feedback({{ $insight->id }}, 'not_useful')" size="sm" variant="ghost">Não útil</flux:button>
+                        <flux:button wire:click="feedback({{ $insight->id }}, 'more')" size="sm" variant="ghost">Mais disto</flux:button>
                         <flux:button wire:click="dismiss({{ $insight->id }})" size="sm" variant="ghost">Dispensar</flux:button>
                     </div>
                 </div>
