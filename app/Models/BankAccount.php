@@ -13,7 +13,7 @@ class BankAccount extends Model
 
     protected $fillable = [
         'workspace_id', 'user_id', 'name', 'type', 'is_business', 'color', 'icon', 'status', 'description', 'opened_at', 'include_in_total', 'alert_below',
-        'bank_name', 'country', 'iban', 'swift', 'holder_name', 'currency', 'balance', 'credit_limit', 'forecast_balance', 'risk_score', 'tags', 'notes',
+        'bank_name', 'country', 'iban', 'account_number', 'swift', 'holder_name', 'currency', 'balance', 'credit_limit', 'forecast_balance', 'risk_score', 'tags', 'notes',
     ];
 
     protected $casts = [
