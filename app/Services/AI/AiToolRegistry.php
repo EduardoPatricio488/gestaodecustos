@@ -16,7 +16,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Services\BusinessAccessService;
 use App\Services\SubscriptionCycleService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use RuntimeException;
 
 class AiToolRegistry
