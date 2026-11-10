@@ -1192,16 +1192,18 @@
                         @if($isScanning)
                             <div class="flex items-center gap-2 rounded-xl bg-brand-100 px-3 py-3 text-xs font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-300"><span class="size-4 animate-spin rounded-full border-2 border-brand-600/20 border-t-brand-600"></span>A IA está a ler a fatura e a preencher os campos...</div>
                         @endif
-                        @if($document)
+                        @if($document || $pendingDocumentPath)
                             <div class="flex items-start gap-3 rounded-xl bg-white p-3 dark:bg-zinc-900">
-                                @if(str_starts_with($document->getMimeType() ?? '', 'image/'))
+                                @if($document && str_starts_with($document->getMimeType() ?? '', 'image/'))
                                     <img src="{{ $document->temporaryUrl() }}" alt="Pré-visualização da fatura" class="h-24 w-20 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
+                                @elseif($pendingDocumentPath && str_starts_with($pendingDocumentMime ?? '', 'image/'))
+                                    <img src="{{ Storage::disk('public')->url($pendingDocumentPath) }}" alt="Pré-visualização da fatura" class="h-24 w-20 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
                                 @else
                                     <div class="flex size-16 items-center justify-center rounded-lg bg-red-50 text-xs font-black text-red-600 dark:bg-red-950/30">PDF</div>
                                 @endif
                                 <div class="min-w-0 flex-1">
-                                    <p class="break-all text-xs font-bold text-zinc-700 dark:text-zinc-200">{{ $document->getClientOriginalName() }}</p>
-                                    <p class="mt-1 text-[10px] text-zinc-500">Fica associado a esta despesa quando carregares em Confirmar Gasto.</p>
+                                    <p class="break-all text-xs font-bold text-zinc-700 dark:text-zinc-200">{{ $document?->getClientOriginalName() ?? $pendingDocumentName }}</p>
+                                    <p class="mt-1 text-[10px] text-zinc-500">Documento recebido diretamente do Scanner de fatura. Fica associado à despesa quando carregares em Confirmar Gasto.</p>
                                     @if($scanSuccess)<p class="mt-2 text-xs font-bold text-emerald-600">✓ Fatura analisada. Campos preenchidos pela IA.</p>@endif
                                 </div>
                             </div>
