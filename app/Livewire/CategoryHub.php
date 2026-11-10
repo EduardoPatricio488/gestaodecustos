@@ -454,7 +454,7 @@ PROMPT;
     // ─────────────────────────────────────────────────────────────────
     public function save(): void
     {
-        if ($this->slug === 'transporte' && $this->transportPassMode) {
+        if (str_starts_with((string) $this->slug, 'transporte') && $this->transportPassMode) {
             $this->saveTransportPass();
             return;
         }
@@ -595,6 +595,7 @@ PROMPT;
             'paid_by_company' => $paidByCompany,
         ]);
 
+        \\Illuminate\\Support\\Facades\\Cache::forget(\"dashboard:subscriptions-monthly:{$workspaceId}:{$user->id}\");
         $user->awardXp(20, 'passe mensal registado');
         $this->reset(['transportPassAmount', 'transportPassPaidByCompany']);
         $this->transportPassName = 'Passe mensal';
