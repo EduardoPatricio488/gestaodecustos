@@ -52,7 +52,7 @@ class FinancialCalendar extends Component
             $incomes = $user->incomes()->whereDate('received_at', $dateStr)->get();
 
             // 3. Assinaturas Planeadas (Sempre que o dia coincide)
-            $subs = $user->subscriptions()->where('billing_day', $tempDate->day)->where('is_active', true)->get();
+            $subs = $user->subscriptions()->where('billing_day', $tempDate->day)->where('is_active', true)->where('paid_by_company', false)->get();
 
             // 4. Salários Planeados
             $recIncomes = $user->recurringIncomes()->where('day_of_month', $tempDate->day)->where('is_active', true)->get();
