@@ -181,7 +181,7 @@ class BankImportService
                     ? (int) $row['category_id']
                     : (in_array($row['type'], ['expense', 'debt_payment'], true) ? $otherCategoryId : null);
                 if ($row['type'] === 'debt_payment') {
-                    $transportCategoryId = $categories->first(fn ($name) => str_contains(mb_strtolower((string) $name), 'transport'));
+                    $transportCategoryId = $categories->filter(fn ($name) => str_contains(mb_strtolower((string) $name), 'transport'))->keys()->first();
                     if ($transportCategoryId) {
                         $categoryId = (int) $transportCategoryId;
                     }
