@@ -17,6 +17,7 @@ class BankTransfer extends Model
         'from_account_id',
         'to_account_id',
         'recipient',
+        'direction',
         'amount',
         'currency',
         'category',
@@ -39,7 +40,7 @@ class BankTransfer extends Model
                 return;
             }
 
-            if ((int) $transfer->from_account_id === (int) $transfer->to_account_id) {
+            if ($transfer->from_account_id && $transfer->to_account_id && (int) $transfer->from_account_id === (int) $transfer->to_account_id) {
                 throw new DomainException('A conta de origem e a conta de destino têm de ser diferentes.');
             }
 
