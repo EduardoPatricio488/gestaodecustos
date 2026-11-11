@@ -1467,7 +1467,7 @@
                 <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1">Fluxo de Caixa</h2>
                 <p class="text-lg font-black dark:text-white uppercase italic tracking-tighter">Movimentos Recentes</p>
             </div>
-            <flux:button variant="ghost" size="sm" class="rounded-xl text-[10px] font-black uppercase tracking-widest" href="{{ route('expenses') }}" wire:navigate>Ver Histórico Completo</flux:button>
+            <flux:button variant="ghost" size="sm" class="rounded-xl text-[10px] font-black uppercase tracking-widest" href="{{ url('/movimentos') }}" wire:navigate>Ver Histórico Completo</flux:button>
         </div>
 
         <div class="divide-y divide-zinc-50 dark:divide-zinc-800/50">
