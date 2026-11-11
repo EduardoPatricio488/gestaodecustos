@@ -76,6 +76,16 @@
                 ];
             @endphp
 
+            <a
+                href="{{ route('movements.index') }}"
+                wire:navigate
+                class="group relative inline-flex shrink-0 items-center gap-2 rounded-t-xl border-b-2 border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3.5 text-[11px] font-black uppercase tracking-wider text-white shadow-md shadow-blue-600/20 transition-all hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:shadow-blue-600/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+            >
+                <flux:icon name="arrow-left-right" class="size-4" />
+                Movimentos
+                <flux:icon name="arrow-up-right" class="size-3.5 opacity-80 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </a>
+
             @foreach($tabs as $t)
                 <button
                     @click="tab = '{{ $t['id'] }}'"
