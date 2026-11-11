@@ -151,7 +151,6 @@ class StatementImportHub extends Component
         $expenses = Expense::query()
             ->with('category:id,name')
             ->where('workspace_id', $workspaceId)
-            ->where('user_id', auth()->id())
             ->where(function ($query) use ($import) {
                 $query->where('bank_statement_import_id', $import->id)
                     ->orWhere('metadata->import_id', $import->id);
@@ -168,7 +167,6 @@ class StatementImportHub extends Component
         $incomes = Income::query()
             ->with('category:id,name')
             ->where('workspace_id', $workspaceId)
-            ->where('user_id', auth()->id())
             ->where('bank_statement_import_id', $import->id)
             ->get()
             ->map(fn (Income $income) => [
