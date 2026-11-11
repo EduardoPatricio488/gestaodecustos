@@ -42,6 +42,35 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class Dashboard extends Component
 {
+    public bool $refreshingInvestmentPrices = false;
+
+    public function refreshInvestmentPrices(): void
+    {
+        $user = Auth::user();
+        $workspace = $user?->currentWorkspace;
+
+        if (! $user || ! $workspace || $this->refreshingInvestmentPrices) {
+            return;
+        }
+
+        $this->refreshingInvestmentPrices = true;
+
+        try {
+            $refresher = app(InvestmentsHub::class);
+            if (! $refresher->refreshPrices(true)) {
+                $this->dispatch('toast', variant: 'error', text: 'Não foi possível atualizar as cotações. Tenta novamente dentro de momentos.');
+
+                return;
+            }
+
+            Cache::forget("dashboard:investments:v3:{$workspace->id}:{$user->id}");
+            Cache::forget("dashboard:account-overview:v1:{$workspace->id}:{$user->id}");
+            $this->dispatch('toast', text: 'Preços dos investimentos atualizados com sucesso.');
+        } finally {
+            $this->refreshingInvestmentPrices = false;
+        }
+    }
+
     public function refreshAccountOverview(): void
     {
         $user = Auth::user();
