@@ -109,7 +109,19 @@
                                     <input type="number" step="0.01" wire:model="preview.rows.{{ $index }}.amount" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs font-bold {{ $isIncome ? 'text-emerald-600' : ($isTransfer ? 'text-blue-600' : 'text-red-600') }}" />
                                 </div>
                                 <div class="md:col-span-3">
-                                    @if(! $isTransfer)
+                                    @if($isTransfer)
+                                        <label class="block text-[10px] font-black uppercase text-zinc-400 mt-2 mb-1">Método de transferência</label>
+                                        <select wire:model="preview.rows.{{ $index }}.transfer_method" class="w-full rounded-lg border border-blue-200 dark:border-blue-800 bg-white dark:bg-zinc-950 px-2 py-2 text-xs">
+                                            <option value="">Não identificado</option>
+                                            <option value="bank_transfer">Transferência bancária</option>
+                                            <option value="immediate_transfer">Transferência imediata</option>
+                                            <option value="multibanco">Multibanco</option>
+                                            <option value="mbway">MB WAY</option>
+                                            <option value="paypal">PayPal</option>
+                                            <option value="revolut">Revolut</option>
+                                            <option value="other">Outro</option>
+                                        </select>
+                                    @else
                                         <label class="block text-[10px] font-black uppercase text-zinc-400 mt-2 mb-1">Categoria</label>
                                         <select wire:model="preview.rows.{{ $index }}.category_id" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs">
                                             <option value="">Sem categoria</option>
