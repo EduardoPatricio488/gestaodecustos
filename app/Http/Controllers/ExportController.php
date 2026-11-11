@@ -153,7 +153,7 @@ class ExportController extends Controller
                 'detail' => 'Transferências bancárias',
                 'amount' => (float) $item->amount,
                 'direction' => ($item->direction ?? 'out') === 'in' ? 'Entrada' : 'Saída',
-                'status' => $item->status ?: 'Concluída',
+                'status' => in_array(mb_strtolower(trim((string) $item->status)), ['completed', 'complete', 'completo'], true) ? 'Completo' : ($item->status ?: 'Completo'),
             ]);
         });
 
