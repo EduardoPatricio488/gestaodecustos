@@ -39,6 +39,7 @@ class MovementsHub extends Component
     public string $editingTransferCategory = '';
     public string $editingStatus = 'completed';
     public string $editingCycle = 'monthly';
+    public string $editingPaymentSource = 'company';
     public bool $editingCompanyPaid = false;
     public bool $editingActive = true;
     public string $editingAmountPaid = '0';
@@ -52,6 +53,7 @@ class MovementsHub extends Component
             'income' => Income::query(),
             'transfer' => BankTransfer::query(),
             'subscription' => Subscription::query(),
+            'subscription_payment' => SubscriptionPayment::query(),
             default => abort(404),
         };
         $model->where('workspace_id', $user->current_workspace_id);
@@ -75,6 +77,7 @@ class MovementsHub extends Component
             'income' => $record->received_at?->format('Y-m-d'),
             'transfer' => $record->transferred_at?->format('Y-m-d'),
             'subscription' => $record->renewal_date?->format('Y-m-d') ?? $record->started_at?->format('Y-m-d'),
+            'subscription_payment' => $record->paid_at?->format('Y-m-d') ?? $record->billing_date?->format('Y-m-d'),
         } ?? now()->format('Y-m-d');
         $this->editingCategoryId = (string) ($record->category_id ?? '');
         $this->editingAccountId = (string) ($record->bank_account_id ?? '');
@@ -89,6 +92,7 @@ class MovementsHub extends Component
         $this->editingTransferCategory = (string) ($record->category ?? '');
         $this->editingStatus = (string) ($record->status ?? 'completed');
         $this->editingCycle = (string) ($record->cycle ?? 'monthly');
+        $this->editingPaymentSource = (string) ($record->payment_source ?? 'company');
         $this->editingCompanyPaid = (bool) ($record->paid_by_company ?? $record->is_company ?? false);
         $this->editingActive = (bool) ($record->is_active ?? true);
         $this->editingAmountPaid = (string) ((float) ($record->amount_paid ?? 0) > 0 ? $record->amount_paid : $record->amount);
@@ -107,6 +111,7 @@ class MovementsHub extends Component
         $this->editingDirection = 'out';
         $this->editingStatus = 'completed';
         $this->editingCycle = 'monthly';
+        $this->editingPaymentSource = 'company';
         $this->editingCompanyPaid = false;
         $this->editingActive = true;
         $this->editingAmountPaid = '0';
@@ -137,6 +142,8 @@ class MovementsHub extends Component
             $rules['editingTransferMethod'] = 'nullable|string|max:100';
             $rules['editingTransferCategory'] = 'nullable|string|max:100';
             $rules['editingStatus'] = 'required|string|max:50';
+        } elseif ($this->editingType === 'subscription_payment') {
+            $rules['editingPaymentSource'] = 'required|string|max:50';
         } else {
             $rules['editingCategoryId'] = 'nullable|integer';
             $rules['editingTitle'] = 'required|string|max:255';
@@ -200,6 +207,12 @@ class MovementsHub extends Component
                     'status' => $this->editingStatus,
                     'currency' => strtoupper($this->editingCurrency),
                     'notes' => $this->editingNotes,
+                ]);
+            } elseif ($this->editingType === 'subscription_payment') {
+                $record->update([
+                    'amount' => $amount,
+                    'paid_at' => $this->editingDate,
+                    'payment_source' => $this->editingPaymentSource,
                 ]);
             } else {
                 $record->update([
@@ -289,7 +302,7 @@ class MovementsHub extends Component
 
         if (in_array($this->type, ['all', 'expense'], true)) {
             $items = $items->concat($scope(Expense::query()->with(['category', 'supplier', 'bankAccount', 'project', 'task', 'costCenter']))->get()->map(fn ($item) => [
-                'key' => 'expense-'.$item->id, 'record_id' => $item->id, 'type' => 'expense', 'type_label' => 'Despesa',
+                'key' => 'expense-'.$item->id, 'record_id' => $item->id, 'edit_type' => 'expense', 'type' => 'expense', 'type_label' => 'Despesa',
                 'record_url' => route('expenses.edit', $item->id),
                 'title' => $item->title ?: $item->description ?: 'Despesa',
                 'detail' => $item->category?->name ?: 'Sem categoria',
@@ -318,7 +331,7 @@ class MovementsHub extends Component
             $items = $items->concat($scope(Income::query()->with(['category', 'bankAccount']))
                 ->where(fn ($q) => $q->whereNull('added_to_salary')->orWhere('added_to_salary', false))
                 ->get()->map(fn ($item) => [
-                    'key' => 'income-'.$item->id, 'record_id' => $item->id, 'type' => 'income', 'type_label' => 'Receita',
+                    'key' => 'income-'.$item->id, 'record_id' => $item->id, 'edit_type' => 'income', 'type' => 'income', 'type_label' => 'Receita',
                     'record_url' => route('hub.incomes'),
                     'title' => $item->description ?: 'Receita',
                     'detail' => $item->category?->name ?: ($item->source ?: 'Receita'),
@@ -340,7 +353,7 @@ class MovementsHub extends Component
 
         if (in_array($this->type, ['all', 'transfer'], true)) {
             $items = $items->concat($scope(BankTransfer::query()->with(['fromAccount', 'toAccount']))->get()->map(fn ($item) => [
-                'key' => 'transfer-'.$item->id, 'record_id' => $item->id, 'type' => 'transfer', 'type_label' => 'Transferência',
+                'key' => 'transfer-'.$item->id, 'record_id' => $item->id, 'edit_type' => 'transfer', 'type' => 'transfer', 'type_label' => 'Transferência',
                 'record_url' => route('hub.debts'),
                 'title' => $item->description ?: ($item->recipient ?: 'Transferência bancária'),
                 'detail' => ($item->fromAccount?->name ?: 'Origem externa').' → '.($item->toAccount?->name ?: 'Destino externo'),
@@ -365,7 +378,7 @@ class MovementsHub extends Component
 
         if (in_array($this->type, ['all', 'subscription'], true)) {
             $items = $items->concat($scope(Subscription::query())->get()->map(fn ($item) => [
-                'key' => 'subscription-'.$item->id, 'record_id' => $item->id, 'type' => 'subscription', 'type_label' => 'Assinatura',
+                'key' => 'subscription-'.$item->id, 'record_id' => $item->id, 'edit_type' => 'subscription', 'type' => 'subscription', 'type_label' => 'Assinatura',
                 'record_url' => route('hub.subscriptions'),
                 'title' => $item->name,
                 'detail' => 'Periodicidade: '.($item->cycle ?: 'Recorrente'),
@@ -386,6 +399,8 @@ class MovementsHub extends Component
             ]));
             $items = $items->concat($scope(\App\Models\SubscriptionPayment::query()->with('subscription'))->get()->map(fn ($payment) => [
                 'key' => 'subscription-payment-'.$payment->id,
+                'record_id' => $payment->id,
+                'edit_type' => 'subscription_payment',
                 'record_url' => route('hub.subscriptions'),
                 'type' => 'subscription',
                 'type_label' => 'Mensalidade',
