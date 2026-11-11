@@ -131,7 +131,7 @@ class BankTransactionsHub extends Component
                     if ($transfer->status === 'completed') {
                         BankAccount::whereKey($transfer->from_account_id)->increment('balance', $transfer->amount);
                         if ($transfer->to_account_id) {
-                            if ($transfer->to_account_id) { BankAccount::whereKey($transfer->to_account_id)->decrement('balance', $transfer->amount); }
+                            BankAccount::whereKey($transfer->to_account_id)->decrement('balance', $transfer->amount);
                         }
                     }
                     $transfer->update([
@@ -208,7 +208,9 @@ class BankTransactionsHub extends Component
                 $transfer = $this->scopedQuery(BankTransfer::class)->lockForUpdate()->findOrFail($id);
                 if ($transfer->status === 'completed') {
                     BankAccount::whereKey($transfer->from_account_id)->increment('balance', $transfer->amount);
-                    BankAccount::whereKey($transfer->to_account_id)->decrement('balance', $transfer->amount);
+                    if ($transfer->to_account_id) {
+                        BankAccount::whereKey($transfer->to_account_id)->decrement('balance', $transfer->amount);
+                    }
                 }
                 $transfer->delete();
             } elseif ($type === 'income') {
