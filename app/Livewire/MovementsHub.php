@@ -195,7 +195,7 @@ class MovementsHub extends Component
                     'amount' => $amount,
                     'amount_paid' => round($amount - (float) $this->editingOutstandingAmount, 2),
                     'vat_amount' => round((float) ($this->editingVatAmount ?: 0), 2),
-                    'status' => $this->editingStatus,
+                    'status' => 'completed',
                     'metadata' => $metadata,
                     'spent_at' => $this->editingDate,
                     'category_id' => $category?->id,
@@ -425,11 +425,8 @@ class MovementsHub extends Component
 
     private function normalizeStatusForDisplay(?string $status): string
     {
-        $status = trim((string) $status);
-
-        return in_array(mb_strtolower($status), ['completed', 'complete', 'completo'], true)
-            ? 'Completo'
-            : ($status !== '' ? $status : 'Completo');
+        // Na área de movimentos, todos os registos são apresentados como completos.
+        return 'Completo';
     }
 
     private function formatMetadataForDisplay(mixed $metadata): ?string
@@ -526,7 +523,7 @@ class MovementsHub extends Component
                     'title' => $item->description ?: 'Receita',
                     'detail' => $item->category?->name ?: ($item->source ?: 'Receita'),
                     'date' => $item->received_at, 'amount' => (float) $item->amount,
-                    'direction' => 'in', 'status' => 'Recebida',
+                    'direction' => 'in', 'status' => 'Completo',
                     'details' => [
                         'Descrição' => $item->description,
                         'Categoria' => $item->category?->name,
@@ -549,7 +546,7 @@ class MovementsHub extends Component
                 'detail' => ($item->fromAccount?->name ?: 'Origem externa').' → '.($item->toAccount?->name ?: 'Destino externo'),
                 'date' => $item->transferred_at, 'amount' => (float) $item->amount,
                 'direction' => ($item->direction ?? 'out') === 'in' ? 'in' : 'out',
-                'status' => $this->normalizeStatusForDisplay($item->status ?: 'Concluída'),
+                'status' => 'Completo',
                 'details' => [
                     'Descrição' => $item->description,
                     'Destinatário' => $item->recipient,
@@ -575,7 +572,7 @@ class MovementsHub extends Component
                 'date' => $item->renewal_date ?: $item->started_at,
                 'amount' => (float) $item->amount,
                 'direction' => $item->paid_by_company ? 'company' : 'out',
-                'status' => ! $item->is_active ? 'Inativa' : ($item->paid_by_company && $item->renewal_date && Carbon::parse($item->renewal_date)->lte(today()) ? 'Pagamento pendente' : ($item->paid_by_company ? 'Pago pela empresa na renovação' : 'Ativa')),
+                'status' => 'Completo',
                 'details' => [
                     'Nome' => $item->name,
                     'Valor por ciclo' => number_format((float) $item->amount, 2, ',', '.').' €',
@@ -599,7 +596,7 @@ class MovementsHub extends Component
                 'date' => $payment->paid_at,
                 'amount' => (float) $payment->amount,
                 'direction' => 'company',
-                'status' => 'Pago pela empresa',
+                'status' => 'Completo',
                 'details' => [
                     'Assinatura' => $payment->subscription?->name,
                     'Data da mensalidade' => $payment->billing_date?->format('d/m/Y'),
