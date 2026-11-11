@@ -59,7 +59,7 @@
         <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-zinc-950/60 p-4" wire:key="edit-bank-movement-modal">
             <div class="my-auto w-full max-w-xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
                 <div class="mb-6 flex items-start justify-between gap-4">
-                    <div><h2 class="text-xl font-black text-zinc-900 dark:text-white">{{ $editingMovementId ? 'Editar movimento' : 'Novo movimento bancário' }}</h2><p class="mt-1 text-sm text-zinc-500">{{ $editingMovementId ? 'Atualiza os dados desta operação bancária.' : 'Preenche os dados para registar uma transferência para outra pessoa.' }}</p></div>
+                    <div><h2 class="text-xl font-black text-zinc-900 dark:text-white">{{ $editingMovementId ? 'Editar movimento' : 'Novo movimento bancário' }}</h2><p class="mt-1 text-sm text-zinc-500">{{ $editingMovementId ? 'Atualiza os dados desta operação bancária.' : ($editDirection === 'in' ? 'Regista dinheiro recebido na tua conta.' : 'Regista dinheiro enviado para outra pessoa.') }}</p></div>
                     <button type="button" wire:click="$set('showEditModal', false)" class="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"><span class="text-xl font-bold leading-none" aria-hidden="true">×</span></button>
                 </div>
                 <form wire:submit="saveMovement" class="space-y-4">
