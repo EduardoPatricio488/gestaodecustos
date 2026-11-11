@@ -78,17 +78,7 @@
                 </div>
 
                 <div x-show="activeTab === 'scanner'" x-cloak class="space-y-5">
-                    <div class="rounded-2xl border border-brand-500/20 bg-brand-500/5 p-4">
-                        <div class="flex items-start gap-3">
-                            <div class="rounded-xl bg-brand-500/10 p-2 text-brand-500"><flux:icon name="sparkles" class="size-5" /></div>
-                            <div>
-                                <p class="text-sm font-black text-zinc-900 dark:text-white">Classificação automática por IA</p>
-                                <p class="mt-1 text-xs leading-relaxed text-zinc-500">A IA lê a fatura, identifica o estabelecimento, o valor e a data, e escolhe a categoria mais adequada entre as tuas categorias existentes.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    @include('livewire.partials.openrouter-quota', ['aiQuota' => $aiQuota])
+                    @include('livewire.partials.openrouter-quota', ['aiQuota' => $aiQuota, 'poll' => false])
 
                     @if($scannerError)
                         <div class="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">
@@ -97,7 +87,12 @@
                         </div>
                     @endif
 
-                    <div class="rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 p-5 sm:p-7 text-center">
+                    @if(($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0)
+                        <div class="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-xs font-medium text-red-400">
+                            A quota diária foi atingida. Podes continuar a criar despesas através da opção «Escolher categoria».
+                        </div>
+                    @else
+                    <div class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 sm:p-5 text-center">
                         <input type="file" wire:model="scannerReceipt" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
                         @if($scannerReceipt)
                             <div class="mt-4 flex flex-col items-center gap-2">
@@ -114,11 +109,12 @@
                         @endif
                         <div wire:loading wire:target="scannerReceipt" class="mt-3 text-xs font-bold text-brand-500">A carregar imagem...</div>
                     </div>
+                    @endif
 
                     <div class="flex flex-col-reverse sm:flex-row gap-3">
                         <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500">Cancelar</button>
                         <button type="button" wire:click="scanInvoiceAndDetectCategory" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0)) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
-                            <span wire:loading.remove wire:target="scanInvoiceAndDetectCategory"><flux:icon name="sparkles" class="size-4" /> {{ (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0) ? 'Quota esgotada' : 'Analisar fatura e detetar categoria' }}</span>
+                            <span wire:loading.remove wire:target="scanInvoiceAndDetectCategory"><flux:icon name="sparkles" class="size-4" /> {{ (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0) ? 'Limite diário atingido' : 'Analisar fatura' }}</span>
                             <span wire:loading wire:target="scanInvoiceAndDetectCategory">A analisar a fatura...</span>
                         </button>
                     </div>
