@@ -809,7 +809,7 @@ class MovementsHub extends Component
                 'date' => $item->renewal_date ?: $item->started_at,
                 'amount' => (float) $item->amount,
                 'direction' => $item->paid_by_company ? 'company' : 'out',
-                'status' => 'Completo',
+                'status' => $item->paid_by_company ? 'Empresa paga esta assinatura' : 'Completo',
                 'details' => [
                     'Nome' => $item->name,
                     'Valor por ciclo' => number_format((float) $item->amount, 2, ',', '.').' €',
