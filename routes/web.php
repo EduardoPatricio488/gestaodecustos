@@ -484,6 +484,7 @@ Route::delete('/stop-impersonating', [ImpersonationController::class, 'stop'])
 // ══════════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/export/dashboard-pdf', [ExportController::class, 'dashboardPdf'])->name('export.dashboard.pdf');
+    Route::get('/export/movimentos-pdf', [ExportController::class, 'movementsPdf'])->name('export.movements.pdf');
     Route::get('/export/expenses', [ExportController::class, 'expensesPdf'])->name('export.expenses');
     Route::get('/export/empresa', [ExportController::class, 'businessExport'])->name('export.business');
     Route::get('/loja/download/{purchase}/request', [StoreDownloadController::class, 'requestToken'])->middleware('throttle:30,1')->name('store.download.request');
