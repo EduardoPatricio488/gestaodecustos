@@ -69,6 +69,7 @@
                 <div>
                     <h2 class="text-lg font-black dark:text-white">Rever movimentos encontrados</h2>
                     <p class="text-xs text-zinc-400 mt-1">Confirma cada movimento. Podes alterar a descrição, data, valor e categoria antes de guardar.</p>
+                    <p class="text-xs font-semibold text-blue-600 dark:text-blue-400 mt-2">Para mudar um movimento entre despesa e transferência, carrega no botão «Trocar para…» que aparece por baixo de cada movimento.</p>
                 </div>
                 <div class="flex flex-wrap gap-2 text-xs">
                     <span class="px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 font-bold">{{ $preview['transactions_total'] ?? 0 }} movimentos</span>
@@ -122,9 +123,16 @@
                         </div>
                         <div class="flex items-center justify-between pl-7">
                             @if(in_array($tx['type'] ?? 'expense', ['expense', 'transfer'], true))
-                                <button type="button" wire:click="$set('preview.rows.{{ $index }}.type', '{{ $isTransfer ? 'expense' : 'transfer' }}')" class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition hover:scale-105 {{ $isTransfer ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 hover:bg-blue-200' : 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300 hover:bg-red-200' }}" title="Carrega para alternar entre despesa e transferência">
-                                    {{ $isTransfer ? 'Transferência' : 'Despesa' }}
-                                </button>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-[10px] text-zinc-500 font-semibold">Tipo atual:</span>
+                                    <span class="inline-flex items-center text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full {{ $isTransfer ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' : 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' }}">
+                                        {{ $isTransfer ? 'Transferência' : 'Despesa' }}
+                                    </span>
+                                    <button type="button" wire:click="$set('preview.rows.{{ $index }}.type', '{{ $isTransfer ? 'expense' : 'transfer' }}')" class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition" title="Trocar o tipo deste movimento">
+                                        <flux:icon name="arrow-left-right" class="size-3" />
+                                        Trocar para {{ $isTransfer ? 'Despesa' : 'Transferência' }}
+                                    </button>
+                                </div>
                             @else
                                 <span class="text-[10px] font-black uppercase tracking-wider {{ $isIncome ? 'text-emerald-600' : 'text-red-600' }}">{{ $isDebtPayment ? 'Pagamento de dívida' : 'Receita' }}</span>
                             @endif
