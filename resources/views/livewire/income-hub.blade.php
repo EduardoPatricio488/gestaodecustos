@@ -2231,16 +2231,44 @@
             </div>
 
             @if($bankReceivedIncomes->isEmpty() && $bankReceivedSalaryPayments->isEmpty())
-                <div class="rounded-2xl border-2 border-dashed border-zinc-200 p-10 text-center dark:border-zinc-700">
-                    <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 dark:bg-indigo-950/40 dark:text-indigo-300">
+                <div class="rounded-2xl border border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50/80 via-white to-white p-6 dark:border-indigo-900/60 dark:from-indigo-950/30 dark:via-zinc-900 dark:to-zinc-900 sm:p-8">
+                    <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300">
                         <flux:icon name="building-library" class="size-7" />
                     </div>
-                    <p class="mt-4 text-base font-black text-zinc-800 dark:text-zinc-100">Ainda não tens transferências bancárias registadas.</p>
-                    <p class="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-500">Quando receberes uma transferência, um pagamento por MB WAY ou o salário na tua conta, regista o movimento e associa-o à respetiva conta bancária para aparecer aqui.</p>
-                    <span class="mt-4 inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                        <span class="flex size-4 items-center justify-center rounded-full border border-current text-[9px] font-black leading-none">i</span>
-                        Sem movimentos para apresentar
-                    </span>
+                    <div class="mt-4 text-center">
+                        <span class="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                            <span class="size-1.5 rounded-full bg-amber-500"></span>
+                            0 movimentos bancários
+                        </span>
+                        <h4 class="mt-3 text-lg font-black text-zinc-900 dark:text-white">Ainda não tens transferências registadas</h4>
+                        <p class="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Esta área está preparada para mostrar o dinheiro que efetivamente entrou nas tuas contas. Assim que registares um recebimento associado a uma conta bancária, os dados aparecem automaticamente aqui.</p>
+                    </div>
+
+                    <div class="mx-auto mt-6 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div class="rounded-xl border border-zinc-200/80 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/70">
+                            <div class="flex items-center gap-2 text-sm font-bold text-zinc-800 dark:text-zinc-100">
+                                <flux:icon name="arrow-down-left" class="size-4 text-emerald-500" />
+                                Transferências
+                            </div>
+                            <p class="mt-2 text-xs leading-relaxed text-zinc-500">Regista o valor recebido e seleciona a conta bancária de destino.</p>
+                        </div>
+                        <div class="rounded-xl border border-zinc-200/80 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/70">
+                            <div class="flex items-center gap-2 text-sm font-bold text-zinc-800 dark:text-zinc-100">
+                                <flux:icon name="smartphone" class="size-4 text-indigo-500" />
+                                MB WAY
+                            </div>
+                            <p class="mt-2 text-xs leading-relaxed text-zinc-500">Adiciona o recebimento e identifica o método ou a conta associada.</p>
+                        </div>
+                        <div class="rounded-xl border border-zinc-200/80 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/70">
+                            <div class="flex items-center gap-2 text-sm font-bold text-zinc-800 dark:text-zinc-100">
+                                <flux:icon name="wallet" class="size-4 text-sky-500" />
+                                Salário
+                            </div>
+                            <p class="mt-2 text-xs leading-relaxed text-zinc-500">Os pagamentos salariais confirmados e associados a uma conta também surgem aqui.</p>
+                        </div>
+                    </div>
+
+                    <p class="mt-6 text-center text-[11px] font-medium text-zinc-400">Nota: esta página não importa movimentos automaticamente do banco. Apresenta os registos que adicionares no Finance Pro IA.</p>
                 </div>
             @else
                 <div class="overflow-x-auto">
