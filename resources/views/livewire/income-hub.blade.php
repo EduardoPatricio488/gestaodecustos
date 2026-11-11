@@ -434,9 +434,15 @@
         <flux:icon name="bolt" class="size-32 text-yellow-500/20 rotate-12" />
     </div>
 
-    <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2">
-        Entradas Extra / Prémios
-    </p>
+    <div class="relative mb-2 flex items-center gap-2">
+        <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Entradas Extra / Prémios</p>
+        <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
+            <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Como é calculado o total de entradas extra e prémios" class="flex size-5 items-center justify-center rounded-full border border-zinc-300 bg-white/80 text-[10px] font-black text-zinc-600 shadow-sm transition hover:scale-110 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">i</button>
+            <div x-show="open" x-cloak x-transition role="tooltip" class="absolute left-0 top-full z-40 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-2xl border border-zinc-700 bg-zinc-950 p-4 text-left normal-case shadow-2xl">
+                <p class="text-[10px] leading-relaxed text-zinc-300">Soma os rendimentos variáveis registados, como receitas extra e prémios. Não corresponde a uma previsão de valores futuros.</p>
+            </div>
+        </div>
+    </div>
 
     <p class="text-4xl font-black text-yellow-600 italic tracking-tight">
         {{ number_format($totalExtras, 0, ',', ' ') }}€
@@ -463,9 +469,15 @@
             <flux:icon name="banknotes" class="size-32 text-amber-500/20 rotate-12" />
         </div>
 
-        <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2">
-            Total {{ now()->year }} (Fixos)
-        </p>
+        <div class="relative mb-2 flex items-center gap-2">
+            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total {{ now()->year }} (Fixos)</p>
+            <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
+                <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Como é calculado o total anual de rendimentos fixos" class="flex size-5 items-center justify-center rounded-full border border-zinc-300 bg-white/80 text-[10px] font-black text-zinc-600 shadow-sm transition hover:scale-110 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">i</button>
+                <div x-show="open" x-cloak x-transition role="tooltip" class="absolute left-0 top-full z-40 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-2xl border border-zinc-700 bg-zinc-950 p-4 text-left normal-case shadow-2xl">
+                    <p class="text-[10px] leading-relaxed text-zinc-300">Soma os valores dos rendimentos fixos criados desde 1 de janeiro do ano atual. É calculado com base nos valores registados e não inclui entradas variáveis.</p>
+                </div>
+            </div>
+        </div>
 
         <p class="text-4xl font-black text-amber-600 italic tracking-tight">
             {{ number_format($totalYear, 0, ',', ' ') }}€
@@ -516,9 +528,15 @@
             <flux:icon name="trophy" class="size-32 text-emerald-500/20 rotate-12" />
         </div>
 
-        <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2">
-            Total ao fim de um ano (Total líquido + Subsídio alimentação)
-        </p>
+        <div class="relative mb-2 flex items-center gap-2">
+            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total ao fim de um ano (Total líquido + Subsídio alimentação)</p>
+            <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
+                <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Como é calculado o total ao fim de um ano" class="flex size-5 items-center justify-center rounded-full border border-zinc-300 bg-white/80 text-[10px] font-black text-zinc-600 shadow-sm transition hover:scale-110 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">i</button>
+                <div x-show="open" x-cloak x-transition role="tooltip" class="absolute left-0 top-full z-40 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-2xl border border-zinc-700 bg-zinc-950 p-4 text-left normal-case shadow-2xl">
+                    <p class="text-[10px] leading-relaxed text-zinc-300">Apresenta uma estimativa para 12 meses, somando o total líquido previsto dos contratos ativos e o subsídio de alimentação configurado. Considera os pagamentos anuais definidos em cada contrato.</p>
+                </div>
+            </div>
+        </div>
 
         <p class="text-4xl font-black text-emerald-600 italic tracking-tight flex items-center gap-2">
             {{ $sourceEmojis[$bestSourceKey] ?? '✨' }}
