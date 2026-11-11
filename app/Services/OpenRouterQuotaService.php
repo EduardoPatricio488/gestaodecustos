@@ -30,7 +30,7 @@ class OpenRouterQuotaService
             Cache::forget($cacheKey);
         }
 
-        return Cache::remember($cacheKey, now()->addSeconds(15), function () use ($apiKey, $empty) {
+        return Cache::remember($cacheKey, now()->addSeconds(60), function () use ($apiKey, $empty) {
             try {
                 $response = Http::withToken($apiKey)
                     ->acceptJson()
