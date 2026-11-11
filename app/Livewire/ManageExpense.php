@@ -216,7 +216,10 @@ PROMPT;
 
             if (preg_match('/\{.*\}/s', $rawText, $matches)) {
                 $result = json_decode($matches[0], true);
-                $amount = $result['amount'] ?? 0;
+                if (! is_array($result)) {
+                    throw new \\Exception('A IA não devolveu JSON válido.');
+                }
+                $amount = $result['amount'] ?? null;
                 if (is_string($amount)) {
                     $amount = str_replace([' ', "\u{00A0}"], '', $amount);
                     if (preg_match('/^\d{1,3}(\.\d{3})+(,\d+)?$/', $amount)) {
@@ -255,7 +258,9 @@ PROMPT;
                 $this->scannedData['amount'] = $amount;
                 $this->scannedData['date'] = $date;
                 $this->amount = $amount;
-                $this->spent_at = $date;
+                if ($date !== null) {
+                    $this->spent_at = $date;
+                }
                 $this->description = trim($result['store'] ?? '');
                 $this->subcategory = $result['subcategory'] ?? $this->subcategory;
                 $this->scanSuccess = true;
