@@ -240,7 +240,10 @@ class Categories extends Component
         $monthStart = Carbon::now()->startOfMonth();
 
         $categories = Category::where('workspace_id', $this->workspaceId())
-            ->where('hidden_from_sidebar', false)
+            ->where(function ($query) {
+                $query->where('hidden_from_sidebar', false)
+                    ->orWhereRaw('LOWER(name) = ?', ['outros']);
+            })
             ->withCount(['expenses as expenses_count' => fn ($q) => $q->where('workspace_id', $this->workspaceId())
                 ->where('spent_at', '>=', $monthStart),
             ])
