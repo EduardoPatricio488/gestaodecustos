@@ -82,7 +82,7 @@ class MovementsHub extends Component
                 'title' => $item->title ?: $item->description ?: 'Despesa',
                 'detail' => $item->category?->name ?: 'Sem categoria',
                 'date' => $item->spent_at, 'amount' => (float) ((float) $item->amount_paid > 0 ? $item->amount_paid : $item->amount),
-                'direction' => 'out', 'status' => $item->status ?: 'Registada',
+                'direction' => 'out', 'status' => 'Completo',
                 'details' => [
                     'Descrição' => $item->description,
                     'Categoria' => $item->category?->name,
@@ -96,7 +96,7 @@ class MovementsHub extends Component
                     'Em falta' => number_format(max(0, (float) $item->amount - (float) $item->amount_paid), 2, ',', '.').' '.($item->currency ?: 'EUR'),
                     'IVA' => $item->vat_amount !== null ? number_format((float) $item->vat_amount, 2, ',', '.').' '.($item->currency ?: 'EUR') : null,
                     'Data' => $item->spent_at?->format('d/m/Y'),
-                    'Estado' => $item->status,
+                    'Estado' => 'Completo',
                     'Informações de importação' => $this->formatMetadataForDisplay($item->metadata),
                 ],
             ]));
