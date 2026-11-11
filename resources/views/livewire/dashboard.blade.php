@@ -156,8 +156,18 @@
 
     {{-- 1. TICKER DE MERCADO ULTRA COMPACTO --}}
     <div x-data="{
+            refreshHidden: false,
+            refreshHideTimer: null,
             scrollNext() { $refs.tickerContainer.scrollBy({ left: 250, behavior: 'smooth' }) },
-            scrollPrev() { $refs.tickerContainer.scrollBy({ left: -250, behavior: 'smooth' }) }
+            scrollPrev() { $refs.tickerContainer.scrollBy({ left: -250, behavior: 'smooth' }) },
+            hideRefreshButton() {
+                this.refreshHidden = true;
+                if (this.refreshHideTimer) clearTimeout(this.refreshHideTimer);
+                this.refreshHideTimer = setTimeout(() => {
+                    this.refreshHidden = false;
+                    this.refreshHideTimer = null;
+                }, 300000);
+            }
          }"
          class="relative group px-1">
 
@@ -185,11 +195,14 @@
         <button
             type="button"
             wire:click="refreshMarketPrices"
+            x-on:click="hideRefreshButton()"
+            x-show="!refreshHidden"
+            x-cloak
             wire:loading.attr="disabled"
             wire:target="refreshMarketPrices"
             title="Atualizar todos os preços de mercado"
             aria-label="Atualizar todos os preços de mercado"
-            class="absolute right-9 top-1/2 -translate-y-1/2 z-30 size-8 flex items-center justify-center rounded-full border border-emerald-300/50 bg-white/95 text-emerald-600 shadow-md transition hover:bg-emerald-50 hover:scale-105 disabled:cursor-wait disabled:opacity-60 dark:bg-zinc-800 dark:text-emerald-400 dark:hover:bg-zinc-700">
+            class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 size-9 flex items-center justify-center rounded-full border border-emerald-300/60 bg-white/95 text-emerald-600 shadow-lg transition hover:bg-emerald-50 hover:scale-105 disabled:cursor-wait disabled:opacity-60 dark:bg-zinc-800 dark:text-emerald-400 dark:hover:bg-zinc-700">
             <flux:icon name="arrow-path" class="size-4" wire:loading.class="animate-spin" wire:target="refreshMarketPrices" />
         </button>
 
