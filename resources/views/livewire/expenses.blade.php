@@ -88,6 +88,8 @@
                         </div>
                     </div>
 
+                    @include('livewire.partials.openrouter-quota', ['aiQuota' => $aiQuota])
+
                     @if($scannerError)
                         <div class="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">
                             <flux:icon name="exclamation-triangle" class="size-4 shrink-0" />
