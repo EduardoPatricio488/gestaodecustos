@@ -137,7 +137,7 @@ class MovementsHub extends Component
         $this->editingTransferMethod = (string) ($record->transfer_method ?? '');
         $this->editingTransferCategory = $this->normalizeTransferCategory($record->category ?? '');
         $this->editingStatus = (string) ($record->status ?? 'completed');
-        $this->editingCycle = (string) ($record->cycle ?? 'monthly');
+        $this->editingCycle = match ((string) ($record->cycle ?? 'monthly')) { 'yearly' => 'annual', 'weekly' => 'monthly', default => (string) ($record->cycle ?? 'monthly') };
         $this->editingPaymentSource = (string) ($record->payment_source ?? 'company');
         $this->editingCompanyPaid = (bool) ($record->paid_by_company ?? $record->is_company ?? false);
         $this->editingActive = (bool) ($record->is_active ?? true);
@@ -413,7 +413,7 @@ class MovementsHub extends Component
         ];
 
         $category = null;
-        if (in_array($this->conversionType, ['expense', 'income', 'subscription'], true)) {
+        if (in_array($this->conversionType, ['expense', 'subscription'], true)) {
             $rules['editingCategoryId'] = $this->conversionType === 'expense' || $this->conversionType === 'subscription' ? 'required|integer' : 'nullable|integer';
             if ($this->editingCategoryId !== '') {
                 $category = $this->conversionCategoryQuery()
@@ -512,7 +512,7 @@ class MovementsHub extends Component
             } elseif ($this->conversionType === 'income') {
                 Income::create($common + [
                     'description' => $description ?: 'Receita',
-                    'category_id' => $category?->id,
+                    'category_id' => null,
                     'bank_account_id' => $account?->id,
                     'received_at' => $this->editingDate,
                     'tax_estimate' => $this->editingIncomeTaxEstimate !== '' ? (float) $this->editingIncomeTaxEstimate : null,
