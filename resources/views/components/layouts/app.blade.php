@@ -1278,7 +1278,7 @@ $hasStoreAccess = $hasLockInAccess;
         :current="request()->routeIs('hub.budget')"
         wire:navigate.hover
     >
-        Orçamento
+        Orçamento {!! $badge($counts['budget']) !!}
     </flux:sidebar.item>
 @endif
                     <flux:sidebar.item icon="arrow-up-tray" :href="route('hub.import')" :current="request()->routeIs('hub.import')" wire:navigate.hover>
