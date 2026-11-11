@@ -306,8 +306,8 @@ class BankTransactionsHub extends Component
             'movements' => $movements,
             'totalIn' => $incomes->sum('amount') + $transfers->where('direction', 'in')->sum('amount'),
             'totalOut' => $expenses->sum(fn ($item) => (float) $item['amount']) + $transfers->where('direction', 'out')->sum('amount'),
-            'totalTransfers' => $transfers->reject(fn ($item) => $item->category === 'Imposto do Selo')->sum('amount'),
-            'totalStampDuty' => $transfers->filter(fn ($item) => $item->category === 'Imposto do Selo')->sum('amount'),
+            'totalTransfers' => $transfers->reject(fn ($item) => ($item['category'] ?? null) === 'Imposto do Selo')->sum('amount'),
+            'totalStampDuty' => $transfers->filter(fn ($item) => ($item['category'] ?? null) === 'Imposto do Selo')->sum('amount'),
             'movementCount' => $movements->count(),
             'bankAccounts' => $scope(BankAccount::query())->orderBy('name')->get(),
         ]);
