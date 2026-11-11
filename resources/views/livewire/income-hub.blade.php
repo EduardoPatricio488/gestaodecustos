@@ -582,7 +582,10 @@
 <div class="space-y-6">
 
     <div class="px-1">
-        <p class="text-sm font-medium leading-relaxed text-zinc-500 dark:text-zinc-400">
+        <h2 class="text-2xl font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white">
+            Rendimentos Fixos
+        </h2>
+        <p class="mt-2 text-sm font-medium leading-relaxed text-zinc-500 dark:text-zinc-400">
             Acompanha os teus contratos de trabalho e consulta os rendimentos líquidos previstos, mensal e anualmente.
         </p>
     </div>
