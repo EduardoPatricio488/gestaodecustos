@@ -113,15 +113,6 @@ class BankTransactionsHub extends Component
                     ->findOrFail($this->editToAccountId);
 
                 $transfer = $this->scopedQuery(BankTransfer::class)->lockForUpdate()->findOrFail($this->editingMovementId);
-                if ($transfer->status === 'completed') {
-                    BankAccount::whereKey($transfer->from_account_id)->decrement('balance', $transfer->amount);
-                    BankAccount::whereKey($transfer->to_account_id)->decrement('balance', $transfer->amount);
-                    BankAccount::whereKey($transfer->from_account_id)->increment('balance', $transfer->amount);
-                }
-                if ($transfer->status === 'completed') {
-                    BankAccount::whereKey($transfer->from_account_id)->increment('balance', $transfer->amount);
-                    BankAccount::whereKey($transfer->to_account_id)->decrement('balance', $transfer->amount);
-                }
                 $oldFrom = (int) $transfer->from_account_id;
                 $oldTo = (int) $transfer->to_account_id;
                 if ($transfer->status === 'completed') {
