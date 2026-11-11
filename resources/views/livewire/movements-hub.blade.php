@@ -35,7 +35,7 @@
                 <article wire:key="{{ $movement['key'] }}" class="flex flex-col gap-3 border-b border-zinc-100 px-4 py-4 last:border-0 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex min-w-0 items-center gap-3">
                         <div class="flex size-10 shrink-0 items-center justify-center rounded-xl {{ $movement['direction'] === 'in' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30' }}">
-                            <flux:icon name="{{ $movement['type'] === 'income' ? 'arrow-down-left' : ($movement['type'] === 'expense' ? 'arrow-up-right' : ($movement['type'] === 'subscription' ? 'repeat' : 'arrows-right-left')) }}" class="size-5" />
+                            <flux:icon name="{{ $movement['type'] === 'income' ? 'arrow-down-left' : ($movement['type'] === 'expense' ? 'arrow-up-right' : ($movement['type'] === 'subscription' ? 'clock' : 'arrows-right-left')) }}" class="size-5" />
                         </div>
                         <div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><p class="truncate text-sm font-bold text-zinc-900 dark:text-white">{{ $movement['title'] }}</p><span class="rounded-full bg-zinc-100 px-2 py-0.5 text-[9px] font-black uppercase text-zinc-500 dark:bg-zinc-800">{{ $movement['type_label'] }}</span></div><p class="mt-1 truncate text-xs text-zinc-500">{{ $movement['detail'] }} · {{ $movement['date']?->format('d/m/Y') ?? '—' }}</p></div>
                     </div>
