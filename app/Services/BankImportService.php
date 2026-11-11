@@ -564,7 +564,8 @@ class BankImportService
     {
         $normalized = $this->normalizeMovementDescription($description);
 
-        return str_contains($normalized, 'mafrense') && str_contains($normalized, 'nem passes');
+        // Os extratos podem apresentar o comerciante apenas como "Mafrense" ou "Nem Passes".
+        return str_contains($normalized, 'mafrense') || str_contains($normalized, 'nem passes');
     }
 
     private function isKnownMerchantExpense(string $normalizedDescription): bool
@@ -574,7 +575,8 @@ class BankImportService
             || str_contains($normalizedDescription, 'mercadona')
             || str_contains($normalizedDescription, 'github')
             || str_contains($normalizedDescription, 'sbksileven')
-            || str_contains($normalizedDescription, 'mafrense nem passes')
+            || str_contains($normalizedDescription, 'mafrense')
+            || str_contains($normalizedDescription, 'nem passes')
             || str_contains($normalizedDescription, 'compra 1293')
             || str_contains($normalizedDescription, 'www amazon')
             || str_contains($normalizedDescription, 'amazon')
@@ -912,7 +914,7 @@ class BankImportService
             str_contains($normalized, 'mercadona'),
             str_contains($normalized, 'hamb da vila'),
             preg_match('/\\bh3\\b/', $normalized) === 1 => 'Alimentação',
-            str_contains($normalized, 'mafrense nem passes') => 'Transporte',
+            (str_contains($normalized, 'mafrense') || str_contains($normalized, 'nem passes')) => 'Transporte',
             str_contains($normalized, 'farmacia falcao') => 'Saúde',
             str_contains($normalized, 'www amazon'),
             str_contains($normalized, 'amazon') => 'Casa',
