@@ -2238,7 +2238,7 @@
                     <p class="mt-4 text-base font-black text-zinc-800 dark:text-zinc-100">Ainda não tens transferências bancárias registadas.</p>
                     <p class="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-500">Quando receberes uma transferência, um pagamento por MB WAY ou o salário na tua conta, regista o movimento e associa-o à respetiva conta bancária para aparecer aqui.</p>
                     <span class="mt-4 inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                        <flux:icon name="info" variant="micro" class="size-3.5" />
+                        <span class="flex size-4 items-center justify-center rounded-full border border-current text-[9px] font-black leading-none">i</span>
                         Sem movimentos para apresentar
                     </span>
                 </div>
