@@ -5,6 +5,8 @@ namespace App\Livewire;
 use App\Models\BankStatementImport;
 use App\Models\CategorizationRule;
 use App\Models\Category;
+use App\Models\Expense;
+use App\Models\Income;
 use App\Services\BankImportService;
 use App\Services\BusinessAccessService;
 use Livewire\Attributes\Layout;
