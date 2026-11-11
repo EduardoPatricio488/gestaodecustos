@@ -295,7 +295,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $download = session()->pull('income_statement_downloads.'.$token);
         abort_unless(is_array($download) && isset($download['path'], $download['name']), 404);
         $path = $download['path'];
-        abort_unless(is_string($path) && preg_match('#^income-statements/[0-9]+/[A-Za-z0-9]+\\.pdf$#', $path), 404);
+        abort_unless(is_string($path) && preg_match('#^income-statements/[0-9]+/[A-Za-z0-9]+\.pdf$#', $path), 404);
         abort_unless(\Illuminate\Support\Facades\Storage::disk('local')->exists($path), 404);
 
         return response()->download(
@@ -331,7 +331,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         );
     })->name('expenses.pending-scan.preview');
 
-    Route::get('/movimentos', \\App\\Livewire\\MovementsHub::class)->name('movements.index');
+    Route::get('/movimentos', \App\Livewire\MovementsHub::class)->name('movements.index');
     Route::get('/expenses', Expenses::class)->name('expenses');
     Route::get('/despesas-pessoais', Expenses::class)->name('expenses.index');
     Route::get('/expenses/create', ManageExpense::class)->name('expenses.create');
