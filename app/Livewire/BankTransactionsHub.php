@@ -118,7 +118,7 @@ class BankTransactionsHub extends Component
                 $this->validate([
                     'editFromAccountId' => 'required|integer|different:editToAccountId',
                     'editToAccountId' => 'required|integer',
-                    'editStatus' => 'required|in:completed,pending,cancelled',
+                    'editStatus' => 'required|in:completed,cancelled',
                 ]);
                 $from = BankAccount::where('workspace_id', $workspaceId)
                     ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
