@@ -72,7 +72,7 @@ class BankImportService
             if ($description === '' || abs($amount) < 0.001) {
                 continue;
             }
-            $categoryId = $this->categorize($workspaceId, $userId, $description, $categories);
+            $categoryId = $this->categorize($workspaceId, $userId, $description, $categories, false);
             $rows[] = [
                 'signature' => sha1($date->format('Y-m-d').'|'.number_format($amount, 2, '.', '').'|'.mb_strtolower($description).'|'.$index),
                 'date' => $date->format('Y-m-d'),
@@ -86,6 +86,20 @@ class BankImportService
 
         if ($rows === []) {
             throw new \RuntimeException('Não consegui identificar movimentos neste PDF. Confirma que exportaste o extrato completo em PDF através de Contas → Movimentos → PDF.');
+        }
+
+        $unknownIndexes = [];
+        foreach ($rows as $rowIndex => $row) {
+            if (! $row['category_id']) {
+                $unknownIndexes[] = $rowIndex;
+            }
+        }
+        if ($unknownIndexes !== []) {
+            $descriptions = array_map(fn ($rowIndex) => $rows[$rowIndex]['description'], $unknownIndexes);
+            $suggestions = $this->categorizeManyWithAi($descriptions, $categories);
+            foreach ($unknownIndexes as $position => $rowIndex) {
+                $rows[$rowIndex]['category_id'] = $suggestions[$position] ?? null;
+            }
         }
 
         return [
@@ -450,7 +464,7 @@ class BankImportService
         return $negative ? -abs($amount) : $amount;
     }
 
-    private function categorize(int $workspaceId, int $userId, string $description, array $categories): ?int
+    private function categorize(int $workspaceId, int $userId, string $description, array $categories, bool $useAi = true): ?int
     {
         if ($categories === []) {
             return null;
@@ -472,7 +486,7 @@ class BankImportService
                 }
             }
         }
-        if ($this->hasAiKey()) {
+        if ($useAi && $this->hasAiKey()) {
             return $this->categorizeWithAi($description, $categories);
         }
 
@@ -499,6 +513,54 @@ class BankImportService
     private function hasAiKey(): bool
     {
         return filled(config('services.openrouter.api_key'));
+    }
+
+    private function categorizeManyWithAi(array $descriptions, array $categories): array
+    {
+        if (! $this->hasAiKey() || $descriptions === [] || $categories === []) {
+            return [];
+        }
+
+        try {
+            $categoryNames = array_values($categories);
+            $payload = array_map(fn ($description, $index) => ['index' => $index, 'description' => $description], $descriptions, array_keys($descriptions));
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.config('services.openrouter.api_key'),
+                'HTTP-Referer' => config('app.url'),
+            ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
+                ->timeout((int) config('limits.ai.request_timeout_seconds', 30))
+                ->post('https://openrouter.ai/api/v1/chat/completions', [
+                    'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                    'messages' => [
+                        ['role' => 'system', 'content' => 'Classifica movimentos bancários apenas nas categorias fornecidas. Não inventes categorias. Devolve exclusivamente JSON válido no formato {"categories":[{"index":0,"category":"nome exato ou UNKNOWN"}]}.'],
+                        ['role' => 'user', 'content' => 'Categorias disponíveis: '.json_encode($categoryNames, JSON_UNESCAPED_UNICODE).'. Movimentos: '.json_encode($payload, JSON_UNESCAPED_UNICODE)],
+                    ],
+                    'max_tokens' => 700,
+                    'temperature' => 0,
+                ]);
+
+            $content = trim((string) $response->json('choices.0.message.content', ''));
+            $content = preg_replace('/^\x60{3}(?:json)?\s*|\s*\x60{3}$/i', '', $content);
+            $decoded = json_decode($content, true);
+            $mapped = [];
+            foreach (($decoded['categories'] ?? []) as $item) {
+                $index = (int) ($item['index'] ?? -1);
+                $name = trim((string) ($item['category'] ?? ''));
+                if ($index < 0 || $index >= count($descriptions) || $name === '' || strcasecmp($name, 'UNKNOWN') === 0) {
+                    continue;
+                }
+                foreach ($categories as $id => $categoryName) {
+                    if (strcasecmp($categoryName, $name) === 0) {
+                        $mapped[$index] = (int) $id;
+                        break;
+                    }
+                }
+            }
+
+            return $mapped;
+        } catch (\Throwable) {
+            return [];
+        }
     }
 
     private function categorizeWithAi(string $description, array $categories): ?int
