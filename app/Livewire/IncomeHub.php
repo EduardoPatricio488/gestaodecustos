@@ -345,7 +345,9 @@ class IncomeHub extends Component
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => 'Finance Pro AI',
             ])->connectTimeout(10)->timeout(90)->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                'model' => in_array(config('services.openrouter.model'), [null, '', 'openrouter/free'], true)
+                    ? 'openai/gpt-4o-mini'
+                    : config('services.openrouter.model'),
                 'temperature' => 0,
                 'max_tokens' => 1400,
                 'response_format' => ['type' => 'json_object'],
