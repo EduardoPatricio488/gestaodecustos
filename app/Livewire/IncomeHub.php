@@ -380,7 +380,8 @@ class IncomeHub extends Component
             ])->connectTimeout(8)->timeout(45)->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => config('services.openrouter.model', 'openrouter/free'),
                 'temperature' => 0,
-                'max_tokens' => 3000,
+                'max_tokens' => 6000,
+                'response_format' => ['type' => 'json_object'],
                 'messages' => [
                     [
                         'role' => 'system',
