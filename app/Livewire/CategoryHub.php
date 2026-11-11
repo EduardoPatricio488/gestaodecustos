@@ -508,7 +508,7 @@ PROMPT;
                 }
             }
             if (! is_array($result)) {
-                throw new \\Exception('A IA não devolveu dados reconhecíveis num formato válido.');
+                throw new \Exception('A IA não devolveu dados reconhecíveis num formato válido.');
             }
 
             // Normaliza nomes alternativos devolvidos por alguns modelos gratuitos.
