@@ -154,6 +154,38 @@ class Expenses extends Component
                 throw new \Exception('A IA não conseguiu analisar a fatura: '.($response->json('error.message') ?? 'erro de comunicação.'));
             }
 
+            // Alguns modelos gratuitos interrompem respostas longas. Nesse caso,
+            // repetimos a leitura com um esquema curto que prioriza os dados essenciais.
+            if ($response->json('choices.0.finish_reason') === 'length') {
+                $compactPrompt = "Analisa esta fatura portuguesa. Devolve APENAS um objeto JSON válido, sem texto adicional. ".
+                    "Escolhe category exatamente desta lista: ".json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
+                    "Extrai apenas: category (categoria mais adequada), amount (total final pago, número), date (YYYY-MM-DD), store (estabelecimento), description (descrição curta). ".
+                    "Não inventes dados; usa null se não estiverem visíveis. Formato: {\\"category\\":null,\\"amount\\":null,\\"date\\":null,\\"store\\":null,\\"description\\":null}";
+
+                $retryResponse = \Illuminate\Support\Facades\Http::withHeaders([
+                    'Authorization' => 'Bearer '.$apiKey,
+                    'Content-Type' => 'application/json',
+                    'HTTP-Referer' => config('app.url'),
+                    'X-Title' => 'Finance Pro AI',
+                ])->connectTimeout(8)
+                    ->timeout(45)
+                    ->post('https://openrouter.ai/api/v1/chat/completions', [
+                        'model' => config('services.openrouter.model', 'openrouter/free'),
+                        'temperature' => 0,
+                        'max_tokens' => 900,
+                        'response_format' => ['type' => 'json_object'],
+                        'reasoning' => ['effort' => 'minimal'],
+                        'messages' => [[
+                            'role' => 'user',
+                            'content' => [['type' => 'text', 'text' => $compactPrompt], $contentPart],
+                        ]],
+                    ]);
+
+                if ($retryResponse->successful()) {
+                    $response = $retryResponse;
+                }
+            }
+
             $content = $response->json('choices.0.message.content');
             if (is_array($content)) {
                 $content = collect($content)
