@@ -25,6 +25,8 @@ class CategoryHub extends Component
 
     public $slug;
 
+    public string $categoryFilter = 'all';
+
     public $title;
 
     public $icon;
@@ -238,6 +240,15 @@ class CategoryHub extends Component
     // ─────────────────────────────────────────────────────────────────
     private function setHubConfig(): void
     {
+        // A página Outros funciona como visão global de todas as categorias.
+        if (Str::slug((string) $this->slug) === 'outros') {
+            $this->dbName = null;
+            $this->title = 'Todas as categorias';
+            $this->icon = 'squares-2x2';
+            $this->subcategories = [];
+            return;
+        }
+
         // 1. Configurações para as categorias "estáticas" (estilos e labels)
         $configs = [
             'carro' => ['db' => 'Carro',       'title' => 'Carro',        'icon' => 'truck',         'subs' => ['Gasolina', 'Manutenção', 'Seguro', 'Portagens', 'Estacionamento', 'Lavagem', 'Multa', 'Inspeção']],
@@ -808,21 +819,32 @@ PROMPT;
         $user = auth()->user();
         $currentWs = $user->currentWorkspace;
 
-        // 1. Busca os dados da categoria para saber a cor e campos
+        // 1. Identifica a visão global ou uma categoria específica.
+        $isAllCategories = Str::slug((string) $this->slug) === 'outros';
+
         $categoryQuery = Category::where('name', $this->dbName)
             ->where('workspace_id', $currentWs->id);
         if ($currentWs->type === 'personal') {
             $categoryQuery->where('user_id', $user->id);
         }
-        $category = $categoryQuery->first();
+        $category = $isAllCategories ? null : $categoryQuery->first();
 
         $categoryColor = $category->color ?? '#6366f1';
 
-        // 2. Query das despesas
-        $query = Expense::with('bankAccount')
-            ->whereHas('category', fn ($q) => $q->where('name', $this->dbName))
+        $filterCategories = Category::where('workspace_id', $currentWs->id)
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->orderBy('order')
+            ->orderBy('name')
+            ->get()
+            ->unique(fn (Category $item) => mb_strtolower(trim($item->name), 'UTF-8'))
+            ->values();
+
+        // 2. Query das despesas: todas as categorias ou apenas a categoria atual.
+        $query = Expense::with(['bankAccount', 'category'])
             ->where('workspace_id', $currentWs->id)
-            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id));
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->when(! $isAllCategories, fn ($q) => $q->whereHas('category', fn ($categoryQuery) => $categoryQuery->where('name', $this->dbName)))
+            ->when($isAllCategories && $this->categoryFilter !== 'all', fn ($q) => $q->where('category_id', $this->categoryFilter));
 
         // 3. Carrega os campos dinâmicos
         $categoryFields = [];
@@ -839,8 +861,10 @@ PROMPT;
         }
 
         return view('livewire.category-hub', [
-            'expenses' => $query->latest('spent_at')->get(),
-            'spentThisMonth' => $query->whereMonth('spent_at', now()->month)->sum('amount'),
+            'expenses' => (clone $query)->latest('spent_at')->get(),
+            'spentThisMonth' => (clone $query)->whereMonth('spent_at', now()->month)->sum('amount'),
+            'filterCategories' => $filterCategories,
+            'isAllCategories' => $isAllCategories,
             'currentWs' => $currentWs,
             'categoryFields' => $categoryFields,
             'categoryColor' => $categoryColor,
