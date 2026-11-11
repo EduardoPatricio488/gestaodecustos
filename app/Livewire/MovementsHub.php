@@ -282,6 +282,10 @@ class MovementsHub extends Component
         if ($this->conversionType === 'transfer') {
             $rules['editingFromAccountId'] = 'required|integer|different:editingToAccountId';
             $rules['editingToAccountId'] = 'required|integer';
+            $rules['editingDirection'] = 'required|in:in,out';
+            $rules['editingRecipient'] = 'nullable|string|max:255';
+            $rules['editingTransferMethod'] = 'nullable|string|max:100';
+            $rules['editingTransferCategory'] = 'nullable|string|max:100';
         }
         $this->validate($rules);
 
@@ -342,8 +346,11 @@ class MovementsHub extends Component
                 BankTransfer::create($common + [
                     'from_account_id' => $fromAccount->id,
                     'to_account_id' => $toAccount->id,
-                    'direction' => 'out',
+                    'direction' => $this->editingDirection,
                     'description' => $description ?: 'Transferência',
+                    'recipient' => $this->editingRecipient ?: null,
+                    'transfer_method' => $this->editingTransferMethod ?: null,
+                    'category' => $this->editingTransferCategory ?: null,
                     'transferred_at' => $this->editingDate,
                     'status' => 'completed',
                     'notes' => $this->editingNotes ?: null,
