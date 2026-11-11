@@ -349,17 +349,17 @@ class IncomeHub extends Component
                     ? 'openai/gpt-4o-mini'
                     : config('services.openrouter.model'),
                 'temperature' => 0,
-                'max_tokens' => 1400,
+                'max_tokens' => 2400,
                 'response_format' => ['type' => 'json_object'],
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'És um assistente de leitura de contratos de trabalho portugueses. Extrai apenas dados explicitamente visíveis. Não inventes valores. Devolve JSON válido com: company, position, department, contract_type (sem_termo, termo_certo, termo_incerto, estagio, prestacao_servicos, outro), start_date (YYYY-MM-DD), end_date (YYYY-MM-DD), salary_gross (número), annual_payments (12 ou 14), meal_allowance (número por dia), working_days (inteiro), holiday_allowance_gross (número), christmas_allowance_gross (número), allowances_in_duodecimos (boolean), health_insurance (texto), expense_allowance (número mensal), additional_benefits (texto). Para campos ausentes usa null. Distingue salário bruto de líquido e não uses o líquido como salário bruto. Converte datas portuguesas para YYYY-MM-DD. Subsídio de alimentação é valor diário.'
+                        'content' => 'És um assistente especializado na leitura integral de contratos de trabalho portugueses. Analisa TODA a fotografia, incluindo rodapé, anexos visíveis, tabelas, listas e texto em letras pequenas. Extrai apenas informação explicitamente visível; nunca inventes nem omitas benefícios. Devolve exclusivamente um objeto JSON válido com estes campos: company, position, department, contract_type (sem_termo, termo_certo, termo_incerto, estagio, prestacao_servicos, outro), start_date (YYYY-MM-DD), end_date (YYYY-MM-DD), salary_gross (número), annual_payments (12 ou 14), meal_allowance (número por dia), working_days (inteiro), holiday_allowance_gross (número), christmas_allowance_gross (número), allowances_in_duodecimos (boolean), health_insurance (texto), expense_allowance (número mensal), additional_benefits (array de strings). MUITO IMPORTANTE: em additional_benefits inclui TODOS os benefícios, regalias, subsídios, seguros, prémios, ajudas de custo, viatura, combustível, telemóvel, computador, formação, férias adicionais, descontos, apoio à infância, alimentação, transporte e quaisquer outras vantagens que estejam escritas. Cada benefício deve ser um elemento separado do array, mantendo o nome e os detalhes/valores/condições exatamente como constam. Não juntes tudo num único benefício, não escolhas apenas o mais importante e não resumas uma lista. Se existirem vários pontos, devolve todos. Se não houver benefícios, devolve []. Para campos ausentes usa null. Distingue salário bruto de líquido e não uses o líquido como salário bruto. Converte datas portuguesas para YYYY-MM-DD. Subsídio de alimentação é valor diário.'
                     ],
                     [
                         'role' => 'user',
                         'content' => [
-                            ['type' => 'text', 'text' => 'Lê esta fotografia do contrato e extrai os dados para preencher o formulário de salário.'],
+                            ['type' => 'text', 'text' => 'Lê cuidadosamente toda a fotografia do contrato, do topo ao fundo. Identifica e lista individualmente TODOS os benefícios e regalias mencionados, mesmo que estejam em secções diferentes ou em letras pequenas. Não omitas nenhum. Extrai também os restantes dados para preencher o formulário.'],
                             ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mime.';base64,'.$image]],
                         ],
                     ],
@@ -429,7 +429,22 @@ class IncomeHub extends Component
             }
             if (filled($data['health_insurance'] ?? null)) $this->recHealthInsurance = mb_substr((string) $data['health_insurance'], 0, 255);
             if (is_numeric($data['expense_allowance'] ?? null)) $this->recExpenseAllowance = (float) $data['expense_allowance'];
-            if (filled($data['additional_benefits'] ?? null)) $this->recAdditionalBenefits = mb_substr((string) $data['additional_benefits'], 0, 2000);
+            if (filled($data['additional_benefits'] ?? null)) {
+                $benefits = $data['additional_benefits'];
+                if (is_array($benefits)) {
+                    $benefits = collect($benefits)
+                        ->flatten()
+                        ->map(fn ($benefit) => is_scalar($benefit) ? trim((string) $benefit) : '')
+                        ->filter()
+                        ->unique()
+                        ->map(fn ($benefit) => '• '.$benefit)
+                        ->implode("\n");
+                } else {
+                    $benefits = trim((string) $benefits);
+                }
+
+                $this->recAdditionalBenefits = mb_substr($benefits, 0, 2000);
+            }
 
             $this->recContractStatus = 'active';
             $this->recalculateEmploymentSalary();
