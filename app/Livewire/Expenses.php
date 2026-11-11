@@ -114,11 +114,11 @@ class Expenses extends Component
                 ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData]]
                 : ['type' => 'file', 'file' => ['filename' => $this->scannerReceipt->getClientOriginalName(), 'file_data' => 'data:'.$mimeType.';base64,'.$fileData]];
 
-            $prompt = "Analisa a fatura e devolve APENAS um objeto JSON minificado, numa única linha. Sem explicações nem markdown. ".
-                "category deve ser exatamente um destes nomes: ".json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
-                "amount é o total efetivamente pago, apenas número; date é YYYY-MM-DD; store é o nome do estabelecimento; description é uma descrição muito curta; subcategory é uma subcategoria curta ou null. ".
-                "Se um dado não estiver visível, usa null. Não inventes e não incluas campos extra. ".
-                "Formato obrigatório: {\"category\":null,\"amount\":null,\"date\":null,\"store\":null,\"description\":null,\"subcategory\":null}";
+            $prompt = "Lê esta fatura e responde apenas com JSON válido, minificado e sem markdown. ".
+                "category tem de ser exatamente um destes nomes: ".json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
+                "Extrai o total pago em amount (número), date (YYYY-MM-DD), store (estabelecimento), description (máx. 5 palavras) e subcategory (curta ou null). ".
+                "Não inventes dados; usa null quando não forem legíveis. Não acrescentes campos. ".
+                "Formato: {\"category\":null,\"amount\":null,\"date\":null,\"store\":null,\"description\":null,\"subcategory\":null}";
 
             $apiKey = config('services.openrouter.api_key');
             if (blank($apiKey)) {
@@ -135,7 +135,7 @@ class Expenses extends Component
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
                     'temperature' => 0,
-                    'max_tokens' => 700,
+                    'max_tokens' => 1400,
                     'response_format' => ['type' => 'json_object'],
                     'reasoning' => ['effort' => 'minimal'],
                     'messages' => [[
@@ -167,10 +167,15 @@ class Expenses extends Component
                 $returnedModel = $response->json('model') ?: config('services.openrouter.model', 'openrouter/free');
                 $finishReason = $response->json('choices.0.finish_reason') ?: 'não indicado';
                 $refusal = $response->json('choices.0.message.refusal');
-                $detail = is_string($refusal) && trim($refusal) !== ''
-                    ? trim($refusal)
-                    : 'O modelo '.$returnedModel.' não devolveu JSON válido (motivo: '.$finishReason.').';
-                throw new \Exception($detail.' Tenta uma imagem mais nítida ou escolhe a categoria manualmente.');
+                if (is_string($refusal) && trim($refusal) !== '') {
+                    $detail = trim($refusal);
+                } elseif ($finishReason === 'length') {
+                    $detail = 'A resposta da IA foi interrompida pelo limite de geração do modelo gratuito ('.$returnedModel.').';
+                } else {
+                    $detail = 'A IA não conseguiu devolver os dados num formato válido ('.$returnedModel.', motivo: '.$finishReason.').';
+                }
+
+                throw new \Exception($detail.' Podes tentar novamente ou escolher a categoria manualmente.');
             }
 
             $suggestedCategory = trim((string) ($result['category'] ?? ''));
