@@ -16,6 +16,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth; // <--- FALTA ISTO
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
@@ -110,6 +111,12 @@ class IncomeHub extends Component
     public float $recExpenseAllowance = 0;
 
     public string $recAdditionalBenefits = '';
+
+    public $contractScanPhoto = null;
+
+    public string $salaryFormMode = 'manual';
+
+    public bool $contractScanProcessing = false;
 
     public string $raiseMode = 'total'; // 'total' ou 'addition'
 
@@ -313,6 +320,96 @@ class IncomeHub extends Component
 
         $this->showRaiseModal = true;
         $this->dispatch('modal-show-upgrade');
+    }
+
+    public function scanEmploymentContract(): void
+    {
+        if (auth()->user()->isViewer()) {
+            $this->dispatch('toast', variant: 'error', text: 'Ação negada.');
+            return;
+        }
+
+        $this->validate(['contractScanPhoto' => 'required|image|mimes:jpg,jpeg,png,webp|max:10240']);
+        $apiKey = config('services.openrouter.api_key');
+        if (! filled($apiKey)) {
+            $this->dispatch('toast', variant: 'error', text: 'O serviço de IA não está configurado.');
+            return;
+        }
+
+        $this->contractScanProcessing = true;
+        try {
+            $mime = $this->contractScanPhoto->getMimeType() ?: 'image/jpeg';
+            $image = base64_encode(file_get_contents($this->contractScanPhoto->getRealPath()));
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.$apiKey,
+                'HTTP-Referer' => config('app.url'),
+                'X-Title' => 'Finance Pro AI',
+            ])->connectTimeout(10)->timeout(90)->post('https://openrouter.ai/api/v1/chat/completions', [
+                'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                'temperature' => 0,
+                'max_tokens' => 1400,
+                'response_format' => ['type' => 'json_object'],
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'És um assistente de leitura de contratos de trabalho portugueses. Extrai apenas dados explicitamente visíveis. Não inventes valores. Devolve JSON válido com: company, position, department, contract_type (sem_termo, termo_certo, termo_incerto, estagio, prestacao_servicos, outro), start_date (YYYY-MM-DD), end_date (YYYY-MM-DD), salary_gross (número), annual_payments (12 ou 14), meal_allowance (número por dia), working_days (inteiro), holiday_allowance_gross (número), christmas_allowance_gross (número), allowances_in_duodecimos (boolean), health_insurance (texto), expense_allowance (número mensal), additional_benefits (texto). Para campos ausentes usa null. Distingue salário bruto de líquido e não uses o líquido como salário bruto. Converte datas portuguesas para YYYY-MM-DD. Subsídio de alimentação é valor diário.'
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => [
+                            ['type' => 'text', 'text' => 'Lê esta fotografia do contrato e extrai os dados para preencher o formulário de salário.'],
+                            ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mime.';base64,'.$image]],
+                        ],
+                    ],
+                ],
+            ]);
+
+            if (! $response->successful()) {
+                throw new \RuntimeException('A IA não conseguiu analisar a fotografia. Tenta novamente com uma imagem mais nítida.');
+            }
+            $content = $response->json('choices.0.message.content');
+            if (is_array($content)) $content = collect($content)->pluck('text')->filter()->implode("\n");
+            $data = json_decode((string) $content, true);
+            if (! is_array($data)) throw new \RuntimeException('Não foi possível interpretar os dados extraídos do contrato.');
+
+            if (filled($data['company'] ?? null)) $this->recDescription = mb_substr(trim((string) $data['company']), 0, 255);
+            if (filled($data['position'] ?? null)) $this->recPosition = mb_substr((string) $data['position'], 0, 255);
+            if (filled($data['department'] ?? null)) $this->recDepartment = mb_substr((string) $data['department'], 0, 255);
+            if (in_array($data['contract_type'] ?? null, ['sem_termo', 'termo_certo', 'termo_incerto', 'estagio', 'prestacao_servicos', 'outro'], true)) $this->recContractType = $data['contract_type'];
+
+            foreach (['start_date' => 'recStartDate', 'end_date' => 'recEndDate'] as $key => $property) {
+                if (filled($data[$key] ?? null) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $data[$key])) $this->{$property} = $data[$key];
+            }
+            if (is_numeric($data['salary_gross'] ?? null) && (float) $data['salary_gross'] > 0) $this->recSalaryGross = (float) $data['salary_gross'];
+            if (in_array((int) ($data['annual_payments'] ?? 0), [12, 14], true)) $this->recAnnualPayments = (int) $data['annual_payments'];
+            if (is_numeric($data['meal_allowance'] ?? null)) $this->recMealAllowance = (float) $data['meal_allowance'];
+            if (is_numeric($data['working_days'] ?? null)) $this->recWorkingDays = max(0, min(31, (int) $data['working_days']));
+            if (is_numeric($data['holiday_allowance_gross'] ?? null)) {
+                $this->recHolidayAllowanceSameAsSalary = false;
+                $this->recHolidayAllowanceGross = (float) $data['holiday_allowance_gross'];
+            }
+            if (is_numeric($data['christmas_allowance_gross'] ?? null)) {
+                $this->recChristmasAllowanceSameAsSalary = false;
+                $this->recChristmasAllowanceGross = (float) $data['christmas_allowance_gross'];
+            }
+            if (is_bool($data['allowances_in_duodecimos'] ?? null)) {
+                $this->recAllowancesInDuodecimos = $data['allowances_in_duodecimos'];
+                $this->recDuodecimosPercentage = $this->recAllowancesInDuodecimos ? 100 : 0;
+            }
+            if (filled($data['health_insurance'] ?? null)) $this->recHealthInsurance = mb_substr((string) $data['health_insurance'], 0, 255);
+            if (is_numeric($data['expense_allowance'] ?? null)) $this->recExpenseAllowance = (float) $data['expense_allowance'];
+            if (filled($data['additional_benefits'] ?? null)) $this->recAdditionalBenefits = mb_substr((string) $data['additional_benefits'], 0, 2000);
+
+            $this->recContractStatus = 'active';
+            $this->recalculateEmploymentSalary();
+            $this->salaryFormMode = 'manual';
+            $this->dispatch('toast', variant: 'success', text: 'Contrato analisado. Confirma os dados preenchidos antes de guardar.');
+        } catch (\Throwable $exception) {
+            report($exception);
+            $this->dispatch('toast', variant: 'error', text: $exception->getMessage() ?: 'Ocorreu um erro ao analisar o contrato.');
+        } finally {
+            $this->contractScanProcessing = false;
+        }
     }
 
     public function saveEmployment()
@@ -533,6 +630,8 @@ class IncomeHub extends Component
         });
 
         // 4. Fechar e avisar
+        $this->contractScanPhoto = null;
+        $this->salaryFormMode = 'manual';
         $this->dispatch('modal-close-emprego');
         $this->dispatch('toast', text: 'Contrato gravado com sucesso! ✅');
 
@@ -924,7 +1023,9 @@ class IncomeHub extends Component
         }
 
         $this->editingFixedId = null;
-        $this->recDescription = '';
+        $this->contractScanPhoto = null;
+        $this->salaryFormMode = 'manual';
+        $this->recDescription = ''
         $this->recPosition = '';
         $this->recDepartment = '';
         $this->recContractType = 'sem_termo';
