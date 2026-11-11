@@ -151,6 +151,7 @@ class CategoryHub extends Component
         $this->spent_at = now()->format('Y-m-d');
         $this->currency = auth()->user()->currentWorkspace->currency ?? 'EUR';
         $this->setHubConfig();
+        $this->refreshScannerQuota();
 
         $pendingScan = session()->pull('pending_expense_scan:'.auth()->user()->current_workspace_id.':'.auth()->id());
 
@@ -378,6 +379,10 @@ class CategoryHub extends Component
         }
 
         try {
+            $this->refreshScannerQuota();
+            if (($this->aiQuota['available'] ?? false) && (int) ($this->aiQuota['remaining'] ?? 0) <= 0) {
+                throw new \\Exception('A quota diária gratuita do OpenRouter está esgotada. A reposição ocorre às 00:00 UTC.');
+            }
             $filePath = $file->getRealPath();
             if (! $filePath || ! file_exists($filePath)) throw new \Exception('Não foi possível ler o ficheiro enviado.');
 
@@ -653,6 +658,7 @@ PROMPT;
             $this->scanError = 'Não foi possível analisar a fatura: '.$e->getMessage();
         } finally {
             $this->isScanning = false;
+            $this->refreshScannerQuota();
         }
     }
 
