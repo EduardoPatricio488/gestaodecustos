@@ -217,7 +217,7 @@ PROMPT;
             if (preg_match('/\{.*\}/s', $rawText, $matches)) {
                 $result = json_decode($matches[0], true);
                 if (! is_array($result)) {
-                    throw new \\Exception('A IA não devolveu JSON válido.');
+                    throw new \Exception('A IA não devolveu JSON válido.');
                 }
                 $amount = $result['amount'] ?? null;
                 if (is_string($amount)) {
@@ -232,9 +232,9 @@ PROMPT;
 
                 $date = $result['date'] ?? null;
                 try {
-                    $date = $date ? Carbon::parse($date)->format('Y-m-d') : now()->format('Y-m-d');
+                    $date = $date ? Carbon::parse($date)->format('Y-m-d') : null;
                 } catch (\Exception $e) {
-                    $date = now()->format('Y-m-d');
+                    $date = null;
                 }
 
                 $metaFields = [
