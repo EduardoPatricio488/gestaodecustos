@@ -46,7 +46,9 @@ class MovementsHub extends Component
     public bool $editingCompanyPaid = false;
     public bool $editingActive = true;
     public string $editingAmountPaid = '0';
+    public string $editingOutstandingAmount = '0';
     public string $editingVatAmount = '0';
+    public string $editingMetadata = '';
 
     private function scopedRecordQuery(string $type, int $id)
     {
@@ -101,8 +103,10 @@ class MovementsHub extends Component
         $this->editingPaymentSource = (string) ($record->payment_source ?? 'company');
         $this->editingCompanyPaid = (bool) ($record->paid_by_company ?? $record->is_company ?? false);
         $this->editingActive = (bool) ($record->is_active ?? true);
-        $this->editingAmountPaid = (string) ((float) ($record->amount_paid ?? 0) > 0 ? $record->amount_paid : $record->amount);
+        $this->editingAmountPaid = (string) ($record->amount_paid ?? 0);
+        $this->editingOutstandingAmount = (string) max(0, round((float) $record->amount - (float) ($record->amount_paid ?? 0), 2));
         $this->editingVatAmount = (string) ($record->vat_amount ?? '0');
+        $this->editingMetadata = $record->metadata ? json_encode($record->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
     }
 
     public function cancelEditMovement(): void
@@ -123,6 +127,8 @@ class MovementsHub extends Component
         $this->editingActive = true;
         $this->editingAmountPaid = '0';
         $this->editingVatAmount = '0';
+        $this->editingOutstandingAmount = '0';
+        $this->editingMetadata = '';
     }
 
     public function saveMovement(): void
@@ -136,6 +142,9 @@ class MovementsHub extends Component
         ];
         if ($this->editingType === 'expense') {
             $rules['editingVatAmount'] = 'nullable|numeric|min:0|max:'.$this->editingAmount;
+            $rules['editingOutstandingAmount'] = 'required|numeric|min:0|max:'.$this->editingAmount;
+            $rules['editingStatus'] = 'required|string|max:50';
+            $rules['editingMetadata'] = 'nullable|string|max:10000';
             $rules['editingCategoryId'] = 'nullable|integer';
         } elseif ($this->editingType === 'income') {
             $rules['editingCategoryId'] = 'nullable|integer';
@@ -156,6 +165,13 @@ class MovementsHub extends Component
             $rules['editingCycle'] = 'required|string|max:50';
         }
         $this->validate($rules);
+        if ($this->editingType === 'expense' && trim($this->editingMetadata) !== '') {
+            json_decode($this->editingMetadata, true);
+            if (json_last_error() !== JSON_ERROR_NONE || ! is_array(json_decode($this->editingMetadata, true))) {
+                $this->addError('editingMetadata', 'As informações de importação têm de estar num formato JSON válido (objeto ou lista).');
+                return;
+            }
+        }
 
         $user = auth()->user();
         $workspaceId = (int) $user->current_workspace_id;
@@ -172,7 +188,9 @@ class MovementsHub extends Component
                 ->findOrFail((int) $this->editingAccountId);
         }
 
-        DB::transaction(function () use ($category, $account): void {
+        $metadata = $this->editingType === 'expense' && trim($this->editingMetadata) !== '' ? json_decode($this->editingMetadata, true) : null;
+
+        DB::transaction(function () use ($category, $account, $metadata): void {
             $record = $this->scopedRecordQuery($this->editingType, (int) $this->editingId)->lockForUpdate()->firstOrFail();
             $amount = round((float) $this->editingAmount, 2);
             if ($this->editingType === 'expense') {
@@ -180,8 +198,10 @@ class MovementsHub extends Component
                     'title' => $this->editingTitle !== '' ? $this->editingTitle : null,
                     'description' => $this->editingDescription,
                     'amount' => $amount,
-                    'amount_paid' => $amount,
+                    'amount_paid' => round($amount - (float) $this->editingOutstandingAmount, 2),
                     'vat_amount' => round((float) ($this->editingVatAmount ?: 0), 2),
+                    'status' => $this->editingStatus,
+                    'metadata' => $metadata,
                     'spent_at' => $this->editingDate,
                     'category_id' => $category?->id,
                     'bank_account_id' => $account?->id,
@@ -430,7 +450,7 @@ class MovementsHub extends Component
                 'title' => $item->title ?: $item->description ?: 'Despesa',
                 'detail' => $item->category?->name ?: 'Sem categoria',
                 'date' => $item->spent_at, 'amount' => (float) ((float) $item->amount_paid > 0 ? $item->amount_paid : $item->amount),
-                'direction' => 'out', 'status' => 'Completo',
+                'direction' => 'out', 'status' => $this->normalizeStatusForDisplay($item->status ?: 'Completo'),
                 'details' => [
                     'Descrição' => $item->description,
                     'Categoria' => $item->category?->name,
@@ -444,7 +464,7 @@ class MovementsHub extends Component
                     'Em falta' => number_format(max(0, (float) $item->amount - (float) ((float) $item->amount_paid > 0 ? $item->amount_paid : $item->amount)), 2, ',', '.').' '.($item->currency ?: 'EUR'),
                     'IVA' => $item->vat_amount !== null ? number_format((float) $item->vat_amount, 2, ',', '.').' '.($item->currency ?: 'EUR') : null,
                     'Data' => $item->spent_at?->format('d/m/Y'),
-                    'Estado' => 'Completo',
+                    'Estado' => $this->normalizeStatusForDisplay($item->status ?: 'Completo'),
                     'Informações de importação' => $this->formatMetadataForDisplay($item->metadata),
                 ],
             ]));
