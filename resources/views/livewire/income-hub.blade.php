@@ -412,7 +412,7 @@
                                 <span class="text-xs font-black tabular-nums text-emerald-300">{{ number_format($thisMonthReceived, 2, ',', ' ') }} €</span>
                             </div>
                         </div>
-                        <p class="mt-2 text-[9px] leading-relaxed text-zinc-400">Inclui o salário líquido, o subsídio de alimentação e os prémios/serviços extra registados este mês. Os salários sem pagamento registado são estimativas.</p>
+                        <p class="mt-2 text-[9px] leading-relaxed text-zinc-400">Inclui receitas registadas, salários com pagamento registado e salários que assinalaste como já recebidos este mês. Os salários não assinalados não entram neste total.</p>
                     </div>
                 </div>
             </div>
