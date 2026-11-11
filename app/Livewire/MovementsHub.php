@@ -480,10 +480,10 @@ class MovementsHub extends Component
             $rules['editingSubscriptionBillingDay'] = 'required|integer|min:1|max:31';
             $rules['editingSubscriptionPaymentMethod'] = 'required|in:card,direct_debit,bank_transfer,paypal,cash';
             $rules['editingSubscriptionStatus'] = 'required|in:active,paused,cancelled';
-            $rules['editingSubscriptionStartedAt'] = 'required|date';
-            $rules['editingSubscriptionRenewalDate'] = 'required|date';
+            $rules['editingSubscriptionStartedAt'] = 'nullable|date';
+            $rules['editingSubscriptionRenewalDate'] = 'nullable|date';
             $rules['editingCycle'] = 'required|in:monthly,quarterly,semiannual,annual';
-            $rules['editingNotes'] = 'nullable|string|max:500';
+            $rules['editingNotes'] = 'nullable|string|max:1000';
             $rules['editingNotifyDaysBefore'] = 'nullable|integer|min:1|max:30';
         }
 
@@ -572,8 +572,8 @@ class MovementsHub extends Component
                     'category_id' => $category->id,
                     'cycle' => $this->editingCycle,
                     'billing_day' => (int) $this->editingSubscriptionBillingDay,
-                    'started_at' => $this->editingSubscriptionStartedAt,
-                    'renewal_date' => $this->editingSubscriptionRenewalDate,
+                    'started_at' => $this->editingSubscriptionStartedAt ?: null,
+                    'renewal_date' => $this->editingSubscriptionRenewalDate ?: null,
                     'payment_method' => $this->editingSubscriptionPaymentMethod,
                     'status' => $this->editingSubscriptionStatus,
                     'is_active' => $this->editingSubscriptionStatus === 'active',
