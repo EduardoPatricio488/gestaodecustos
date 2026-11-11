@@ -9,7 +9,11 @@
                     <p class="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Centraliza os movimentos associados às tuas contas: transferências entre bancos, recebimentos, pagamentos e operações identificadas como MB WAY.</p>
                 </div>
             </div>
-
+            <div class="flex shrink-0">
+                <button type="button" wire:click="openNewTransfer" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
+                    <flux:icon name="plus" class="size-4" /> Nova transferência
+                </button>
+            </div>
         </div>
     </section>
 
@@ -23,7 +27,7 @@
     <section class="space-y-4" x-data="{ filter: 'all', query: '' }">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 class="text-lg font-black text-zinc-900 dark:text-white">Histórico de movimentos</h2><p class="text-xs text-zinc-500">Consulta e filtra as operações registadas nas tuas contas.</p></div><div class="relative w-full sm:max-w-xs"><flux:icon name="magnifying-glass" class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" /><input x-model="query" type="search" placeholder="Pesquisar movimento, conta..." class="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-9 pr-3 text-sm text-zinc-800 outline-none focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"></div></div>
         <div class="flex flex-wrap gap-2">
-            @foreach([['all','Todos'],['transfer','Transferências'],['mbway','MB WAY'],['income','Entradas'],['expense','Saídas']] as [$key,$label])
+            @foreach([['all','Todos'],['transfer','Transferências'],['in','Entradas'],['out','Saídas']] as [$key,$label])
                 <button type="button" @click="filter='{{ $key }}'" :class="filter==='{{ $key }}' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-900'" class="rounded-full border border-zinc-200 px-4 py-2 text-xs font-bold dark:border-zinc-700">{{ $label }}</button>
             @endforeach
         </div>
@@ -33,7 +37,7 @@
             @else
                 <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @foreach($movements as $movement)
-                        @php $filterType = $movement['kind'] === 'mbway' ? 'mbway' : ($movement['kind'] === 'transfer' ? 'transfer' : $movement['direction']); @endphp
+                        @php $filterType = $movement['kind'] === 'transfer' ? 'transfer' : $movement['direction']; @endphp
                         <article x-show="(filter === 'all' || filter === '{{ $filterType }}') && @js(mb_strtolower($movement['label'].' '.$movement['account'].' '.$movement['counterpart'].' '.$movement['channel'])).includes(query.toLowerCase())" class="flex flex-col gap-3 px-4 py-4 transition hover:bg-zinc-50 dark:hover:bg-zinc-800/40 sm:flex-row sm:items-center sm:px-5">
                             <div class="flex min-w-0 flex-1 items-center gap-3"><div class="flex size-10 shrink-0 items-center justify-center rounded-xl {{ $movement['kind'] === 'mbway' ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : ($movement['direction'] === 'in' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300' : ($movement['direction'] === 'out' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300')) }}"><flux:icon name="{{ $movement['kind'] === 'mbway' ? 'device-phone-mobile' : ($movement['direction'] === 'in' ? 'arrow-down-left' : ($movement['direction'] === 'out' ? 'arrow-up-right' : 'arrows-right-left')) }}" class="size-5" /></div><div class="min-w-0"><p class="truncate text-sm font-bold text-zinc-900 dark:text-white">{{ $movement['label'] }}</p><p class="mt-0.5 truncate text-xs text-zinc-500">{{ $movement['account'] }} <span class="px-1 text-zinc-300">·</span> {{ $movement['counterpart'] }}</p></div></div>
                             <div class="flex flex-col gap-2 sm:items-end">
@@ -55,7 +59,7 @@
         <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-zinc-950/60 p-4" wire:key="edit-bank-movement-modal">
             <div class="my-auto w-full max-w-xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
                 <div class="mb-6 flex items-start justify-between gap-4">
-                    <div><h2 class="text-xl font-black text-zinc-900 dark:text-white">Editar movimento</h2><p class="mt-1 text-sm text-zinc-500">Atualiza os dados desta operação bancária.</p></div>
+                    <div><h2 class="text-xl font-black text-zinc-900 dark:text-white">{{ $editingMovementId ? 'Editar movimento' : 'Nova transferência' }}</h2><p class="mt-1 text-sm text-zinc-500">{{ $editingMovementId ? 'Atualiza os dados desta operação bancária.' : 'Preenche os dados para registar uma transferência entre contas.' }}</p></div>
                     <button type="button" wire:click="$set('showEditModal', false)" class="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"><flux:icon name="x" class="size-5" /></button>
                 </div>
                 <form wire:submit="saveMovement" class="space-y-4">
@@ -76,7 +80,7 @@
                     @endif
                     <div class="flex justify-end gap-3 border-t border-zinc-100 pt-5 dark:border-zinc-800">
                         <button type="button" wire:click="$set('showEditModal', false)" class="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-bold text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancelar</button>
-                        <button type="submit" wire:loading.attr="disabled" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"><span wire:loading.remove wire:target="saveMovement">Guardar alterações</span><span wire:loading wire:target="saveMovement">A guardar...</span></button>
+                        <button type="submit" wire:loading.attr="disabled" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"><span wire:loading.remove wire:target="saveMovement">{{ $editingMovementId ? 'Guardar alterações' : 'Registar transferência' }}</span><span wire:loading wire:target="saveMovement">A guardar...</span></button>
                     </div>
                 </form>
             </div>
