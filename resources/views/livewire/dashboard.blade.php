@@ -182,6 +182,17 @@
             @endforeach
         </div>
 
+        <button
+            type="button"
+            wire:click="refreshMarketPrices"
+            wire:loading.attr="disabled"
+            wire:target="refreshMarketPrices"
+            title="Atualizar todos os preços de mercado"
+            aria-label="Atualizar todos os preços de mercado"
+            class="absolute right-9 top-1/2 -translate-y-1/2 z-30 size-8 flex items-center justify-center rounded-full border border-emerald-300/50 bg-white/95 text-emerald-600 shadow-md transition hover:bg-emerald-50 hover:scale-105 disabled:cursor-wait disabled:opacity-60 dark:bg-zinc-800 dark:text-emerald-400 dark:hover:bg-zinc-700">
+            <flux:icon name="arrow-path" class="size-4" wire:loading.class="animate-spin" wire:target="refreshMarketPrices" />
+        </button>
+
         <button x-on:click="scrollNext" class="absolute -right-1 top-1/2 -translate-y-1/2 z-20 size-8 flex items-center justify-center bg-white/90 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex">
             <flux:icon name="chevron-right" class="size-3 text-zinc-600 dark:text-zinc-300" />
         </button>
