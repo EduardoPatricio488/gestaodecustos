@@ -114,17 +114,12 @@ class Expenses extends Component
                 ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData]]
                 : ['type' => 'file', 'file' => ['filename' => $this->scannerReceipt->getClientOriginalName(), 'file_data' => 'data:'.$mimeType.';base64,'.$fileData]];
 
-            $prompt = "Analisa esta fatura ou recibo português e devolve APENAS JSON válido, minificado, sem markdown. ".
+            // Nesta etapa só precisamos dos dados essenciais para abrir a revisão da despesa.
+            // Um prompt curto reduz o tempo de resposta e evita truncagens dos modelos gratuitos.
+            $prompt = "Analisa esta fatura portuguesa e devolve APENAS JSON válido, sem markdown. ".
                 "A categoria tem de ser exatamente uma destas: ".json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
-                "Extrai todos os campos visíveis. Não inventes, não estimes e não calcules valores ausentes; usa null quando não estiverem impressos ou legíveis. ".
-                "amount=total final da compra; item_name=produto(s) comprado(s); date=YYYY-MM-DD; time=HH:MM; quantity=número; unit=unidade; ".
-                "store=nome do estabelecimento; description=descrição curta; subcategory=subcategoria curta; unit_price=preço unitário; vat_rate=taxa IVA percentual; ".
-                "gross_amount=total ilíquido/com IVA; net_amount=base tributável sem IVA; vat_amount=valor do IVA; tax_incidence=descrição da incidência/taxa; ".
-                "amount_tendered=valor entregue; change_amount=troco; payment_condition=Pronto pagamento, A prazo, Pagamento parcial ou Pagamento diferido; ".
-                "payment_method=método indicado (Dinheiro, Multibanco, Cartão, MB Way, Transferência ou outro texto explícito); ".
-                "company_nif=NIF do emitente; customer_nif=NIF do cliente; invoice_number=número do documento; notes=observações impressas relevantes. ".
-                "Não confundas o NIF do emitente com o NIF do cliente. Valores numéricos apenas, com ponto decimal. ".
-                "Estrutura exata: {\"category\":null,\"amount\":null,\"item_name\":null,\"date\":null,\"time\":null,\"quantity\":null,\"unit\":null,\"store\":null,\"description\":null,\"subcategory\":null,\"unit_price\":null,\"vat_rate\":null,\"gross_amount\":null,\"net_amount\":null,\"vat_amount\":null,\"tax_incidence\":null,\"amount_tendered\":null,\"change_amount\":null,\"payment_condition\":null,\"payment_method\":null,\"company_nif\":null,\"customer_nif\":null,\"invoice_number\":null,\"notes\":null}";
+                "Extrai apenas: category (categoria mais adequada), amount (total final pago, número), date (YYYY-MM-DD), store (estabelecimento) e description (descrição curta). ".
+                'Não inventes dados; usa null se não estiverem visíveis. Formato: {"category":null,"amount":null,"date":null,"store":null,"description":null}';
 
             $apiKey = config('services.openrouter.api_key');
             if (blank($apiKey)) {
@@ -136,12 +131,12 @@ class Expenses extends Component
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => 'Finance Pro AI',
-            ])->connectTimeout(8)
-                ->timeout(45)
+            ])->connectTimeout(5)
+                ->timeout(25)
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
                     'temperature' => 0,
-                    'max_tokens' => 2200,
+                    'max_tokens' => 700,
                     'response_format' => ['type' => 'json_object'],
                     'reasoning' => ['effort' => 'minimal'],
                     'messages' => [[
@@ -152,38 +147,6 @@ class Expenses extends Component
 
             if (! $response->successful()) {
                 throw new \Exception('A IA não conseguiu analisar a fatura: '.($response->json('error.message') ?? 'erro de comunicação.'));
-            }
-
-            // Alguns modelos gratuitos interrompem respostas longas. Nesse caso,
-            // repetimos a leitura com um esquema curto que prioriza os dados essenciais.
-            if ($response->json('choices.0.finish_reason') === 'length') {
-                $compactPrompt = "Analisa esta fatura portuguesa. Devolve APENAS um objeto JSON válido, sem texto adicional. ".
-                    "Escolhe category exatamente desta lista: ".json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
-                    "Extrai apenas: category (categoria mais adequada), amount (total final pago, número), date (YYYY-MM-DD), store (estabelecimento), description (descrição curta). ".
-                    'Não inventes dados; usa null se não estiverem visíveis. Formato: {"category":null,"amount":null,"date":null,"store":null,"description":null}';
-
-                $retryResponse = \Illuminate\Support\Facades\Http::withHeaders([
-                    'Authorization' => 'Bearer '.$apiKey,
-                    'Content-Type' => 'application/json',
-                    'HTTP-Referer' => config('app.url'),
-                    'X-Title' => 'Finance Pro AI',
-                ])->connectTimeout(8)
-                    ->timeout(45)
-                    ->post('https://openrouter.ai/api/v1/chat/completions', [
-                        'model' => config('services.openrouter.model', 'openrouter/free'),
-                        'temperature' => 0,
-                        'max_tokens' => 900,
-                        'response_format' => ['type' => 'json_object'],
-                        'reasoning' => ['effort' => 'minimal'],
-                        'messages' => [[
-                            'role' => 'user',
-                            'content' => [['type' => 'text', 'text' => $compactPrompt], $contentPart],
-                        ]],
-                    ]);
-
-                if ($retryResponse->successful()) {
-                    $response = $retryResponse;
-                }
             }
 
             $content = $response->json('choices.0.message.content');
