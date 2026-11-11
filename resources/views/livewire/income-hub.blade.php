@@ -564,7 +564,7 @@
     {{-- ================================================================== --}}
     {{-- GRELHA FIXOS + EXTRAS · RESPONSIVA                               --}}
     {{-- ================================================================== --}}
-   <div class="flex flex-col gap-12 w-full">
+   <div class="flex flex-col gap-12 w-full" x-data="{ activeIncomeTab: 'billing' }">
 
 
 
@@ -589,17 +589,18 @@
 <div class="space-y-6">
 
     {{-- Título --}}
-    <div class="flex items-center justify-between px-2">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-500">
-                <flux:icon name="calendar-days" variant="outline" class="size-4" />
-            </div>
-            <h2 class="text-sm font-black uppercase tracking-widest text-zinc-400">
-                Valores a faturar
-            </h2>
-        </div>
-
+    <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5 dark:border-zinc-800 dark:bg-zinc-950">
+        <button type="button" @click="activeIncomeTab = 'billing'" :class="activeIncomeTab === 'billing' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'" class="inline-flex items-center gap-2 rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-wider transition">
+            <flux:icon name="calendar-days" variant="micro" class="size-4" />
+            Valores a faturar
+        </button>
+        <button type="button" @click="activeIncomeTab = 'bank'" :class="activeIncomeTab === 'bank' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'" class="inline-flex items-center gap-2 rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-wider transition">
+            <flux:icon name="building-library" variant="micro" class="size-4" />
+            Movimentos bancários
+        </button>
     </div>
+    <div x-show="activeIncomeTab === 'billing'" x-cloak>
+
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div class="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -2205,6 +2206,76 @@
             </div>
         @endforelse
     </div>
+    </div>
+    <div x-show="activeIncomeTab === 'bank'" x-cloak class="space-y-6">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total recebido em contas</p>
+                <p class="mt-2 text-2xl font-black text-emerald-600">{{ number_format($bankTransactionsTotal, 2, ',', ' ') }} €</p>
+                <p class="mt-1 text-[10px] text-zinc-500">Soma dos movimentos bancários registados</p>
+            </div>
+            <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Entradas e transferências</p>
+                <p class="mt-2 text-2xl font-black text-zinc-900 dark:text-white">{{ $bankReceivedIncomes->count() }}</p>
+                <p class="mt-1 text-[10px] text-zinc-500">Movimentos associados a uma conta</p>
+            </div>
+            <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Salários recebidos</p>
+                <p class="mt-2 text-2xl font-black text-zinc-900 dark:text-white">{{ $bankReceivedSalaryPayments->count() }}</p>
+                <p class="mt-1 text-[10px] text-zinc-500">Pagamentos salariais confirmados</p>
+            </div>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <div class="mb-4 flex items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-sm font-black uppercase tracking-wider text-zinc-900 dark:text-white">Movimentos por conta bancária</h3>
+                    <p class="mt-1 text-xs text-zinc-500">Transferências, MB WAY e outras entradas associadas às tuas contas.</p>
+                </div>
+                <span class="rounded-full bg-indigo-50 px-3 py-1 text-[9px] font-black uppercase text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">Registos reais</span>
+            </div>
+
+            @if($bankReceivedIncomes->isEmpty() && $bankReceivedSalaryPayments->isEmpty())
+                <div class="rounded-2xl border-2 border-dashed border-zinc-200 p-10 text-center dark:border-zinc-700">
+                    <flux:icon name="building-library" class="mx-auto size-8 text-zinc-300 dark:text-zinc-600" />
+                    <p class="mt-3 text-sm font-bold text-zinc-700 dark:text-zinc-200">Ainda não existem movimentos bancários registados.</p>
+                    <p class="mt-1 text-xs text-zinc-500">Ao registares uma entrada ou salário, seleciona a conta bancária ou a conta MB WAY como destino.</p>
+                </div>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[680px] text-left">
+                        <thead><tr class="border-b border-zinc-100 text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:border-zinc-800"><th class="px-3 py-3">Data</th><th class="px-3 py-3">Descrição</th><th class="px-3 py-3">Conta / método</th><th class="px-3 py-3 text-right">Valor recebido</th></tr></thead>
+                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                            @foreach($bankReceivedIncomes as $movement)
+                                <tr>
+                                    <td class="px-3 py-3 text-xs text-zinc-500">{{ $movement->received_at?->format('d/m/Y') ?? '—' }}</td>
+                                    <td class="px-3 py-3"><p class="text-xs font-bold text-zinc-900 dark:text-white">{{ $movement->description }}</p><p class="mt-0.5 text-[9px] uppercase text-zinc-400">Entrada</p></td>
+                                    <td class="px-3 py-3 text-xs font-semibold text-zinc-600 dark:text-zinc-300">{{ $movement->bankAccount?->name ?? 'Conta não identificada' }}</td>
+                                    <td class="px-3 py-3 text-right text-sm font-black text-emerald-600">+{{ number_format((float) ($movement->amount_converted ?? $movement->amount), 2, ',', ' ') }} €</td>
+                                </tr>
+                            @endforeach
+                            @foreach($bankReceivedSalaryPayments as $movement)
+                                @php
+                                    $movementMealCard = ($movement->recurringIncome?->metadata['meal_allowance_destination'] ?? null) === 'meal_card';
+                                    $movementAmount = (float) $movement->bank_balance_amount > 0
+                                        ? (float) $movement->bank_balance_amount
+                                        : max(0, (float) $movement->net_received - ($movementMealCard ? (float) $movement->meal_allowance : 0));
+                                @endphp
+                                <tr>
+                                    <td class="px-3 py-3 text-xs text-zinc-500">{{ $movement->paid_at?->format('d/m/Y') ?? '—' }}</td>
+                                    <td class="px-3 py-3"><p class="text-xs font-bold text-zinc-900 dark:text-white">{{ $movement->recurringIncome?->description ?? 'Salário' }}</p><p class="mt-0.5 text-[9px] uppercase text-zinc-400">Salário · {{ \Carbon\Carbon::create($movement->payment_year, $movement->payment_month)->translatedFormat('F Y') }}</p></td>
+                                    <td class="px-3 py-3 text-xs font-semibold text-zinc-600 dark:text-zinc-300">{{ $movement->bankAccount?->name ?? 'Conta não identificada' }}</td>
+                                    <td class="px-3 py-3 text-right text-sm font-black text-emerald-600">+{{ number_format($movementAmount, 2, ',', ' ') }} €</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+    </div>
+
+
 </div>
 
 
