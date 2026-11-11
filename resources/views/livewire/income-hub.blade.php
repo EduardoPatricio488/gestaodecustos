@@ -2232,9 +2232,15 @@
 
             @if($bankReceivedIncomes->isEmpty() && $bankReceivedSalaryPayments->isEmpty())
                 <div class="rounded-2xl border-2 border-dashed border-zinc-200 p-10 text-center dark:border-zinc-700">
-                    <flux:icon name="building-library" class="mx-auto size-8 text-zinc-300 dark:text-zinc-600" />
-                    <p class="mt-3 text-sm font-bold text-zinc-700 dark:text-zinc-200">Ainda não existem movimentos bancários registados.</p>
-                    <p class="mt-1 text-xs text-zinc-500">Ao registares uma entrada ou salário, seleciona a conta bancária ou a conta MB WAY como destino.</p>
+                    <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 dark:bg-indigo-950/40 dark:text-indigo-300">
+                        <flux:icon name="building-library" class="size-7" />
+                    </div>
+                    <p class="mt-4 text-base font-black text-zinc-800 dark:text-zinc-100">Ainda não tens transferências bancárias registadas.</p>
+                    <p class="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-500">Quando receberes uma transferência, um pagamento por MB WAY ou o salário na tua conta, regista o movimento e associa-o à respetiva conta bancária para aparecer aqui.</p>
+                    <span class="mt-4 inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                        <flux:icon name="info" variant="micro" class="size-3.5" />
+                        Sem movimentos para apresentar
+                    </span>
                 </div>
             @else
                 <div class="overflow-x-auto">
