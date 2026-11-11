@@ -32,27 +32,24 @@ class BankImportService
         $ext = strtolower($file->getClientOriginalExtension());
         $parsed = $this->parseTransactionsFromFile($content, $ext);
         $expenseCandidates = [];
-        $expenseIndex = 0;
 
-        foreach ($parsed['transactions'] as $transaction) {
+        foreach ($parsed['transactions'] as $transactionIndex => $transaction) {
             $amount = (float) ($transaction['amount'] ?? 0);
             $classification = $this->classifyMovement((string) ($transaction['description'] ?? ''), $amount);
-            if ($amount >= 0 && $classification['type'] !== 'transfer') {
-                continue;
-            }
-            $signature = $this->buildExpenseSignature($transaction, $expenseIndex);
             $expenseCandidates[] = [
-                'signature' => $signature,
+                'signature' => $this->buildExpenseSignature($transaction, $transactionIndex),
                 'date' => $transaction['date']->format('Y-m-d'),
                 'description' => Str::limit((string) $transaction['description'], 90),
                 'amount' => round($amount, 2),
-                'type' => $classification['type'] === 'transfer' ? 'transfer' : ($classification['type'] === 'debt_payment' ? 'debt_payment' : 'expense'),
+                'type' => $classification['type'] === 'transfer' ? 'transfer' : ($classification['type'] === 'debt_payment' ? 'debt_payment' : ($amount >= 0 ? 'income' : 'expense')),
                 'movement_label' => $classification['label'],
             ];
-            $expenseIndex++;
         }
 
         $this->refineMovementTypesWithAi($expenseCandidates);
+        $expenseCandidates = array_values(array_filter($expenseCandidates, fn ($row) =>
+            (float) $row['amount'] < 0 || $row['type'] === 'transfer'
+        ));
 
         return [
             'bank' => $parsed['bank'],
@@ -358,21 +355,18 @@ class BankImportService
             $categories = Category::where('workspace_id', $workspace->id)->pluck('name', 'id');
             $imported = 0;
             $duplicatesSkipped = 0;
-            $movementIndex = 0;
             $aiRows = [];
             foreach ($transactions as $transactionIndex => $candidate) {
                 $candidateAmount = (float) ($candidate['amount'] ?? 0);
                 $candidateDescription = (string) ($candidate['description'] ?? '');
                 $candidateClassification = $this->classifyMovement($candidateDescription, $candidateAmount);
-                if ($candidateAmount < 0 || $candidateClassification['type'] === 'transfer') {
-                    $aiRows[$transactionIndex] = [
-                        'type' => $candidateClassification['type'] === 'transfer' || $candidateClassification['type'] === 'debt_payment'
-                            ? $candidateClassification['type']
-                            : ($candidateAmount >= 0 ? 'income' : 'expense'),
-                        'description' => $candidateDescription,
-                        'amount' => $candidateAmount,
-                    ];
-                }
+                $aiRows[$transactionIndex] = [
+                    'type' => $candidateClassification['type'] === 'transfer' || $candidateClassification['type'] === 'debt_payment'
+                        ? $candidateClassification['type']
+                        : ($candidateAmount >= 0 ? 'income' : 'expense'),
+                    'description' => $candidateDescription,
+                    'amount' => $candidateAmount,
+                ];
             }
             $this->refineMovementTypesWithAi($aiRows);
             $selectedLookup = is_array($selectedSignatures) ? array_fill_keys(array_values($selectedSignatures), true) : null;
@@ -388,7 +382,7 @@ class BankImportService
                     continue;
                 }
 
-                $signature = $this->buildExpenseSignature($transaction, $movementIndex++);
+                $signature = $this->buildExpenseSignature($transaction, $transactionIndex);
                 if ($selectedLookup !== null && ! isset($selectedLookup[$signature])) {
                     continue;
                 }
