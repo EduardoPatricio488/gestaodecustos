@@ -28,6 +28,8 @@ class IncomeHub extends Component
 {
     use WithFileUploads;
 
+    public string $activeIncomeTab = 'billing';
+
     // Receita Extra
     public $description = '';
 
