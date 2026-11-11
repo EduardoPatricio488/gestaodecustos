@@ -30,6 +30,7 @@ class BankTransactionsHub extends Component
     public string $editStatus = 'completed';
     public ?int $editCategoryId = null;
     public bool $canConvertTransferToExpense = false;
+    public bool $showConvertExpenseOptions = false;
 
     private function authorizeMutation(): void
     {
@@ -56,6 +57,7 @@ class BankTransactionsHub extends Component
         $this->editingMovementId = null;
         $this->editingMovementType = 'transfer';
         $this->canConvertTransferToExpense = false;
+        $this->showConvertExpenseOptions = false;
         $this->editCategoryId = null;
         $this->editDescription = '';
         $this->editAmount = '';
@@ -77,6 +79,7 @@ class BankTransactionsHub extends Component
         $this->resetValidation();
         $this->editingMovementType = $type;
         $this->editingMovementId = (int) $id;
+        $this->showConvertExpenseOptions = false;
 
         if ($type === 'transfer') {
             $item = $this->scopedQuery(BankTransfer::class)->findOrFail($id);
