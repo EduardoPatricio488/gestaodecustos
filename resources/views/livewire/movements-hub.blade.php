@@ -49,7 +49,7 @@
                         </div>
                     </div>
                     <div x-cloak x-show="open" x-transition.opacity.duration.200ms class="border-t border-zinc-100 bg-zinc-50/70 px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950/40">
-                        <div class="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-500"><flux:icon name="info" class="size-4" /> Informações do registo</div>
+                        <div class="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-500"><flux:icon name="document-text" class="size-4" /> Informações do registo</div>
                         <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             @foreach(($movement['details'] ?? []) as $detailLabel => $detailValue)
                                 @if($detailValue !== null && $detailValue !== '')
