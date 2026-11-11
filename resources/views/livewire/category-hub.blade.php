@@ -1356,5 +1356,7 @@
         });
     </script>
 
+@endif {{-- Fecho de segurança da condição do template --}}
+
 </div>{{-- /FIM DO WRAPPER x-data root --}}
 </div>{{-- /FIM DO WRAPPER DE COR --}}
