@@ -2207,6 +2207,18 @@
 
     <div x-show="activeIncomeTab === 'bank'" x-transition.opacity.duration.200ms x-cloak>
     <div class="space-y-6">
+        <div class="rounded-2xl border border-indigo-200 bg-indigo-50/80 p-5 dark:border-indigo-900/60 dark:bg-indigo-950/30 sm:p-6">
+            <div class="flex items-start gap-3">
+                <div class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-900/60 dark:text-indigo-300">
+                    <flux:icon name="building-library" class="size-6" />
+                </div>
+                <div class="min-w-0">
+                    <h3 class="text-sm font-black text-indigo-950 dark:text-indigo-100">Área de Transferências Bancárias</h3>
+                    <p class="mt-1 text-sm leading-relaxed text-indigo-900/80 dark:text-indigo-200/80">Aqui podes acompanhar os valores que entram efetivamente nas tuas contas bancárias, incluindo transferências, recebimentos por MB WAY e salários. Para um movimento aparecer nesta lista, regista o recebimento e associa-o à respetiva conta bancária.</p>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total recebido em contas</p>
