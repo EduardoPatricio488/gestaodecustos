@@ -89,24 +89,29 @@
                         </div>
                         <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Estado</label><select wire:model="editStatus" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="completed">Concluído</option><option value="cancelled">Cancelada</option></select></div>
                         @if($canConvertTransferToExpense)
-                            <div class="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
-                                <div class="mb-3">
-                                    <p class="text-sm font-black text-zinc-900 dark:text-white">Este movimento é uma despesa?</p>
-                                    <p class="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">Converte o movimento importado numa despesa normal e escolhe a categoria. Deixará de aparecer nas Transferências Bancárias.</p>
-                                </div>
-                                <label class="mb-1.5 block text-xs font-bold text-zinc-600 dark:text-zinc-300">Categoria da despesa</label>
-                                <select wire:model="editCategoryId" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
-                                    <option value="">Selecionar categoria</option>
-                                    @foreach($expenseCategories as $category)
-                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('editCategoryId')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
-                                <button type="button" wire:click="convertTransferToExpense" wire:loading.attr="disabled" class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-700 disabled:opacity-50">
-                                    
-                                    <span wire:loading.remove wire:target="convertTransferToExpense">Converter em despesa</span>
-                                    <span wire:loading wire:target="convertTransferToExpense">A converter...</span>
+                            <div class="pt-1">
+                                <button type="button" wire:click="$toggle('showConvertExpenseOptions')" class="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500 transition hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400">
+                                    <span>{{ $showConvertExpenseOptions ? 'Cancelar classificação como despesa' : 'Este movimento é uma despesa?' }}</span>
+                                    <span class="text-[10px]">{{ $showConvertExpenseOptions ? '−' : '+' }}</span>
                                 </button>
+
+                                @if($showConvertExpenseOptions)
+                                    <div class="mt-3 rounded-xl border border-zinc-200 bg-zinc-50/70 p-4 dark:border-zinc-700 dark:bg-zinc-800/40">
+                                        <p class="mb-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">Escolhe a categoria para transformar este movimento numa despesa normal.</p>
+                                        <label class="mb-1.5 block text-xs font-bold text-zinc-600 dark:text-zinc-300">Categoria da despesa</label>
+                                        <select wire:model="editCategoryId" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
+                                            <option value="">Selecionar categoria</option>
+                                            @foreach($expenseCategories as $category)
+                                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('editCategoryId')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
+                                        <button type="button" wire:click="convertTransferToExpense" wire:loading.attr="disabled" class="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50">
+                                            <span wire:loading.remove wire:target="convertTransferToExpense">Converter em despesa</span>
+                                            <span wire:loading wire:target="convertTransferToExpense">A converter...</span>
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
                         @endif
                     @else
