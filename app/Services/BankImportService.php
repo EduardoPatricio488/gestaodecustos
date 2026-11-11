@@ -427,6 +427,7 @@ class BankImportService
                         : ($candidateAmount >= 0 ? 'income' : 'expense'),
                     'description' => $candidateDescription,
                     'amount' => $candidateAmount,
+                    'transfer_method' => $this->detectTransferMethod($candidateDescription),
                 ];
             }
             $this->refineMovementTypesWithAi($aiRows);
@@ -481,6 +482,7 @@ class BankImportService
                         'recipient' => $this->extractCounterparty($description),
                         'amount' => $amount, 'currency' => 'EUR',
                         'category' => $classification['transfer_category'] ?? null,
+                        'transfer_method' => $aiRows[$transactionIndex]['transfer_method'] ?? $this->detectTransferMethod($description),
                         'description' => $description,
                         'status' => 'completed', 'transferred_at' => $date,
                         'bank_statement_import_id' => $import->id,
