@@ -18,6 +18,47 @@ class MovementsHub extends Component
     public string $search = '';
     public string $period = 'all';
 
+    private function formatMetadataForDisplay(mixed $metadata): ?string
+    {
+        if (is_string($metadata)) {
+            $decoded = json_decode($metadata, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $metadata = $decoded;
+            } elseif (trim($metadata) !== '') {
+                return trim($metadata);
+            } else {
+                return null;
+            }
+        }
+
+        if (! is_array($metadata) || $metadata === []) {
+            return null;
+        }
+
+        $labels = [
+            'bank' => 'Banco',
+            'import_id' => 'Número da importação',
+            'source_file_type' => 'Tipo de ficheiro de origem',
+        ];
+
+        return collect($metadata)->map(function ($value, $key) use ($labels) {
+            if (is_array($value) || is_object($value)) {
+                $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+            }
+
+            $label = $labels[$key] ?? ucfirst(str_replace(['_', '-'], ' ', (string) $key));
+            $displayValue = (string) $value;
+
+            if ($key === 'bank') {
+                $displayValue = mb_strtoupper($displayValue);
+            } elseif ($key === 'source_file_type') {
+                $displayValue = mb_strtoupper($displayValue);
+            }
+
+            return $label.': '.$displayValue;
+        })->implode("\n");
+    }
+
     public function clearFilters(): void
     {
         $this->type = 'all';
@@ -56,7 +97,7 @@ class MovementsHub extends Component
                     'IVA' => $item->vat_amount !== null ? number_format((float) $item->vat_amount, 2, ',', '.').' '.($item->currency ?: 'EUR') : null,
                     'Data' => $item->spent_at?->format('d/m/Y'),
                     'Estado' => $item->status,
-                    'Notas' => $item->metadata ? json_encode($item->metadata, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) : null,
+                    'Informações de importação' => $this->formatMetadataForDisplay($item->metadata),
                 ],
             ]));
         }
