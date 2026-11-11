@@ -6,12 +6,12 @@
     $quotaPercent = (int) ($aiQuota['percent'] ?? 0);
     $quotaWarning = $quotaAvailable && $quotaLimit > 0 && $quotaPercent >= 80;
 @endphp
-<div wire:poll.60s="refreshScannerQuota" class="rounded-2xl border {{ !$quotaAvailable ? 'border-zinc-700 bg-zinc-900/70' : ($quotaRemaining <= 0 ? 'border-red-500/30 bg-red-500/10' : ($quotaWarning ? 'border-amber-500/30 bg-amber-500/10' : 'border-emerald-500/20 bg-emerald-500/5')) }} p-4 text-left">
 @if($poll ?? true)
-<div wire:poll.60s="refreshScannerQuota"     <div class="flex items-center justify-between gap-3">
+<div wire:poll.60s="refreshScannerQuota" class="rounded-2xl border {{ !$quotaAvailable ? 'border-zinc-700 bg-zinc-900/70' : ($quotaRemaining <= 0 ? 'border-red-500/30 bg-red-500/10' : ($quotaWarning ? 'border-amber-500/30 bg-amber-500/10' : 'border-emerald-500/20 bg-emerald-500/5')) }} p-4 text-left">
 @else
-<div     <div class="flex items-center justify-between gap-3">
+<div class="rounded-2xl border {{ !$quotaAvailable ? 'border-zinc-700 bg-zinc-900/70' : ($quotaRemaining <= 0 ? 'border-red-500/30 bg-red-500/10' : ($quotaWarning ? 'border-amber-500/30 bg-amber-500/10' : 'border-emerald-500/20 bg-emerald-500/5')) }} p-4 text-left">
 @endif
+    <div class="flex items-center justify-between gap-3">
         <div>
             <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Quota diária da IA</p>
             @if($quotaAvailable)
@@ -33,7 +33,7 @@
             <span>Reinicia às 00:00 UTC</span>
         </div>
         @if($quotaRemaining <= 0)
-            <p class="mt-2 text-xs font-bold text-red-300">Quota esgotada. O upload pode ser feito, mas a análise por IA só estará disponível após a reposição.</p>
+            <p class="mt-2 text-xs font-bold text-red-300">Quota esgotada. Podes anexar o documento, mas a análise por IA só estará disponível após a reposição.</p>
         @elseif($quotaWarning)
             <p class="mt-2 text-xs font-bold text-amber-300">Estás perto do limite diário de pedidos gratuitos.</p>
         @endif
