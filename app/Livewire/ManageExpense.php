@@ -123,6 +123,7 @@ class ManageExpense extends Component
             $this->spent_at = now()->format('Y-m-d');
         }
         $this->currency = auth()->user()->currentWorkspace->currency ?? 'EUR';
+        $this->refreshScannerQuota();
     }
 
     public function updatedCategoryId($value): void
@@ -157,6 +158,10 @@ class ManageExpense extends Component
         }
 
         try {
+            $this->refreshScannerQuota();
+            if (($this->aiQuota['available'] ?? false) && (int) ($this->aiQuota['remaining'] ?? 0) <= 0) {
+                throw new \\Exception('A quota diária gratuita do OpenRouter está esgotada. A reposição ocorre às 00:00 UTC.');
+            }
             $imageFullPath = $this->receipt->getRealPath();
             $imageData = base64_encode(file_get_contents($imageFullPath));
             $mimeType = $this->receipt->getMimeType() ?: 'image/jpeg';
@@ -244,6 +249,7 @@ PROMPT;
             $this->scanError = 'Erro ao processar.';
         } finally {
             $this->isScanning = false;
+            $this->refreshScannerQuota();
         }
     }
 
