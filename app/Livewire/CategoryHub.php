@@ -240,8 +240,8 @@ class CategoryHub extends Component
     // ─────────────────────────────────────────────────────────────────
     private function setHubConfig(): void
     {
-        // A página Outros funciona como visão global de todas as categorias.
-        if (Str::slug((string) $this->slug) === 'outros') {
+        // A página Todas as categorias apresenta a visão global.
+        if (Str::slug((string) $this->slug) === 'todas-as-categorias') {
             $this->dbName = null;
             $this->title = 'Todas as categorias';
             $this->icon = 'squares-2x2';
@@ -820,7 +820,7 @@ PROMPT;
         $currentWs = $user->currentWorkspace;
 
         // 1. Identifica a visão global ou uma categoria específica.
-        $isAllCategories = Str::slug((string) $this->slug) === 'outros';
+        $isAllCategories = Str::slug((string) $this->slug) === 'todas-as-categorias';
 
         $categoryQuery = Category::where('name', $this->dbName)
             ->where('workspace_id', $currentWs->id);
