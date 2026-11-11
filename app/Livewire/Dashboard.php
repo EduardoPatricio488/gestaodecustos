@@ -165,7 +165,7 @@ class Dashboard extends Component
             }
 
             $this->marketPrices = $prices;
-            Cache::put('market_prices_all', $prices, now()->addMinutes(30));
+            Cache::forever('market_prices_all', $prices);
             $this->dispatch('toast', text: 'Todos os preços de mercado foram atualizados.');
         } finally {
             $this->refreshingMarketPrices = false;
@@ -275,7 +275,7 @@ class Dashboard extends Component
         $this->exportStart = now()->startOfMonth()->format('Y-m-d');
         $this->exportEnd = now()->endOfMonth()->format('Y-m-d');
 
-        $this->marketPrices = Cache::flexible('market_prices_all', [300, 1800], fn () => $this->fetchMarketPrices());
+        $this->marketPrices = Cache::get('market_prices_all', []);
 
         if (! $user->workspaces()->exists()) {
             $ws = Workspace::create([
