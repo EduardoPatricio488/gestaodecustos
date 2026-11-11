@@ -73,7 +73,7 @@ class SubscriptionHub extends Component
 
     public array $stripePlanDetails = [];
 
-    public ?string $stripePlanError = null;
+    public ?string $stripePlanError = null;\n\n    public bool $showPaymentHistoryModal = false;\n\n    public string $paymentHistoryTitle = '';\n\n    public array $paymentHistory = [];
 
     public function mount(): void
     {
@@ -101,6 +101,40 @@ class SubscriptionHub extends Component
         $this->notify_before_billing = $sub->notify_before_billing;
         $this->notify_days_before = $sub->notify_days_before;
         $this->dispatch('modal-show-add-sub');
+    }
+
+    public function openPaymentHistory(int $id): void
+    {
+        $user = auth()->user();
+
+        $subscription = Subscription::query()
+            ->where('workspace_id', $user->current_workspace_id)
+            ->where('user_id', $user->id)
+            ->findOrFail($id);
+
+        $this->paymentHistoryTitle = $subscription->name;
+        $this->paymentHistory = SubscriptionPayment::query()
+            ->where('workspace_id', $user->current_workspace_id)
+            ->where('user_id', $user->id)
+            ->where('subscription_id', $subscription->id)
+            ->orderByDesc('billing_date')
+            ->get()
+            ->map(fn (SubscriptionPayment $payment) => [
+                'billing_date' => $payment->billing_date?->format('d/m/Y'),
+                'paid_at' => $payment->paid_at?->format('d/m/Y'),
+                'amount' => (float) $payment->amount,
+                'source' => $payment->payment_source === 'company' ? 'Pago pela empresa' : 'Pagamento registado',
+            ])
+            ->all();
+
+        $this->showPaymentHistoryModal = true;
+    }
+
+    public function closePaymentHistory(): void
+    {
+        $this->showPaymentHistoryModal = false;
+        $this->paymentHistory = [];
+        $this->paymentHistoryTitle = '';
     }
 
     public function toggleStatus($id)
