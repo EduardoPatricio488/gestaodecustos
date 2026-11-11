@@ -9,7 +9,7 @@
                     <p class="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Centraliza os movimentos associados às tuas contas: transferências entre bancos, recebimentos, pagamentos e operações identificadas como MB WAY.</p>
                 </div>
             </div>
-            <a href="{{ route('hub.banco') }}" wire:navigate class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-700"><flux:icon name="plus" class="size-4" /> Gerir contas e transferências</a>
+
         </div>
     </section>
 
