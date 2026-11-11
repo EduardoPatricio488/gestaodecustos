@@ -79,7 +79,37 @@ class Expenses extends Component
             }
 
             $mimeType = $this->scannerReceipt->getMimeType() ?: 'image/jpeg';
-            $fileData = base64_encode(file_get_contents($filePath));
+            $fileContents = file_get_contents($filePath);
+            if (! is_string($fileContents) || $fileContents === '') {
+                throw new \Exception('Não foi possível ler o conteúdo da fatura.');
+            }
+
+            // Reduz fotografias grandes para acelerar o pedido multimodal sem perder legibilidade.
+            if (str_starts_with($mimeType, 'image/') && function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
+                $sourceImage = @imagecreatefromstring($fileContents);
+                if ($sourceImage !== false) {
+                    $originalWidth = imagesx($sourceImage);
+                    $originalHeight = imagesy($sourceImage);
+                    $scale = min(1, 1600 / max($originalWidth, $originalHeight));
+                    $targetWidth = max(1, (int) round($originalWidth * $scale));
+                    $targetHeight = max(1, (int) round($originalHeight * $scale));
+                    $resizedImage = imagecreatetruecolor($targetWidth, $targetHeight);
+                    $white = imagecolorallocate($resizedImage, 255, 255, 255);
+                    imagefill($resizedImage, 0, 0, $white);
+                    imagecopyresampled($resizedImage, $sourceImage, 0, 0, 0, 0, $targetWidth, $targetHeight, $originalWidth, $originalHeight);
+                    ob_start();
+                    imagejpeg($resizedImage, null, 78);
+                    $compressedImage = ob_get_clean();
+                    if (is_string($compressedImage) && $compressedImage !== '') {
+                        $fileContents = $compressedImage;
+                        $mimeType = 'image/jpeg';
+                    }
+                    imagedestroy($resizedImage);
+                    imagedestroy($sourceImage);
+                }
+            }
+
+            $fileData = base64_encode($fileContents);
             $contentPart = str_starts_with($mimeType, 'image/')
                 ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData]]
                 : ['type' => 'file', 'file' => ['filename' => $this->scannerReceipt->getClientOriginalName(), 'file_data' => 'data:'.$mimeType.';base64,'.$fileData]];
@@ -101,8 +131,10 @@ class Expenses extends Component
             $response = \Illuminate\Support\Facades\Http::withHeaders([
                 'Authorization' => 'Bearer '.$apiKey,
                 'Content-Type' => 'application/json',
-            ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
-                ->timeout((int) config('limits.ai.request_timeout_seconds', 60))
+                'HTTP-Referer' => config('app.url'),
+                'X-Title' => 'Finance Pro AI',
+            ])->connectTimeout(8)
+                ->timeout(45)
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
                     'max_tokens' => 3000,
@@ -118,13 +150,29 @@ class Expenses extends Component
                 throw new \Exception('A IA não conseguiu analisar a fatura: '.($response->json('error.message') ?? 'erro de comunicação.'));
             }
 
-            $raw = trim(preg_replace('/\x60{3}json|\x60{3}/i', '', (string) $response->json('choices.0.message.content')));
-            if (! preg_match('/\{.*\}/s', $raw, $matches)) {
-                throw new \Exception('A IA não devolveu dados reconhecíveis.');
+            $content = $response->json('choices.0.message.content');
+            if (is_array($content)) {
+                $content = collect($content)
+                    ->map(fn ($part) => is_string($part) ? $part : data_get($part, 'text', data_get($part, 'content', '')))
+                    ->filter(fn ($part) => is_string($part) && trim($part) !== '')
+                    ->implode("\n");
             }
-            $result = json_decode($matches[0], true);
+            $raw = trim((string) $content);
+            $raw = preg_replace('/^\x60{3}(?:json)?\s*|\s*\x60{3}$/i', '', $raw);
+            $result = json_decode($raw, true);
+
+            if (! is_array($result) && preg_match('/\{.*\}/s', $raw, $matches)) {
+                $result = json_decode($matches[0], true);
+            }
+
             if (! is_array($result) || json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('Não foi possível interpretar os dados extraídos da fatura.');
+                $returnedModel = $response->json('model') ?: config('services.openrouter.model', 'openrouter/free');
+                $finishReason = $response->json('choices.0.finish_reason') ?: 'não indicado';
+                $refusal = $response->json('choices.0.message.refusal');
+                $detail = is_string($refusal) && trim($refusal) !== ''
+                    ? trim($refusal)
+                    : 'O modelo '.$returnedModel.' não devolveu JSON válido (motivo: '.$finishReason.').';
+                throw new \Exception($detail.' Tenta uma imagem mais nítida ou escolhe a categoria manualmente.');
             }
 
             $suggestedCategory = trim((string) ($result['category'] ?? ''));
