@@ -429,8 +429,7 @@
                     'bg-white text-zinc-600 border-zinc-200 hover:border-brand-400 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700' => $categoryFilter !== 'all',
                 ])>
                 <flux:icon name="squares-2x2" class="size-4" />
-                Todas
-                <span class="text-[10px] opacity-70">{{ $filterCategories->sum(fn ($cat) => $expenses->where('category_id', $cat->id)->count()) }}</span>
+                Todas as categorias
             </button>
 
             @foreach($filterCategories as $filterCategory)
