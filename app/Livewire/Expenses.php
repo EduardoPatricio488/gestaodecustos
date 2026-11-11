@@ -188,7 +188,7 @@ class Expenses extends Component
                     ? trim($refusal)
                     : 'A IA não conseguiu devolver os dados num formato válido ('.$returnedModel.', motivo: '.$finishReason.').';
 
-                throw new \\Exception($detail.' Podes tentar novamente ou escolher a categoria manualmente.');
+                throw new \Exception($detail.' Podes tentar novamente ou escolher a categoria manualmente.');
             }
 
             $suggestedCategory = trim((string) ($result['category'] ?? ''));
@@ -203,7 +203,7 @@ class Expenses extends Component
             }
 
             if (! $category) {
-                throw new \\Exception('A IA não conseguiu associar a fatura a uma categoria existente. Experimenta a escolha manual.');
+                throw new \Exception('A IA não conseguiu associar a fatura a uma categoria existente. Experimenta a escolha manual.');
             }
             if (blank($category->slug)) {
                 $category->slug = Category::uniqueSlugFor($category->name, $user->current_workspace_id, $category->id);
