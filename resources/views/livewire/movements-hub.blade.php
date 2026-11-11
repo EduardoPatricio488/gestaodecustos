@@ -130,7 +130,7 @@
     @endif
 
     @if($showConversionModal)
-        <div class="fixed inset-0 z-[105] flex items-center justify-center overflow-y-auto bg-zinc-950/70 p-4 backdrop-blur-sm" wire:key="movement-conversion-modal" @click.self="$wire.closeConversionModal()" x-on:keydown.escape.window="$wire.closeConversionModal()">
+        <div class="fixed inset-0 z-[105] flex items-center justify-center overflow-y-auto bg-zinc-950/70 p-4 backdrop-blur-sm" wire:key="movement-conversion-modal" x-init="const sidebar = document.querySelector('[data-flux-sidebar]'); const previousDisplay = sidebar?.style.display ?? ''; if (sidebar) sidebar.style.display = 'none'; return () => { if (sidebar) sidebar.style.display = previousDisplay; }" @click.self="$wire.closeConversionModal()" x-on:keydown.escape.window="$wire.closeConversionModal()">
             <div class="my-auto w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 sm:p-6" @click.stop>
                 <div class="mb-5 flex items-start justify-between gap-3"><div><h2 class="text-lg font-black text-zinc-900 dark:text-white">Mudar tipo de movimento</h2><p class="mt-1 text-xs text-zinc-500">Escolhe o novo tipo. Os dados compatíveis serão preenchidos automaticamente.</p></div><button type="button" wire:click="closeConversionModal" class="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"><flux:icon name="x-mark" class="size-5" /></button></div>
                 @if(in_array($editingType, ['expense','income','transfer','subscription'], true))
