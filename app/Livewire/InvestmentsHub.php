@@ -929,7 +929,7 @@ class InvestmentsHub extends Component
             }
 
             return round($price, 6);
-        } catch (\\Throwable $e) {
+        } catch (\Throwable $e) {
             Log::warning('InvestmentsHub: falha ao obter cotação Yahoo Finance', [
                 'symbol' => $symbol,
                 'message' => $e->getMessage(),
