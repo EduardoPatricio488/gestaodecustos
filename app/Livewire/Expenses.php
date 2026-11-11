@@ -34,6 +34,11 @@ class Expenses extends Component
         $this->aiQuota = app(\App\Services\OpenRouterQuotaService::class)->dailyQuota(true);
     }
 
+    private function loadScannerQuota(): void
+    {
+        $this->aiQuota = app(\App\Services\OpenRouterQuotaService::class)->dailyQuota();
+    }
+
     public function updatedScannerReceipt(): void
     {
         $this->resetValidation('scannerReceipt');
@@ -63,7 +68,7 @@ class Expenses extends Component
         $this->isScanningInvoice = true;
 
         try {
-            $this->refreshScannerQuota();
+            $this->loadScannerQuota();
             if (($this->aiQuota['available'] ?? false) && (int) ($this->aiQuota['remaining'] ?? 0) <= 0) {
                 throw new \Exception('A quota diária gratuita do OpenRouter está esgotada. A reposição ocorre às 00:00 UTC.');
             }
@@ -217,7 +222,7 @@ PROMPT;
             $hasEssentialData = collect(['amount', 'date', 'store', 'description'])
                 ->contains(fn ($field) => isset($result[$field]) && $result[$field] !== '');
 
-            if (! $hasEssentialData || $finishReason === 'length') {
+            if (! $hasEssentialData) {
                 $retryPrompt = "Lê novamente a fatura inteira e completa os campos em falta. Responde apenas com JSON válido, sem markdown. Não inventes; usa null quando ausente/ilegível. ".
                     "A categoria tem de ser exatamente uma destas: ".
                     json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).
@@ -334,13 +339,13 @@ PROMPT;
             $this->scannerError = 'Não foi possível analisar a fatura. '.$e->getMessage();
         } finally {
             $this->isScanningInvoice = false;
-            $this->refreshScannerQuota();
+            $this->loadScannerQuota();
         }
     }
 
     public function mount(): void
     {
-        $this->refreshScannerQuota();
+        $this->loadScannerQuota();
         $this->openCreateAfterCategory = request()->boolean('open_new');
 
         if ($this->openCreateAfterCategory) {
