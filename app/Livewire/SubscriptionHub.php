@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Category;
 use App\Models\Payment;
 use App\Models\Subscription;
+use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
 use App\Services\SubscriptionCycleService;
 use Illuminate\Support\Carbon;
@@ -73,7 +74,13 @@ class SubscriptionHub extends Component
 
     public array $stripePlanDetails = [];
 
-    public ?string $stripePlanError = null;\n\n    public bool $showPaymentHistoryModal = false;\n\n    public string $paymentHistoryTitle = '';\n\n    public array $paymentHistory = [];
+    public ?string $stripePlanError = null;
+
+    public bool $showPaymentHistoryModal = false;
+
+    public string $paymentHistoryTitle = '';
+
+    public array $paymentHistory = [];
 
     public function mount(): void
     {
