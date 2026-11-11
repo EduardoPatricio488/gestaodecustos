@@ -412,7 +412,7 @@
                                 <span class="text-xs font-black tabular-nums text-emerald-300">{{ number_format($thisMonthReceived, 2, ',', ' ') }} €</span>
                             </div>
                         </div>
-                        <p class="mt-2 text-[9px] leading-relaxed text-zinc-400">Inclui receitas registadas, salários com pagamento registado e salários que assinalaste como já recebidos este mês. Os salários não assinalados não entram neste total.</p>
+                        <p class="mt-2 text-[9px] leading-relaxed text-zinc-400">Soma todos os valores dos Rendimentos Fixos. Nos contratos de trabalho, o salário só é incluído quando existe um contrato e está selecionada a opção «Já recebi este salário este mês».</p>
                     </div>
                 </div>
             </div>
