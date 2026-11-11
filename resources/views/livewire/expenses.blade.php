@@ -42,9 +42,6 @@
                     <h2 class="mt-1 text-xl font-black italic tracking-tight text-zinc-900 dark:text-white">Nova despesa</h2>
                     <p class="mt-1 text-xs font-medium text-zinc-500">Digitaliza uma fatura com IA ou escolhe manualmente a categoria.</p>
                 </div>
-                <button type="button" x-on:click="open = false" class="p-2 rounded-xl text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                    <flux:icon name="x-mark" class="size-5" />
-                </button>
             </div>
 
             <div class="grid grid-cols-2 gap-2 p-3 sm:px-6 border-b border-zinc-100 dark:border-zinc-800">
