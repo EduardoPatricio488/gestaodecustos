@@ -400,11 +400,18 @@ class IncomeHub extends Component
 
             // Fallback: extrair o objeto JSON se a IA acrescentar texto explicativo.
             if (! is_array($data)) {
-                $jsonStart = strpos($content, '{');
-                $jsonEnd = strrpos($content, '}');
-                if ($jsonStart !== false && $jsonEnd !== false && $jsonEnd > $jsonStart) {
-                    $data = json_decode(substr($content, $jsonStart, $jsonEnd - $jsonStart + 1), true);
-                }
+                $refusal = $response->json('choices.0.message.refusal');
+                $returnedModel = $response->json('model') ?: config('services.openrouter.model', 'openrouter/free');
+                $finishReason = $response->json('choices.0.finish_reason') ?: 'não indicado';
+                $message = is_string($refusal) && trim($refusal) !== ''
+                    ? trim($refusal)
+                    : 'O modelo '.$returnedModel.' não devolveu JSON válido (motivo de conclusão: '.$finishReason.').';
+
+                report(new \\RuntimeException(
+                    'Scanner de contrato: resposta inválida; modelo='.$returnedModel.'; finish_reason='.$finishReason.'; content_type='.gettype($content)
+                ));
+
+                throw new \\RuntimeException($message.' Experimenta novamente ou seleciona um modelo gratuito com suporte a imagens e saída JSON.');
             }
 
             if (! is_array($data)) {
