@@ -1263,7 +1263,7 @@ class Dashboard extends Component
                 'status' => 'Completo',
             ]));
 
-        $recentMovements = $recentMovements->concat($movementScope(\\App\\Models\\BankTransfer::query())
+        $recentMovements = $recentMovements->concat($movementScope(\App\Models\BankTransfer::query())
             ->get()->map(fn ($item) => [
                 'key' => 'transfer-'.$item->id,
                 'type' => 'transfer',
@@ -1289,7 +1289,7 @@ class Dashboard extends Component
                 'status' => $item->is_active ? 'Ativa' : 'Inativa',
             ]));
 
-        $recentMovements = $recentMovements->concat($movementScope(\\App\\Models\\SubscriptionPayment::query()->with('subscription'))
+        $recentMovements = $recentMovements->concat($movementScope(\App\Models\SubscriptionPayment::query()->with('subscription'))
             ->get()->map(fn ($item) => [
                 'key' => 'subscription-payment-'.$item->id,
                 'type' => 'subscription',
