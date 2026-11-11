@@ -145,50 +145,36 @@ class Dashboard extends Component
 
     public $marketPrices = [];
 
-    public function mount()
+    public bool $refreshingMarketPrices = false;
+
+    public function refreshMarketPrices(): void
     {
-        $user = Auth::user();
-        if (request()->query('checkout') === 'success') {
-            $user->refresh();
-            $sessionId = (string) request()->query('session_id', '');
-
-            if ($sessionId !== '') {
-                try {
-                    $stripeSession = $user->stripe()->checkout->sessions->retrieve($sessionId);
-                    if (($stripeSession->payment_status ?? null) === 'paid'
-                        && (string) ($stripeSession->client_reference_id ?? '') === (string) $user->id
-                    ) {
-                        app(SubscriptionCheckoutService::class)->activateFromStripeSession($stripeSession);
-                        $user->refresh();
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning('Falha ao confirmar sessão de checkout do Stripe: '.$e->getMessage());
-                }
-            }
-
-            $planRecord = SubscriptionPlan::where('slug', $user->plan)->first();
-            if ($planRecord && $user->plan !== 'free') {
-                $this->suggestedName = 'Finance Pro '.$planRecord->name;
-                $this->suggestedPrice = $planRecord->price;
-                $this->showSubSuggestion = true;
-            }
+        if ($this->refreshingMarketPrices) {
+            return;
         }
 
-        $this->privacyMode = session('privacy_mode', false);
-        Cache::flexible("dashboard:notifications-checked:{$user->id}:".now()->toDateString(), [3600, 86400], function () use ($user) {
-            NotificationService::checkAll($user);
+        $this->refreshingMarketPrices = true;
 
-            return true;
-        });
+        try {
+            $prices = $this->fetchMarketPrices();
 
-        if (in_array($user->role, ['admin', 'moderator', 'analyst']) && $user->email_verified_at && ! session()->has('admin_impersonation')) {
-            return redirect()->route('admin.dashboard');
+            if (empty($prices)) {
+                $this->dispatch('toast', variant: 'error', text: 'Não foi possível atualizar os preços. Tenta novamente dentro de momentos.');
+
+                return;
+            }
+
+            $this->marketPrices = $prices;
+            Cache::put('market_prices_all', $prices, now()->addMinutes(30));
+            $this->dispatch('toast', text: 'Todos os preços de mercado foram atualizados.');
+        } finally {
+            $this->refreshingMarketPrices = false;
         }
+    }
 
-        $this->exportStart = now()->startOfMonth()->format('Y-m-d');
-        $this->exportEnd = now()->endOfMonth()->format('Y-m-d');
-
-        $this->marketPrices = Cache::flexible('market_prices_all', [300, 1800], function () {
+    private function fetchMarketPrices(): array
+    {
+        $result = [];
             $result = [];
             try {
                 $responses = Http::pool(function (Pool $pool) {
@@ -245,7 +231,53 @@ class Dashboard extends Component
                 Log::debug('Falha ao atualizar preços de mercado no dashboard: '.$e->getMessage());
             }
             return $result;
+        return $result;
+    }
+
+    public function mount()
+    {
+        $user = Auth::user();
+        if (request()->query('checkout') === 'success') {
+            $user->refresh();
+            $sessionId = (string) request()->query('session_id', '');
+
+            if ($sessionId !== '') {
+                try {
+                    $stripeSession = $user->stripe()->checkout->sessions->retrieve($sessionId);
+                    if (($stripeSession->payment_status ?? null) === 'paid'
+                        && (string) ($stripeSession->client_reference_id ?? '') === (string) $user->id
+                    ) {
+                        app(SubscriptionCheckoutService::class)->activateFromStripeSession($stripeSession);
+                        $user->refresh();
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Falha ao confirmar sessão de checkout do Stripe: '.$e->getMessage());
+                }
+            }
+
+            $planRecord = SubscriptionPlan::where('slug', $user->plan)->first();
+            if ($planRecord && $user->plan !== 'free') {
+                $this->suggestedName = 'Finance Pro '.$planRecord->name;
+                $this->suggestedPrice = $planRecord->price;
+                $this->showSubSuggestion = true;
+            }
+        }
+
+        $this->privacyMode = session('privacy_mode', false);
+        Cache::flexible("dashboard:notifications-checked:{$user->id}:".now()->toDateString(), [3600, 86400], function () use ($user) {
+            NotificationService::checkAll($user);
+
+            return true;
         });
+
+        if (in_array($user->role, ['admin', 'moderator', 'analyst']) && $user->email_verified_at && ! session()->has('admin_impersonation')) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        $this->exportStart = now()->startOfMonth()->format('Y-m-d');
+        $this->exportEnd = now()->endOfMonth()->format('Y-m-d');
+
+        $this->marketPrices = Cache::flexible('market_prices_all', [300, 1800], fn () => $this->fetchMarketPrices());
 
         if (! $user->workspaces()->exists()) {
             $ws = Workspace::create([
