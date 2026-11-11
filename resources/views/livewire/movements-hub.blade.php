@@ -97,8 +97,6 @@
                                                     <input wire:model="editingStatus" class="w-full rounded-lg border-zinc-200 bg-transparent px-2 py-1 text-sm font-semibold dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
                                                 @elseif($detailLabel === 'Estado' && $editingType === 'subscription')
                                                     <label class="inline-flex items-center gap-2"><input type="checkbox" wire:model="editingActive" class="rounded border-zinc-300"> <span>Ativa</span></label>
-                                                @elseif($detailLabel === 'Método de pagamento' && $editingType === 'subscription')
-                                                    <input wire:model="editingPaymentSource" class="w-full rounded-lg border-zinc-200 bg-transparent px-2 py-1 text-sm font-semibold dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
                                                 @elseif($detailLabel === 'Origem do pagamento' && $editingType === 'subscription_payment')
                                                     <input wire:model="editingPaymentSource" class="w-full rounded-lg border-zinc-200 bg-transparent px-2 py-1 text-sm font-semibold dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
                                                 @elseif($detailLabel === 'Notas' && in_array($editingType, ['income', 'transfer', 'subscription'], true))
