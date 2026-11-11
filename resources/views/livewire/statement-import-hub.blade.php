@@ -1,120 +1,155 @@
 <div class="space-y-8 pb-24">
     <div class="flex items-center gap-5 px-1">
         <div class="p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-xl">
-            <flux:icon name="arrow-up-tray" class="w-8 h-8 text-blue-600" />
+            <flux:icon name="arrow-down-tray" class="w-8 h-8 text-blue-600" />
         </div>
         <div>
-            <h1 class="text-3xl font-black dark:text-white uppercase tracking-tighter italic">Importar Extrato</h1>
-            <p class="text-xs text-zinc-400 mt-1">CSV/OFX de CGD, Millennium, Revolut, N26 — categorização automática</p>
+            <h1 class="text-3xl font-black dark:text-white uppercase tracking-tighter italic">Importar Movimentos</h1>
+            <p class="text-xs text-zinc-400 mt-1">Importa despesas e receitas da tua conta bancária, com revisão antes de guardar.</p>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 max-w-2xl">
-        <form wire:submit="generatePreview" class="space-y-6">
-            <div class="border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl p-8 text-center">
-                <flux:icon name="document-arrow-up" class="size-12 text-zinc-300 mx-auto mb-4" />
-                <input type="file" wire:model="statementFile" accept=".csv,.txt,.ofx" class="text-sm" />
-                <p class="text-[10px] text-zinc-400 mt-3">Formatos: CSV ou OFX (máx. 5MB)</p>
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div class="xl:col-span-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 space-y-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/30 flex items-center justify-center">
+                    <span class="text-red-600 font-black text-xs">S</span>
+                </div>
+                <div>
+                    <h2 class="font-black dark:text-white">Como obter o PDF Santander</h2>
+                    <p class="text-[11px] text-zinc-400">Só precisas de alguns passos.</p>
+                </div>
             </div>
-            <div wire:loading wire:target="statementFile,generatePreview,importStatement" class="text-sm text-blue-500 font-bold">
-                A processar extrato...
+            <ol class="space-y-3 text-sm text-zinc-600 dark:text-zinc-300">
+                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">1</span><span>Abre a aplicação do <strong>Santander</strong>.</span></li>
+                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">2</span><span>Entra em <strong>Contas</strong>.</span></li>
+                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">3</span><span>Seleciona a conta e abre <strong>Movimentos</strong>.</span></li>
+                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">4</span><span>Carrega em <strong>PDF</strong> para gerar o extrato.</span></li>
+                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">5</span><span>Guarda o PDF no dispositivo e carrega-o aqui.</span></li>
+            </ol>
+            <div class="rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 p-3 text-xs text-blue-800 dark:text-blue-200">
+                <strong>Privacidade:</strong> o Finance Pro lê as datas, descrições e valores dos movimentos. Não precisa do teu PIN, palavra-passe ou códigos de acesso ao banco.
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <flux:button type="submit" variant="filled" class="w-full rounded-2xl font-black" :disabled="!$statementFile">
-                    Pré-visualizar
-                </flux:button>
-                <flux:button type="button" variant="primary" class="w-full rounded-2xl font-black" wire:click="importStatement" :disabled="!$previewReady">
-                    Confirmar Importação
-                </flux:button>
-            </div>
-        </form>
+        </div>
 
-        @if($previewReady)
-            <div class="mt-6 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/30 space-y-3">
-                <p class="font-black text-sm">Pré-visualização pronta</p>
-                <p class="text-xs">
-                    Banco: {{ strtoupper($preview['bank'] ?? '-') }} · Origem: {{ strtoupper($preview['source_file_type'] ?? '-') }}
-                </p>
-                <p class="text-xs">
-                    {{ $preview['transactions_total'] ?? 0 }} transações lidas · {{ $preview['expenses_total'] ?? 0 }} despesas para importar
-                </p>
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <p class="text-[11px] text-zinc-500">Selecionadas: {{ count($selectedSignatures) }} de {{ $preview['expenses_total'] ?? 0 }}</p>
-                    <div class="flex gap-2">
-                        <flux:button type="button" variant="ghost" class="rounded-xl" wire:click="selectAllPreviewRows">
-                            Selecionar tudo
-                        </flux:button>
-                        <flux:button type="button" variant="ghost" class="rounded-xl" wire:click="clearSelectedPreviewRows">
-                            Limpar seleção
-                        </flux:button>
-                    </div>
+        <div class="xl:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-5">
+            <div>
+                <h2 class="text-lg font-black dark:text-white">Carregar extrato bancário</h2>
+                <p class="text-xs text-zinc-400 mt-1">Começa por carregar o PDF exportado pela aplicação Santander.</p>
+            </div>
+            <form wire:submit="generatePreview" class="space-y-5">
+                <label class="block border-2 border-dashed border-zinc-200 dark:border-zinc-700 hover:border-blue-400 rounded-2xl p-8 text-center cursor-pointer transition">
+                    <flux:icon name="file-pdf" class="size-12 text-red-500 mx-auto mb-3" />
+                    <span class="block text-sm font-black dark:text-white">Selecionar extrato PDF</span>
+                    <span class="block text-[11px] text-zinc-400 mt-1">PDF do Santander · Também são aceites CSV e OFX</span>
+                    <input type="file" wire:model="statementFile" accept=".pdf,.csv,.txt,.ofx" class="mt-4 block w-full max-w-xs mx-auto text-xs" />
+                    @if($statementFile)
+                        <span class="block text-xs text-emerald-600 font-bold mt-3">{{ $statementFile->getClientOriginalName() }}</span>
+                    @endif
+                </label>
+                @error('statementFile') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
+                <div wire:loading wire:target="statementFile,generatePreview,importStatement" class="text-sm text-blue-500 font-bold">
+                    <span class="inline-flex items-center gap-2"><flux:icon name="arrow-path" class="size-4 animate-spin" /> A ler e analisar o extrato...</span>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
-                    <table class="min-w-full text-xs">
-                        <thead class="bg-zinc-100 dark:bg-zinc-800/70">
-                            <tr>
-                                <th class="text-left p-2 font-black">Importar</th>
-                                <th class="text-left p-2 font-black">Data</th>
-                                <th class="text-left p-2 font-black">Descrição</th>
-                                <th class="text-right p-2 font-black">Valor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse(($preview['rows'] ?? []) as $tx)
-                                <tr class="border-t border-zinc-200 dark:border-zinc-800">
-                                    <td class="p-2 align-top">
-                                        <input
-                                            type="checkbox"
-                                            class="rounded border-zinc-300"
-                                            wire:model.live="selectedSignatures"
-                                            value="{{ $tx['signature'] }}"
-                                        />
-                                    </td>
-                                    <td class="p-2">{{ \Carbon\Carbon::parse($tx['date'])->format('d/m/Y') }}</td>
-                                    <td class="p-2">{{ $tx['description'] }}</td>
-                                    <td class="p-2 text-right font-bold text-red-600">{{ number_format($tx['amount'], 2, ',', '.') }} €</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="p-3 text-center text-zinc-400">Nenhuma despesa encontrada na amostra.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                <div class="flex justify-end">
-                    <flux:button type="button" variant="ghost" class="rounded-xl" wire:click="clearPreview">
-                        Limpar Pré-visualização
+                <div class="flex flex-wrap gap-3">
+                    <flux:button type="submit" variant="filled" class="rounded-xl font-black" :disabled="!$statementFile">
+                        Analisar movimentos
                     </flux:button>
+                    @if($previewReady)
+                        <flux:button type="button" variant="ghost" class="rounded-xl" wire:click="clearPreview">Cancelar análise</flux:button>
+                    @endif
                 </div>
-            </div>
-        @endif
-
-        @if($lastImport)
-            <div class="mt-6 p-4 rounded-2xl {{ $lastImport->status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'bg-red-50 dark:bg-red-950/30' }}">
-                <p class="font-black text-sm">
-                    {{ $lastImport->status === 'completed' ? '✓ Importação concluída' : '✗ Falha na importação' }}
-                </p>
-                <p class="text-xs mt-1">
-                    {{ $lastImport->transactions_imported }} de {{ $lastImport->transactions_total }} transações
-                    @if($lastImport->bank_detected) · Banco: {{ strtoupper($lastImport->bank_detected) }} @endif
-                </p>
-                @if(($lastImport->errors['duplicates_skipped'] ?? 0) > 0)
-                    <p class="text-xs mt-1 text-amber-700 dark:text-amber-300">
-                        {{ $lastImport->errors['duplicates_skipped'] }} transações duplicadas foram ignoradas.
-                    </p>
-                @endif
-            </div>
-        @endif
+            </form>
+        </div>
     </div>
 
-    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 max-w-3xl">
-        <h3 class="text-sm font-black uppercase tracking-widest text-zinc-400 mb-4">Regras Automáticas de Categorização</h3>
+    @if($previewReady)
+        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 space-y-5">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-black dark:text-white">Rever movimentos encontrados</h2>
+                    <p class="text-xs text-zinc-400 mt-1">Confirma cada movimento. Podes alterar a descrição, data, valor e categoria antes de guardar.</p>
+                </div>
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <span class="px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 font-bold">{{ $preview['transactions_total'] ?? 0 }} movimentos</span>
+                    <span class="px-3 py-2 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 font-bold">{{ $preview['expenses_total'] ?? 0 }} despesas</span>
+                    <span class="px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 font-bold">{{ $preview['incomes_total'] ?? 0 }} receitas</span>
+                </div>
+            </div>
 
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <p class="text-xs text-zinc-500">Selecionados: <strong>{{ count($selectedSignatures) }}</strong> de {{ count($preview['rows'] ?? []) }}</p>
+                <div class="flex flex-wrap gap-2">
+                    <flux:button type="button" size="sm" variant="ghost" wire:click="selectAllPreviewRows">Selecionar todos</flux:button>
+                    <flux:button type="button" size="sm" variant="ghost" wire:click="clearSelectedPreviewRows">Desmarcar todos</flux:button>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                @foreach(($preview['rows'] ?? []) as $index => $tx)
+                    @php($isIncome = ($tx['type'] ?? 'expense') === 'income')
+                    <div wire:key="statement-row-{{ $tx['signature'] ?? $index }}" class="rounded-2xl border {{ in_array($tx['signature'] ?? '', $selectedSignatures, true) ? 'border-blue-300 dark:border-blue-800' : 'border-zinc-200 dark:border-zinc-800' }} p-4 space-y-3">
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" class="mt-1 rounded border-zinc-300" wire:model.live="selectedSignatures" value="{{ $tx['signature'] ?? '' }}" />
+                            <div class="min-w-0 flex-1 grid grid-cols-1 md:grid-cols-12 gap-3">
+                                <div class="md:col-span-2">
+                                    <label class="block text-[10px] font-black uppercase text-zinc-400 mb-1">Data</label>
+                                    <input type="date" wire:model="preview.rows.{{ $index }}.date" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs" />
+                                </div>
+                                <div class="md:col-span-5">
+                                    <label class="block text-[10px] font-black uppercase text-zinc-400 mb-1">Descrição</label>
+                                    <input type="text" wire:model="preview.rows.{{ $index }}.description" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-xs" />
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-[10px] font-black uppercase text-zinc-400 mb-1">Valor (€)</label>
+                                    <input type="number" step="0.01" wire:model="preview.rows.{{ $index }}.amount" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs font-bold {{ $isIncome ? 'text-emerald-600' : 'text-red-600' }}" />
+                                </div>
+                                <div class="md:col-span-3">
+                                    <label class="block text-[10px] font-black uppercase text-zinc-400 mb-1">Categoria</label>
+                                    <select wire:model="preview.rows.{{ $index }}.category_id" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs">
+                                        <option value="">Sem categoria</option>
+                                        @foreach($categories as $category)
+                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pl-7">
+                            <span class="text-[10px] font-black uppercase tracking-wider {{ $isIncome ? 'text-emerald-600' : 'text-red-600' }}">{{ $isIncome ? 'Receita' : 'Despesa' }}</span>
+                            @if(isset($tx['balance']))
+                                <span class="text-[10px] text-zinc-400">Saldo após movimento: {{ number_format((float) $tx['balance'], 2, ',', '.') }} €</span>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-zinc-100 dark:border-zinc-800 pt-5">
+                <p class="text-xs text-zinc-500">Os movimentos só entram nas tuas contas depois de carregares em confirmar.</p>
+                <flux:button type="button" variant="primary" class="rounded-xl font-black" wire:click="importStatement" :disabled="count($selectedSignatures) === 0">
+                    Confirmar {{ count($selectedSignatures) }} movimentos
+                </flux:button>
+            </div>
+        </div>
+    @endif
+
+    @if($lastImport)
+        <div class="p-5 rounded-2xl {{ $lastImport->status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900' : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900' }}">
+            <p class="font-black text-sm">{{ $lastImport->status === 'completed' ? 'Importação concluída' : 'Falha na importação' }}</p>
+            <p class="text-xs mt-1">{{ $lastImport->transactions_imported }} de {{ $lastImport->transactions_total }} movimentos registados.</p>
+            @if(($lastImport->errors['duplicates_skipped'] ?? 0) > 0)
+                <p class="text-xs mt-1 text-amber-700 dark:text-amber-300">{{ $lastImport->errors['duplicates_skipped'] }} movimentos duplicados foram ignorados.</p>
+            @endif
+        </div>
+    @endif
+
+    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-4xl">
+        <h3 class="text-sm font-black uppercase tracking-widest text-zinc-400 mb-4">Regras automáticas de categorização</h3>
         <form wire:submit="saveCategorizationRule" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
             <div class="md:col-span-2">
                 <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Texto-chave</label>
-                <input wire:model="ruleKeyword" type="text" placeholder="Ex: netflix, uber, continente" class="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm" />
+                <input wire:model="ruleKeyword" type="text" placeholder="Ex.: netflix, uber, continente" class="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm" />
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Categoria</label>
@@ -133,21 +168,16 @@
                 </div>
             </div>
         </form>
-
         <div class="mt-5 space-y-2">
             @forelse($rules as $rule)
-                <div class="flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/30">
+                <div class="flex items-center justify-between gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/30">
                     <div>
                         <p class="text-sm font-black dark:text-white">"{{ $rule->keyword }}" → {{ $rule->category?->name ?? 'Sem categoria' }}</p>
                         <p class="text-[10px] text-zinc-400 uppercase font-black mt-1">Prioridade {{ $rule->priority }} · {{ $rule->is_active ? 'Ativa' : 'Inativa' }}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <flux:button type="button" variant="ghost" class="rounded-xl" wire:click="toggleRule({{ $rule->id }})">
-                            {{ $rule->is_active ? 'Desativar' : 'Ativar' }}
-                        </flux:button>
-                        <flux:button type="button" variant="danger" class="rounded-xl" wire:click="deleteRule({{ $rule->id }})" wire:confirm="Remover regra?">
-                            Remover
-                        </flux:button>
+                        <flux:button type="button" variant="ghost" wire:click="toggleRule({{ $rule->id }})">{{ $rule->is_active ? 'Desativar' : 'Ativar' }}</flux:button>
+                        <flux:button type="button" variant="danger" wire:click="deleteRule({{ $rule->id }})" wire:confirm="Remover regra?">Remover</flux:button>
                     </div>
                 </div>
             @empty
@@ -158,17 +188,16 @@
 
     @if($imports->isNotEmpty())
         <div>
-            <h3 class="text-sm font-black uppercase tracking-widest text-zinc-400 mb-4">Histórico</h3>
+            <h3 class="text-sm font-black uppercase tracking-widest text-zinc-400 mb-4">Histórico de importações</h3>
             <div class="space-y-2">
                 @foreach($imports as $import)
-                    <div class="flex justify-between items-center p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl">
+                    <div class="flex justify-between items-center gap-3 p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl">
                         <div>
                             <p class="font-bold text-sm dark:text-white">{{ $import->filename }}</p>
                             <p class="text-[10px] text-zinc-400">{{ $import->created_at->format('d/m/Y H:i') }}</p>
                         </div>
-                        <span class="text-[9px] font-black uppercase px-2 py-1 rounded-full
-                            {{ $import->status === 'completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600' }}">
-                            {{ $import->status }} · {{ $import->transactions_imported }} tx
+                        <span class="text-[9px] font-black uppercase px-2 py-1 rounded-full {{ $import->status === 'completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600' }}">
+                            {{ $import->status }} · {{ $import->transactions_imported }} movimentos
                         </span>
                     </div>
                 @endforeach
