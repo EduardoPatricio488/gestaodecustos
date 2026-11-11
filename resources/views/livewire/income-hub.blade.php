@@ -1187,6 +1187,37 @@
                 {{-- BODY --}}
                 <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar sm:p-6">
 
+                    <div class="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800">
+                        <button type="button" wire:click="$set('salaryFormMode', 'manual')" class="rounded-xl px-3 py-3 text-[10px] font-black uppercase transition {{ $salaryFormMode === 'manual' ? 'bg-white text-indigo-600 shadow dark:bg-zinc-900' : 'text-zinc-500' }}">Preencher manualmente</button>
+                        <button type="button" wire:click="$set('salaryFormMode', 'scanner')" class="rounded-xl px-3 py-3 text-[10px] font-black uppercase transition {{ $salaryFormMode === 'scanner' ? 'bg-white text-indigo-600 shadow dark:bg-zinc-900' : 'text-zinc-500' }}">Scanner do contrato IA</button>
+                    </div>
+
+                    @if($salaryFormMode === 'scanner')
+                        <section class="space-y-4 rounded-3xl border border-indigo-200 bg-indigo-50/70 p-5 dark:border-indigo-900/50 dark:bg-indigo-950/20">
+                            <div>
+                                <h3 class="text-sm font-black uppercase text-indigo-700 dark:text-indigo-300">Ler fotografia do contrato</h3>
+                                <p class="mt-1 text-xs leading-5 text-zinc-600 dark:text-zinc-300">Carrega uma fotografia nítida do contrato. A IA identifica os dados profissionais, remuneração, subsídios e benefícios e preenche o formulário. Podes rever e corrigir tudo antes de confirmar.</p>
+                            </div>
+                            <label class="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-indigo-300 bg-white p-5 text-center dark:border-indigo-800 dark:bg-zinc-900">
+                                <flux:icon name="camera" class="mb-2 size-8 text-indigo-500" />
+                                <span class="text-xs font-black text-zinc-700 dark:text-zinc-200">Escolher fotografia do contrato</span>
+                                <span class="mt-1 text-[10px] text-zinc-500">JPG, PNG ou WEBP · máximo 10 MB</span>
+                                <input type="file" wire:model="contractScanPhoto" accept="image/jpeg,image/png,image/webp" capture="environment" class="sr-only">
+                            </label>
+                            @if($contractScanPhoto)
+                                <p class="text-xs font-semibold text-indigo-700 dark:text-indigo-300">{{ $contractScanPhoto->getClientOriginalName() }}</p>
+                                <img src="{{ $contractScanPhoto->temporaryUrl() }}" alt="Pré-visualização do contrato" class="mx-auto max-h-64 rounded-xl border border-zinc-200 object-contain dark:border-zinc-700">
+                            @endif
+                            @error('contractScanPhoto')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
+                            <div wire:loading wire:target="contractScanPhoto" class="text-xs font-semibold text-indigo-600">A carregar fotografia...</div>
+                            <button type="button" wire:click="scanEmploymentContract" wire:loading.attr="disabled" wire:target="scanEmploymentContract,contractScanPhoto" @disabled(! $contractScanPhoto || $contractScanProcessing) class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-black uppercase text-white shadow-lg shadow-indigo-600/20 disabled:cursor-not-allowed disabled:opacity-50">
+                                <flux:icon name="sparkles" class="size-4" />
+                                <span wire:loading.remove wire:target="scanEmploymentContract">Analisar contrato com IA</span>
+                                <span wire:loading wire:target="scanEmploymentContract">A analisar fotografia...</span>
+                            </button>
+                            <p class="text-[10px] leading-4 text-zinc-500">A análise pode falhar em fotografias pouco nítidas. Os dados só são guardados quando confirmares o contrato.</p>
+                        </section>
+                    @else
                     {{-- DESCRIÇÃO --}}
                     <div class="relative">
                         <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-indigo-600 z-10">Nome da Empresa</label>
@@ -1401,10 +1432,11 @@
                         </span>
                     </label>
                     <div>
-                        <label class="text-[9px] font-black uppercase text-zinc-500">Notas e observações do contrato</label>
-                        <textarea wire:model="recNotes" rows="3" maxlength="5000" placeholder="Alterações contratuais, aumentos, funções ou notas pessoais" class="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></textarea>
-                        @error('recNotes')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                        <label class="text-[9px] font-black uppercase text-zinc-500">Benefícios e regalias do contrato</label>
+                        <textarea wire:model="recAdditionalBenefits" rows="3" maxlength="2000" placeholder="Ex.: seguro de saúde, prémio anual, formação, teletrabalho, viatura, passe de transporte..." class="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></textarea>
+                        @error('recAdditionalBenefits')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                     </div>
+                    @endif
                 </div>
 
                 {{-- FOOTER --}}
