@@ -191,6 +191,68 @@ class Expenses extends Component
                 throw new \Exception($detail.' Podes tentar novamente ou escolher a categoria manualmente.');
             }
 
+            // Uma categoria isolada não significa que a fatura foi extraída.
+            // Se valor, data, estabelecimento e descrição vierem vazios, tenta novamente
+            // com o mesmo modelo gratuito e a mesma imagem, pedindo apenas os campos essenciais.
+            $hasEssentialData = collect(['amount', 'date', 'store', 'description'])
+                ->contains(fn ($field) => isset($result[$field]) && $result[$field] !== '');
+
+            if (! $hasEssentialData) {
+                $retryPrompt = "Lê a imagem da fatura portuguesa e extrai os dados que estejam visíveis. ".
+                    "Responde apenas com JSON válido. Não inventes. ".
+                    "Extrai: amount (total final pago, número), date (YYYY-MM-DD), store (nome do estabelecimento), ".
+                    "description (compra/produtos em poucas palavras), category (uma destas: ".
+                    json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).
+                    "). Usa null apenas se o dado não estiver legível. ".
+                    '{"category":null,"amount":null,"date":null,"store":null,"description":null}';
+
+                $retryResponse = \\Illuminate\\Support\\Facades\\Http::withHeaders([
+                    'Authorization' => 'Bearer '.$apiKey,
+                    'Content-Type' => 'application/json',
+                    'HTTP-Referer' => config('app.url'),
+                    'X-Title' => 'Finance Pro AI',
+                ])->connectTimeout(5)->timeout(35)
+                    ->post('https://openrouter.ai/api/v1/chat/completions', [
+                        'model' => config('services.openrouter.model', 'openrouter/free'),
+                        'temperature' => 0,
+                        'max_tokens' => 900,
+                        'response_format' => ['type' => 'json_object'],
+                        'messages' => [[
+                            'role' => 'user',
+                            'content' => [['type' => 'text', 'text' => $retryPrompt], $contentPart],
+                        ]],
+                    ]);
+
+                if ($retryResponse->successful()) {
+                    $retryRaw = $retryResponse->json('choices.0.message.content');
+                    if (is_array($retryRaw)) {
+                        $retryRaw = collect($retryRaw)
+                            ->map(fn ($part) => is_string($part) ? $part : data_get($part, 'text', data_get($part, 'content', '')))
+                            ->filter(fn ($part) => is_string($part) && trim($part) !== '')
+                            ->implode("\\n");
+                    }
+                    $retryRaw = trim(preg_replace('/^\\x60{3}(?:json)?\\s*|\\s*\\x60{3}$/i', '', (string) $retryRaw));
+                    $retryResult = json_decode($retryRaw, true);
+                    if (! is_array($retryResult) && preg_match('/\\{.*\\}/s', $retryRaw, $retryMatches)) {
+                        $retryResult = json_decode($retryMatches[0], true);
+                    }
+                    if (is_array($retryResult)) {
+                        foreach (['category', 'amount', 'date', 'store', 'description'] as $field) {
+                            if ((! isset($result[$field]) || $result[$field] === '') && isset($retryResult[$field]) && $retryResult[$field] !== '') {
+                                $result[$field] = $retryResult[$field];
+                            }
+                        }
+                    }
+                }
+            }
+
+            $hasEssentialData = collect(['amount', 'date', 'store', 'description'])
+                ->contains(fn ($field) => isset($result[$field]) && $result[$field] !== '');
+
+            if (! $hasEssentialData) {
+                throw new \\Exception('A IA não conseguiu extrair o valor, a data, o estabelecimento ou a descrição desta fatura. Experimenta uma fotografia mais nítida, direita e com a fatura completa visível.');
+            }
+
             $suggestedCategory = trim((string) ($result['category'] ?? ''));
             $category = $categories->first(fn ($item) => mb_strtolower(trim($item->name)) === mb_strtolower($suggestedCategory));
 
