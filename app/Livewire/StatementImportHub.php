@@ -181,7 +181,7 @@ class StatementImportHub extends Component
 
         $this->viewingImportId = $import->id;
         $this->viewingImportMovements = $expenses->concat($incomes)
-            ->sortBy('date')
+            ->sortByDesc('date')
             ->values()
             ->all();
     }
