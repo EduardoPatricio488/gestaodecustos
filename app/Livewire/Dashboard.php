@@ -175,7 +175,6 @@ class Dashboard extends Component
     private function fetchMarketPrices(): array
     {
         $result = [];
-            $result = [];
             try {
                 $responses = Http::pool(function (Pool $pool) {
                     return [
@@ -230,7 +229,6 @@ class Dashboard extends Component
             } catch (\Throwable $e) {
                 Log::debug('Falha ao atualizar preços de mercado no dashboard: '.$e->getMessage());
             }
-            return $result;
         return $result;
     }
 
