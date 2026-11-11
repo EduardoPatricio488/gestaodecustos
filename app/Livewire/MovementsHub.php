@@ -91,7 +91,7 @@ class MovementsHub extends Component
         $this->editingCycle = (string) ($record->cycle ?? 'monthly');
         $this->editingCompanyPaid = (bool) ($record->paid_by_company ?? $record->is_company ?? false);
         $this->editingActive = (bool) ($record->is_active ?? true);
-        $this->editingAmountPaid = (string) ($record->amount_paid ?? $record->amount ?? '0');
+        $this->editingAmountPaid = (string) ((float) ($record->amount_paid ?? 0) > 0 ? $record->amount_paid : $record->amount);
         $this->editingVatAmount = (string) ($record->vat_amount ?? '0');
     }
 
@@ -304,8 +304,8 @@ class MovementsHub extends Component
                     'Tarefa' => $item->task?->name,
                     'Centro de custo' => $item->costCenter?->name,
                     'Valor total' => number_format((float) $item->amount, 2, ',', '.').' '.($item->currency ?: 'EUR'),
-                    'Valor pago' => number_format((float) $item->amount, 2, ',', '.').' '.($item->currency ?: 'EUR'),
-                    'Em falta' => number_format(0, 2, ',', '.').' '.($item->currency ?: 'EUR'),
+                    'Valor pago' => number_format((float) ((float) $item->amount_paid > 0 ? $item->amount_paid : $item->amount), 2, ',', '.').' '.($item->currency ?: 'EUR'),
+                    'Em falta' => number_format(max(0, (float) $item->amount - (float) ((float) $item->amount_paid > 0 ? $item->amount_paid : $item->amount)), 2, ',', '.').' '.($item->currency ?: 'EUR'),
                     'IVA' => $item->vat_amount !== null ? number_format((float) $item->vat_amount, 2, ',', '.').' '.($item->currency ?: 'EUR') : null,
                     'Data' => $item->spent_at?->format('d/m/Y'),
                     'Estado' => 'Completo',
