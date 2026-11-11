@@ -952,13 +952,9 @@ class InvestmentsHub extends Component
             }
 
             foreach ($assets->whereIn('type', ['Acao', 'ETF', 'Fundo', 'Cripto']) as $asset) {
-                // Para posições importadas da XTB, o preço do relatório do broker
-                // é a referência da posição. Não o substituir por Yahoo/AlphaVantage,
-                // cujas cotações podem diferir do preço executável apresentado na XTB.
-                if (strtoupper(trim((string) $asset->broker)) === 'XTB') {
-                    continue;
-                }
-
+                // As posições XTB também recebem a cotação de mercado mais recente
+                // disponível no fornecedor externo. O relatório importado serve para
+                // registar quantidade e custo de aquisição, não para congelar o preço atual.
                 $ticker = strtoupper((string) $asset->symbol);
 
                 if (isset($cryptoPrices[$ticker]) && $cryptoPrices[$ticker] > 0) {
@@ -972,7 +968,7 @@ class InvestmentsHub extends Component
 
             $this->lastUpdated = now()->format('H:i');
             if (! $silent) {
-                $this->dispatch('toast', text: "{$updated} ativos atualizados. As posições XTB mantêm a cotação do último relatório importado.");
+                $this->dispatch('toast', text: "{$updated} ativos atualizados com as cotações de mercado disponíveis.");
             }
 
             return true;
