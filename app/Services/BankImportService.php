@@ -26,7 +26,7 @@ class BankImportService
         'millennium' => ['data', 'data valor', 'descrição'],
     ];
 
-    public function preview(UploadedFile $file): array
+    public function preview(UploadedFile $file, int $workspaceId, int $userId): array
     {
         $content = file_get_contents($file->getRealPath());
         $ext = strtolower($file->getClientOriginalExtension());
@@ -70,6 +70,40 @@ class BankImportService
         $expenseCandidates = array_values(array_filter($expenseCandidates, fn ($row) =>
             (float) $row['amount'] < 0 || $row['type'] === 'transfer'
         ));
+
+        $otherCategoryId = $this->ensureOtherCategory($workspaceId, $userId);
+        $categories = Category::where('workspace_id', $workspaceId)->pluck('name', 'id')->all();
+
+        foreach ($expenseCandidates as $index => $row) {
+            if (($row['type'] ?? '') !== 'expense') {
+                $expenseCandidates[$index]['category_id'] = null;
+                continue;
+            }
+
+            $expenseCandidates[$index]['category_id'] = $this->categorize(
+                $workspaceId,
+                $userId,
+                (string) ($row['description'] ?? ''),
+                $categories,
+                false
+            );
+        }
+
+        $unknownIndexes = [];
+        foreach ($expenseCandidates as $index => $row) {
+            if (($row['type'] ?? '') === 'expense' && empty($row['category_id'])) {
+                $unknownIndexes[] = $index;
+            }
+        }
+
+        if ($unknownIndexes !== []) {
+            $descriptions = array_map(fn ($index) => (string) $expenseCandidates[$index]['description'], $unknownIndexes);
+            $suggestions = $this->categorizeManyWithAi($descriptions, $categories);
+
+            foreach ($unknownIndexes as $position => $rowIndex) {
+                $expenseCandidates[$rowIndex]['category_id'] = $suggestions[$position] ?? $otherCategoryId;
+            }
+        }
 
         return [
             'bank' => $parsed['bank'],
@@ -147,7 +181,7 @@ class BankImportService
             $categoryId = $mafrenseNemPasses
                 ? ($transportCategoryId ? (int) $transportCategoryId : $otherCategoryId)
                 : ($classification['type'] === 'expense'
-                    ? ($this->categorize($workspaceId, $userId, $description, $categories, false) ?: $otherCategoryId)
+                    ? ($this->categorize($workspaceId, $userId, $description, $categories, false))
                     : null);
             $rows[] = [
                 'signature' => sha1($date->format('Y-m-d').'|'.number_format($amount, 2, '.', '').'|'.mb_strtolower($description).'|'.count($rows)),
@@ -189,7 +223,7 @@ class BankImportService
             if ($this->isKnownMerchantExpense($normalized) && (float) ($row['amount'] ?? 0) < 0) {
                 $rows[$rowIndex]['type'] = 'expense';
                 $rows[$rowIndex]['transfer_category'] = null;
-                $rows[$rowIndex]['category_id'] = $this->categorize($workspaceId, $userId, $description, $categories, false) ?: $otherCategoryId;
+                $rows[$rowIndex]['category_id'] = $this->categorize($workspaceId, $userId, $description, $categories, false);
             }
         }
 
@@ -1088,7 +1122,7 @@ class BankImportService
             ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
                 ->timeout((int) config('limits.ai.request_timeout_seconds', 30))
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
-                    'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                    'model' => config('services.openrouter.model', 'openrouter/free'),
                     'messages' => [
                         ['role' => 'system', 'content' => 'Classifica movimentos bancários apenas nas categorias fornecidas. Não inventes categorias. Devolve exclusivamente JSON válido no formato {"categories":[{"index":0,"category":"nome exato ou UNKNOWN"}]}.'],
                         ['role' => 'user', 'content' => 'Categorias disponíveis: '.json_encode($categoryNames, JSON_UNESCAPED_UNICODE).'. Movimentos: '.json_encode($payload, JSON_UNESCAPED_UNICODE)],
