@@ -133,6 +133,7 @@ class BankImportService
                 'type' => $classification['type'] === 'transfer' ? 'transfer' : ($classification['type'] === 'debt_payment' ? 'debt_payment' : ($amount < 0 ? 'expense' : 'income')),
                 'category_id' => $categoryId,
                 'movement_label' => $classification['label'],
+                'transfer_category' => $classification['transfer_category'] ?? null,
             ];
         }
 
@@ -402,7 +403,9 @@ class BankImportService
                         'from_account_id' => null, 'to_account_id' => null,
                         'direction' => $signedAmount > 0 ? 'in' : 'out',
                         'recipient' => $this->extractCounterparty($description),
-                        'amount' => $amount, 'currency' => 'EUR', 'description' => $description,
+                        'amount' => $amount, 'currency' => 'EUR',
+                        'category' => $classification['transfer_category'] ?? null,
+                        'description' => $description,
                         'status' => 'completed', 'transferred_at' => $date,
                         'bank_statement_import_id' => $import->id,
                         'notes' => 'Importado automaticamente do extrato bancário.',
