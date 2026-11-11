@@ -188,7 +188,7 @@ PROMPT;
                 'Authorization' => 'Bearer '.config('services.openrouter.api_key'),
                 'Content-Type' => 'application/json',
             ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))->timeout((int) config('limits.ai.request_timeout_seconds', 30))->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => 'google/gemini-2.5-flash',
+                'model' => config('services.openrouter.model', 'openrouter/free'),
                 'max_tokens' => 2000,
                 'messages' => [
                     [
