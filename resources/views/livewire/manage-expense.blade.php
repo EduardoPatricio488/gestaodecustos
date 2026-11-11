@@ -238,6 +238,8 @@
                         <button type="button" @click="scannerOpen = false" class="text-zinc-500 hover:text-white"><flux:icon name="x-mark" /></button>
                     </div>
 
+                    @include('livewire.partials.openrouter-quota', ['aiQuota' => $aiQuota])
+
                     @if($scanError)
                         <div class="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-xs text-red-400 font-medium">{{ $scanError }}</div>
                     @endif
