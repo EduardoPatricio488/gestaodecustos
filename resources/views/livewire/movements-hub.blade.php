@@ -99,7 +99,7 @@
                                     @if($editingType !== 'subscription')
                                         <label class="space-y-1 text-xs font-bold text-zinc-500">Moeda<input maxlength="3" wire:model="editingCurrency" class="w-full rounded-xl border-zinc-200 text-sm uppercase dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
                                     @endif
-                                    @if(in_array($editingType, ['expense','income'], true))
+                                    @if(in_array($editingType, ['expense','income','subscription'], true))
                                         <label class="space-y-1 text-xs font-bold text-zinc-500">Categoria
                                             <select wire:model="editingCategoryId" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Sem categoria</option>@foreach($editCategories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select>
                                         </label>
