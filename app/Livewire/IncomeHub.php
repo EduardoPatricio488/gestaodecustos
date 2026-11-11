@@ -367,7 +367,20 @@ class IncomeHub extends Component
             ]);
 
             if (! $response->successful()) {
-                throw new \RuntimeException('A IA não conseguiu analisar a fotografia. Tenta novamente com uma imagem mais nítida.');
+                $providerMessage = $response->json('error.message')
+                    ?? $response->json('message')
+                    ?? 'O fornecedor de IA não devolveu uma explicação.';
+                $providerMessage = is_string($providerMessage)
+                    ? trim(preg_replace('/\\s+/', ' ', $providerMessage))
+                    : 'Resposta de erro não reconhecida do fornecedor de IA.';
+
+                report(new \\RuntimeException(
+                    'Scanner de contrato: OpenRouter HTTP '.$response->status().' — '.mb_substr($providerMessage, 0, 500)
+                ));
+
+                throw new \\RuntimeException(
+                    'A IA não conseguiu analisar a fotografia (HTTP '.$response->status().'). '.$providerMessage
+                );
             }
             $content = $response->json('choices.0.message.content');
 
