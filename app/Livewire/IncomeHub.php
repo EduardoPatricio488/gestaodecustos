@@ -1025,7 +1025,7 @@ class IncomeHub extends Component
         $this->editingFixedId = null;
         $this->contractScanPhoto = null;
         $this->salaryFormMode = 'manual';
-        $this->recDescription = ''
+        $this->recDescription = '';
         $this->recPosition = '';
         $this->recDepartment = '';
         $this->recContractType = 'sem_termo';
