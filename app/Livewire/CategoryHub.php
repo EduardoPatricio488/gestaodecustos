@@ -382,7 +382,39 @@ class CategoryHub extends Component
             if (! $filePath || ! file_exists($filePath)) throw new \Exception('Não foi possível ler o ficheiro enviado.');
 
             $mimeType = $file->getMimeType() ?: 'image/jpeg';
-            $fileData = base64_encode(file_get_contents($filePath));
+            $fileContents = file_get_contents($filePath);
+            if (! is_string($fileContents) || $fileContents === '') {
+                throw new \\Exception('Não foi possível ler o conteúdo da fatura.');
+            }
+
+            // Redimensiona fotografias grandes para acelerar a análise sem perder legibilidade.
+            if (str_starts_with($mimeType, 'image/') && function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
+                $sourceImage = @imagecreatefromstring($fileContents);
+                if ($sourceImage !== false) {
+                    $originalWidth = imagesx($sourceImage);
+                    $originalHeight = imagesy($sourceImage);
+                    $scale = min(1, 1800 / max($originalWidth, $originalHeight));
+                    if ($scale < 1) {
+                        $targetWidth = max(1, (int) round($originalWidth * $scale));
+                        $targetHeight = max(1, (int) round($originalHeight * $scale));
+                        $resizedImage = imagecreatetruecolor($targetWidth, $targetHeight);
+                        $white = imagecolorallocate($resizedImage, 255, 255, 255);
+                        imagefill($resizedImage, 0, 0, $white);
+                        imagecopyresampled($resizedImage, $sourceImage, 0, 0, 0, 0, $targetWidth, $targetHeight, $originalWidth, $originalHeight);
+                        ob_start();
+                        imagejpeg($resizedImage, null, 82);
+                        $compressedImage = ob_get_clean();
+                        if (is_string($compressedImage) && $compressedImage !== '') {
+                            $fileContents = $compressedImage;
+                            $mimeType = 'image/jpeg';
+                        }
+                        imagedestroy($resizedImage);
+                    }
+                    imagedestroy($sourceImage);
+                }
+            }
+
+            $fileData = base64_encode($fileContents);
             $contentPart = str_starts_with($mimeType, 'image/')
                 ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData]]
                 : ['type' => 'file', 'file' => ['filename' => $file->getClientOriginalName(), 'file_data' => 'data:'.$mimeType.';base64,'.$fileData]];
@@ -413,10 +445,11 @@ PROMPT;
                 'Authorization' => 'Bearer '.$apiKey,
                 'Content-Type' => 'application/json',
             ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
-                ->timeout((int) config('limits.ai.request_timeout_seconds', 60))
+                ->timeout(min(40, (int) config('limits.ai.request_timeout_seconds', 40)))
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
-                    'max_tokens' => 3000,
+                    'temperature' => 0,
+                    'max_tokens' => 2200,
                     'response_format' => ['type' => 'json_object'],
                     'reasoning' => ['effort' => 'minimal'],
                     'messages' => [[
@@ -429,20 +462,56 @@ PROMPT;
                 throw new \Exception('A IA não conseguiu analisar a fatura: '.($response->json('error.message') ?? 'erro de comunicação.'));
             }
 
-            $rawText = trim(preg_replace('/\x60{3}json|\x60{3}/i', '', (string) $response->json('choices.0.message.content')));
-            if (! preg_match('/\{.*\}/s', $rawText, $matches)) {
-                throw new \Exception('A IA não devolveu dados reconhecíveis.');
+            $content = $response->json('choices.0.message.content');
+            if (is_array($content)) {
+                $content = collect($content)
+                    ->map(fn ($part) => is_string($part) ? $part : data_get($part, 'text', data_get($part, 'content', '')))
+                    ->filter(fn ($part) => is_string($part) && trim($part) !== '')
+                    ->implode("\\n");
+            }
+            $rawText = trim(preg_replace('/^\\x60{3}(?:json)?\\s*|\\s*\\x60{3}$/i', '', (string) $content));
+            $result = json_decode($rawText, true);
+            if (! is_array($result) && preg_match('/\\{.*\\}/s', $rawText, $matches)) {
+                $result = json_decode($matches[0], true);
+            }
+            if (! is_array($result)) {
+                throw new \\Exception('A IA não devolveu dados reconhecíveis num formato válido.');
             }
 
-            $result = json_decode($matches[0], true);
-            if (! is_array($result) || json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('Não foi possível interpretar os dados extraídos da fatura.');
+            // Normaliza nomes alternativos devolvidos por alguns modelos gratuitos.
+            $aliases = [
+                'amount' => ['total', 'total_paid', 'valor_total', 'total_amount'],
+                'date' => ['purchase_date', 'invoice_date', 'data'],
+                'store' => ['merchant', 'establishment', 'supplier', 'loja', 'estabelecimento'],
+                'description' => ['items_description', 'purchase_description', 'details', 'descricao'],
+                'item_name' => ['product', 'product_name', 'item', 'purchase'],
+                'time' => ['purchase_time'],
+                'vat_rate' => ['iva', 'tax_rate'],
+                'vat_amount' => ['iva_amount', 'valor_iva'],
+                'gross_amount' => ['total_gross'],
+                'net_amount' => ['total_net'],
+            ];
+            foreach ($aliases as $target => $alternatives) {
+                if (! isset($result[$target]) || $result[$target] === '') {
+                    foreach ($alternatives as $alternative) {
+                        if (isset($result[$alternative]) && $result[$alternative] !== '') {
+                            $result[$target] = $result[$alternative];
+                            break;
+                        }
+                    }
+                }
             }
 
             // Alguns modelos gratuitos devolvem JSON válido, mas deixam todos os campos a null.
             // Nesse caso fazemos uma segunda tentativa mais curta, usando o mesmo modelo e ficheiro.
-            $hasExtractedData = collect($result)->contains(
-                fn ($value) => $value !== null && $value !== '' && $value !== []
+            $recognisedFields = [
+                'amount', 'date', 'time', 'quantity', 'unit', 'store', 'description', 'item_name',
+                'subcategory', 'unit_price', 'vat_rate', 'gross_amount', 'net_amount', 'vat_amount',
+                'tax_incidence', 'amount_tendered', 'change_amount', 'payment_condition',
+                'payment_method', 'company_nif', 'customer_nif', 'invoice_number', 'notes',
+            ];
+            $hasExtractedData = collect($recognisedFields)->contains(
+                fn ($field) => isset($result[$field]) && $result[$field] !== '' && $result[$field] !== []
             );
 
             if (! $hasExtractedData) {
@@ -494,8 +563,14 @@ PROMPT;
                 }
             }
 
-            $hasExtractedData = collect($result)->contains(
-                fn ($value) => $value !== null && $value !== '' && $value !== []
+            $recognisedFields = [
+                'amount', 'date', 'time', 'quantity', 'unit', 'store', 'description', 'item_name',
+                'subcategory', 'unit_price', 'vat_rate', 'gross_amount', 'net_amount', 'vat_amount',
+                'tax_incidence', 'amount_tendered', 'change_amount', 'payment_condition',
+                'payment_method', 'company_nif', 'customer_nif', 'invoice_number', 'notes',
+            ];
+            $hasExtractedData = collect($recognisedFields)->contains(
+                fn ($field) => isset($result[$field]) && $result[$field] !== '' && $result[$field] !== []
             );
 
             if (! $hasExtractedData) {
@@ -552,6 +627,18 @@ PROMPT;
             if ($description !== '') $this->description = $description;
             elseif ($store !== '') $this->description = $store;
             if ($matchedSub !== null) $this->subcategory = $matchedSub;
+
+            $hasFormValue = $amount !== null
+                || $date !== null
+                || $store !== ''
+                || $description !== ''
+                || ! blank($result['item_name'] ?? null)
+                || ! blank($matchedSub)
+                || collect($this->meta)->contains(fn ($value) => $value !== null && $value !== '');
+
+            if (! $hasFormValue) {
+                throw new \\Exception('A IA respondeu, mas não conseguiu preencher nenhum campo da compra. Experimenta uma fotografia mais nítida, direita e com a fatura completa visível.');
+            }
 
             $this->scannedData = $result;
             $this->scannedData['amount'] = $amount;
