@@ -2507,8 +2507,13 @@ class IncomeHub extends Component
             return (float) $payment->net_received + ($mealCard ? 0 : (float) $payment->meal_allowance);
         });
 
+        // Só contar contratos sem pagamento registado quando o utilizador
+        // confirmou explicitamente que já recebeu o salário neste mês.
+        $currentReceivedMonth = $thisMonth->format('Y-m');
         $receivedSalaryContracts = $projectedSalaryContracts
+            ->filter(fn (RecurringIncome $income) => ($income->metadata['received_month'] ?? null) === $currentReceivedMonth)
             ->reject(fn (RecurringIncome $income) => $paidSalaryPayments->contains('recurring_income_id', $income->id));
+
         $thisMonthPendingSalaryNet = (float) $receivedSalaryContracts->sum(function (RecurringIncome $income): float {
             $metadata = $income->metadata ?? [];
 
