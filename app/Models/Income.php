@@ -42,6 +42,19 @@ class Income extends Model
                 throw new DomainException('O valor da receita deve ser superior a zero.');
             }
 
+            if ($income->category_id) {
+                $workspace = Workspace::withoutGlobalScopes()->find($income->workspace_id);
+                $categoryQuery = Category::withoutGlobalScopes()
+                    ->whereKey($income->category_id)
+                    ->where('workspace_id', $income->workspace_id);
+                if ($workspace?->type === 'personal') {
+                    $categoryQuery->where('user_id', $income->user_id);
+                }
+                if (! $categoryQuery->exists()) {
+                    throw new DomainException('A categoria selecionada não pertence ao utilizador ou à empresa.');
+                }
+            }
+
             $workspaceCurrency = strtoupper((string) (Workspace::find($income->workspace_id)?->currency ?? 'EUR'));
             $transactionCurrency = strtoupper((string) ($income->currency ?: $workspaceCurrency));
 
