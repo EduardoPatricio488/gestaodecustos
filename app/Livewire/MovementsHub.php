@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Expense;
 use App\Models\Income;
 use App\Models\Subscription;
+use App\Models\SubscriptionPayment;
 use App\Models\BankTransfer;
 use Carbon\Carbon;
 use Livewire\Attributes\Layout;
@@ -39,7 +40,7 @@ class MovementsHub extends Component
                 'key' => 'expense-'.$item->id, 'type' => 'expense', 'type_label' => 'Despesa',
                 'title' => $item->title ?: $item->description ?: 'Despesa',
                 'detail' => $item->category?->name ?: 'Sem categoria',
-                'date' => $item->spent_at, 'amount' => (float) ($item->amount_paid ?: $item->amount),
+                'date' => $item->spent_at, 'amount' => (float) ((float) $item->amount_paid > 0 ? $item->amount_paid : $item->amount),
                 'direction' => 'out', 'status' => $item->status ?: 'Registada',
             ]));
         }
