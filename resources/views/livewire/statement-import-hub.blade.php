@@ -158,7 +158,7 @@
                             <p class="text-[10px] text-zinc-400">{{ $import->created_at->format('d/m/Y H:i') }} · {{ $import->transactions_imported }} movimentos importados</p>
                             <div class="flex flex-wrap gap-2 mt-2">
                                 <flux:button type="button" size="xs" variant="ghost" wire:click="viewImportMovements({{ $import->id }})">Ver movimentos</flux:button>
-                                <flux:button type="button" size="xs" variant="danger" wire:click="deleteImport({{ $import->id }})" wire:confirm="Esta ação vai eliminar esta importação e todas as despesas e receitas criadas por ela. Queres continuar?">Apagar importação</flux:button>
+                                <flux:button type="button" size="xs" variant="danger" wire:click="deleteImport({{ $import->id }})" wire:confirm="Esta ação vai eliminar esta importação e todos os movimentos associados: despesas, receitas, transferências bancárias e registos de dívidas. Queres continuar?">Apagar importação</flux:button>
                             </div>
                         </div>
                         <span class="shrink-0 text-[9px] font-black uppercase px-2 py-1 rounded-full {{ $import->status === 'completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600' }}">
