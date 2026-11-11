@@ -347,17 +347,17 @@ class IncomeHub extends Component
             ])->connectTimeout(10)->timeout(90)->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => config('services.openrouter.model', 'openrouter/free'),
                 'temperature' => 0,
-                'max_tokens' => 2400,
+                'max_tokens' => 4000,
                 'response_format' => ['type' => 'json_object'],
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'És um assistente especializado na leitura integral de contratos de trabalho portugueses. Analisa TODA a fotografia, incluindo rodapé, anexos visíveis, tabelas, listas e texto em letras pequenas. Extrai apenas informação explicitamente visível; nunca inventes nem omitas benefícios. Devolve exclusivamente um objeto JSON válido com estes campos: company, position, department, contract_type (sem_termo, termo_certo, termo_incerto, estagio, prestacao_servicos, outro), start_date (YYYY-MM-DD), end_date (YYYY-MM-DD), salary_gross (número), annual_payments (12 ou 14), meal_allowance (número por dia), working_days (inteiro), holiday_allowance_gross (número), christmas_allowance_gross (número), allowances_in_duodecimos (boolean), health_insurance (texto), expense_allowance (número mensal), additional_benefits (array de strings). MUITO IMPORTANTE: em additional_benefits inclui TODOS os benefícios, regalias, subsídios, seguros, prémios, ajudas de custo, viatura, combustível, telemóvel, computador, formação, férias adicionais, descontos, apoio à infância, alimentação, transporte e quaisquer outras vantagens que estejam escritas. Cada benefício deve ser um elemento separado do array, mantendo o nome e os detalhes/valores/condições exatamente como constam. Não juntes tudo num único benefício, não escolhas apenas o mais importante e não resumas uma lista. Se existirem vários pontos, devolve todos. Se não houver benefícios, devolve []. Para campos ausentes usa null. Distingue salário bruto de líquido e não uses o líquido como salário bruto. Converte datas portuguesas para YYYY-MM-DD. Subsídio de alimentação é valor diário.'
+                        'content' => 'Lê a fotografia de um contrato de trabalho português e extrai apenas dados claramente visíveis, sem inventar. Responde APENAS com um objeto JSON válido, sem Markdown, usando exatamente estas chaves: company, position, department, contract_type (sem_termo, termo_certo, termo_incerto, estagio, prestacao_servicos ou outro), start_date (YYYY-MM-DD), end_date (YYYY-MM-DD), salary_gross (número), annual_payments (12 ou 14), meal_allowance (valor diário), working_days (inteiro), holiday_allowance_gross (número), christmas_allowance_gross (número), allowances_in_duodecimos (boolean), health_insurance (texto), expense_allowance (valor mensal), additional_benefits (array de strings). Usa null nos campos ausentes e [] se não houver benefícios. Em additional_benefits inclui cada benefício/regalia explicitamente mencionado como um item separado, com valor ou condição quando legível; não repitas dados já representados noutros campos. Distingue salário bruto de líquido. Converte datas para YYYY-MM-DD.'
                     ],
                     [
                         'role' => 'user',
                         'content' => [
-                            ['type' => 'text', 'text' => 'Lê cuidadosamente toda a fotografia do contrato, do topo ao fundo. Identifica e lista individualmente TODOS os benefícios e regalias mencionados, mesmo que estejam em secções diferentes ou em letras pequenas. Não omitas nenhum. Extrai também os restantes dados para preencher o formulário.'],
+                            ['type' => 'text', 'text' => 'Extrai os campos definidos nas instruções a partir da fotografia. Dá prioridade à exatidão e mantém a resposta JSON curta.'],
                             ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mime.';base64,'.$image]],
                         ],
                     ],
