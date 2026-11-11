@@ -103,8 +103,9 @@ class MovementsHub extends Component
         $this->editingPaymentSource = (string) ($record->payment_source ?? 'company');
         $this->editingCompanyPaid = (bool) ($record->paid_by_company ?? $record->is_company ?? false);
         $this->editingActive = (bool) ($record->is_active ?? true);
-        $this->editingAmountPaid = (string) ($record->amount_paid ?? 0);
-        $this->editingOutstandingAmount = (string) max(0, round((float) $record->amount - (float) ($record->amount_paid ?? 0), 2));
+        $paidAmount = (float) ($record->amount_paid ?? 0) > 0 ? (float) $record->amount_paid : (float) $record->amount;
+        $this->editingAmountPaid = (string) $paidAmount;
+        $this->editingOutstandingAmount = (string) max(0, round((float) $record->amount - $paidAmount, 2));
         $this->editingVatAmount = (string) ($record->vat_amount ?? '0');
         $this->editingMetadata = $record->metadata ? json_encode($record->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
     }
