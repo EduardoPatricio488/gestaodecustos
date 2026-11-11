@@ -2247,21 +2247,21 @@
                     <div class="mx-auto mt-6 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
                         <div class="rounded-xl border border-zinc-200/80 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/70">
                             <div class="flex items-center gap-2 text-sm font-bold text-zinc-800 dark:text-zinc-100">
-                                <flux:icon name="arrow-down-left" class="size-4 text-emerald-500" />
+                                <span class="flex size-4 items-center justify-center text-base font-black leading-none text-emerald-500">↙</span>
                                 Transferências
                             </div>
                             <p class="mt-2 text-xs leading-relaxed text-zinc-500">Regista o valor recebido e seleciona a conta bancária de destino.</p>
                         </div>
                         <div class="rounded-xl border border-zinc-200/80 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/70">
                             <div class="flex items-center gap-2 text-sm font-bold text-zinc-800 dark:text-zinc-100">
-                                <flux:icon name="smartphone" class="size-4 text-indigo-500" />
+                                <span class="flex size-4 items-center justify-center text-xs font-black leading-none text-indigo-500">M</span>
                                 MB WAY
                             </div>
                             <p class="mt-2 text-xs leading-relaxed text-zinc-500">Adiciona o recebimento e identifica o método ou a conta associada.</p>
                         </div>
                         <div class="rounded-xl border border-zinc-200/80 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/70">
                             <div class="flex items-center gap-2 text-sm font-bold text-zinc-800 dark:text-zinc-100">
-                                <flux:icon name="wallet" class="size-4 text-sky-500" />
+                                <span class="flex size-4 items-center justify-center text-sm font-black leading-none text-sky-500">€</span>
                                 Salário
                             </div>
                             <p class="mt-2 text-xs leading-relaxed text-zinc-500">Os pagamentos salariais confirmados e associados a uma conta também surgem aqui.</p>
