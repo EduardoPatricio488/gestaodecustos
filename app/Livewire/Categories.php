@@ -180,6 +180,7 @@ class Categories extends Component
             ->where('user_id', auth()->id())
             ->whereKey($id)
             ->where('is_fixed', false)
+            ->whereRaw('LOWER(TRIM(name)) != ?', ['outros'])
             ->first();
 
         if (! $category) {
@@ -247,10 +248,12 @@ class Categories extends Component
             ->withCount(['expenses as expenses_count' => fn ($q) => $q->where('workspace_id', $this->workspaceId())
                 ->where('spent_at', '>=', $monthStart),
             ])
+            ->orderByRaw("CASE WHEN LOWER(TRIM(name)) = 'outros' THEN 1 ELSE 0 END ASC")
             ->orderBy('order', 'asc')
             ->orderBy('name', 'asc')
             ->get()
-            ->unique('name');
+            ->unique(fn (Category $category) => mb_strtolower(trim($category->name), 'UTF-8'))
+            ->values();
 
         return view('livewire.categories', compact('categories'));
     }
