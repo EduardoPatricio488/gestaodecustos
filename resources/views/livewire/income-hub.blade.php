@@ -554,14 +554,14 @@
 
 
 
-<div class="flex flex-col gap-8 w-full" x-data="{ activeIncomeTab: 'billing' }">
+<div class="flex flex-col gap-8 w-full">
     <div class="flex justify-center">
         <div class="inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5 dark:border-zinc-800 dark:bg-zinc-950">
-            <button type="button" @click="activeIncomeTab = 'billing'" :class="activeIncomeTab === 'billing' ? 'bg-white text-zinc-950 shadow-md ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700' : 'text-zinc-500 hover:bg-white/70 hover:text-zinc-950 dark:hover:bg-zinc-800/70 dark:hover:text-white'" class="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl px-6 py-3.5 text-sm font-extrabold tracking-normal transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] sm:text-base">
+            <button type="button" wire:click="$set('activeIncomeTab', 'billing')" class="{{ $activeIncomeTab === 'billing' ? 'bg-white text-zinc-950 shadow-md ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700' : 'text-zinc-500 hover:bg-white/70 hover:text-zinc-950 dark:hover:bg-zinc-800/70 dark:hover:text-white' }}" class="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl px-6 py-3.5 text-sm font-extrabold tracking-normal transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] sm:text-base">
                 <flux:icon name="calendar-days" variant="micro" class="size-5 transition-transform duration-300 group-hover:scale-110" />
                 Rendimentos Mensais
             </button>
-            <button type="button" @click="activeIncomeTab = 'bank'" :class="activeIncomeTab === 'bank' ? 'bg-white text-zinc-950 shadow-md ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700' : 'text-zinc-500 hover:bg-white/70 hover:text-zinc-950 dark:hover:bg-zinc-800/70 dark:hover:text-white'" class="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl px-6 py-3.5 text-sm font-extrabold tracking-normal transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] sm:text-base">
+            <button type="button" wire:click="$set('activeIncomeTab', 'bank')" class="{{ $activeIncomeTab === 'bank' ? 'bg-white text-zinc-950 shadow-md ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700' : 'text-zinc-500 hover:bg-white/70 hover:text-zinc-950 dark:hover:bg-zinc-800/70 dark:hover:text-white' }}" class="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl px-6 py-3.5 text-sm font-extrabold tracking-normal transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] sm:text-base">
                 <flux:icon name="building-library" variant="micro" class="size-5 transition-transform duration-300 group-hover:scale-110" />
                 Transferências Bancárias
             </button>
@@ -594,7 +594,8 @@
 {{-- ============================================================= --}}
 <div class="space-y-6">
 
-    <div x-show="activeIncomeTab === 'billing'" x-cloak class="space-y-8">
+    @if($activeIncomeTab === 'billing')
+    <div class="space-y-8">
 
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -2202,7 +2203,10 @@
         @endforelse
     </div>
     </div>
-    <div x-show="activeIncomeTab === 'bank'" x-transition.opacity.duration.200ms class="space-y-6">
+    @endif
+
+    @if($activeIncomeTab === 'bank')
+    <div class="space-y-6">
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total recebido em contas</p>
@@ -2303,7 +2307,7 @@
             @endif
         </div>
     </div>
-
+    @endif
 
 </div>
 
