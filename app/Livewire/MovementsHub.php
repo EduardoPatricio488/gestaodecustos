@@ -68,6 +68,29 @@ class MovementsHub extends Component
         return $model->whereKey($id);
     }
 
+    private function normalizeTransferCategory(mixed $category): string
+    {
+        if (is_array($category)) {
+            return trim((string) ($category['name'] ?? ''));
+        }
+
+        if (is_object($category)) {
+            return trim((string) ($category->name ?? ''));
+        }
+
+        $value = trim((string) $category);
+        if ($value === '') {
+            return '';
+        }
+
+        $decoded = json_decode($value, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return trim((string) ($decoded['name'] ?? ''));
+        }
+
+        return $value;
+    }
+
     public function editMovement(string $type, int $id): void
     {
         $record = $this->scopedRecordQuery($type, $id)->firstOrFail();
@@ -97,7 +120,7 @@ class MovementsHub extends Component
         $this->editingDirection = (string) ($record->direction ?? 'out');
         $this->editingRecipient = (string) ($record->recipient ?? '');
         $this->editingTransferMethod = (string) ($record->transfer_method ?? '');
-        $this->editingTransferCategory = (string) ($record->category ?? '');
+        $this->editingTransferCategory = $this->normalizeTransferCategory($record->category ?? '');
         $this->editingStatus = (string) ($record->status ?? 'completed');
         $this->editingCycle = (string) ($record->cycle ?? 'monthly');
         $this->editingPaymentSource = (string) ($record->payment_source ?? 'company');
