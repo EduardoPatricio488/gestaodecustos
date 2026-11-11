@@ -428,7 +428,7 @@ class CategoryHub extends Component
 
             $fileData = base64_encode($fileContents);
             $contentPart = str_starts_with($mimeType, 'image/')
-                ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData]]
+                ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData, 'detail' => 'high']]
                 : ['type' => 'file', 'file' => ['filename' => $file->getClientOriginalName(), 'file_data' => 'data:'.$mimeType.';base64,'.$fileData]];
 
             $subsStr = implode(', ', $this->subcategories);
