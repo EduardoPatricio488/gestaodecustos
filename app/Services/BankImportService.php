@@ -121,9 +121,15 @@ class BankImportService
             }
 
             $classification = $this->classifyMovement($description, $amount);
-            $categoryId = $classification['type'] === 'expense'
-                ? ($this->categorize($workspaceId, $userId, $description, $categories, false) ?: $otherCategoryId)
+            $mafrenseNemPasses = $this->isMafrenseNemPasses($description);
+            $transportCategoryId = $categories
+                ? collect($categories)->filter(fn ($name) => str_contains(mb_strtolower((string) $name), 'transport'))->keys()->first()
                 : null;
+            $categoryId = $mafrenseNemPasses
+                ? ($transportCategoryId ? (int) $transportCategoryId : $otherCategoryId)
+                : ($classification['type'] === 'expense'
+                    ? ($this->categorize($workspaceId, $userId, $description, $categories, false) ?: $otherCategoryId)
+                    : null);
             $rows[] = [
                 'signature' => sha1($date->format('Y-m-d').'|'.number_format($amount, 2, '.', '').'|'.mb_strtolower($description).'|'.count($rows)),
                 'date' => $date->format('Y-m-d'),
@@ -185,7 +191,17 @@ class BankImportService
             $duplicates = 0;
 
             foreach ($rows as $row) {
-                if (! is_array($row) || ! in_array($row['type'] ?? null, ['expense', 'income', 'transfer', 'debt_payment'], true)) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                $rowDescription = trim((string) ($row['description'] ?? ''));
+                if ($this->isMafrenseNemPasses($rowDescription) && (float) ($row['amount'] ?? 0) < 0) {
+                    $row['type'] = 'expense';
+                    $row['transfer_category'] = null;
+                    $transportCategoryId = $categories->filter(fn ($name) => str_contains(mb_strtolower((string) $name), 'transport'))->keys()->first();
+                    $row['category_id'] = $transportCategoryId ? (int) $transportCategoryId : $otherCategoryId;
+                }
+                if (! in_array($row['type'] ?? null, ['expense', 'income', 'transfer', 'debt_payment'], true)) {
                     continue;
                 }
                 $date = Carbon::parse($row['date'] ?? '');
@@ -379,6 +395,12 @@ class BankImportService
                 if (isset($aiRows[$transactionIndex])) {
                     $classification['type'] = $aiRows[$transactionIndex]['type'];
                 }
+                // A Mafrense Nem Passes é sempre uma despesa de transporte,
+                // mesmo que uma classificação anterior ou IA a marque como transferência/dívida.
+                if ($this->isMafrenseNemPasses($description) && $signedAmount < 0) {
+                    $classification['type'] = 'expense';
+                    $classification['transfer_category'] = null;
+                }
                 if ($signedAmount >= 0 && $classification['type'] !== 'transfer') {
                     continue;
                 }
@@ -514,6 +536,13 @@ class BankImportService
 
         // Mafrense Nem Passes é uma despesa normal de transporte, não uma dívida.
         return ['type' => $amount >= 0 ? 'income' : 'expense', 'label' => $amount >= 0 ? 'Receita' : 'Despesa'];
+    }
+
+    private function isMafrenseNemPasses(string $description): bool
+    {
+        $normalized = $this->normalizeMovementDescription($description);
+
+        return str_contains($normalized, 'mafrense') && str_contains($normalized, 'nem passes');
     }
 
     private function isKnownMerchantExpense(string $normalizedDescription): bool
