@@ -55,28 +55,7 @@
                         </div>
                     </div>
                     <div x-cloak x-show="open" x-transition.opacity.duration.200ms class="border-t border-zinc-100 bg-zinc-50/70 px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950/40">
-                        <div class="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-500"><flux:icon name="document-text" class="size-4" /> Informações do registo</div>
-                        <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            @foreach(($movement['details'] ?? []) as $detailLabel => $detailValue)
-                                @if($detailValue !== null && $detailValue !== '')
-                                    <div class="min-w-0 rounded-xl border border-zinc-200/80 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-                                        <dt class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{{ $detailLabel }}</dt>
-                                        <dd class="mt-1 break-words whitespace-pre-wrap text-sm font-semibold text-zinc-800 dark:text-zinc-200">{{ $detailValue }}</dd>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </dl>
-                        <div class="mt-4 flex flex-wrap justify-end gap-2">
-                                <button type="button" wire:click="editMovement('{{ $movement['edit_type'] ?? $movement['type'] }}', {{ $movement['record_id'] }})" class="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 transition hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
-                                    <flux:icon name="pencil-square" class="size-4" /> Editar informações
-                                </button>
-                                @if(!empty($movement['record_url']))
-                                    <a href="{{ $movement['record_url'] }}" wire:navigate class="inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-zinc-700 dark:bg-zinc-700">
-                                        <flux:icon name="arrow-top-right-on-square" class="size-4" /> Abrir registo
-                                    </a>
-                                @endif
-                            </div>
-
+                        <div class="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-500"><flux:icon name="document-text" class="size-4" /> Informações do registo <span class="font-semibold normal-case text-blue-600">· os campos são editáveis</span></div>
                         @if($editingId && $editingType === ($movement['edit_type'] ?? $movement['type']) && (int) $editingId === (int) ($movement['record_id'] ?? 0))
                             <form wire:submit="saveMovement" class="mt-4 space-y-4 rounded-2xl border border-blue-200 bg-white p-4 dark:border-blue-900 dark:bg-zinc-900">
                                 <div class="flex items-center justify-between gap-3">
@@ -137,6 +116,29 @@
                                     <button type="submit" wire:loading.attr="disabled" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-60"><flux:icon name="check" class="size-4" /> Guardar alterações</button>
                                 </div>
                             </form>
+                        @else
+
+                        <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            @foreach(($movement['details'] ?? []) as $detailLabel => $detailValue)
+                                @if($detailValue !== null && $detailValue !== '')
+                                    <div class="min-w-0 rounded-xl border border-zinc-200/80 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+                                        <dt class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{{ $detailLabel }}</dt>
+                                        <dd class="mt-1 break-words whitespace-pre-wrap text-sm font-semibold text-zinc-800 dark:text-zinc-200">{{ $detailValue }}</dd>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </dl>
+                        <div class="mt-4 flex flex-wrap justify-end gap-2">
+                                <button type="button" wire:click="editMovement('{{ $movement['edit_type'] ?? $movement['type'] }}', {{ $movement['record_id'] }})" class="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 transition hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
+                                    <flux:icon name="pencil-square" class="size-4" /> Editar informações
+                                </button>
+                                @if(!empty($movement['record_url']))
+                                    <a href="{{ $movement['record_url'] }}" wire:navigate class="inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-zinc-700 dark:bg-zinc-700">
+                                        <flux:icon name="arrow-top-right-on-square" class="size-4" /> Abrir registo
+                                    </a>
+                                @endif
+                            </div>
+
                         @endif
                     </div>
                 </article>
