@@ -577,7 +577,7 @@ class BankImportService
             || str_contains($normalizedDescription, 'sbksileven')
             || str_contains($normalizedDescription, 'mafrense')
             || str_contains($normalizedDescription, 'nem passes')
-            || str_contains($normalizedDescription, 'compra 1293')
+            || (str_contains($normalizedDescription, 'compra') && str_contains($normalizedDescription, '1293'))
             || str_contains($normalizedDescription, 'www amazon')
             || str_contains($normalizedDescription, 'amazon')
             || str_contains($normalizedDescription, 'farmacia falcao');
