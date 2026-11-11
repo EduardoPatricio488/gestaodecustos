@@ -547,13 +547,10 @@ PROMPT;
                 fn ($field) => isset($result[$field]) && $result[$field] !== '' && $result[$field] !== []
             );
 
-            if (! $hasExtractedData) {
-                $compactPrompt = "Analisa visualmente esta fatura portuguesa. Extrai os dados que estejam realmente visíveis; ".
-                    "não devolvas todos os campos a null se conseguires ler a imagem. Responde apenas com JSON válido. ".
-                    "amount: total final pago em número; date: data YYYY-MM-DD; store: nome da loja; ".
-                    "description: produto/compra; item_name: artigo principal; subcategory: escolhe uma destas opções: ".
-                    $subsStr.". Usa null apenas nos campos impossíveis de ler. ".
-                    '{"amount":null,"date":null,"store":null,"description":null,"item_name":null,"subcategory":null}';
+            if (! $hasExtractedData || $finishReason === 'length') {
+                $compactPrompt = "Volta a ler a fatura completa e devolve todos os campos que consigas identificar. Não inventes; usa null quando ausente/ilegível. ".
+                    "Responde apenas com JSON válido. Subcategoria permitida: ".$subsStr.". ".
+                    '{"amount":null,"item_name":null,"date":null,"time":null,"quantity":null,"unit":null,"store":null,"description":null,"subcategory":null,"unit_price":null,"vat_rate":null,"gross_amount":null,"net_amount":null,"vat_amount":null,"tax_incidence":null,"amount_tendered":null,"change_amount":null,"payment_condition":null,"payment_method":null,"company_nif":null,"customer_nif":null,"invoice_number":null,"notes":null}';
 
                 $retryResponse = Http::withHeaders([
                     'Authorization' => 'Bearer '.$apiKey,
@@ -587,7 +584,11 @@ PROMPT;
                                 fn ($value) => $value !== null && $value !== '' && $value !== []
                             );
                             if ($retryHasData) {
-                                $result = array_merge($result, $retryResult);
+                                foreach ($retryResult as $field => $value) {
+                                    if ($value !== null && $value !== '' && $value !== []) {
+                                        $result[$field] = $value;
+                                    }
+                                }
                             }
                         }
                     }
