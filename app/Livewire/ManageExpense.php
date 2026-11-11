@@ -191,6 +191,7 @@ PROMPT;
                 'model' => config('services.openrouter.model', 'openrouter/free'),
                 'max_tokens' => 3000,
                 'response_format' => ['type' => 'json_object'],
+                    'reasoning' => ['effort' => 'minimal'],
                 'messages' => [
                     [
                         'role' => 'user',
