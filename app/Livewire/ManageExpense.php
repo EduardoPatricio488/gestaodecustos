@@ -201,7 +201,7 @@ PROMPT;
                         'role' => 'user',
                         'content' => [
                             ['type' => 'text', 'text' => $prompt],
-                            ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$imageData]],
+                            ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$imageData, 'detail' => 'high']],
                         ],
                     ],
                 ],
