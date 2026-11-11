@@ -7,7 +7,11 @@
     $quotaWarning = $quotaAvailable && $quotaLimit > 0 && $quotaPercent >= 80;
 @endphp
 <div wire:poll.60s="refreshScannerQuota" class="rounded-2xl border {{ !$quotaAvailable ? 'border-zinc-700 bg-zinc-900/70' : ($quotaRemaining <= 0 ? 'border-red-500/30 bg-red-500/10' : ($quotaWarning ? 'border-amber-500/30 bg-amber-500/10' : 'border-emerald-500/20 bg-emerald-500/5')) }} p-4 text-left">
-    <div class="flex items-center justify-between gap-3">
+@if($poll ?? true)
+<div wire:poll.60s="refreshScannerQuota"     <div class="flex items-center justify-between gap-3">
+@else
+<div     <div class="flex items-center justify-between gap-3">
+@endif
         <div>
             <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Quota diária da IA</p>
             @if($quotaAvailable)
