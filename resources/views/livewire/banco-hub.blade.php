@@ -62,6 +62,7 @@
             @php
                 $tabs = [
                     ['id' => 'overview',    'label' => 'Visão Geral',  'icon' => 'squares-2x2'],
+                    ['id' => 'movements',   'label' => 'Movimentos',   'icon' => 'arrows-right-left'],
                     ['id' => 'accounts',    'label' => 'Contas',       'icon' => 'building-library'],
                     ['id' => 'transfers',   'label' => 'Transferências','icon' => 'arrows-right-left'],
                     ['id' => 'reserves',    'label' => 'Reservas',     'icon' => 'banknotes'],
@@ -100,6 +101,10 @@
 {{-- ═══════════════════════════════════════════════════════════════
      TAB: VISÃO GERAL
 ══════════════════════════════════════════════════════════════ --}}
+<div x-show="tab === 'movements'" x-cloak class="space-y-6">
+    <livewire:movements-hub :read-only="true" />
+</div>
+
 <div x-show="tab === 'overview'" x-cloak class="space-y-6">
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-zinc-900/70 px-3 py-2">
