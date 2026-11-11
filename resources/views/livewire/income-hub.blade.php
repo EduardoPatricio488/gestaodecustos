@@ -621,7 +621,7 @@
         <div class="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <div class="flex items-center gap-1.5">
                 <flux:tooltip toggleable content="Previsão do rendimento líquido dos contratos salariais ativos para um ano completo. Tem em conta o número de pagamentos anuais definido em cada contrato, incluindo subsídios quando aplicável.">
-                    <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total ao fim de um ano (Total líquido + Subsídio alimentação)</p>
+                    <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total ao fim de um ano (Total líquido de todos os registos)</p>
                 </flux:tooltip>
             </div>
             <p class="mt-1 text-2xl font-black text-amber-600">{{ number_format($salaryAnnualTotal, 2, ',', ' ') }} €</p>
