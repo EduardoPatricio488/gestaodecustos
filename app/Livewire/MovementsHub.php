@@ -78,7 +78,7 @@ class MovementsHub extends Component
                 'direction' => $item->paid_by_company ? 'company' : 'out',
                 'status' => ! $item->is_active ? 'Inativa' : ($item->paid_by_company && $item->renewal_date && Carbon::parse($item->renewal_date)->lte(today()) ? 'Pagamento pendente' : ($item->paid_by_company ? 'Pago pela empresa na renovação' : 'Ativa')),
             ]));
-            $items = $items->concat($scope(SubscriptionPayment::query()->with('subscription'))->get()->map(fn ($payment) => [
+            $items = $items->concat($scope(\App\Models\SubscriptionPayment::query()->with('subscription'))->get()->map(fn ($payment) => [
                 'key' => 'subscription-payment-'.$payment->id,
                 'type' => 'subscription',
                 'type_label' => 'Mensalidade',
