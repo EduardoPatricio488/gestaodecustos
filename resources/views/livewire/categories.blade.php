@@ -182,7 +182,7 @@
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-3">
                                             <span class="font-black uppercase tracking-tight dark:text-white text-lg truncate">{{ $c->name }}</span>
-                                            @if ($c->is_fixed || mb_strtolower(trim($c->name), 'UTF-8') === 'outros')
+                                            @if ($c->is_fixed)
                                                 <span class="text-[8px] font-black uppercase text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded italic shrink-0">Sistema</span>
                                             @endif
                                         </div>
@@ -200,11 +200,9 @@
 
                                 {{-- Ações --}}
                                 <div class="flex items-center gap-3 shrink-0 ml-4">
-                                    @unless ($c->is_fixed || mb_strtolower(trim($c->name), 'UTF-8') === 'outros')
-                                        <flux:button size="sm" variant="ghost" icon="adjustments-horizontal" :href="route('categories.fields', $c->id)" wire:navigate class="rounded-xl text-zinc-500 hover:text-indigo-500" />
-                                        <flux:button size="sm" variant="ghost" icon="pencil" wire:click="startEdit({{ $c->id }})" class="rounded-xl text-zinc-500 hover:text-indigo-500" />
-                                    @endunless
-                                    @unless ($c->is_fixed || mb_strtolower(trim($c->name), 'UTF-8') === 'outros')
+                                    <flux:button size="sm" variant="ghost" icon="adjustments-horizontal" :href="route('categories.fields', $c->id)" wire:navigate class="rounded-xl text-zinc-500 hover:text-indigo-500" />
+                                    <flux:button size="sm" variant="ghost" icon="pencil" wire:click="startEdit({{ $c->id }})" class="rounded-xl text-zinc-500 hover:text-indigo-500" />
+                                    @unless ($c->is_fixed)
                                         <flux:button size="sm" variant="ghost" icon="trash" wire:click="delete({{ $c->id }})" wire:confirm="Eliminar Hub '{{ $c->name }}'?" class="text-red-500 rounded-xl hover:bg-red-50" />
                                     @endunless
                                 </div>
