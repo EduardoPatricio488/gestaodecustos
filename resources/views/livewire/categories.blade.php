@@ -168,7 +168,7 @@
                             <div class="flex items-center justify-between p-4 md:p-6 rounded-[1.8rem] hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-all duration-300 w-full">
                                 <div class="flex items-center gap-6 flex-1 min-w-0">
                                     {{-- Handle para pegar e arrastar --}}
-                                    <div class="drag-handle cursor-grab active:cursor-grabbing p-2 text-zinc-300 dark:text-zinc-700 hover:text-indigo-500 transition-colors shrink-0">
+                                    <div @class(['drag-handle cursor-grab active:cursor-grabbing p-2 text-zinc-300 dark:text-zinc-700 hover:text-indigo-500 transition-colors shrink-0', 'invisible pointer-events-none' => mb_strtolower(trim($c->name), 'UTF-8') === 'outros'])>
                                         <flux:icon name="bars-2" variant="mini" class="size-6" />
                                     </div>
 
