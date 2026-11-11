@@ -3,6 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Exports\BusinessExport;
+use App\Models\Expense;
+use App\Models\Income;
+use App\Models\Subscription;
+use App\Models\SubscriptionPayment;
+use App\Models\BankTransfer;
 use App\Services\BusinessAccessService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -98,6 +103,93 @@ class ExportController extends Controller
             ->get();
 
         return Pdf::loadView('pdf.expenses', compact('expenses'))->download('despesas_pessoais.pdf');
+    }
+
+    public function movementsPdf()
+    {
+        [$user, $workspace] = $this->currentUserAndWorkspace();
+        $isBusiness = in_array($workspace->type, ['business', 'company'], true);
+
+        if ($isBusiness) {
+            app(BusinessAccessService::class)->assert('export_reports', $user, $workspace);
+        }
+
+        $scope = fn ($query) => $query->where('workspace_id', $workspace->id)
+            ->when(! $isBusiness, fn ($q) => $q->where('user_id', $user->id));
+
+        $rows = collect();
+
+        $scope(Expense::query()->with(['category', 'supplier']))->get()->each(function ($item) use ($rows) {
+            $rows->push([
+                'date' => $item->spent_at,
+                'type' => 'Despesa',
+                'description' => $item->title ?: $item->description ?: 'Despesa',
+                'detail' => $item->category?->name ?: 'Sem categoria',
+                'amount' => (float) $item->amount,
+                'direction' => 'Saída',
+                'status' => $item->status ?: 'Registada',
+            ]);
+        });
+
+        $scope(Income::query()->with('category'))
+            ->where(fn ($q) => $q->whereNull('added_to_salary')->orWhere('added_to_salary', false))
+            ->get()->each(function ($item) use ($rows) {
+                $rows->push([
+                    'date' => $item->received_at,
+                    'type' => 'Receita',
+                    'description' => $item->description ?: 'Receita',
+                    'detail' => $item->category?->name ?: ($item->source ?: 'Receita'),
+                    'amount' => (float) $item->amount,
+                    'direction' => 'Entrada',
+                    'status' => 'Recebida',
+                ]);
+            });
+
+        $scope(BankTransfer::query()->with(['fromAccount', 'toAccount']))->get()->each(function ($item) use ($rows) {
+            $rows->push([
+                'date' => $item->transferred_at,
+                'type' => 'Transferência',
+                'description' => $item->description ?: ($item->recipient ?: 'Transferência bancária'),
+                'detail' => ($item->fromAccount?->name ?: 'Origem externa').' → '.($item->toAccount?->name ?: 'Destino externo'),
+                'amount' => (float) $item->amount,
+                'direction' => ($item->direction ?? 'out') === 'in' ? 'Entrada' : 'Saída',
+                'status' => $item->status ?: 'Concluída',
+            ]);
+        });
+
+        $scope(Subscription::query())->get()->each(function ($item) use ($rows) {
+            $rows->push([
+                'date' => $item->renewal_date ?: $item->started_at,
+                'type' => 'Assinatura',
+                'description' => $item->name ?: 'Assinatura',
+                'detail' => 'Periodicidade: '.($item->cycle ?: 'Recorrente'),
+                'amount' => (float) $item->amount,
+                'direction' => $item->paid_by_company ? 'Pago pela empresa' : 'Compromisso',
+                'status' => $item->is_active ? 'Ativa' : 'Inativa',
+            ]);
+        });
+
+        $scope(SubscriptionPayment::query()->with('subscription'))->get()->each(function ($payment) use ($rows) {
+            $rows->push([
+                'date' => $payment->paid_at,
+                'type' => 'Mensalidade',
+                'description' => $payment->subscription?->name ?: 'Assinatura',
+                'detail' => 'Mensalidade paga pela empresa',
+                'amount' => (float) $payment->amount,
+                'direction' => 'Pago pela empresa',
+                'status' => 'Pago',
+            ]);
+        });
+
+        $rows = $rows->sortByDesc(fn ($row) => $row['date'] ? Carbon::parse($row['date'])->timestamp : 0)->values();
+
+        return Pdf::loadView('pdf.movements', [
+            'workspaceName' => $workspace->name,
+            'rows' => $rows,
+            'total' => $rows->count(),
+            'generatedAt' => now()->format('d/m/Y H:i'),
+        ])->setPaper('a4', 'landscape')
+            ->download('Todos_os_Movimentos_'.now()->format('Ymd_His').'.pdf');
     }
 
     public function businessExport(Request $request)
