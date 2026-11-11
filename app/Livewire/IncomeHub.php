@@ -378,7 +378,10 @@ class IncomeHub extends Component
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => 'Finance Pro AI',
             ])->connectTimeout(8)->timeout(45)->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => 'google/gemma-4-31b-it:free',
+                'models' => [
+                    'google/gemma-4-31b-it:free',
+                    'google/gemma-4-26b-a4b-it:free',
+                ],
                 'temperature' => 0,
                 'max_tokens' => 1800,
                 'response_format' => ['type' => 'json_object'],
