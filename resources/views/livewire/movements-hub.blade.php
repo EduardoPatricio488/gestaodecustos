@@ -66,6 +66,14 @@
                                 @endif
                             @endforeach
                         </dl>
+                        @if(!empty($movement['record_url']))
+                            <div class="mt-4 flex justify-end">
+                                <a href="{{ $movement['record_url'] }}" wire:navigate class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-blue-700">
+                                    <flux:icon name="arrow-top-right-on-square" class="size-4" />
+                                    Abrir registo
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 </article>
             @empty
