@@ -189,7 +189,8 @@ PROMPT;
                 'Content-Type' => 'application/json',
             ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))->timeout((int) config('limits.ai.request_timeout_seconds', 30))->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => config('services.openrouter.model', 'openrouter/free'),
-                'max_tokens' => 2000,
+                'max_tokens' => 3000,
+                'response_format' => ['type' => 'json_object'],
                 'messages' => [
                     [
                         'role' => 'user',
