@@ -90,7 +90,7 @@
 
     @if($editingId)
         <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-zinc-950/60 p-4" wire:key="movement-editor-modal">
-            <div class="my-6 w-full max-w-3xl rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 sm:p-6" @click.stop>
+            <div class="my-3 max-h-[72vh] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl [scrollbar-gutter:stable] dark:border-zinc-700 dark:bg-zinc-900 sm:p-5" @click.stop>
                 <div class="mb-5 flex items-start justify-between gap-3">
                     <div><h2 class="text-lg font-black text-zinc-900 dark:text-white">Editar movimento</h2><p class="mt-1 text-xs text-zinc-500">Altera os campos e guarda. Também podes converter o tipo de movimento.</p></div>
                     <button type="button" wire:click="cancelEditMovement" class="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800" aria-label="Fechar"><flux:icon name="x-mark" class="size-5" /></button>
