@@ -198,8 +198,9 @@
             }
 
             return [
-                'incomes'       => \App\Models\Income::where('workspace_id', $workspaceId)->count()
-                    + \App\Models\RecurringIncome::where('workspace_id', $workspaceId)->count(),
+                'incomes'       => \App\Models\Income::where('workspace_id', $workspaceId)
+                    ->whereNotNull('category_id')
+                    ->count(),
                 'investments'   => \App\Models\Investment::where('workspace_id', $workspaceId)->count(),
                 'transfers'     => \App\Models\BankTransfer::where('workspace_id', $workspaceId)->count(),
                 'budget'        => \App\Models\Category::where('workspace_id', $workspaceId)->where('budget', '>', 0)->count(),
