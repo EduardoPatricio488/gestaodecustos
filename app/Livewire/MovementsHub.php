@@ -6,6 +6,7 @@ use App\Models\Expense;
 use App\Models\Income;
 use App\Models\Subscription;
 use App\Models\BankTransfer;
+use Carbon\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -76,12 +77,15 @@ class MovementsHub extends Component
         }
 
         $items = $items->filter(function ($item) {
-            $date = $item['date'];
+            $date = $item['date'] ? Carbon::parse($item['date']) : null;
+
             if ($this->period === 'month' && (! $date || ! $date->isCurrentMonth())) return false;
             if ($this->period === 'year' && (! $date || ! $date->isCurrentYear())) return false;
+
             $needle = mb_strtolower(trim($this->search));
+
             return $needle === '' || str_contains(mb_strtolower($item['title'].' '.$item['detail'].' '.$item['type_label']), $needle);
-        })->sortByDesc(fn ($item) => $item['date']?->timestamp ?? 0)->values();
+        })->sortByDesc(fn ($item) => $item['date'] ? Carbon::parse($item['date'])->getTimestamp() : 0)->values();
 
         return view('livewire.movements-hub', [
             'movements' => $items,
