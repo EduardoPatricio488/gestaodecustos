@@ -44,6 +44,7 @@ class BankImportService
                 'type' => $classification['type'] === 'transfer' ? 'transfer' : ($classification['type'] === 'debt_payment' ? 'debt_payment' : ($amount >= 0 ? 'income' : 'expense')),
                 'movement_label' => $classification['label'],
                 'transfer_category' => $classification['transfer_category'] ?? null,
+                'transfer_method' => $this->detectTransferMethod($description),
             ];
         }
 
@@ -154,10 +155,12 @@ class BankImportService
                 'description' => Str::limit($description, 160),
                 'amount' => round($amount, 2),
                 'balance' => round((float) ($balance ?? 0), 2),
+                'transfer_method' => $this->detectTransferMethod($description),
                 'type' => $classification['type'] === 'transfer' ? 'transfer' : ($classification['type'] === 'debt_payment' ? 'debt_payment' : ($amount < 0 ? 'expense' : 'income')),
                 'category_id' => $categoryId,
                 'movement_label' => $classification['label'],
                 'transfer_category' => $classification['transfer_category'] ?? null,
+                'transfer_method' => $this->detectTransferMethod($description),
             ];
         }
 
@@ -273,6 +276,7 @@ class BankImportService
                         'from_account_id' => null, 'to_account_id' => null,
                         'direction' => $direction, 'recipient' => $this->extractCounterparty($description),
                         'amount' => $absoluteAmount, 'currency' => 'EUR', 'category' => $row['transfer_category'] ?? null,
+                        'transfer_method' => $row['transfer_method'] ?? $this->detectTransferMethod($description),
                         'description' => $description,
                         'status' => 'completed', 'transferred_at' => $date,
                         'bank_statement_import_id' => $import->id,
@@ -598,6 +602,21 @@ class BankImportService
         return ['type' => $amount >= 0 ? 'income' : 'expense', 'label' => $amount >= 0 ? 'Receita' : 'Despesa'];
     }
 
+    private function detectTransferMethod(string $description): ?string
+    {
+        $normalized = $this->normalizeMovementDescription($description);
+
+        return match (true) {
+            str_contains($normalized, 'mbway'), str_contains($normalized, 'mb way'), str_contains($normalized, 'trf mb') => 'mbway',
+            str_contains($normalized, 'multibanco'), str_contains($normalized, 'atm') => 'multibanco',
+            str_contains($normalized, 'paypal'), str_contains($normalized, 'pp *') => 'paypal',
+            str_contains($normalized, 'revolut') => 'revolut',
+            str_contains($normalized, 'transferencia imediata'), str_contains($normalized, 'trf imed') => 'immediate_transfer',
+            str_contains($normalized, 'transferencia'), str_contains($normalized, 'trf ') => 'bank_transfer',
+            default => null,
+        };
+    }
+
     private function isExplicitTransferDescription(string $normalizedDescription): bool
     {
         return str_starts_with($normalizedDescription, 'transferencia de ')
@@ -657,7 +676,7 @@ class BankImportService
             $normalized = $this->normalizeMovementDescription((string) ($row['description'] ?? ''));
             if ($this->isKnownMerchantExpense($normalized)
                 || str_contains($normalized, 'imposto do selo sobre comissao')
-                || $this->isExplicitTransferDescription($normalized)) {
+                 ) {
                 continue;
             }
 
@@ -666,6 +685,7 @@ class BankImportService
                 'description' => (string) ($row['description'] ?? ''),
                 'amount' => (float) ($row['amount'] ?? 0),
                 'initial_type' => (string) ($row['type'] ?? ''),
+                'is_transfer' => ($row['type'] ?? '') === 'transfer',
             ];
         }
 
@@ -684,7 +704,7 @@ class BankImportService
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'És um especialista em classificação de movimentos de extratos bancários portugueses. Analisa individualmente a descrição e o valor de CADA registo. Escolhe uma classe: transfer, debt_payment, expense ou income.\n\nREGRAS IMPORTANTES:\n- "Transferência De NOME", "Transferência Para NOME", "Transferência recebida de NOME", "Transferência enviada para NOME", "TRF", "TRF IMED" e transferências MB WAY entre pessoas são transfer. Exemplo: "Transferência De Rita Maria Campenhe Casquilho Louro" = transfer.\n- Uma transferência é movimentação de dinheiro entre pessoas/contas; não é uma compra nem uma despesa de consumo.\n- "Pagamento", "Compra", "Débito", "Compra cartão", serviços, subscrições, restaurantes, supermercados, combustível e levantamentos são normalmente expense, mesmo quando pagos por transferência bancária ou cartão.\n- debt_payment apenas quando a descrição indicar claramente liquidação de empréstimo, prestação ou dívida.\n- income para salário, reembolso, juros ou outro rendimento recebido que não seja transferência entre pessoas/contas.\n- Não classifiques como transfer apenas porque aparece o nome de uma pessoa; procura o contexto explícito de transferência.\n- O sinal do valor indica o sentido do movimento, não a sua classe: valores negativos podem ser transferências enviadas e valores positivos transferências recebidas.\n\nDevolve exclusivamente JSON válido no formato {"items":[{"index":0,"type":"transfer","confidence":0.99}]}. Usa confidence entre 0 e 1. Não omitas índices.'
+                            'content' => 'És um especialista em classificação de movimentos de extratos bancários portugueses. Analisa individualmente a descrição e o valor de CADA registo. Escolhe uma classe: transfer, debt_payment, expense ou income.\n\nREGRAS IMPORTANTES:\n- "Transferência De NOME", "Transferência Para NOME", "Transferência recebida de NOME", "Transferência enviada para NOME", "TRF", "TRF IMED" e transferências MB WAY entre pessoas são transfer. Exemplo: "Transferência De Rita Maria Campenhe Casquilho Louro" = transfer.\n- Uma transferência é movimentação de dinheiro entre pessoas/contas; não é uma compra nem uma despesa de consumo.\n- "Pagamento", "Compra", "Débito", "Compra cartão", serviços, subscrições, restaurantes, supermercados, combustível e levantamentos são normalmente expense, mesmo quando pagos por transferência bancária ou cartão.\n- debt_payment apenas quando a descrição indicar claramente liquidação de empréstimo, prestação ou dívida.\n- income para salário, reembolso, juros ou outro rendimento recebido que não seja transferência entre pessoas/contas.\n- Não classifiques como transfer apenas porque aparece o nome de uma pessoa; procura o contexto explícito de transferência.\n- O sinal do valor indica o sentido do movimento, não a sua classe: valores negativos podem ser transferências enviadas e valores positivos transferências recebidas.\n\nIdentifica também o método quando o movimento for uma transferência: mbway, multibanco, paypal, revolut, immediate_transfer, bank_transfer ou null se não for possível. Devolve exclusivamente JSON válido no formato {"items":[{"index":0,"type":"transfer","confidence":0.99,"transfer_method":"mbway"}]}. Usa confidence entre 0 e 1. Não omitas índices.'
                         ],
                         [
                             'role' => 'user',
@@ -703,7 +723,14 @@ class BankImportService
                 $index = (int) ($item['index'] ?? -1);
                 $type = (string) ($item['type'] ?? '');
                 $confidence = (float) ($item['confidence'] ?? 0);
-                if (! isset($rows[$index]) || $confidence < 0.80 || ! in_array($type, ['transfer', 'debt_payment', 'expense', 'income'], true)) {
+                if (! isset($rows[$index]) || ! in_array($type, ['transfer', 'debt_payment', 'expense', 'income'], true)) {
+                    continue;
+                }
+                $method = (string) ($item['transfer_method'] ?? '');
+                if ($type === 'transfer' && in_array($method, ['mbway', 'multibanco', 'paypal', 'revolut', 'immediate_transfer', 'bank_transfer'], true)) {
+                    $rows[$index]['transfer_method'] = $method;
+                }
+                if ($confidence < 0.80) {
                     continue;
                 }
                 if ($type === 'income' && (float) $rows[$index]['amount'] < 0) {
