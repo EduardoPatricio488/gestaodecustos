@@ -60,7 +60,7 @@
             <div class="my-auto w-full max-w-xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
                 <div class="mb-6 flex items-start justify-between gap-4">
                     <div><h2 class="text-xl font-black text-zinc-900 dark:text-white">{{ $editingMovementId ? 'Editar movimento' : 'Nova transferência' }}</h2><p class="mt-1 text-sm text-zinc-500">{{ $editingMovementId ? 'Atualiza os dados desta operação bancária.' : 'Preenche os dados para registar uma transferência entre contas.' }}</p></div>
-                    <button type="button" wire:click="$set('showEditModal', false)" class="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"><flux:icon name="x" class="size-5" /></button>
+                    <button type="button" wire:click="$set('showEditModal', false)" class="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"><span class="text-xl font-bold leading-none" aria-hidden="true">×</span></button>
                 </div>
                 <form wire:submit="saveMovement" class="space-y-4">
                     <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Descrição</label><input type="text" wire:model="editDescription" maxlength="255" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></div>
