@@ -26,7 +26,11 @@ class StatementImportHub extends Component
 
     public bool $previewReady = false;
 
-    public array $selectedSignatures = [];\n\n    public ?int $viewingImportId = null;\n\n    public array $viewingImportMovements = [];
+    public array $selectedSignatures = [];
+
+    public ?int $viewingImportId = null;
+
+    public array $viewingImportMovements = [];
 
     public string $ruleKeyword = '';
 
