@@ -51,6 +51,17 @@ class MovementsHub extends Component
     public string $editingOutstandingAmount = '0';
     public string $editingVatAmount = '0';
     public string $editingMetadata = '';
+    public array $conversionFieldValues = [];
+    public string $editingIncomeTaxEstimate = '';
+    public string $editingIncomeDestination = 'cash';
+    public string $editingSubscriptionBillingDay = '';
+    public string $editingSubscriptionPaymentMethod = 'card';
+    public string $editingSubscriptionStatus = 'active';
+    public string $editingSubscriptionStartedAt = '';
+    public string $editingSubscriptionRenewalDate = '';
+    public bool $editingNotifyBeforeBilling = false;
+    public string $editingNotifyDaysBefore = '3';
+    public string $editingTransferStatus = 'completed';
 
     private function scopedRecordQuery(string $type, int $id)
     {
@@ -135,21 +146,80 @@ class MovementsHub extends Component
         $this->editingOutstandingAmount = (string) max(0, round((float) $record->amount - $paidAmount, 2));
         $this->editingVatAmount = (string) ($record->vat_amount ?? '0');
         $this->editingMetadata = $this->formatMetadataForDisplay($record->metadata) ?? '';
+        $this->editingIncomeTaxEstimate = (string) ($record->tax_estimate ?? '');
+        $this->editingIncomeDestination = $record->bank_account_id ? 'bank:'.$record->bank_account_id : 'cash';
+        $this->editingSubscriptionBillingDay = (string) ($record->billing_day ?? ($this->editingDate ? Carbon::parse($this->editingDate)->day : now()->day));
+        $this->editingSubscriptionPaymentMethod = (string) ($record->payment_method ?? 'card');
+        $this->editingSubscriptionStatus = (string) ($record->status ?? 'active');
+        $this->editingSubscriptionStartedAt = $record->started_at?->format('Y-m-d') ?? $this->editingDate;
+        $this->editingSubscriptionRenewalDate = $record->renewal_date?->format('Y-m-d') ?? $this->editingDate;
+        $this->editingNotifyBeforeBilling = (bool) ($record->notify_before_billing ?? false);
+        $this->editingNotifyDaysBefore = (string) ($record->notify_days_before ?? 3);
+        $this->editingTransferStatus = (string) ($record->status ?? 'completed');
+        $this->conversionFieldValues = is_array($record->metadata ?? null) ? $record->metadata : [];
     }
 
     public function openConversionModal(string $type, int $id): void
     {
+        abort_unless(in_array($type, ['expense', 'income', 'transfer', 'subscription'], true), 404);
         $this->editMovement($type, $id);
         $this->showEditModal = false;
         $this->showConversionModal = true;
         $this->conversionType = '';
-        if ($type !== 'transfer' && $this->editingAccountId !== '') {
-            if ($this->editingDirection === 'in') {
+        $this->resetValidation();
+    }
+
+    public function updatedConversionType(string $type): void
+    {
+        if (! in_array($type, ['expense', 'income', 'transfer', 'subscription'], true)) {
+            return;
+        }
+
+        $this->resetValidation();
+        if ($type === 'transfer') {
+            if ($this->editingType === 'income' && $this->editingAccountId !== '') {
                 $this->editingToAccountId = $this->editingAccountId;
-            } else {
+            } elseif ($this->editingType !== 'transfer' && $this->editingAccountId !== '') {
                 $this->editingFromAccountId = $this->editingAccountId;
             }
         }
+
+        if ($type === 'expense' && $this->editingType === 'expense') {
+            $this->conversionFieldValues = $this->parseMetadataFromEditor($this->editingMetadata) ?? [];
+        }
+    }
+
+    public function updatedEditingCategoryId(): void
+    {
+        if ($this->conversionType !== 'expense' || $this->editingCategoryId === '') {
+            return;
+        }
+
+        $user = auth()->user();
+        $category = Category::where('workspace_id', $user->current_workspace_id)
+            ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->with('fields')
+            ->find((int) $this->editingCategoryId);
+
+        if (! $category) {
+            $this->conversionFieldValues = [];
+            return;
+        }
+
+        $allowedKeys = $category->fields->pluck('key')->all();
+        $this->conversionFieldValues = array_intersect_key(
+            $this->conversionFieldValues,
+            array_flip($allowedKeys)
+        );
+    }
+
+    private function conversionCategoryQuery()
+    {
+        $user = auth()->user();
+
+        return Category::where('workspace_id', $user->current_workspace_id)
+            ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+            ->where('hidden_from_sidebar', false);
     }
 
     public function closeConversionModal(): void
@@ -168,6 +238,9 @@ class MovementsHub extends Component
             'editingDate', 'editingCategoryId', 'editingAccountId', 'editingNotes',
             'editingSource', 'editingIncomeType', 'editingFrequency', 'editingRecipient',
             'editingTransferMethod', 'editingTransferCategory',
+            'conversionFieldValues', 'editingIncomeTaxEstimate', 'editingIncomeDestination',
+            'editingSubscriptionBillingDay', 'editingSubscriptionPaymentMethod', 'editingSubscriptionStatus',
+            'editingSubscriptionStartedAt', 'editingSubscriptionRenewalDate', 'editingNotifyDaysBefore',
         ]);
         $this->editingCurrency = strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR'));
         $this->editingDirection = 'out';
@@ -180,6 +253,8 @@ class MovementsHub extends Component
         $this->editingVatAmount = '0';
         $this->editingOutstandingAmount = '0';
         $this->editingMetadata = '';
+        $this->editingNotifyBeforeBilling = false;
+        $this->editingTransferStatus = 'completed';
     }
 
     public function saveMovement(): void
@@ -308,60 +383,102 @@ class MovementsHub extends Component
     public function convertMovement(): void
     {
         abort_unless($this->editingType !== '' && $this->editingId, 404);
+
         $allowed = ['expense', 'income', 'transfer', 'subscription'];
         if (! in_array($this->editingType, $allowed, true) || ! in_array($this->conversionType, $allowed, true)) {
-            $this->addError('conversionType', 'Este tipo de registo não pode ser convertido.');
+            $this->addError('conversionType', 'Seleciona um tipo de movimento válido.');
             return;
         }
         if ($this->conversionType === $this->editingType) {
-            $this->addError('conversionType', 'Seleciona um tipo diferente do atual.');
+            $this->addError('conversionType', 'O movimento já é deste tipo.');
             return;
         }
 
         $rules = [
-            'conversionType' => 'required|in:expense,income,transfer,subscription',
             'editingAmount' => 'required|numeric|min:0.01',
             'editingDate' => 'required|date',
             'editingCurrency' => 'required|string|size:3',
         ];
-        if ($this->conversionType === 'subscription') {
-            $rules['editingTitle'] = 'required|string|max:255';
-            $rules['editingCategoryId'] = 'required|integer';
-            $rules['editingCycle'] = 'required|in:monthly,yearly,weekly,quarterly';
+
+        $category = null;
+        if (in_array($this->conversionType, ['expense', 'income', 'subscription'], true)) {
+            $rules['editingCategoryId'] = $this->conversionType === 'subscription' ? 'required|integer' : 'nullable|integer';
+            if ($this->editingCategoryId !== '') {
+                $category = $this->conversionCategoryQuery()
+                    ->with('fields')
+                    ->findOrFail((int) $this->editingCategoryId);
+            }
         }
-        if ($this->conversionType === 'transfer') {
+
+        if ($this->conversionType === 'expense') {
+            $rules['editingDescription'] = 'nullable|string|max:255';
+            foreach (($category?->fields ?? collect()) as $field) {
+                $rule = match ($field->type) {
+                    'number' => 'numeric',
+                    'date' => 'date',
+                    'checkbox' => 'boolean',
+                    'select' => 'in:'.collect($field->options ?? [])->implode(','),
+                    default => 'string|max:1000',
+                };
+                $rules['conversionFieldValues.'.$field->key] = $field->required ? $rule.'|required' : $rule.'|nullable';
+            }
+        } elseif ($this->conversionType === 'income') {
+            $rules['editingDescription'] = 'required|string|max:255';
+            $rules['editingIncomeTaxEstimate'] = 'nullable|numeric|min:0|max:100';
+            $rules['editingNotes'] = 'nullable|string|max:500';
+        } elseif ($this->conversionType === 'transfer') {
             $rules['editingFromAccountId'] = 'required|integer|different:editingToAccountId';
             $rules['editingToAccountId'] = 'required|integer';
-            $rules['editingDirection'] = 'required|in:in,out';
-            $rules['editingRecipient'] = 'nullable|string|max:255';
-            $rules['editingTransferMethod'] = 'nullable|string|max:100';
-            $rules['editingTransferCategory'] = 'nullable|string|max:100';
+            $rules['editingTransferStatus'] = 'required|in:completed,pending,failed';
+            $rules['editingDescription'] = 'nullable|string|max:255';
+            $rules['editingNotes'] = 'nullable|string|max:500';
+        } else {
+            $rules['editingTitle'] = 'required|string|max:255';
+            $rules['editingSubscriptionBillingDay'] = 'required|integer|min:1|max:31';
+            $rules['editingSubscriptionPaymentMethod'] = 'required|in:card,direct_debit,bank_transfer,paypal,cash';
+            $rules['editingSubscriptionStatus'] = 'required|in:active,paused,cancelled';
+            $rules['editingSubscriptionStartedAt'] = 'required|date';
+            $rules['editingSubscriptionRenewalDate'] = 'required|date';
+            $rules['editingCycle'] = 'required|in:monthly,quarterly,semiannual,annual';
+            $rules['editingNotes'] = 'nullable|string|max:500';
+            $rules['editingNotifyDaysBefore'] = 'nullable|integer|min:1|max:30';
         }
+
         $this->validate($rules);
 
         $user = auth()->user();
         $workspaceId = (int) $user->current_workspace_id;
         $personal = $user->currentWorkspace?->type === 'personal';
-        $category = null;
-        if (in_array($this->conversionType, ['expense', 'income', 'subscription'], true) && $this->editingCategoryId !== '') {
-            $category = Category::where('workspace_id', $workspaceId)
-                ->when($personal, fn ($q) => $q->where('user_id', $user->id))
-                ->findOrFail((int) $this->editingCategoryId);
-        }
+
         $account = null;
         if (in_array($this->conversionType, ['expense', 'income'], true) && $this->editingAccountId !== '') {
             $account = BankAccount::where('workspace_id', $workspaceId)
                 ->when($personal, fn ($q) => $q->where('user_id', $user->id))
                 ->findOrFail((int) $this->editingAccountId);
         }
+
         $fromAccount = null;
         $toAccount = null;
         if ($this->conversionType === 'transfer') {
-            $fromAccount = BankAccount::where('workspace_id', $workspaceId)->when($personal, fn ($q) => $q->where('user_id', $user->id))->findOrFail((int) $this->editingFromAccountId);
-            $toAccount = BankAccount::where('workspace_id', $workspaceId)->when($personal, fn ($q) => $q->where('user_id', $user->id))->findOrFail((int) $this->editingToAccountId);
+            $fromAccount = BankAccount::where('workspace_id', $workspaceId)
+                ->when($personal, fn ($q) => $q->where('user_id', $user->id))
+                ->findOrFail((int) $this->editingFromAccountId);
+            $toAccount = BankAccount::where('workspace_id', $workspaceId)
+                ->when($personal, fn ($q) => $q->where('user_id', $user->id))
+                ->findOrFail((int) $this->editingToAccountId);
         }
 
-        DB::transaction(function () use ($category, $account, $fromAccount, $toAccount, $user, $workspaceId): void {
+        $metadata = [];
+        if ($this->conversionType === 'expense' && $category) {
+            foreach ($category->fields as $field) {
+                $value = $this->conversionFieldValues[$field->key] ?? null;
+                if ($value !== null && $value !== '') {
+                    $metadata[$field->key] = $value;
+                }
+            }
+        }
+
+        DB::transaction(function () use ($category, $account, $fromAccount, $toAccount, $user, $workspaceId, $metadata): void {
             $old = $this->scopedRecordQuery($this->editingType, (int) $this->editingId)->lockForUpdate()->firstOrFail();
             $amount = round((float) $this->editingAmount, 2);
             $description = trim($this->editingDescription) !== '' ? trim($this->editingDescription) : trim($this->editingTitle);
@@ -374,13 +491,11 @@ class MovementsHub extends Component
 
             if ($this->conversionType === 'expense') {
                 Expense::create($common + [
-                    'title' => $this->editingTitle ?: $description ?: 'Despesa',
                     'description' => $description ?: null,
                     'category_id' => $category?->id,
                     'bank_account_id' => $account?->id,
                     'spent_at' => $this->editingDate,
-                    'amount_paid' => $amount,
-                    'is_company' => $this->editingCompanyPaid,
+                    'metadata' => $metadata,
                 ]);
             } elseif ($this->conversionType === 'income') {
                 Income::create($common + [
@@ -388,36 +503,41 @@ class MovementsHub extends Component
                     'category_id' => $category?->id,
                     'bank_account_id' => $account?->id,
                     'received_at' => $this->editingDate,
-                    'source' => $this->editingSource ?: 'Movimento convertido',
-                    'type' => $this->editingIncomeType ?: 'other',
+                    'tax_estimate' => $this->editingIncomeTaxEstimate !== '' ? (float) $this->editingIncomeTaxEstimate : null,
+                    'type' => 'Extra',
+                    'source' => 'emprego',
+                    'frequency' => 'pontual',
                     'notes' => $this->editingNotes ?: null,
                 ]);
             } elseif ($this->conversionType === 'transfer') {
                 BankTransfer::create($common + [
                     'from_account_id' => $fromAccount->id,
                     'to_account_id' => $toAccount->id,
-                    'direction' => $this->editingDirection,
                     'description' => $description ?: 'Transferência',
-                    'recipient' => $this->editingRecipient ?: null,
-                    'transfer_method' => $this->editingTransferMethod ?: null,
-                    'category' => $this->editingTransferCategory ?: null,
                     'transferred_at' => $this->editingDate,
-                    'status' => 'completed',
+                    'status' => $this->editingTransferStatus,
                     'notes' => $this->editingNotes ?: null,
                 ]);
+
+                if ($this->editingTransferStatus === 'completed') {
+                    BankAccount::where('workspace_id', $workspaceId)->whereKey($fromAccount->id)->decrement('balance', $amount);
+                    BankAccount::where('workspace_id', $workspaceId)->whereKey($toAccount->id)->increment('balance', $amount);
+                }
             } else {
                 Subscription::create($common + [
                     'name' => $this->editingTitle ?: $description ?: 'Nova assinatura',
                     'category_id' => $category->id,
                     'cycle' => $this->editingCycle,
-                    'billing_day' => (int) Carbon::parse($this->editingDate)->day,
-                    'started_at' => $this->editingDate,
-                    'renewal_date' => $this->editingDate,
-                    'payment_method' => 'other',
-                    'status' => 'active',
-                    'is_active' => true,
+                    'billing_day' => (int) $this->editingSubscriptionBillingDay,
+                    'started_at' => $this->editingSubscriptionStartedAt,
+                    'renewal_date' => $this->editingSubscriptionRenewalDate,
+                    'payment_method' => $this->editingSubscriptionPaymentMethod,
+                    'status' => $this->editingSubscriptionStatus,
+                    'is_active' => $this->editingSubscriptionStatus === 'active',
                     'paid_by_company' => $this->editingCompanyPaid,
                     'notes' => $this->editingNotes ?: null,
+                    'notify_before_billing' => $this->editingNotifyBeforeBilling,
+                    'notify_days_before' => $this->editingNotifyDaysBefore !== '' ? (int) $this->editingNotifyDaysBefore : null,
                 ]);
             }
 
@@ -695,6 +815,9 @@ class MovementsHub extends Component
             'editAccounts' => BankAccount::where('workspace_id', $workspaceId)
                 ->when($personal, fn ($q) => $q->where('user_id', $user->id))
                 ->orderBy('name')->get(),
+            'conversionExpenseCategory' => $this->conversionType === 'expense' && $this->editingCategoryId !== ''
+                ? $this->conversionCategoryQuery()->with(['fields' => fn ($query) => $query->orderBy('order')])->find((int) $this->editingCategoryId)
+                : null,
         ]);
     }
 }
