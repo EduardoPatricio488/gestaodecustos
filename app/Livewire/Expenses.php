@@ -90,7 +90,7 @@ class Expenses extends Component
                 if ($sourceImage !== false) {
                     $originalWidth = imagesx($sourceImage);
                     $originalHeight = imagesy($sourceImage);
-                    $scale = min(1, 1600 / max($originalWidth, $originalHeight));
+                    $scale = min(1, 2200 / max($originalWidth, $originalHeight));
                     $targetWidth = max(1, (int) round($originalWidth * $scale));
                     $targetHeight = max(1, (int) round($originalHeight * $scale));
                     $resizedImage = imagecreatetruecolor($targetWidth, $targetHeight);
@@ -98,7 +98,7 @@ class Expenses extends Component
                     imagefill($resizedImage, 0, 0, $white);
                     imagecopyresampled($resizedImage, $sourceImage, 0, 0, 0, 0, $targetWidth, $targetHeight, $originalWidth, $originalHeight);
                     ob_start();
-                    imagejpeg($resizedImage, null, 78);
+                    imagejpeg($resizedImage, null, 88);
                     $compressedImage = ob_get_clean();
                     if (is_string($compressedImage) && $compressedImage !== '') {
                         $fileContents = $compressedImage;
@@ -111,15 +111,16 @@ class Expenses extends Component
 
             $fileData = base64_encode($fileContents);
             $contentPart = str_starts_with($mimeType, 'image/')
-                ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData]]
+                ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData, 'detail' => 'high']]
                 : ['type' => 'file', 'file' => ['filename' => $this->scannerReceipt->getClientOriginalName(), 'file_data' => 'data:'.$mimeType.';base64,'.$fileData]];
 
             // Nesta etapa só precisamos dos dados essenciais para abrir a revisão da despesa.
             // Um prompt curto reduz o tempo de resposta e evita truncagens dos modelos gratuitos.
             $prompt = "Analisa esta fatura portuguesa e devolve APENAS JSON válido, sem markdown. ".
                 "A categoria tem de ser exatamente uma destas: ".json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
-                "Extrai apenas: category (categoria mais adequada), amount (total final pago, número), date (YYYY-MM-DD), store (estabelecimento) e description (descrição curta). ".
-                'Não inventes dados; usa null se não estiverem visíveis. Formato: {"category":null,"amount":null,"date":null,"store":null,"description":null}';
+                "Lê cuidadosamente a imagem inteira, incluindo o cabeçalho e o rodapé. Extrai: category (categoria mais adequada), amount (total final efetivamente pago, número), date (data da fatura YYYY-MM-DD), store (nome do estabelecimento/emitente) e description (produtos ou serviços comprados, em poucas palavras). ".
+                "Não confundas o NIF com valores, nem subtotal com total pago. Se conseguires ler pelo menos um destes dados, devolve-o; usa null apenas para os campos realmente ausentes ou ilegíveis. ".
+                'Devolve apenas este JSON: {"category":null,"amount":null,"date":null,"store":null,"description":null}';
 
             $apiKey = config('services.openrouter.api_key');
             if (blank($apiKey)) {
@@ -136,9 +137,7 @@ class Expenses extends Component
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
                     'temperature' => 0,
-                    'max_tokens' => 700,
-                    'response_format' => ['type' => 'json_object'],
-                    'reasoning' => ['effort' => 'minimal'],
+                    'max_tokens' => 900,
                     'messages' => [[
                         'role' => 'user',
                         'content' => [['type' => 'text', 'text' => $prompt], $contentPart],
@@ -198,7 +197,7 @@ class Expenses extends Component
                 ->contains(fn ($field) => isset($result[$field]) && $result[$field] !== '');
 
             if (! $hasEssentialData) {
-                $retryPrompt = "Lê a imagem da fatura portuguesa e extrai os dados que estejam visíveis. ".
+                $retryPrompt = "Lê cuidadosamente a imagem inteira da fatura portuguesa, com atenção ao cabeçalho, linhas de artigos e total no rodapé. Extrai os dados que estejam visíveis. ".
                     "Responde apenas com JSON válido. Não inventes. ".
                     "Extrai: amount (total final pago, número), date (YYYY-MM-DD), store (nome do estabelecimento), ".
                     "description (compra/produtos em poucas palavras), category (uma destas: ".
@@ -215,8 +214,7 @@ class Expenses extends Component
                     ->post('https://openrouter.ai/api/v1/chat/completions', [
                         'model' => config('services.openrouter.model', 'openrouter/free'),
                         'temperature' => 0,
-                        'max_tokens' => 900,
-                        'response_format' => ['type' => 'json_object'],
+                        'max_tokens' => 1100,
                         'messages' => [[
                             'role' => 'user',
                             'content' => [['type' => 'text', 'text' => $retryPrompt], $contentPart],
@@ -250,7 +248,16 @@ class Expenses extends Component
                 ->contains(fn ($field) => isset($result[$field]) && $result[$field] !== '');
 
             if (! $hasEssentialData) {
-                throw new \Exception('A IA não conseguiu extrair o valor, a data, o estabelecimento ou a descrição desta fatura. Experimenta uma fotografia mais nítida, direita e com a fatura completa visível.');
+                $usedModel = $response->json('model') ?: config('services.openrouter.model', 'openrouter/free');
+                $finishReason = $response->json('choices.0.finish_reason') ?: 'não indicado';
+                \Illuminate\Support\Facades\Log::warning('Expenses invoice scanner returned no readable invoice fields.', [
+                    'model' => $usedModel,
+                    'finish_reason' => $finishReason,
+                    'image_mime' => $mimeType,
+                    'image_bytes' => strlen($fileContents),
+                    'response_has_content' => filled($content),
+                ]);
+                throw new \Exception('O modelo gratuito ('.$usedModel.') recebeu a imagem, mas não conseguiu ler os dados da fatura ('.$finishReason.'). Tenta novamente; se continuar, será necessário usar um modelo de visão diferente.');
             }
 
             $suggestedCategory = trim((string) ($result['category'] ?? ''));
