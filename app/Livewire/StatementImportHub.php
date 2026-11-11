@@ -184,7 +184,7 @@ class StatementImportHub extends Component
             ->where('bank_statement_import_id', $import->id)
             ->get()
             ->map(fn (BankTransfer $transfer) => [
-                'type' => 'Transferência',
+                'type' => (($transfer->direction ?? 'out') === 'in') ? 'Transferência recebida' : 'Transferência enviada',
                 'date' => $transfer->transferred_at?->format('Y-m-d'),
                 'description' => $transfer->description,
                 'amount' => (float) $transfer->amount,
