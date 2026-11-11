@@ -235,12 +235,6 @@ class BankImportService
                 if (! is_array($row)) {
                     continue;
                 }
-                $rowDescription = trim((string) ($row['description'] ?? ''));
-                if ($this->isKnownMerchantExpense($this->normalizeMovementDescription($rowDescription)) && (float) ($row['amount'] ?? 0) < 0) {
-                    $row['type'] = 'expense';
-                    $row['transfer_category'] = null;
-                    $row['category_id'] = $this->categorize((int) $workspace->id, $userId, $rowDescription, $categories->all(), false) ?: $otherCategoryId;
-                }
                 if (! in_array($row['type'] ?? null, ['expense', 'income', 'transfer', 'debt_payment'], true)) {
                     continue;
                 }
