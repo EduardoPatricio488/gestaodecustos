@@ -260,7 +260,7 @@ class BankTransactionsHub extends Component
                 'counterpart' => $item->recipient ?: 'Destinatário não indicado',
                 'amount' => (float) $item->amount, 'direction' => ($item->direction ?? 'out') === 'in' ? 'in' : 'out',
                 'channel' => $item->category === 'Imposto do Selo' ? 'Imposto do Selo' : 'Transferência bancária',
-                'status' => in_array(mb_strtolower((string) $item->status), ['completed', 'complete', 'pending', 'pendente'], true) ? 'Concluído' : (($item->status === 'cancelled') ? 'Cancelada' : 'Concluído'),
+                'status' => mb_strtolower((string) $item->status) === 'cancelled' ? 'Cancelada' : 'Concluído',
             ]);
 
         $incomes = $scope(Income::query()->with('bankAccount'))
@@ -296,7 +296,7 @@ class BankTransactionsHub extends Component
                     'counterpart' => 'Saída de dinheiro',
                     'amount' => (float) $item->amount_paid > 0 ? (float) $item->amount_paid : (float) $item->amount,
                     'direction' => 'out', 'channel' => $mbway ? 'MB WAY' : 'Pagamento bancário',
-                    'status' => $item->status ?: 'Concluído',
+                    'status' => mb_strtolower((string) $item->status) === 'cancelled' ? 'Cancelada' : 'Concluído',
                 ];
             });
 
