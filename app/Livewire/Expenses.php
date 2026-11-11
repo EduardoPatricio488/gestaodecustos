@@ -124,7 +124,7 @@ class Expenses extends Component
                 "payment_method=método indicado (Dinheiro, Multibanco, Cartão, MB Way, Transferência ou outro texto explícito); ".
                 "company_nif=NIF do emitente; customer_nif=NIF do cliente; invoice_number=número do documento; notes=observações impressas relevantes. ".
                 "Não confundas o NIF do emitente com o NIF do cliente. Valores numéricos apenas, com ponto decimal. ".
-                "Estrutura exata: {\\"category\\":null,\\"amount\\":null,\\"item_name\\":null,\\"date\\":null,\\"time\\":null,\\"quantity\\":null,\\"unit\\":null,\\"store\\":null,\\"description\\":null,\\"subcategory\\":null,\\"unit_price\\":null,\\"vat_rate\\":null,\\"gross_amount\\":null,\\"net_amount\\":null,\\"vat_amount\\":null,\\"tax_incidence\\":null,\\"amount_tendered\\":null,\\"change_amount\\":null,\\"payment_condition\\":null,\\"payment_method\\":null,\\"company_nif\\":null,\\"customer_nif\\":null,\\"invoice_number\\":null,\\"notes\\":null}";
+                "Estrutura exata: {\"category\":null,\"amount\":null,\"item_name\":null,\"date\":null,\"time\":null,\"quantity\":null,\"unit\":null,\"store\":null,\"description\":null,\"subcategory\":null,\"unit_price\":null,\"vat_rate\":null,\"gross_amount\":null,\"net_amount\":null,\"vat_amount\":null,\"tax_incidence\":null,\"amount_tendered\":null,\"change_amount\":null,\"payment_condition\":null,\"payment_method\":null,\"company_nif\":null,\"customer_nif\":null,\"invoice_number\":null,\"notes\":null}";
 
             $apiKey = config('services.openrouter.api_key');
             if (blank($apiKey)) {
