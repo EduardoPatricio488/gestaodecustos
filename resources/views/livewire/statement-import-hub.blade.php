@@ -68,7 +68,7 @@
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-black dark:text-white">Rever movimentos encontrados</h2>
-                    <p class="text-xs text-zinc-400 mt-1">Confirma cada movimento. Podes alterar a descrição, data, valor e categoria antes de guardar.</p>
+                    <p class="text-xs text-zinc-400 mt-1">Confirma cada movimento. Podes alterar a descrição, data e valor, bem como a categoria das despesas ou o método das transferências, antes de guardar.</p>
                     <p class="text-xs font-semibold text-blue-600 dark:text-blue-400 mt-2">Para mudar um movimento entre despesa e transferência, carrega no botão «Trocar para…» que aparece por baixo de cada movimento.</p>
                 </div>
                 <div class="flex flex-wrap gap-2 text-xs">
