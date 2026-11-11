@@ -189,6 +189,18 @@ class MovementsHub extends Component
         }
     }
 
+    public function updatedEditingIncomeDestination(string $destination): void
+    {
+        if ($destination === 'cash') {
+            $this->editingAccountId = '';
+            return;
+        }
+
+        if (str_starts_with($destination, 'bank:')) {
+            $this->editingAccountId = substr($destination, 5);
+        }
+    }
+
     public function updatedEditingCategoryId(): void
     {
         if ($this->conversionType !== 'expense' || $this->editingCategoryId === '') {
@@ -402,7 +414,7 @@ class MovementsHub extends Component
 
         $category = null;
         if (in_array($this->conversionType, ['expense', 'income', 'subscription'], true)) {
-            $rules['editingCategoryId'] = $this->conversionType === 'subscription' ? 'required|integer' : 'nullable|integer';
+            $rules['editingCategoryId'] = $this->conversionType === 'expense' || $this->conversionType === 'subscription' ? 'required|integer' : 'nullable|integer';
             if ($this->editingCategoryId !== '') {
                 $category = $this->conversionCategoryQuery()
                     ->with('fields')
