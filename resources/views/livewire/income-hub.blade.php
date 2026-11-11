@@ -2202,7 +2202,7 @@
         @endforelse
     </div>
     </div>
-    <div x-show="activeIncomeTab === 'bank'" x-cloak class="space-y-6">
+    <div x-show="activeIncomeTab === 'bank'" x-transition.opacity.duration.200ms class="space-y-6">
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total recebido em contas</p>
