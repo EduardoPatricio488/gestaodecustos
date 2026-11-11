@@ -275,7 +275,6 @@
                 'anomalies'     => \App\Livewire\AnomalyHub::detectedCountForSidebar($workspaceId, $user->id),
                 'expense_forecast' => $forecastCategoryCount,
                 'subscriptions' => \App\Models\Subscription::where('workspace_id', $workspaceId)->count(),
-                'subscription_scanner' => \App\Livewire\SubscriptionScannerHub::suggestedCountForSidebar(),
                 'networth'      => \App\Models\BankPatrimony::where('workspace_id', $workspaceId)->count(),
                 'retirement'    => 0,
                 'inflation'     => 0,
@@ -1342,9 +1341,6 @@ $hasStoreAccess = $hasLockInAccess;
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="credit-card" :href="route('hub.subscriptions')" wire:navigate.hover>
                         Assinaturas {!! $badge($counts['subscriptions']) !!}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="magnifying-glass" :href="route('hub.subscriptions.scanner')" wire:navigate.hover>
-                        Scanner Subscrições {!! $badge($counts['subscription_scanner']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="briefcase" :href="route('hub.networth')" wire:navigate.hover>
                         Património Real {!! $badge($counts['networth']) !!}
