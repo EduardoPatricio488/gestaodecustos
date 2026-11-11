@@ -1440,10 +1440,6 @@
                         <p class="text-[10px] text-zinc-400 font-medium">Baseado no teu rácio de poupança e cumprimento de orçamentos.</p>
                     </div>
                 </div>
-                <a href="{{ route('hub.budget') }}" wire:navigate class="inline-flex items-center justify-center gap-2 self-start sm:self-auto rounded-xl px-3 py-2 text-[9px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-500/10 hover:bg-brand-500/15 transition-colors whitespace-nowrap">
-                    Ver análise detalhada
-                    <flux:icon name="arrow-up-right" variant="micro" class="size-3.5" />
-                </a>
             </div>
         </div>
 
