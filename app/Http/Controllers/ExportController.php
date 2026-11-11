@@ -127,7 +127,7 @@ class ExportController extends Controller
                 'detail' => $item->category?->name ?: 'Sem categoria',
                 'amount' => (float) $item->amount,
                 'direction' => 'Saída',
-                'status' => $item->status ?: 'Registada',
+                'status' => 'Completo',
             ]);
         });
 
