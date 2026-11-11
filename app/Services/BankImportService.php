@@ -415,6 +415,7 @@ class BankImportService
                 $normalizedDescription = $this->normalizeMovementDescription($description);
                 $isRegularMerchantPurchase = $signedAmount < 0 && (
                     str_contains($normalizedDescription, 'mercadona')
+                    || str_contains($normalizedDescription, 'j vasco simoes')
                     || str_contains($normalizedDescription, 'hamb da vila')
                     || $this->isKnownMerchantExpense($normalizedDescription)
                 );
@@ -573,6 +574,7 @@ class BankImportService
         return preg_match('/\\bh3\\b/', $normalizedDescription) === 1
             || (str_contains($normalizedDescription, 'hamb') && str_contains($normalizedDescription, 'vila'))
             || str_contains($normalizedDescription, 'mercadona')
+            || str_contains($normalizedDescription, 'j vasco simoes')
             || str_contains($normalizedDescription, 'github')
             || str_contains($normalizedDescription, 'sbksileven')
             || str_contains($normalizedDescription, 'mafrense')
