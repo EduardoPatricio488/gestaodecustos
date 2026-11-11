@@ -14,6 +14,7 @@ class Debt extends Model
     protected $fillable = [
         'workspace_id',
         'user_id',
+        'bank_statement_import_id',
         'bank_account_id',
         'type',
         'person_name',
