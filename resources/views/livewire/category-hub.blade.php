@@ -1192,6 +1192,9 @@
                         <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Condição de pagamento</span>
                             <select wire:model="meta.payment_condition" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white"><option value="">Selecionar...</option><option value="Pronto pagamento">Pronto pagamento</option><option value="A prazo">A prazo</option><option value="Pagamento parcial">Pagamento parcial</option><option value="Pagamento diferido">Pagamento diferido</option></select>
                         </label>
+                        <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Método de pagamento</span>
+                            <input wire:model="meta.payment_method" type="text" placeholder="Ex.: Multibanco, MB Way, Dinheiro..." class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
+                        </label>
                         <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Pago com / Conta</span>
                             <select wire:model.live="bankAccountId" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white"><option value="">💵 Dinheiro físico</option>@foreach($this->bankAccounts as $acc)<option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>@endforeach</select>
                         </label>
