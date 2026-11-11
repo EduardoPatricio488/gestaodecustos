@@ -1,0 +1,23 @@
+<?php
+
+use Illuminate\\Database\\Migrations\\Migration;
+use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('bank_transfers', function (Blueprint $table): void {
+            $table->foreignId('to_account_id')->nullable()->change();
+            $table->string('recipient')->nullable()->after('to_account_id');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('bank_transfers', function (Blueprint $table): void {
+            $table->dropColumn('recipient');
+        });
+    }
+};
