@@ -186,13 +186,17 @@ PROMPT;
             // que já tenham sido enviados e deixamos os restantes para revisão.
             if ((! is_array($result) || json_last_error() !== JSON_ERROR_NONE) && $finishReason === 'length') {
                 $partial = [];
-                foreach (['category', 'store', 'description', 'date'] as $field) {
-                    if (preg_match('/"'.preg_quote($field, '/').'"\\s*:\\s*"([^"]*)"/i', $raw, $match)) {
+                $stringFields = ['category', 'date', 'time', 'unit', 'store', 'description', 'item_name', 'subcategory', 'tax_incidence', 'payment_condition', 'payment_method', 'company_nif', 'customer_nif', 'invoice_number', 'notes'];
+                $numericFields = ['amount', 'quantity', 'unit_price', 'vat_rate', 'gross_amount', 'net_amount', 'vat_amount', 'amount_tendered', 'change_amount'];
+                foreach ($stringFields as $field) {
+                    if (preg_match('/"'.preg_quote($field, '/').'\\s*:\\s*"([^"]*)"/i', $raw, $match)) {
                         $partial[$field] = trim($match[1]);
                     }
                 }
-                if (preg_match('/"amount"\\s*:\\s*"?([0-9]+(?:[.,][0-9]+)?)"?/i', $raw, $match)) {
-                    $partial['amount'] = str_replace(',', '.', $match[1]);
+                foreach ($numericFields as $field) {
+                    if (preg_match('/"'.preg_quote($field, '/').'\\s*:\\s*"?(-?[0-9]+(?:[.,][0-9]+)?)"?/i', $raw, $match)) {
+                        $partial[$field] = str_replace(',', '.', $match[1]);
+                    }
                 }
                 $result = $partial;
             }
