@@ -35,15 +35,31 @@ class BankImportService
         $expenseIndex = 0;
 
         foreach ($parsed['transactions'] as $transaction) {
-            if (($transaction['amount'] ?? 0) >= 0) {
+            $amount = (float) ($transaction['amount'] ?? 0);
+            $classification = $this->classifyMovement((string) ($transaction['description'] ?? ''), $amount);
+            if ($amount >= 0 && $classification['type'] !== 'transfer') {
                 continue;
             }
             $signature = $this->buildExpenseSignature($transaction, $expenseIndex);
-            $expenseCandidates[] = ['signature' => $signature, 'date' => $transaction['date']->format('Y-m-d'), 'description' => Str::limit((string) $transaction['description'], 90), 'amount' => round((float) $transaction['amount'], 2)];
+            $expenseCandidates[] = [
+                'signature' => $signature,
+                'date' => $transaction['date']->format('Y-m-d'),
+                'description' => Str::limit((string) $transaction['description'], 90),
+                'amount' => round($amount, 2),
+                'type' => $classification['type'] === 'transfer' ? 'transfer' : ($classification['type'] === 'debt_payment' ? 'debt_payment' : 'expense'),
+                'movement_label' => $classification['label'],
+            ];
             $expenseIndex++;
         }
 
-        return ['bank' => $parsed['bank'], 'source_file_type' => $parsed['source_file_type'], 'transactions_total' => count($parsed['transactions']), 'expenses_total' => count($expenseCandidates), 'rows' => $expenseCandidates];
+        return [
+            'bank' => $parsed['bank'],
+            'source_file_type' => $parsed['source_file_type'],
+            'transactions_total' => count($parsed['transactions']),
+            'expenses_total' => count(array_filter($expenseCandidates, fn ($row) => in_array($row['type'], ['expense', 'debt_payment'], true))),
+            'transfers_total' => count(array_filter($expenseCandidates, fn ($row) => $row['type'] === 'transfer')),
+            'rows' => $expenseCandidates,
+        ];
     }
 
     public function previewSantanderPdf(UploadedFile $file, int $workspaceId, int $userId): array
@@ -336,29 +352,80 @@ class BankImportService
             $bank = $parsed['bank'];
             $sourceFileType = $parsed['source_file_type'];
             $import->update(['bank_detected' => $bank]);
+            $otherCategoryId = $this->ensureOtherCategory((int) $workspace->id, $userId);
             $categories = Category::where('workspace_id', $workspace->id)->pluck('name', 'id');
             $imported = 0;
             $duplicatesSkipped = 0;
-            $expenseIndex = 0;
+            $movementIndex = 0;
             $selectedLookup = is_array($selectedSignatures) ? array_fill_keys(array_values($selectedSignatures), true) : null;
 
             foreach ($transactions as $transaction) {
-                if (($transaction['amount'] ?? 0) >= 0) {
+                $signedAmount = (float) ($transaction['amount'] ?? 0);
+                $description = trim((string) ($transaction['description'] ?? ''));
+                $classification = $this->classifyMovement($description, $signedAmount);
+                if ($signedAmount >= 0 && $classification['type'] !== 'transfer') {
                     continue;
                 }
-                $signature = $this->buildExpenseSignature($transaction, $expenseIndex++);
+
+                $signature = $this->buildExpenseSignature($transaction, $movementIndex++);
                 if ($selectedLookup !== null && ! isset($selectedLookup[$signature])) {
                     continue;
                 }
-                $amount = abs((float) $transaction['amount']);
-                $description = trim((string) $transaction['description']);
-                if ($this->expenseAlreadyExists($workspace->id, $userId, $transaction['date'], $amount, $description)) {
-                    $duplicatesSkipped++;
 
-                    continue;
+                $amount = abs($signedAmount);
+                $date = $transaction['date'];
+                if ($classification['type'] === 'transfer') {
+                    $exists = BankTransfer::query()->where('workspace_id', $workspace->id)->where('user_id', $userId)
+                        ->whereDate('transferred_at', $date->toDateString())->where('amount', number_format($amount, 2, '.', ''))
+                        ->where('description', $description)->exists();
+                    if ($exists) {
+                        $duplicatesSkipped++;
+                        continue;
+                    }
+                    BankTransfer::create([
+                        'workspace_id' => $workspace->id, 'user_id' => $userId,
+                        'from_account_id' => null, 'to_account_id' => null,
+                        'direction' => $signedAmount > 0 ? 'in' : 'out',
+                        'recipient' => $this->extractCounterparty($description),
+                        'amount' => $amount, 'currency' => 'EUR', 'description' => $description,
+                        'status' => 'completed', 'transferred_at' => $date,
+                        'bank_statement_import_id' => $import->id,
+                        'notes' => 'Importado automaticamente do extrato bancário.',
+                    ]);
+                } elseif ($classification['type'] === 'debt_payment') {
+                    if ($this->expenseAlreadyExists($workspace->id, $userId, $date, $amount, $description)) {
+                        $duplicatesSkipped++;
+                        continue;
+                    }
+                    $transportCategoryId = $categories->filter(fn ($name) => str_contains(mb_strtolower((string) $name), 'transport'))->keys()->first();
+                    $categoryId = $transportCategoryId ? (int) $transportCategoryId : $otherCategoryId;
+                    $expense = Expense::create([
+                        'user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId,
+                        'bank_statement_import_id' => $import->id, 'title' => Str::limit($description, 100),
+                        'amount' => $amount, 'amount_paid' => $amount, 'status' => 'paid',
+                        'description' => $description, 'spent_at' => $date,
+                        'metadata' => ['import_id' => $import->id, 'bank' => $bank, 'source_file_type' => $sourceFileType, 'movement_type' => 'debt_payment'],
+                    ]);
+                    Debt::create([
+                        'workspace_id' => $workspace->id, 'user_id' => $userId, 'type' => 'owe',
+                        'person_name' => 'Mafrense', 'amount' => $amount,
+                        'description' => 'Dívida de transportes — '.$description,
+                        'due_at' => $date, 'is_paid' => true, 'expense_id' => $expense->id,
+                        'bank_statement_import_id' => $import->id,
+                    ]);
+                } else {
+                    if ($this->expenseAlreadyExists($workspace->id, $userId, $date, $amount, $description)) {
+                        $duplicatesSkipped++;
+                        continue;
+                    }
+                    $categoryId = $this->categorize($workspace->id, $userId, $description, $categories->toArray()) ?: $otherCategoryId;
+                    Expense::create([
+                        'user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId,
+                        'bank_statement_import_id' => $import->id, 'title' => Str::limit($description, 100),
+                        'amount' => $amount, 'description' => $description, 'spent_at' => $date,
+                        'metadata' => ['import_id' => $import->id, 'bank' => $bank, 'source_file_type' => $sourceFileType],
+                    ]);
                 }
-                $categoryId = $this->categorize($workspace->id, $userId, $description, $categories->toArray());
-                Expense::create(['user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId, 'bank_statement_import_id' => $import->id, 'title' => Str::limit($description, 100), 'amount' => $amount, 'description' => $description, 'spent_at' => $transaction['date'], 'metadata' => ['import_id' => $import->id, 'bank' => $bank, 'source_file_type' => $sourceFileType]]);
                 $imported++;
             }
             $import->update(['status' => 'completed', 'transactions_total' => count($transactions), 'transactions_imported' => $imported, 'errors' => $duplicatesSkipped > 0 ? ['duplicates_skipped' => $duplicatesSkipped] : null]);
