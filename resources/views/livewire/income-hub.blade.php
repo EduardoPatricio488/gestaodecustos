@@ -588,17 +588,6 @@
 {{-- ============================================================= --}}
 <div class="space-y-6">
 
-    {{-- Título --}}
-    <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5 dark:border-zinc-800 dark:bg-zinc-950">
-        <button type="button" @click="activeIncomeTab = 'billing'" :class="activeIncomeTab === 'billing' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'" class="inline-flex items-center gap-2 rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-wider transition">
-            <flux:icon name="calendar-days" variant="micro" class="size-4" />
-            Valores a faturar
-        </button>
-        <button type="button" @click="activeIncomeTab = 'bank'" :class="activeIncomeTab === 'bank' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'" class="inline-flex items-center gap-2 rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-wider transition">
-            <flux:icon name="building-library" variant="micro" class="size-4" />
-            Movimentos bancários
-        </button>
-    </div>
     <div x-show="activeIncomeTab === 'billing'" x-cloak>
 
 
