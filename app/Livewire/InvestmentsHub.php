@@ -883,20 +883,22 @@ class InvestmentsHub extends Component
             $meta = $result['meta'] ?? [];
             $price = null;
 
-            // Preferir a cotação de mercado mais recente reportada pelo fornecedor.
-            $marketPrice = $meta['regularMarketPrice'] ?? null;
-            if (is_numeric($marketPrice) && (float) $marketPrice > 0) {
-                $price = (float) $marketPrice;
+            // Usar primeiro o último candle intradiário disponível. O regularMarketPrice
+            // pode representar apenas o último fecho da sessão regular e ficar atrasado.
+            $closes = $result['indicators']['quote'][0]['close'] ?? [];
+            $timestamps = $result['timestamp'] ?? [];
+            foreach (array_reverse($closes, true) as $index => $close) {
+                if (is_numeric($close) && (float) $close > 0) {
+                    $price = (float) $close;
+                    break;
+                }
             }
 
-            // Se os metadados não trouxerem preço, usar o último candle válido.
+            // Só recorrer ao preço regular se a resposta não trouxer candles válidos.
             if ($price === null) {
-                $closes = $result['indicators']['quote'][0]['close'] ?? [];
-                foreach (array_reverse($closes) as $close) {
-                    if (is_numeric($close) && (float) $close > 0) {
-                        $price = (float) $close;
-                        break;
-                    }
+                $marketPrice = $meta['regularMarketPrice'] ?? null;
+                if (is_numeric($marketPrice) && (float) $marketPrice > 0) {
+                    $price = (float) $marketPrice;
                 }
             }
 
