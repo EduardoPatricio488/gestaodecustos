@@ -72,7 +72,7 @@
                                 </button>
                                 @if(!empty($movement['record_url']))
                                     <a href="{{ $movement['record_url'] }}" wire:navigate class="inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-zinc-700 dark:bg-zinc-700">
-                                        <flux:icon name="arrow-top-right-on-square" class="size-4" /> Abrir módulo
+                                        <flux:icon name="arrow-top-right-on-square" class="size-4" /> Abrir registo
                                     </a>
                                 @endif
                             </div>
