@@ -46,6 +46,11 @@ class Categories extends Component
         return auth()->user()->currentWorkspace?->id ?? 0;
     }
 
+    private function isProtectedCategory(Category $category): bool
+    {
+        return $category->is_fixed || mb_strtolower(trim($category->name), 'UTF-8') === 'outros';
+    }
+
     private function ensureOrdersAreSet()
     {
         $categories = Category::where('workspace_id', $this->workspaceId())
@@ -66,10 +71,18 @@ class Categories extends Component
         $this->ensureOrdersAreSet();
         $category = Category::where('workspace_id', $this->workspaceId())->findOrFail($id);
 
+        if ($this->isProtectedCategory($category)) {
+            return;
+        }
+
         $prev = Category::where('workspace_id', $this->workspaceId())
             ->where('order', '<', $category->order)
             ->orderBy('order', 'desc')
             ->first();
+
+        if ($prev && $this->isProtectedCategory($prev)) {
+            return;
+        }
 
         if ($prev) {
             $oldOrder = $category->order;
@@ -84,10 +97,18 @@ class Categories extends Component
         $this->ensureOrdersAreSet();
         $category = Category::where('workspace_id', $this->workspaceId())->findOrFail($id);
 
+        if ($this->isProtectedCategory($category)) {
+            return;
+        }
+
         $next = Category::where('workspace_id', $this->workspaceId())
             ->where('order', '>', $category->order)
             ->orderBy('order', 'asc')
             ->first();
+
+        if ($next && $this->isProtectedCategory($next)) {
+            return;
+        }
 
         if ($next) {
             $oldOrder = $category->order;
@@ -149,6 +170,12 @@ class Categories extends Component
         ]);
 
         $category = Category::where('workspace_id', $this->workspaceId())->findOrFail($this->editingId);
+
+        if ($this->isProtectedCategory($category)) {
+            $this->cancelEdit();
+            return null;
+        }
+
         $newSlug = Str::slug($this->editName, '-');
         $tempSlug = $newSlug;
         $i = 2;
@@ -209,6 +236,11 @@ class Categories extends Component
     public function startEdit(int $id)
     {
         $category = Category::where('workspace_id', $this->workspaceId())->findOrFail($id);
+
+        if ($this->isProtectedCategory($category)) {
+            return;
+        }
+
         $this->editingId = $category->id;
         $this->editName = $category->name;
         $this->editColor = $category->color ?? '#10b981';
@@ -226,9 +258,13 @@ class Categories extends Component
         $wsId = auth()->user()->current_workspace_id;
 
         foreach ($items as $item) {
-            Category::where('id', $item['value'])
+            $category = Category::where('id', $item['value'])
                 ->where('workspace_id', $wsId)
-                ->update(['order' => $item['order']]);
+                ->first();
+
+            if ($category && ! $this->isProtectedCategory($category)) {
+                $category->update(['order' => $item['order']]);
+            }
         }
 
         Cache::flush();
@@ -243,7 +279,7 @@ class Categories extends Component
         $categories = Category::where('workspace_id', $this->workspaceId())
             ->where(function ($query) {
                 $query->where('hidden_from_sidebar', false)
-                    ->orWhereRaw('LOWER(name) = ?', ['outros']);
+                    ->orWhereRaw('LOWER(TRIM(name)) = ?', ['outros']);
             })
             ->withCount(['expenses as expenses_count' => fn ($q) => $q->where('workspace_id', $this->workspaceId())
                 ->where('spent_at', '>=', $monthStart),
