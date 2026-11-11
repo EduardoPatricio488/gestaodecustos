@@ -50,6 +50,13 @@ class ManageExpense extends Component
 
     public $scanError = '';
 
+    public array $aiQuota = [];
+
+    public function refreshScannerQuota(): void
+    {
+        $this->aiQuota = app(\\App\\Services\\OpenRouterQuotaService::class)->dailyQuota(true);
+    }
+
     public array $hubConfigs = [
         'carro' => ['subs' => ['Gasolina', 'Manutenção', 'Seguro', 'Portagens', 'Estacionamento', 'Lavagem', 'Multa', 'Inspeção']],
         'casa' => ['subs' => ['Renda', 'Luz/Água', 'Internet', 'Gás', 'Condomínio', 'Obras', 'Mobiliário', 'Limpeza']],
