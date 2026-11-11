@@ -52,6 +52,8 @@ class BankImportService
             $expenseIndex++;
         }
 
+        $this->refineMovementTypesWithAi($expenseCandidates);
+
         return [
             'bank' => $parsed['bank'],
             'source_file_type' => $parsed['source_file_type'],
@@ -357,12 +359,31 @@ class BankImportService
             $imported = 0;
             $duplicatesSkipped = 0;
             $movementIndex = 0;
+            $aiRows = [];
+            foreach ($transactions as $transactionIndex => $candidate) {
+                $candidateAmount = (float) ($candidate['amount'] ?? 0);
+                $candidateDescription = (string) ($candidate['description'] ?? '');
+                $candidateClassification = $this->classifyMovement($candidateDescription, $candidateAmount);
+                if ($candidateAmount < 0 || $candidateClassification['type'] === 'transfer') {
+                    $aiRows[$transactionIndex] = [
+                        'type' => $candidateClassification['type'] === 'transfer' || $candidateClassification['type'] === 'debt_payment'
+                            ? $candidateClassification['type']
+                            : ($candidateAmount >= 0 ? 'income' : 'expense'),
+                        'description' => $candidateDescription,
+                        'amount' => $candidateAmount,
+                    ];
+                }
+            }
+            $this->refineMovementTypesWithAi($aiRows);
             $selectedLookup = is_array($selectedSignatures) ? array_fill_keys(array_values($selectedSignatures), true) : null;
 
-            foreach ($transactions as $transaction) {
+            foreach ($transactions as $transactionIndex => $transaction) {
                 $signedAmount = (float) ($transaction['amount'] ?? 0);
                 $description = trim((string) ($transaction['description'] ?? ''));
                 $classification = $this->classifyMovement($description, $signedAmount);
+                if (isset($aiRows[$transactionIndex])) {
+                    $classification['type'] = $aiRows[$transactionIndex]['type'];
+                }
                 if ($signedAmount >= 0 && $classification['type'] !== 'transfer') {
                     continue;
                 }
