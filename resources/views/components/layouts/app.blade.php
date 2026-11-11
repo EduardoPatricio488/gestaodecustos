@@ -166,7 +166,7 @@
 
     // 4. CACHE DE CONTAGENS DA SIDEBAR
     $counts = \Illuminate\Support\Facades\Cache::remember(
-        "layout:sidebar-counts:v5:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
+        "layout:sidebar-counts:v6:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
         60,
         function () use ($user, $currentWs, $workspaceId, $isAdminMode, $isBusinessMode) {
             if ($isAdminMode) {
@@ -262,10 +262,10 @@
                 'anomalies'     => \App\Livewire\AnomalyHub::detectedCountForSidebar($workspaceId, $user->id),
                 'expense_forecast' => $forecastCategoryCount,
                 'subscriptions' => \App\Models\Subscription::where('workspace_id', $workspaceId)->count(),
-                'subscription_scanner' => \App\Models\Subscription::where('workspace_id', $workspaceId)->count(),
+                'subscription_scanner' => \App\Livewire\SubscriptionScannerHub::suggestedCountForSidebar(),
                 'networth'      => \App\Models\BankPatrimony::where('workspace_id', $workspaceId)->count(),
-                'retirement'    => \App\Models\Investment::where('workspace_id', $workspaceId)->count(),
-                'inflation'     => \App\Models\Expense::where('workspace_id', $workspaceId)->where('is_company', false)->count(),
+                'retirement'    => 0,
+                'inflation'     => 0,
                 'activity'      => \App\Models\ActivityLog::where('workspace_id', $workspaceId)->count(),
                 'goals'         => \App\Models\Goal::where('workspace_id', $workspaceId)->count(),
                 'debts'         => \App\Models\Debt::where('workspace_id', $workspaceId)->count(),
