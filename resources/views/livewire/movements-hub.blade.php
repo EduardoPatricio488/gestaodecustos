@@ -72,7 +72,7 @@
                                     <flux:icon name="pencil" class="size-3.5" /> Editar informações
                                 </button>
                                 <button type="button" wire:click="openConversionModal('{{ $movement['edit_type'] }}', {{ $movement['record_id'] }})" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-amber-700">
-                                    <flux:icon name="arrow-left-right" class="size-3.5" /> Mudar movimento
+                                    <flux:icon name="arrow-path" class="size-3.5" /> Mudar movimento
                                 </button>
                             @endif
                         @if(!empty($movement['record_url']))
