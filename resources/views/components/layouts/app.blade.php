@@ -1491,6 +1491,18 @@ $hasStoreAccess = $hasLockInAccess;
         $catCounts = is_array($catCounts ?? null) ? $catCounts : [];
     @endphp
 
+    <flux:sidebar.item
+        icon="squares-2x2"
+        :href="route('hub.category', 'todas-as-categorias')"
+        wire:navigate.hover
+        @class([
+            'font-bold text-zinc-900 dark:text-white' => request()->route('slug') === 'todas-as-categorias',
+            'opacity-90' => request()->route('slug') !== 'todas-as-categorias'
+        ])
+    >
+        Todas as categorias
+    </flux:sidebar.item>
+
     @foreach($sidebarCategories as $sidebarCat)
         @php
             $lowerName = mb_strtolower(trim($sidebarCat->name), 'UTF-8');
@@ -1498,7 +1510,7 @@ $hasStoreAccess = $hasLockInAccess;
         @endphp
 
         <flux:sidebar.item
-            :icon="$lowerName === 'outros' ? 'squares-2x2' : ($sidebarCat->icon ?? 'tag')"
+            :icon="$sidebarCat->icon ?? ($lowerName === 'outros' ? 'tag' : 'tag')"
             :href="route('hub.category', $sidebarCat->slug)"
             wire:navigate.hover
             @class([
@@ -1506,7 +1518,7 @@ $hasStoreAccess = $hasLockInAccess;
                 'opacity-90' => !$sidebarCat->is_fixed && $lowerName !== 'outros'
             ])
         >
-            {{ $lowerName === 'outros' ? 'Todas as categorias' : $sidebarCat->name }}
+            {{ $sidebarCat->name }}
 
             @if($catCount > 0)
                 <span class="ml-auto text-[10px] font-black text-brand-600 bg-brand-500/10 px-1.5 py-0.5 rounded-md italic">
