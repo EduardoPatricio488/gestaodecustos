@@ -384,7 +384,7 @@ class CategoryHub extends Component
             $mimeType = $file->getMimeType() ?: 'image/jpeg';
             $fileContents = file_get_contents($filePath);
             if (! is_string($fileContents) || $fileContents === '') {
-                throw new \\Exception('Não foi possível ler o conteúdo da fatura.');
+                throw new \Exception('Não foi possível ler o conteúdo da fatura.');
             }
 
             // Redimensiona fotografias grandes para acelerar a análise sem perder legibilidade.
@@ -467,15 +467,15 @@ PROMPT;
                 $content = collect($content)
                     ->map(fn ($part) => is_string($part) ? $part : data_get($part, 'text', data_get($part, 'content', '')))
                     ->filter(fn ($part) => is_string($part) && trim($part) !== '')
-                    ->implode("\\n");
+                    ->implode("\n");
             }
-            $rawText = trim(preg_replace('/^\\x60{3}(?:json)?\\s*|\\s*\\x60{3}$/i', '', (string) $content));
+            $rawText = trim(preg_replace('/^\\x60{3}(?:json)?\s*|\s*\\x60{3}$/i', '', (string) $content));
             $result = json_decode($rawText, true);
             if (! is_array($result) && preg_match('/\\{.*\\}/s', $rawText, $matches)) {
                 $result = json_decode($matches[0], true);
             }
             if (! is_array($result)) {
-                throw new \\Exception('A IA não devolveu dados reconhecíveis num formato válido.');
+                throw new \Exception('A IA não devolveu dados reconhecíveis num formato válido.');
             }
 
             // Normaliza nomes alternativos devolvidos por alguns modelos gratuitos.
@@ -637,7 +637,7 @@ PROMPT;
                 || collect($this->meta)->contains(fn ($value) => $value !== null && $value !== '');
 
             if (! $hasFormValue) {
-                throw new \\Exception('A IA respondeu, mas não conseguiu preencher nenhum campo da compra. Experimenta uma fotografia mais nítida, direita e com a fatura completa visível.');
+                throw new \Exception('A IA respondeu, mas não conseguiu preencher nenhum campo da compra. Experimenta uma fotografia mais nítida, direita e com a fatura completa visível.');
             }
 
             $this->scannedData = $result;
