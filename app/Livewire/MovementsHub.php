@@ -142,6 +142,14 @@ class MovementsHub extends Component
         $this->editMovement($type, $id);
         $this->showEditModal = false;
         $this->showConversionModal = true;
+        $this->conversionType = '';
+        if ($type !== 'transfer' && $this->editingAccountId !== '') {
+            if ($this->editingDirection === 'in') {
+                $this->editingToAccountId = $this->editingAccountId;
+            } else {
+                $this->editingFromAccountId = $this->editingAccountId;
+            }
+        }
     }
 
     public function closeConversionModal(): void
