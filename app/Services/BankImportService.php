@@ -6,7 +6,10 @@ use App\Models\BankStatementImport;
 use App\Models\CategorizationRule;
 use App\Models\Category;
 use App\Models\Expense;
+use App\Models\GoalContribution;
+use App\Models\Income;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
@@ -163,7 +166,7 @@ class BankImportService
                         $duplicates++;
                         continue;
                     }
-                    \App\Models\Income::create([
+                    Income::create([
                         'user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId,
                         'bank_statement_import_id' => $import->id,
                         'description' => $description, 'amount' => $absoluteAmount,
