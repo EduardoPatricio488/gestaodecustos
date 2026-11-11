@@ -217,14 +217,12 @@ PROMPT;
             $hasEssentialData = collect(['amount', 'date', 'store', 'description'])
                 ->contains(fn ($field) => isset($result[$field]) && $result[$field] !== '');
 
-            if (! $hasEssentialData) {
-                $retryPrompt = "Lê cuidadosamente a imagem inteira da fatura portuguesa, com atenção ao cabeçalho, linhas de artigos e total no rodapé. Extrai os dados que estejam visíveis. ".
-                    "Responde apenas com JSON válido. Não inventes. ".
-                    "Extrai: amount (total final pago, número), date (YYYY-MM-DD), store (nome do estabelecimento), ".
-                    "description (compra/produtos em poucas palavras), category (uma destas: ".
+            if (! $hasEssentialData || $finishReason === 'length') {
+                $retryPrompt = "Lê novamente a fatura inteira e completa os campos em falta. Responde apenas com JSON válido, sem markdown. Não inventes; usa null quando ausente/ilegível. ".
+                    "A categoria tem de ser exatamente uma destas: ".
                     json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).
-                    "). Usa null apenas se o dado não estiver legível. ".
-                    '{"category":null,"amount":null,"date":null,"store":null,"description":null}';
+                    ". amount é o total final pago; gross_amount ilíquido; net_amount base tributável; vat_amount IVA; date YYYY-MM-DD; time HH:MM. ".
+                    '{"category":null,"amount":null,"date":null,"time":null,"quantity":null,"unit":null,"store":null,"description":null,"item_name":null,"subcategory":null,"unit_price":null,"vat_rate":null,"gross_amount":null,"net_amount":null,"vat_amount":null,"tax_incidence":null,"amount_tendered":null,"change_amount":null,"payment_condition":null,"payment_method":null,"company_nif":null,"customer_nif":null,"invoice_number":null,"notes":null}';
 
                 $retryResponse = \Illuminate\Support\Facades\Http::withHeaders([
                     'Authorization' => 'Bearer '.$apiKey,
@@ -256,7 +254,7 @@ PROMPT;
                         $retryResult = json_decode($retryMatches[0], true);
                     }
                     if (is_array($retryResult)) {
-                        foreach (['category', 'amount', 'date', 'store', 'description'] as $field) {
+                        foreach (['category', 'amount', 'date', 'time', 'quantity', 'unit', 'store', 'description', 'item_name', 'subcategory', 'unit_price', 'vat_rate', 'gross_amount', 'net_amount', 'vat_amount', 'tax_incidence', 'amount_tendered', 'change_amount', 'payment_condition', 'payment_method', 'company_nif', 'customer_nif', 'invoice_number', 'notes'] as $field) {
                             if ((! isset($result[$field]) || $result[$field] === '') && isset($retryResult[$field]) && $retryResult[$field] !== '') {
                                 $result[$field] = $retryResult[$field];
                             }
