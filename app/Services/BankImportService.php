@@ -49,7 +49,19 @@ class BankImportService
 
         $this->refineMovementTypesWithAi($expenseCandidates);
         foreach ($expenseCandidates as $index => $row) {
-            if ((float) ($row['amount'] ?? 0) < 0 && $this->isKnownMerchantExpense($this->normalizeMovementDescription((string) ($row['description'] ?? '')))) {
+            $description = (string) ($row['description'] ?? '');
+            $normalized = $this->normalizeMovementDescription($description);
+
+            if ($this->isExplicitTransferDescription($normalized)) {
+                $expenseCandidates[$index]['type'] = 'transfer';
+                $expenseCandidates[$index]['movement_label'] = (float) $row['amount'] >= 0
+                    ? 'Transferência recebida'
+                    : 'Transferência enviada';
+                $expenseCandidates[$index]['transfer_category'] = 'Transferência bancária';
+                continue;
+            }
+
+            if ((float) ($row['amount'] ?? 0) < 0 && $this->isKnownMerchantExpense($normalized)) {
                 $expenseCandidates[$index]['type'] = 'expense';
                 $expenseCandidates[$index]['transfer_category'] = null;
             }
@@ -155,10 +167,23 @@ class BankImportService
 
         $this->refineMovementTypesWithAi($rows);
 
-        // Compras a comerciantes conhecidos nunca podem ser promovidas a transferência pela IA.
+        // Regras explícitas prevalecem sempre sobre a resposta da IA.
         foreach ($rows as $rowIndex => $row) {
             $description = (string) ($row['description'] ?? '');
-            if ($this->isKnownMerchantExpense($this->normalizeMovementDescription($description)) && (float) ($row['amount'] ?? 0) < 0) {
+            $normalized = $this->normalizeMovementDescription($description);
+
+            if ($this->isExplicitTransferDescription($normalized)) {
+                $rows[$rowIndex]['type'] = 'transfer';
+                $rows[$rowIndex]['movement_label'] = (float) $row['amount'] >= 0
+                    ? 'Transferência recebida'
+                    : 'Transferência enviada';
+                $rows[$rowIndex]['transfer_category'] = 'Transferência bancária';
+                $rows[$rowIndex]['category_id'] = null;
+                continue;
+            }
+
+            // Compras a comerciantes conhecidos nunca podem ser promovidas a transferência pela IA.
+            if ($this->isKnownMerchantExpense($normalized) && (float) ($row['amount'] ?? 0) < 0) {
                 $rows[$rowIndex]['type'] = 'expense';
                 $rows[$rowIndex]['transfer_category'] = null;
                 $rows[$rowIndex]['category_id'] = $this->categorize($workspaceId, $userId, $description, $categories, false) ?: $otherCategoryId;
@@ -538,7 +563,7 @@ class BankImportService
 
         // Transferências identificadas explicitamente no descritivo do extrato.
         // Esta regra é determinística e não depende da resposta da IA.
-        if (preg_match('/^(?:transferencia|transf(?:erencia)?\\s+)(?:de|para|recebida de|enviada para)\\b/u', $normalized) === 1) {
+        if ($this->isExplicitTransferDescription($normalized)) {
             return [
                 'type' => 'transfer',
                 'label' => $amount >= 0 ? 'Transferência recebida' : 'Transferência enviada',
@@ -571,6 +596,16 @@ class BankImportService
 
         // Mafrense Nem Passes é uma despesa normal de transporte, não uma dívida.
         return ['type' => $amount >= 0 ? 'income' : 'expense', 'label' => $amount >= 0 ? 'Receita' : 'Despesa'];
+    }
+
+    private function isExplicitTransferDescription(string $normalizedDescription): bool
+    {
+        return str_starts_with($normalizedDescription, 'transferencia de ')
+            || str_starts_with($normalizedDescription, 'transferencia para ')
+            || str_starts_with($normalizedDescription, 'transferencia recebida de ')
+            || str_starts_with($normalizedDescription, 'transferencia enviada para ')
+            || str_starts_with($normalizedDescription, 'transferencia recebida ')
+            || str_starts_with($normalizedDescription, 'transferencia enviada ');
     }
 
     private function isMafrenseNemPasses(string $description): bool
@@ -622,7 +657,7 @@ class BankImportService
             $normalized = $this->normalizeMovementDescription((string) ($row['description'] ?? ''));
             if ($this->isKnownMerchantExpense($normalized)
                 || str_contains($normalized, 'imposto do selo sobre comissao')
-                || preg_match('/^(?:transferencia|transf(?:erencia)?\\s+)(?:de|para|recebida de|enviada para)\\b/u', $normalized) === 1) {
+                || $this->isExplicitTransferDescription($normalized)) {
                 continue;
             }
 
