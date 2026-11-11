@@ -208,7 +208,7 @@ PROMPT;
             ]);
 
             if (! $response->successful()) {
-                throw new \Exception('Erro na API.');
+                throw new \Exception('Erro na API: '.($response->json('error.message') ?? 'resposta não reconhecida.'));
             }
 
             $responseContent = $response->json('choices.0.message.content');
