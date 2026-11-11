@@ -1470,48 +1470,34 @@
             <flux:button variant="ghost" size="sm" class="rounded-xl text-[10px] font-black uppercase tracking-widest" href="{{ url('/movimentos') }}" wire:navigate>Ver Histórico Completo</flux:button>
         </div>
 
-        <div class="divide-y divide-zinc-50 dark:divide-zinc-800/50">
-            @forelse ($recent as $e)
-                <div class="flex items-center justify-between p-6 hover:bg-zinc-50 dark:hover:bg-brand-500/5 transition-all duration-300 group/row">
-                    <div class="flex items-center gap-5">
-                        {{-- Ícone da Categoria ou Avatar do User --}}
-                        <div class="relative">
-                            <div class="size-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 group-hover/row:scale-110 group-hover/row:bg-brand-500 group-hover/row:text-white transition-all shadow-sm">
-                                <flux:icon name="banknotes" variant="outline" class="size-5" />
+        <div class="max-h-[510px] overflow-y-auto overscroll-contain divide-y divide-zinc-100 dark:divide-zinc-800" style="scrollbar-width: thin;">
+            @forelse ($recentMovements as $movement)
+                <article wire:key="dashboard-{{ $movement['key'] }}" class="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
+                    <div class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                        <div class="flex min-w-0 items-center gap-3 sm:gap-4">
+                            <div class="flex size-10 shrink-0 items-center justify-center rounded-xl {{ $movement['direction'] === 'in' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : ($movement['direction'] === 'company' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30') }}">
+                                <flux:icon name="{{ $movement['type'] === 'income' ? 'arrow-down-left' : ($movement['type'] === 'expense' ? 'arrow-up-right' : ($movement['type'] === 'subscription' ? 'clock' : 'arrows-right-left')) }}" class="size-5" />
                             </div>
-                            <div class="absolute -bottom-1 -right-1 size-5 rounded-full border-2 border-white dark:border-zinc-900 overflow-hidden shadow-sm" title="Registado por {{ $e->user->name }}">
-                                <div class="size-full bg-brand-600 flex items-center justify-center text-[8px] font-black text-white uppercase">
-                                    {{ substr($e->user->name, 0, 1) }}
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <p class="truncate text-sm font-bold text-zinc-900 dark:text-white">{{ $movement['title'] }}</p>
+                                    <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-[9px] font-black uppercase text-zinc-500 dark:bg-zinc-800">{{ $movement['type_label'] }}</span>
                                 </div>
+                                <p class="mt-1 truncate text-xs text-zinc-500">{{ $movement['detail'] }} · {{ $movement['date']?->format('d/m/Y') ?? '—' }}</p>
                             </div>
                         </div>
-
-                        <div class="flex flex-col">
-                            <div class="flex items-center gap-2">
-                                <span class="font-black text-sm text-zinc-900 dark:text-white uppercase tracking-tight">{{ $e->description ?: $e->category?->name }}</span>
-                                <span class="text-[8px] font-black px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 rounded-md uppercase tracking-widest">{{ $e->category?->name ?? 'Geral' }}</span>
-                            </div>
-                            <div class="flex items-center gap-2 mt-0.5">
-                                <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest italic">{{ $e->spent_at->translatedFormat('d M Y') }}</p>
-                                <span class="text-zinc-300 dark:text-zinc-700">·</span>
-                                <p class="text-[10px] text-zinc-500 font-black uppercase">{{ $e->user->id === auth()->id() ? 'Tu' : explode(' ', $e->user->name)[0] }}</p>
-                            </div>
+                        <div class="flex items-center justify-between gap-4 sm:justify-end">
+                            <span class="text-[10px] font-semibold text-zinc-400">{{ $movement['status'] }}</span>
+                            <p class="text-base font-black tabular-nums {{ $movement['direction'] === 'in' ? 'text-emerald-600' : ($movement['direction'] === 'company' ? 'text-blue-600' : 'text-rose-600') }}">
+                                {{ $movement['direction'] === 'in' ? '+' : ($movement['direction'] === 'company' ? '' : '−') }}{{ number_format($movement['amount'], 2, ',', '.') }} €
+                            </p>
                         </div>
                     </div>
-
-                    {{-- VALOR COM PRIVACIDADE --}}
-                    <div class="text-right">
-                        <span class="text-lg font-black text-red-500 tracking-tighter">
-                            <span :class="privacyMode ? 'blur-md select-none' : ''" class="transition-all duration-500 inline-block">
-                                -{{ $currentWs->money($e->amount) }}
-                            </span>
-                        </span>
-                    </div>
-                </div>
+                </article>
             @empty
-                <div class="flex flex-col items-center justify-center py-20 text-center">
-                    <flux:icon name="magnifying-glass" class="size-12 text-zinc-200 dark:text-zinc-800 mb-4" />
-                    <p class="text-zinc-400 text-xs font-black uppercase tracking-widest italic">Nenhum movimento registado neste espaço.</p>
+                <div class="px-5 py-14 text-center">
+                    <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400 dark:bg-zinc-800"><flux:icon name="inbox" class="size-7" /></div>
+                    <h3 class="mt-4 text-sm font-black text-zinc-900 dark:text-white">Não existem movimentos registados</h3>
                 </div>
             @endforelse
         </div>
