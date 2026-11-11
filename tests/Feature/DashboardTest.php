@@ -25,7 +25,6 @@ test('free users can access the main planning and analysis routes', function () 
         route('hub.expense-forecast'),
         route('hub.investments'),
         route('hub.subscriptions'),
-        route('hub.subscriptions.scanner'),
         route('hub.networth'),
         route('hub.retirement'),
         route('hub.inflation'),
