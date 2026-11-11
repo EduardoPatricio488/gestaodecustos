@@ -881,7 +881,10 @@ class InvestmentsHub extends Component
                     $cells[] = trim(preg_replace('/\\s+/u', ' ', $cell->textContent) ?? '');
                 }
 
-                if (count($cells) < 2 || strcasecmp($cells[0], 'Last') !== 0) {
+                // Para uma posição comprada, o valor de liquidação é calculado
+                // pelo preço Bid (preço a que o mercado compra as unidades),
+                // não pelo Last, que pode ficar acima do preço de venda.
+                if (count($cells) < 2 || strcasecmp($cells[0], 'Bid') !== 0) {
                     continue;
                 }
 
@@ -897,9 +900,10 @@ class InvestmentsHub extends Component
                 if (is_numeric($rawPrice) && (float) $rawPrice > 0) {
                     $price = round((float) $rawPrice, 6);
 
-                    Log::info('InvestmentsHub: cotação Tradegate obtida', [
+                    Log::info('InvestmentsHub: cotação Bid Tradegate obtida', [
                         'isin' => $isin,
                         'price' => $price,
+                        'quote_type' => 'bid',
                     ]);
 
                     return $price;
