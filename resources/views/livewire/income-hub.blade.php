@@ -595,7 +595,7 @@
 {{-- ============================================================= --}}
 <div class="space-y-6">
 
-    <div x-show="activeIncomeTab === 'billing'" x-cloak>
+    <div x-show="activeIncomeTab === 'billing'" x-cloak class="space-y-8">
 
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
