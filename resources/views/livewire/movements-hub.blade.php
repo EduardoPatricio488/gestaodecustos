@@ -69,7 +69,10 @@
                         <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
                             @if(in_array($movement['edit_type'] ?? '', ['expense', 'income', 'transfer', 'subscription'], true))
                                 <button type="button" wire:click="editMovement('{{ $movement['edit_type'] }}', {{ $movement['record_id'] }})" class="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-[11px] font-bold text-zinc-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-blue-950/30">
-                                    <flux:icon name="pencil" class="size-3.5" /> Editar
+                                    <flux:icon name="pencil" class="size-3.5" /> Editar informações
+                                </button>
+                                <button type="button" wire:click="openConversionModal('{{ $movement['edit_type'] }}', {{ $movement['record_id'] }})" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-amber-700">
+                                    <flux:icon name="arrow-left-right" class="size-3.5" /> Mudar movimento
                                 </button>
                             @endif
                         @if(!empty($movement['record_url']))
@@ -134,6 +137,15 @@
                         <button type="submit" class="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700" wire:loading.attr="disabled" wire:target="saveMovement">Guardar alterações</button>
                     </div>
                 </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($showConversionModal)
+        <div class="fixed inset-0 z-[105] flex items-center justify-center overflow-y-auto bg-zinc-950/70 p-4 backdrop-blur-sm" wire:key="movement-conversion-modal" @click.self="$wire.closeConversionModal()" x-on:keydown.escape.window="$wire.closeConversionModal()">
+            <div class="my-auto w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 sm:p-6" @click.stop>
+                <div class="mb-5 flex items-start justify-between gap-3"><div><h2 class="text-lg font-black text-zinc-900 dark:text-white">Mudar tipo de movimento</h2><p class="mt-1 text-xs text-zinc-500">Escolhe o novo tipo. Os dados compatíveis serão preenchidos automaticamente.</p></div><button type="button" wire:click="closeConversionModal" class="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"><flux:icon name="x-mark" class="size-5" /></button></div>
                 @if(in_array($editingType, ['expense','income','transfer','subscription'], true))
                     <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
                         <h3 class="text-xs font-black uppercase tracking-wide text-amber-800 dark:text-amber-300">Alterar tipo de movimento</h3>
@@ -164,7 +176,6 @@
                         <div class="mt-3 flex justify-end"><button type="button" wire:click="convertMovement" wire:confirm="Tens a certeza? O registo atual será apagado e substituído pelo novo tipo." wire:loading.attr="disabled" wire:target="convertMovement" class="rounded-xl bg-amber-600 px-4 py-2.5 text-xs font-black text-white hover:bg-amber-700">Converter movimento</button></div>
                     </div>
                 @endif
-                </div>
             </div>
         </div>
     @endif
