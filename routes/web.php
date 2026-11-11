@@ -105,7 +105,6 @@ use App\Livewire\Store\UserInventory;
 use App\Livewire\Store\WishlistHub;
 use App\Livewire\SubscriptionHub;
 use App\Livewire\SubscriptionPlans;
-use App\Livewire\SubscriptionScannerHub;
 use App\Livewire\SupportHub;
 use App\Livewire\WrappedReport;
 use App\Livewire\YearlyReport;
@@ -364,7 +363,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/anomalias', AnomalyHub::class)->name('hub.anomalies');
     Route::get('/previsao-despesas', ExpenseForecastHub::class)->name('hub.expense-forecast');
     Route::get('/assinaturas', SubscriptionHub::class)->name('hub.subscriptions');
-    Route::get('/assinaturas/scanner', SubscriptionScannerHub::class)->name('hub.subscriptions.scanner');
     Route::get('/dividir', SplitHub::class)->name('hub.split');
     Route::get('/investimentos', InvestmentsHub::class)->name('hub.investments');
     Route::get('/patrimonio', NetWorthHub::class)->name('hub.networth');
