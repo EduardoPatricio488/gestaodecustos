@@ -171,7 +171,7 @@
                         <div class="relative overflow-hidden rounded-[1.5rem] bg-zinc-950 px-5 py-5 text-white">
                             <div class="absolute -right-12 -top-16 size-44 rounded-full bg-rose-500/20 blur-3xl"></div>
                             <div class="relative flex items-center gap-4">
-                                <div class="flex size-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-xl"><flux:icon name="receipt" class="size-6" /></div>
+                                <div class="flex size-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-xl"><flux:icon name="banknotes" class="size-6" /></div>
                                 <div><p class="text-[9px] font-black uppercase tracking-[0.25em] text-rose-300">Nova despesa</p><h3 class="mt-1 text-lg font-black uppercase italic tracking-tight">Dados da despesa</h3></div>
                             </div>
                         </div>
@@ -196,12 +196,6 @@
                                         @foreach($editCategories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach
                                     </select>
                                     @error('editingCategoryId')<span class="text-[9px] text-rose-500">{{ $message }}</span>@enderror
-                                </label>
-                                <label class="space-y-2 text-[9px] font-black uppercase tracking-widest text-zinc-400">Conta bancária
-                                    <select wire:model="editingAccountId" class="h-13 w-full rounded-2xl border-0 bg-zinc-50 font-bold text-zinc-900 shadow-inner dark:bg-zinc-950 dark:text-white">
-                                        <option value="">Sem conta associada</option>
-                                        @foreach($editAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach
-                                    </select>
                                 </label>
                             </div>
                         </section>
@@ -258,7 +252,6 @@
                             <label class="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Data *<input wire:model="editingDate" type="date" class="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">@error('editingDate')<span class="mt-1 block text-[10px] text-rose-500">{{ $message }}</span>@enderror</label>
                             <label class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 sm:col-span-2">Descrição<input wire:model="editingDescription" placeholder="Ex.: Transferência para poupança" class="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"></label>
                             <label class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 sm:col-span-2">Estado<select wire:model="editingTransferStatus" class="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"><option value="completed">Concluída</option><option value="pending">Pendente</option><option value="failed">Falhada</option></select>@error('editingTransferStatus')<span class="mt-1 block text-[10px] text-rose-500">{{ $message }}</span>@enderror</label>
-                            <label class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 sm:col-span-2">Notas<textarea wire:model="editingNotes" rows="2" class="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"></textarea></label>
                         </div>
                         <div class="flex justify-end gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800"><button type="button" wire:click="closeConversionModal" class="rounded-xl border border-zinc-200 px-4 py-2.5 text-xs font-bold text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">Cancelar</button><button type="submit" wire:confirm="Tens a certeza? O movimento atual será substituído por uma transferência." wire:loading.attr="disabled" class="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-black text-white hover:bg-blue-700">Converter em transferência</button></div>
                     </form>
@@ -278,11 +271,10 @@
                         </div>
                         <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-brand-500">Notas</span><textarea wire:model="editingNotes" rows="3" placeholder="Plano, contrato, promoção..." class="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-900 dark:border-white/10 dark:bg-zinc-900/40 dark:text-white"></textarea></label>
                         <div class="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-white/10 dark:bg-zinc-900/40"><label class="flex items-center justify-between gap-4"><span><span class="block text-[10px] font-black uppercase tracking-widest text-brand-500">Lembrete de cobrança</span><span class="mt-1 block text-xs text-zinc-500">Avisar antes da renovação ou débito.</span></span><input type="checkbox" wire:model="editingNotifyBeforeBilling" class="rounded border-zinc-300 text-brand-500 focus:ring-brand-500"></label><label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-brand-500">Dias antes</span><input wire:model="editingNotifyDaysBefore" type="number" min="1" max="30" class="h-12 w-full rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-black text-zinc-900 dark:border-white/10 dark:bg-zinc-950 dark:text-white"></label></div>
-                        <label class="flex items-center gap-3 rounded-2xl border border-amber-300/30 bg-amber-50 p-4 dark:bg-amber-950/20"><input type="checkbox" wire:model="editingCompanyPaid" class="size-4 rounded accent-amber-600"><span class="text-xs font-bold text-amber-800 dark:text-amber-200">Pago pela empresa?</span></label>
                         <div class="flex flex-col-reverse gap-3 border-t border-zinc-100 pt-5 dark:border-zinc-800 sm:flex-row"><button type="button" wire:click="closeConversionModal" class="h-14 flex-1 rounded-2xl text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:bg-zinc-50">Cancelar</button><button type="submit" wire:confirm="Tens a certeza? O movimento atual será substituído por uma assinatura." wire:loading.attr="disabled" class="h-14 flex-[2] rounded-2xl bg-brand-600 text-xs font-black uppercase tracking-widest text-white shadow-xl hover:bg-brand-500">Converter em assinatura</button></div>
                     </form>
                 @else
-                    <div class="p-8 text-center"><flux:icon name="arrow-left-right" class="mx-auto size-8 text-zinc-300" /><p class="mt-3 text-sm font-bold text-zinc-500">Seleciona o novo tipo para carregar o formulário correspondente.</p></div>
+                    <div class="p-8 text-center"><flux:icon name="arrow-path" class="mx-auto size-8 text-zinc-300" /><p class="mt-3 text-sm font-bold text-zinc-500">Seleciona o novo tipo para carregar o formulário correspondente.</p></div>
                 @endif
             </div>
         </div>
