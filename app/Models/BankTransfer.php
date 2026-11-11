@@ -14,6 +14,7 @@ class BankTransfer extends Model
     protected $fillable = [
         'workspace_id',
         'user_id',
+        'bank_statement_import_id',
         'from_account_id',
         'to_account_id',
         'recipient',
