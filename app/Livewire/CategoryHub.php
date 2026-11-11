@@ -651,6 +651,10 @@ PROMPT;
                 }
             }
 
+            if (blank($this->meta['item_name'] ?? null) && filled($result['description'] ?? null)) {
+                $this->meta['item_name'] = trim((string) $result['description']);
+            }
+
             $amount = $toNumber($result['amount'] ?? null);
             if ($amount !== null) $this->amount = $amount;
             if ($date !== null) $this->spent_at = $date;
