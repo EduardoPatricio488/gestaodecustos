@@ -32,14 +32,35 @@
         </div>
         <div class="overflow-hidden rounded-2xl border border-zinc-100 dark:border-zinc-800">
             @forelse($movements as $movement)
-                <article wire:key="{{ $movement['key'] }}" class="flex flex-col gap-3 border-b border-zinc-100 px-4 py-4 last:border-0 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="flex min-w-0 items-center gap-3">
-                        <div class="flex size-10 shrink-0 items-center justify-center rounded-xl {{ $movement['direction'] === 'in' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : ($movement['direction'] === 'company' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30') }}">
-                            <flux:icon name="{{ $movement['direction'] === 'company' ? 'clock' : ($movement['type'] === 'income' ? 'arrow-down-left' : ($movement['type'] === 'expense' ? 'arrow-up-right' : ($movement['type'] === 'subscription' ? 'clock' : 'arrows-right-left'))) }}" class="size-5" />
+                <article wire:key="{{ $movement['key'] }}" x-data="{ open: false }" class="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
+                    <div class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="flex min-w-0 items-center gap-3">
+                            <div class="flex size-10 shrink-0 items-center justify-center rounded-xl {{ $movement['direction'] === 'in' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : ($movement['direction'] === 'company' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30') }}">
+                                <flux:icon name="{{ $movement['direction'] === 'company' ? 'clock' : ($movement['type'] === 'income' ? 'arrow-down-left' : ($movement['type'] === 'expense' ? 'arrow-up-right' : ($movement['type'] === 'subscription' ? 'clock' : 'arrows-right-left'))) }}" class="size-5" />
+                            </div>
+                            <div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><p class="truncate text-sm font-bold text-zinc-900 dark:text-white">{{ $movement['title'] }}</p><span class="rounded-full bg-zinc-100 px-2 py-0.5 text-[9px] font-black uppercase text-zinc-500 dark:bg-zinc-800">{{ $movement['type_label'] }}</span></div><p class="mt-1 truncate text-xs text-zinc-500">{{ $movement['detail'] }} · {{ $movement['date']?->format('d/m/Y') ?? '—' }}</p></div>
                         </div>
-                        <div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><p class="truncate text-sm font-bold text-zinc-900 dark:text-white">{{ $movement['title'] }}</p><span class="rounded-full bg-zinc-100 px-2 py-0.5 text-[9px] font-black uppercase text-zinc-500 dark:bg-zinc-800">{{ $movement['type_label'] }}</span></div><p class="mt-1 truncate text-xs text-zinc-500">{{ $movement['detail'] }} · {{ $movement['date']?->format('d/m/Y') ?? '—' }}</p></div>
+                        <div class="flex items-center justify-between gap-4 sm:justify-end">
+                            <span class="text-[10px] font-semibold text-zinc-400">{{ $movement['status'] }}</span>
+                            <p class="text-base font-black tabular-nums {{ $movement['direction'] === 'in' ? 'text-emerald-600' : ($movement['direction'] === 'company' ? 'text-blue-600' : 'text-rose-600') }}">{{ $movement['direction'] === 'in' ? '+' : ($movement['direction'] === 'company' ? '' : '−') }}{{ number_format($movement['amount'], 2, ',', '.') }} €</p>
+                            <button type="button" @click="open = !open" :aria-expanded="open.toString()" class="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-zinc-200 text-zinc-500 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-zinc-700 dark:hover:bg-blue-950/30" aria-label="Abrir detalhes do movimento" title="Ver todas as informações">
+                                <flux:icon name="chevron-down" class="size-4 transition-transform duration-200" x-bind:class="open ? 'rotate-180' : ''" />
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between gap-4 sm:justify-end"><span class="text-[10px] font-semibold text-zinc-400">{{ $movement['status'] }}</span><p class="text-base font-black tabular-nums {{ $movement['direction'] === 'in' ? 'text-emerald-600' : ($movement['direction'] === 'company' ? 'text-blue-600' : 'text-rose-600') }}">{{ $movement['direction'] === 'in' ? '+' : ($movement['direction'] === 'company' ? '' : '−') }}{{ number_format($movement['amount'], 2, ',', '.') }} €</p></div>
+                    <div x-cloak x-show="open" x-transition.opacity.duration.200ms class="border-t border-zinc-100 bg-zinc-50/70 px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+                        <div class="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-500"><flux:icon name="info" class="size-4" /> Informações do registo</div>
+                        <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            @foreach(($movement['details'] ?? []) as $detailLabel => $detailValue)
+                                @if($detailValue !== null && $detailValue !== '')
+                                    <div class="min-w-0 rounded-xl border border-zinc-200/80 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+                                        <dt class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{{ $detailLabel }}</dt>
+                                        <dd class="mt-1 break-words whitespace-pre-wrap text-sm font-semibold text-zinc-800 dark:text-zinc-200">{{ $detailValue }}</dd>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </dl>
+                    </div>
                 </article>
             @empty
                 <div class="px-5 py-14 text-center"><div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400 dark:bg-zinc-800"><flux:icon name="inbox" class="size-7" /></div><h3 class="mt-4 text-sm font-black text-zinc-900 dark:text-white">Não foram encontrados movimentos</h3><p class="mt-1 text-xs text-zinc-500">Experimenta alterar os filtros ou o período selecionado.</p></div>
