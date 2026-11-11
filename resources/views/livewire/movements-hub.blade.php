@@ -137,7 +137,7 @@
         @endphp
         <div class="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-6" wire:key="movement-conversion-modal" wire:click.self="closeConversionModal" x-on:keydown.escape.window="$wire.closeConversionModal()">
             <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" wire:click="closeConversionModal"></div>
-            <div class="relative w-full max-w-3xl max-h-[94vh] overflow-hidden rounded-[2rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl" wire:click.stop>
+            <div class="relative flex h-[94dvh] max-h-[94dvh] min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl" wire:click.stop>
                 <div class="sticky top-0 z-30 flex flex-col gap-4 p-5 sm:p-6 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur">
                     <div class="flex items-start justify-between gap-4">
                         <div>
@@ -256,7 +256,7 @@
                         <div class="flex justify-end gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800"><button type="button" wire:click="closeConversionModal" class="rounded-xl border border-zinc-200 px-4 py-2.5 text-xs font-bold text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">Cancelar</button><button type="submit" wire:confirm="Tens a certeza? O movimento atual será substituído por uma transferência." wire:loading.attr="disabled" class="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-black text-white hover:bg-blue-700">Converter em transferência</button></div>
                     </form>
                 @elseif($conversionType === 'subscription')
-                    <form wire:submit="convertMovement" class="max-h-[calc(94vh-190px)] overflow-y-auto p-6 space-y-6">
+                    <form wire:submit="convertMovement" class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain p-5 sm:p-6 space-y-5" style="scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
                         <div class="flex items-center gap-4 border-b border-white/10 pb-5"><div class="rounded-2xl bg-brand-600/30 p-3 text-brand-300 shadow"><flux:icon name="credit-card" class="size-5" /></div><div><p class="text-[9px] font-black uppercase tracking-widest text-brand-300">Nova assinatura</p><h3 class="text-xl font-black uppercase italic tracking-tight text-zinc-900 dark:text-white">Configuração completa de custo recorrente</h3></div></div>
                         <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-brand-500">Nome da assinatura</span><input wire:model="editingTitle" type="text" placeholder="Ex.: Netflix, Spotify, Renda..." class="h-14 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 text-sm font-bold text-zinc-900 dark:border-white/10 dark:bg-zinc-900/40 dark:text-white">@error('editingTitle')<span class="text-xs text-rose-500">{{ $message }}</span>@enderror</label>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
