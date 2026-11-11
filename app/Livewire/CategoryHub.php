@@ -169,6 +169,8 @@ class CategoryHub extends Component
                 return is_numeric($value) ? (float) $value : null;
             };
 
+            // Mantém em branco os dados que a fatura não permite identificar.
+            $this->subcategory = null;
             $suggestedSubcategory = mb_strtolower(trim((string) ($result['subcategory'] ?? '')));
             foreach ($this->subcategories as $availableSubcategory) {
                 if ($suggestedSubcategory !== '' && (
@@ -179,9 +181,6 @@ class CategoryHub extends Component
                     break;
                 }
             }
-
-            // Mantém em branco os dados que a fatura não permite identificar.
-            $this->subcategory = null;
             $this->amount = $toNumber($result['amount'] ?? null)
                 ?? $toNumber($result['gross_amount'] ?? null)
                 ?? $toNumber($result['net_amount'] ?? null);
