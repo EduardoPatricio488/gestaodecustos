@@ -88,6 +88,7 @@ class MovementsHub extends Component
         if (in_array($this->type, ['all', 'expense'], true)) {
             $items = $items->concat($scope(Expense::query()->with(['category', 'supplier', 'bankAccount', 'project', 'task', 'costCenter']))->get()->map(fn ($item) => [
                 'key' => 'expense-'.$item->id, 'type' => 'expense', 'type_label' => 'Despesa',
+                'record_url' => route('expenses.edit', $item->id),
                 'title' => $item->title ?: $item->description ?: 'Despesa',
                 'detail' => $item->category?->name ?: 'Sem categoria',
                 'date' => $item->spent_at, 'amount' => (float) ((float) $item->amount_paid > 0 ? $item->amount_paid : $item->amount),
@@ -116,6 +117,7 @@ class MovementsHub extends Component
                 ->where(fn ($q) => $q->whereNull('added_to_salary')->orWhere('added_to_salary', false))
                 ->get()->map(fn ($item) => [
                     'key' => 'income-'.$item->id, 'type' => 'income', 'type_label' => 'Receita',
+                    'record_url' => route('hub.incomes'),
                     'title' => $item->description ?: 'Receita',
                     'detail' => $item->category?->name ?: ($item->source ?: 'Receita'),
                     'date' => $item->received_at, 'amount' => (float) $item->amount,
@@ -137,6 +139,7 @@ class MovementsHub extends Component
         if (in_array($this->type, ['all', 'transfer'], true)) {
             $items = $items->concat($scope(BankTransfer::query()->with(['fromAccount', 'toAccount']))->get()->map(fn ($item) => [
                 'key' => 'transfer-'.$item->id, 'type' => 'transfer', 'type_label' => 'Transferência',
+                'record_url' => route('hub.debts'),
                 'title' => $item->description ?: ($item->recipient ?: 'Transferência bancária'),
                 'detail' => ($item->fromAccount?->name ?: 'Origem externa').' → '.($item->toAccount?->name ?: 'Destino externo'),
                 'date' => $item->transferred_at, 'amount' => (float) $item->amount,
@@ -161,6 +164,7 @@ class MovementsHub extends Component
         if (in_array($this->type, ['all', 'subscription'], true)) {
             $items = $items->concat($scope(Subscription::query())->get()->map(fn ($item) => [
                 'key' => 'subscription-'.$item->id, 'type' => 'subscription', 'type_label' => 'Assinatura',
+                'record_url' => route('hub.subscriptions'),
                 'title' => $item->name,
                 'detail' => 'Periodicidade: '.($item->cycle ?: 'Recorrente'),
                 'date' => $item->renewal_date ?: $item->started_at,
@@ -180,6 +184,7 @@ class MovementsHub extends Component
             ]));
             $items = $items->concat($scope(\App\Models\SubscriptionPayment::query()->with('subscription'))->get()->map(fn ($payment) => [
                 'key' => 'subscription-payment-'.$payment->id,
+                'record_url' => route('hub.subscriptions'),
                 'type' => 'subscription',
                 'type_label' => 'Mensalidade',
                 'title' => $payment->subscription?->name ?: 'Assinatura',
