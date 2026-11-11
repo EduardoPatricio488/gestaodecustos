@@ -39,7 +39,7 @@
             </div>
             <form wire:submit="generatePreview" class="space-y-5">
                 <label class="block border-2 border-dashed border-zinc-200 dark:border-zinc-700 hover:border-blue-400 rounded-2xl p-8 text-center cursor-pointer transition">
-                    <flux:icon name="file-pdf" class="size-12 text-red-500 mx-auto mb-3" />
+                    <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-red-50 dark:bg-red-950/30 text-red-600 flex items-center justify-center font-black text-sm tracking-wider">PDF</div>
                     <span class="block text-sm font-black dark:text-white">Selecionar extrato PDF</span>
                     <span class="block text-[11px] text-zinc-400 mt-1">PDF do Santander · Também são aceites CSV e OFX</span>
                     <input type="file" wire:model="statementFile" accept=".pdf,.csv,.txt,.ofx" class="mt-4 block w-full max-w-xs mx-auto text-xs" />
