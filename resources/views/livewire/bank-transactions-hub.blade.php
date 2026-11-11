@@ -36,7 +36,13 @@
                         @php $filterType = $movement['kind'] === 'mbway' ? 'mbway' : ($movement['kind'] === 'transfer' ? 'transfer' : $movement['direction']); @endphp
                         <article x-show="(filter === 'all' || filter === '{{ $filterType }}') && @js(mb_strtolower($movement['label'].' '.$movement['account'].' '.$movement['counterpart'].' '.$movement['channel'])).includes(query.toLowerCase())" class="flex flex-col gap-3 px-4 py-4 transition hover:bg-zinc-50 dark:hover:bg-zinc-800/40 sm:flex-row sm:items-center sm:px-5">
                             <div class="flex min-w-0 flex-1 items-center gap-3"><div class="flex size-10 shrink-0 items-center justify-center rounded-xl {{ $movement['kind'] === 'mbway' ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : ($movement['direction'] === 'in' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300' : ($movement['direction'] === 'out' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300')) }}"><flux:icon name="{{ $movement['kind'] === 'mbway' ? 'device-phone-mobile' : ($movement['direction'] === 'in' ? 'arrow-down-left' : ($movement['direction'] === 'out' ? 'arrow-up-right' : 'arrows-right-left')) }}" class="size-5" /></div><div class="min-w-0"><p class="truncate text-sm font-bold text-zinc-900 dark:text-white">{{ $movement['label'] }}</p><p class="mt-0.5 truncate text-xs text-zinc-500">{{ $movement['account'] }} <span class="px-1 text-zinc-300">·</span> {{ $movement['counterpart'] }}</p></div></div>
-                            <div class="flex items-center justify-between gap-4 sm:justify-end"><div class="text-left sm:text-right"><p class="text-[11px] font-bold text-zinc-500">{{ $movement['date']?->format('d/m/Y') ?? '—' }} · {{ $movement['channel'] }}</p><p class="mt-1 text-base font-black tabular-nums {{ $movement['direction'] === 'in' ? 'text-emerald-600' : ($movement['direction'] === 'out' ? 'text-rose-600' : 'text-blue-600') }}">{{ $movement['direction'] === 'in' ? '+' : ($movement['direction'] === 'out' ? '−' : '') }}{{ number_format($movement['amount'], 2, ',', '.') }} €</p></div><span class="rounded-full bg-zinc-100 px-2.5 py-1 text-[9px] font-black uppercase text-zinc-500 dark:bg-zinc-800">{{ $movement['status'] }}</span></div>
+                            <div class="flex flex-col gap-2 sm:items-end">
+                                <div class="flex items-center justify-between gap-4 sm:justify-end"><div class="text-left sm:text-right"><p class="text-[11px] font-bold text-zinc-500">{{ $movement['date']?->format('d/m/Y') ?? '—' }} · {{ $movement['channel'] }}</p><p class="mt-1 text-base font-black tabular-nums {{ $movement['direction'] === 'in' ? 'text-emerald-600' : ($movement['direction'] === 'out' ? 'text-rose-600' : 'text-blue-600') }}">{{ $movement['direction'] === 'in' ? '+' : ($movement['direction'] === 'out' ? '−' : '') }}{{ number_format($movement['amount'], 2, ',', '.') }} €</p></div><span class="rounded-full bg-zinc-100 px-2.5 py-1 text-[9px] font-black uppercase text-zinc-500 dark:bg-zinc-800">{{ $movement['status'] }}</span></div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" wire:click="editMovement('{{ $movement['id'] }}')" class="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[11px] font-bold text-zinc-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-blue-950/30"><flux:icon name="pencil" class="size-3.5" /> Editar</button>
+                                    <button type="button" wire:click="deleteMovement('{{ $movement['id'] }}')" wire:confirm="Tens a certeza de que pretendes eliminar este movimento? Esta ação não pode ser anulada." class="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2.5 py-1.5 text-[11px] font-bold text-rose-600 transition hover:bg-rose-50 dark:border-rose-900/60 dark:hover:bg-rose-950/30"><flux:icon name="trash-2" class="size-3.5" /> Eliminar</button>
+                                </div>
+                            </div>
                         </article>
                     @endforeach
                 </div>
@@ -44,4 +50,36 @@
         </div>
         <p class="text-[11px] leading-relaxed text-zinc-400">Esta página apresenta apenas movimentos registados no Finance Pro IA e associados a uma conta bancária. Não existe ligação automática ao banco nem importação automática de operações MB WAY.</p>
     </section>
+
+    @if($showEditModal)
+        <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-zinc-950/60 p-4" wire:key="edit-bank-movement-modal">
+            <div class="my-auto w-full max-w-xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
+                <div class="mb-6 flex items-start justify-between gap-4">
+                    <div><h2 class="text-xl font-black text-zinc-900 dark:text-white">Editar movimento</h2><p class="mt-1 text-sm text-zinc-500">Atualiza os dados desta operação bancária.</p></div>
+                    <button type="button" wire:click="$set('showEditModal', false)" class="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"><flux:icon name="x" class="size-5" /></button>
+                </div>
+                <form wire:submit="saveMovement" class="space-y-4">
+                    <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Descrição</label><input type="text" wire:model="editDescription" maxlength="255" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></div>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Valor (€)</label><input type="number" step="0.01" min="0.01" wire:model="editAmount" required class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editAmount')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
+                        <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Data</label><input type="date" wire:model="editDate" required class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editDate')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
+                    </div>
+                    @if($editingMovementType === 'transfer')
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Conta de origem</label><select wire:model="editFromAccountId" required class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Selecionar conta</option>@foreach($bankAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select>@error('editFromAccountId')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
+                            <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Conta de destino</label><select wire:model="editToAccountId" required class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Selecionar conta</option>@foreach($bankAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select>@error('editToAccountId')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
+                        </div>
+                        <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Estado</label><select wire:model="editStatus" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="completed">Concluída</option><option value="pending">Pendente</option><option value="cancelled">Cancelada</option></select></div>
+                    @else
+                        <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Conta bancária</label><select wire:model="editBankAccountId" required class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Selecionar conta</option>@foreach($bankAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select>@error('editBankAccountId')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
+                        <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Método</label><select wire:model="editChannel" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="bank">Transferência / banco</option><option value="mbway">MB WAY</option></select></div>
+                    @endif
+                    <div class="flex justify-end gap-3 border-t border-zinc-100 pt-5 dark:border-zinc-800">
+                        <button type="button" wire:click="$set('showEditModal', false)" class="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-bold text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancelar</button>
+                        <button type="submit" wire:loading.attr="disabled" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"><span wire:loading.remove wire:target="saveMovement">Guardar alterações</span><span wire:loading wire:target="saveMovement">A guardar...</span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 </div>
