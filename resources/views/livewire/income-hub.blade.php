@@ -488,41 +488,9 @@
         </p>
     </div>
 
-    {{-- MELHOR FONTE (6 CATEGORIAS REAIS) --}}
-    @php
-        $sourceNames = [
-            'independente' => 'Trabalho Independente / Recibos Verdes',
-            'investimentos' => 'Investimentos / Dividendos',
-            'imobiliario' => 'Rendas e Exploração Imobiliária',
-            'reforma' => 'Reforma / Pensão de Velhice',
-            'bolsa' => 'Bolsa de Estudo / Apoio à Formação',
-            'outro' => 'Outra Fonte',
-        ];
-
-        $sourceEmojis = [
-            'independente' => '💼',
-            'investimentos' => '📈',
-            'imobiliario' => '🏠',
-            'reforma' => '🧓',
-            'bolsa' => '🎓',
-            'outro' => '✨',
-        ];
-
-        // Agrupar rendimentos fixos por fonte e somar
-        $bestSourceKey = $fixedIncomes
-            ->groupBy('source')
-            ->map(fn($items) => $items->sum('amount'))
-            ->sortDesc()
-            ->keys()
-            ->first();
-
-        $bestSourceValue = $fixedIncomes
-            ->where('source', $bestSourceKey)
-            ->sum('amount');
-    @endphp
-
+    {{-- PROJEÇÃO ANUAL LÍQUIDA + SUBSÍDIO DE ALIMENTAÇÃO --}}
     <div class="relative p-6 rounded-[2rem] bg-white/40 dark:bg-zinc-900/40
-                backdrop-blur-xl border border-white/20 shadow-xl overflow-hidden group">
+                backdrop-blur-xl border border-white/20 shadow-xl overflow-visible group relative z-10 hover:z-50">
 
         <div class="absolute inset-0 opacity-10">
             <flux:icon name="trophy" class="size-32 text-emerald-500/20 rotate-12" />
@@ -533,18 +501,17 @@
             <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
                 <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Como é calculado o total ao fim de um ano" class="flex size-5 items-center justify-center rounded-full border border-zinc-300 bg-white/80 text-[10px] font-black text-zinc-600 shadow-sm transition hover:scale-110 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">i</button>
                 <div x-show="open" x-cloak x-transition role="tooltip" class="absolute left-0 top-full z-40 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-2xl border border-zinc-700 bg-zinc-950 p-4 text-left normal-case shadow-2xl">
-                    <p class="text-[10px] leading-relaxed text-zinc-300">Soma os valores dos rendimentos fixos associados à fonte de rendimento com maior total. A fonte correspondente é apresentada por baixo. Este valor não é atualmente calculado como uma projeção anual.</p>
+                    <p class="text-[10px] leading-relaxed text-zinc-300">Apresenta a estimativa anual líquida dos contratos de trabalho ativos, considerando os valores e condições de pagamento configurados, o subsídio de alimentação e os prémios definidos nos contratos.</p>
                 </div>
             </div>
         </div>
 
-        <p class="text-4xl font-black text-emerald-600 italic tracking-tight flex items-center gap-2">
-            {{ $sourceEmojis[$bestSourceKey] ?? '✨' }}
-            {{ number_format($bestSourceValue, 0, ',', ' ') }}€
+        <p class="text-4xl font-black text-emerald-600 italic tracking-tight">
+            {{ number_format($salaryAnnualTotal, 2, ',', ' ') }}€
         </p>
 
         <p class="text-[10px] text-zinc-400 font-medium mt-1">
-            {{ $sourceNames[$bestSourceKey] ?? 'N/A' }}
+            Estimativa anual dos contratos de trabalho ativos
         </p>
     </div>
 
