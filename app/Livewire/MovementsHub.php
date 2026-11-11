@@ -70,9 +70,23 @@ class MovementsHub extends Component
         if (in_array($this->type, ['all', 'subscription'], true)) {
             $items = $items->concat($scope(Subscription::query())->get()->map(fn ($item) => [
                 'key' => 'subscription-'.$item->id, 'type' => 'subscription', 'type_label' => 'Assinatura',
-                'title' => $item->name, 'detail' => 'Periodicidade: '.($item->cycle ?: 'Recorrente'),
-                'date' => $item->renewal_date ?: $item->started_at, 'amount' => (float) $item->amount,
-                'direction' => 'out', 'status' => $item->is_active ? 'Ativa' : 'Inativa',
+                'title' => $item->name,
+                'detail' => 'Periodicidade: '.($item->cycle ?: 'Recorrente'),
+                'date' => $item->renewal_date ?: $item->started_at,
+                'amount' => (float) $item->amount,
+                'direction' => $item->paid_by_company ? 'company' : 'out',
+                'status' => ! $item->is_active ? 'Inativa' : ($item->paid_by_company && $item->renewal_date && Carbon::parse($item->renewal_date)->lte(today()) ? 'Pagamento pendente' : ($item->paid_by_company ? 'Pago pela empresa na renovação' : 'Ativa')),
+            ]));
+            $items = $items->concat($scope(SubscriptionPayment::query()->with('subscription'))->get()->map(fn ($payment) => [
+                'key' => 'subscription-payment-'.$payment->id,
+                'type' => 'subscription',
+                'type_label' => 'Mensalidade',
+                'title' => $payment->subscription?->name ?: 'Assinatura',
+                'detail' => 'Mensalidade paga pela empresa',
+                'date' => $payment->paid_at,
+                'amount' => (float) $payment->amount,
+                'direction' => 'company',
+                'status' => 'Pago pela empresa',
             ]));
         }
 
