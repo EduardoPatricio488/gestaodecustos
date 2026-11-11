@@ -48,6 +48,12 @@ class BankImportService
         }
 
         $this->refineMovementTypesWithAi($expenseCandidates);
+        foreach ($expenseCandidates as $index => $row) {
+            if ((float) ($row['amount'] ?? 0) < 0 && $this->isKnownMerchantExpense($this->normalizeMovementDescription((string) ($row['description'] ?? '')))) {
+                $expenseCandidates[$index]['type'] = 'expense';
+                $expenseCandidates[$index]['transfer_category'] = null;
+            }
+        }
         $expenseCandidates = array_values(array_filter($expenseCandidates, fn ($row) =>
             (float) $row['amount'] < 0 || $row['type'] === 'transfer'
         ));
