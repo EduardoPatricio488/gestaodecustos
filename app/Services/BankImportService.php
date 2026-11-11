@@ -197,9 +197,7 @@ class BankImportService
                     : (in_array($row['type'], ['expense', 'debt_payment'], true) ? $otherCategoryId : null);
                 if ($row['type'] === 'debt_payment') {
                     $transportCategoryId = $categories->filter(fn ($name) => str_contains(mb_strtolower((string) $name), 'transport'))->keys()->first();
-                    if ($transportCategoryId) {
-                        $categoryId = (int) $transportCategoryId;
-                    }
+                    $categoryId = $transportCategoryId ? (int) $transportCategoryId : $otherCategoryId;
                 }
                 $absoluteAmount = abs($amount);
 
@@ -238,7 +236,7 @@ class BankImportService
                     ]);
                     Debt::create([
                         'workspace_id' => $workspace->id, 'user_id' => $userId,
-                        'type' => 'owe', 'person_name' => 'Mafrense', 'amount' => $absoluteAmount,
+                        'type' => 'owe', 'person_name' => str_contains($this->normalizeMovementDescription($description), 'mafrense') ? 'Mafrense' : 'Credor não identificado', 'amount' => $absoluteAmount,
                         'description' => 'Dívida de transportes — '.$description,
                         'due_at' => $date, 'is_paid' => true, 'expense_id' => $expense->id,
                         'bank_statement_import_id' => $import->id,
@@ -423,7 +421,7 @@ class BankImportService
                     ]);
                     Debt::create([
                         'workspace_id' => $workspace->id, 'user_id' => $userId, 'type' => 'owe',
-                        'person_name' => 'Mafrense', 'amount' => $amount,
+                        'person_name' => str_contains($this->normalizeMovementDescription($description), 'mafrense') ? 'Mafrense' : 'Credor não identificado', 'amount' => $amount,
                         'description' => 'Dívida de transportes — '.$description,
                         'due_at' => $date, 'is_paid' => true, 'expense_id' => $expense->id,
                         'bank_statement_import_id' => $import->id,
