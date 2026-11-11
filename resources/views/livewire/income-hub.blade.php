@@ -412,7 +412,7 @@
                                 <span class="text-xs font-black tabular-nums text-emerald-300">{{ number_format($thisMonthReceived, 2, ',', ' ') }} €</span>
                             </div>
                         </div>
-                        <p class="mt-2 text-[9px] leading-relaxed text-zinc-400">Soma todos os valores dos Rendimentos Fixos. Nos contratos de trabalho, o salário só é incluído quando existe um contrato e está selecionada a opção «Já recebi este salário este mês».</p>
+                        <p class="mt-2 text-[9px] leading-relaxed text-zinc-400">Soma todos os valores a faturar. Nos contratos de trabalho, o salário só é incluído quando existe um contrato e está selecionada a opção «Já recebi este salário este mês».</p>
                     </div>
                 </div>
             </div>
@@ -472,7 +472,7 @@
         </p>
 
         <p class="text-[10px] text-zinc-400 font-medium mt-1">
-            Rendimentos Fixos acumulados
+            Valores a faturar acumulados
         </p>
     </div>
 
@@ -610,7 +610,7 @@
                 <flux:icon name="calendar-days" variant="outline" class="size-4" />
             </div>
             <h2 class="text-sm font-black uppercase tracking-widest text-zinc-400">
-                Rendimentos Fixos
+                Valores a faturar
             </h2>
         </div>
 
