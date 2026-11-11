@@ -181,6 +181,16 @@ class CategoryHub extends Component
                     break;
                 }
             }
+
+            // A análise compacta pode não devolver a subcategoria.
+            // Nesse caso, usa "Outros" como opção neutra válida em vez de bloquear a gravação.
+            if (blank($this->subcategory)) {
+                if (! in_array('Outros', $this->subcategories, true)) {
+                    $this->subcategories[] = 'Outros';
+                }
+                $this->subcategory = 'Outros';
+            }
+
             $this->amount = $toNumber($result['amount'] ?? null)
                 ?? $toNumber($result['gross_amount'] ?? null)
                 ?? $toNumber($result['net_amount'] ?? null);
