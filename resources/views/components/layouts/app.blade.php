@@ -1269,7 +1269,7 @@ $hasStoreAccess = $hasLockInAccess;
                         Investimentos {!! $badge($counts['investments']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="arrows-right-left" :href="route('hub.debts')" wire:navigate.hover>
-                        Transferências MB WAY {!! $badge($counts['transfers']) !!}
+                        Transferências {!! $badge($counts['transfers']) !!}
                     </flux:sidebar.item>
                     @if($myRestrictions?->restrict_budget)
     {{-- VERSÃO BLOQUEADA (APARECE MAS NÃO CLICA) --}}
