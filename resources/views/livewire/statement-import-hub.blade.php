@@ -108,17 +108,6 @@
                                     <input type="number" step="0.01" wire:model="preview.rows.{{ $index }}.amount" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs font-bold {{ $isIncome ? 'text-emerald-600' : ($isTransfer ? 'text-blue-600' : 'text-red-600') }}" />
                                 </div>
                                 <div class="md:col-span-3">
-                                    <label class="block text-[10px] font-black uppercase text-zinc-400 mb-1">Tipo de movimento</label>
-                                    <select wire:model="preview.rows.{{ $index }}.type" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs font-bold">
-                                        <option value="expense">Despesa</option>
-                                        <option value="transfer">Transferência</option>
-                                        @if($isDebtPayment)
-                                            <option value="debt_payment">Pagamento de dívida</option>
-                                        @endif
-                                        @if($isIncome)
-                                            <option value="income">Receita</option>
-                                        @endif
-                                    </select>
                                     @if(! $isTransfer)
                                         <label class="block text-[10px] font-black uppercase text-zinc-400 mt-2 mb-1">Categoria</label>
                                         <select wire:model="preview.rows.{{ $index }}.category_id" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs">
@@ -132,7 +121,13 @@
                             </div>
                         </div>
                         <div class="flex items-center justify-between pl-7">
-                            <span class="text-[10px] font-black uppercase tracking-wider {{ $isIncome ? 'text-emerald-600' : ($isTransfer ? 'text-blue-600' : 'text-red-600') }}">{{ $isTransfer ? 'Transferência bancária' : ($isDebtPayment ? 'Pagamento de dívida' : ($isIncome ? 'Receita' : 'Despesa')) }}</span>
+                            @if(in_array($tx['type'] ?? 'expense', ['expense', 'transfer'], true))
+                                <button type="button" wire:click="$set('preview.rows.{{ $index }}.type', '{{ $isTransfer ? 'expense' : 'transfer' }}')" class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition hover:scale-105 {{ $isTransfer ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 hover:bg-blue-200' : 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300 hover:bg-red-200' }}" title="Carrega para alternar entre despesa e transferência">
+                                    {{ $isTransfer ? 'Transferência' : 'Despesa' }}
+                                </button>
+                            @else
+                                <span class="text-[10px] font-black uppercase tracking-wider {{ $isIncome ? 'text-emerald-600' : 'text-red-600' }}">{{ $isDebtPayment ? 'Pagamento de dívida' : 'Receita' }}</span>
+                            @endif
                             @if(isset($tx['balance']))
                                 <span class="text-[10px] text-zinc-400">Saldo após movimento: {{ number_format((float) $tx['balance'], 2, ',', '.') }} €</span>
                             @endif
