@@ -513,7 +513,7 @@ class MovementsHub extends Component
                 'details' => [
                     'Nome' => $item->name,
                     'Valor por ciclo' => number_format((float) $item->amount, 2, ',', '.').' €',
-                    'Periodicidade' => $item->cycle,
+                    'Periodicidade' => match (strtolower((string) $item->cycle)) { 'monthly' => 'Mensal', 'yearly' => 'Anual', 'weekly' => 'Semanal', 'quarterly' => 'Trimestral', default => ucfirst((string) $item->cycle) },
                     'Método de pagamento' => $item->paid_by_company ? 'Pago pela empresa' : $item->payment_method,
                     'Data de início' => $item->started_at?->format('d/m/Y'),
                     'Próxima renovação' => $item->renewal_date?->format('d/m/Y'),
