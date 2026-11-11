@@ -501,7 +501,7 @@
             <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
                 <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Como é calculado o total ao fim de um ano" class="flex size-5 items-center justify-center rounded-full border border-zinc-300 bg-white/80 text-[10px] font-black text-zinc-600 shadow-sm transition hover:scale-110 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">i</button>
                 <div x-show="open" x-cloak x-transition role="tooltip" class="absolute left-0 top-full z-40 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-2xl border border-zinc-700 bg-zinc-950 p-4 text-left normal-case shadow-2xl">
-                    <p class="text-[10px] leading-relaxed text-zinc-300">Apresenta a estimativa anual líquida dos contratos de trabalho ativos, considerando os valores e condições de pagamento configurados, o subsídio de alimentação e os prémios definidos nos contratos.</p>
+                    <p class="text-[10px] leading-relaxed text-zinc-300">Soma a estimativa líquida anual de todos os rendimentos recorrentes ativos do workspace. Os contratos de trabalho usam o cálculo salarial anual, incluindo os subsídios configurados; os restantes registos são anualizados de acordo com a periodicidade definida.</p>
                 </div>
             </div>
         </div>
@@ -511,7 +511,7 @@
         </p>
 
         <p class="text-[10px] text-zinc-400 font-medium mt-1">
-            Estimativa anual dos contratos de trabalho ativos
+            Estimativa anual líquida de todos os registos ativos
         </p>
     </div>
 
@@ -624,7 +624,7 @@
                     <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total ao fim de um ano (Total líquido de todos os registos)</p>
                 </flux:tooltip>
             </div>
-            <p class="mt-1 text-2xl font-black text-amber-600">{{ number_format($salaryAnnualTotal, 2, ',', ' ') }} €</p>
+            <p class="mt-1 text-2xl font-black text-amber-600">{{ number_format($allRecordsAnnualNetTotal, 2, ',', ' ') }} €</p>
         </div>
     </div>
 
