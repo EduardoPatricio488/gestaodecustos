@@ -255,10 +255,11 @@ class BankTransactionsHub extends Component
             ->latest('transferred_at')->get()->map(fn ($item) => [
                 'id' => 'transfer-'.$item->id, 'date' => $item->transferred_at,
                 'kind' => 'transfer', 'label' => $item->description ?: 'Transferência entre contas',
+                'category' => $item->category,
                 'account' => (($item->direction ?? 'out') === 'in' ? $item->toAccount?->name : $item->fromAccount?->name) ?? 'Conta bancária',
                 'counterpart' => $item->recipient ?: 'Destinatário não indicado',
                 'amount' => (float) $item->amount, 'direction' => ($item->direction ?? 'out') === 'in' ? 'in' : 'out',
-                'channel' => 'Transferência bancária', 'status' => $item->status,
+                'channel' => $item->category === 'Imposto do Selo' ? 'Imposto do Selo' : 'Transferência bancária', 'status' => $item->status,
             ]);
 
         $incomes = $scope(Income::query()->with('bankAccount'))
@@ -305,7 +306,8 @@ class BankTransactionsHub extends Component
             'movements' => $movements,
             'totalIn' => $incomes->sum('amount') + $transfers->where('direction', 'in')->sum('amount'),
             'totalOut' => $expenses->sum(fn ($item) => (float) $item['amount']) + $transfers->where('direction', 'out')->sum('amount'),
-            'totalTransfers' => $transfers->sum('amount'),
+            'totalTransfers' => $transfers->reject(fn ($item) => $item->category === 'Imposto do Selo')->sum('amount'),
+            'totalStampDuty' => $transfers->filter(fn ($item) => $item->category === 'Imposto do Selo')->sum('amount'),
             'movementCount' => $movements->count(),
             'bankAccounts' => $scope(BankAccount::query())->orderBy('name')->get(),
         ]);
