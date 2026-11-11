@@ -35,7 +35,7 @@
     >
         <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60 backdrop-blur-sm" x-on:click="open = false"></div>
 
-        <div x-show="open" x-transition class="relative w-full max-w-2xl max-h-[88vh] overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
+        <div x-show="open" x-transition class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
             <div class="flex items-start justify-between gap-4 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800">
                 <div>
                     <p class="text-[9px] font-black uppercase tracking-[0.2em] text-brand-500">Novo movimento</p>
@@ -58,7 +58,7 @@
                 </button>
             </div>
 
-            <div class="max-h-[65vh] overflow-y-auto p-4 sm:p-6">
+            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
                 <div x-show="activeTab === 'category'">
                     <p class="mb-4 text-xs font-medium text-zinc-500">Seleciona a categoria onde queres registar a despesa.</p>
                     @if($categories->isNotEmpty())
@@ -118,9 +118,9 @@
 
                     <div class="flex flex-col-reverse sm:flex-row gap-3">
                         <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500">Cancelar</button>
-                        <button type="button" wire:click="scanInvoiceAndDetectCategory" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:opacity-50">
+                        <button type="button" wire:click="scanInvoiceAndDetectCategory" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
                             <span wire:loading.remove wire:target="scanInvoiceAndDetectCategory"><flux:icon name="sparkles" class="size-4" /> Analisar fatura e detetar categoria</span>
-                            <span wire:loading wire:target="scanInvoiceAndDetectCategory">A analisar com IA...</span>
+                            <span wire:loading wire:target="scanInvoiceAndDetectCategory">A analisar a fatura...</span>
                         </button>
                     </div>
                 </div>
