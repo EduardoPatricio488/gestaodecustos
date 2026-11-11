@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\BankStatementImport;
+use App\Models\BankTransfer;
 use App\Models\CategorizationRule;
 use App\Models\Category;
 use App\Models\Expense;
@@ -177,8 +178,21 @@ class StatementImportHub extends Component
                 'category' => $income->category?->name ?? 'Sem categoria',
             ]);
 
+        $transfers = BankTransfer::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
+            ->where('bank_statement_import_id', $import->id)
+            ->get()
+            ->map(fn (BankTransfer $transfer) => [
+                'type' => 'Transferência',
+                'date' => $transfer->transferred_at?->format('Y-m-d'),
+                'description' => $transfer->description,
+                'amount' => (float) $transfer->amount,
+                'category' => 'Transferências bancárias',
+            ]);
+
         $this->viewingImportId = $import->id;
-        $this->viewingImportMovements = $expenses->concat($incomes)
+        $this->viewingImportMovements = $expenses->concat($incomes)->concat($transfers)
             ->sortByDesc('date')
             ->values()
             ->all();
@@ -203,7 +217,7 @@ class StatementImportHub extends Component
             $this->closeImportMovements();
         }
 
-        $this->dispatch('toast', variant: 'success', text: "Importação eliminada: {$deleted['expenses']} despesas e {$deleted['incomes']} receitas removidas.");
+        $this->dispatch('toast', variant: 'success', text: "Importação eliminada: {$deleted['expenses']} despesas, {$deleted['incomes']} receitas, ".($deleted['transfers'] ?? 0)." transferências e ".($deleted['debts'] ?? 0)." dívidas removidas.");
     }
 
     public function saveCategorizationRule(): void
