@@ -338,16 +338,49 @@ class IncomeHub extends Component
 
         $this->contractScanProcessing = true;
         try {
+            // Reduz a fotografia para acelerar o envio e a análise, mantendo legibilidade.
+            $originalImage = file_get_contents($this->contractScanPhoto->getRealPath());
             $mime = $this->contractScanPhoto->getMimeType() ?: 'image/jpeg';
-            $image = base64_encode(file_get_contents($this->contractScanPhoto->getRealPath()));
+            $imageToSend = $originalImage;
+
+            if (function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
+                $sourceImage = @imagecreatefromstring($originalImage);
+
+                if ($sourceImage !== false) {
+                    $originalWidth = imagesx($sourceImage);
+                    $originalHeight = imagesy($sourceImage);
+                    $maxDimension = 1600;
+                    $scale = min(1, $maxDimension / max($originalWidth, $originalHeight));
+                    $targetWidth = max(1, (int) round($originalWidth * $scale));
+                    $targetHeight = max(1, (int) round($originalHeight * $scale));
+                    $resizedImage = imagecreatetruecolor($targetWidth, $targetHeight);
+                    $white = imagecolorallocate($resizedImage, 255, 255, 255);
+                    imagefill($resizedImage, 0, 0, $white);
+                    imagecopyresampled($resizedImage, $sourceImage, 0, 0, 0, 0, $targetWidth, $targetHeight, $originalWidth, $originalHeight);
+
+                    ob_start();
+                    imagejpeg($resizedImage, null, 78);
+                    $compressedImage = ob_get_clean();
+
+                    if (is_string($compressedImage) && $compressedImage !== '') {
+                        $imageToSend = $compressedImage;
+                        $mime = 'image/jpeg';
+                    }
+
+                    imagedestroy($resizedImage);
+                    imagedestroy($sourceImage);
+                }
+            }
+
+            $image = base64_encode($imageToSend);
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer '.$apiKey,
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => 'Finance Pro AI',
-            ])->connectTimeout(10)->timeout(90)->post('https://openrouter.ai/api/v1/chat/completions', [
+            ])->connectTimeout(8)->timeout(45)->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => config('services.openrouter.model', 'openrouter/free'),
                 'temperature' => 0,
-                'max_tokens' => 4000,
+                'max_tokens' => 1800,
                 'response_format' => ['type' => 'json_object'],
                 'messages' => [
                     [
