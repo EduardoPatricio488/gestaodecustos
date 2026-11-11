@@ -19,9 +19,15 @@
     <section class="space-y-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div><h2 class="text-lg font-black text-zinc-900 dark:text-white">Histórico completo</h2><p class="text-xs text-zinc-500">Filtra por tipo, período ou pesquisa.</p></div>
-            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:w-auto">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <a href="{{ route('export.movements.pdf') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700">
+                    <flux:icon name="document-arrow-down" class="size-4" />
+                    Exportar PDF
+                </a>
+                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:w-auto">
                 <input type="search" wire:model.live.debounce.300ms="search" placeholder="Pesquisar movimentos..." class="min-w-0 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
                 <select wire:model.live="period" class="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="all">Todo o período</option><option value="month">Este mês</option><option value="year">Este ano</option></select>
+                </div>
             </div>
         </div>
         <div class="flex flex-wrap gap-2">
