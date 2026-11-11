@@ -181,19 +181,13 @@ class ManageExpense extends Component
                 : 'Geral, Outros';
 
             $prompt = <<<PROMPT
-Analisa esta fatura/recibo com atenção. Devolve APENAS um objeto JSON válido, sem markdown, sem explicações.
-O JSON deve ter exatamente estes campos:
-{
-  "amount": <número decimal, valor total pago>,
-  "date": "<data no formato YYYY-MM-DD>",
-  "store": "<nome do estabelecimento ou fornecedor>",
-  "subcategory": "<escolhe a mais adequada de: {$subsStr}>",
-  "invoice_number": "<número da fatura se visível, caso contrário null>",
-  "nif_emitter": "<NIF/número fiscal do emitente se visível, caso contrário null>",
-  "payment_method": "<Multibanco, Cartão Crédito, Dinheiro, MB Way, Transferência ou desconhecido>",
-  "tax": <valor do IVA se discriminado, caso contrário null>,
-  "notes": "<observação útil sobre a despesa, máx 1 frase, ou null>"
-}
+Analisa esta fatura/recibo português por inteiro, incluindo cabeçalho, artigos, totais e rodapé. Devolve APENAS JSON válido, sem markdown.
+Extrai todos os dados impressos; não inventes nem calcules dados ausentes. Usa null quando ilegível ou inexistente.
+amount é o total final pago; date YYYY-MM-DD; time HH:MM; quantity e valores monetários são números decimais com ponto.
+gross_amount é o valor ilíquido, net_amount é a base tributável, vat_amount é o IVA e vat_rate a taxa. Não confundas NIF do emitente com NIF do cliente.
+subcategory deve ser escolhida desta lista: {$subsStr}.
+Devolve exatamente esta estrutura:
+{"amount":null,"item_name":null,"date":null,"time":null,"quantity":null,"unit":null,"store":null,"description":null,"subcategory":null,"unit_price":null,"vat_rate":null,"gross_amount":null,"net_amount":null,"vat_amount":null,"tax_incidence":null,"amount_tendered":null,"change_amount":null,"payment_condition":null,"payment_method":null,"company_nif":null,"customer_nif":null,"invoice_number":null,"notes":null}
 PROMPT;
 
             $response = Http::withHeaders([
@@ -201,9 +195,7 @@ PROMPT;
                 'Content-Type' => 'application/json',
             ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))->timeout((int) config('limits.ai.request_timeout_seconds', 30))->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => config('services.openrouter.model', 'openrouter/free'),
-                'max_tokens' => 3000,
-                'response_format' => ['type' => 'json_object'],
-                    'reasoning' => ['effort' => 'minimal'],
+                'max_tokens' => 3500,
                 'messages' => [
                     [
                         'role' => 'user',
@@ -242,6 +234,23 @@ PROMPT;
                     $date = now()->format('Y-m-d');
                 }
 
+                $metaFields = [
+                    'item_name', 'time', 'quantity', 'unit', 'unit_price', 'vat_rate',
+                    'gross_amount', 'net_amount', 'vat_amount', 'tax_incidence',
+                    'amount_tendered', 'change_amount', 'payment_condition', 'payment_method',
+                    'company_nif', 'customer_nif', 'invoice_number', 'notes',
+                ];
+                foreach ($metaFields as $field) {
+                    if (isset($result[$field]) && $result[$field] !== '') {
+                        $this->meta[$field] = $result[$field];
+                    }
+                }
+                if (isset($result['store']) && trim((string) $result['store']) !== '') {
+                    $this->meta['local'] = trim((string) $result['store']);
+                }
+                if (isset($result['tax']) && ! isset($this->meta['vat_amount'])) {
+                    $this->meta['vat_amount'] = $result['tax'];
+                }
                 $this->scannedData = $result;
                 $this->scannedData['amount'] = $amount;
                 $this->scannedData['date'] = $date;
@@ -253,7 +262,7 @@ PROMPT;
                 $this->dispatch('scan-completed');
             }
         } catch (\Exception $e) {
-            $this->scanError = 'Erro ao processar.';
+            $this->scanError = 'Não foi possível analisar a fatura: '.$e->getMessage();
         } finally {
             $this->isScanning = false;
             $this->refreshScannerQuota();
