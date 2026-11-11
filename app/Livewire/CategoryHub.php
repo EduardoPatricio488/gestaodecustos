@@ -197,7 +197,20 @@ class CategoryHub extends Component
             $this->spent_at = ! empty($result['date']) ? $result['date'] : '';
             $store = trim((string) ($result['store'] ?? ''));
             $description = trim((string) ($result['description'] ?? ''));
+            $itemName = trim((string) ($result['item_name'] ?? ''));
             $this->description = $description;
+
+            // O scanner da página "Todas as Despesas" devolve "description",
+            // mas o formulário do Hub apresenta a compra em meta.item_name.
+            if ($itemName === '' && $description !== '') {
+                $itemName = $description;
+            }
+            if ($itemName !== '') {
+                $this->meta['item_name'] = $itemName;
+            }
+            if ($store !== '') {
+                $this->meta['local'] = $store;
+            }
 
             $numericKeys = ['quantity', 'unit_price', 'vat_rate', 'gross_amount', 'net_amount', 'vat_amount', 'amount_tendered', 'change_amount'];
             $metaKeys = [
