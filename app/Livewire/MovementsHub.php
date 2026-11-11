@@ -135,7 +135,6 @@ class MovementsHub extends Component
             'editingDescription' => 'nullable|string|max:255',
         ];
         if ($this->editingType === 'expense') {
-            $rules['editingAmountPaid'] = 'required|numeric|min:0|max:'.$this->editingAmount;
             $rules['editingVatAmount'] = 'nullable|numeric|min:0|max:'.$this->editingAmount;
             $rules['editingCategoryId'] = 'nullable|integer';
         } elseif ($this->editingType === 'income') {
@@ -181,7 +180,7 @@ class MovementsHub extends Component
                     'title' => $this->editingTitle !== '' ? $this->editingTitle : null,
                     'description' => $this->editingDescription,
                     'amount' => $amount,
-                    'amount_paid' => round((float) $this->editingAmountPaid, 2),
+                    'amount_paid' => $amount,
                     'vat_amount' => round((float) ($this->editingVatAmount ?: 0), 2),
                     'spent_at' => $this->editingDate,
                     'category_id' => $category?->id,
