@@ -27,6 +27,13 @@ class Expenses extends Component
 
     public string $scannerError = '';
 
+    public array $aiQuota = [];
+
+    public function refreshScannerQuota(): void
+    {
+        $this->aiQuota = app(\\App\\Services\\OpenRouterQuotaService::class)->dailyQuota(true);
+    }
+
     public function updatedScannerReceipt(): void
     {
         $this->resetValidation('scannerReceipt');
@@ -56,6 +63,10 @@ class Expenses extends Component
         $this->isScanningInvoice = true;
 
         try {
+            $this->refreshScannerQuota();
+            if (($this->aiQuota['available'] ?? false) && (int) ($this->aiQuota['remaining'] ?? 0) <= 0) {
+                throw new \\Exception('A quota diária gratuita do OpenRouter está esgotada. A reposição ocorre às 00:00 UTC.');
+            }
             $user = auth()->user();
             $workspace = $user->currentWorkspace;
             $categoriesQuery = Category::where('workspace_id', $user->current_workspace_id)
@@ -315,11 +326,13 @@ class Expenses extends Component
             $this->scannerError = 'Não foi possível analisar a fatura. '.$e->getMessage();
         } finally {
             $this->isScanningInvoice = false;
+            $this->refreshScannerQuota();
         }
     }
 
     public function mount(): void
     {
+        $this->refreshScannerQuota();
         $this->openCreateAfterCategory = request()->boolean('open_new');
 
         if ($this->openCreateAfterCategory) {
