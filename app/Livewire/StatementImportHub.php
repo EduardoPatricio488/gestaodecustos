@@ -35,20 +35,25 @@ class StatementImportHub extends Component
     public function generatePreview(): void
     {
         $this->authorizeImport();
-        $this->validate(['statementFile' => 'required|file|mimes:csv,txt,ofx|max:5120']);
+        $this->validate(['statementFile' => 'required|file|mimes:pdf,csv,txt,ofx|max:10240']);
 
         $service = app(BankImportService::class);
-        $this->preview = $service->preview($this->statementFile);
+        $extension = strtolower($this->statementFile->getClientOriginalExtension());
+        if ($extension === 'pdf') {
+            $this->preview = $service->previewSantanderPdf($this->statementFile, (int) auth()->user()->current_workspace_id, (int) auth()->id());
+        } else {
+            $this->preview = $service->preview($this->statementFile);
+        }
         $this->previewReady = true;
         $this->selectedSignatures = array_values(array_filter(array_map(
             fn (array $row) => $row['signature'] ?? null,
             $this->preview['rows'] ?? []
         )));
 
-        if (($this->preview['expenses_total'] ?? 0) === 0) {
-            $this->dispatch('toast', variant: 'warning', text: 'Nenhuma despesa negativa encontrada na pré-visualização.');
+        if (($this->preview['transactions_total'] ?? 0) === 0) {
+            $this->dispatch('toast', variant: 'warning', text: 'Não foram encontrados movimentos no ficheiro.');
         } else {
-            $this->dispatch('toast', variant: 'success', text: 'Pré-visualização gerada. Confirma para importar.');
+            $this->dispatch('toast', variant: 'success', text: count($this->preview['rows']).' movimentos identificados. Revê cada um antes de confirmar.');
         }
     }
 
@@ -67,12 +72,20 @@ class StatementImportHub extends Component
             return;
         }
 
-        $this->validate(['statementFile' => 'required|file|mimes:csv,txt,ofx|max:5120']);
+        $this->validate(['statementFile' => 'required|file|mimes:pdf,csv,txt,ofx|max:10240']);
 
         $workspace = auth()->user()->currentWorkspace;
         $service = app(BankImportService::class);
 
-        $this->lastImport = $service->import($workspace, auth()->id(), $this->statementFile, $this->selectedSignatures);
+        if (($this->preview['source_file_type'] ?? null) === 'pdf') {
+            $selectedRows = array_values(array_filter(
+                $this->preview['rows'] ?? [],
+                fn (array $row) => in_array($row['signature'] ?? null, $this->selectedSignatures, true)
+            ));
+            $this->lastImport = $service->confirmPreview($workspace, (int) auth()->id(), $this->statementFile->getClientOriginalName(), $selectedRows);
+        } else {
+            $this->lastImport = $service->import($workspace, auth()->id(), $this->statementFile, $this->selectedSignatures);
+        }
 
         if ($this->lastImport->status === 'completed') {
             $duplicatesSkipped = (int) ($this->lastImport->errors['duplicates_skipped'] ?? 0);
