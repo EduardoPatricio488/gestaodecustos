@@ -18,6 +18,15 @@ class MovementsHub extends Component
     public string $search = '';
     public string $period = 'all';
 
+    private function normalizeStatusForDisplay(?string $status): string
+    {
+        $status = trim((string) $status);
+
+        return in_array(mb_strtolower($status), ['completed', 'complete', 'completo'], true)
+            ? 'Completo'
+            : ($status !== '' ? $status : 'Completo');
+    }
+
     private function formatMetadataForDisplay(mixed $metadata): ?string
     {
         if (is_string($metadata)) {
@@ -132,7 +141,7 @@ class MovementsHub extends Component
                 'detail' => ($item->fromAccount?->name ?: 'Origem externa').' → '.($item->toAccount?->name ?: 'Destino externo'),
                 'date' => $item->transferred_at, 'amount' => (float) $item->amount,
                 'direction' => ($item->direction ?? 'out') === 'in' ? 'in' : 'out',
-                'status' => $item->status ?: 'Concluída',
+                'status' => $this->normalizeStatusForDisplay($item->status ?: 'Concluída'),
                 'details' => [
                     'Descrição' => $item->description,
                     'Destinatário' => $item->recipient,
@@ -143,7 +152,7 @@ class MovementsHub extends Component
                     'Categoria' => $item->category,
                     'Valor' => number_format((float) $item->amount, 2, ',', '.').' '.($item->currency ?: 'EUR'),
                     'Data' => $item->transferred_at?->format('d/m/Y'),
-                    'Estado' => $item->status,
+                    'Estado' => $this->normalizeStatusForDisplay($item->status),
                     'Notas' => $item->notes,
                 ],
             ]));
