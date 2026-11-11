@@ -300,8 +300,15 @@ class StatementImportHub extends Component
             ->limit(10)
             ->get();
 
+        $user = auth()->user();
+        $isPersonalWorkspace = $user->currentWorkspace?->type === 'personal';
+
+        // Mantém a lista de categorias alinhada com a sidebar e com o módulo de despesas.
         $categories = Category::query()
             ->where('workspace_id', $workspaceId)
+            ->when($isPersonalWorkspace, fn ($query) => $query->where('user_id', $user->id))
+            ->where('hidden_from_sidebar', false)
+            ->orderBy('order')
             ->orderBy('name')
             ->get(['id', 'name']);
 
