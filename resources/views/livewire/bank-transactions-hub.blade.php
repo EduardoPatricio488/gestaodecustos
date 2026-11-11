@@ -88,6 +88,27 @@
                             @endif
                         </div>
                         <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Estado</label><select wire:model="editStatus" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="completed">Concluído</option><option value="cancelled">Cancelada</option></select></div>
+                        @if($canConvertTransferToExpense)
+                            <div class="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
+                                <div class="mb-3">
+                                    <p class="text-sm font-black text-zinc-900 dark:text-white">Este movimento é uma despesa?</p>
+                                    <p class="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">Converte o movimento importado numa despesa normal e escolhe a categoria. Deixará de aparecer nas Transferências Bancárias.</p>
+                                </div>
+                                <label class="mb-1.5 block text-xs font-bold text-zinc-600 dark:text-zinc-300">Categoria da despesa</label>
+                                <select wire:model="editCategoryId" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
+                                    <option value="">Selecionar categoria</option>
+                                    @foreach($expenseCategories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('editCategoryId')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
+                                <button type="button" wire:click="convertTransferToExpense" wire:loading.attr="disabled" class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-700 disabled:opacity-50">
+                                    <flux:icon name="receipt" class="size-4" />
+                                    <span wire:loading.remove wire:target="convertTransferToExpense">Converter em despesa</span>
+                                    <span wire:loading wire:target="convertTransferToExpense">A converter...</span>
+                                </button>
+                            </div>
+                        @endif
                     @else
                         <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Conta bancária</label><select wire:model="editBankAccountId" required class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Selecionar conta</option>@foreach($bankAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select>@error('editBankAccountId')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
                         <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Método</label><select wire:model="editChannel" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="bank">Transferência / banco</option><option value="mbway">MB WAY</option></select></div>
