@@ -87,6 +87,18 @@
                                 <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Remetente</label><input type="text" wire:model="editRecipient" maxlength="255" required placeholder="Nome de quem envia o dinheiro" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editRecipient')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
                             @endif
                         </div>
+                        <div>
+                            <label class="mb-1.5 block text-xs font-bold text-zinc-500">Método de transferência</label>
+                            <select wire:model="editTransferMethod" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
+                                <option value="bank_transfer">Transferência bancária</option>
+                                <option value="immediate_transfer">Transferência imediata</option>
+                                <option value="multibanco">Multibanco</option>
+                                <option value="mbway">MB WAY</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="revolut">Revolut</option>
+                                <option value="other">Outro</option>
+                            </select>
+                        </div>
                         <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Estado</label><select wire:model="editStatus" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="completed">Concluído</option><option value="cancelled">Cancelada</option></select></div>
                         @if($canConvertTransferToExpense)
                             <div class="pt-1">
