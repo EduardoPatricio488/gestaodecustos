@@ -1470,10 +1470,10 @@
             <flux:button variant="ghost" size="sm" class="rounded-xl text-[10px] font-black uppercase tracking-widest" href="{{ url('/movimentos') }}" wire:navigate>Ver Histórico Completo</flux:button>
         </div>
 
-        <div class="max-h-[510px] overflow-y-auto overscroll-contain divide-y divide-zinc-100 dark:divide-zinc-800" style="scrollbar-width: thin;">
+        <div class="max-h-[504px] overflow-y-auto overscroll-contain divide-y divide-zinc-100 dark:divide-zinc-800" style="scrollbar-width: thin;">
             @forelse ($recentMovements as $movement)
                 <article wire:key="dashboard-{{ $movement['key'] }}" class="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
-                    <div class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                    <div class="flex min-h-[84px] flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                         <div class="flex min-w-0 items-center gap-3 sm:gap-4">
                             <div class="flex size-10 shrink-0 items-center justify-center rounded-xl {{ $movement['direction'] === 'in' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : ($movement['direction'] === 'company' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30') }}">
                                 <flux:icon name="{{ $movement['type'] === 'income' ? 'arrow-down-left' : ($movement['type'] === 'expense' ? 'arrow-up-right' : ($movement['type'] === 'subscription' ? 'clock' : 'arrows-right-left')) }}" class="size-5" />
