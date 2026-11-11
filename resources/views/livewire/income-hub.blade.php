@@ -554,15 +554,14 @@
 
 
 
-<div class="flex flex-col gap-12 w-full" x-data="{ activeIncomeTab: 'billing' }">
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 class="text-2xl font-black dark:text-white uppercase italic tracking-tighter">Todos os Rendimentos</h2>
-        <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5 dark:border-zinc-800 dark:bg-zinc-950">
-            <button type="button" @click="activeIncomeTab = 'billing'" :class="activeIncomeTab === 'billing' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'" class="inline-flex items-center gap-2 rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-wider transition">
+<div class="flex flex-col gap-8 w-full" x-data="{ activeIncomeTab: 'billing' }">
+    <div class="flex justify-center">
+        <div class="inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5 dark:border-zinc-800 dark:bg-zinc-950">
+            <button type="button" @click="activeIncomeTab = 'billing'" :class="activeIncomeTab === 'billing' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'" class="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-[10px] font-black uppercase tracking-wider transition">
                 <flux:icon name="calendar-days" variant="micro" class="size-4" />
-                Todos os Rendimentos
+                Rendimentos Mensais
             </button>
-            <button type="button" @click="activeIncomeTab = 'bank'" :class="activeIncomeTab === 'bank' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'" class="inline-flex items-center gap-2 rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-wider transition">
+            <button type="button" @click="activeIncomeTab = 'bank'" :class="activeIncomeTab === 'bank' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'" class="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-[10px] font-black uppercase tracking-wider transition">
                 <flux:icon name="building-library" variant="micro" class="size-4" />
                 Transferências Bancárias
             </button>
