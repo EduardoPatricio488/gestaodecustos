@@ -1312,6 +1312,9 @@ $hasStoreAccess = $hasLockInAccess;
                     <flux:sidebar.item icon="arrows-right-left" :href="route('hub.debts')" wire:navigate.hover>
                         Transferências Banc. {!! $badge($counts['transfers']) !!}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="list" :href="route('movements.index')" wire:navigate.hover>
+                        Movimentos
+                    </flux:sidebar.item>
                     @if($myRestrictions?->restrict_budget)
     {{-- VERSÃO BLOQUEADA (APARECE MAS NÃO CLICA) --}}
     <flux:sidebar.item
