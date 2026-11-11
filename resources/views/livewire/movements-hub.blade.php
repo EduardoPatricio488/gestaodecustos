@@ -56,51 +56,51 @@
                     </div>
                     <div x-cloak x-show="open" x-transition.opacity.duration.200ms class="border-t border-zinc-100 bg-zinc-50/70 px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950/40">
                         <div class="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-500"><flux:icon name="document-text" class="size-4" /> Informações do registo</div>
-                        <dl class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        <dl class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                             @foreach(($movement['details'] ?? []) as $detailLabel => $detailValue)
                                 @if($detailValue !== null && $detailValue !== '')
-                                    <div class="min-w-0 rounded-xl border border-zinc-200/80 bg-white px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900">
+                                    <div class="min-w-0 rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 dark:border-zinc-800 dark:bg-zinc-900">
                                         <dt class="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{{ $detailLabel }}</dt>
-                                        <dd class="mt-0.5 break-words whitespace-pre-wrap text-sm font-semibold leading-5 text-zinc-800 dark:text-zinc-200">
+                                        <dd class="mt-0.5 break-words whitespace-pre-wrap text-xs font-semibold leading-4 text-zinc-800 dark:text-zinc-200">
                                             @if($editingId && $editingType === ($movement['edit_type'] ?? $movement['type']) && (int) $editingId === (int) ($movement['record_id'] ?? 0))
                                                 @if($detailLabel === 'Descrição' && in_array($editingType, ['expense', 'income', 'transfer'], true))
-                                                    <input wire:model="editingDescription" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input wire:model="editingDescription" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Nome' && $editingType === 'subscription')
-                                                    <input wire:model="editingTitle" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input wire:model="editingTitle" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Categoria' && in_array($editingType, ['expense', 'income', 'subscription'], true))
-                                                    <select wire:model="editingCategoryId" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200"><option value="">Sem categoria</option>@foreach($editCategories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select>
+                                                    <select wire:model="editingCategoryId" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200"><option value="">Sem categoria</option>@foreach($editCategories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select>
                                                 @elseif($detailLabel === 'Origem' && $editingType === 'income')
-                                                    <input wire:model="editingSource" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input wire:model="editingSource" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Tipo' && $editingType === 'income')
-                                                    <input wire:model="editingIncomeType" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input wire:model="editingIncomeType" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Frequência' && $editingType === 'income')
-                                                    <input wire:model="editingFrequency" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input wire:model="editingFrequency" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Valor total' && $editingType === 'expense' || $detailLabel === 'Valor' && in_array($editingType, ['income', 'transfer', 'subscription_payment'], true) || $detailLabel === 'Valor por ciclo' && $editingType === 'subscription')
-                                                    <input type="number" min="0.01" step="0.01" wire:model="editingAmount" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input type="number" min="0.01" step="0.01" wire:model="editingAmount" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Valor pago' && $editingType === 'expense')
-                                                    <input type="number" min="0" step="0.01" wire:model="editingAmountPaid" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input type="number" min="0" step="0.01" wire:model="editingAmountPaid" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'IVA' && $editingType === 'expense')
-                                                    <input type="number" min="0" step="0.01" wire:model="editingVatAmount" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input type="number" min="0" step="0.01" wire:model="editingVatAmount" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif(in_array($detailLabel, ['Data', 'Data de recebimento', 'Próxima renovação', 'Data de registo do pagamento'], true) && in_array($editingType, ['expense', 'income', 'transfer', 'subscription', 'subscription_payment'], true))
-                                                    <input type="date" wire:model="editingDate" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input type="date" wire:model="editingDate" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Periodicidade' && $editingType === 'subscription')
-                                                    <input wire:model="editingCycle" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input wire:model="editingCycle" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Destinatário' && $editingType === 'transfer')
-                                                    <input wire:model="editingRecipient" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input wire:model="editingRecipient" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Método' && $editingType === 'transfer')
-                                                    <input wire:model="editingTransferMethod" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input wire:model="editingTransferMethod" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Categoria' && $editingType === 'transfer')
-                                                    <input wire:model="editingTransferCategory" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input wire:model="editingTransferCategory" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Direção' && $editingType === 'transfer')
-                                                    <select wire:model="editingDirection" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200"><option value="out">Saída</option><option value="in">Entrada</option></select>
+                                                    <select wire:model="editingDirection" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200"><option value="out">Saída</option><option value="in">Entrada</option></select>
                                                 @elseif($detailLabel === 'Estado' && $editingType === 'transfer')
-                                                    <input wire:model="editingStatus" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input wire:model="editingStatus" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Estado' && $editingType === 'subscription')
                                                     <label class="inline-flex items-center gap-2"><input type="checkbox" wire:model="editingActive" class="rounded border-zinc-300"> <span>Ativa</span></label>
                                                 @elseif($detailLabel === 'Origem do pagamento' && $editingType === 'subscription_payment')
-                                                    <input wire:model="editingPaymentSource" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
+                                                    <input wire:model="editingPaymentSource" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200">
                                                 @elseif($detailLabel === 'Notas' && in_array($editingType, ['income', 'transfer', 'subscription'], true))
-                                                    <textarea wire:model="editingNotes" rows="2" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold leading-5 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200"></textarea>
+                                                    <textarea wire:model="editingNotes" rows="2" class="h-5 w-full min-w-0 border-0 bg-transparent p-0 text-xs font-semibold leading-4 text-zinc-800 focus:ring-1 focus:ring-blue-500 dark:text-zinc-200"></textarea>
                                                 @else
                                                     {{ $detailValue }}
                                                 @endif
