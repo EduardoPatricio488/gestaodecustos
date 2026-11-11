@@ -158,7 +158,9 @@ class StatementImportHub extends Component
             })
             ->get()
             ->map(fn (Expense $expense) => [
-                'type' => 'Despesa',
+                'type' => (is_array($expense->metadata) && ($expense->metadata['movement_type'] ?? null) === 'debt_payment')
+                    ? 'Pagamento de dívida'
+                    : 'Despesa',
                 'date' => $expense->spent_at?->format('Y-m-d'),
                 'description' => $expense->description ?: $expense->title,
                 'amount' => (float) $expense->amount,
