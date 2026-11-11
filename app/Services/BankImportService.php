@@ -57,31 +57,57 @@ class BankImportService
         }
 
         $monthMap = ['jan'=>'01','fev'=>'02','mar'=>'03','abr'=>'04','mai'=>'05','jun'=>'06','jul'=>'07','ago'=>'08','set'=>'09','out'=>'10','nov'=>'11','dez'=>'12'];
-        $pattern = '/(?<date>\d{2}\s+[A-Za-zçÇ]{3}\s+\d{4})\s+D\.\s*valor:\s*\d{2}\s+[A-Za-zçÇ]{3}\s+\d{4}\s+(?<description>.+?)\s+(?<amount>[−–-]?\s*\d[\d.]*,\d{2})\s*€?\s+(?<balance>\d[\d.]*,\d{2})\s*€?/u';
-        preg_match_all($pattern, $text, $matches, PREG_SET_ORDER);
-
+        $monthPattern = '(?:jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)';
+        $segments = preg_split('/(?=\d{2}\s+'.$monthPattern.'\s+\d{4}\s+D\.\s*valor:)/iu', $text, -1, PREG_SPLIT_NO_EMPTY);
         $categories = Category::where('workspace_id', $workspaceId)->pluck('name', 'id')->all();
         $rows = [];
-        foreach ($matches as $index => $match) {
-            $dateParts = preg_split('/\s+/', mb_strtolower(trim($match['date'])));
+
+        foreach ($segments as $segment) {
+            if (! preg_match('/(?<date>\d{2}\s+'.$monthPattern.'\s+\d{4})\s+D\.\s*valor:\s*\d{2}\s+'.$monthPattern.'\s+\d{4}\s*/iu', $segment, $header, PREG_OFFSET_CAPTURE)) {
+                continue;
+            }
+
+            $dateParts = preg_split('/\s+/', mb_strtolower(trim($header['date'][0])));
             $month = $monthMap[$dateParts[1] ?? ''] ?? null;
             if (! $month) {
                 continue;
             }
-            $date = Carbon::createFromFormat('d/m/Y', $dateParts[0].'/'.$month.'/'.$dateParts[2])->startOfDay();
-            $amountText = str_replace(['−', '–', ' '], '-', trim($match['amount']));
-            $amount = (float) str_replace(',', '.', str_replace('.', '', $amountText));
-            $description = trim($match['description']);
-            if ($description === '' || abs($amount) < 0.001) {
+
+            try {
+                $date = Carbon::createFromFormat('d/m/Y', $dateParts[0].'/'.$month.'/'.$dateParts[2])->startOfDay();
+            } catch (\Throwable) {
                 continue;
             }
+
+            preg_match_all('/(?<amount>[−–-]?\s*\d[\d.]*,\d{2})\s*€?\s+(?<balance>[−–-]?\s*\d[\d.]*,\d{2})\s*€?/u', $segment, $moneyMatches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+            if ($moneyMatches === []) {
+                continue;
+            }
+
+            $money = $moneyMatches[count($moneyMatches) - 1];
+            $amountText = str_replace(['−', '–'], '-', preg_replace('/\s+/u', '', $money['amount'][0]));
+            $balanceText = str_replace(['−', '–'], '-', preg_replace('/\s+/u', '', $money['balance'][0]));
+            $amount = $this->parseAmount($amountText);
+            $balance = $this->parseAmount($balanceText);
+            if ($amount === null || abs($amount) < 0.001) {
+                continue;
+            }
+
+            $descriptionStart = $header[0][1] + strlen($header[0][0]);
+            $descriptionLength = max(0, $money['amount'][1] - $descriptionStart);
+            $description = trim(preg_replace('/\s+/u', ' ', substr($segment, $descriptionStart, $descriptionLength)));
+            $description = trim($description, " \t\n\r\0\x0B|;,-");
+            if ($description === '') {
+                continue;
+            }
+
             $categoryId = $this->categorize($workspaceId, $userId, $description, $categories, false);
             $rows[] = [
-                'signature' => sha1($date->format('Y-m-d').'|'.number_format($amount, 2, '.', '').'|'.mb_strtolower($description).'|'.$index),
+                'signature' => sha1($date->format('Y-m-d').'|'.number_format($amount, 2, '.', '').'|'.mb_strtolower($description).'|'.count($rows)),
                 'date' => $date->format('Y-m-d'),
                 'description' => Str::limit($description, 160),
                 'amount' => round($amount, 2),
-                'balance' => round((float) str_replace(',', '.', str_replace('.', '', $match['balance'])), 2),
+                'balance' => round((float) ($balance ?? 0), 2),
                 'type' => $amount < 0 ? 'expense' : 'income',
                 'category_id' => $categoryId,
             ];
