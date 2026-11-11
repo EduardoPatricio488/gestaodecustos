@@ -461,9 +461,7 @@ PROMPT;
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
                     'temperature' => 0,
-                    'max_tokens' => 2200,
-                    'response_format' => ['type' => 'json_object'],
-                    'reasoning' => ['effort' => 'minimal'],
+                    'max_tokens' => 3500,
                     'messages' => [[
                         'role' => 'user',
                         'content' => [['type' => 'text', 'text' => $prompt], $contentPart],
@@ -486,8 +484,31 @@ PROMPT;
             if (! is_array($result) && preg_match('/\{.*\}/s', $rawText, $matches)) {
                 $result = json_decode($matches[0], true);
             }
+            $finishReason = $response->json('choices.0.finish_reason') ?: '';
+            if (! is_array($result) && $finishReason === 'length') {
+                $partial = [];
+                $partialFields = [
+                    'amount', 'item_name', 'date', 'time', 'quantity', 'unit', 'store', 'description',
+                    'subcategory', 'unit_price', 'vat_rate', 'gross_amount', 'net_amount', 'vat_amount',
+                    'tax_incidence', 'amount_tendered', 'change_amount', 'payment_condition',
+                    'payment_method', 'company_nif', 'customer_nif', 'invoice_number', 'notes',
+                ];
+                $numericFields = ['amount', 'quantity', 'unit_price', 'vat_rate', 'gross_amount', 'net_amount', 'vat_amount', 'amount_tendered', 'change_amount'];
+                foreach ($partialFields as $field) {
+                    if (in_array($field, $numericFields, true)) {
+                        if (preg_match('/"'.preg_quote($field, '/').'\\s*:\\s*(-?\\d+(?:\\.\\d+)?)/', $rawText, $match)) {
+                            $partial[$field] = (float) $match[1];
+                        }
+                    } elseif (preg_match('/"'.preg_quote($field, '/').'\\s*:\\s*"([^"]*)"/', $rawText, $match)) {
+                        $partial[$field] = trim($match[1]);
+                    }
+                }
+                if ($partial !== []) {
+                    $result = $partial;
+                }
+            }
             if (! is_array($result)) {
-                throw new \Exception('A IA não devolveu dados reconhecíveis num formato válido.');
+                throw new \\Exception('A IA não devolveu dados reconhecíveis num formato válido.');
             }
 
             // Normaliza nomes alternativos devolvidos por alguns modelos gratuitos.
@@ -542,9 +563,7 @@ PROMPT;
                     ->post('https://openrouter.ai/api/v1/chat/completions', [
                         'model' => config('services.openrouter.model', 'openrouter/free'),
                         'temperature' => 0,
-                        'max_tokens' => 1200,
-                        'response_format' => ['type' => 'json_object'],
-                        'reasoning' => ['effort' => 'minimal'],
+                        'max_tokens' => 1800,
                         'messages' => [[
                             'role' => 'user',
                             'content' => [['type' => 'text', 'text' => $compactPrompt], $contentPart],
