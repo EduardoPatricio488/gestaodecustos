@@ -211,7 +211,14 @@ PROMPT;
                 throw new \Exception('Erro na API.');
             }
 
-            $rawText = preg_replace('/```json|```/i', '', $response->json('choices.0.message.content') ?? '');
+            $responseContent = $response->json('choices.0.message.content');
+            if (is_array($responseContent)) {
+                $responseContent = collect($responseContent)
+                    ->map(fn ($part) => is_string($part) ? $part : data_get($part, 'text', data_get($part, 'content', '')))
+                    ->filter(fn ($part) => is_string($part) && trim($part) !== '')
+                    ->implode("\\n");
+            }
+            $rawText = preg_replace('/```json|```/i', '', (string) $responseContent);
             $rawText = trim($rawText);
 
             if (preg_match('/\{.*\}/s', $rawText, $matches)) {
