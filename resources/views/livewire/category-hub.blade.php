@@ -409,6 +409,47 @@
         @endif
     </div>
 
+    @if($isAllCategories)
+    {{-- FILTROS POR CATEGORIA --}}
+    <section class="mx-2 mt-8 space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 px-1">
+            <div>
+                <h2 class="text-sm font-black uppercase tracking-wider text-zinc-900 dark:text-white">Filtrar movimentos</h2>
+                <p class="text-xs text-zinc-500 mt-1">Escolhe uma categoria ou consulta todos os movimentos.</p>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{{ $filterCategories->count() }} categorias disponíveis</span>
+        </div>
+
+        <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+            <button type="button"
+                wire:click="$set('categoryFilter', 'all')"
+                @class([
+                    'shrink-0 inline-flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-wide transition-all',
+                    'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white shadow-md' => $categoryFilter === 'all',
+                    'bg-white text-zinc-600 border-zinc-200 hover:border-brand-400 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700' => $categoryFilter !== 'all',
+                ])>
+                <flux:icon name="squares-2x2" class="size-4" />
+                Todas
+                <span class="text-[10px] opacity-70">{{ $filterCategories->sum(fn ($cat) => $expenses->where('category_id', $cat->id)->count()) }}</span>
+            </button>
+
+            @foreach($filterCategories as $filterCategory)
+                <button type="button"
+                    wire:key="category-filter-{{ $filterCategory->id }}"
+                    wire:click="$set('categoryFilter', '{{ $filterCategory->id }}')"
+                    @class([
+                        'shrink-0 inline-flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-wide transition-all',
+                        'bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-500/20' => (string) $categoryFilter === (string) $filterCategory->id,
+                        'bg-white text-zinc-600 border-zinc-200 hover:border-brand-400 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700' => (string) $categoryFilter !== (string) $filterCategory->id,
+                    ])>
+                    <flux:icon :name="$filterCategory->icon ?? 'tag'" class="size-4" />
+                    {{ $filterCategory->name }}
+                </button>
+            @endforeach
+        </div>
+    </section>
+    @endif
+
     {{-- ── SECÇÃO DE MOVIMENTOS ── --}}
     <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-sm overflow-hidden mx-2 mt-8">
         <div class="px-4 sm:px-8 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/30 dark:bg-zinc-950/20">
