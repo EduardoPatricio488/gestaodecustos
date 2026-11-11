@@ -398,6 +398,7 @@ PROMPT;
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
                     'max_tokens' => 3000,
+                    'response_format' => ['type' => 'json_object'],
                     'messages' => [[
                         'role' => 'user',
                         'content' => [['type' => 'text', 'text' => $prompt], $contentPart],
