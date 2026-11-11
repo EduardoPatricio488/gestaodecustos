@@ -33,7 +33,7 @@
         </div>
         <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
             @if($movements->isEmpty())
-                <div class="px-6 py-16 text-center"><div class="mx-auto flex size-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-500 dark:bg-blue-950/40"><flux:icon name="arrows-right-left" class="size-8" /></div><h3 class="mt-4 text-base font-black text-zinc-900 dark:text-white">Ainda não existem movimentos bancários</h3><p class="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-zinc-500">Quando registares transferências entre contas, receitas ou despesas associadas a uma conta bancária, os movimentos aparecem aqui. Os movimentos MB WAY são identificados quando o método ou a descrição do registo o indicar.</p><a href="{{ route('hub.banco') }}" wire:navigate class="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700"><flux:icon name="building-library" class="size-4" /> Abrir gestão bancária</a></div>
+                <div class="px-6 py-16 text-center"><div class="mx-auto flex size-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-500 dark:bg-blue-950/40"><flux:icon name="arrows-right-left" class="size-8" /></div><h3 class="mt-4 text-base font-black text-zinc-900 dark:text-white">Ainda não existem movimentos bancários</h3><p class="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-zinc-500">Quando registares transferências bancárias, receitas ou despesas associadas a uma conta bancária, os movimentos aparecem aqui. Os movimentos MB WAY são identificados quando o método ou a descrição do registo o indicar.</p><a href="{{ route('hub.banco') }}" wire:navigate class="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700"><flux:icon name="building-library" class="size-4" /> Abrir gestão bancária</a></div>
             @else
                 <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @foreach($movements as $movement)
@@ -59,7 +59,7 @@
         <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-zinc-950/60 p-4" wire:key="edit-bank-movement-modal">
             <div class="my-auto w-full max-w-xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
                 <div class="mb-6 flex items-start justify-between gap-4">
-                    <div><h2 class="text-xl font-black text-zinc-900 dark:text-white">{{ $editingMovementId ? 'Editar movimento' : 'Nova transferência' }}</h2><p class="mt-1 text-sm text-zinc-500">{{ $editingMovementId ? 'Atualiza os dados desta operação bancária.' : 'Preenche os dados para registar uma transferência entre contas.' }}</p></div>
+                    <div><h2 class="text-xl font-black text-zinc-900 dark:text-white">{{ $editingMovementId ? 'Editar movimento' : 'Nova transferência' }}</h2><p class="mt-1 text-sm text-zinc-500">{{ $editingMovementId ? 'Atualiza os dados desta operação bancária.' : 'Preenche os dados para registar uma transferência para outra pessoa.' }}</p></div>
                     <button type="button" wire:click="$set('showEditModal', false)" class="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"><span class="text-xl font-bold leading-none" aria-hidden="true">×</span></button>
                 </div>
                 <form wire:submit="saveMovement" class="space-y-4">
