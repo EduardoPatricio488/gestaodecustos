@@ -191,6 +191,18 @@ class MovementsHub extends Component
                 : 'cash';
         }
 
+        if ($type === 'income' && $this->editingAccountId !== '') {
+            $incomeAccountExists = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+                ->where('user_id', auth()->id())
+                ->whereKey((int) $this->editingAccountId)
+                ->exists();
+
+            if (! $incomeAccountExists) {
+                $this->editingAccountId = '';
+                $this->editingIncomeDestination = 'cash';
+            }
+        }
+
         if ($type === 'transfer') {
             $this->editingTransferStatus = $this->editingType === 'transfer'
                 ? $this->editingTransferStatus
@@ -495,9 +507,9 @@ class MovementsHub extends Component
 
         $account = null;
         if (in_array($this->conversionType, ['expense', 'income'], true) && $this->editingAccountId !== '') {
-            $account = BankAccount::where('workspace_id', $workspaceId)
-                ->when($personal, fn ($q) => $q->where('user_id', $user->id))
-                ->findOrFail((int) $this->editingAccountId);
+            $accountQuery = BankAccount::where('workspace_id', $workspaceId)
+                ->when($personal || $this->conversionType === 'income', fn ($q) => $q->where('user_id', $user->id));
+            $account = $accountQuery->findOrFail((int) $this->editingAccountId);
         }
 
         $fromAccount = null;
@@ -862,6 +874,9 @@ class MovementsHub extends Component
                 ->get(),
             'editAccounts' => BankAccount::where('workspace_id', $workspaceId)
                 ->when($personal, fn ($q) => $q->where('user_id', $user->id))
+                ->orderBy('name')->get(),
+            'conversionIncomeAccounts' => BankAccount::where('workspace_id', $workspaceId)
+                ->where('user_id', $user->id)
                 ->orderBy('name')->get(),
             'conversionExpenseCategory' => $this->conversionType === 'expense' && $this->editingCategoryId !== ''
                 ? $this->conversionCategoryQuery()->with(['fields' => fn ($query) => $query->orderBy('order')])->find((int) $this->editingCategoryId)
