@@ -166,7 +166,7 @@
 
     // 4. CACHE DE CONTAGENS DA SIDEBAR
     $counts = \Illuminate\Support\Facades\Cache::remember(
-        "layout:sidebar-counts:v6:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
+        "layout:sidebar-counts:v7:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
         60,
         function () use ($user, $currentWs, $workspaceId, $isAdminMode, $isBusinessMode) {
             if ($isAdminMode) {
@@ -240,7 +240,20 @@
                     || (float) ($activeForecastSubscriptions[$category->id] ?? 0) > 0)
                 ->count();
 
+            $movementScope = fn ($query) => $query
+                ->where('workspace_id', $workspaceId)
+                ->when($currentWs?->type === 'personal', fn ($q) => $q->where('user_id', $user->id));
+
+            $movementCount = $movementScope(\App\Models\Expense::query())->count()
+                + $movementScope(\App\Models\Income::query())
+                    ->where(fn ($q) => $q->whereNull('added_to_salary')->orWhere('added_to_salary', false))
+                    ->count()
+                + $movementScope(\App\Models\BankTransfer::query())->count()
+                + $movementScope(\App\Models\Subscription::query())->count()
+                + $movementScope(\App\Models\SubscriptionPayment::query())->count();
+
             return [
+                'movements'     => $movementCount,
                 'incomes'       => \App\Models\RecurringIncome::where('workspace_id', $workspaceId)
                     ->where('user_id', $user->id)
                     ->where('source', 'emprego')
@@ -1313,7 +1326,7 @@ $hasStoreAccess = $hasLockInAccess;
                         Transferências Banc. {!! $badge($counts['transfers']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="arrows-right-left" :href="route('movements.index')" wire:navigate.hover>
-                        Movimentos
+                        Movimentos {!! $badge($counts['movements']) !!}
                     </flux:sidebar.item>
                     @if($myRestrictions?->restrict_budget)
     {{-- VERSÃO BLOQUEADA (APARECE MAS NÃO CLICA) --}}
