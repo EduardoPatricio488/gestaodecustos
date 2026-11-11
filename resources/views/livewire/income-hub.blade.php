@@ -1059,7 +1059,24 @@
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/30 dark:bg-amber-950/20"><p class="text-[9px] font-black uppercase text-amber-700">Alimentação</p><p class="mt-1 text-lg font-black">{{ number_format((float) ($detailMeta['meal_allowance'] ?? 0), 2, ',', ' ') }} €/dia</p><p class="text-xs text-zinc-500">{{ $detailMeta['working_days'] ?? 0 }} dias · {{ number_format($detailMealTotal, 2, ',', ' ') }} €/mês · {{ number_format($detailMealTotal * 11, 2, ',', ' ') }} €/ano estimado</p><p class="mt-1 text-[10px] text-zinc-500">Método: {{ $detailMeta['meal_allowance_destination'] ?? 'igual ao salário' }} · limite diário estimado de isenção: {{ number_format(($detailMeta['meal_allowance_destination'] ?? '') === 'meal_card' ? 10.455 : 6.15, 3, ',', ' ') }} €.</p><p class="text-[10px] text-zinc-500">Parcela mensal sujeita a tributação: {{ number_format((float) ($salaryDetailsPayroll['meal_taxable'] ?? 0), 2, ',', ' ') }} €.</p></div>
                         <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-[9px] font-black uppercase text-zinc-500">Subsídios de férias e Natal</p><p class="mt-1 text-sm font-bold">{{ ($detailMeta['duodecimos_percentage'] ?? (($detailMeta['allowances_in_duodecimos'] ?? false) ? 100 : 0)) }}% em duodécimos{{ (int) ($detailMeta['duodecimos_percentage'] ?? (($detailMeta['allowances_in_duodecimos'] ?? false) ? 100 : 0)) < 100 ? ' · remanescente pago nos meses correspondentes' : '' }}</p><p class="text-xs text-zinc-500">{{ number_format($detailMonthlyDuodecimos, 2, ',', ' ') }} €/mês em duodécimos</p></div>
-                        <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-[9px] font-black uppercase text-zinc-500">Outros benefícios registados</p><p class="mt-1 text-sm font-bold">{{ $detailMeta['health_insurance'] ?? 'Sem seguro de saúde registado' }}</p><p class="text-xs text-zinc-500">Ajudas de custo: {{ number_format((float) ($detailMeta['expense_allowance'] ?? 0), 2, ',', ' ') }} €/mês</p><p class="mt-1 whitespace-pre-wrap text-xs text-zinc-500">{{ $detailMeta['additional_benefits'] ?? 'Sem benefícios adicionais registados.' }}</p><p class="mt-2 text-[10px] text-zinc-500">O tratamento fiscal/contributivo destes benefícios não é calculado automaticamente.</p></div>
+                        <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"><p class="text-[9px] font-black uppercase text-zinc-500">Outros benefícios registados</p><p class="mt-1 text-sm font-bold">{{ $detailMeta['health_insurance'] ?? 'Sem seguro de saúde registado' }}</p><p class="text-xs text-zinc-500">Ajudas de custo: {{ number_format((float) ($detailMeta['expense_allowance'] ?? 0), 2, ',', ' ') }} €/mês</p><p class="mt-2 text-[10px] text-zinc-500">O tratamento fiscal/contributivo destes benefícios não é calculado automaticamente.</p></div>
+                    </div>
+                    @php
+                        $contractBenefits = collect(preg_split('/\\r\\n|\\r|\\n/', (string) ($detailMeta['additional_benefits'] ?? '')))
+                            ->map(fn ($benefit) => trim(preg_replace('/^\\s*[•·*-]\\s*/u', '', $benefit)))
+                            ->filter();
+                    @endphp
+                    <div class="mt-3 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+                        <p class="text-[9px] font-black uppercase text-zinc-500">Benefícios e regalias do contrato</p>
+                        @if($contractBenefits->isNotEmpty())
+                            <ul class="mt-2 space-y-2">
+                                @foreach($contractBenefits as $benefit)
+                                    <li class="flex items-start gap-2 text-xs text-zinc-600 dark:text-zinc-300"><span class="mt-0.5 text-emerald-500">•</span><span>{{ $benefit }}</span></li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p class="mt-2 text-xs text-zinc-500">Sem benefícios adicionais registados.</p>
+                        @endif
                     </div>
                 @elseif($salaryDetailsTab === 'payments')
                     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
