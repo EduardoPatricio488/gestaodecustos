@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\BankStatementImport;
+use App\Models\BankTransfer;
+use App\Models\Debt;
 use App\Models\CategorizationRule;
 use App\Models\Category;
 use App\Models\Expense;
@@ -59,6 +61,7 @@ class BankImportService
         $monthMap = ['jan'=>'01','fev'=>'02','mar'=>'03','abr'=>'04','mai'=>'05','jun'=>'06','jul'=>'07','ago'=>'08','set'=>'09','out'=>'10','nov'=>'11','dez'=>'12'];
         $monthPattern = '(?:jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)';
         $segments = preg_split('/(?=\d{2}\s+'.$monthPattern.'\s+\d{4}\s+D\.\s*valor:)/iu', $text, -1, PREG_SPLIT_NO_EMPTY);
+        $otherCategoryId = $this->ensureOtherCategory($workspaceId, $userId);
         $categories = Category::where('workspace_id', $workspaceId)->pluck('name', 'id')->all();
         $rows = [];
 
@@ -101,15 +104,19 @@ class BankImportService
                 continue;
             }
 
-            $categoryId = $this->categorize($workspaceId, $userId, $description, $categories, false);
+            $classification = $this->classifyMovement($description, $amount);
+            $categoryId = $classification['type'] === 'expense'
+                ? ($this->categorize($workspaceId, $userId, $description, $categories, false) ?: $otherCategoryId)
+                : null;
             $rows[] = [
                 'signature' => sha1($date->format('Y-m-d').'|'.number_format($amount, 2, '.', '').'|'.mb_strtolower($description).'|'.count($rows)),
                 'date' => $date->format('Y-m-d'),
                 'description' => Str::limit($description, 160),
                 'amount' => round($amount, 2),
                 'balance' => round((float) ($balance ?? 0), 2),
-                'type' => $amount < 0 ? 'expense' : 'income',
+                'type' => $classification['type'] === 'transfer' ? 'transfer' : ($classification['type'] === 'debt_payment' ? 'debt_payment' : ($amount < 0 ? 'expense' : 'income')),
                 'category_id' => $categoryId,
+                'movement_label' => $classification['label'],
             ];
         }
 
@@ -117,9 +124,11 @@ class BankImportService
             throw new \RuntimeException('Não consegui identificar movimentos neste PDF. Confirma que exportaste o extrato completo em PDF através de Contas → Movimentos → PDF.');
         }
 
+        $this->refineMovementTypesWithAi($rows);
+
         $unknownIndexes = [];
         foreach ($rows as $rowIndex => $row) {
-            if (! $row['category_id']) {
+            if ($row['type'] === 'expense' && ! $row['category_id']) {
                 $unknownIndexes[] = $rowIndex;
             }
         }
@@ -127,7 +136,7 @@ class BankImportService
             $descriptions = array_map(fn ($rowIndex) => $rows[$rowIndex]['description'], $unknownIndexes);
             $suggestions = $this->categorizeManyWithAi($descriptions, $categories);
             foreach ($unknownIndexes as $position => $rowIndex) {
-                $rows[$rowIndex]['category_id'] = $suggestions[$position] ?? null;
+                $rows[$rowIndex]['category_id'] = $suggestions[$position] ?? $otherCategoryId;
             }
         }
 
@@ -135,8 +144,9 @@ class BankImportService
             'bank' => 'Santander',
             'source_file_type' => 'pdf',
             'transactions_total' => count($rows),
-            'expenses_total' => count(array_filter($rows, fn ($row) => $row['type'] === 'expense')),
+            'expenses_total' => count(array_filter($rows, fn ($row) => in_array($row['type'], ['expense', 'debt_payment'], true))),
             'incomes_total' => count(array_filter($rows, fn ($row) => $row['type'] === 'income')),
+            'transfers_total' => count(array_filter($rows, fn ($row) => $row['type'] === 'transfer')),
             'rows' => $rows,
         ];
     }
@@ -152,24 +162,66 @@ class BankImportService
         ]);
 
         try {
+            $otherCategoryId = $this->ensureOtherCategory((int) $workspace->id, $userId);
             $categories = Category::where('workspace_id', $workspace->id)->pluck('name', 'id');
             $imported = 0;
             $duplicates = 0;
 
             foreach ($rows as $row) {
-                if (! is_array($row) || ! in_array($row['type'] ?? null, ['expense', 'income'], true)) {
+                if (! is_array($row) || ! in_array($row['type'] ?? null, ['expense', 'income', 'transfer', 'debt_payment'], true)) {
                     continue;
                 }
                 $date = Carbon::parse($row['date'] ?? '');
                 $amount = round((float) ($row['amount'] ?? 0), 2);
                 $description = trim((string) ($row['description'] ?? ''));
-                if ($description === '' || $amount === 0 || ($row['type'] === 'expense' && $amount >= 0) || ($row['type'] === 'income' && $amount <= 0)) {
+                if ($description === '' || $amount === 0 || (in_array($row['type'], ['expense', 'debt_payment'], true) && $amount >= 0) || ($row['type'] === 'income' && $amount <= 0)) {
                     continue;
                 }
-                $categoryId = isset($row['category_id']) && $categories->has((int) $row['category_id']) ? (int) $row['category_id'] : null;
+                $categoryId = isset($row['category_id']) && $categories->has((int) $row['category_id'])
+                    ? (int) $row['category_id']
+                    : (in_array($row['type'], ['expense', 'debt_payment'], true) ? $otherCategoryId : null);
                 $absoluteAmount = abs($amount);
 
-                if ($row['type'] === 'expense') {
+                if ($row['type'] === 'transfer') {
+                    $direction = $amount > 0 ? 'in' : 'out';
+                    $exists = BankTransfer::query()->where('workspace_id', $workspace->id)->where('user_id', $userId)
+                        ->whereDate('transferred_at', $date->toDateString())->where('amount', number_format($absoluteAmount, 2, '.', ''))
+                        ->where('description', $description)->exists();
+                    if ($exists) {
+                        $duplicates++;
+                        continue;
+                    }
+                    BankTransfer::create([
+                        'workspace_id' => $workspace->id, 'user_id' => $userId,
+                        'from_account_id' => null, 'to_account_id' => null,
+                        'direction' => $direction, 'recipient' => $this->extractCounterparty($description),
+                        'amount' => $absoluteAmount, 'currency' => 'EUR', 'description' => $description,
+                        'status' => 'completed', 'transferred_at' => $date,
+                        'bank_statement_import_id' => $import->id,
+                        'notes' => 'Importado automaticamente do extrato bancário.',
+                    ]);
+                } elseif ($row['type'] === 'debt_payment') {
+                    $exists = Expense::query()->where('workspace_id', $workspace->id)->where('user_id', $userId)
+                        ->whereDate('spent_at', $date->toDateString())->where('amount', number_format($absoluteAmount, 2, '.', ''))
+                        ->where('description', $description)->exists();
+                    if ($exists) {
+                        $duplicates++;
+                        continue;
+                    }
+                    $expense = Expense::create([
+                        'user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId,
+                        'bank_statement_import_id' => $import->id, 'title' => Str::limit($description, 100),
+                        'amount' => $absoluteAmount, 'description' => $description, 'spent_at' => $date,
+                        'metadata' => ['import_id' => $import->id, 'bank' => 'santander', 'source_file_type' => 'pdf', 'movement_type' => 'debt_payment'],
+                    ]);
+                    Debt::create([
+                        'workspace_id' => $workspace->id, 'user_id' => $userId,
+                        'type' => 'owe', 'person_name' => 'Mafrense', 'amount' => $absoluteAmount,
+                        'description' => 'Dívida de transportes — '.$description,
+                        'due_at' => $date, 'is_paid' => true, 'expense_id' => $expense->id,
+                        'bank_statement_import_id' => $import->id,
+                    ]);
+                } elseif ($row['type'] === 'expense') {
                     $exists = Expense::query()->where('workspace_id', $workspace->id)->where('user_id', $userId)
                         ->whereDate('spent_at', $date->toDateString())->where('amount', number_format($absoluteAmount, 2, '.', ''))
                         ->where('description', $description)->exists();
@@ -226,6 +278,11 @@ class BankImportService
                     $query->where('bank_statement_import_id', $import->id)
                         ->orWhere('metadata->import_id', $import->id);
                 });
+
+            BankTransfer::query()->where('workspace_id', $import->workspace_id)->where('user_id', $import->user_id)
+                ->where('bank_statement_import_id', $import->id)->delete();
+            Debt::query()->where('workspace_id', $import->workspace_id)->where('user_id', $import->user_id)
+                ->where('bank_statement_import_id', $import->id)->delete();
 
             $incomeIds = Income::query()
                 ->where('workspace_id', $import->workspace_id)
@@ -299,6 +356,124 @@ class BankImportService
         }
 
         return $import->fresh();
+    }
+
+    private function ensureOtherCategory(int $workspaceId, int $userId): int
+    {
+        $category = Category::query()->where('workspace_id', $workspaceId)
+            ->whereRaw('LOWER(name) = ?', ['outros'])->first();
+
+        if (! $category) {
+            $category = Category::create([
+                'workspace_id' => $workspaceId, 'user_id' => $userId,
+                'name' => 'Outros', 'color' => '#64748b',
+            ]);
+        }
+
+        return (int) $category->id;
+    }
+
+    private function normalizeMovementDescription(string $description): string
+    {
+        $description = Str::ascii(mb_strtolower(trim($description)));
+        return preg_replace('/[^a-z0-9]+/i', ' ', $description) ?? $description;
+    }
+
+    private function classifyMovement(string $description, float $amount): array
+    {
+        $normalized = $this->normalizeMovementDescription($description);
+        $patterns = [
+            'trf mbway', 'trf mb way', 'transferencia mbway', 'transferencia mb way',
+            'trf imed', 'trf imediata', 'transferencia imediata', 'betclic pt',
+            'comissao disponibilizacao de cartao de debito',
+            'anulacao de comissao disponibilizacao de cartao de debito',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (str_contains($normalized, $this->normalizeMovementDescription($pattern))) {
+                return ['type' => 'transfer', 'label' => 'Transferência bancária'];
+            }
+        }
+
+        // Alguns PDFs do Santander perdem o "ã" em "Comissão".
+        if (str_starts_with($normalized, 'comisso ') || str_starts_with($normalized, 'comissao ')) {
+            return ['type' => 'transfer', 'label' => 'Transferência bancária'];
+        }
+
+        if (str_contains($normalized, 'mafrense') && str_contains($normalized, 'passes')) {
+            return ['type' => 'debt_payment', 'label' => 'Dívida de transportes'];
+        }
+
+        return ['type' => $amount >= 0 ? 'income' : 'expense', 'label' => $amount >= 0 ? 'Receita' : 'Despesa'];
+    }
+
+    private function refineMovementTypesWithAi(array &$rows): void
+    {
+        if (! $this->hasAiKey() || $rows === []) {
+            return;
+        }
+
+        $candidates = [];
+        foreach ($rows as $index => $row) {
+            if (in_array($row['type'], ['transfer', 'debt_payment'], true)) {
+                continue;
+            }
+            $candidates[] = ['index' => $index, 'description' => $row['description'], 'amount' => $row['amount']];
+        }
+
+        if ($candidates === []) {
+            return;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.config('services.openrouter.api_key'),
+                'HTTP-Referer' => config('app.url'),
+            ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
+                ->timeout((int) config('limits.ai.request_timeout_seconds', 30))
+                ->post('https://openrouter.ai/api/v1/chat/completions', [
+                    'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                    'messages' => [
+                        ['role' => 'system', 'content' => 'És um classificador de movimentos bancários portugueses. Para cada descrição, escolhe exclusivamente uma classe: transfer, debt_payment, expense ou income. Transfer significa envio/receção de dinheiro, transferências MB WAY, imediatas, movimentos Betclic e comissões bancárias explicitamente indicadas como transferências. debt_payment significa liquidação de uma dívida/obrigação identificável. Uma compra, serviço, subscrição, levantamento ou pagamento comercial normal é expense. Um crédito/rendimento é income. Não inventes relações nem assumes que qualquer pagamento é transferência. Usa debt_payment apenas quando o texto indicar claramente uma dívida. Devolve JSON: {"items":[{"index":0,"type":"expense","confidence":0.0}]}.'],
+                        ['role' => 'user', 'content' => json_encode($candidates, JSON_UNESCAPED_UNICODE)],
+                    ],
+                    'max_tokens' => 900, 'temperature' => 0,
+                ]);
+
+            $content = trim((string) $response->json('choices.0.message.content', ''));
+            $content = preg_replace('/^\x60{3}(?:json)?\s*|\s*\x60{3}$/i', '', $content);
+            $decoded = json_decode($content, true);
+
+            foreach (($decoded['items'] ?? []) as $item) {
+                $index = (int) ($item['index'] ?? -1);
+                $type = (string) ($item['type'] ?? '');
+                $confidence = (float) ($item['confidence'] ?? 0);
+                if (! isset($rows[$index]) || $confidence < 0.80 || ! in_array($type, ['transfer', 'debt_payment', 'expense', 'income'], true)) {
+                    continue;
+                }
+                if ($type === 'income' && (float) $rows[$index]['amount'] < 0) {
+                    continue;
+                }
+                if (in_array($type, ['expense', 'debt_payment', 'transfer'], true) && (float) $rows[$index]['amount'] > 0 && $type !== 'transfer') {
+                    continue;
+                }
+                $rows[$index]['type'] = $type;
+                $rows[$index]['movement_label'] = match ($type) {
+                    'transfer' => 'Transferência bancária',
+                    'debt_payment' => 'Pagamento de dívida',
+                    'income' => 'Receita',
+                    default => 'Despesa',
+                };
+            }
+        } catch (\Throwable) {
+            // Mantém a classificação determinística se a IA estiver indisponível.
+        }
+    }
+
+    private function extractCounterparty(string $description): string
+    {
+        $clean = trim(preg_replace('/^(trf\.?\s*mb\s*way|trf\.?\s*imed\.?|transferencia\s+imediata|transferencia\s+mb\s*way)\s*[-:]?\s*/iu', '', $description) ?? $description);
+        return Str::limit($clean !== '' ? $clean : $description, 255, '');
     }
 
     private function expenseAlreadyExists(int $workspaceId, int $userId, Carbon $date, float $amount, string $description): bool
