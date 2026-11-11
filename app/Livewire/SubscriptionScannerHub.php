@@ -16,6 +16,11 @@ class SubscriptionScannerHub extends Component
 
     public float $amountTolerancePct = 15.0;
 
+    public static function suggestedCountForSidebar(): int
+    {
+        return count((new self())->buildSuggestions());
+    }
+
     private function normalizeMerchant(string $text): string
     {
         $clean = mb_strtolower($text);
