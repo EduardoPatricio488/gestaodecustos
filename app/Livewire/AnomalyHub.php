@@ -119,13 +119,13 @@ class AnomalyHub extends Component
                 continue;
             }
 
-            $median = $this->median($samples);
+            $median = self::median($samples);
             if ($median <= 0) {
                 continue;
             }
 
             $deviations = array_map(fn ($v) => abs($v - $median), $samples);
-            $mad = $this->median($deviations);
+            $mad = self::median($deviations);
 
             $robustSigma = $mad > 0 ? ($mad * 1.4826) : max(1.0, $median * 0.15);
             $score = (((float) $expense->amount) - $median) / $robustSigma;
