@@ -65,7 +65,7 @@ class Expenses extends Component
         try {
             $this->refreshScannerQuota();
             if (($this->aiQuota['available'] ?? false) && (int) ($this->aiQuota['remaining'] ?? 0) <= 0) {
-                throw new \\Exception('A quota diária gratuita do OpenRouter está esgotada. A reposição ocorre às 00:00 UTC.');
+                throw new \Exception('A quota diária gratuita do OpenRouter está esgotada. A reposição ocorre às 00:00 UTC.');
             }
             $user = auth()->user();
             $workspace = $user->currentWorkspace;
