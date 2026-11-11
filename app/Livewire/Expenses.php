@@ -164,25 +164,46 @@ class Expenses extends Component
                 $result = json_decode($matches[0], true);
             }
 
-            if (! is_array($result) || json_last_error() !== JSON_ERROR_NONE) {
-                $returnedModel = $response->json('model') ?: config('services.openrouter.model', 'openrouter/free');
-                $finishReason = $response->json('choices.0.finish_reason') ?: 'não indicado';
-                $refusal = $response->json('choices.0.message.refusal');
-                if (is_string($refusal) && trim($refusal) !== '') {
-                    $detail = trim($refusal);
-                } elseif ($finishReason === 'length') {
-                    $detail = 'A resposta da IA foi interrompida pelo limite de geração do modelo gratuito ('.$returnedModel.').';
-                } else {
-                    $detail = 'A IA não conseguiu devolver os dados num formato válido ('.$returnedModel.', motivo: '.$finishReason.').';
-                }
+            $finishReason = $response->json('choices.0.finish_reason') ?: 'não indicado';
 
-                throw new \Exception($detail.' Podes tentar novamente ou escolher a categoria manualmente.');
+            // Se o modelo gratuito cortar a resposta, recuperamos os campos
+            // que já tenham sido enviados e deixamos os restantes para revisão.
+            if ((! is_array($result) || json_last_error() !== JSON_ERROR_NONE) && $finishReason === 'length') {
+                $partial = [];
+                foreach (['category', 'store', 'description', 'date'] as $field) {
+                    if (preg_match('/"'.preg_quote($field, '/').'"\\s*:\\s*"([^"]*)"/i', $raw, $match)) {
+                        $partial[$field] = trim($match[1]);
+                    }
+                }
+                if (preg_match('/"amount"\\s*:\\s*"?([0-9]+(?:[.,][0-9]+)?)"?/i', $raw, $match)) {
+                    $partial['amount'] = str_replace(',', '.', $match[1]);
+                }
+                $result = $partial;
+            }
+
+            if (! is_array($result)) {
+                $returnedModel = $response->json('model') ?: config('services.openrouter.model', 'openrouter/free');
+                $refusal = $response->json('choices.0.message.refusal');
+                $detail = is_string($refusal) && trim($refusal) !== ''
+                    ? trim($refusal)
+                    : 'A IA não conseguiu devolver os dados num formato válido ('.$returnedModel.', motivo: '.$finishReason.').';
+
+                throw new \\Exception($detail.' Podes tentar novamente ou escolher a categoria manualmente.');
             }
 
             $suggestedCategory = trim((string) ($result['category'] ?? ''));
             $category = $categories->first(fn ($item) => mb_strtolower(trim($item->name)) === mb_strtolower($suggestedCategory));
+
+            // Se a resposta tiver sido cortada antes de indicar a categoria,
+            // abre a revisão em "Outros" (ou na primeira categoria disponível).
+            if (! $category && $finishReason === 'length') {
+                $category = $categories->first(fn ($item) => mb_strtolower(trim($item->name)) === 'outros')
+                    ?? $categories->first();
+                $result['category'] = $category?->name;
+            }
+
             if (! $category) {
-                throw new \Exception('A IA não conseguiu associar a fatura a uma categoria existente. Experimenta a escolha manual.');
+                throw new \\Exception('A IA não conseguiu associar a fatura a uma categoria existente. Experimenta a escolha manual.');
             }
             if (blank($category->slug)) {
                 $category->slug = Category::uniqueSlugFor($category->name, $user->current_workspace_id, $category->id);
