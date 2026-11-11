@@ -37,14 +37,22 @@ class StatementImportHub extends Component
         $this->authorizeImport();
         $this->validate(['statementFile' => 'required|file|mimes:pdf,csv,txt,ofx|max:10240']);
 
-        $service = app(BankImportService::class);
-        $extension = strtolower($this->statementFile->getClientOriginalExtension());
-        if ($extension === 'pdf') {
-            $this->preview = $service->previewSantanderPdf($this->statementFile, (int) auth()->user()->current_workspace_id, (int) auth()->id());
-        } else {
-            $this->preview = $service->preview($this->statementFile);
+        try {
+            $service = app(BankImportService::class);
+            $extension = strtolower($this->statementFile->getClientOriginalExtension());
+            if ($extension === 'pdf') {
+                $this->preview = $service->previewSantanderPdf($this->statementFile, (int) auth()->user()->current_workspace_id, (int) auth()->id());
+            } else {
+                $this->preview = $service->preview($this->statementFile);
+            }
+            $this->previewReady = true;
+        } catch (\Throwable $exception) {
+            $this->preview = [];
+            $this->previewReady = false;
+            $this->selectedSignatures = [];
+            $this->addError('statementFile', $exception->getMessage());
+            return;
         }
-        $this->previewReady = true;
         $this->selectedSignatures = array_values(array_filter(array_map(
             fn (array $row) => $row['signature'] ?? null,
             $this->preview['rows'] ?? []
