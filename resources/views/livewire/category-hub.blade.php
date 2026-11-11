@@ -898,7 +898,7 @@
                         </div>
                         <div class="min-w-0">
                             <p class="text-[8px] font-black text-zinc-500 uppercase">Local/Loja</p>
-                            <p class="text-sm font-black text-white truncate">{{ $scannedData['store'] ?: 'Não detetado' }}</p>
+                            <p class="text-sm font-black text-white truncate">{{ $scannedData['store'] ?? 'Não detetado' }}</p>
                         </div>
                     </div>
 
