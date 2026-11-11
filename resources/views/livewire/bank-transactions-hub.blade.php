@@ -59,7 +59,7 @@
         <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-zinc-950/60 p-4" wire:key="edit-bank-movement-modal">
             <div class="my-auto w-full max-w-xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" @click.stop>
                 <div class="mb-6 flex items-start justify-between gap-4">
-                    <div><h2 class="text-xl font-black text-zinc-900 dark:text-white">{{ $editingMovementId ? 'Editar movimento' : 'Nova transferência' }}</h2><p class="mt-1 text-sm text-zinc-500">{{ $editingMovementId ? 'Atualiza os dados desta operação bancária.' : 'Preenche os dados para registar uma transferência para outra pessoa.' }}</p></div>
+                    <div><h2 class="text-xl font-black text-zinc-900 dark:text-white">{{ $editingMovementId ? 'Editar movimento' : 'Novo movimento bancário' }}</h2><p class="mt-1 text-sm text-zinc-500">{{ $editingMovementId ? 'Atualiza os dados desta operação bancária.' : 'Preenche os dados para registar uma transferência para outra pessoa.' }}</p></div>
                     <button type="button" wire:click="$set('showEditModal', false)" class="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"><span class="text-xl font-bold leading-none" aria-hidden="true">×</span></button>
                 </div>
                 <form wire:submit="saveMovement" class="space-y-4">
@@ -69,9 +69,22 @@
                         <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Data</label><input type="date" wire:model="editDate" required class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editDate')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
                     </div>
                     @if($editingMovementType === 'transfer')
+                        <div class="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1.5 dark:bg-zinc-800">
+                            <button type="button" wire:click="$set('editDirection', 'out')" class="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-bold transition {{ $editDirection === 'out' ? 'bg-white text-blue-700 shadow-sm dark:bg-zinc-700 dark:text-blue-300' : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white' }}">
+                                <flux:icon name="arrow-up-right" class="size-4" /> Enviar dinheiro
+                            </button>
+                            <button type="button" wire:click="$set('editDirection', 'in')" class="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-bold transition {{ $editDirection === 'in' ? 'bg-white text-emerald-700 shadow-sm dark:bg-zinc-700 dark:text-emerald-300' : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white' }}">
+                                <flux:icon name="arrow-down-left" class="size-4" /> Receber dinheiro
+                            </button>
+                        </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Conta de origem</label><select wire:model="editFromAccountId" required class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Selecionar conta</option>@foreach($bankAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select>@error('editFromAccountId')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
-                            <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Destinatário</label><input type="text" wire:model="editRecipient" maxlength="255" required placeholder="Nome de quem vai receber" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editRecipient')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
+                            @if($editDirection === 'out')
+                                <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Conta de origem</label><select wire:model="editFromAccountId" required class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Selecionar conta</option>@foreach($bankAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select>@error('editFromAccountId')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
+                                <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Destinatário</label><input type="text" wire:model="editRecipient" maxlength="255" required placeholder="Nome de quem vai receber" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editRecipient')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
+                            @else
+                                <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Conta de destino</label><select wire:model="editToAccountId" required class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Selecionar conta</option>@foreach($bankAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select>@error('editToAccountId')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
+                                <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Remetente</label><input type="text" wire:model="editRecipient" maxlength="255" required placeholder="Nome de quem envia o dinheiro" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editRecipient')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror</div>
+                            @endif
                         </div>
                         <div><label class="mb-1.5 block text-xs font-bold text-zinc-500">Estado</label><select wire:model="editStatus" class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="completed">Concluída</option><option value="cancelled">Cancelada</option></select></div>
                     @else
@@ -80,7 +93,7 @@
                     @endif
                     <div class="flex justify-end gap-3 border-t border-zinc-100 pt-5 dark:border-zinc-800">
                         <button type="button" wire:click="$set('showEditModal', false)" class="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-bold text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancelar</button>
-                        <button type="submit" wire:loading.attr="disabled" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"><span wire:loading.remove wire:target="saveMovement">{{ $editingMovementId ? 'Guardar alterações' : 'Registar transferência' }}</span><span wire:loading wire:target="saveMovement">A guardar...</span></button>
+                        <button type="submit" wire:loading.attr="disabled" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"><span wire:loading.remove wire:target="saveMovement">{{ $editingMovementId ? 'Guardar alterações' : ($editingMovementType === 'transfer' && $editDirection === 'in' ? 'Registar recebimento' : 'Registar transferência') }}</span><span wire:loading wire:target="saveMovement">A guardar...</span></button>
                     </div>
                 </form>
             </div>
