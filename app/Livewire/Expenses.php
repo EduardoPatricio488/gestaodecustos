@@ -114,14 +114,11 @@ class Expenses extends Component
                 ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData]]
                 : ['type' => 'file', 'file' => ['filename' => $this->scannerReceipt->getClientOriginalName(), 'file_data' => 'data:'.$mimeType.';base64,'.$fileData]];
 
-            $prompt = "Lê esta fatura/recibo português e extrai todos os campos visíveis. Devolve APENAS JSON válido. ".
-                "Nunca inventes nem calcules dados que não estejam impressos; usa null quando ausente/ilegível. ".
-                "Números decimais com ponto, data YYYY-MM-DD, hora HH:MM. Não confundas NIF do emitente com NIF do cliente. ".
-                "Escolhe obrigatoriamente category pelo nome exato de uma categoria desta lista: ".json_encode($categoryOptions, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
-                "amount é o total pago; gross_amount é o valor ilíquido; net_amount é a base/valor líquido; vat_amount é o valor do IVA. ".
-                'payment_condition deve ser "Pronto pagamento", "A prazo", "Pagamento parcial", "Pagamento diferido" ou null. '.
-                'payment_method deve ser "Dinheiro", "Multibanco", "Cartão", "MB Way", "Transferência" ou null. '.
-                'Devolve exatamente: {"category":null,"amount":null,"item_name":null,"date":null,"time":null,"quantity":null,"unit":null,"store":null,"description":null,"subcategory":null,"unit_price":null,"vat_rate":null,"gross_amount":null,"net_amount":null,"vat_amount":null,"tax_incidence":null,"amount_tendered":null,"change_amount":null,"payment_condition":null,"payment_method":null,"company_nif":null,"customer_nif":null,"invoice_number":null,"notes":null}';
+            $prompt = "Lê a fatura/recibo. Responde apenas com JSON válido e curto, sem markdown. Não inventes: usa null se não estiver visível. ".
+                "Escolhe category exatamente de: ".json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
+                "amount=total efetivamente pago (número); date=data YYYY-MM-DD; store=estabelecimento; description=descrição curta; subcategory=subcategoria curta; invoice_number=número da fatura; ".
+                "payment_method=Dinheiro, Multibanco, Cartão, MB Way, Transferência ou null; company_nif=NIF do emitente; customer_nif=NIF do cliente; vat_amount=IVA total; notes=nota curta. ".
+                "Não incluas campos extra. Formato exato: {\"category\":null,\"amount\":null,\"date\":null,\"store\":null,\"description\":null,\"subcategory\":null,\"invoice_number\":null,\"payment_method\":null,\"company_nif\":null,\"customer_nif\":null,\"vat_amount\":null,\"notes\":null}";
 
             $apiKey = config('services.openrouter.api_key');
             if (blank($apiKey)) {
@@ -137,7 +134,8 @@ class Expenses extends Component
                 ->timeout(45)
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
-                    'max_tokens' => 3000,
+                    'temperature' => 0,
+                    'max_tokens' => 1200,
                     'response_format' => ['type' => 'json_object'],
                     'reasoning' => ['effort' => 'minimal'],
                     'messages' => [[
