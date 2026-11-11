@@ -41,7 +41,7 @@ class BankImportService
                 'date' => $transaction['date']->format('Y-m-d'),
                 'description' => Str::limit((string) $transaction['description'], 90),
                 'amount' => round($amount, 2),
-                'type' => $classification['type'] === 'transfer' ? 'transfer' : ($classification['type'] === 'debt_payment' ? 'debt_payment' : ($amount >= 0 ? 'income' : 'expense')),
+                'type' => $classification['type'] === 'debt_payment' ? 'debt_payment' : ($classification['type'] === 'transfer' || $amount >= 0 ? 'transfer' : 'expense'),
                 'movement_label' => $classification['label'],
                 'transfer_category' => $classification['transfer_category'] ?? null,
                 'transfer_method' => $this->detectTransferMethod((string) ($transaction['description'] ?? '')),
@@ -53,7 +53,7 @@ class BankImportService
             $description = (string) ($row['description'] ?? '');
             $normalized = $this->normalizeMovementDescription($description);
 
-            if ($this->isExplicitTransferDescription($normalized)) {
+            if ($this->isExplicitTransferDescription($normalized) || (float) ($row['amount'] ?? 0) > 0) {
                 $expenseCandidates[$index]['type'] = 'transfer';
                 $expenseCandidates[$index]['movement_label'] = (float) $row['amount'] >= 0
                     ? 'Transferência recebida'
@@ -190,7 +190,7 @@ class BankImportService
                 'amount' => round($amount, 2),
                 'balance' => round((float) ($balance ?? 0), 2),
                 'transfer_method' => $this->detectTransferMethod($description),
-                'type' => $classification['type'] === 'transfer' ? 'transfer' : ($classification['type'] === 'debt_payment' ? 'debt_payment' : ($amount < 0 ? 'expense' : 'income')),
+                'type' => $classification['type'] === 'debt_payment' ? 'debt_payment' : ($classification['type'] === 'transfer' || $amount >= 0 ? 'transfer' : 'expense'),
                 'category_id' => $categoryId,
                 'movement_label' => $classification['label'],
                 'transfer_category' => $classification['transfer_category'] ?? null,
@@ -209,7 +209,7 @@ class BankImportService
             $description = (string) ($row['description'] ?? '');
             $normalized = $this->normalizeMovementDescription($description);
 
-            if ($this->isExplicitTransferDescription($normalized)) {
+            if ($this->isExplicitTransferDescription($normalized) || (float) ($row['amount'] ?? 0) > 0) {
                 $rows[$rowIndex]['type'] = 'transfer';
                 $rows[$rowIndex]['movement_label'] = (float) $row['amount'] >= 0
                     ? 'Transferência recebida'
@@ -246,7 +246,7 @@ class BankImportService
             'source_file_type' => 'pdf',
             'transactions_total' => count($rows),
             'expenses_total' => count(array_filter($rows, fn ($row) => in_array($row['type'], ['expense', 'debt_payment'], true))),
-            'incomes_total' => count(array_filter($rows, fn ($row) => $row['type'] === 'income')),
+            'incomes_total' => 0,
             'transfers_total' => count(array_filter($rows, fn ($row) => $row['type'] === 'transfer')),
             'rows' => $rows,
         ];
