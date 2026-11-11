@@ -144,48 +144,6 @@
         </div>
     @endif
 
-    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-4xl">
-        <h3 class="text-sm font-black uppercase tracking-widest text-zinc-400 mb-4">Regras automáticas de categorização</h3>
-        <form wire:submit="saveCategorizationRule" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-            <div class="md:col-span-2">
-                <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Texto-chave</label>
-                <input wire:model="ruleKeyword" type="text" placeholder="Ex.: netflix, uber, continente" class="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm" />
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Categoria</label>
-                <select wire:model="ruleCategoryId" class="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm">
-                    <option value="">Selecionar</option>
-                    @foreach($categories as $category)
-                        <option value="{{ $category->id }}">{{ $category->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Prioridade</label>
-                <div class="flex gap-2">
-                    <input wire:model="rulePriority" type="number" min="1" max="9999" class="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm" />
-                    <flux:button type="submit" variant="primary" class="rounded-xl font-black mt-1">Guardar</flux:button>
-                </div>
-            </div>
-        </form>
-        <div class="mt-5 space-y-2">
-            @forelse($rules as $rule)
-                <div class="flex items-center justify-between gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/30">
-                    <div>
-                        <p class="text-sm font-black dark:text-white">"{{ $rule->keyword }}" → {{ $rule->category?->name ?? 'Sem categoria' }}</p>
-                        <p class="text-[10px] text-zinc-400 uppercase font-black mt-1">Prioridade {{ $rule->priority }} · {{ $rule->is_active ? 'Ativa' : 'Inativa' }}</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <flux:button type="button" variant="ghost" wire:click="toggleRule({{ $rule->id }})">{{ $rule->is_active ? 'Desativar' : 'Ativar' }}</flux:button>
-                        <flux:button type="button" variant="danger" wire:click="deleteRule({{ $rule->id }})" wire:confirm="Remover regra?">Remover</flux:button>
-                    </div>
-                </div>
-            @empty
-                <p class="text-xs text-zinc-400">Ainda não tens regras personalizadas. Cria uma para melhorar a categorização automática.</p>
-            @endforelse
-        </div>
-    </div>
-
     @if($imports->isNotEmpty())
         <div>
             <h3 class="text-sm font-black uppercase tracking-widest text-zinc-400 mb-4">Histórico de importações</h3>
