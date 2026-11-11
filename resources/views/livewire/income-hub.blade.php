@@ -620,7 +620,7 @@
         <div class="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <div class="flex items-center gap-1.5">
                 <flux:tooltip toggleable content="Número de contratos salariais que se encontram atualmente ativos.">
-                    <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Salários ativos</p>
+                    <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Registos</p>
                 </flux:tooltip>
             </div>
             <p class="mt-1 text-2xl font-black text-indigo-600">{{ $salaryActiveCount }}</p>
