@@ -44,6 +44,21 @@ class BankTransactionsHub extends Component
             ->when($user->currentWorkspace?->type === 'personal', fn ($query) => $query->where('user_id', $user->id));
     }
 
+    public function openNewTransfer(): void
+    {
+        $this->authorizeMutation();
+        $this->resetValidation();
+        $this->editingMovementId = null;
+        $this->editingMovementType = 'transfer';
+        $this->editDescription = '';
+        $this->editAmount = '';
+        $this->editDate = now()->format('Y-m-d');
+        $this->editFromAccountId = null;
+        $this->editToAccountId = null;
+        $this->editStatus = 'completed';
+        $this->showEditModal = true;
+    }
+
     public function editMovement(string $key): void
     {
         $this->authorizeMutation();
@@ -112,21 +127,33 @@ class BankTransactionsHub extends Component
                     ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
                     ->findOrFail($this->editToAccountId);
 
-                $transfer = $this->scopedQuery(BankTransfer::class)->lockForUpdate()->findOrFail($this->editingMovementId);
-                $oldFrom = (int) $transfer->from_account_id;
-                $oldTo = (int) $transfer->to_account_id;
-                if ($transfer->status === 'completed') {
-                    BankAccount::whereKey($oldFrom)->increment('balance', $transfer->amount);
-                    BankAccount::whereKey($oldTo)->decrement('balance', $transfer->amount);
+                if ($this->editingMovementId) {
+                    $transfer = $this->scopedQuery(BankTransfer::class)->lockForUpdate()->findOrFail($this->editingMovementId);
+                    if ($transfer->status === 'completed') {
+                        BankAccount::whereKey($transfer->from_account_id)->increment('balance', $transfer->amount);
+                        BankAccount::whereKey($transfer->to_account_id)->decrement('balance', $transfer->amount);
+                    }
+                    $transfer->update([
+                        'from_account_id' => $from->id,
+                        'to_account_id' => $to->id,
+                        'amount' => (float) $this->editAmount,
+                        'description' => $this->editDescription ?: null,
+                        'transferred_at' => $this->editDate,
+                        'status' => $this->editStatus,
+                    ]);
+                } else {
+                    BankTransfer::create([
+                        'workspace_id' => $workspaceId,
+                        'user_id' => $user->id,
+                        'from_account_id' => $from->id,
+                        'to_account_id' => $to->id,
+                        'amount' => (float) $this->editAmount,
+                        'currency' => $from->currency ?? 'EUR',
+                        'description' => $this->editDescription ?: null,
+                        'transferred_at' => $this->editDate,
+                        'status' => $this->editStatus,
+                    ]);
                 }
-                $transfer->update([
-                    'from_account_id' => $from->id,
-                    'to_account_id' => $to->id,
-                    'amount' => (float) $this->editAmount,
-                    'description' => $this->editDescription ?: null,
-                    'transferred_at' => $this->editDate,
-                    'status' => $this->editStatus,
-                ]);
                 if ($this->editStatus === 'completed') {
                     $from->decrement('balance', (float) $this->editAmount);
                     $to->increment('balance', (float) $this->editAmount);
@@ -165,7 +192,7 @@ class BankTransactionsHub extends Component
         });
 
         $this->showEditModal = false;
-        $this->dispatch('toast', variant: 'success', text: 'Movimento atualizado com sucesso.');
+        $this->dispatch('toast', variant: 'success', text: $this->editingMovementId ? 'Movimento atualizado com sucesso.' : 'Transferência registada com sucesso.');
     }
 
     public function deleteMovement(string $key): void
