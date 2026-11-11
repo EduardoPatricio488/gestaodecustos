@@ -983,7 +983,17 @@ class InvestmentsHub extends Component
 
     private function coinGeckoId(string $symbol): string
     {
-        $map = ['BTC' => 'bitcoin', 'ETH' => 'ethereum', 'SOL' => 'solana', 'ADA' => 'cardano', 'DOT' => 'polkadot', 'MATIC' => 'matic-network'];
+        $map = [
+            'BTC' => 'bitcoin', 'ETH' => 'ethereum', 'SOL' => 'solana', 'ADA' => 'cardano',
+            'DOT' => 'polkadot', 'MATIC' => 'matic-network', 'AVAX' => 'avalanche-2',
+            'LINK' => 'chainlink', 'UNI' => 'uniswap', 'ATOM' => 'cosmos', 'XRP' => 'ripple',
+            'LTC' => 'litecoin', 'DOGE' => 'dogecoin', 'SHIB' => 'shiba-inu',
+            'BNB' => 'binancecoin', 'TRX' => 'tron', 'TON' => 'the-open-network',
+            'SUI' => 'sui', 'APT' => 'aptos', 'OP' => 'optimism', 'ARB' => 'arbitrum',
+            'INJ' => 'injective-protocol', 'FET' => 'fetch-ai', 'NEAR' => 'near',
+            'FTM' => 'fantom', 'ALGO' => 'algorand', 'XLM' => 'stellar',
+            'VET' => 'vechain', 'ICP' => 'internet-computer', 'HBAR' => 'hedera-hashgraph',
+        ];
 
         return $map[strtoupper($symbol)] ?? strtolower($symbol);
     }
