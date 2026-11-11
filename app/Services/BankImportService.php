@@ -246,8 +246,14 @@ class BankImportService
                 }
                 $date = Carbon::parse($row['date'] ?? '');
                 $amount = round((float) ($row['amount'] ?? 0), 2);
+                // Ao alterar o tipo na revisão, normaliza o sinal para o registo correto.
+                if (in_array($row['type'], ['expense', 'debt_payment'], true)) {
+                    $amount = -abs($amount);
+                } elseif ($row['type'] === 'income') {
+                    $amount = abs($amount);
+                }
                 $description = trim((string) ($row['description'] ?? ''));
-                if ($description === '' || $amount === 0 || (in_array($row['type'], ['expense', 'debt_payment'], true) && $amount >= 0) || ($row['type'] === 'income' && $amount <= 0)) {
+                if ($description === '' || $amount === 0) {
                     continue;
                 }
                 $categoryId = isset($row['category_id']) && $categories->has((int) $row['category_id'])
