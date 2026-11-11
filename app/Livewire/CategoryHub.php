@@ -469,9 +469,9 @@ PROMPT;
                     ->filter(fn ($part) => is_string($part) && trim($part) !== '')
                     ->implode("\n");
             }
-            $rawText = trim(preg_replace('/^\\x60{3}(?:json)?\s*|\s*\\x60{3}$/i', '', (string) $content));
+            $rawText = trim(preg_replace('/^\x60{3}(?:json)?\s*|\s*\x60{3}$/i', '', (string) $content));
             $result = json_decode($rawText, true);
-            if (! is_array($result) && preg_match('/\\{.*\\}/s', $rawText, $matches)) {
+            if (! is_array($result) && preg_match('/\{.*\}/s', $rawText, $matches)) {
                 $result = json_decode($matches[0], true);
             }
             if (! is_array($result)) {
