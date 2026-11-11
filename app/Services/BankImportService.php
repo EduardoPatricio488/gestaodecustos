@@ -150,6 +150,7 @@ class BankImportService
                     }
                     Expense::create([
                         'user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId,
+                        'bank_statement_import_id' => $import->id,
                         'title' => Str::limit($description, 100), 'amount' => $absoluteAmount,
                         'description' => $description, 'spent_at' => $date,
                         'metadata' => ['import_id' => $import->id, 'bank' => 'santander', 'source_file_type' => 'pdf'],
@@ -164,6 +165,7 @@ class BankImportService
                     }
                     \App\Models\Income::create([
                         'user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId,
+                        'bank_statement_import_id' => $import->id,
                         'description' => $description, 'amount' => $absoluteAmount,
                         'received_at' => $date, 'type' => 'Extra', 'source' => 'outros',
                         'frequency' => 'pontual',
@@ -183,6 +185,47 @@ class BankImportService
         }
 
         return $import->fresh();
+    }
+
+    public function deleteImport(BankStatementImport $import): array
+    {
+        return DB::transaction(function () use ($import): array {
+            $expensesQuery = Expense::query()
+                ->where('workspace_id', $import->workspace_id)
+                ->where('user_id', $import->user_id)
+                ->where(function ($query) use ($import) {
+                    $query->where('bank_statement_import_id', $import->id)
+                        ->orWhere('metadata->import_id', $import->id);
+                });
+
+            $incomeIds = Income::query()
+                ->where('workspace_id', $import->workspace_id)
+                ->where('user_id', $import->user_id)
+                ->where('bank_statement_import_id', $import->id)
+                ->pluck('id');
+
+            $contributions = GoalContribution::query()
+                ->whereIn('income_id', $incomeIds)
+                ->get(['id', 'goal_id', 'amount']);
+
+            foreach ($contributions->groupBy('goal_id') as $goalId => $items) {
+                $total = (float) $items->sum('amount');
+                DB::table('goals')->where('id', $goalId)->where('workspace_id', $import->workspace_id)
+                    ->update(['current_amount' => DB::raw('GREATEST(0, current_amount - '.number_format($total, 2, '.', '').')')]);
+            }
+
+            $contributions->each->delete();
+            $deletedExpenses = $expensesQuery->count();
+            $deletedIncomes = Income::query()
+                ->where('workspace_id', $import->workspace_id)
+                ->where('user_id', $import->user_id)
+                ->where('bank_statement_import_id', $import->id)
+                ->delete();
+            $expensesQuery->delete();
+            $import->delete();
+
+            return ['expenses' => $deletedExpenses, 'incomes' => $deletedIncomes];
+        });
     }
 
     public function import(Workspace $workspace, int $userId, UploadedFile $file, ?array $selectedSignatures = null): BankStatementImport
@@ -218,7 +261,7 @@ class BankImportService
                     continue;
                 }
                 $categoryId = $this->categorize($workspace->id, $userId, $description, $categories->toArray());
-                Expense::create(['user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId, 'title' => Str::limit($description, 100), 'amount' => $amount, 'description' => $description, 'spent_at' => $transaction['date'], 'metadata' => ['import_id' => $import->id, 'bank' => $bank, 'source_file_type' => $sourceFileType]]);
+                Expense::create(['user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId, 'bank_statement_import_id' => $import->id, 'title' => Str::limit($description, 100), 'amount' => $amount, 'description' => $description, 'spent_at' => $transaction['date'], 'metadata' => ['import_id' => $import->id, 'bank' => $bank, 'source_file_type' => $sourceFileType]]);
                 $imported++;
             }
             $import->update(['status' => 'completed', 'transactions_total' => count($transactions), 'transactions_imported' => $imported, 'errors' => $duplicatesSkipped > 0 ? ['duplicates_skipped' => $duplicatesSkipped] : null]);
