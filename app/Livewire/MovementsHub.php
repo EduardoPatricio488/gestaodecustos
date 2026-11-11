@@ -445,7 +445,7 @@ class MovementsHub extends Component
 
         $category = null;
         if (in_array($this->conversionType, ['expense', 'subscription'], true)) {
-            $rules['editingCategoryId'] = $this->conversionType === 'expense' || $this->conversionType === 'subscription' ? 'required|integer' : 'nullable|integer';
+            $rules['editingCategoryId'] = 'required|integer';
             if ($this->editingCategoryId !== '') {
                 $category = $this->conversionCategoryQuery()
                     ->with('fields')
