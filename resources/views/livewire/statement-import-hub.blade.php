@@ -74,6 +74,7 @@
                     <span class="px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 font-bold">{{ $preview['transactions_total'] ?? 0 }} movimentos</span>
                     <span class="px-3 py-2 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 font-bold">{{ $preview['expenses_total'] ?? 0 }} despesas</span>
                     <span class="px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 font-bold">{{ $preview['incomes_total'] ?? 0 }} receitas</span>
+                    <span class="px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 font-bold">{{ $preview['transfers_total'] ?? 0 }} transferências</span>
                 </div>
             </div>
 
@@ -88,6 +89,8 @@
             <div class="space-y-3">
                 @foreach(($preview['rows'] ?? []) as $index => $tx)
                     @php($isIncome = ($tx['type'] ?? 'expense') === 'income')
+                    @php($isTransfer = ($tx['type'] ?? '') === 'transfer')
+                    @php($isDebtPayment = ($tx['type'] ?? '') === 'debt_payment')
                     <div wire:key="statement-row-{{ $tx['signature'] ?? $index }}" class="rounded-2xl border {{ in_array($tx['signature'] ?? '', $selectedSignatures, true) ? 'border-blue-300 dark:border-blue-800' : 'border-zinc-200 dark:border-zinc-800' }} p-4 space-y-3">
                         <div class="flex items-start gap-3">
                             <input type="checkbox" class="mt-1 rounded border-zinc-300" wire:model.live="selectedSignatures" value="{{ $tx['signature'] ?? '' }}" />
@@ -102,7 +105,7 @@
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-[10px] font-black uppercase text-zinc-400 mb-1">Valor (€)</label>
-                                    <input type="number" step="0.01" wire:model="preview.rows.{{ $index }}.amount" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs font-bold {{ $isIncome ? 'text-emerald-600' : 'text-red-600' }}" />
+                                    <input type="number" step="0.01" wire:model="preview.rows.{{ $index }}.amount" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs font-bold {{ $isIncome ? 'text-emerald-600' : ($isTransfer ? 'text-blue-600' : 'text-red-600') }}" />
                                 </div>
                                 <div class="md:col-span-3">
                                     <label class="block text-[10px] font-black uppercase text-zinc-400 mb-1">Categoria</label>
@@ -116,7 +119,7 @@
                             </div>
                         </div>
                         <div class="flex items-center justify-between pl-7">
-                            <span class="text-[10px] font-black uppercase tracking-wider {{ $isIncome ? 'text-emerald-600' : 'text-red-600' }}">{{ $isIncome ? 'Receita' : 'Despesa' }}</span>
+                            <span class="text-[10px] font-black uppercase tracking-wider {{ $isIncome ? 'text-emerald-600' : ($isTransfer ? 'text-blue-600' : 'text-red-600') }}">{{ $isTransfer ? 'Transferência bancária' : ($isDebtPayment ? 'Pagamento de dívida' : ($isIncome ? 'Receita' : 'Despesa')) }}</span>
                             @if(isset($tx['balance']))
                                 <span class="text-[10px] text-zinc-400">Saldo após movimento: {{ number_format((float) $tx['balance'], 2, ',', '.') }} €</span>
                             @endif
