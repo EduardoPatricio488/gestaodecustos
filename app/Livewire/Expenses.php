@@ -127,11 +127,17 @@ class Expenses extends Component
 
             // Nesta etapa só precisamos dos dados essenciais para abrir a revisão da despesa.
             // Um prompt curto reduz o tempo de resposta e evita truncagens dos modelos gratuitos.
-            $prompt = "Analisa esta fatura portuguesa e devolve APENAS JSON válido, sem markdown. ".
-                "A categoria tem de ser exatamente uma destas: ".json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
-                "Lê cuidadosamente a imagem inteira, incluindo o cabeçalho e o rodapé. Extrai: category (categoria mais adequada), amount (total final efetivamente pago, número), date (data da fatura YYYY-MM-DD), store (nome do estabelecimento/emitente) e description (produtos ou serviços comprados, em poucas palavras). ".
-                "Não confundas o NIF com valores, nem subtotal com total pago. Se conseguires ler pelo menos um destes dados, devolve-o; usa null apenas para os campos realmente ausentes ou ilegíveis. ".
-                'Devolve apenas este JSON: {"category":null,"amount":null,"date":null,"store":null,"description":null}';
+            $categoryNames = json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $prompt = <<<PROMPT
+Analisa a fatura portuguesa na imagem ou PDF, página a página, incluindo cabeçalho, linhas de artigos, totais e rodapé. Devolve APENAS JSON válido, sem markdown.
+A categoria tem de ser exatamente uma destas: {$categoryNames}.
+Extrai TODOS os campos visíveis. Não inventes nem calcules dados ausentes. Usa null quando não estiverem impressos ou legíveis.
+amount = total final efetivamente pago; gross_amount = total ilíquido; net_amount = base tributável/valor líquido; vat_amount = IVA total; vat_rate = taxa de IVA.
+date = YYYY-MM-DD; time = HH:MM; quantity e valores monetários são números decimais com ponto.
+Não confundas NIF do emitente com NIF do cliente, nem subtotal com total pago. Para payment_method usa apenas Dinheiro, Multibanco, Cartão, MB Way, Transferência ou null.
+Devolve exatamente esta estrutura, mantendo todos os campos:
+{"category":null,"amount":null,"date":null,"time":null,"quantity":null,"unit":null,"store":null,"description":null,"item_name":null,"subcategory":null,"unit_price":null,"vat_rate":null,"gross_amount":null,"net_amount":null,"vat_amount":null,"tax_incidence":null,"amount_tendered":null,"change_amount":null,"payment_condition":null,"payment_method":null,"company_nif":null,"customer_nif":null,"invoice_number":null,"notes":null}
+PROMPT;
 
             $apiKey = config('services.openrouter.api_key');
             if (blank($apiKey)) {
@@ -148,7 +154,7 @@ class Expenses extends Component
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
                     'temperature' => 0,
-                    'max_tokens' => 900,
+                    'max_tokens' => 3200,
                     'messages' => [[
                         'role' => 'user',
                         'content' => [['type' => 'text', 'text' => $prompt], $contentPart],
@@ -225,7 +231,7 @@ class Expenses extends Component
                     ->post('https://openrouter.ai/api/v1/chat/completions', [
                         'model' => config('services.openrouter.model', 'openrouter/free'),
                         'temperature' => 0,
-                        'max_tokens' => 1100,
+                        'max_tokens' => 2400,
                         'messages' => [[
                             'role' => 'user',
                             'content' => [['type' => 'text', 'text' => $retryPrompt], $contentPart],
