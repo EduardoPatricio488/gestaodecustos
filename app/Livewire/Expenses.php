@@ -114,11 +114,11 @@ class Expenses extends Component
                 ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData]]
                 : ['type' => 'file', 'file' => ['filename' => $this->scannerReceipt->getClientOriginalName(), 'file_data' => 'data:'.$mimeType.';base64,'.$fileData]];
 
-            $prompt = "Lê a fatura/recibo. Responde apenas com JSON válido e curto, sem markdown. Não inventes: usa null se não estiver visível. ".
-                "Escolhe category exatamente de: ".json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
-                "amount=total efetivamente pago (número); date=data YYYY-MM-DD; store=estabelecimento; description=descrição curta; subcategory=subcategoria curta; invoice_number=número da fatura; ".
-                "payment_method=Dinheiro, Multibanco, Cartão, MB Way, Transferência ou null; company_nif=NIF do emitente; customer_nif=NIF do cliente; vat_amount=IVA total; notes=nota curta. ".
-                "Não incluas campos extra. Formato exato: {\"category\":null,\"amount\":null,\"date\":null,\"store\":null,\"description\":null,\"subcategory\":null,\"invoice_number\":null,\"payment_method\":null,\"company_nif\":null,\"customer_nif\":null,\"vat_amount\":null,\"notes\":null}";
+            $prompt = "Analisa a fatura e devolve APENAS um objeto JSON minificado, numa única linha. Sem explicações nem markdown. ".
+                "category deve ser exatamente um destes nomes: ".json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
+                "amount é o total efetivamente pago, apenas número; date é YYYY-MM-DD; store é o nome do estabelecimento; description é uma descrição muito curta; subcategory é uma subcategoria curta ou null. ".
+                "Se um dado não estiver visível, usa null. Não inventes e não incluas campos extra. ".
+                "Formato obrigatório: {\"category\":null,\"amount\":null,\"date\":null,\"store\":null,\"description\":null,\"subcategory\":null}";
 
             $apiKey = config('services.openrouter.api_key');
             if (blank($apiKey)) {
@@ -135,7 +135,7 @@ class Expenses extends Component
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
                     'temperature' => 0,
-                    'max_tokens' => 1200,
+                    'max_tokens' => 700,
                     'response_format' => ['type' => 'json_object'],
                     'reasoning' => ['effort' => 'minimal'],
                     'messages' => [[
