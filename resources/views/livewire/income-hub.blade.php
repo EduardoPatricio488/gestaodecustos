@@ -533,7 +533,7 @@
             <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
                 <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Como é calculado o total ao fim de um ano" class="flex size-5 items-center justify-center rounded-full border border-zinc-300 bg-white/80 text-[10px] font-black text-zinc-600 shadow-sm transition hover:scale-110 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">i</button>
                 <div x-show="open" x-cloak x-transition role="tooltip" class="absolute left-0 top-full z-40 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-2xl border border-zinc-700 bg-zinc-950 p-4 text-left normal-case shadow-2xl">
-                    <p class="text-[10px] leading-relaxed text-zinc-300">Apresenta uma estimativa para 12 meses, somando o total líquido previsto dos contratos ativos e o subsídio de alimentação configurado. Considera os pagamentos anuais definidos em cada contrato.</p>
+                    <p class="text-[10px] leading-relaxed text-zinc-300">Soma os valores dos rendimentos fixos associados à fonte de rendimento com maior total. A fonte correspondente é apresentada por baixo. Este valor não é atualmente calculado como uma projeção anual.</p>
                 </div>
             </div>
         </div>
