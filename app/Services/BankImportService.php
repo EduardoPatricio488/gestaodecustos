@@ -149,6 +149,16 @@ class BankImportService
 
         $this->refineMovementTypesWithAi($rows);
 
+        // Compras a comerciantes conhecidos nunca podem ser promovidas a transferência pela IA.
+        foreach ($rows as $rowIndex => $row) {
+            $description = (string) ($row['description'] ?? '');
+            if ($this->isKnownMerchantExpense($this->normalizeMovementDescription($description)) && (float) ($row['amount'] ?? 0) < 0) {
+                $rows[$rowIndex]['type'] = 'expense';
+                $rows[$rowIndex]['transfer_category'] = null;
+                $rows[$rowIndex]['category_id'] = $this->categorize($workspaceId, $userId, $description, $categories, false) ?: $otherCategoryId;
+            }
+        }
+
         $unknownIndexes = [];
         foreach ($rows as $rowIndex => $row) {
             if ($row['type'] === 'expense' && ! $row['category_id']) {
@@ -195,11 +205,10 @@ class BankImportService
                     continue;
                 }
                 $rowDescription = trim((string) ($row['description'] ?? ''));
-                if ($this->isMafrenseNemPasses($rowDescription) && (float) ($row['amount'] ?? 0) < 0) {
+                if ($this->isKnownMerchantExpense($this->normalizeMovementDescription($rowDescription)) && (float) ($row['amount'] ?? 0) < 0) {
                     $row['type'] = 'expense';
                     $row['transfer_category'] = null;
-                    $transportCategoryId = $categories->filter(fn ($name) => str_contains(mb_strtolower((string) $name), 'transport'))->keys()->first();
-                    $row['category_id'] = $transportCategoryId ? (int) $transportCategoryId : $otherCategoryId;
+                    $row['category_id'] = $this->categorize((int) $workspace->id, $userId, $rowDescription, $categories->all(), false) ?: $otherCategoryId;
                 }
                 if (! in_array($row['type'] ?? null, ['expense', 'income', 'transfer', 'debt_payment'], true)) {
                     continue;
@@ -397,7 +406,7 @@ class BankImportService
                 }
                 // A Mafrense Nem Passes é sempre uma despesa de transporte,
                 // mesmo que uma classificação anterior ou IA a marque como transferência/dívida.
-                if ($this->isMafrenseNemPasses($description) && $signedAmount < 0) {
+                if ($this->isKnownMerchantExpense($this->normalizeMovementDescription($description)) && $signedAmount < 0) {
                     $classification['type'] = 'expense';
                     $classification['transfer_category'] = null;
                 }
