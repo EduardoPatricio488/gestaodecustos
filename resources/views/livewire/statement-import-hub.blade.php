@@ -185,7 +185,7 @@
                         <p class="text-sm font-bold dark:text-white">{{ $movement['description'] }}</p>
                         <p class="text-[11px] text-zinc-400">{{ \Carbon\Carbon::parse($movement['date'])->format('d/m/Y') }} · {{ $movement['type'] }} · {{ $movement['category'] }}</p>
                     </div>
-                    <span class="text-sm font-black {{ $movement['type'] === 'Receita' || str_contains($movement['type'], 'recebida') ? 'text-emerald-600' : (str_contains($movement['type'], 'Transferência enviada') ? 'text-blue-600' : 'text-red-600') }}">
+                    <span class="text-sm font-black {{ $movement['type'] === 'Receita' || str_contains($movement['type'], 'recebida') ? 'text-emerald-600' : 'text-red-600' }}">
                         {{ $movement['type'] === 'Receita' || str_contains($movement['type'], 'recebida') ? '+' : '−' }}{{ number_format($movement['amount'], 2, ',', '.') }} €
                     </span>
                 </div>
