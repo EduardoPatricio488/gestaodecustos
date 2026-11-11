@@ -149,6 +149,7 @@ class StatementImportHub extends Component
             ->findOrFail($importId);
 
         $expenses = Expense::query()
+            ->with('category:id,name')
             ->where('workspace_id', $workspaceId)
             ->where('user_id', auth()->id())
             ->where(function ($query) use ($import) {
