@@ -49,12 +49,16 @@ class CompanySubscriptionPaymentService
                             );
 
                             $processed++;
-                            $dueDate = match ($locked->cycle) {
-                                'quarterly' => $dueDate->copy()->addMonthsNoOverflow(3),
-                                'semiannual' => $dueDate->copy()->addMonthsNoOverflow(6),
-                                'annual', 'yearly' => $dueDate->copy()->addYearNoOverflow(),
-                                default => $dueDate->copy()->addMonthNoOverflow(),
+                            $months = match ($locked->cycle) {
+                                'quarterly' => 3,
+                                'semiannual' => 6,
+                                'annual', 'yearly' => 12,
+                                default => 1,
                             };
+
+                            $nextMonth = $dueDate->copy()->startOfMonth()->addMonthsNoOverflow($months);
+                            $billingDay = min((int) $locked->billing_day, $nextMonth->daysInMonth);
+                            $dueDate = $nextMonth->day($billingDay);
                         }
 
                         $locked->renewal_date = $dueDate->toDateString();
