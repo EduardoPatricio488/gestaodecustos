@@ -827,6 +827,16 @@ class InvestmentsHub extends Component
     private function fetchStockPrice(string $symbol): ?float
     {
         return Cache::remember('stock_price_'.strtoupper($symbol), self::CACHE_PRICES_TTL, function () use ($symbol) {
+            // O VUAA.DE da XTB corresponde ao ISIN IE00BFMXXD54.
+            // Para este ETF usamos primeiro a cotação negociada na Tradegate,
+            // que continua a publicar preços depois do fecho da sessão regular XETRA.
+            if (in_array(strtoupper($symbol), ['VUAA.DE', 'VUAA'], true)) {
+                $tradegatePrice = $this->fetchFromTradegate('IE00BFMXXD54');
+                if ($tradegatePrice !== null && $tradegatePrice > 0) {
+                    return $tradegatePrice;
+                }
+            }
+
             $price = $this->fetchFromYahoo($symbol);
             if ($price !== null) {
                 return $price;
@@ -834,6 +844,82 @@ class InvestmentsHub extends Component
 
             return $this->fetchFromAlphaVantage($symbol);
         });
+    }
+
+    private function fetchFromTradegate(string $isin): ?float
+    {
+        try {
+            $response = Http::timeout(12)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (compatible; FinanceProIA/1.0)',
+                    'Accept' => 'text/html,application/xhtml+xml',
+                    'Cache-Control' => 'no-cache',
+                ])
+                ->get('https://www.tradegatebsx.com/orderbuch.php', [
+                    'isin' => $isin,
+                    'lang' => 'en',
+                ]);
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $previous = libxml_use_internal_errors(true);
+            $document = new \\DOMDocument();
+            $loaded = $document->loadHTML($response->body());
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+
+            if (! $loaded) {
+                return null;
+            }
+
+            $xpath = new \\DOMXPath($document);
+            foreach ($xpath->query('//tr') as $row) {
+                $cells = [];
+                foreach ($xpath->query('./th|./td', $row) as $cell) {
+                    $cells[] = trim(preg_replace('/\\s+/u', ' ', $cell->textContent) ?? '');
+                }
+
+                if (count($cells) < 2 || strcasecmp($cells[0], 'Last') !== 0) {
+                    continue;
+                }
+
+                $rawPrice = preg_replace('/[^0-9,.]/', '', $cells[1]) ?? '';
+                if (str_contains($rawPrice, ',') && str_contains($rawPrice, '.')) {
+                    $rawPrice = strrpos($rawPrice, ',') > strrpos($rawPrice, '.')
+                        ? str_replace('.', '', str_replace(',', '.', $rawPrice))
+                        : str_replace(',', '', $rawPrice);
+                } else {
+                    $rawPrice = str_replace(',', '.', $rawPrice);
+                }
+
+                if (is_numeric($rawPrice) && (float) $rawPrice > 0) {
+                    $price = round((float) $rawPrice, 6);
+
+                    Log::info('InvestmentsHub: cotação Tradegate obtida', [
+                        'isin' => $isin,
+                        'price' => $price,
+                    ]);
+
+                    return $price;
+                }
+            }
+
+            Log::warning('InvestmentsHub: não foi possível interpretar a cotação Tradegate', [
+                'isin' => $isin,
+                'status' => $response->status(),
+            ]);
+
+            return null;
+        } catch (\\Throwable $e) {
+            Log::warning('InvestmentsHub: fonte Tradegate indisponível', [
+                'isin' => $isin,
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     private function fetchFromYahoo(string $symbol): ?float
