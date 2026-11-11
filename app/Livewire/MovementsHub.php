@@ -22,6 +22,8 @@ class MovementsHub extends Component
     public string $period = 'all';
     public string $editingType = '';
     public string $conversionType = '';
+    public bool $showEditModal = false;
+    public bool $showConversionModal = false;
     public string $editingFromAccountId = '';
     public string $editingToAccountId = '';
     public ?int $editingId = null;
@@ -97,6 +99,8 @@ class MovementsHub extends Component
         $this->resetValidation();
         $this->editingType = $type;
         $this->conversionType = $type;
+        $this->showEditModal = true;
+        $this->showConversionModal = false;
         $this->editingFromAccountId = (string) ($record->from_account_id ?? '');
         $this->editingToAccountId = (string) ($record->to_account_id ?? '');
         $this->editingId = $id;
@@ -133,8 +137,23 @@ class MovementsHub extends Component
         $this->editingMetadata = $this->formatMetadataForDisplay($record->metadata) ?? '';
     }
 
+    public function openConversionModal(string $type, int $id): void
+    {
+        $this->editMovement($type, $id);
+        $this->showEditModal = false;
+        $this->showConversionModal = true;
+    }
+
+    public function closeConversionModal(): void
+    {
+        $this->showConversionModal = false;
+        $this->cancelEditMovement();
+    }
+
     public function cancelEditMovement(): void
     {
+        $this->showEditModal = false;
+        $this->showConversionModal = false;
         $this->reset([
             'editingType', 'editingId', 'editingTitle', 'editingDescription', 'editingAmount',
             'conversionType', 'editingFromAccountId', 'editingToAccountId',
