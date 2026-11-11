@@ -259,7 +259,8 @@ class BankTransactionsHub extends Component
                 'account' => (($item->direction ?? 'out') === 'in' ? $item->toAccount?->name : $item->fromAccount?->name) ?? 'Conta bancária',
                 'counterpart' => $item->recipient ?: 'Destinatário não indicado',
                 'amount' => (float) $item->amount, 'direction' => ($item->direction ?? 'out') === 'in' ? 'in' : 'out',
-                'channel' => $item->category === 'Imposto do Selo' ? 'Imposto do Selo' : 'Transferência bancária', 'status' => $item->status,
+                'channel' => $item->category === 'Imposto do Selo' ? 'Imposto do Selo' : 'Transferência bancária',
+                'status' => in_array(mb_strtolower((string) $item->status), ['completed', 'complete', 'pending', 'pendente'], true) ? 'Concluído' : (($item->status === 'cancelled') ? 'Cancelada' : 'Concluído'),
             ]);
 
         $incomes = $scope(Income::query()->with('bankAccount'))
