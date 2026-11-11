@@ -21,6 +21,9 @@ class MovementsHub extends Component
     public string $search = '';
     public string $period = 'all';
     public string $editingType = '';
+    public string $conversionType = '';
+    public string $editingFromAccountId = '';
+    public string $editingToAccountId = '';
     public ?int $editingId = null;
     public string $editingTitle = '';
     public string $editingDescription = '';
@@ -68,6 +71,9 @@ class MovementsHub extends Component
         $record = $this->scopedRecordQuery($type, $id)->firstOrFail();
         $this->resetValidation();
         $this->editingType = $type;
+        $this->conversionType = $type;
+        $this->editingFromAccountId = (string) ($record->from_account_id ?? '');
+        $this->editingToAccountId = (string) ($record->to_account_id ?? '');
         $this->editingId = $id;
         $this->editingTitle = (string) ($record->title ?? $record->name ?? '');
         $this->editingDescription = (string) ($record->description ?? '');
@@ -103,6 +109,7 @@ class MovementsHub extends Component
     {
         $this->reset([
             'editingType', 'editingId', 'editingTitle', 'editingDescription', 'editingAmount',
+            'conversionType', 'editingFromAccountId', 'editingToAccountId',
             'editingDate', 'editingCategoryId', 'editingAccountId', 'editingNotes',
             'editingSource', 'editingIncomeType', 'editingFrequency', 'editingRecipient',
             'editingTransferMethod', 'editingTransferCategory',
@@ -232,6 +239,123 @@ class MovementsHub extends Component
         $this->dispatch('toast', text: 'Registo atualizado com sucesso.');
     }
 
+
+
+    public function convertMovement(): void
+    {
+        abort_unless($this->editingType !== '' && $this->editingId, 404);
+        $allowed = ['expense', 'income', 'transfer', 'subscription'];
+        if (! in_array($this->editingType, $allowed, true) || ! in_array($this->conversionType, $allowed, true)) {
+            $this->addError('conversionType', 'Este tipo de registo não pode ser convertido.');
+            return;
+        }
+        if ($this->conversionType === $this->editingType) {
+            $this->addError('conversionType', 'Seleciona um tipo diferente do atual.');
+            return;
+        }
+
+        $rules = [
+            'conversionType' => 'required|in:expense,income,transfer,subscription',
+            'editingAmount' => 'required|numeric|min:0.01',
+            'editingDate' => 'required|date',
+            'editingCurrency' => 'required|string|size:3',
+        ];
+        if ($this->conversionType === 'subscription') {
+            $rules['editingTitle'] = 'required|string|max:255';
+            $rules['editingCategoryId'] = 'required|integer';
+            $rules['editingCycle'] = 'required|in:monthly,yearly,weekly,quarterly';
+        }
+        if ($this->conversionType === 'transfer') {
+            $rules['editingFromAccountId'] = 'required|integer|different:editingToAccountId';
+            $rules['editingToAccountId'] = 'required|integer';
+        }
+        $this->validate($rules);
+
+        $user = auth()->user();
+        $workspaceId = (int) $user->current_workspace_id;
+        $personal = $user->currentWorkspace?->type === 'personal';
+        $category = null;
+        if (in_array($this->conversionType, ['expense', 'income', 'subscription'], true) && $this->editingCategoryId !== '') {
+            $category = Category::where('workspace_id', $workspaceId)
+                ->when($personal, fn ($q) => $q->where('user_id', $user->id))
+                ->findOrFail((int) $this->editingCategoryId);
+        }
+        $account = null;
+        if (in_array($this->conversionType, ['expense', 'income'], true) && $this->editingAccountId !== '') {
+            $account = BankAccount::where('workspace_id', $workspaceId)
+                ->when($personal, fn ($q) => $q->where('user_id', $user->id))
+                ->findOrFail((int) $this->editingAccountId);
+        }
+        $fromAccount = null;
+        $toAccount = null;
+        if ($this->conversionType === 'transfer') {
+            $fromAccount = BankAccount::where('workspace_id', $workspaceId)->when($personal, fn ($q) => $q->where('user_id', $user->id))->findOrFail((int) $this->editingFromAccountId);
+            $toAccount = BankAccount::where('workspace_id', $workspaceId)->when($personal, fn ($q) => $q->where('user_id', $user->id))->findOrFail((int) $this->editingToAccountId);
+        }
+
+        DB::transaction(function () use ($category, $account, $fromAccount, $toAccount, $user, $workspaceId): void {
+            $old = $this->scopedRecordQuery($this->editingType, (int) $this->editingId)->lockForUpdate()->firstOrFail();
+            $amount = round((float) $this->editingAmount, 2);
+            $description = trim($this->editingDescription) !== '' ? trim($this->editingDescription) : trim($this->editingTitle);
+            $common = [
+                'user_id' => $user->id,
+                'workspace_id' => $workspaceId,
+                'amount' => $amount,
+                'currency' => strtoupper($this->editingCurrency),
+            ];
+
+            if ($this->conversionType === 'expense') {
+                Expense::create($common + [
+                    'title' => $this->editingTitle ?: $description ?: 'Despesa',
+                    'description' => $description ?: null,
+                    'category_id' => $category?->id,
+                    'bank_account_id' => $account?->id,
+                    'spent_at' => $this->editingDate,
+                    'amount_paid' => $amount,
+                    'is_company' => $this->editingCompanyPaid,
+                ]);
+            } elseif ($this->conversionType === 'income') {
+                Income::create($common + [
+                    'description' => $description ?: 'Receita',
+                    'category_id' => $category?->id,
+                    'bank_account_id' => $account?->id,
+                    'received_at' => $this->editingDate,
+                    'source' => $this->editingSource ?: 'Movimento convertido',
+                    'type' => $this->editingIncomeType ?: 'other',
+                    'notes' => $this->editingNotes ?: null,
+                ]);
+            } elseif ($this->conversionType === 'transfer') {
+                BankTransfer::create($common + [
+                    'from_account_id' => $fromAccount->id,
+                    'to_account_id' => $toAccount->id,
+                    'direction' => 'out',
+                    'description' => $description ?: 'Transferência',
+                    'transferred_at' => $this->editingDate,
+                    'status' => 'completed',
+                    'notes' => $this->editingNotes ?: null,
+                ]);
+            } else {
+                Subscription::create($common + [
+                    'name' => $this->editingTitle ?: $description ?: 'Nova assinatura',
+                    'category_id' => $category->id,
+                    'cycle' => $this->editingCycle,
+                    'billing_day' => (int) Carbon::parse($this->editingDate)->day,
+                    'started_at' => $this->editingDate,
+                    'renewal_date' => $this->editingDate,
+                    'payment_method' => 'other',
+                    'status' => 'active',
+                    'is_active' => true,
+                    'paid_by_company' => $this->editingCompanyPaid,
+                    'notes' => $this->editingNotes ?: null,
+                ]);
+            }
+
+            $old->delete();
+        });
+
+        $this->cancelEditMovement();
+        $this->dispatch('toast', text: 'Movimento convertido com sucesso. O registo anterior foi substituído.');
+    }
 
     private function normalizeStatusForDisplay(?string $status): string
     {
