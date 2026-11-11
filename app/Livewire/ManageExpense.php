@@ -268,10 +268,12 @@ PROMPT;
                 if ($date !== null) {
                     $this->spent_at = $date;
                 }
-                $this->description = trim($result['store'] ?? '');
+                $this->description = trim((string) ($result['description'] ?? $result['item_name'] ?? $result['store'] ?? ''));
                 $this->subcategory = $result['subcategory'] ?? $this->subcategory;
                 $this->scanSuccess = true;
                 $this->dispatch('scan-completed');
+            } else {
+                throw new \Exception('A IA não conseguiu devolver os dados da fatura em JSON.');
             }
         } catch (\Exception $e) {
             $this->scanError = 'Não foi possível analisar a fatura: '.$e->getMessage();
