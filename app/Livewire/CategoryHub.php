@@ -94,7 +94,7 @@ class CategoryHub extends Component
 
     public function refreshScannerQuota(): void
     {
-        $this->aiQuota = app(\\App\\Services\\OpenRouterQuotaService::class)->dailyQuota(true);
+        $this->aiQuota = app(\App\Services\OpenRouterQuotaService::class)->dailyQuota(true);
     }
 
     protected $rules = [
