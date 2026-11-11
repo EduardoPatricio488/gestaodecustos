@@ -22,6 +22,7 @@ class BankTransfer extends Model
         'amount',
         'currency',
         'category',
+        'transfer_method',
         'description',
         'status',
         'transferred_at',
