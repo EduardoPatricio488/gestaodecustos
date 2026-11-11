@@ -217,7 +217,8 @@ class BankImportService
                     $expense = Expense::create([
                         'user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId,
                         'bank_statement_import_id' => $import->id, 'title' => Str::limit($description, 100),
-                        'amount' => $absoluteAmount, 'description' => $description, 'spent_at' => $date,
+                        'amount' => $absoluteAmount, 'amount_paid' => $absoluteAmount, 'status' => 'paid',
+                        'description' => $description, 'spent_at' => $date,
                         'metadata' => ['import_id' => $import->id, 'bank' => 'santander', 'source_file_type' => 'pdf', 'movement_type' => 'debt_payment'],
                     ]);
                     Debt::create([
