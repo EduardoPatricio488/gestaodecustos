@@ -428,7 +428,7 @@
     </div>
 {{-- ENTRADAS EXTRAS --}}
 <div class="relative p-6 rounded-[2rem] bg-white/40 dark:bg-zinc-900/40
-            backdrop-blur-xl border border-white/20 shadow-xl overflow-hidden group">
+            backdrop-blur-xl border border-white/20 shadow-xl overflow-visible group relative z-10 hover:z-50">
 
     <div class="absolute inset-0 opacity-10">
         <flux:icon name="bolt" class="size-32 text-yellow-500/20 rotate-12" />
@@ -463,7 +463,7 @@
     @endphp
 
     <div class="relative p-6 rounded-[2rem] bg-white/40 dark:bg-zinc-900/40
-                backdrop-blur-xl border border-white/20 shadow-xl overflow-hidden group">
+                backdrop-blur-xl border border-white/20 shadow-xl overflow-visible group relative z-10 hover:z-50">
 
         <div class="absolute inset-0 opacity-10">
             <flux:icon name="banknotes" class="size-32 text-amber-500/20 rotate-12" />
