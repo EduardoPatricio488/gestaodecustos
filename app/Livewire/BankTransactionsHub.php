@@ -26,6 +26,7 @@ class BankTransactionsHub extends Component
     public ?int $editToAccountId = null;
     public string $editRecipient = '';
     public string $editDirection = 'out';
+    public string $editTransferMethod = 'bank_transfer';
     public string $editChannel = 'bank';
     public string $editStatus = 'completed';
     public ?int $editCategoryId = null;
@@ -66,6 +67,7 @@ class BankTransactionsHub extends Component
         $this->editToAccountId = null;
         $this->editRecipient = '';
         $this->editDirection = 'out';
+        $this->editTransferMethod = 'bank_transfer';
         $this->editStatus = 'completed';
         $this->showEditModal = true;
     }
@@ -87,6 +89,7 @@ class BankTransactionsHub extends Component
             $this->editAmount = (string) $item->amount;
             $this->editDate = $item->transferred_at?->format('Y-m-d') ?? now()->format('Y-m-d');
             $this->editDirection = (string) ($item->direction ?? 'out');
+            $this->editTransferMethod = (string) ($item->transfer_method ?: 'bank_transfer');
             $this->editFromAccountId = $item->from_account_id ? (int) $item->from_account_id : null;
             $this->editToAccountId = $item->to_account_id ? (int) $item->to_account_id : null;
             $this->editRecipient = (string) ($item->recipient ?: ($this->editDirection === 'in' ? $item->fromAccount?->name : $item->toAccount?->name) ?? '');
@@ -195,6 +198,7 @@ class BankTransactionsHub extends Component
             'editAmount' => 'required|numeric|min:0.01',
             'editDate' => 'required|date',
             'editChannel' => 'required|in:bank,mbway',
+            'editTransferMethod' => 'required|in:bank_transfer,immediate_transfer,multibanco,mbway,paypal,revolut,other',
         ]);
 
         $user = auth()->user();
@@ -235,6 +239,7 @@ class BankTransactionsHub extends Component
                         'description' => $this->editDescription ?: null,
                         'transferred_at' => $this->editDate,
                         'status' => $this->editStatus,
+                        'transfer_method' => $this->editTransferMethod,
                     ]);
                 } else {
                     BankTransfer::create([
@@ -249,6 +254,7 @@ class BankTransactionsHub extends Component
                         'description' => $this->editDescription ?: null,
                         'transferred_at' => $this->editDate,
                         'status' => $this->editStatus,
+                        'transfer_method' => $this->editTransferMethod,
                     ]);
                 }
 
@@ -337,10 +343,11 @@ class BankTransactionsHub extends Component
                 'id' => 'transfer-'.$item->id, 'date' => $item->transferred_at,
                 'kind' => 'transfer', 'label' => $item->description ?: 'Transferência entre contas',
                 'category' => $item->category,
+                'transfer_method' => $item->transfer_method,
                 'account' => (($item->direction ?? 'out') === 'in' ? $item->toAccount?->name : $item->fromAccount?->name) ?? 'Conta bancária',
                 'counterpart' => $item->recipient ?: 'Destinatário não indicado',
                 'amount' => (float) $item->amount, 'direction' => ($item->direction ?? 'out') === 'in' ? 'in' : 'out',
-                'channel' => $item->category === 'Imposto do Selo' ? 'Imposto do Selo' : 'Transferência bancária',
+                'channel' => $item->category === 'Imposto do Selo' ? 'Imposto do Selo' : match ($item->transfer_method) { 'mbway' => 'MB WAY', 'multibanco' => 'Multibanco', 'paypal' => 'PayPal', 'revolut' => 'Revolut', 'immediate_transfer' => 'Transferência imediata', 'other' => 'Outro', default => 'Transferência bancária' },
                 'status' => mb_strtolower((string) $item->status) === 'cancelled' ? 'Cancelada' : 'Concluído',
             ]);
 
