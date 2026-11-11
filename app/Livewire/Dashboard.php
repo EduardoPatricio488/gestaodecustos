@@ -1286,7 +1286,7 @@ class Dashboard extends Component
                 'date' => $item->renewal_date ?: $item->started_at,
                 'amount' => (float) $item->amount,
                 'direction' => $item->paid_by_company ? 'company' : 'out',
-                'status' => 'Completo',
+                'status' => $item->paid_by_company ? 'Empresa paga esta assinatura' : 'Completo',
             ]));
 
         $recentMovements = $recentMovements->concat($movementScope(\App\Models\SubscriptionPayment::query()->with('subscription'))
