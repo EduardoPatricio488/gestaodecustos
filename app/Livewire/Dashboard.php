@@ -1230,6 +1230,82 @@ class Dashboard extends Component
         $accountOverview['meal_allowance_annual'] = $dashboardMealAllowanceAnnualProjection;
         $accountOverview['salary_payments_count'] = $projectedSalaryHistoryPayments->count();
 
+        // Histórico unificado da dashboard: usa os mesmos tipos e critérios da página Movimentos.
+        $movementScope = fn ($query) => $query->where('workspace_id', $currentWs->id)
+            ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id));
+
+        $recentMovements = collect();
+
+        $recentMovements = $recentMovements->concat($movementScope(Expense::query()->with('category'))
+            ->get()->map(fn ($item) => [
+                'key' => 'expense-'.$item->id,
+                'type' => 'expense',
+                'type_label' => 'Despesa',
+                'title' => $item->title ?: $item->description ?: 'Despesa',
+                'detail' => $item->category?->name ?: 'Sem categoria',
+                'date' => $item->spent_at,
+                'amount' => (float) ((float) $item->amount_paid > 0 ? $item->amount_paid : $item->amount),
+                'direction' => 'out',
+                'status' => $item->status ?: 'Completo',
+            ]));
+
+        $recentMovements = $recentMovements->concat($movementScope(Income::query()->with('category'))
+            ->where(fn ($q) => $q->whereNull('added_to_salary')->orWhere('added_to_salary', false))
+            ->get()->map(fn ($item) => [
+                'key' => 'income-'.$item->id,
+                'type' => 'income',
+                'type_label' => 'Receita',
+                'title' => $item->description ?: 'Receita',
+                'detail' => $item->category?->name ?: ($item->source ?: 'Receita'),
+                'date' => $item->received_at,
+                'amount' => (float) $item->amount,
+                'direction' => 'in',
+                'status' => 'Completo',
+            ]));
+
+        $recentMovements = $recentMovements->concat($movementScope(\\App\\Models\\BankTransfer::query())
+            ->get()->map(fn ($item) => [
+                'key' => 'transfer-'.$item->id,
+                'type' => 'transfer',
+                'type_label' => 'Transferência',
+                'title' => $item->description ?: ($item->recipient ?: 'Transferência bancária'),
+                'detail' => 'Transferência bancária',
+                'date' => $item->transferred_at,
+                'amount' => (float) $item->amount,
+                'direction' => ($item->direction ?? 'out') === 'in' ? 'in' : 'out',
+                'status' => $item->status ?: 'Completo',
+            ]));
+
+        $recentMovements = $recentMovements->concat($movementScope(Subscription::query())
+            ->get()->map(fn ($item) => [
+                'key' => 'subscription-'.$item->id,
+                'type' => 'subscription',
+                'type_label' => 'Assinatura',
+                'title' => $item->name ?: 'Assinatura',
+                'detail' => 'Periodicidade: '.($item->cycle ?: 'Recorrente'),
+                'date' => $item->renewal_date ?: $item->started_at,
+                'amount' => (float) $item->amount,
+                'direction' => $item->paid_by_company ? 'company' : 'out',
+                'status' => $item->is_active ? 'Ativa' : 'Inativa',
+            ]));
+
+        $recentMovements = $recentMovements->concat($movementScope(\\App\\Models\\SubscriptionPayment::query()->with('subscription'))
+            ->get()->map(fn ($item) => [
+                'key' => 'subscription-payment-'.$item->id,
+                'type' => 'subscription',
+                'type_label' => 'Mensalidade',
+                'title' => $item->subscription?->name ?: 'Assinatura',
+                'detail' => 'Mensalidade paga pela empresa',
+                'date' => $item->paid_at,
+                'amount' => (float) $item->amount,
+                'direction' => 'company',
+                'status' => 'Completo',
+            ]));
+
+        $recentMovements = $recentMovements
+            ->sortByDesc(fn ($item) => $item['date'] ? Carbon::parse($item['date'])->getTimestamp() : 0)
+            ->values();
+
         return view('livewire.dashboard', [
             'currentWs' => $currentWs,
             'dashboardProjectedSalaryNet' => $dashboardProjectedSalaryNet,
@@ -1294,7 +1370,7 @@ class Dashboard extends Component
             'chartMax' => max($last6->max('spent') ?? 0, $last6->max('earned') ?? 0, 1),
             'last6' => $last6,
             'byCategory' => $byCategory,
-            'recent' => Expense::with(['category:id,name', 'user:id,name'])->where('workspace_id', $currentWs->id)->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))->latest('spent_at')->take(5)->get(['id', 'workspace_id', 'category_id', 'user_id', 'description', 'amount', 'spent_at']),
+            'recentMovements' => $recentMovements,
         ]);
     }
 
