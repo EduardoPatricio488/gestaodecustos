@@ -777,6 +777,8 @@
                     </button>
                 </div>
 
+                @include('livewire.partials.openrouter-quota', ['aiQuota' => $aiQuota])
+
                 {{-- Erro do Scan --}}
                 @if($scanError)
                 <div class="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3">
