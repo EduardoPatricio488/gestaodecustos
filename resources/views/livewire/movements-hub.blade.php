@@ -66,8 +66,7 @@
                                 @endif
                             @endforeach
                         </dl>
-                        @if(true)
-                            <div class="mt-4 flex flex-wrap justify-end gap-2">
+                        <div class="mt-4 flex flex-wrap justify-end gap-2">
                                 <button type="button" wire:click="editMovement('{{ $movement['edit_type'] ?? $movement['type'] }}', {{ $movement['record_id'] }})" class="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 transition hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
                                     <flux:icon name="pencil-square" class="size-4" /> Editar informações
                                 </button>
@@ -77,7 +76,6 @@
                                     </a>
                                 @endif
                             </div>
-                        @endif
 
                         @if($editingId && $editingType === ($movement['edit_type'] ?? $movement['type']) && (int) $editingId === (int) ($movement['record_id'] ?? 0))
                             <form wire:submit="saveMovement" class="mt-4 space-y-4 rounded-2xl border border-blue-200 bg-white p-4 dark:border-blue-900 dark:bg-zinc-900">
@@ -103,6 +101,8 @@
                                         <label class="space-y-1 text-xs font-bold text-zinc-500">Categoria
                                             <select wire:model="editingCategoryId" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Sem categoria</option>@foreach($editCategories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select>
                                         </label>
+                                    @endif
+                                    @if(in_array($editingType, ['expense','income'], true))
                                         <label class="space-y-1 text-xs font-bold text-zinc-500">Conta bancária
                                             <select wire:model="editingAccountId" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Sem conta associada</option>@foreach($editAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select>
                                         </label>
