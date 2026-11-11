@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\BankAccount;
 use App\Models\BankTransfer;
+use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Income;
 use App\Services\BusinessAccessService;
@@ -27,6 +28,8 @@ class BankTransactionsHub extends Component
     public string $editDirection = 'out';
     public string $editChannel = 'bank';
     public string $editStatus = 'completed';
+    public ?int $editCategoryId = null;
+    public bool $canConvertTransferToExpense = false;
 
     private function authorizeMutation(): void
     {
@@ -52,6 +55,8 @@ class BankTransactionsHub extends Component
         $this->resetValidation();
         $this->editingMovementId = null;
         $this->editingMovementType = 'transfer';
+        $this->canConvertTransferToExpense = false;
+        $this->editCategoryId = null;
         $this->editDescription = '';
         $this->editAmount = '';
         $this->editDate = now()->format('Y-m-d');
@@ -83,6 +88,8 @@ class BankTransactionsHub extends Component
             $this->editToAccountId = $item->to_account_id ? (int) $item->to_account_id : null;
             $this->editRecipient = (string) ($item->recipient ?: ($this->editDirection === 'in' ? $item->fromAccount?->name : $item->toAccount?->name) ?? '');
             $this->editStatus = (string) $item->status;
+            $this->canConvertTransferToExpense = ! is_null($item->bank_statement_import_id);
+            $this->editCategoryId = null;
         } elseif ($type === 'income') {
             $item = $this->scopedQuery(Income::class)->where(fn ($q) => $q->whereNotNull('bank_account_id')->orWhereNotNull('bank_statement_import_id'))
                 ->where(fn ($q) => $q->whereNull('added_to_salary')->orWhere('added_to_salary', false))
@@ -104,6 +111,77 @@ class BankTransactionsHub extends Component
         }
 
         $this->showEditModal = true;
+    }
+
+    public function convertTransferToExpense(): void
+    {
+        $this->authorizeMutation();
+
+        if ($this->editingMovementType !== 'transfer' || ! $this->editingMovementId || ! $this->canConvertTransferToExpense) {
+            abort(403);
+        }
+
+        $this->validate([
+            'editCategoryId' => 'required|integer',
+        ], [
+            'editCategoryId.required' => 'Seleciona a categoria da despesa.',
+        ]);
+
+        $user = auth()->user();
+        $workspaceId = (int) $user->current_workspace_id;
+
+        DB::transaction(function () use ($user, $workspaceId): void {
+            $transfer = $this->scopedQuery(BankTransfer::class)
+                ->lockForUpdate()
+                ->findOrFail($this->editingMovementId);
+
+            if (! $transfer->bank_statement_import_id) {
+                throw new \\RuntimeException('Só podes converter movimentos importados de extratos bancários.');
+            }
+
+            $categoryQuery = Category::query()
+                ->where('workspace_id', $workspaceId)
+                ->whereKey($this->editCategoryId);
+
+            if ($user->currentWorkspace?->type === 'personal') {
+                $categoryQuery->where('user_id', $user->id);
+            }
+
+            $category = $categoryQuery->firstOrFail();
+
+            // Se a transferência tiver alterado saldos de contas internas, repõe o saldo antes de a remover.
+            if ($transfer->status === 'completed') {
+                if (($transfer->direction ?? 'out') === 'in' && $transfer->to_account_id) {
+                    BankAccount::whereKey($transfer->to_account_id)->decrement('balance', $transfer->amount);
+                } elseif ($transfer->from_account_id) {
+                    BankAccount::whereKey($transfer->from_account_id)->increment('balance', $transfer->amount);
+                }
+            }
+
+            $amount = round((float) $transfer->amount, 2);
+            Expense::create([
+                'user_id' => $user->id,
+                'workspace_id' => $workspaceId,
+                'category_id' => $category->id,
+                'bank_statement_import_id' => $transfer->bank_statement_import_id,
+                'title' => mb_substr((string) ($transfer->description ?: $transfer->recipient ?: 'Despesa importada'), 0, 100),
+                'amount' => $amount,
+                'amount_paid' => $amount,
+                'status' => 'paid',
+                'description' => $transfer->description ?: $transfer->recipient,
+                'spent_at' => $transfer->transferred_at,
+                'metadata' => [
+                    'import_id' => $transfer->bank_statement_import_id,
+                    'movement_type' => 'expense',
+                    'converted_from_bank_transfer_id' => $transfer->id,
+                ],
+            ]);
+
+            $transfer->delete();
+        });
+
+        $this->showEditModal = false;
+        $this->dispatch('toast', variant: 'success', text: 'Movimento convertido em despesa com sucesso.');
     }
 
     public function saveMovement(): void
@@ -311,6 +389,9 @@ class BankTransactionsHub extends Component
             'totalStampDuty' => $transfers->filter(fn ($item) => ($item['category'] ?? null) === 'Imposto do Selo')->sum('amount'),
             'movementCount' => $movements->count(),
             'bankAccounts' => $scope(BankAccount::query())->orderBy('name')->get(),
+            'expenseCategories' => Category::query()->where('workspace_id', $workspaceId)
+                ->when($personal, fn ($q) => $q->where('user_id', $user->id))
+                ->where('hidden_from_sidebar', false)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 }
