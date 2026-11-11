@@ -1478,6 +1478,7 @@ $hasStoreAccess = $hasLockInAccess;
             ->whereNotNull('slug')
             ->where('slug', '!=', '')
             ->where('hidden_from_sidebar', false)
+            ->orderByRaw("CASE WHEN LOWER(TRIM(name)) = 'outros' THEN 1 ELSE 0 END ASC")
             ->orderBy('order', 'asc')
             ->orderBy('name', 'asc')
             ->get()
