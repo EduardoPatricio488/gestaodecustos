@@ -1477,7 +1477,10 @@ $hasStoreAccess = $hasLockInAccess;
         $sidebarCategories = \App\Models\Category::where('workspace_id', $workspaceId)
             ->whereNotNull('slug')
             ->where('slug', '!=', '')
-            ->where('hidden_from_sidebar', false)
+            ->where(function ($query) {
+                $query->where('hidden_from_sidebar', false)
+                    ->orWhereRaw("LOWER(TRIM(name)) = 'outros'");
+            })
             ->orderByRaw("CASE WHEN LOWER(TRIM(name)) = 'outros' THEN 1 ELSE 0 END ASC")
             ->orderBy('order', 'asc')
             ->orderBy('name', 'asc')
@@ -1499,8 +1502,8 @@ $hasStoreAccess = $hasLockInAccess;
             :href="route('hub.category', $sidebarCat->slug)"
             wire:navigate.hover
             @class([
-                'font-bold text-zinc-900 dark:text-white' => $sidebarCat->is_fixed,
-                'opacity-90' => !$sidebarCat->is_fixed
+                'font-bold text-zinc-900 dark:text-white' => $sidebarCat->is_fixed || $lowerName === 'outros',
+                'opacity-90' => !$sidebarCat->is_fixed && $lowerName !== 'outros'
             ])
         >
             {{ $sidebarCat->name }}
