@@ -407,11 +407,11 @@ class IncomeHub extends Component
                     ? trim($refusal)
                     : 'O modelo '.$returnedModel.' não devolveu JSON válido (motivo de conclusão: '.$finishReason.').';
 
-                report(new \\RuntimeException(
+                report(new \RuntimeException(
                     'Scanner de contrato: resposta inválida; modelo='.$returnedModel.'; finish_reason='.$finishReason.'; content_type='.gettype($content)
                 ));
 
-                throw new \\RuntimeException($message.' Experimenta novamente ou seleciona um modelo gratuito com suporte a imagens e saída JSON.');
+                throw new \RuntimeException($message.' Experimenta novamente ou seleciona um modelo gratuito com suporte a imagens e saída JSON.');
             }
 
             if (! is_array($data)) {
