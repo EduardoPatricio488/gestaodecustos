@@ -839,32 +839,86 @@ class InvestmentsHub extends Component
     private function fetchFromYahoo(string $symbol): ?float
     {
         try {
-            $res = Http::timeout(8)->withHeaders(['User-Agent' => 'Mozilla/5.0', 'Accept' => 'application/json'])->get("https://query1.finance.yahoo.com/v8/finance/chart/{$symbol}", ['interval' => '1d', 'range' => '1d']);
+            // Usar candles intradiários dos últimos 5 dias evita depender apenas de
+            // regularMarketPrice, que pode ficar preso a um fecho antigo em alguns tickers.
+            $res = Http::timeout(12)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0',
+                    'Accept' => 'application/json',
+                    'Cache-Control' => 'no-cache',
+                ])
+                ->get("https://query1.finance.yahoo.com/v8/finance/chart/{$symbol}", [
+                    'interval' => '5m',
+                    'range' => '5d',
+                    'includePrePost' => 'false',
+                ]);
+
             if (! $res->ok()) {
                 return null;
             }
-            $data = $res->json();
-            $price = $data['chart']['result'][0]['meta']['regularMarketPrice'] ?? null;
-            if (! $price) {
+
+            $result = $res->json('chart.result.0');
+            if (! is_array($result)) {
                 return null;
             }
-            $currency = strtoupper($data['chart']['result'][0]['meta']['currency'] ?? 'EUR');
+
+            $meta = $result['meta'] ?? [];
+            $price = null;
+            $closes = $result['indicators']['quote'][0]['close'] ?? [];
+
+            // O último candle com preço é a cotação mais recente disponibilizada
+            // pelo Yahoo, incluindo a última sessão quando a bolsa já fechou.
+            foreach (array_reverse($closes) as $close) {
+                if (is_numeric($close) && (float) $close > 0) {
+                    $price = (float) $close;
+                    break;
+                }
+            }
+
+            // Fallback para o preço de mercado indicado nos metadados da resposta.
+            if ($price === null) {
+                $metaPrice = $meta['regularMarketPrice'] ?? null;
+                $price = is_numeric($metaPrice) && (float) $metaPrice > 0
+                    ? (float) $metaPrice
+                    : null;
+            }
+
+            if ($price === null) {
+                return null;
+            }
+
+            $rawCurrency = (string) ($meta['currency'] ?? 'EUR');
+            $currency = strtoupper($rawCurrency);
+
+            // O Yahoo representa alguns ativos britânicos em pence (GBp), não GBP.
+            if ($rawCurrency === 'GBp') {
+                $price /= 100;
+                $currency = 'GBP';
+            }
+
             if ($currency === 'USD') {
                 $rate = $this->getEurUsdRate();
                 if ($rate === null) {
                     return null;
-                } $price *= $rate;
+                }
+                $price *= $rate;
             } elseif ($currency === 'GBP') {
                 $rate = $this->getEurGbpRate();
                 if ($rate === null) {
                     return null;
-                } $price *= $rate;
-            } elseif ($currency === 'GBP' || $currency === 'GBp') {
+                }
+                $price *= $rate;
+            } elseif ($currency !== 'EUR') {
                 return null;
             }
 
-            return (float) $price;
-        } catch (\Throwable) {
+            return round($price, 6);
+        } catch (\\Throwable $e) {
+            Log::warning('InvestmentsHub: falha ao obter cotação Yahoo Finance', [
+                'symbol' => $symbol,
+                'message' => $e->getMessage(),
+            ]);
+
             return null;
         }
     }
