@@ -18,14 +18,14 @@
     </section>
 
     <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"><p class="text-xs font-bold uppercase tracking-wider text-zinc-400">Movimentos registados</p><p class="mt-2 text-3xl font-black text-zinc-950 dark:text-white">{{ number_format($movementCount, 0, ',', '.') }}</p><p class="mt-1 text-xs text-zinc-400">Movimentos associados a contas</p></div>
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"><p class="text-xs font-bold uppercase tracking-wider text-zinc-400">Movimentos registados</p><p class="mt-2 text-3xl font-black text-zinc-950 dark:text-white">{{ number_format($movementCount, 0, ',', '.') }}</p><p class="mt-1 text-xs text-zinc-400">Movimentos bancários e importados</p></div>
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 dark:border-emerald-900/50 dark:bg-emerald-950/20"><p class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Entradas</p><p class="mt-2 text-3xl font-black text-emerald-700 dark:text-emerald-400">{{ number_format($totalIn, 2, ',', '.') }} €</p><p class="mt-1 text-xs text-emerald-700/70">Receitas e recebimentos</p></div>
         <div class="rounded-2xl border border-rose-200 bg-rose-50/70 p-5 dark:border-rose-900/50 dark:bg-rose-950/20"><p class="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">Saídas</p><p class="mt-2 text-3xl font-black text-rose-700 dark:text-rose-400">{{ number_format($totalOut, 2, ',', '.') }} €</p><p class="mt-1 text-xs text-rose-700/70">Pagamentos e despesas</p></div>
         <div class="rounded-2xl border border-blue-200 bg-blue-50/70 p-5 dark:border-blue-900/50 dark:bg-blue-950/20"><p class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Entre contas</p><p class="mt-2 text-3xl font-black text-blue-700 dark:text-blue-400">{{ number_format($totalTransfers, 2, ',', '.') }} €</p><p class="mt-1 text-xs text-blue-700/70">Transferências internas</p></div>
     </section>
 
     <section class="space-y-4" x-data="{ filter: 'all', query: '' }">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 class="text-lg font-black text-zinc-900 dark:text-white">Histórico de movimentos</h2><p class="text-xs text-zinc-500">Consulta e filtra as operações registadas nas tuas contas.</p></div><div class="relative w-full sm:max-w-xs"><flux:icon name="magnifying-glass" class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" /><input x-model="query" type="search" placeholder="Pesquisar movimento, conta..." class="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-9 pr-3 text-sm text-zinc-800 outline-none focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"></div></div>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 class="text-lg font-black text-zinc-900 dark:text-white">Histórico de movimentos</h2><p class="text-xs text-zinc-500">Consulta e filtra as operações bancárias e os movimentos importados dos teus extratos.</p></div><div class="relative w-full sm:max-w-xs"><flux:icon name="magnifying-glass" class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" /><input x-model="query" type="search" placeholder="Pesquisar movimento, conta..." class="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-9 pr-3 text-sm text-zinc-800 outline-none focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"></div></div>
         <div class="flex flex-wrap gap-2">
             @foreach([['all','Todos'],['transfer','Transferências'],['in','Entradas'],['out','Saídas']] as [$key,$label])
                 <button type="button" @click="filter='{{ $key }}'" :class="filter==='{{ $key }}' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-900'" class="rounded-full border border-zinc-200 px-4 py-2 text-xs font-bold dark:border-zinc-700">{{ $label }}</button>
@@ -33,7 +33,7 @@
         </div>
         <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
             @if($movements->isEmpty())
-                <div class="px-6 py-16 text-center"><div class="mx-auto flex size-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-500 dark:bg-blue-950/40"><flux:icon name="arrows-right-left" class="size-8" /></div><h3 class="mt-4 text-base font-black text-zinc-900 dark:text-white">Ainda não existem movimentos bancários</h3><p class="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-zinc-500">Quando registares transferências bancárias, receitas ou despesas associadas a uma conta bancária, os movimentos aparecem aqui. Os movimentos MB WAY são identificados quando o método ou a descrição do registo o indicar.</p><a href="{{ route('hub.banco') }}" wire:navigate class="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700"><flux:icon name="building-library" class="size-4" /> Abrir gestão bancária</a></div>
+                <div class="px-6 py-16 text-center"><div class="mx-auto flex size-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-500 dark:bg-blue-950/40"><flux:icon name="arrows-right-left" class="size-8" /></div><h3 class="mt-4 text-base font-black text-zinc-900 dark:text-white">Ainda não existem movimentos bancários</h3><p class="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-zinc-500">Quando registares movimentos bancários ou confirmares a importação de um extrato, as operações aparecem aqui. Os movimentos MB WAY são identificados quando o método ou a descrição do registo o indicar.</p><a href="{{ route('hub.banco') }}" wire:navigate class="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700"><flux:icon name="building-library" class="size-4" /> Abrir gestão bancária</a></div>
             @else
                 <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @foreach($movements as $movement)
@@ -52,7 +52,7 @@
                 </div>
             @endif
         </div>
-        <p class="text-[11px] leading-relaxed text-zinc-400">Esta página apresenta apenas movimentos registados no Finance Pro IA e associados a uma conta bancária. Não existe ligação automática ao banco nem importação automática de operações MB WAY.</p>
+        <p class="text-[11px] leading-relaxed text-zinc-400">Esta página apresenta movimentos registados no Finance Pro IA, incluindo operações importadas de extratos bancários. Não existe ligação automática ao banco nem importação automática de operações MB WAY.</p>
     </section>
 
     @if($showEditModal)
