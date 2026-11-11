@@ -50,7 +50,7 @@ class StatementImportHub extends Component
             if ($extension === 'pdf') {
                 $this->preview = $service->previewSantanderPdf($this->statementFile, (int) auth()->user()->current_workspace_id, (int) auth()->id());
             } else {
-                $this->preview = $service->preview($this->statementFile);
+                $this->preview = $service->preview($this->statementFile, (int) auth()->user()->current_workspace_id, (int) auth()->id());
             }
             $this->previewReady = true;
         } catch (\Throwable $exception) {
