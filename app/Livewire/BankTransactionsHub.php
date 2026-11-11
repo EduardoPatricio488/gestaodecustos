@@ -24,6 +24,7 @@ class BankTransactionsHub extends Component
     public ?int $editFromAccountId = null;
     public ?int $editToAccountId = null;
     public string $editRecipient = '';
+    public string $editDirection = 'out';
     public string $editChannel = 'bank';
     public string $editStatus = 'completed';
 
@@ -57,6 +58,7 @@ class BankTransactionsHub extends Component
         $this->editFromAccountId = null;
         $this->editToAccountId = null;
         $this->editRecipient = '';
+        $this->editDirection = 'out';
         $this->editStatus = 'completed';
         $this->showEditModal = true;
     }
@@ -76,9 +78,10 @@ class BankTransactionsHub extends Component
             $this->editDescription = (string) ($item->description ?? '');
             $this->editAmount = (string) $item->amount;
             $this->editDate = $item->transferred_at?->format('Y-m-d') ?? now()->format('Y-m-d');
-            $this->editFromAccountId = (int) $item->from_account_id;
+            $this->editDirection = (string) ($item->direction ?? 'out');
+            $this->editFromAccountId = $item->from_account_id ? (int) $item->from_account_id : null;
             $this->editToAccountId = $item->to_account_id ? (int) $item->to_account_id : null;
-            $this->editRecipient = (string) ($item->recipient ?: ($item->toAccount?->name ?? ''));
+            $this->editRecipient = (string) ($item->recipient ?: ($this->editDirection === 'in' ? $item->fromAccount?->name : $item->toAccount?->name) ?? '');
             $this->editStatus = (string) $item->status;
         } elseif ($type === 'income') {
             $item = $this->scopedQuery(Income::class)->whereNotNull('bank_account_id')
@@ -118,27 +121,36 @@ class BankTransactionsHub extends Component
 
         DB::transaction(function () use ($user, $workspaceId): void {
             if ($this->editingMovementType === 'transfer') {
+                $accountField = $this->editDirection === 'in' ? 'editToAccountId' : 'editFromAccountId';
                 $this->validate([
-                    'editFromAccountId' => 'required|integer',
+                    $accountField => 'required|integer',
                     'editRecipient' => 'required|string|max:255',
+                    'editDirection' => 'required|in:in,out',
                     'editStatus' => 'required|in:completed,cancelled',
                 ]);
-                $from = BankAccount::where('workspace_id', $workspaceId)
+
+                $account = BankAccount::where('workspace_id', $workspaceId)
                     ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
-                    ->findOrFail($this->editFromAccountId);
+                    ->findOrFail($this->editDirection === 'in' ? $this->editToAccountId : $this->editFromAccountId);
+
                 if ($this->editingMovementId) {
                     $transfer = $this->scopedQuery(BankTransfer::class)->lockForUpdate()->findOrFail($this->editingMovementId);
+
                     if ($transfer->status === 'completed') {
-                        BankAccount::whereKey($transfer->from_account_id)->increment('balance', $transfer->amount);
-                        if ($transfer->to_account_id) {
+                        if (($transfer->direction ?? 'out') === 'in' && $transfer->to_account_id) {
                             BankAccount::whereKey($transfer->to_account_id)->decrement('balance', $transfer->amount);
+                        } elseif ($transfer->from_account_id) {
+                            BankAccount::whereKey($transfer->from_account_id)->increment('balance', $transfer->amount);
                         }
                     }
+
                     $transfer->update([
-                        'from_account_id' => $from->id,
-                        'to_account_id' => null,
+                        'direction' => $this->editDirection,
+                        'from_account_id' => $this->editDirection === 'out' ? $account->id : null,
+                        'to_account_id' => $this->editDirection === 'in' ? $account->id : null,
                         'recipient' => trim($this->editRecipient),
                         'amount' => (float) $this->editAmount,
+                        'currency' => $account->currency ?? 'EUR',
                         'description' => $this->editDescription ?: null,
                         'transferred_at' => $this->editDate,
                         'status' => $this->editStatus,
@@ -147,19 +159,24 @@ class BankTransactionsHub extends Component
                     BankTransfer::create([
                         'workspace_id' => $workspaceId,
                         'user_id' => $user->id,
-                        'from_account_id' => $from->id,
-                        'to_account_id' => null,
+                        'direction' => $this->editDirection,
+                        'from_account_id' => $this->editDirection === 'out' ? $account->id : null,
+                        'to_account_id' => $this->editDirection === 'in' ? $account->id : null,
                         'recipient' => trim($this->editRecipient),
                         'amount' => (float) $this->editAmount,
-                        'currency' => $from->currency ?? 'EUR',
+                        'currency' => $account->currency ?? 'EUR',
                         'description' => $this->editDescription ?: null,
                         'transferred_at' => $this->editDate,
                         'status' => $this->editStatus,
                     ]);
                 }
+
                 if ($this->editStatus === 'completed') {
-                    $from->decrement('balance', (float) $this->editAmount);
+                    $this->editDirection === 'in'
+                        ? $account->increment('balance', (float) $this->editAmount)
+                        : $account->decrement('balance', (float) $this->editAmount);
                 }
+
                 return;
             }
 
@@ -207,9 +224,10 @@ class BankTransactionsHub extends Component
             if ($type === 'transfer') {
                 $transfer = $this->scopedQuery(BankTransfer::class)->lockForUpdate()->findOrFail($id);
                 if ($transfer->status === 'completed') {
-                    BankAccount::whereKey($transfer->from_account_id)->increment('balance', $transfer->amount);
-                    if ($transfer->to_account_id) {
+                    if (($transfer->direction ?? 'out') === 'in' && $transfer->to_account_id) {
                         BankAccount::whereKey($transfer->to_account_id)->decrement('balance', $transfer->amount);
+                    } elseif ($transfer->from_account_id) {
+                        BankAccount::whereKey($transfer->from_account_id)->increment('balance', $transfer->amount);
                     }
                 }
                 $transfer->delete();
@@ -237,9 +255,9 @@ class BankTransactionsHub extends Component
             ->latest('transferred_at')->get()->map(fn ($item) => [
                 'id' => 'transfer-'.$item->id, 'date' => $item->transferred_at,
                 'kind' => 'transfer', 'label' => $item->description ?: 'Transferência entre contas',
-                'account' => $item->fromAccount?->name ?? 'Conta de origem',
-                'counterpart' => $item->recipient ?: ($item->toAccount?->name ?? 'Destinatário não indicado'),
-                'amount' => (float) $item->amount, 'direction' => 'internal',
+                'account' => (($item->direction ?? 'out') === 'in' ? $item->toAccount?->name : $item->fromAccount?->name) ?? 'Conta bancária',
+                'counterpart' => $item->recipient ?: 'Destinatário não indicado',
+                'amount' => (float) $item->amount, 'direction' => ($item->direction ?? 'out') === 'in' ? 'in' : 'out',
                 'channel' => 'Transferência bancária', 'status' => $item->status,
             ]);
 
@@ -283,8 +301,8 @@ class BankTransactionsHub extends Component
 
         return view('livewire.bank-transactions-hub', [
             'movements' => $movements,
-            'totalIn' => $incomes->sum('amount'),
-            'totalOut' => $expenses->sum(fn ($item) => (float) $item['amount']),
+            'totalIn' => $incomes->sum('amount') + $transfers->where('direction', 'in')->sum('amount'),
+            'totalOut' => $expenses->sum(fn ($item) => (float) $item['amount']) + $transfers->where('direction', 'out')->sum('amount'),
             'totalTransfers' => $transfers->sum('amount'),
             'movementCount' => $movements->count(),
             'bankAccounts' => $scope(BankAccount::query())->orderBy('name')->get(),
