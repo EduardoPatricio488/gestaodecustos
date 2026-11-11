@@ -382,6 +382,7 @@ class IncomeHub extends Component
                 'temperature' => 0,
                 'max_tokens' => 6000,
                 'response_format' => ['type' => 'json_object'],
+                    'reasoning' => ['effort' => 'minimal'],
                 'messages' => [
                     [
                         'role' => 'system',
