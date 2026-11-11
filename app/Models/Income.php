@@ -17,7 +17,7 @@ class Income extends Model
 
     protected $fillable = [
         'user_id', 'workspace_id', 'salary_recurring_income_id', 'salary_income_type', 'service_unit_amount', 'service_quantity',
-        'bank_account_id', 'added_to_salary', 'description', 'amount', 'currency',
+        'bank_account_id', 'category_id', 'added_to_salary', 'description', 'amount', 'currency',
         'amount_converted', 'received_at', 'type', 'source', 'frequency', 'tax_estimate', 'notes',
     ];
 
@@ -65,6 +65,11 @@ class Income extends Model
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
     public function salaryContract(): BelongsTo
