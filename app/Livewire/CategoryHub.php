@@ -417,9 +417,77 @@ PROMPT;
             }
 
             $rawText = trim(preg_replace('/\x60{3}json|\x60{3}/i', '', (string) $response->json('choices.0.message.content')));
-            if (! preg_match('/\{.*\}/s', $rawText, $matches)) throw new \Exception('A IA não devolveu dados reconhecíveis.');
+            if (! preg_match('/\{.*\}/s', $rawText, $matches)) {
+                throw new \Exception('A IA não devolveu dados reconhecíveis.');
+            }
+
             $result = json_decode($matches[0], true);
-            if (! is_array($result) || json_last_error() !== JSON_ERROR_NONE) throw new \Exception('Não foi possível interpretar os dados extraídos da fatura.');
+            if (! is_array($result) || json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Não foi possível interpretar os dados extraídos da fatura.');
+            }
+
+            // Alguns modelos gratuitos devolvem JSON válido, mas deixam todos os campos a null.
+            // Nesse caso fazemos uma segunda tentativa mais curta, usando o mesmo modelo e ficheiro.
+            $hasExtractedData = collect($result)->contains(
+                fn ($value) => $value !== null && $value !== '' && $value !== []
+            );
+
+            if (! $hasExtractedData) {
+                $compactPrompt = "Analisa visualmente esta fatura portuguesa. Extrai os dados que estejam realmente visíveis; ".
+                    "não devolvas todos os campos a null se conseguires ler a imagem. Responde apenas com JSON válido. ".
+                    "amount: total final pago em número; date: data YYYY-MM-DD; store: nome da loja; ".
+                    "description: produto/compra; item_name: artigo principal; subcategory: escolhe uma destas opções: ".
+                    $subsStr.". Usa null apenas nos campos impossíveis de ler. ".
+                    '{"amount":null,"date":null,"store":null,"description":null,"item_name":null,"subcategory":null}';
+
+                $retryResponse = Http::withHeaders([
+                    'Authorization' => 'Bearer '.$apiKey,
+                    'Content-Type' => 'application/json',
+                ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
+                    ->timeout((int) config('limits.ai.request_timeout_seconds', 60))
+                    ->post('https://openrouter.ai/api/v1/chat/completions', [
+                        'model' => config('services.openrouter.model', 'openrouter/free'),
+                        'temperature' => 0,
+                        'max_tokens' => 1200,
+                        'response_format' => ['type' => 'json_object'],
+                        'reasoning' => ['effort' => 'minimal'],
+                        'messages' => [[
+                            'role' => 'user',
+                            'content' => [['type' => 'text', 'text' => $compactPrompt], $contentPart],
+                        ]],
+                    ]);
+
+                if ($retryResponse->successful()) {
+                    $retryContent = $retryResponse->json('choices.0.message.content');
+                    if (is_array($retryContent)) {
+                        $retryContent = collect($retryContent)
+                            ->map(fn ($part) => is_string($part) ? $part : data_get($part, 'text', data_get($part, 'content', '')))
+                            ->filter(fn ($part) => is_string($part) && trim($part) !== '')
+                            ->implode("\n");
+                    }
+
+                    $retryText = trim(preg_replace('/\x60{3}(?:json)?|\x60{3}/i', '', (string) $retryContent));
+                    if (preg_match('/\{.*\}/s', $retryText, $retryMatches)) {
+                        $retryResult = json_decode($retryMatches[0], true);
+                        if (is_array($retryResult) && json_last_error() === JSON_ERROR_NONE) {
+                            $retryHasData = collect($retryResult)->contains(
+                                fn ($value) => $value !== null && $value !== '' && $value !== []
+                            );
+                            if ($retryHasData) {
+                                $result = array_merge($result, $retryResult);
+                            }
+                        }
+                    }
+                }
+            }
+
+            $hasExtractedData = collect($result)->contains(
+                fn ($value) => $value !== null && $value !== '' && $value !== []
+            );
+
+            if (! $hasExtractedData) {
+                throw new \Exception('A IA respondeu, mas não conseguiu identificar dados legíveis nesta fatura. Experimenta uma fotografia mais nítida, direita e com a fatura completa visível.');
+            }
 
             $toNumber = static function ($value): ?float {
                 if ($value === null || $value === '') return null;
