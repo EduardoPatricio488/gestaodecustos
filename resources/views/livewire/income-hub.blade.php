@@ -557,12 +557,12 @@
 <div class="flex flex-col gap-8 w-full" x-data="{ activeIncomeTab: 'billing' }">
     <div class="flex justify-center">
         <div class="inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5 dark:border-zinc-800 dark:bg-zinc-950">
-            <button type="button" @click="activeIncomeTab = 'billing'" :class="activeIncomeTab === 'billing' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'" class="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-[10px] font-black uppercase tracking-wider transition">
-                <flux:icon name="calendar-days" variant="micro" class="size-4" />
+            <button type="button" @click="activeIncomeTab = 'billing'" :class="activeIncomeTab === 'billing' ? 'bg-white text-zinc-950 shadow-md ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700' : 'text-zinc-500 hover:bg-white/70 hover:text-zinc-950 dark:hover:bg-zinc-800/70 dark:hover:text-white'" class="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-extrabold tracking-normal transition-all duration-200 sm:text-base">
+                <flux:icon name="calendar-days" variant="micro" class="size-5" />
                 Rendimentos Mensais
             </button>
-            <button type="button" @click="activeIncomeTab = 'bank'" :class="activeIncomeTab === 'bank' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'" class="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-[10px] font-black uppercase tracking-wider transition">
-                <flux:icon name="building-library" variant="micro" class="size-4" />
+            <button type="button" @click="activeIncomeTab = 'bank'" :class="activeIncomeTab === 'bank' ? 'bg-white text-zinc-950 shadow-md ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700' : 'text-zinc-500 hover:bg-white/70 hover:text-zinc-950 dark:hover:bg-zinc-800/70 dark:hover:text-white'" class="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-extrabold tracking-normal transition-all duration-200 sm:text-base">
+                <flux:icon name="building-library" variant="micro" class="size-5" />
                 Transferências Bancárias
             </button>
         </div>
