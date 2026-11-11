@@ -7,12 +7,14 @@
                 <div><h1 class="text-2xl font-black tracking-tight text-zinc-950 dark:text-white sm:text-3xl">Todos os movimentos</h1><p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Receitas, despesas, assinaturas e transferências num único histórico.</p></div>
             </div>
             <div class="flex flex-wrap items-center gap-2 self-start">
+                @if(! $readOnly)
                 <a href="{{ route('hub.import') }}" wire:navigate.hover class="group inline-flex items-center gap-2 rounded-xl border border-emerald-500 bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-emerald-600/25 transition duration-200 hover:-translate-y-0.5 hover:from-emerald-500 hover:to-teal-500 hover:shadow-xl hover:shadow-emerald-600/30 focus:outline-none focus:ring-4 focus:ring-emerald-500/30">
                     <span class="flex size-8 items-center justify-center rounded-lg bg-white/15 transition group-hover:scale-110"><flux:icon name="arrow-up-tray" class="size-4" /></span>
                     <span class="text-left"><span class="block text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-100">Importação</span><span class="block">Importar extrato</span></span>
                     <flux:icon name="arrow-right" class="size-4 transition group-hover:translate-x-1" />
                 </a>
                 <a href="{{ route('dashboard') }}" wire:navigate class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-bold text-zinc-600 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"><flux:icon name="arrow-left" class="size-4" /> Dashboard</a>
+                @endif
             </div>
         </div>
     </section>
@@ -74,7 +76,7 @@
                             @endforeach
                         </dl>
                         <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
-                            @if(in_array($movement['edit_type'] ?? '', ['expense', 'income', 'transfer', 'subscription'], true))
+                            @if(! $readOnly && in_array($movement['edit_type'] ?? '', ['expense', 'income', 'transfer', 'subscription'], true))
                                 <button type="button" wire:click="editMovement('{{ $movement['edit_type'] }}', {{ $movement['record_id'] }})" class="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-[11px] font-bold text-zinc-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-blue-950/30">
                                     <flux:icon name="pencil" class="size-3.5" /> Editar informações
                                 </button>
@@ -98,6 +100,7 @@
         <p class="text-[11px] text-zinc-400">As assinaturas representam compromissos recorrentes e não são somadas novamente às despesas pagas.</p>
     </section>
 
+    @if(! $readOnly)
     @if($showEditModal && $editingId)
         <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-zinc-950/70 p-2 backdrop-blur-sm sm:p-4" wire:key="movement-editor-modal" @click.self="$wire.cancelEditMovement()" x-on:keydown.escape.window="$wire.cancelEditMovement()">
             <div class="flex min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" style="height: min(760px, calc(100dvh - 32px)); max-height: calc(100dvh - 32px); min-height: 0; display: flex; flex-direction: column;" @click.stop>
@@ -285,5 +288,6 @@
                 @endif
             </div>
         </div>
+    @endif
     @endif
 </div>
