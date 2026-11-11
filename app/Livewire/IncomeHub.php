@@ -368,9 +368,38 @@ class IncomeHub extends Component
                 throw new \RuntimeException('A IA não conseguiu analisar a fotografia. Tenta novamente com uma imagem mais nítida.');
             }
             $content = $response->json('choices.0.message.content');
-            if (is_array($content)) $content = collect($content)->pluck('text')->filter()->implode("\n");
-            $data = json_decode((string) $content, true);
-            if (! is_array($data)) throw new \RuntimeException('Não foi possível interpretar os dados extraídos do contrato.');
+
+            // Alguns modelos devolvem o conteúdo em blocos e/ou dentro de blocos
+            // Markdown, mesmo quando é solicitado JSON estruturado.
+            if (is_array($content)) {
+                $content = collect($content)
+                    ->map(function ($part) {
+                        if (is_string($part)) return $part;
+                        return data_get($part, 'text', data_get($part, 'content', ''));
+                    })
+                    ->filter(fn ($part) => is_string($part) && trim($part) !== '')
+                    ->implode("\n");
+            }
+
+            $content = trim((string) $content);
+            $content = preg_replace('/^\x60{3}(?:json)?\s*|\s*\x60{3}$/i', '', $content);
+            $data = json_decode($content, true);
+
+            // Fallback: extrair o objeto JSON se a IA acrescentar texto explicativo.
+            if (! is_array($data)) {
+                $jsonStart = strpos($content, '{');
+                $jsonEnd = strrpos($content, '}');
+                if ($jsonStart !== false && $jsonEnd !== false && $jsonEnd > $jsonStart) {
+                    $data = json_decode(substr($content, $jsonStart, $jsonEnd - $jsonStart + 1), true);
+                }
+            }
+
+            if (! is_array($data)) {
+                $reason = $response->json('choices.0.message.refusal')
+                    ?: $response->json('error.message')
+                    ?: 'A resposta da IA não veio num formato JSON válido. Tenta novamente ou usa uma fotografia mais nítida.';
+                throw new \RuntimeException($reason);
+            }
 
             if (filled($data['company'] ?? null)) $this->recDescription = mb_substr(trim((string) $data['company']), 0, 255);
             if (filled($data['position'] ?? null)) $this->recPosition = mb_substr((string) $data['position'], 0, 255);
