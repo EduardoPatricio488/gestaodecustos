@@ -1,13 +1,13 @@
 <?php
 
-namespace App\\Livewire;
+namespace App\Livewire;
 
-use App\\Models\\Expense;
-use App\\Models\\Income;
-use App\\Models\\Subscription;
-use App\\Models\\BankTransfer;
-use Livewire\\Attributes\\Layout;
-use Livewire\\Component;
+use App\Models\Expense;
+use App\Models\Income;
+use App\Models\Subscription;
+use App\Models\BankTransfer;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class MovementsHub extends Component
