@@ -75,7 +75,7 @@ class MovementsHub extends Component
         $this->editingFromAccountId = (string) ($record->from_account_id ?? '');
         $this->editingToAccountId = (string) ($record->to_account_id ?? '');
         $this->editingId = $id;
-        $this->editingTitle = (string) ($record->title ?? $record->name ?? '');
+        $this->editingTitle = (string) ($record->title ?? $record->name ?? $record->description ?? '');
         $this->editingDescription = (string) ($record->description ?? '');
         $this->editingAmount = (string) ($record->amount ?? '0');
         $this->editingDate = match ($type) {
