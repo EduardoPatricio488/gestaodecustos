@@ -43,6 +43,7 @@ class BankImportService
                 'amount' => round($amount, 2),
                 'type' => $classification['type'] === 'transfer' ? 'transfer' : ($classification['type'] === 'debt_payment' ? 'debt_payment' : ($amount >= 0 ? 'income' : 'expense')),
                 'movement_label' => $classification['label'],
+                'transfer_category' => $classification['transfer_category'] ?? null,
             ];
         }
 
@@ -214,7 +215,8 @@ class BankImportService
                         'workspace_id' => $workspace->id, 'user_id' => $userId,
                         'from_account_id' => null, 'to_account_id' => null,
                         'direction' => $direction, 'recipient' => $this->extractCounterparty($description),
-                        'amount' => $absoluteAmount, 'currency' => 'EUR', 'description' => $description,
+                        'amount' => $absoluteAmount, 'currency' => 'EUR', 'category' => $row['transfer_category'] ?? null,
+                        'description' => $description,
                         'status' => 'completed', 'transferred_at' => $date,
                         'bank_statement_import_id' => $import->id,
                         'notes' => 'Importado automaticamente do extrato bancário.',
@@ -473,6 +475,22 @@ class BankImportService
     private function classifyMovement(string $description, float $amount): array
     {
         $normalized = $this->normalizeMovementDescription($description);
+
+        // O Imposto do Selo é um custo associado às comissões bancárias,
+        // apresentado na página de Transferências como custo de transferência.
+        if (str_contains($normalized, 'imposto do selo sobre comissao')) {
+            return [
+                'type' => 'transfer',
+                'label' => 'Imposto do Selo sobre comissão',
+                'transfer_category' => 'Imposto do Selo',
+            ];
+        }
+
+        // Estes comerciantes representam compras/serviços, nunca transferências.
+        if ($this->isKnownMerchantExpense($normalized)) {
+            return ['type' => $amount >= 0 ? 'income' : 'expense', 'label' => $amount >= 0 ? 'Receita' : 'Despesa'];
+        }
+
         $patterns = [
             'trf mbway', 'trf mb way', 'transferencia mbway', 'transferencia mb way',
             'trf imed', 'trf imediata', 'transferencia imediata', 'betclic pt',
@@ -491,11 +509,32 @@ class BankImportService
             return ['type' => 'transfer', 'label' => 'Transferência bancária'];
         }
 
-        if (str_contains($normalized, 'mafrense') && str_contains($normalized, 'passes')) {
-            return ['type' => 'debt_payment', 'label' => 'Dívida de transportes'];
+        // Mafrense Nem Passes é uma despesa normal de transporte, não uma dívida.
+        return ['type' => $amount >= 0 ? 'income' : 'expense', 'label' => $amount >= 0 ? 'Receita' : 'Despesa'];
+    }
+
+    private function isKnownMerchantExpense(string $normalizedDescription): bool
+    {
+        return preg_match('/\\bh3\\b/', $normalizedDescription) === 1
+            || str_contains($normalizedDescription, 'hamb da vila')
+            || str_contains($normalizedDescription, 'mercadona')
+            || str_contains($normalizedDescription, 'github')
+            || str_contains($normalizedDescription, 'sbksileven')
+            || str_contains($normalizedDescription, 'mafrense nem passes')
+            || str_contains($normalizedDescription, 'compra 1293')
+            || str_contains($normalizedDescription, 'www amazon')
+            || str_contains($normalizedDescription, 'amazon');
+    }
+
+    private function categoryIdByName(array $categories, string $wantedName): ?int
+    {
+        foreach ($categories as $id => $name) {
+            if (mb_strtolower(trim((string) $name), 'UTF-8') === mb_strtolower($wantedName, 'UTF-8')) {
+                return (int) $id;
+            }
         }
 
-        return ['type' => $amount >= 0 ? 'income' : 'expense', 'label' => $amount >= 0 ? 'Receita' : 'Despesa'];
+        return null;
     }
 
     private function refineMovementTypesWithAi(array &$rows): void
@@ -506,7 +545,8 @@ class BankImportService
 
         $candidates = [];
         foreach ($rows as $index => $row) {
-            if (in_array($row['type'], ['transfer', 'debt_payment'], true)) {
+            if (in_array($row['type'], ['transfer', 'debt_payment'], true)
+                || $this->isKnownMerchantExpense($this->normalizeMovementDescription((string) ($row['description'] ?? '')))) {
                 continue;
             }
             $candidates[] = ['index' => $index, 'description' => $row['description'], 'amount' => $row['amount']];
@@ -808,6 +848,28 @@ class BankImportService
             return null;
         }
         $desc = strtolower($description);
+        $normalized = $this->normalizeMovementDescription($description);
+
+        // Regras determinísticas para os comerciantes indicados pelo utilizador.
+        $fixedCategory = match (true) {
+            str_contains($normalized, 'github') => 'Tecnologia',
+            str_contains($normalized, 'sbksileven') => 'Entretenimento',
+            str_contains($normalized, 'mercadona'),
+            str_contains($normalized, 'hamb da vila'),
+            preg_match('/\\bh3\\b/', $normalized) === 1 => 'Alimentação',
+            str_contains($normalized, 'mafrense nem passes') => 'Transporte',
+            str_contains($normalized, 'www amazon'),
+            str_contains($normalized, 'amazon') => 'Casa',
+            default => null,
+        };
+
+        if ($fixedCategory) {
+            $fixedCategoryId = $this->categoryIdByName($categories, $fixedCategory);
+            if ($fixedCategoryId) {
+                return $fixedCategoryId;
+            }
+        }
+
         $customRuleCategoryId = $this->categorizeWithRules($workspaceId, $userId, $desc, array_keys($categories));
         if ($customRuleCategoryId) {
             return $customRuleCategoryId;
