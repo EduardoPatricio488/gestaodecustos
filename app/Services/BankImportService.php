@@ -678,7 +678,7 @@ class BankImportService
             $normalized = $this->normalizeMovementDescription((string) ($row['description'] ?? ''));
             if ($this->isKnownMerchantExpense($normalized)
                 || str_contains($normalized, 'imposto do selo sobre comissao')
-                 ) {
+                || $this->isExplicitTransferDescription($normalized)) {
                 continue;
             }
 
