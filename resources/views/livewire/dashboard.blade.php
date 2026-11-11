@@ -921,6 +921,12 @@
                         </div>
                     </div>
                     <div class="flex shrink-0 items-center gap-2">
+                        <button type="button" wire:click="refreshInvestmentPrices" wire:loading.attr="disabled" wire:target="refreshInvestmentPrices" class="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-300 bg-white/90 px-3 py-2.5 text-[11px] font-black text-sky-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-wait disabled:opacity-60 dark:border-sky-400/30 dark:bg-slate-800 dark:text-sky-300 dark:hover:bg-slate-700">
+                            <flux:icon name="refresh-cw" class="size-4" wire:loading.remove wire:target="refreshInvestmentPrices" />
+                            <flux:icon name="loader-circle" class="size-4 animate-spin" wire:loading wire:target="refreshInvestmentPrices" />
+                            <span wire:loading.remove wire:target="refreshInvestmentPrices">Atualizar preços</span>
+                            <span wire:loading wire:target="refreshInvestmentPrices">A atualizar...</span>
+                        </button>
                         <a href="{{ route('hub.investments') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-[11px] font-black text-white shadow-md shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-400">
                             Ver investimentos
                             <flux:icon name="arrow-up-right" class="size-4" />
