@@ -180,6 +180,12 @@ class BankImportService
                 $categoryId = isset($row['category_id']) && $categories->has((int) $row['category_id'])
                     ? (int) $row['category_id']
                     : (in_array($row['type'], ['expense', 'debt_payment'], true) ? $otherCategoryId : null);
+                if ($row['type'] === 'debt_payment') {
+                    $transportCategoryId = $categories->first(fn ($name) => str_contains(mb_strtolower((string) $name), 'transport'));
+                    if ($transportCategoryId) {
+                        $categoryId = (int) $transportCategoryId;
+                    }
+                }
                 $absoluteAmount = abs($amount);
 
                 if ($row['type'] === 'transfer') {
@@ -279,8 +285,12 @@ class BankImportService
                         ->orWhere('metadata->import_id', $import->id);
                 });
 
+            $deletedTransfers = BankTransfer::query()->where('workspace_id', $import->workspace_id)->where('user_id', $import->user_id)
+                ->where('bank_statement_import_id', $import->id)->count();
             BankTransfer::query()->where('workspace_id', $import->workspace_id)->where('user_id', $import->user_id)
                 ->where('bank_statement_import_id', $import->id)->delete();
+            $deletedDebts = Debt::query()->where('workspace_id', $import->workspace_id)->where('user_id', $import->user_id)
+                ->where('bank_statement_import_id', $import->id)->count();
             Debt::query()->where('workspace_id', $import->workspace_id)->where('user_id', $import->user_id)
                 ->where('bank_statement_import_id', $import->id)->delete();
 
@@ -310,7 +320,7 @@ class BankImportService
             $expensesQuery->delete();
             $import->delete();
 
-            return ['expenses' => $deletedExpenses, 'incomes' => $deletedIncomes];
+            return ['expenses' => $deletedExpenses, 'incomes' => $deletedIncomes, 'transfers' => $deletedTransfers, 'debts' => $deletedDebts];
         });
     }
 
