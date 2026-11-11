@@ -1217,6 +1217,7 @@
                     </section>
 
                     {{-- DOCUMENTO --}}
+                    @include('livewire.partials.openrouter-quota', ['aiQuota' => $aiQuota, 'poll' => false])
                     <section class="space-y-3 rounded-2xl border border-dashed border-brand-300 bg-brand-50/50 p-4 dark:border-brand-800 dark:bg-brand-950/20">
                         <div class="flex items-center gap-2"><flux:icon name="paper-clip" class="size-4 text-brand-600" /><h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300">Documento da compra</h4></div>
                         <input wire:model="document" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-xs file:font-bold file:text-white">
