@@ -969,7 +969,7 @@ class InvestmentsHub extends Component
             }
 
             return true;
-        } catch (\\Throwable $e) {
+        } catch (\Throwable $e) {
             Log::warning('InvestmentsHub: falha ao atualizar cotações', ['message' => $e->getMessage()]);
             if (! $silent) {
                 $this->dispatch('toast', text: 'Erro ao sincronizar preços: '.$e->getMessage(), variant: 'error');
