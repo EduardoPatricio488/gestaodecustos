@@ -206,7 +206,7 @@ class Expenses extends Component
                     "). Usa null apenas se o dado não estiver legível. ".
                     '{"category":null,"amount":null,"date":null,"store":null,"description":null}';
 
-                $retryResponse = \\Illuminate\\Support\\Facades\\Http::withHeaders([
+                $retryResponse = \Illuminate\Support\Facades\Http::withHeaders([
                     'Authorization' => 'Bearer '.$apiKey,
                     'Content-Type' => 'application/json',
                     'HTTP-Referer' => config('app.url'),
@@ -250,7 +250,7 @@ class Expenses extends Component
                 ->contains(fn ($field) => isset($result[$field]) && $result[$field] !== '');
 
             if (! $hasEssentialData) {
-                throw new \\Exception('A IA não conseguiu extrair o valor, a data, o estabelecimento ou a descrição desta fatura. Experimenta uma fotografia mais nítida, direita e com a fatura completa visível.');
+                throw new \Exception('A IA não conseguiu extrair o valor, a data, o estabelecimento ou a descrição desta fatura. Experimenta uma fotografia mais nítida, direita e com a fatura completa visível.');
             }
 
             $suggestedCategory = trim((string) ($result['category'] ?? ''));
