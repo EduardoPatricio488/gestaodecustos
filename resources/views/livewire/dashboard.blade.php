@@ -609,7 +609,7 @@
     <div class="flex items-center gap-1.5 shrink-0">
         <a href="{{ route('movements.index') }}" wire:navigate
             class="flex items-center justify-center gap-2 px-3 sm:px-5 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-black uppercase text-[10px] tracking-widest border border-blue-100 dark:border-blue-900/50 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
-            <flux:icon name="arrow-left-right" variant="micro" class="size-4 shrink-0" />
+            <flux:icon name="arrows-right-left" variant="micro" class="size-4 shrink-0" />
             <span>Movimentos</span>
         </a>
 
@@ -922,8 +922,8 @@
                     </div>
                     <div class="flex shrink-0 items-center gap-2">
                         <button type="button" wire:click="refreshInvestmentPrices" wire:loading.attr="disabled" wire:target="refreshInvestmentPrices" class="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-300 bg-white/90 px-3 py-2.5 text-[11px] font-black text-sky-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-wait disabled:opacity-60 dark:border-sky-400/30 dark:bg-slate-800 dark:text-sky-300 dark:hover:bg-slate-700">
-                            <flux:icon name="refresh-cw" class="size-4" wire:loading.remove wire:target="refreshInvestmentPrices" />
-                            <flux:icon name="loader-circle" class="size-4 animate-spin" wire:loading wire:target="refreshInvestmentPrices" />
+                            <flux:icon name="arrow-path" class="size-4" wire:loading.remove wire:target="refreshInvestmentPrices" />
+                            <flux:icon name="arrow-path" class="size-4 animate-spin" wire:loading wire:target="refreshInvestmentPrices" />
                             <span wire:loading.remove wire:target="refreshInvestmentPrices">Atualizar preços</span>
                             <span wire:loading wire:target="refreshInvestmentPrices">A atualizar...</span>
                         </button>
