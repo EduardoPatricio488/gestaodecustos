@@ -517,7 +517,7 @@
         </div>
 
         <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2">
-            Melhor Fonte
+            Total anual estimado (Total líquido + Subsídio alimentação)
         </p>
 
         <p class="text-4xl font-black text-emerald-600 italic tracking-tight flex items-center gap-2">
