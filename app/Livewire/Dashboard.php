@@ -1246,7 +1246,7 @@ class Dashboard extends Component
                 'date' => $item->spent_at,
                 'amount' => (float) ((float) $item->amount_paid > 0 ? $item->amount_paid : $item->amount),
                 'direction' => 'out',
-                'status' => $item->status ?: 'Completo',
+                'status' => 'Completo',
             ]));
 
         $recentMovements = $recentMovements->concat($movementScope(Income::query()->with('category'))
@@ -1273,7 +1273,7 @@ class Dashboard extends Component
                 'date' => $item->transferred_at,
                 'amount' => (float) $item->amount,
                 'direction' => ($item->direction ?? 'out') === 'in' ? 'in' : 'out',
-                'status' => $item->status ?: 'Completo',
+                'status' => 'Completo',
             ]));
 
         $recentMovements = $recentMovements->concat($movementScope(Subscription::query())
@@ -1282,11 +1282,11 @@ class Dashboard extends Component
                 'type' => 'subscription',
                 'type_label' => 'Assinatura',
                 'title' => $item->name ?: 'Assinatura',
-                'detail' => 'Periodicidade: '.($item->cycle ?: 'Recorrente'),
+                'detail' => ($item->paid_by_company ? 'Pago pela empresa · ' : '').'Periodicidade: '.match (strtolower((string) $item->cycle)) { 'monthly' => 'Mensal', 'yearly', 'annual' => 'Anual', 'weekly' => 'Semanal', 'quarterly' => 'Trimestral', 'semiannual' => 'Semestral', default => ($item->cycle ?: 'Recorrente') },
                 'date' => $item->renewal_date ?: $item->started_at,
                 'amount' => (float) $item->amount,
                 'direction' => $item->paid_by_company ? 'company' : 'out',
-                'status' => $item->is_active ? 'Ativa' : 'Inativa',
+                'status' => 'Completo',
             ]));
 
         $recentMovements = $recentMovements->concat($movementScope(\App\Models\SubscriptionPayment::query()->with('subscription'))
