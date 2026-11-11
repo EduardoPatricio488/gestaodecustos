@@ -831,12 +831,28 @@ PROMPT;
 
         $categoryColor = $category->color ?? '#6366f1';
 
+        // Apenas as categorias ativas apresentadas no Cofre de Categorias,
+        // pela mesma ordem definida no sistema.
+        $categoryOrder = array_flip([
+            'alimentação',
+            'carro',
+            'casa',
+            'educação',
+            'empréstimos',
+            'entretenimento',
+            'saúde',
+            'seguros',
+            'tecnologia',
+            'transporte',
+            'outros',
+        ]);
+
         $filterCategories = Category::where('workspace_id', $currentWs->id)
             ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
-            ->orderBy('order')
-            ->orderBy('name')
             ->get()
+            ->filter(fn (Category $item) => array_key_exists(mb_strtolower(trim($item->name), 'UTF-8'), $categoryOrder))
             ->unique(fn (Category $item) => mb_strtolower(trim($item->name), 'UTF-8'))
+            ->sortBy(fn (Category $item) => $categoryOrder[mb_strtolower(trim($item->name), 'UTF-8')])
             ->values();
 
         // 2. Query das despesas: todas as categorias ou apenas a categoria atual.
