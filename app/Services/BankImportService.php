@@ -149,7 +149,7 @@ class BankImportService
                         continue;
                     }
                     \App\Models\Income::create([
-                        'user_id' => $userId, 'workspace_id' => $workspace->id,
+                        'user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId,
                         'description' => $description, 'amount' => $absoluteAmount,
                         'received_at' => $date, 'type' => 'Extra', 'source' => 'outros',
                         'frequency' => 'pontual',
