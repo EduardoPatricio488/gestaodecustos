@@ -148,9 +148,9 @@ class ExportController extends Controller
         $scope(BankTransfer::query()->with(['fromAccount', 'toAccount']))->get()->each(function ($item) use ($rows) {
             $rows->push([
                 'date' => $item->transferred_at,
-                'type' => 'Transferência',
+                'type' => 'Transferência bancária',
                 'description' => $item->description ?: ($item->recipient ?: 'Transferência bancária'),
-                'detail' => ($item->fromAccount?->name ?: 'Origem externa').' → '.($item->toAccount?->name ?: 'Destino externo'),
+                'detail' => 'Transferências bancárias',
                 'amount' => (float) $item->amount,
                 'direction' => ($item->direction ?? 'out') === 'in' ? 'Entrada' : 'Saída',
                 'status' => $item->status ?: 'Concluída',
