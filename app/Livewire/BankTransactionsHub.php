@@ -136,7 +136,7 @@ class BankTransactionsHub extends Component
                 ->findOrFail($this->editingMovementId);
 
             if (! $transfer->bank_statement_import_id) {
-                throw new \\RuntimeException('Só podes converter movimentos importados de extratos bancários.');
+                throw new \RuntimeException('Só podes converter movimentos importados de extratos bancários.');
             }
 
             $categoryQuery = Category::query()
