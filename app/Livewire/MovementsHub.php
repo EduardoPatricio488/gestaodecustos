@@ -184,9 +184,6 @@ class MovementsHub extends Component
             }
         }
 
-        if ($type === 'expense' && $this->editingType === 'expense') {
-            $this->conversionFieldValues = $this->parseMetadataFromEditor($this->editingMetadata) ?? [];
-        }
     }
 
     public function updatedEditingIncomeDestination(string $destination): void
@@ -231,7 +228,10 @@ class MovementsHub extends Component
 
         return Category::where('workspace_id', $user->current_workspace_id)
             ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
-            ->where('hidden_from_sidebar', false);
+            ->where(function ($query) {
+                $query->where('hidden_from_sidebar', false)
+                    ->orWhereRaw('LOWER(TRIM(name)) = ?', ['outros']);
+            });
     }
 
     public function closeConversionModal(): void
@@ -266,6 +266,7 @@ class MovementsHub extends Component
         $this->editingOutstandingAmount = '0';
         $this->editingMetadata = '';
         $this->editingNotifyBeforeBilling = false;
+        $this->editingIncomeDestination = 'cash';
         $this->editingTransferStatus = 'completed';
     }
 
@@ -551,6 +552,11 @@ class MovementsHub extends Component
                     'notify_before_billing' => $this->editingNotifyBeforeBilling,
                     'notify_days_before' => $this->editingNotifyDaysBefore !== '' ? (int) $this->editingNotifyDaysBefore : null,
                 ]);
+            }
+
+            if ($this->editingType === 'transfer' && $old->status === 'completed') {
+                BankAccount::where('workspace_id', $workspaceId)->whereKey($old->from_account_id)->increment('balance', (float) $old->amount);
+                BankAccount::where('workspace_id', $workspaceId)->whereKey($old->to_account_id)->decrement('balance', (float) $old->amount);
             }
 
             $old->delete();
