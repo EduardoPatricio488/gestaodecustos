@@ -87,11 +87,7 @@
                         </div>
                     @endif
 
-                    @if(($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0)
-                        <div class="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-xs font-medium text-red-400">
-                            A quota diária foi atingida. Podes continuar a criar despesas através da opção «Escolher categoria».
-                        </div>
-                    @else
+                    @if(! (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0))
                     <div class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 sm:p-5 text-center">
                         <input type="file" wire:model="scannerReceipt" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
                         @if($scannerReceipt)
