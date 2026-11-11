@@ -604,13 +604,23 @@ class BankImportService
             return;
         }
 
+        // A IA revê cada movimento, incluindo os que as regras iniciais já marcaram
+        // como transferência ou pagamento de dívida. Comerciantes conhecidos e
+        // imposto do selo mantêm as regras determinísticas existentes.
         $candidates = [];
         foreach ($rows as $index => $row) {
-            if (in_array($row['type'], ['transfer', 'debt_payment'], true)
-                || $this->isKnownMerchantExpense($this->normalizeMovementDescription((string) ($row['description'] ?? '')))) {
+            $normalized = $this->normalizeMovementDescription((string) ($row['description'] ?? ''));
+            if ($this->isKnownMerchantExpense($normalized)
+                || str_contains($normalized, 'imposto do selo sobre comissao')) {
                 continue;
             }
-            $candidates[] = ['index' => $index, 'description' => $row['description'], 'amount' => $row['amount']];
+
+            $candidates[] = [
+                'index' => $index,
+                'description' => (string) ($row['description'] ?? ''),
+                'amount' => (float) ($row['amount'] ?? 0),
+                'initial_type' => (string) ($row['type'] ?? ''),
+            ];
         }
 
         if ($candidates === []) {
@@ -624,12 +634,19 @@ class BankImportService
             ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
                 ->timeout((int) config('limits.ai.request_timeout_seconds', 30))
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
-                    'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+                    'model' => config('services.openrouter.model', 'openrouter/free'),
                     'messages' => [
-                        ['role' => 'system', 'content' => 'És um classificador de movimentos bancários portugueses. Para cada descrição, escolhe exclusivamente uma classe: transfer, debt_payment, expense ou income. Transfer significa envio/receção de dinheiro, transferências MB WAY, imediatas, movimentos Betclic e comissões bancárias explicitamente indicadas como transferências. debt_payment significa liquidação de uma dívida/obrigação identificável. Uma compra, serviço, subscrição, levantamento ou pagamento comercial normal é expense. Um crédito/rendimento é income. Não inventes relações nem assumes que qualquer pagamento é transferência. Usa debt_payment apenas quando o texto indicar claramente uma dívida. Devolve JSON: {"items":[{"index":0,"type":"expense","confidence":0.0}]}.'],
-                        ['role' => 'user', 'content' => json_encode($candidates, JSON_UNESCAPED_UNICODE)],
+                        [
+                            'role' => 'system',
+                            'content' => 'És um especialista em classificação de movimentos de extratos bancários portugueses. Analisa individualmente a descrição e o valor de CADA registo. Escolhe uma classe: transfer, debt_payment, expense ou income.\n\nREGRAS IMPORTANTES:\n- "Transferência De NOME", "Transferência Para NOME", "Transferência recebida de NOME", "Transferência enviada para NOME", "TRF", "TRF IMED" e transferências MB WAY entre pessoas são transfer. Exemplo: "Transferência De Rita Maria Campenhe Casquilho Louro" = transfer.\n- Uma transferência é movimentação de dinheiro entre pessoas/contas; não é uma compra nem uma despesa de consumo.\n- "Pagamento", "Compra", "Débito", "Compra cartão", serviços, subscrições, restaurantes, supermercados, combustível e levantamentos são normalmente expense, mesmo quando pagos por transferência bancária ou cartão.\n- debt_payment apenas quando a descrição indicar claramente liquidação de empréstimo, prestação ou dívida.\n- income para salário, reembolso, juros ou outro rendimento recebido que não seja transferência entre pessoas/contas.\n- Não classifiques como transfer apenas porque aparece o nome de uma pessoa; procura o contexto explícito de transferência.\n- O sinal do valor indica o sentido do movimento, não a sua classe: valores negativos podem ser transferências enviadas e valores positivos transferências recebidas.\n\nDevolve exclusivamente JSON válido no formato {"items":[{"index":0,"type":"transfer","confidence":0.99}]}. Usa confidence entre 0 e 1. Não omitas índices.'
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => json_encode($candidates, JSON_UNESCAPED_UNICODE),
+                        ],
                     ],
-                    'max_tokens' => 900, 'temperature' => 0,
+                    'max_tokens' => 1800,
+                    'temperature' => 0,
                 ]);
 
             $content = trim((string) $response->json('choices.0.message.content', ''));
@@ -646,9 +663,10 @@ class BankImportService
                 if ($type === 'income' && (float) $rows[$index]['amount'] < 0) {
                     continue;
                 }
-                if (in_array($type, ['expense', 'debt_payment', 'transfer'], true) && (float) $rows[$index]['amount'] > 0 && $type !== 'transfer') {
+                if (in_array($type, ['expense', 'debt_payment'], true) && (float) $rows[$index]['amount'] > 0) {
                     continue;
                 }
+
                 $rows[$index]['type'] = $type;
                 $rows[$index]['movement_label'] = match ($type) {
                     'transfer' => 'Transferência bancária',
@@ -656,6 +674,9 @@ class BankImportService
                     'income' => 'Receita',
                     default => 'Despesa',
                 };
+                if ($type !== 'transfer') {
+                    $rows[$index]['transfer_category'] = null;
+                }
             }
         } catch (\Throwable) {
             // Mantém a classificação determinística se a IA estiver indisponível.
