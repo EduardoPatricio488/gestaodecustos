@@ -90,6 +90,13 @@ class CategoryHub extends Component
 
     public $scanError = '';
 
+    public array $aiQuota = [];
+
+    public function refreshScannerQuota(): void
+    {
+        $this->aiQuota = app(\\App\\Services\\OpenRouterQuotaService::class)->dailyQuota(true);
+    }
+
     protected $rules = [
         'receipt' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:20480',
         'photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
