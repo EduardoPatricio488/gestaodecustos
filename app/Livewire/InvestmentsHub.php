@@ -838,9 +838,27 @@ class InvestmentsHub extends Component
 
     private function fetchFromYahoo(string $symbol): ?float
     {
+        // O ticker de bolsa Xetra é VUAA; VUA1.DE é o Reuters RIC oficial.
+        // Alguns fornecedores aceitam um ou outro identificador, por isso tentamos
+        // primeiro o RIC e depois o ticker Yahoo habitual, sem assumir que são iguais.
+        $symbolsToTry = array_values(array_unique(array_filter([
+            strtoupper($symbol) === 'VUAA.DE' ? 'VUA1.DE' : $symbol,
+            $symbol,
+        ])));
+
+        foreach ($symbolsToTry as $providerSymbol) {
+            $price = $this->fetchYahooSymbolPrice($providerSymbol);
+            if ($price !== null && $price > 0) {
+                return $price;
+            }
+        }
+
+        return null;
+    }
+
+    private function fetchYahooSymbolPrice(string $symbol): ?float
+    {
         try {
-            // Usar candles intradiários dos últimos 5 dias evita depender apenas de
-            // regularMarketPrice, que pode ficar preso a um fecho antigo em alguns tickers.
             $res = Http::timeout(12)
                 ->withHeaders([
                     'User-Agent' => 'Mozilla/5.0',
@@ -850,7 +868,7 @@ class InvestmentsHub extends Component
                 ->get("https://query1.finance.yahoo.com/v8/finance/chart/{$symbol}", [
                     'interval' => '5m',
                     'range' => '5d',
-                    'includePrePost' => 'false',
+                    'includePrePost' => 'true',
                 ]);
 
             if (! $res->ok()) {
@@ -864,23 +882,22 @@ class InvestmentsHub extends Component
 
             $meta = $result['meta'] ?? [];
             $price = null;
-            $closes = $result['indicators']['quote'][0]['close'] ?? [];
 
-            // O último candle com preço é a cotação mais recente disponibilizada
-            // pelo Yahoo, incluindo a última sessão quando a bolsa já fechou.
-            foreach (array_reverse($closes) as $close) {
-                if (is_numeric($close) && (float) $close > 0) {
-                    $price = (float) $close;
-                    break;
-                }
+            // Preferir a cotação de mercado mais recente reportada pelo fornecedor.
+            $marketPrice = $meta['regularMarketPrice'] ?? null;
+            if (is_numeric($marketPrice) && (float) $marketPrice > 0) {
+                $price = (float) $marketPrice;
             }
 
-            // Fallback para o preço de mercado indicado nos metadados da resposta.
+            // Se os metadados não trouxerem preço, usar o último candle válido.
             if ($price === null) {
-                $metaPrice = $meta['regularMarketPrice'] ?? null;
-                $price = is_numeric($metaPrice) && (float) $metaPrice > 0
-                    ? (float) $metaPrice
-                    : null;
+                $closes = $result['indicators']['quote'][0]['close'] ?? [];
+                foreach (array_reverse($closes) as $close) {
+                    if (is_numeric($close) && (float) $close > 0) {
+                        $price = (float) $close;
+                        break;
+                    }
+                }
             }
 
             if ($price === null) {
@@ -890,7 +907,6 @@ class InvestmentsHub extends Component
             $rawCurrency = (string) ($meta['currency'] ?? 'EUR');
             $currency = strtoupper($rawCurrency);
 
-            // O Yahoo representa alguns ativos britânicos em pence (GBp), não GBP.
             if ($rawCurrency === 'GBp') {
                 $price /= 100;
                 $currency = 'GBP';
@@ -913,7 +929,7 @@ class InvestmentsHub extends Component
             }
 
             return round($price, 6);
-        } catch (\Throwable $e) {
+        } catch (\\Throwable $e) {
             Log::warning('InvestmentsHub: falha ao obter cotação Yahoo Finance', [
                 'symbol' => $symbol,
                 'message' => $e->getMessage(),
