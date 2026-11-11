@@ -536,6 +536,16 @@ class BankImportService
             ];
         }
 
+        // Transferências identificadas explicitamente no descritivo do extrato.
+        // Esta regra é determinística e não depende da resposta da IA.
+        if (preg_match('/^(?:transferencia|transf(?:erencia)?\\s+)(?:de|para|recebida de|enviada para)\\b/u', $normalized) === 1) {
+            return [
+                'type' => 'transfer',
+                'label' => $amount >= 0 ? 'Transferência recebida' : 'Transferência enviada',
+                'transfer_category' => 'Transferência bancária',
+            ];
+        }
+
         // Estes comerciantes representam compras/serviços, nunca transferências.
         if ($this->isKnownMerchantExpense($normalized)) {
             return ['type' => $amount >= 0 ? 'income' : 'expense', 'label' => $amount >= 0 ? 'Receita' : 'Despesa'];
@@ -611,7 +621,8 @@ class BankImportService
         foreach ($rows as $index => $row) {
             $normalized = $this->normalizeMovementDescription((string) ($row['description'] ?? ''));
             if ($this->isKnownMerchantExpense($normalized)
-                || str_contains($normalized, 'imposto do selo sobre comissao')) {
+                || str_contains($normalized, 'imposto do selo sobre comissao')
+                || preg_match('/^(?:transferencia|transf(?:erencia)?\\s+)(?:de|para|recebida de|enviada para)\\b/u', $normalized) === 1) {
                 continue;
             }
 
