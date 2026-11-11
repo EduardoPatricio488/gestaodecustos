@@ -560,9 +560,17 @@ class MovementsHub extends Component
             'movementCount' => $items->count(),
             'incomeTotal' => $items->where('direction', 'in')->sum('amount'),
             'expenseTotal' => $items->where('direction', 'out')->sum('amount'),
-            'editCategories' => Category::where('workspace_id', $workspaceId)
+            'editCategories' => Category::query()
+                ->where('workspace_id', $workspaceId)
                 ->when($personal, fn ($q) => $q->where('user_id', $user->id))
-                ->orderBy('name')->get(),
+                ->where(function ($query) {
+                    $query->where('hidden_from_sidebar', false)
+                        ->orWhereRaw('LOWER(TRIM(name)) = ?', ['outros']);
+                })
+                ->orderByRaw("CASE WHEN LOWER(TRIM(name)) = 'outros' THEN 1 ELSE 0 END ASC")
+                ->orderBy('order')
+                ->orderBy('name')
+                ->get(),
             'editAccounts' => BankAccount::where('workspace_id', $workspaceId)
                 ->when($personal, fn ($q) => $q->where('user_id', $user->id))
                 ->orderBy('name')->get(),
