@@ -107,7 +107,7 @@ class MovementsHub extends Component
         $this->editingAmountPaid = (string) $paidAmount;
         $this->editingOutstandingAmount = (string) max(0, round((float) $record->amount - $paidAmount, 2));
         $this->editingVatAmount = (string) ($record->vat_amount ?? '0');
-        $this->editingMetadata = $record->metadata ? json_encode($record->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
+        $this->editingMetadata = $this->formatMetadataForDisplay($record->metadata) ?? '';
     }
 
     public function cancelEditMovement(): void
@@ -166,13 +166,7 @@ class MovementsHub extends Component
             $rules['editingCycle'] = 'required|string|max:50';
         }
         $this->validate($rules);
-        if ($this->editingType === 'expense' && trim($this->editingMetadata) !== '') {
-            json_decode($this->editingMetadata, true);
-            if (json_last_error() !== JSON_ERROR_NONE || ! is_array(json_decode($this->editingMetadata, true))) {
-                $this->addError('editingMetadata', 'As informações de importação têm de estar num formato JSON válido (objeto ou lista).');
-                return;
-            }
-        }
+
 
         $user = auth()->user();
         $workspaceId = (int) $user->current_workspace_id;
@@ -189,7 +183,7 @@ class MovementsHub extends Component
                 ->findOrFail((int) $this->editingAccountId);
         }
 
-        $metadata = $this->editingType === 'expense' && trim($this->editingMetadata) !== '' ? json_decode($this->editingMetadata, true) : null;
+        $metadata = $this->editingType === 'expense' ? $this->parseMetadataFromEditor($this->editingMetadata) : null;
 
         DB::transaction(function () use ($category, $account, $metadata): void {
             $record = $this->scopedRecordQuery($this->editingType, (int) $this->editingId)->lockForUpdate()->firstOrFail();
@@ -375,6 +369,58 @@ class MovementsHub extends Component
 
         $this->cancelEditMovement();
         $this->dispatch('toast', text: 'Movimento convertido com sucesso. O registo anterior foi substituído.');
+    }
+
+    private function parseMetadataFromEditor(string $text): ?array
+    {
+        $text = trim($text);
+
+        if ($text === '') {
+            return null;
+        }
+
+        // Mantém compatibilidade com registos colados no formato JSON antigo.
+        $decoded = json_decode($text, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        $keys = [
+            'banco' => 'bank',
+            'número da importação' => 'import_id',
+            'numero da importacao' => 'import_id',
+            'id da importação' => 'import_id',
+            'id da importacao' => 'import_id',
+            'tipo de ficheiro de origem' => 'source_file_type',
+            'tipo de ficheiro' => 'source_file_type',
+        ];
+
+        $metadata = [];
+        foreach (preg_split('/\\r\\n|\\r|\\n/', $text) as $line) {
+            if (! str_contains($line, ':')) {
+                continue;
+            }
+
+            [$label, $value] = array_map('trim', explode(':', $line, 2));
+            if ($label === '' || $value === '') {
+                continue;
+            }
+
+            $normalizedLabel = mb_strtolower($label);
+            $key = $keys[$normalizedLabel] ?? str_replace(' ', '_', $normalizedLabel);
+
+            if ($key === 'bank') {
+                $value = mb_strtolower($value);
+            } elseif ($key === 'source_file_type') {
+                $value = mb_strtolower($value);
+            } elseif ($key === 'import_id' && is_numeric($value)) {
+                $value = (int) $value;
+            }
+
+            $metadata[$key] = $value;
+        }
+
+        return $metadata !== [] ? $metadata : null;
     }
 
     private function normalizeStatusForDisplay(?string $status): string
