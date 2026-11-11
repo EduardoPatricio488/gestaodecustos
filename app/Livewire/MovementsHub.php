@@ -3,6 +3,9 @@
 namespace App\Livewire;
 
 use App\Models\Expense;
+use App\Models\Category;
+use App\Models\BankAccount;
+use Illuminate\Support\Facades\DB;
 use App\Models\Income;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
@@ -17,6 +20,203 @@ class MovementsHub extends Component
     public string $type = 'all';
     public string $search = '';
     public string $period = 'all';
+    public string $editingType = '';
+    public ?int $editingId = null;
+    public string $editingTitle = '';
+    public string $editingDescription = '';
+    public string $editingAmount = '';
+    public string $editingDate = '';
+    public string $editingCategoryId = '';
+    public string $editingAccountId = '';
+    public string $editingCurrency = 'EUR';
+    public string $editingNotes = '';
+    public string $editingSource = '';
+    public string $editingIncomeType = '';
+    public string $editingFrequency = '';
+    public string $editingDirection = 'out';
+    public string $editingRecipient = '';
+    public string $editingTransferMethod = '';
+    public string $editingTransferCategory = '';
+    public string $editingStatus = 'completed';
+    public string $editingCycle = 'monthly';
+    public bool $editingCompanyPaid = false;
+    public bool $editingActive = true;
+    public string $editingAmountPaid = '0';
+    public string $editingVatAmount = '0';
+
+    private function scopedRecordQuery(string $type, int $id)
+    {
+        $user = auth()->user();
+        $model = match ($type) {
+            'expense' => Expense::query(),
+            'income' => Income::query(),
+            'transfer' => BankTransfer::query(),
+            'subscription' => Subscription::query(),
+            default => abort(404),
+        };
+        $model->where('workspace_id', $user->current_workspace_id);
+        if ($user->currentWorkspace?->type === 'personal') {
+            $model->where('user_id', $user->id);
+        }
+        return $model->whereKey($id);
+    }
+
+    public function editMovement(string $type, int $id): void
+    {
+        $record = $this->scopedRecordQuery($type, $id)->firstOrFail();
+        $this->resetValidation();
+        $this->editingType = $type;
+        $this->editingId = $id;
+        $this->editingTitle = (string) ($record->title ?? $record->name ?? '');
+        $this->editingDescription = (string) ($record->description ?? '');
+        $this->editingAmount = (string) ($record->amount ?? '0');
+        $this->editingDate = match ($type) {
+            'expense' => $record->spent_at?->format('Y-m-d'),
+            'income' => $record->received_at?->format('Y-m-d'),
+            'transfer' => $record->transferred_at?->format('Y-m-d'),
+            'subscription' => $record->renewal_date?->format('Y-m-d') ?? $record->started_at?->format('Y-m-d'),
+        } ?? now()->format('Y-m-d');
+        $this->editingCategoryId = (string) ($record->category_id ?? '');
+        $this->editingAccountId = (string) ($record->bank_account_id ?? '');
+        $this->editingCurrency = strtoupper((string) ($record->currency ?? auth()->user()->currentWorkspace?->currency ?? 'EUR'));
+        $this->editingNotes = (string) ($record->notes ?? '');
+        $this->editingSource = (string) ($record->source ?? '');
+        $this->editingIncomeType = (string) ($record->type ?? '');
+        $this->editingFrequency = (string) ($record->frequency ?? '');
+        $this->editingDirection = (string) ($record->direction ?? 'out');
+        $this->editingRecipient = (string) ($record->recipient ?? '');
+        $this->editingTransferMethod = (string) ($record->transfer_method ?? '');
+        $this->editingTransferCategory = (string) ($record->category ?? '');
+        $this->editingStatus = (string) ($record->status ?? 'completed');
+        $this->editingCycle = (string) ($record->cycle ?? 'monthly');
+        $this->editingCompanyPaid = (bool) ($record->paid_by_company ?? $record->is_company ?? false);
+        $this->editingActive = (bool) ($record->is_active ?? true);
+        $this->editingAmountPaid = (string) ($record->amount_paid ?? $record->amount ?? '0');
+        $this->editingVatAmount = (string) ($record->vat_amount ?? '0');
+    }
+
+    public function cancelEditMovement(): void
+    {
+        $this->reset([
+            'editingType', 'editingId', 'editingTitle', 'editingDescription', 'editingAmount',
+            'editingDate', 'editingCategoryId', 'editingAccountId', 'editingNotes',
+            'editingSource', 'editingIncomeType', 'editingFrequency', 'editingRecipient',
+            'editingTransferMethod', 'editingTransferCategory',
+        ]);
+        $this->editingCurrency = strtoupper((string) (auth()->user()->currentWorkspace?->currency ?? 'EUR'));
+        $this->editingDirection = 'out';
+        $this->editingStatus = 'completed';
+        $this->editingCycle = 'monthly';
+        $this->editingCompanyPaid = false;
+        $this->editingActive = true;
+        $this->editingAmountPaid = '0';
+        $this->editingVatAmount = '0';
+    }
+
+    public function saveMovement(): void
+    {
+        abort_unless($this->editingType !== '' && $this->editingId, 404);
+        $rules = [
+            'editingAmount' => 'required|numeric|min:0.01',
+            'editingDate' => 'required|date',
+            'editingCurrency' => 'required|string|size:3',
+            'editingDescription' => 'nullable|string|max:255',
+        ];
+        if ($this->editingType === 'expense') {
+            $rules['editingAmountPaid'] = 'required|numeric|min:0|max:'.$this->editingAmount;
+            $rules['editingVatAmount'] = 'nullable|numeric|min:0|max:'.$this->editingAmount;
+            $rules['editingCategoryId'] = 'nullable|integer';
+        } elseif ($this->editingType === 'income') {
+            $rules['editingCategoryId'] = 'nullable|integer';
+            $rules['editingSource'] = 'nullable|string|max:100';
+            $rules['editingIncomeType'] = 'nullable|string|max:100';
+            $rules['editingFrequency'] = 'nullable|string|max:100';
+        } elseif ($this->editingType === 'transfer') {
+            $rules['editingDirection'] = 'required|in:in,out';
+            $rules['editingRecipient'] = 'nullable|string|max:255';
+            $rules['editingTransferMethod'] = 'nullable|string|max:100';
+            $rules['editingTransferCategory'] = 'nullable|string|max:100';
+            $rules['editingStatus'] = 'required|string|max:50';
+        } else {
+            $rules['editingTitle'] = 'required|string|max:255';
+            $rules['editingCycle'] = 'required|string|max:50';
+        }
+        $this->validate($rules);
+
+        $user = auth()->user();
+        $workspaceId = (int) $user->current_workspace_id;
+        $category = null;
+        if (in_array($this->editingType, ['expense', 'income'], true) && $this->editingCategoryId !== '') {
+            $category = Category::where('workspace_id', $workspaceId)
+                ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                ->findOrFail((int) $this->editingCategoryId);
+        }
+        $account = null;
+        if (in_array($this->editingType, ['expense', 'income'], true) && $this->editingAccountId !== '') {
+            $account = BankAccount::where('workspace_id', $workspaceId)
+                ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                ->findOrFail((int) $this->editingAccountId);
+        }
+
+        DB::transaction(function () use ($category, $account): void {
+            $record = $this->scopedRecordQuery($this->editingType, (int) $this->editingId)->lockForUpdate()->firstOrFail();
+            $amount = round((float) $this->editingAmount, 2);
+            if ($this->editingType === 'expense') {
+                $record->update([
+                    'title' => $this->editingTitle !== '' ? $this->editingTitle : null,
+                    'description' => $this->editingDescription,
+                    'amount' => $amount,
+                    'amount_paid' => round((float) $this->editingAmountPaid, 2),
+                    'vat_amount' => round((float) ($this->editingVatAmount ?: 0), 2),
+                    'spent_at' => $this->editingDate,
+                    'category_id' => $category?->id,
+                    'bank_account_id' => $account?->id,
+                    'currency' => strtoupper($this->editingCurrency),
+                    'is_company' => $this->editingCompanyPaid,
+                ]);
+            } elseif ($this->editingType === 'income') {
+                $record->update([
+                    'description' => $this->editingDescription,
+                    'amount' => $amount,
+                    'received_at' => $this->editingDate,
+                    'category_id' => $category?->id,
+                    'bank_account_id' => $account?->id,
+                    'currency' => strtoupper($this->editingCurrency),
+                    'source' => $this->editingSource,
+                    'type' => $this->editingIncomeType,
+                    'frequency' => $this->editingFrequency,
+                    'notes' => $this->editingNotes,
+                ]);
+            } elseif ($this->editingType === 'transfer') {
+                $record->update([
+                    'description' => $this->editingDescription,
+                    'amount' => $amount,
+                    'transferred_at' => $this->editingDate,
+                    'direction' => $this->editingDirection,
+                    'recipient' => $this->editingRecipient,
+                    'transfer_method' => $this->editingTransferMethod,
+                    'category' => $this->editingTransferCategory,
+                    'status' => $this->editingStatus,
+                    'currency' => strtoupper($this->editingCurrency),
+                    'notes' => $this->editingNotes,
+                ]);
+            } else {
+                $record->update([
+                    'name' => $this->editingTitle,
+                    'amount' => $amount,
+                    'cycle' => $this->editingCycle,
+                    'renewal_date' => $this->editingDate,
+                    'paid_by_company' => $this->editingCompanyPaid,
+                    'is_active' => $this->editingActive,
+                    'notes' => $this->editingNotes,
+                ]);
+            }
+        });
+
+        $this->cancelEditMovement();
+        $this->dispatch('toast', text: 'Registo atualizado com sucesso.');
+    }
+
 
     private function normalizeStatusForDisplay(?string $status): string
     {
@@ -220,6 +420,12 @@ class MovementsHub extends Component
             'movementCount' => $items->count(),
             'incomeTotal' => $items->where('direction', 'in')->sum('amount'),
             'expenseTotal' => $items->where('direction', 'out')->sum('amount'),
+            'editCategories' => Category::where('workspace_id', $workspaceId)
+                ->when($personal, fn ($q) => $q->where('user_id', $user->id))
+                ->orderBy('name')->get(),
+            'editAccounts' => BankAccount::where('workspace_id', $workspaceId)
+                ->when($personal, fn ($q) => $q->where('user_id', $user->id))
+                ->orderBy('name')->get(),
         ]);
     }
 }
