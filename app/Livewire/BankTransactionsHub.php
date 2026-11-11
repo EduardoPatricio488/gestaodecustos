@@ -362,32 +362,15 @@ class BankTransactionsHub extends Component
                 ];
             });
 
-        $expenses = $scope(Expense::query()->with('bankAccount'))
-            ->where(fn ($q) => $q->whereNotNull('bank_account_id')->orWhereNotNull('bank_statement_import_id')->orWhereNotNull('metadata->import_id'))
-            ->latest('spent_at')->get()->map(function ($item) {
-                $metadata = is_array($item->metadata) ? $item->metadata : [];
-                $method = mb_strtolower((string) ($metadata['payment_method'] ?? $metadata['payment_type'] ?? ''));
-                $description = mb_strtolower((string) $item->description);
-                $mbway = str_contains($method, 'mbway') || str_contains($method, 'mb way') || str_contains($description, 'mbway') || str_contains($description, 'mb way');
-                return [
-                    'id' => 'expense-'.$item->id, 'date' => $item->spent_at,
-                    'kind' => $mbway ? 'mbway' : 'expense',
-                    'label' => $item->description ?: ($mbway ? 'Pagamento MB WAY' : 'Pagamento'),
-                    'account' => $item->bankAccount?->name ?? 'Conta bancária',
-                    'counterpart' => 'Saída de dinheiro',
-                    'amount' => (float) $item->amount_paid > 0 ? (float) $item->amount_paid : (float) $item->amount,
-                    'direction' => 'out', 'channel' => $mbway ? 'MB WAY' : 'Pagamento bancário',
-                    'status' => mb_strtolower((string) $item->status) === 'cancelled' ? 'Cancelada' : 'Concluído',
-                ];
-            });
-
-        $movements = $transfers->concat($incomes)->concat($expenses)
+        // Esta área é dedicada a transferências e entradas bancárias.
+        // Despesas/pagamentos permanecem no módulo de Despesas e não são listados aqui.
+        $movements = $transfers->concat($incomes)
             ->sortByDesc(fn ($item) => $item['date']?->timestamp ?? 0)->values();
 
         return view('livewire.bank-transactions-hub', [
             'movements' => $movements,
             'totalIn' => $incomes->sum('amount') + $transfers->where('direction', 'in')->sum('amount'),
-            'totalOut' => $expenses->sum(fn ($item) => (float) $item['amount']) + $transfers->where('direction', 'out')->sum('amount'),
+            'totalOut' => $transfers->where('direction', 'out')->sum('amount'),
             'totalTransfers' => $transfers->reject(fn ($item) => ($item['category'] ?? null) === 'Imposto do Selo')->sum('amount'),
             'totalStampDuty' => $transfers->filter(fn ($item) => ($item['category'] ?? null) === 'Imposto do Selo')->sum('amount'),
             'movementCount' => $movements->count(),
