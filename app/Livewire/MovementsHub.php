@@ -163,6 +163,9 @@ class MovementsHub extends Component
     {
         abort_unless(in_array($type, ['expense', 'income', 'transfer', 'subscription'], true), 404);
         $this->editMovement($type, $id);
+        if (trim($this->editingDescription) === '') {
+            $this->editingDescription = $this->editingTitle;
+        }
         $this->showEditModal = false;
         $this->showConversionModal = true;
         $this->conversionType = '';
@@ -176,12 +179,39 @@ class MovementsHub extends Component
         }
 
         $this->resetValidation();
+
+        if ($type === 'expense' && $this->editingType === 'transfer') {
+            $this->editingAccountId = $this->editingFromAccountId;
+        }
+
+        if ($type === 'income' && $this->editingType === 'transfer') {
+            $this->editingAccountId = $this->editingToAccountId;
+            $this->editingIncomeDestination = $this->editingToAccountId !== ''
+                ? 'bank:'.$this->editingToAccountId
+                : 'cash';
+        }
+
         if ($type === 'transfer') {
+            $this->editingTransferStatus = $this->editingType === 'transfer'
+                ? $this->editingTransferStatus
+                : 'completed';
+
             if ($this->editingType === 'income' && $this->editingAccountId !== '') {
                 $this->editingToAccountId = $this->editingAccountId;
-            } elseif ($this->editingType !== 'transfer' && $this->editingAccountId !== '') {
+            } elseif ($this->editingType === 'expense' && $this->editingAccountId !== '') {
                 $this->editingFromAccountId = $this->editingAccountId;
             }
+        }
+
+        if ($type === 'subscription' && $this->editingType !== 'subscription') {
+            $this->editingCycle = 'monthly';
+            $this->editingSubscriptionStatus = 'active';
+            $this->editingSubscriptionPaymentMethod = 'card';
+            $this->editingSubscriptionBillingDay = (string) Carbon::parse($this->editingDate)->day;
+            $this->editingSubscriptionStartedAt = $this->editingDate;
+            $this->editingSubscriptionRenewalDate = $this->editingDate;
+            $this->editingNotifyBeforeBilling = false;
+            $this->editingNotifyDaysBefore = '3';
         }
 
     }
