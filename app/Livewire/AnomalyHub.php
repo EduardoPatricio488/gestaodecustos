@@ -15,7 +15,7 @@ class AnomalyHub extends Component
 
     public float $minMultiplier = 1.5;
 
-    private function median(array $values): float
+    private static function median(array $values): float
     {
         if (empty($values)) {
             return 0.0;
@@ -30,6 +30,58 @@ class AnomalyHub extends Component
         }
 
         return (float) $values[$mid];
+    }
+
+    /**
+     * Devolve o número de anomalias detetadas com os parâmetros predefinidos
+     * utilizados na página de Anomalias IA.
+     */
+    public static function detectedCountForSidebar(int $workspaceId, int $userId): int
+    {
+        $startCurrentMonth = now()->startOfMonth();
+        $startHistory = now()->copy()->subMonths(6)->startOfMonth();
+
+        $historyByCategory = Expense::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('user_id', $userId)
+            ->where('is_company', false)
+            ->where('spent_at', '>=', $startHistory)
+            ->where('spent_at', '<', $startCurrentMonth)
+            ->get(['category_id', 'amount'])
+            ->groupBy(fn ($expense) => $expense->category_id ?? 0)
+            ->map(fn ($items) => $items->pluck('amount')->map(fn ($value) => (float) $value)->values()->all());
+
+        $currentMonth = Expense::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('is_company', false)
+            ->where('spent_at', '>=', $startCurrentMonth)
+            ->get(['category_id', 'amount']);
+
+        $count = 0;
+
+        foreach ($currentMonth as $expense) {
+            $samples = $historyByCategory->get($expense->category_id ?? 0, []);
+
+            if (count($samples) < 3) {
+                continue;
+            }
+
+            $median = self::median($samples);
+            if ($median <= 0) {
+                continue;
+            }
+
+            $deviations = array_map(fn ($value) => abs($value - $median), $samples);
+            $mad = self::median($deviations);
+            $robustSigma = $mad > 0 ? ($mad * 1.4826) : max(1.0, $median * 0.15);
+            $score = (((float) $expense->amount) - $median) / $robustSigma;
+
+            if ($score >= 2.8 && ((float) $expense->amount) >= ($median * 1.5)) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     public function render()
