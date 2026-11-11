@@ -374,11 +374,11 @@ class IncomeHub extends Component
                     ? trim(preg_replace('/\\s+/', ' ', $providerMessage))
                     : 'Resposta de erro não reconhecida do fornecedor de IA.';
 
-                report(new \\RuntimeException(
+                report(new \RuntimeException(
                     'Scanner de contrato: OpenRouter HTTP '.$response->status().' — '.mb_substr($providerMessage, 0, 500)
                 ));
 
-                throw new \\RuntimeException(
+                throw new \RuntimeException(
                     'A IA não conseguiu analisar a fotografia (HTTP '.$response->status().'). '.$providerMessage
                 );
             }
