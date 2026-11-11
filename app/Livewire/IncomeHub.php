@@ -2397,6 +2397,41 @@ class IncomeHub extends Component
             ->latest()
             ->get();
 
+        // Movimentos efetivamente recebidos em contas bancárias (inclui contas
+        // identificadas como MB WAY pelo nome). Não inclui previsões nem dinheiro físico.
+        $bankReceivedIncomes = Income::with('bankAccount')
+            ->where('workspace_id', $workspaceId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
+            ->whereNotNull('bank_account_id')
+            ->where(function ($query): void {
+                $query->whereNull('added_to_salary')->orWhere('added_to_salary', false);
+            })
+            ->latest('received_at')
+            ->get();
+
+        $bankReceivedSalaryPayments = SalaryPayment::with(['recurringIncome', 'bankAccount'])
+            ->where('workspace_id', $workspaceId)
+            ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
+            ->where('status', 'paid')
+            ->whereNotNull('bank_account_id')
+            ->orderByDesc('paid_at')
+            ->orderByDesc('id')
+            ->get();
+
+        $bankTransactionsTotal = (float) $bankReceivedIncomes->sum(
+            fn (Income $income) => (float) ($income->amount_converted ?? $income->amount)
+        );
+        $bankTransactionsTotal += (float) $bankReceivedSalaryPayments->sum(function (SalaryPayment $payment): float {
+            if ((float) $payment->bank_balance_amount > 0) {
+                return (float) $payment->bank_balance_amount;
+            }
+
+            $mealCard = ($payment->recurringIncome?->metadata['meal_allowance_destination'] ?? null) === 'meal_card';
+
+            return max(0, (float) $payment->net_received - ($mealCard ? (float) $payment->meal_allowance : 0));
+        });
+        $bankTransactionsTotal = round($bankTransactionsTotal, 2);
+
         $salaryIncomeHistoryContract = $this->salaryIncomeHistoryId
             ? $allSalaryContracts->firstWhere('id', $this->salaryIncomeHistoryId)
             : null;
@@ -2622,6 +2657,9 @@ class IncomeHub extends Component
             'salaryIncomeHistoryContract' => $salaryIncomeHistoryContract,
             'salaryIncomeHistory' => $salaryIncomeHistory,
             'extraIncomes' => $extraIncomes,
+            'bankReceivedIncomes' => $bankReceivedIncomes,
+            'bankReceivedSalaryPayments' => $bankReceivedSalaryPayments,
+            'bankTransactionsTotal' => $bankTransactionsTotal,
             'totalMonthly' => $totalMonthly,
             'avgMonthly' => $avgMonthly,
             'lastMonth' => $lastMonth,
