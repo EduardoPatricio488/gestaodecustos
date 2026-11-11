@@ -166,7 +166,7 @@
 
     // 4. CACHE DE CONTAGENS DA SIDEBAR
     $counts = \Illuminate\Support\Facades\Cache::remember(
-        "layout:sidebar-counts:v2:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
+        "layout:sidebar-counts:v3:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
         60,
         function () use ($user, $currentWs, $workspaceId, $isAdminMode, $isBusinessMode) {
             if ($isAdminMode) {
@@ -201,7 +201,15 @@
                 'incomes'       => \App\Models\Income::where('workspace_id', $workspaceId)->count()
                     + \App\Models\RecurringIncome::where('workspace_id', $workspaceId)->count(),
                 'investments'   => \App\Models\Investment::where('workspace_id', $workspaceId)->count(),
+                'transfers'     => \App\Models\BankTransfer::where('workspace_id', $workspaceId)->count(),
+                'budget'        => \App\Models\Category::where('workspace_id', $workspaceId)->where('budget', '>', 0)->count(),
+                'anomalies'     => \App\Models\Expense::where('workspace_id', $workspaceId)->where('is_company', false)->count(),
+                'expense_forecast' => \App\Models\Expense::where('workspace_id', $workspaceId)->where('is_company', false)->count(),
                 'subscriptions' => \App\Models\Subscription::where('workspace_id', $workspaceId)->count(),
+                'subscription_scanner' => \App\Models\Subscription::where('workspace_id', $workspaceId)->count(),
+                'networth'      => \App\Models\BankPatrimony::where('workspace_id', $workspaceId)->count(),
+                'retirement'    => \App\Models\Investment::where('workspace_id', $workspaceId)->count(),
+                'inflation'     => \App\Models\Expense::where('workspace_id', $workspaceId)->where('is_company', false)->count(),
                 'activity'      => \App\Models\ActivityLog::where('workspace_id', $workspaceId)->count(),
                 'goals'         => \App\Models\Goal::where('workspace_id', $workspaceId)->count(),
                 'debts'         => \App\Models\Debt::where('workspace_id', $workspaceId)->count(),
@@ -1248,7 +1256,7 @@ $hasStoreAccess = $hasLockInAccess;
                         Investimentos {!! $badge($counts['investments']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="arrows-right-left" :href="route('hub.debts')" wire:navigate.hover>
-                        Transferências Bancárias
+                        Transferências Bancárias {!! $badge($counts['transfers']) !!}
                     </flux:sidebar.item>
                     @if($myRestrictions?->restrict_budget)
     {{-- VERSÃO BLOQUEADA (APARECE MAS NÃO CLICA) --}}
@@ -1258,7 +1266,7 @@ $hasStoreAccess = $hasLockInAccess;
         title="Área Bloqueada pelo Administrador"
     >
         <span class="flex items-center justify-between w-full">
-            Orçamento
+            Orçamento {!! $badge($counts['budget']) !!}
             <flux:icon name="lock-closed" variant="micro" class="size-3 text-amber-600" />
         </span>
     </flux:sidebar.item>
@@ -1280,25 +1288,25 @@ $hasStoreAccess = $hasLockInAccess;
                         Dividir Despesas {!! $badge($counts['splits']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="exclamation-triangle" :href="route('hub.anomalies')" wire:navigate.hover>
-                        Anomalias IA
+                        Anomalias IA {!! $badge($counts['anomalies']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="chart-pie" :href="route('hub.expense-forecast')" wire:navigate.hover>
-                        Previsão Despesas
+                        Previsão Despesas {!! $badge($counts['expense_forecast']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="credit-card" :href="route('hub.subscriptions')" wire:navigate.hover>
                         Assinaturas {!! $badge($counts['subscriptions']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="magnifying-glass" :href="route('hub.subscriptions.scanner')" wire:navigate.hover>
-                        Scanner Subscrições
+                        Scanner Subscrições {!! $badge($counts['subscription_scanner']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="briefcase" :href="route('hub.networth')" wire:navigate.hover>
-                        Património Real
+                        Património Real {!! $badge($counts['networth']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="clock" :href="route('hub.retirement')" wire:navigate.hover>
-                        Simulador de Reforma
+                        Simulador de Reforma {!! $badge($counts['retirement']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="fire" :href="route('hub.inflation')" wire:navigate.hover>
-                        Análise de Inflação
+                        Análise de Inflação {!! $badge($counts['inflation']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item
                         icon="building-library"
