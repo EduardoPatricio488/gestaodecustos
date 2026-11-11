@@ -303,7 +303,7 @@ class MovementsHub extends Component
         if (in_array($this->type, ['all', 'expense'], true)) {
             $items = $items->concat($scope(Expense::query()->with(['category', 'supplier', 'bankAccount', 'project', 'task', 'costCenter']))->get()->map(fn ($item) => [
                 'key' => 'expense-'.$item->id, 'record_id' => $item->id, 'edit_type' => 'expense', 'type' => 'expense', 'type_label' => 'Despesa',
-                'record_url' => route('expenses.edit', $item->id),
+                'record_url' => route('hub.category', $item->category?->resolveSlug() ?? 'outras').'?open_expense='.$item->id,
                 'title' => $item->title ?: $item->description ?: 'Despesa',
                 'detail' => $item->category?->name ?: 'Sem categoria',
                 'date' => $item->spent_at, 'amount' => (float) ((float) $item->amount_paid > 0 ? $item->amount_paid : $item->amount),
