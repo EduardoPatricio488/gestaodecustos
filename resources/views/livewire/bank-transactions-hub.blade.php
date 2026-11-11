@@ -103,7 +103,7 @@
                                 </select>
                                 @error('editCategoryId')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
                                 <button type="button" wire:click="convertTransferToExpense" wire:loading.attr="disabled" class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-700 disabled:opacity-50">
-                                    <flux:icon name="receipt" class="size-4" />
+                                    
                                     <span wire:loading.remove wire:target="convertTransferToExpense">Converter em despesa</span>
                                     <span wire:loading wire:target="convertTransferToExpense">A converter...</span>
                                 </button>
