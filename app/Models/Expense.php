@@ -13,7 +13,7 @@ class Expense extends Model
 {
     use BelongsToWorkspace, LogsActivity;
 
-    protected $fillable = ['user_id', 'category_id', 'workspace_id', 'supplier_id', 'bank_account_id', 'subcategory', 'metadata', 'amount', 'amount_paid', 'description', 'status', 'spent_at', 'receipt_path', 'is_company', 'project_id', 'task_id', 'cost_center_id', 'currency', 'amount_converted', 'vat_amount', 'title'];
+    protected $fillable = ['user_id', 'category_id', 'workspace_id', 'bank_statement_import_id', 'supplier_id', 'bank_account_id', 'subcategory', 'metadata', 'amount', 'amount_paid', 'description', 'status', 'spent_at', 'receipt_path', 'is_company', 'project_id', 'task_id', 'cost_center_id', 'currency', 'amount_converted', 'vat_amount', 'title'];
 
     protected $casts = ['spent_at' => 'date', 'amount' => 'decimal:2', 'amount_paid' => 'decimal:2', 'amount_converted' => 'decimal:2', 'vat_amount' => 'decimal:2', 'metadata' => 'array', 'is_company' => 'boolean'];
 
