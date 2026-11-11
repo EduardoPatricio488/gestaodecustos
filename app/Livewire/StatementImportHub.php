@@ -307,7 +307,11 @@ class StatementImportHub extends Component
         $categories = Category::query()
             ->where('workspace_id', $workspaceId)
             ->when($isPersonalWorkspace, fn ($query) => $query->where('user_id', $user->id))
-            ->where('hidden_from_sidebar', false)
+            ->where(function ($query) {
+                $query->where('hidden_from_sidebar', false)
+                    ->orWhereRaw('LOWER(TRIM(name)) = ?', ['outros']);
+            })
+            ->orderByRaw("CASE WHEN LOWER(TRIM(name)) = 'outros' THEN 1 ELSE 0 END ASC")
             ->orderBy('order')
             ->orderBy('name')
             ->get(['id', 'name']);
