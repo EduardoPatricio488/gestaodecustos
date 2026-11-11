@@ -160,7 +160,7 @@ class Expenses extends Component
                 $compactPrompt = "Analisa esta fatura portuguesa. Devolve APENAS um objeto JSON válido, sem texto adicional. ".
                     "Escolhe category exatamente desta lista: ".json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES).". ".
                     "Extrai apenas: category (categoria mais adequada), amount (total final pago, número), date (YYYY-MM-DD), store (estabelecimento), description (descrição curta). ".
-                    "Não inventes dados; usa null se não estiverem visíveis. Formato: {\\"category\\":null,\\"amount\\":null,\\"date\\":null,\\"store\\":null,\\"description\\":null}";
+                    'Não inventes dados; usa null se não estiverem visíveis. Formato: {"category":null,"amount":null,"date":null,"store":null,"description":null}';
 
                 $retryResponse = \Illuminate\Support\Facades\Http::withHeaders([
                     'Authorization' => 'Bearer '.$apiKey,
