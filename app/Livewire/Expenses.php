@@ -210,7 +210,7 @@ class Expenses extends Component
                     'Content-Type' => 'application/json',
                     'HTTP-Referer' => config('app.url'),
                     'X-Title' => 'Finance Pro AI',
-                ])->connectTimeout(5)->timeout(35)
+                ])->connectTimeout(4)->timeout(20)
                     ->post('https://openrouter.ai/api/v1/chat/completions', [
                         'model' => config('services.openrouter.model', 'openrouter/free'),
                         'temperature' => 0,
