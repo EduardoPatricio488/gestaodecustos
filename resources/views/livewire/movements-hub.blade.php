@@ -66,14 +66,19 @@
                                 @endif
                             @endforeach
                         </dl>
+                        <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
+                            @if(in_array($movement['edit_type'] ?? '', ['expense', 'income', 'transfer', 'subscription'], true))
+                                <button type="button" wire:click="editMovement('{{ $movement['edit_type'] }}', {{ $movement['record_id'] }})" class="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-[11px] font-bold text-zinc-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-blue-950/30">
+                                    <flux:icon name="pencil" class="size-3.5" /> Editar
+                                </button>
+                            @endif
                         @if(!empty($movement['record_url']))
-                            <div class="mt-4 flex justify-end">
                                 <a href="{{ $movement['record_url'] }}" wire:navigate class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-blue-700">
                                     <flux:icon name="arrow-top-right-on-square" class="size-4" />
                                     Abrir registo
                                 </a>
-                            </div>
                         @endif
+                        </div>
                     </div>
                 </article>
             @empty
@@ -82,4 +87,68 @@
         </div>
         <p class="text-[11px] text-zinc-400">As assinaturas representam compromissos recorrentes e não são somadas novamente às despesas pagas.</p>
     </section>
+
+    @if($editingId)
+        <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-zinc-950/60 p-4" wire:key="movement-editor-modal">
+            <div class="my-6 w-full max-w-3xl rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 sm:p-6" @click.stop>
+                <div class="mb-5 flex items-start justify-between gap-3">
+                    <div><h2 class="text-lg font-black text-zinc-900 dark:text-white">Editar movimento</h2><p class="mt-1 text-xs text-zinc-500">Altera os campos e guarda. Também podes converter o tipo de movimento.</p></div>
+                    <button type="button" wire:click="cancelEditMovement" class="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800" aria-label="Fechar"><flux:icon name="x-mark" class="size-5" /></button>
+                </div>
+                <form wire:submit="saveMovement" class="space-y-4">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        @if(in_array($editingType, ['expense','subscription']))
+                            <label class="text-xs font-bold text-zinc-500">Nome / título<input wire:model="editingTitle" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
+                        @endif
+                        <label class="text-xs font-bold text-zinc-500">Descrição<input wire:model="editingDescription" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
+                        <label class="text-xs font-bold text-zinc-500">Valor<input type="number" min="0.01" step="0.01" wire:model="editingAmount" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
+                        <label class="text-xs font-bold text-zinc-500">Data<input type="date" wire:model="editingDate" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
+                        <label class="text-xs font-bold text-zinc-500">Moeda<input maxlength="3" wire:model="editingCurrency" class="mt-1 w-full rounded-xl border-zinc-200 text-sm uppercase dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
+                        @if(in_array($editingType, ['expense','income','subscription']))
+                            <label class="text-xs font-bold text-zinc-500">Categoria<select wire:model="editingCategoryId" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Sem categoria</option>@foreach($editCategories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select></label>
+                        @endif
+                        @if(in_array($editingType, ['expense','income']))
+                            <label class="text-xs font-bold text-zinc-500">Conta bancária<select wire:model="editingAccountId" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Sem conta</option>@foreach($editAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select></label>
+                        @endif
+                        @if($editingType === 'transfer')
+                            <label class="text-xs font-bold text-zinc-500">Direção<select wire:model="editingDirection" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="out">Saída</option><option value="in">Entrada</option></select></label>
+                            <label class="text-xs font-bold text-zinc-500">Destinatário<input wire:model="editingRecipient" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
+                        @endif
+                        @if($editingType === 'subscription')
+                            <label class="text-xs font-bold text-zinc-500">Periodicidade<select wire:model="editingCycle" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="monthly">Mensal</option><option value="yearly">Anual</option><option value="weekly">Semanal</option><option value="quarterly">Trimestral</option></select></label>
+                        @endif
+                        @if($editingType === 'income')
+                            <label class="text-xs font-bold text-zinc-500">Origem<input wire:model="editingSource" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
+                            <label class="text-xs font-bold text-zinc-500">Tipo de receita<input wire:model="editingIncomeType" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
+                        @endif
+                    </div>
+                    <div class="flex flex-wrap justify-end gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                        <button type="button" wire:click="cancelEditMovement" class="rounded-xl border border-zinc-200 px-4 py-2.5 text-xs font-bold text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">Cancelar</button>
+                        <button type="submit" class="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700" wire:loading.attr="disabled" wire:target="saveMovement">Guardar alterações</button>
+                    </div>
+                </form>
+                @if(in_array($editingType, ['expense','income','transfer','subscription'], true))
+                    <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
+                        <h3 class="text-xs font-black uppercase tracking-wide text-amber-800 dark:text-amber-300">Alterar tipo de movimento</h3>
+                        <p class="mt-1 text-xs text-amber-800/80 dark:text-amber-200/80">O movimento atual será substituído pelo novo tipo; não ficarão dois registos.</p>
+                        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <label class="text-xs font-bold text-zinc-600 dark:text-zinc-300">Novo tipo<select wire:model="conversionType" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="expense">Despesa</option><option value="income">Receita</option><option value="transfer">Transferência</option><option value="subscription">Assinatura</option></select></label>
+                            @if($conversionType === 'transfer')
+                                <label class="text-xs font-bold text-zinc-600 dark:text-zinc-300">Conta de origem<select wire:model="editingFromAccountId" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Selecionar conta</option>@foreach($editAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select></label>
+                                <label class="text-xs font-bold text-zinc-600 dark:text-zinc-300">Conta de destino<select wire:model="editingToAccountId" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Selecionar conta</option>@foreach($editAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select></label>
+                            @endif
+                            @if($conversionType === 'subscription')
+                                <label class="text-xs font-bold text-zinc-600 dark:text-zinc-300">Categoria da assinatura<select wire:model="editingCategoryId" class="mt-1 w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Selecionar categoria</option>@foreach($editCategories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select></label>
+                            @endif
+                        </div>
+                        @error('conversionType')<p class="mt-2 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                        @error('editingFromAccountId')<p class="mt-2 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                        @error('editingToAccountId')<p class="mt-2 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                        @error('editingCategoryId')<p class="mt-2 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                        <div class="mt-3 flex justify-end"><button type="button" wire:click="convertMovement" wire:confirm="Tens a certeza? O registo atual será apagado e substituído pelo novo tipo." wire:loading.attr="disabled" wire:target="convertMovement" class="rounded-xl bg-amber-600 px-4 py-2.5 text-xs font-black text-white hover:bg-amber-700">Converter movimento</button></div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
 </div>
