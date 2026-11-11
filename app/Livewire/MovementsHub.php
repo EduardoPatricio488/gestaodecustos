@@ -17,6 +17,13 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class MovementsHub extends Component
 {
+    public bool $readOnly = false;
+
+    public function mount(bool $readOnly = false): void
+    {
+        $this->readOnly = $readOnly;
+    }
+
     public string $type = 'all';
     public string $search = '';
     public string $period = 'all';
@@ -106,6 +113,7 @@ class MovementsHub extends Component
 
     public function editMovement(string $type, int $id): void
     {
+        abort_if($this->readOnly, 404);
         $record = $this->scopedRecordQuery($type, $id)->firstOrFail();
         $this->resetValidation();
         $this->editingType = $type;
@@ -161,6 +169,7 @@ class MovementsHub extends Component
 
     public function openConversionModal(string $type, int $id): void
     {
+        abort_if($this->readOnly, 404);
         abort_unless(in_array($type, ['expense', 'income', 'transfer', 'subscription'], true), 404);
         $this->editMovement($type, $id);
         if (trim($this->editingDescription) === '') {
@@ -314,6 +323,7 @@ class MovementsHub extends Component
 
     public function saveMovement(): void
     {
+        abort_if($this->readOnly, 404);
         abort_unless($this->editingType !== '' && $this->editingId, 404);
         $rules = [
             'editingAmount' => 'required|numeric|min:0.01',
@@ -437,6 +447,7 @@ class MovementsHub extends Component
 
     public function convertMovement(): void
     {
+        abort_if($this->readOnly, 404);
         abort_unless($this->editingType !== '' && $this->editingId, 404);
 
         $allowed = ['expense', 'income', 'transfer', 'subscription'];
