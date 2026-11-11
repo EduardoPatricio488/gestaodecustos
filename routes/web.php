@@ -31,7 +31,6 @@ use App\Livewire\Admin\UserManagement;
 use App\Livewire\AiInsights;
 use App\Livewire\AnomalyHub;
 use App\Livewire\BancoHub;
-use App\Livewire\BudgetHub;
 use App\Livewire\Business\AbsenceHub;
 use App\Livewire\Business\AtInvoiceHub;
 use App\Livewire\Business\BankAccountHub;
@@ -306,7 +305,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('hub.incomes.statement.download');
     Route::get('/dividas', BankTransactionsHub::class)->name('hub.debts');
     Route::get('/objetivos', GoalsHub::class)->name('hub.goals');
-    Route::get('/orcamento', BudgetHub::class)->name('hub.budget');
     Route::get('/wrapped', WrappedReport::class)->name('hub.wrapped');
     Route::get('/banco', BancoHub::class)->name('hub.banco');
     Route::get('/calendario', PersonalCalendar::class)->name('hub.calendar');
