@@ -342,7 +342,7 @@ class BankTransactionsHub extends Component
             ->latest('transferred_at')->get()->map(fn ($item) => [
                 'id' => 'transfer-'.$item->id, 'date' => $item->transferred_at,
                 'kind' => 'transfer', 'label' => $item->description ?: 'Transferência entre contas',
-                'category' => $item->category,
+                'category' => $item->category === 'Imposto do Selo' ? 'Imposto do Selo' : null,
                 'transfer_method' => $item->transfer_method,
                 'account' => (($item->direction ?? 'out') === 'in' ? $item->toAccount?->name : $item->fromAccount?->name) ?? 'Conta bancária',
                 'counterpart' => $item->recipient ?: 'Destinatário não indicado',
