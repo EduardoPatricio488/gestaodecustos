@@ -577,7 +577,8 @@ class BankImportService
             || str_contains($normalizedDescription, 'mafrense nem passes')
             || str_contains($normalizedDescription, 'compra 1293')
             || str_contains($normalizedDescription, 'www amazon')
-            || str_contains($normalizedDescription, 'amazon');
+            || str_contains($normalizedDescription, 'amazon')
+            || str_contains($normalizedDescription, 'farmacia falcao');
     }
 
     private function categoryIdByName(array $categories, string $wantedName): ?int
@@ -912,6 +913,7 @@ class BankImportService
             str_contains($normalized, 'hamb da vila'),
             preg_match('/\\bh3\\b/', $normalized) === 1 => 'Alimentação',
             str_contains($normalized, 'mafrense nem passes') => 'Transporte',
+            str_contains($normalized, 'farmacia falcao') => 'Saúde',
             str_contains($normalized, 'www amazon'),
             str_contains($normalized, 'amazon') => 'Casa',
             default => null,
