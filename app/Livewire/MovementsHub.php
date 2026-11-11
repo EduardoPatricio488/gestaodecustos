@@ -138,6 +138,7 @@ class MovementsHub extends Component
             $rules['editingTransferCategory'] = 'nullable|string|max:100';
             $rules['editingStatus'] = 'required|string|max:50';
         } else {
+            $rules['editingCategoryId'] = 'nullable|integer';
             $rules['editingTitle'] = 'required|string|max:255';
             $rules['editingCycle'] = 'required|string|max:50';
         }
@@ -146,7 +147,7 @@ class MovementsHub extends Component
         $user = auth()->user();
         $workspaceId = (int) $user->current_workspace_id;
         $category = null;
-        if (in_array($this->editingType, ['expense', 'income'], true) && $this->editingCategoryId !== '') {
+        if (in_array($this->editingType, ['expense', 'income', 'subscription'], true) && $this->editingCategoryId !== '') {
             $category = Category::where('workspace_id', $workspaceId)
                 ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
                 ->findOrFail((int) $this->editingCategoryId);
@@ -205,6 +206,7 @@ class MovementsHub extends Component
                     'name' => $this->editingTitle,
                     'amount' => $amount,
                     'cycle' => $this->editingCycle,
+                    'category_id' => $category?->id,
                     'renewal_date' => $this->editingDate,
                     'paid_by_company' => $this->editingCompanyPaid,
                     'is_active' => $this->editingActive,
