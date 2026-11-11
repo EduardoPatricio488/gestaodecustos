@@ -827,9 +827,10 @@
                         wire:click="scanReceiptWithAI"
                         wire:loading.attr="disabled"
                         wire:target="receipt, scanReceiptWithAI"
+                        @disabled(! $receipt || (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0))
                         class="flex-[2] h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-brand-600 text-white font-black uppercase shadow-xl disabled:opacity-50 transition-all text-xs sm:text-sm"
                     >
-                        <span wire:loading.remove wire:target="receipt, scanReceiptWithAI">Iniciar Extração</span>
+                        <span wire:loading.remove wire:target="receipt, scanReceiptWithAI">@if(($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0)Quota esgotada@else Iniciar Extração@endif</span>
                         <span wire:loading wire:target="receipt">Aguarde...</span>
                         <span wire:loading wire:target="scanReceiptWithAI">A ler com IA...</span>
                     </button>
