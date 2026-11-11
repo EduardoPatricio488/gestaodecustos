@@ -90,6 +90,11 @@ Schedule::command('salary:process-monthly-payments')
     ->withoutOverlapping(60)
     ->onOneServer();
 
+Schedule::command('subscriptions:process-company-payments')
+    ->dailyAt('00:05')
+    ->withoutOverlapping(60)
+    ->onOneServer();
+
 
 // Atualiza diariamente as capitalizações trimestrais dos Certificados de Aforro Série E.
 Schedule::call(function () {
