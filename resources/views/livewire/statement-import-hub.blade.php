@@ -108,13 +108,26 @@
                                     <input type="number" step="0.01" wire:model="preview.rows.{{ $index }}.amount" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs font-bold {{ $isIncome ? 'text-emerald-600' : ($isTransfer ? 'text-blue-600' : 'text-red-600') }}" />
                                 </div>
                                 <div class="md:col-span-3">
-                                    <label class="block text-[10px] font-black uppercase text-zinc-400 mb-1">Categoria</label>
-                                    <select wire:model="preview.rows.{{ $index }}.category_id" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs">
-                                        <option value="">Sem categoria</option>
-                                        @foreach($categories as $category)
-                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                        @endforeach
+                                    <label class="block text-[10px] font-black uppercase text-zinc-400 mb-1">Tipo de movimento</label>
+                                    <select wire:model="preview.rows.{{ $index }}.type" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs font-bold">
+                                        <option value="expense">Despesa</option>
+                                        <option value="transfer">Transferência</option>
+                                        @if($isDebtPayment)
+                                            <option value="debt_payment">Pagamento de dívida</option>
+                                        @endif
+                                        @if($isIncome)
+                                            <option value="income">Receita</option>
+                                        @endif
                                     </select>
+                                    @if(! $isTransfer)
+                                        <label class="block text-[10px] font-black uppercase text-zinc-400 mt-2 mb-1">Categoria</label>
+                                        <select wire:model="preview.rows.{{ $index }}.category_id" class="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-2 text-xs">
+                                            <option value="">Sem categoria</option>
+                                            @foreach($categories as $category)
+                                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    @endif
                                 </div>
                             </div>
                         </div>
