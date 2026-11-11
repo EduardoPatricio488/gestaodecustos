@@ -497,7 +497,7 @@
         </div>
 
         <div class="relative mb-2 flex items-center gap-2">
-            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total ao fim de um ano (Total líquido + Subsídio alimentação)</p>
+            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total anual estimado (Total líquido + Subsídio alimentação)</p>
             <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
                 <button type="button" @click.stop="open = !open" :aria-expanded="open" aria-label="Como é calculado o total ao fim de um ano" class="flex size-5 items-center justify-center rounded-full border border-zinc-300 bg-white/80 text-[10px] font-black text-zinc-600 shadow-sm transition hover:scale-110 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">i</button>
                 <div x-show="open" x-cloak x-transition role="tooltip" class="absolute left-0 top-full z-40 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-2xl border border-zinc-700 bg-zinc-950 p-4 text-left normal-case shadow-2xl">
@@ -621,7 +621,7 @@
         <div class="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <div class="flex items-center gap-1.5">
                 <flux:tooltip toggleable content="Previsão do rendimento líquido dos contratos salariais ativos para um ano completo. Tem em conta o número de pagamentos anuais definido em cada contrato, incluindo subsídios quando aplicável.">
-                    <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total anual estimado (Total líquido + Subsídio alimentação)</p>
+                    <p class="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total ao fim de um ano (Total líquido + Subsídio alimentação)</p>
                 </flux:tooltip>
             </div>
             <p class="mt-1 text-2xl font-black text-amber-600">{{ number_format($salaryAnnualTotal, 2, ',', ' ') }} €</p>
