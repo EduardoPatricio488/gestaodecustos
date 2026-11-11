@@ -16,7 +16,7 @@ class Income extends Model
     use BelongsToWorkspace, LogsActivity;
 
     protected $fillable = [
-        'user_id', 'workspace_id', 'salary_recurring_income_id', 'salary_income_type', 'service_unit_amount', 'service_quantity',
+        'user_id', 'workspace_id', 'bank_statement_import_id', 'salary_recurring_income_id', 'salary_income_type', 'service_unit_amount', 'service_quantity',
         'bank_account_id', 'category_id', 'added_to_salary', 'description', 'amount', 'currency',
         'amount_converted', 'received_at', 'type', 'source', 'frequency', 'tax_estimate', 'notes',
     ];
