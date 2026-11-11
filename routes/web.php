@@ -331,6 +331,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         );
     })->name('expenses.pending-scan.preview');
 
+    Route::get('/movimentos', \\App\\Livewire\\MovementsHub::class)->name('movements.index');
     Route::get('/expenses', Expenses::class)->name('expenses');
     Route::get('/despesas-pessoais', Expenses::class)->name('expenses.index');
     Route::get('/expenses/create', ManageExpense::class)->name('expenses.create');
