@@ -36,21 +36,12 @@
         <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60 backdrop-blur-sm" x-on:click="open = false"></div>
 
         <div x-show="open" x-transition class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
-            <div class="relative border-b border-zinc-100 px-6 py-5 pr-14 dark:border-zinc-800">
+            <div class="border-b border-zinc-100 px-6 py-5 dark:border-zinc-800">
                 <div class="min-w-0">
                     <p class="text-[9px] font-black uppercase tracking-[0.2em] text-brand-500">Novo movimento</p>
                     <h2 class="mt-1 text-xl font-black italic tracking-tight text-zinc-900 dark:text-white">Nova despesa</h2>
                     <p class="mt-1 text-xs font-medium text-zinc-500">Digitaliza uma fatura com IA ou escolhe manualmente a categoria.</p>
                 </div>
-                <button
-                    type="button"
-                    x-on:click="open = false"
-                    aria-label="Fechar modal"
-                    title="Fechar"
-                    class="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-red-900 dark:hover:bg-red-950 dark:hover:text-red-400"
-                >
-                    <flux:icon name="x-mark" class="size-4" />
-                </button>
             </div>
 
             <div class="grid grid-cols-2 gap-2 p-3 sm:px-6 border-b border-zinc-100 dark:border-zinc-800">
