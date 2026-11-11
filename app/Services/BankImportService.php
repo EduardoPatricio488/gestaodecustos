@@ -416,6 +416,8 @@ class BankImportService
                 $isRegularMerchantPurchase = $signedAmount < 0 && (
                     str_contains($normalizedDescription, 'mercadona')
                     || str_contains($normalizedDescription, 'j vasco simoes')
+            || str_contains($normalizedDescription, '8 91 978 cpr estrang')
+            || str_contains($normalizedDescription, 'paypal europe s')
                     || str_contains($normalizedDescription, 'hamb da vila')
                     || $this->isKnownMerchantExpense($normalizedDescription)
                 );
