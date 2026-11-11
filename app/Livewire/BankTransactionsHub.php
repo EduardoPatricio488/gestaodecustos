@@ -84,7 +84,7 @@ class BankTransactionsHub extends Component
             $this->editRecipient = (string) ($item->recipient ?: ($this->editDirection === 'in' ? $item->fromAccount?->name : $item->toAccount?->name) ?? '');
             $this->editStatus = (string) $item->status;
         } elseif ($type === 'income') {
-            $item = $this->scopedQuery(Income::class)->whereNotNull('bank_account_id')
+            $item = $this->scopedQuery(Income::class)->where(fn ($q) => $q->whereNotNull('bank_account_id')->orWhereNotNull('bank_statement_import_id'))
                 ->where(fn ($q) => $q->whereNull('added_to_salary')->orWhere('added_to_salary', false))
                 ->findOrFail($id);
             $this->editDescription = (string) ($item->description ?? '');
@@ -93,7 +93,7 @@ class BankTransactionsHub extends Component
             $this->editBankAccountId = (int) $item->bank_account_id;
             $this->editChannel = str_contains(mb_strtolower((string) $item->source), 'mb') || str_contains(mb_strtolower((string) $item->description), 'mb way') ? 'mbway' : 'bank';
         } else {
-            $item = $this->scopedQuery(Expense::class)->whereNotNull('bank_account_id')->findOrFail($id);
+            $item = $this->scopedQuery(Expense::class)->where(fn ($q) => $q->whereNotNull('bank_account_id')->orWhereNotNull('bank_statement_import_id')->orWhereNotNull('metadata->import_id'))->findOrFail($id);
             $this->editDescription = (string) ($item->description ?? '');
             $this->editAmount = (string) ((float) $item->amount_paid > 0 ? $item->amount_paid : $item->amount);
             $this->editDate = $item->spent_at?->format('Y-m-d') ?? now()->format('Y-m-d');
@@ -232,11 +232,11 @@ class BankTransactionsHub extends Component
                 }
                 $transfer->delete();
             } elseif ($type === 'income') {
-                $this->scopedQuery(Income::class)->whereNotNull('bank_account_id')
+                $this->scopedQuery(Income::class)->where(fn ($q) => $q->whereNotNull('bank_account_id')->orWhereNotNull('bank_statement_import_id'))
                     ->where(fn ($q) => $q->whereNull('added_to_salary')->orWhere('added_to_salary', false))
                     ->findOrFail($id)->delete();
             } else {
-                $this->scopedQuery(Expense::class)->whereNotNull('bank_account_id')->findOrFail($id)->delete();
+                $this->scopedQuery(Expense::class)->where(fn ($q) => $q->whereNotNull('bank_account_id')->orWhereNotNull('bank_statement_import_id')->orWhereNotNull('metadata->import_id'))->findOrFail($id)->delete();
             }
         });
 
@@ -261,7 +261,8 @@ class BankTransactionsHub extends Component
                 'channel' => 'Transferência bancária', 'status' => $item->status,
             ]);
 
-        $incomes = $scope(Income::query()->with('bankAccount'))->whereNotNull('bank_account_id')
+        $incomes = $scope(Income::query()->with('bankAccount'))
+            ->where(fn ($q) => $q->whereNotNull('bank_account_id')->orWhereNotNull('bank_statement_import_id'))
             ->where(fn ($q) => $q->whereNull('added_to_salary')->orWhere('added_to_salary', false))
             ->latest('received_at')->get()->map(function ($item) {
                 $source = mb_strtolower((string) ($item->source ?? ''));
@@ -279,7 +280,8 @@ class BankTransactionsHub extends Component
             });
 
         $expenses = $scope(Expense::query()->with('bankAccount'))
-            ->whereNotNull('bank_account_id')->latest('spent_at')->get()->map(function ($item) {
+            ->where(fn ($q) => $q->whereNotNull('bank_account_id')->orWhereNotNull('bank_statement_import_id')->orWhereNotNull('metadata->import_id'))
+            ->latest('spent_at')->get()->map(function ($item) {
                 $metadata = is_array($item->metadata) ? $item->metadata : [];
                 $method = mb_strtolower((string) ($metadata['payment_method'] ?? $metadata['payment_type'] ?? ''));
                 $description = mb_strtolower((string) $item->description);
