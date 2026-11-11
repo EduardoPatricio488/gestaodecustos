@@ -141,7 +141,7 @@
                                         {{ $isTransfer ? 'Transferência' : 'Despesa' }}
                                     </span>
                                     <button type="button" wire:click="$set('preview.rows.{{ $index }}.type', '{{ $isTransfer ? 'expense' : 'transfer' }}')" class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition" title="Trocar o tipo deste movimento">
-                                        <flux:icon name="arrow-left-right" class="size-3" />
+                                        <span aria-hidden="true" class="text-sm leading-none">⇄</span>
                                         Trocar para {{ $isTransfer ? 'Despesa' : 'Transferência' }}
                                     </button>
                                 </div>
