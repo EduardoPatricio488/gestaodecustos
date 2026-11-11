@@ -1498,7 +1498,7 @@ $hasStoreAccess = $hasLockInAccess;
         @endphp
 
         <flux:sidebar.item
-            :icon="$sidebarCat->icon ?? 'tag'"
+            :icon="$lowerName === 'outros' ? 'squares-2x2' : ($sidebarCat->icon ?? 'tag')"
             :href="route('hub.category', $sidebarCat->slug)"
             wire:navigate.hover
             @class([
@@ -1506,7 +1506,7 @@ $hasStoreAccess = $hasLockInAccess;
                 'opacity-90' => !$sidebarCat->is_fixed && $lowerName !== 'outros'
             ])
         >
-            {{ $sidebarCat->name }}
+            {{ $lowerName === 'outros' ? 'Todas as categorias' : $sidebarCat->name }}
 
             @if($catCount > 0)
                 <span class="ml-auto text-[10px] font-black text-brand-600 bg-brand-500/10 px-1.5 py-0.5 rounded-md italic">
