@@ -180,27 +180,24 @@ class CategoryHub extends Component
                 }
             }
 
-            if (blank($this->subcategory)) {
-                $this->subcategory = in_array('Geral', $this->subcategories, true)
-                    ? 'Geral'
-                    : ($this->subcategories[0] ?? 'Outros');
-            }
-
+            // Mantém em branco os dados que a fatura não permite identificar.
+            $this->subcategory = null;
             $this->amount = $toNumber($result['amount'] ?? null)
                 ?? $toNumber($result['gross_amount'] ?? null)
                 ?? $toNumber($result['net_amount'] ?? null);
-            $this->spent_at = $result['date'] ?? now()->format('Y-m-d');
+            $this->spent_at = ! empty($result['date']) ? $result['date'] : '';
             $store = trim((string) ($result['store'] ?? ''));
             $description = trim((string) ($result['description'] ?? ''));
-            $this->description = $description !== '' ? $description : $store;
+            $this->description = $description;
 
             $numericKeys = ['quantity', 'unit_price', 'vat_rate', 'gross_amount', 'net_amount', 'vat_amount', 'amount_tendered', 'change_amount'];
             $metaKeys = [
-                'item_name', 'time', 'quantity', 'unit', 'unit_price', 'vat_rate',
+                'item_name', 'time', 'quantity', 'unit', 'local', 'unit_price', 'vat_rate',
                 'gross_amount', 'net_amount', 'vat_amount', 'tax_incidence',
                 'amount_tendered', 'change_amount', 'payment_condition', 'payment_method',
                 'company_nif', 'customer_nif', 'invoice_number', 'notes',
             ];
+            $result['local'] = $result['store'] ?? null;
             foreach ($metaKeys as $key) {
                 $value = $result[$key] ?? null;
                 if ($value !== null && $value !== '') {
