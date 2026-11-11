@@ -166,7 +166,7 @@
 
     // 4. CACHE DE CONTAGENS DA SIDEBAR
     $counts = \Illuminate\Support\Facades\Cache::remember(
-        "layout:sidebar-counts:v4:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
+        "layout:sidebar-counts:v5:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
         60,
         function () use ($user, $currentWs, $workspaceId, $isAdminMode, $isBusinessMode) {
             if ($isAdminMode) {
@@ -197,6 +197,49 @@
                 ];
             }
 
+            $forecastStart = now()->copy()->subMonths(6)->startOfMonth();
+            $forecastCurrentMonth = now()->copy()->startOfMonth();
+
+            $historicalCategoryTotals = \App\Models\Expense::query()
+                ->where('workspace_id', $workspaceId)
+                ->where('user_id', $user->id)
+                ->where('is_company', false)
+                ->where('spent_at', '>=', $forecastStart)
+                ->where('spent_at', '<', $forecastCurrentMonth)
+                ->whereNotNull('category_id')
+                ->selectRaw('category_id, SUM(amount) as total')
+                ->groupBy('category_id')
+                ->pluck('total', 'category_id');
+
+            $currentCategoryTotals = \App\Models\Expense::query()
+                ->where('workspace_id', $workspaceId)
+                ->where('is_company', false)
+                ->where('spent_at', '>=', $forecastCurrentMonth)
+                ->whereNotNull('category_id')
+                ->selectRaw('category_id, SUM(amount) as total')
+                ->groupBy('category_id')
+                ->pluck('total', 'category_id');
+
+            $activeForecastSubscriptions = \App\Models\Subscription::where('workspace_id', $workspaceId)
+                ->where('user_id', $user->id)
+                ->get(['category_id', 'amount', 'cycle', 'status', 'is_active', 'paid_by_company'])
+                ->filter(fn ($subscription) => ! $subscription->paid_by_company
+                    && ($subscription->status ?: ($subscription->is_active ? 'active' : 'paused')) === 'active')
+                ->groupBy('category_id')
+                ->map(fn ($subscriptions) => (float) $subscriptions->sum(
+                    fn ($subscription) => \App\Services\SubscriptionCycleService::toMonthly(
+                        (float) $subscription->amount,
+                        $subscription->cycle
+                    )
+                ));
+
+            $forecastCategoryCount = \App\Models\Category::where('workspace_id', $workspaceId)
+                ->get(['id'])
+                ->filter(fn ($category) => (float) ($historicalCategoryTotals[$category->id] ?? 0) > 0
+                    || (float) ($currentCategoryTotals[$category->id] ?? 0) > 0
+                    || (float) ($activeForecastSubscriptions[$category->id] ?? 0) > 0)
+                ->count();
+
             return [
                 'incomes'       => \App\Models\RecurringIncome::where('workspace_id', $workspaceId)
                     ->where('user_id', $user->id)
@@ -216,8 +259,8 @@
                 'investments'   => \App\Models\Investment::where('workspace_id', $workspaceId)->count(),
                 'transfers'     => \App\Models\BankTransfer::where('workspace_id', $workspaceId)->count(),
                 'budget'        => \App\Models\Category::where('workspace_id', $workspaceId)->where('budget', '>', 0)->count(),
-                'anomalies'     => \App\Models\Expense::where('workspace_id', $workspaceId)->where('is_company', false)->count(),
-                'expense_forecast' => \App\Models\Expense::where('workspace_id', $workspaceId)->where('is_company', false)->count(),
+                'anomalies'     => \App\Livewire\AnomalyHub::detectedCountForSidebar($workspaceId, $user->id),
+                'expense_forecast' => $forecastCategoryCount,
                 'subscriptions' => \App\Models\Subscription::where('workspace_id', $workspaceId)->count(),
                 'subscription_scanner' => \App\Models\Subscription::where('workspace_id', $workspaceId)->count(),
                 'networth'      => \App\Models\BankPatrimony::where('workspace_id', $workspaceId)->count(),
@@ -240,13 +283,11 @@
 
     // 5. CACHE DE CATEGORIAS
     $catCounts = \Illuminate\Support\Facades\Cache::remember(
-        "layout:category-counts:v10:{$workspaceId}",
+        "layout:category-counts:v11:{$workspaceId}",
         60,
         fn () => \App\Models\Expense::selectRaw('categories.name, count(*) as total')
             ->join('categories', 'expenses.category_id', '=', 'categories.id')
             ->where('expenses.workspace_id', $workspaceId)
-            ->whereMonth('spent_at', now()->month)
-            ->whereYear('spent_at', now()->year)
             ->groupBy('categories.name')
             ->pluck('total', 'name')
             ->mapWithKeys(fn ($item, $key) => [mb_strtolower(trim($key), 'UTF-8') => $item])
