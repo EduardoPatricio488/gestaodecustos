@@ -66,9 +66,9 @@
                                 @endif
                             @endforeach
                         </dl>
-                        @if(!str_starts_with($movement['key'], 'subscription-payment-'))
+                        @if(true)
                             <div class="mt-4 flex flex-wrap justify-end gap-2">
-                                <button type="button" wire:click="editMovement('{{ $movement['type'] }}', {{ $movement['record_id'] }})" class="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 transition hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
+                                <button type="button" wire:click="editMovement('{{ $movement['edit_type'] ?? $movement['type'] }}', {{ $movement['record_id'] }})" class="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 transition hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
                                     <flux:icon name="pencil-square" class="size-4" /> Editar informações
                                 </button>
                                 @if(!empty($movement['record_url']))
@@ -79,7 +79,7 @@
                             </div>
                         @endif
 
-                        @if($editingId && $editingType === $movement['type'] && (int) $editingId === (int) ($movement['record_id'] ?? 0))
+                        @if($editingId && $editingType === ($movement['edit_type'] ?? $movement['type']) && (int) $editingId === (int) ($movement['record_id'] ?? 0))
                             <form wire:submit="saveMovement" class="mt-4 space-y-4 rounded-2xl border border-blue-200 bg-white p-4 dark:border-blue-900 dark:bg-zinc-900">
                                 <div class="flex items-center justify-between gap-3">
                                     <h4 class="text-sm font-black text-zinc-900 dark:text-white">Editar registo</h4>
@@ -91,12 +91,12 @@
                                     @elseif($editingType === 'expense')
                                         <label class="space-y-1 text-xs font-bold text-zinc-500">Título<input wire:model="editingTitle" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
                                     @endif
-                                    @if($editingType !== 'subscription')
+                                    @if(!in_array($editingType, ['subscription','subscription_payment'], true))
                                         <label class="space-y-1 text-xs font-bold text-zinc-500">Descrição<input wire:model="editingDescription" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
                                     @endif
                                     <label class="space-y-1 text-xs font-bold text-zinc-500">Valor<input type="number" step="0.01" min="0.01" wire:model="editingAmount" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editingAmount')<span class="text-rose-500">{{ $message }}</span>@enderror</label>
                                     <label class="space-y-1 text-xs font-bold text-zinc-500">Data<input type="date" wire:model="editingDate" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editingDate')<span class="text-rose-500">{{ $message }}</span>@enderror</label>
-                                    @if($editingType !== 'subscription')
+                                    @if(!in_array($editingType, ['subscription','subscription_payment'], true))
                                         <label class="space-y-1 text-xs font-bold text-zinc-500">Moeda<input maxlength="3" wire:model="editingCurrency" class="w-full rounded-xl border-zinc-200 text-sm uppercase dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
                                     @endif
                                     @if(in_array($editingType, ['expense','income','subscription'], true))
@@ -125,6 +125,8 @@
                                         <label class="space-y-1 text-xs font-bold text-zinc-500">Periodicidade<input wire:model="editingCycle" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
                                         <label class="flex items-center gap-2 self-end rounded-xl border border-zinc-200 p-3 text-xs font-bold text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"><input type="checkbox" wire:model="editingCompanyPaid" class="rounded border-zinc-300"> Paga pela empresa</label>
                                         <label class="flex items-center gap-2 self-end rounded-xl border border-zinc-200 p-3 text-xs font-bold text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"><input type="checkbox" wire:model="editingActive" class="rounded border-zinc-300"> Assinatura ativa</label>
+                                    @elseif($editingType === 'subscription_payment')
+                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Origem do pagamento<input wire:model="editingPaymentSource" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
                                     @endif
                                     @if(in_array($editingType, ['income','transfer','subscription'], true))
                                         <label class="space-y-1 text-xs font-bold text-zinc-500 sm:col-span-2">Notas<textarea wire:model="editingNotes" rows="2" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></textarea></label>
