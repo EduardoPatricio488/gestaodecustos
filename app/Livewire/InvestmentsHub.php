@@ -865,7 +865,7 @@ class InvestmentsHub extends Component
             }
 
             $previous = libxml_use_internal_errors(true);
-            $document = new \\DOMDocument();
+            $document = new \DOMDocument();
             $loaded = $document->loadHTML($response->body());
             libxml_clear_errors();
             libxml_use_internal_errors($previous);
@@ -874,7 +874,7 @@ class InvestmentsHub extends Component
                 return null;
             }
 
-            $xpath = new \\DOMXPath($document);
+            $xpath = new \DOMXPath($document);
             foreach ($xpath->query('//tr') as $row) {
                 $cells = [];
                 foreach ($xpath->query('./th|./td', $row) as $cell) {
@@ -912,7 +912,7 @@ class InvestmentsHub extends Component
             ]);
 
             return null;
-        } catch (\\Throwable $e) {
+        } catch (\Throwable $e) {
             Log::warning('InvestmentsHub: fonte Tradegate indisponível', [
                 'isin' => $isin,
                 'message' => $e->getMessage(),
