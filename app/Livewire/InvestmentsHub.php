@@ -913,42 +913,47 @@ class InvestmentsHub extends Component
         });
     }
 
-    public function refreshPrices(bool $silent = false): void
+    public function refreshPrices(bool $silent = false): bool
     {
         $this->isRefreshing = true;
+
         try {
-            $assets = Investment::where('workspace_id', Auth::user()->current_workspace_id)
-                ->when(
-                    Auth::user()->currentWorkspace?->type === 'personal',
-                    fn ($q) => $q->where('user_id', Auth::id())
-                )
+            $user = Auth::user();
+            $assets = Investment::where('workspace_id', $user->current_workspace_id)
+                ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
                 ->get();
-            $debtAssets = $assets->where('type', 'Divida');
+
             $updated = 0;
-            foreach ($debtAssets as $debtAsset) {
+            foreach ($assets->where('type', 'Divida') as $debtAsset) {
                 if (! $debtAsset->operation_date || ! $debtAsset->interest_rate) {
                     continue;
                 }
+
                 $debtAsset->update(['current_price' => DebtInstrumentCalculator::process($debtAsset)]);
                 $updated++;
             }
-            $cryptoSymbols = $assets->where('type', 'Cripto')->pluck('symbol')->unique()->values()->toArray();
-            $ids = collect($cryptoSymbols)->map(fn ($s) => $this->coinGeckoId($s))->implode(',');
-            if ($ids) {
+
+            $cryptoSymbols = $assets->where('type', 'Cripto')->pluck('symbol')->filter()->unique()->values()->toArray();
+            $ids = collect($cryptoSymbols)->map(fn ($symbol) => $this->coinGeckoId($symbol))->unique()->implode(',');
+            if ($ids !== '') {
                 Cache::forget('coingecko_prices_'.md5($ids));
             }
+
             $cryptoPrices = $this->fetchCryptoPrices($cryptoSymbols);
             $stockAssets = $assets->whereIn('type', ['Acao', 'ETF', 'Fundo']);
             $stockPrices = [];
-            foreach ($stockAssets->pluck('symbol')->unique() as $sym) {
-                Cache::forget('stock_price_'.strtoupper($sym));
-                $price = $this->fetchStockPrice($sym);
-                if ($price !== null) {
-                    $stockPrices[strtoupper($sym)] = $price;
+
+            foreach ($stockAssets->pluck('symbol')->filter()->unique() as $symbol) {
+                Cache::forget('stock_price_'.strtoupper($symbol));
+                $price = $this->fetchStockPrice($symbol);
+                if ($price !== null && $price > 0) {
+                    $stockPrices[strtoupper($symbol)] = $price;
                 }
             }
+
             foreach ($assets->whereIn('type', ['Acao', 'ETF', 'Fundo', 'Cripto']) as $asset) {
-                $ticker = strtoupper($asset->symbol);
+                $ticker = strtoupper((string) $asset->symbol);
+
                 if (isset($cryptoPrices[$ticker]) && $cryptoPrices[$ticker] > 0) {
                     $asset->update(['current_price' => $cryptoPrices[$ticker]]);
                     $updated++;
@@ -957,15 +962,20 @@ class InvestmentsHub extends Component
                     $updated++;
                 }
             }
+
             $this->lastUpdated = now()->format('H:i');
             if (! $silent) {
                 $this->dispatch('toast', text: "{$updated} ativos sincronizados com o mercado.");
             }
-        } catch (\Throwable $e) {
+
+            return true;
+        } catch (\\Throwable $e) {
             Log::warning('InvestmentsHub: falha ao atualizar cotações', ['message' => $e->getMessage()]);
             if (! $silent) {
                 $this->dispatch('toast', text: 'Erro ao sincronizar preços: '.$e->getMessage(), variant: 'error');
             }
+
+            return false;
         } finally {
             $this->isRefreshing = false;
         }
