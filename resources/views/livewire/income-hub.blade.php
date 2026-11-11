@@ -614,10 +614,6 @@
             </h2>
         </div>
 
-        <button type="button" wire:click="newEmployment" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition hover:bg-indigo-700">
-            <flux:icon name="plus" variant="micro" class="size-3" />
-            Adicionar salário
-        </button>
     </div>
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
