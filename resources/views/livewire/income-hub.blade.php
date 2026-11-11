@@ -581,6 +581,12 @@
 {{-- ============================================================= --}}
 <div class="space-y-6">
 
+    <div class="px-1">
+        <p class="text-sm font-medium leading-relaxed text-zinc-500 dark:text-zinc-400">
+            Acompanha os teus contratos de trabalho e consulta os rendimentos líquidos previstos, mensal e anualmente.
+        </p>
+    </div>
+
     <div>
     <div class="space-y-8">
 
