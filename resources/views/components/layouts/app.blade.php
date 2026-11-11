@@ -166,7 +166,7 @@
 
     // 4. CACHE DE CONTAGENS DA SIDEBAR
     $counts = \Illuminate\Support\Facades\Cache::remember(
-        "layout:sidebar-counts:v3:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
+        "layout:sidebar-counts:v4:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
         60,
         function () use ($user, $currentWs, $workspaceId, $isAdminMode, $isBusinessMode) {
             if ($isAdminMode) {
@@ -198,8 +198,20 @@
             }
 
             return [
-                'incomes'       => \App\Models\Income::where('workspace_id', $workspaceId)
-                    ->whereNotNull('category_id')
+                'incomes'       => \App\Models\RecurringIncome::where('workspace_id', $workspaceId)
+                    ->where('user_id', $user->id)
+                    ->where('source', 'emprego')
+                    ->where(function ($query) {
+                        $query->whereNull('metadata->income_type')
+                            ->orWhere('metadata->income_type', '!=', 'meal_card_allowance');
+                    })
+                    ->where(function ($query) {
+                        $query->where('metadata->contract_status', 'active')
+                            ->orWhere(function ($fallback) {
+                                $fallback->whereNull('metadata->contract_status')
+                                    ->where('is_active', true);
+                            });
+                    })
                     ->count(),
                 'investments'   => \App\Models\Investment::where('workspace_id', $workspaceId)->count(),
                 'transfers'     => \App\Models\BankTransfer::where('workspace_id', $workspaceId)->count(),
