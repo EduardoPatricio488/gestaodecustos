@@ -24,7 +24,7 @@ class StatementImportHub extends Component
 
     public bool $previewReady = false;
 
-    public array $selectedSignatures = [];
+    public array $selectedSignatures = [];\n\n    public ?int $viewingImportId = null;\n\n    public array $viewingImportMovements = [];
 
     public string $ruleKeyword = '';
 
@@ -131,6 +131,74 @@ class StatementImportHub extends Component
     public function clearSelectedPreviewRows(): void
     {
         $this->selectedSignatures = [];
+    }
+
+    public function viewImportMovements(int $importId): void
+    {
+        $this->authorizeImport();
+        $workspaceId = (int) auth()->user()->current_workspace_id;
+        $import = BankStatementImport::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
+            ->findOrFail($importId);
+
+        $expenses = Expense::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
+            ->where(function ($query) use ($import) {
+                $query->where('bank_statement_import_id', $import->id)
+                    ->orWhere('metadata->import_id', $import->id);
+            })
+            ->get()
+            ->map(fn (Expense $expense) => [
+                'type' => 'Despesa',
+                'date' => $expense->spent_at?->format('Y-m-d'),
+                'description' => $expense->description ?: $expense->title,
+                'amount' => (float) $expense->amount,
+                'category' => $expense->category?->name ?? 'Sem categoria',
+            ]);
+
+        $incomes = Income::query()
+            ->with('category:id,name')
+            ->where('workspace_id', $workspaceId)
+            ->where('user_id', auth()->id())
+            ->where('bank_statement_import_id', $import->id)
+            ->get()
+            ->map(fn (Income $income) => [
+                'type' => 'Receita',
+                'date' => $income->received_at?->format('Y-m-d'),
+                'description' => $income->description,
+                'amount' => (float) $income->amount,
+                'category' => $income->category?->name ?? 'Sem categoria',
+            ]);
+
+        $this->viewingImportId = $import->id;
+        $this->viewingImportMovements = $expenses->concat($incomes)
+            ->sortBy('date')
+            ->values()
+            ->all();
+    }
+
+    public function closeImportMovements(): void
+    {
+        $this->viewingImportId = null;
+        $this->viewingImportMovements = [];
+    }
+
+    public function deleteImport(int $importId): void
+    {
+        $this->authorizeImport();
+        $import = BankStatementImport::query()
+            ->where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->findOrFail($importId);
+
+        $deleted = app(BankImportService::class)->deleteImport($import);
+        if ($this->viewingImportId === $importId) {
+            $this->closeImportMovements();
+        }
+
+        $this->dispatch('toast', variant: 'success', text: "Importação eliminada: {$deleted['expenses']} despesas e {$deleted['incomes']} receitas removidas.");
     }
 
     public function saveCategorizationRule(): void
