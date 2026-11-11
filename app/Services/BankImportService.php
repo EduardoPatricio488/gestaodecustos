@@ -41,6 +41,136 @@ class BankImportService
         return ['bank' => $parsed['bank'], 'source_file_type' => $parsed['source_file_type'], 'transactions_total' => count($parsed['transactions']), 'expenses_total' => count($expenseCandidates), 'rows' => $expenseCandidates];
     }
 
+    public function previewSantanderPdf(UploadedFile $file, int $workspaceId, int $userId): array
+    {
+        if (! class_exists(\Smalot\PdfParser\Parser::class)) {
+            throw new \RuntimeException('O leitor de PDF não está instalado no servidor.');
+        }
+
+        $document = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath());
+        $text = preg_replace('/\s+/u', ' ', trim($document->getText()));
+        if (! $text || ! str_contains(mb_strtolower($text), 'movimentos da sua conta')) {
+            throw new \RuntimeException('Este PDF não parece ser um extrato de movimentos do Santander ou não contém texto legível.');
+        }
+
+        $monthMap = ['jan'=>'01','fev'=>'02','mar'=>'03','abr'=>'04','mai'=>'05','jun'=>'06','jul'=>'07','ago'=>'08','set'=>'09','out'=>'10','nov'=>'11','dez'=>'12'];
+        $pattern = '/(?<date>\d{2}\s+[A-Za-zçÇ]{3}\s+\d{4})\s+D\.\s*valor:\s*\d{2}\s+[A-Za-zçÇ]{3}\s+\d{4}\s+(?<description>.+?)\s+(?<amount>[−–-]?\s*\d[\d.]*,\d{2})\s*€?\s+(?<balance>\d[\d.]*,\d{2})\s*€?/u';
+        preg_match_all($pattern, $text, $matches, PREG_SET_ORDER);
+
+        $categories = Category::where('workspace_id', $workspaceId)->pluck('name', 'id')->all();
+        $rows = [];
+        foreach ($matches as $index => $match) {
+            $dateParts = preg_split('/\s+/', mb_strtolower(trim($match['date'])));
+            $month = $monthMap[$dateParts[1] ?? ''] ?? null;
+            if (! $month) {
+                continue;
+            }
+            $date = Carbon::createFromFormat('d/m/Y', $dateParts[0].'/'.$month.'/'.$dateParts[2])->startOfDay();
+            $amountText = str_replace(['−', '–', ' '], '-', trim($match['amount']));
+            $amount = (float) str_replace(',', '.', str_replace('.', '', $amountText));
+            $description = trim($match['description']);
+            if ($description === '' || abs($amount) < 0.001) {
+                continue;
+            }
+            $categoryId = $this->categorize($workspaceId, $userId, $description, $categories);
+            $rows[] = [
+                'signature' => sha1($date->format('Y-m-d').'|'.number_format($amount, 2, '.', '').'|'.mb_strtolower($description).'|'.$index),
+                'date' => $date->format('Y-m-d'),
+                'description' => Str::limit($description, 160),
+                'amount' => round($amount, 2),
+                'balance' => round((float) str_replace(',', '.', str_replace('.', '', $match['balance'])), 2),
+                'type' => $amount < 0 ? 'expense' : 'income',
+                'category_id' => $categoryId,
+            ];
+        }
+
+        if ($rows === []) {
+            throw new \RuntimeException('Não consegui identificar movimentos neste PDF. Confirma que exportaste o extrato completo em PDF através de Contas → Movimentos → PDF.');
+        }
+
+        return [
+            'bank' => 'Santander',
+            'source_file_type' => 'pdf',
+            'transactions_total' => count($rows),
+            'expenses_total' => count(array_filter($rows, fn ($row) => $row['type'] === 'expense')),
+            'incomes_total' => count(array_filter($rows, fn ($row) => $row['type'] === 'income')),
+            'rows' => $rows,
+        ];
+    }
+
+    public function confirmPreview(Workspace $workspace, int $userId, string $filename, array $rows): BankStatementImport
+    {
+        $import = BankStatementImport::create([
+            'workspace_id' => $workspace->id,
+            'user_id' => $userId,
+            'filename' => $filename,
+            'bank_detected' => 'santander',
+            'status' => 'processing',
+        ]);
+
+        try {
+            $categories = Category::where('workspace_id', $workspace->id)->pluck('name', 'id');
+            $imported = 0;
+            $duplicates = 0;
+
+            foreach ($rows as $row) {
+                if (! is_array($row) || ! in_array($row['type'] ?? null, ['expense', 'income'], true)) {
+                    continue;
+                }
+                $date = Carbon::parse($row['date'] ?? '');
+                $amount = round((float) ($row['amount'] ?? 0), 2);
+                $description = trim((string) ($row['description'] ?? ''));
+                if ($description === '' || $amount === 0 || ($row['type'] === 'expense' && $amount >= 0) || ($row['type'] === 'income' && $amount <= 0)) {
+                    continue;
+                }
+                $categoryId = isset($row['category_id']) && $categories->has((int) $row['category_id']) ? (int) $row['category_id'] : null;
+                $absoluteAmount = abs($amount);
+
+                if ($row['type'] === 'expense') {
+                    $exists = Expense::query()->where('workspace_id', $workspace->id)->where('user_id', $userId)
+                        ->whereDate('spent_at', $date->toDateString())->where('amount', number_format($absoluteAmount, 2, '.', ''))
+                        ->where('description', $description)->exists();
+                    if ($exists) {
+                        $duplicates++;
+                        continue;
+                    }
+                    Expense::create([
+                        'user_id' => $userId, 'workspace_id' => $workspace->id, 'category_id' => $categoryId,
+                        'title' => Str::limit($description, 100), 'amount' => $absoluteAmount,
+                        'description' => $description, 'spent_at' => $date,
+                        'metadata' => ['import_id' => $import->id, 'bank' => 'santander', 'source_file_type' => 'pdf'],
+                    ]);
+                } else {
+                    $exists = \App\Models\Income::query()->where('workspace_id', $workspace->id)->where('user_id', $userId)
+                        ->whereDate('received_at', $date->toDateString())->where('amount', number_format($absoluteAmount, 2, '.', ''))
+                        ->where('description', $description)->exists();
+                    if ($exists) {
+                        $duplicates++;
+                        continue;
+                    }
+                    \App\Models\Income::create([
+                        'user_id' => $userId, 'workspace_id' => $workspace->id,
+                        'description' => $description, 'amount' => $absoluteAmount,
+                        'received_at' => $date, 'type' => 'Extra', 'source' => 'outros',
+                        'frequency' => 'pontual',
+                    ]);
+                }
+                $imported++;
+            }
+
+            $import->update([
+                'status' => 'completed',
+                'transactions_total' => count($rows),
+                'transactions_imported' => $imported,
+                'errors' => $duplicates > 0 ? ['duplicates_skipped' => $duplicates] : null,
+            ]);
+        } catch (\Throwable $exception) {
+            $import->update(['status' => 'failed', 'errors' => ['message' => $exception->getMessage()]]);
+        }
+
+        return $import->fresh();
+    }
+
     public function import(Workspace $workspace, int $userId, UploadedFile $file, ?array $selectedSignatures = null): BankStatementImport
     {
         $import = BankStatementImport::create(['workspace_id' => $workspace->id, 'user_id' => $userId, 'filename' => $file->getClientOriginalName(), 'status' => 'processing']);
