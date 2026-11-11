@@ -90,12 +90,12 @@
 
     @if($editingId)
         <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-zinc-950/70 p-2 backdrop-blur-sm sm:p-4" wire:key="movement-editor-modal" @click.self="$wire.cancelEditMovement()" x-on:keydown.escape.window="$wire.cancelEditMovement()">
-            <div class="flex h-[92dvh] max-h-[900px] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 sm:h-[86dvh]" @click.stop>
+            <div class="flex min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" style="height: min(760px, calc(100dvh - 32px)); max-height: calc(100dvh - 32px); min-height: 0; display: flex; flex-direction: column;" @click.stop>
                 <div class="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-100 px-4 py-4 dark:border-zinc-800 sm:px-6 sm:py-5">
                     <div><h2 class="text-lg font-black text-zinc-900 dark:text-white">Editar movimento</h2><p class="mt-1 text-xs text-zinc-500">Altera os campos e guarda. Também podes converter o tipo de movimento.</p></div>
                     <button type="button" wire:click="cancelEditMovement" class="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800" aria-label="Fechar"><flux:icon name="x-mark" class="size-5" /></button>
                 </div>
-                <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-scroll overscroll-y-contain px-4 pb-5 [scrollbar-gutter:stable] sm:px-6" style="min-height: 0; flex: 1 1 0%; overflow-y: scroll; overscroll-behavior: contain; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+                <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain px-4 pb-5 sm:px-6" style="height: 0; min-height: 0; flex: 1 1 0%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; -webkit-overflow-scrolling: touch;" x-init="$el.scrollTop = 0">
                 <form wire:submit="saveMovement" class="space-y-4">
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         @if(in_array($editingType, ['expense','subscription']))
