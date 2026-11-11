@@ -2442,6 +2442,37 @@ class IncomeHub extends Component
         $projectedMealAllowanceTotal = $projectedSalaryContracts->sum(fn (RecurringIncome $income) => (float) ($income->metadata['calculated_sa'] ?? 0));
         $salaryAnnualTotal = $projectedSalaryContracts->sum(fn (RecurringIncome $income) => (float) ($income->annual_net_estimate ?? ((float) $income->amount * (int) ($income->metadata['annual_payments'] ?? 12))));
 
+        // Total anual líquido de todos os rendimentos recorrentes ativos do workspace.
+        // Os contratos de trabalho usam a estimativa de processamento salarial;
+        // os restantes registos são anualizados pela periodicidade configurada.
+        $allRecordsAnnualNetTotal = $fixedIncomes
+            ->filter(function (RecurringIncome $income): bool {
+                $metadata = $income->metadata ?? [];
+                $status = $metadata['contract_status'] ?? ($income->is_active ? 'active' : 'suspended');
+
+                return $status === 'active'
+                    && ($metadata['income_type'] ?? null) !== 'meal_card_allowance';
+            })
+            ->sum(function (RecurringIncome $income): float {
+                if ($income->source === 'emprego') {
+                    return (float) ($income->annual_net_estimate ?? (
+                        (float) $income->amount * (int) ($income->metadata['annual_payments'] ?? 12)
+                    ));
+                }
+
+                $annualOccurrences = match ($income->frequency ?? 'mensal') {
+                    'semanal' => 52,
+                    'trimestral' => 4,
+                    'semestral' => 2,
+                    'anual' => 1,
+                    'variavel' => 12,
+                    default => 12,
+                };
+
+                return max(0, (float) $income->amount) * $annualOccurrences;
+            });
+        $allRecordsAnnualNetTotal = round($allRecordsAnnualNetTotal, 2);
+
         // Histórico detalhado apresentado nos cartões de salário e alimentação.
         $projectedSalaryHistoryPayments = SalaryPayment::with(['recurringIncome', 'bankAccount'])
             ->where('workspace_id', $workspaceId)
@@ -2579,6 +2610,7 @@ class IncomeHub extends Component
             'salaryActiveCount' => $salaryActiveCount,
             'salaryMonthlyTotal' => $salaryMonthlyTotal,
             'salaryAnnualTotal' => $salaryAnnualTotal,
+            'allRecordsAnnualNetTotal' => $allRecordsAnnualNetTotal,
             'projectedSalaryContracts' => $projectedSalaryContracts,
             'projectedSalaryNetTotal' => $projectedSalaryNetTotal,
             'projectedSalaryAnnualTotal' => $projectedSalaryAnnualTotal,
