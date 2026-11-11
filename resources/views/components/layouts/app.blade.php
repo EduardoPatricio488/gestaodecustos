@@ -1328,29 +1328,6 @@ $hasStoreAccess = $hasLockInAccess;
                     <flux:sidebar.item icon="arrows-right-left" :href="route('movements.index')" wire:navigate.hover>
                         Movimentos {!! $badge($counts['movements']) !!}
                     </flux:sidebar.item>
-                    @if($myRestrictions?->restrict_budget)
-    {{-- VERSÃO BLOQUEADA (APARECE MAS NÃO CLICA) --}}
-    <flux:sidebar.item
-        icon="lock-closed"
-        class="opacity-50 grayscale cursor-not-allowed"
-        title="Área Bloqueada pelo Administrador"
-    >
-        <span class="flex items-center justify-between w-full">
-            Orçamento {!! $badge($counts['budget']) !!}
-            <flux:icon name="lock-closed" variant="micro" class="size-3 text-amber-600" />
-        </span>
-    </flux:sidebar.item>
-@else
-    {{-- VERSÃO LIBERTADA (ORIGINAL) --}}
-    <flux:sidebar.item
-        icon="calculator"
-        :href="route('hub.budget')"
-        :current="request()->routeIs('hub.budget')"
-        wire:navigate.hover
-    >
-        Orçamento {!! $badge($counts['budget']) !!}
-    </flux:sidebar.item>
-@endif
                     <flux:sidebar.item icon="arrow-up-tray" :href="route('hub.import')" :current="request()->routeIs('hub.import')" wire:navigate.hover>
                         Importar Extrato {!! $badge($counts['imports']) !!}
                     </flux:sidebar.item>
