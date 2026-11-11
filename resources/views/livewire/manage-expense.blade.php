@@ -261,7 +261,7 @@
                     <div class="flex gap-4">
                         <button type="button" @click="scannerOpen = false" class="flex-1 h-14 text-zinc-500 font-bold uppercase text-xs tracking-widest">Cancelar</button>
                         <button type="button" wire:click="scanReceiptWithAI" wire:loading.attr="disabled" @disabled(! $receipt || (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0)) class="flex-[2] h-14 rounded-2xl bg-brand-600 text-white font-black uppercase shadow-xl text-sm transition-all hover:bg-brand-500">
-                            @if(($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0)Quota esgotada@else Iniciar Extração@endif
+                            {{ (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0) ? 'Quota esgotada' : 'Iniciar Extração' }}
                         </button>
                     </div>
                 </div>
