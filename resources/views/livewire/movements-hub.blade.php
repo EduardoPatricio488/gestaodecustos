@@ -56,68 +56,6 @@
                     </div>
                     <div x-cloak x-show="open" x-transition.opacity.duration.200ms class="border-t border-zinc-100 bg-zinc-50/70 px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950/40">
                         <div class="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-500"><flux:icon name="document-text" class="size-4" /> Informações do registo <span class="font-semibold normal-case text-blue-600">· os campos são editáveis</span></div>
-                        @if($editingId && $editingType === ($movement['edit_type'] ?? $movement['type']) && (int) $editingId === (int) ($movement['record_id'] ?? 0))
-                            <form wire:submit="saveMovement" class="mt-4 space-y-4 rounded-2xl border border-blue-200 bg-white p-4 dark:border-blue-900 dark:bg-zinc-900">
-                                <div class="flex items-center justify-between gap-3">
-                                    <h4 class="text-sm font-black text-zinc-900 dark:text-white">Editar registo</h4>
-                                    <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600">Alterações guardadas na conta</span>
-                                </div>
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    @if($editingType === 'subscription')
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Nome<input wire:model="editingTitle" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editingTitle')<span class="text-rose-500">{{ $message }}</span>@enderror</label>
-                                    @elseif($editingType === 'expense')
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Título<input wire:model="editingTitle" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                    @endif
-                                    @if(!in_array($editingType, ['subscription','subscription_payment'], true))
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Descrição<input wire:model="editingDescription" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                    @endif
-                                    <label class="space-y-1 text-xs font-bold text-zinc-500">Valor<input type="number" step="0.01" min="0.01" wire:model="editingAmount" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editingAmount')<span class="text-rose-500">{{ $message }}</span>@enderror</label>
-                                    <label class="space-y-1 text-xs font-bold text-zinc-500">Data<input type="date" wire:model="editingDate" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editingDate')<span class="text-rose-500">{{ $message }}</span>@enderror</label>
-                                    @if(!in_array($editingType, ['subscription','subscription_payment'], true))
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Moeda<input maxlength="3" wire:model="editingCurrency" class="w-full rounded-xl border-zinc-200 text-sm uppercase dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                    @endif
-                                    @if(in_array($editingType, ['expense','income','subscription'], true))
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Categoria
-                                            <select wire:model="editingCategoryId" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Sem categoria</option>@foreach($editCategories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select>
-                                        </label>
-                                    @endif
-                                    @if(in_array($editingType, ['expense','income'], true))
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Conta bancária
-                                            <select wire:model="editingAccountId" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="">Sem conta associada</option>@foreach($editAccounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select>
-                                        </label>
-                                    @endif
-                                    @if($editingType === 'expense')
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Valor pago<input type="number" min="0" step="0.01" wire:model="editingAmountPaid" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">@error('editingAmountPaid')<span class="text-rose-500">{{ $message }}</span>@enderror</label>
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">IVA<input type="number" min="0" step="0.01" wire:model="editingVatAmount" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                        <label class="flex items-center gap-2 self-end rounded-xl border border-zinc-200 p-3 text-xs font-bold text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"><input type="checkbox" wire:model="editingCompanyPaid" class="rounded border-zinc-300"> Despesa da empresa</label>
-                                    @elseif($editingType === 'income')
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Origem<input wire:model="editingSource" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Tipo de receita<input wire:model="editingIncomeType" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Frequência<input wire:model="editingFrequency" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                    @elseif($editingType === 'transfer')
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Direção<select wire:model="editingDirection" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"><option value="out">Saída</option><option value="in">Entrada</option></select></label>
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Categoria<input wire:model="editingTransferCategory" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Destinatário<input wire:model="editingRecipient" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Método<input wire:model="editingTransferMethod" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Estado<input wire:model="editingStatus" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                    @elseif($editingType === 'subscription')
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Periodicidade<input wire:model="editingCycle" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                        <label class="flex items-center gap-2 self-end rounded-xl border border-zinc-200 p-3 text-xs font-bold text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"><input type="checkbox" wire:model="editingCompanyPaid" class="rounded border-zinc-300"> Paga pela empresa</label>
-                                        <label class="flex items-center gap-2 self-end rounded-xl border border-zinc-200 p-3 text-xs font-bold text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"><input type="checkbox" wire:model="editingActive" class="rounded border-zinc-300"> Assinatura ativa</label>
-                                    @elseif($editingType === 'subscription_payment')
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500">Origem do pagamento<input wire:model="editingPaymentSource" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></label>
-                                    @endif
-                                    @if(in_array($editingType, ['income','transfer','subscription'], true))
-                                        <label class="space-y-1 text-xs font-bold text-zinc-500 sm:col-span-2">Notas<textarea wire:model="editingNotes" rows="2" class="w-full rounded-xl border-zinc-200 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></textarea></label>
-                                    @endif
-                                </div>
-                                <div class="flex flex-wrap justify-end gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-                                    <button type="button" wire:click="cancelEditMovement" class="rounded-xl border border-zinc-200 px-4 py-2.5 text-xs font-bold text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">Cancelar</button>
-                                    <button type="submit" wire:loading.attr="disabled" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-60"><flux:icon name="check" class="size-4" /> Guardar alterações</button>
-                                </div>
-                            </form>
-                        @else
-
                         <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             @foreach(($movement['details'] ?? []) as $detailLabel => $detailValue)
                                 @if($detailValue !== null && $detailValue !== '')
@@ -194,7 +132,6 @@
                             </div>
                         @endif
 
-                        @endif
                     </div>
                 </article>
             @empty
