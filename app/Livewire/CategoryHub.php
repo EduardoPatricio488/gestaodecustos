@@ -257,7 +257,9 @@ class CategoryHub extends Component
 
         $this->budgetLimit = $category ? (float) $category->budget_limit : 0;
 
-        if (request()->boolean('open_new')) {
+        if ($expenseId = request()->integer('open_expense')) {
+            $this->editExpense($expenseId);
+        } elseif (request()->boolean('open_new')) {
             $this->dispatch('open-add-expense-modal');
         }
     }
