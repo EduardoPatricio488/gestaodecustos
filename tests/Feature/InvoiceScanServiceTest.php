@@ -44,8 +44,12 @@ test('invoice scanner uses only openrouter free and returns normalised data', fu
     Http::assertSent(fn (Request $request) =>
         str_ends_with($request->url(), '/chat/completions')
         && $request['model'] === 'openrouter/free'
-        && data_get($request->data(), 'reasoning.effort') === 'none'
-        && data_get($request->data(), 'response_format.type') === 'json_object'
+        && data_get($request->data(), 'provider.allow_fallbacks') === true
+        && data_get($request->data(), 'provider.max_price.prompt') === 0
+        && data_get($request->data(), 'provider.max_price.completion') === 0
+        && $request['max_tokens'] === 1200
+        && ! array_key_exists('reasoning', $request->data())
+        && ! array_key_exists('response_format', $request->data())
         && ! array_key_exists('models', $request->data())
     );
     Http::assertSentCount(2);
@@ -93,6 +97,8 @@ test('invoice scanner reports free-router capacity errors without retrying or pa
     Http::assertSent(fn (Request $request) =>
         str_ends_with($request->url(), '/chat/completions')
         && $request['model'] === 'openrouter/free'
+        && data_get($request->data(), 'provider.max_price.prompt') === 0
+        && data_get($request->data(), 'provider.max_price.completion') === 0
         && ! array_key_exists('models', $request->data())
     );
     Http::assertSentCount(2);
