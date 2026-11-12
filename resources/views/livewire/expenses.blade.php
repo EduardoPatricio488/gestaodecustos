@@ -77,7 +77,7 @@
                     @endif
                 </div>
 
-                <div x-show="activeTab === 'scanner'" x-cloak class="space-y-5">
+                <div x-show="activeTab === 'scanner'" x-cloak class="space-y-5" @if($isScanningInvoice) wire:poll.3s="checkInvoiceScan" @endif>
                     @include('livewire.partials.openrouter-quota', ['aiQuota' => $aiQuota, 'poll' => false])
 
                     @if($scannerError)
@@ -109,9 +109,12 @@
 
                     <div class="flex flex-col-reverse sm:flex-row gap-3">
                         <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500">Cancelar</button>
-                        <button type="button" wire:click="scanInvoiceAndDetectCategory" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0)) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
-                            <span wire:loading.remove wire:target="scanInvoiceAndDetectCategory"><flux:icon name="sparkles" class="size-4" /> {{ (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0) ? 'Limite diário atingido' : 'Analisar fatura' }}</span>
-                            <span wire:loading wire:target="scanInvoiceAndDetectCategory">A analisar a fatura...</span>
+                        <button type="button" wire:click="scanInvoiceAndDetectCategory" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || $isScanningInvoice || (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0)) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
+                            @if($isScanningInvoice)
+                                <flux:icon name="arrow-path" class="size-4 animate-spin" /> A analisar a fatura em segundo plano...
+                            @else
+                                <flux:icon name="sparkles" class="size-4" /> {{ (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0) ? 'Limite diário atingido' : 'Analisar fatura' }}
+                            @endif
                         </button>
                     </div>
                 </div>
