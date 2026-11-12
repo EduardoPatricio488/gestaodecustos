@@ -103,8 +103,8 @@ class Expenses extends Component
             return;
         }
 
-        // A análise é executada depois de a resposta Livewire ser enviada.
-        // O modal pode continuar a consultar o estado sem ficar preso ao pedido HTTP da IA.
+        // A análise corre numa ligação de background, num processo separado.
+        // Assim, o pedido Livewire termina sem ficar ocupado durante a chamada à IA.
         dispatch(function () use ($cacheKey, $storedPath, $documentName, $documentMime, $categoryOptions, $apiKey, $appUrl, $userId, $workspaceId) {
             @set_time_limit(180);
 
@@ -264,7 +264,7 @@ PROMPT;
                         : $exception->getMessage(),
                 ], now()->addMinutes(20));
             }
-        })->afterResponse();
+        })->onConnection('background');
     }
 
     public function checkInvoiceScan(): void
