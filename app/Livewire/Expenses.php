@@ -331,10 +331,12 @@ PROMPT;
             'document_mime' => $scan['document_mime'],
         ]);
 
+        // Força um carregamento completo para que o CategoryHub::mount()
+        // leia a análise guardada na sessão e abra o formulário de revisão.
         $this->redirect(route('hub.category', [
             'slug' => $scan['category_slug'],
             'open_scan_review' => 1,
-        ]), navigate: true);
+        ]));
     }
 
     public function mount(): void
