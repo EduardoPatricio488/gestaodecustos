@@ -156,18 +156,8 @@
 
     {{-- 1. TICKER DE MERCADO ULTRA COMPACTO --}}
     <div x-data="{
-            refreshHidden: false,
-            refreshHideTimer: null,
             scrollNext() { $refs.tickerContainer.scrollBy({ left: 250, behavior: 'smooth' }) },
-            scrollPrev() { $refs.tickerContainer.scrollBy({ left: -250, behavior: 'smooth' }) },
-            hideRefreshButton() {
-                this.refreshHidden = true;
-                if (this.refreshHideTimer) clearTimeout(this.refreshHideTimer);
-                this.refreshHideTimer = setTimeout(() => {
-                    this.refreshHidden = false;
-                    this.refreshHideTimer = null;
-                }, 300000);
-            }
+            scrollPrev() { $refs.tickerContainer.scrollBy({ left: -250, behavior: 'smooth' }) }
          }"
          class="relative group px-1">
 
@@ -191,20 +181,6 @@
                 </div>
             @endforeach
         </div>
-
-        <button
-            type="button"
-            wire:click="refreshMarketPrices"
-            x-on:click="hideRefreshButton()"
-            x-show="!refreshHidden"
-            x-cloak
-            wire:loading.attr="disabled"
-            wire:target="refreshMarketPrices"
-            title="Atualizar todos os preços de mercado"
-            aria-label="Atualizar todos os preços de mercado"
-            class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 size-9 flex items-center justify-center rounded-full border border-emerald-300/60 bg-white/95 text-emerald-600 shadow-lg transition hover:bg-emerald-50 hover:scale-105 disabled:cursor-wait disabled:opacity-60 dark:bg-zinc-800 dark:text-emerald-400 dark:hover:bg-zinc-700">
-            <flux:icon name="arrow-path" class="size-4" wire:loading.class="animate-spin" wire:target="refreshMarketPrices" />
-        </button>
 
         <button x-on:click="scrollNext" class="absolute -right-1 top-1/2 -translate-y-1/2 z-20 size-8 flex items-center justify-center bg-white/90 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex">
             <flux:icon name="chevron-right" class="size-3 text-zinc-600 dark:text-zinc-300" />
@@ -690,6 +666,7 @@
     $isBusiness = auth()->user()->isBusinessPlan();
 @endphp
 
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
 @if($isBusiness && $userWorkspaces->count() >= 1)
     <div class="flex items-center gap-2 sm:gap-4 bg-zinc-100/50 dark:bg-zinc-900/50 p-1.5 rounded-2xl w-fit border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
 
@@ -747,7 +724,7 @@
         })->values()->all();
     @endphp
 
-    <div class="mb-4 flex flex-wrap items-center gap-2.5">
+    <div class="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2.5">
         <div
             x-data="{ items: @js($dashboardInvestmentCards), activeInvestment: 0, next() { if (this.items.length) this.activeInvestment = (this.activeInvestment + 1) % this.items.length }, previous() { if (this.items.length) this.activeInvestment = (this.activeInvestment - 1 + this.items.length) % this.items.length } }"
             x-init="$wire.on('dashboard-investments-updated', event => { items = event.detail.items; activeInvestment = 0; })"
@@ -793,6 +770,7 @@
             <span wire:loading wire:target="refreshInvestmentPrices">A atualizar...</span>
         </button>
     </div>
+</div>
 
     {{-- MENU DE ÂNCORAS: navegação rápida pelas secções da dashboard --}}
     <nav aria-label="Menu de Âncoras" class="sticky top-2 z-30 flex w-full min-w-0 flex-col gap-2 overflow-hidden rounded-2xl border border-sky-200/80 bg-gradient-to-r from-white via-sky-50/95 to-blue-50/90 p-2.5 shadow-lg shadow-sky-950/10 backdrop-blur-xl dark:border-sky-400/20 dark:from-zinc-950 dark:via-slate-900 dark:to-blue-950/40 sm:flex-row sm:items-center sm:gap-3 sm:px-4">
