@@ -344,7 +344,7 @@ PROMPT;
         if (preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $value)) {
             try {
                 return Carbon::createFromFormat('!Y-m-d', $value)->format('Y-m-d');
-            } catch (\\Throwable) {
+            } catch (\Throwable) {
                 return null;
             }
         }
