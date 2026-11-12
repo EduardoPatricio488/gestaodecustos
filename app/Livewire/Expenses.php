@@ -168,7 +168,7 @@ PROMPT;
                     'X-Title' => 'Finance Pro AI',
                 ])->connectTimeout(8)->timeout(100)->post('https://openrouter.ai/api/v1/chat/completions', [
                     // Modelo utilizado na versão do scanner confirmada como funcional.
-                    'model' => 'google/gemini-2.5-flash',
+                    'model' => 'openrouter/free',
                     'temperature' => 0,
                     'max_tokens' => 3200,
                     'messages' => [[
