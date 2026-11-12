@@ -167,7 +167,7 @@ class ManageExpense extends Component
             $path = $this->receipt->getRealPath();
             $contents = $path && is_file($path) ? file_get_contents($path) : false;
             if (! is_string($contents) || $contents === '') {
-                throw new \\RuntimeException('Não foi possível ler o ficheiro selecionado.');
+                throw new \RuntimeException('Não foi possível ler o ficheiro selecionado.');
             }
 
             $selectedCat = Category::where('workspace_id', auth()->user()->current_workspace_id)
@@ -177,7 +177,7 @@ class ManageExpense extends Component
                 ? $this->hubConfigs[$selectedCat->slug]['subs']
                 : ['Geral', 'Outros'];
 
-            $result = app(\\App\\Services\\InvoiceScanService::class)->analyse(
+            $result = app(\App\\Services\\InvoiceScanService::class)->analyse(
                 $contents,
                 $this->receipt->getClientOriginalName(),
                 $this->receipt->getMimeType() ?: 'image/jpeg',
@@ -213,8 +213,8 @@ class ManageExpense extends Component
             $this->scannedData = $result;
             $this->scanSuccess = true;
             $this->dispatch('scan-completed');
-        } catch (\\Throwable $exception) {
-            \\Illuminate\\Support\\Facades\\Log::error('ManageExpense invoice scan failed.', [
+        } catch (\Throwable $exception) {
+            \Illuminate\\Support\\Facades\\Log::error('ManageExpense invoice scan failed.', [
                 'message' => $exception->getMessage(),
                 'user_id' => auth()->id(),
                 'workspace_id' => auth()->user()?->current_workspace_id,
