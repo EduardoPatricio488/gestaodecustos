@@ -78,8 +78,6 @@
                 </div>
 
                 <div x-show="activeTab === 'scanner'" x-cloak class="space-y-5" @if($isScanningInvoice) wire:poll.3s="checkInvoiceScan" @endif>
-                    @include('livewire.partials.openrouter-quota', ['aiQuota' => $aiQuota, 'poll' => false])
-
                     @if($scannerError)
                         <div class="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">
                             <flux:icon name="exclamation-triangle" class="size-4 shrink-0" />
@@ -87,7 +85,6 @@
                         </div>
                     @endif
 
-                    @if(! (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0))
                     <div class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 sm:p-5 text-center">
                         <input type="file" wire:model="scannerReceipt" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
                         @if($scannerReceipt)
@@ -105,15 +102,13 @@
                         @endif
                         <div wire:loading wire:target="scannerReceipt" class="mt-3 text-xs font-bold text-brand-500">A carregar imagem...</div>
                     </div>
-                    @endif
-
                     <div class="flex flex-col-reverse sm:flex-row gap-3">
                         <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500">Cancelar</button>
-                        <button type="button" wire:click="scanInvoiceAndDetectCategory" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || $isScanningInvoice || (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0)) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
+                        <button type="button" wire:click="scanInvoiceAndDetectCategory" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || $isScanningInvoice) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
                             @if($isScanningInvoice)
                                 <flux:icon name="arrow-path" class="size-4 animate-spin" /> A analisar a fatura em segundo plano...
                             @else
-                                <flux:icon name="sparkles" class="size-4" /> {{ (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0) ? 'Limite diário atingido' : 'Analisar fatura' }}
+                                <flux:icon name="sparkles" class="size-4" /> Analisar fatura
                             @endif
                         </button>
                     </div>
