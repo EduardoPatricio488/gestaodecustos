@@ -24,7 +24,7 @@
         <div class="p-6 bg-zinc-50/50 dark:bg-zinc-950/20 border-t border-zinc-100 dark:border-zinc-800">{{ $expenses->links() }}</div>
     </div>
     <div
-        x-data="{ open: false, activeTab: 'category' }"
+        x-data="{ open: false, activeTab: 'category', scanSecondsRemaining: 45, scanTimer: null, startInvoiceTimer() { this.scanSecondsRemaining = 45; if (this.scanTimer) clearInterval(this.scanTimer); this.scanTimer = setInterval(() => { if (this.scanSecondsRemaining > 0) this.scanSecondsRemaining--; else clearInterval(this.scanTimer); }, 1000); } }"
         x-on:open-expense-category-picker.window="open = true; activeTab = 'scanner'"
         x-on:keydown.escape.window="open = false"
         x-show="open"
@@ -104,14 +104,23 @@
                     </div>
                     <div class="flex flex-col-reverse sm:flex-row gap-3">
                         <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500">Cancelar</button>
-                        <button type="button" wire:click="scanInvoiceAndDetectCategory" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || $isScanningInvoice) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
+                        <button type="button" wire:click="scanInvoiceAndDetectCategory" x-on:click="startInvoiceTimer()" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || $isScanningInvoice) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
                             @if($isScanningInvoice)
-                                <flux:icon name="arrow-path" class="size-4 animate-spin" /> A analisar a fatura em segundo plano...
+                                <flux:icon name="arrow-path" class="size-4 animate-spin" /> A analisar fatura...
                             @else
                                 <flux:icon name="sparkles" class="size-4" /> Analisar fatura
                             @endif
                         </button>
                     </div>
+                    @if($isScanningInvoice)
+                        <div class="rounded-xl border border-brand-500/20 bg-brand-500/5 px-4 py-3 text-center">
+                            <p class="text-xs font-bold text-brand-600 dark:text-brand-400">A analisar a tua fatura...</p>
+                            <p class="mt-1 text-[11px] text-zinc-500" x-text="scanSecondsRemaining > 0 ? 'Tempo estimado restante: ' + scanSecondsRemaining + ' s' : 'A análise está a demorar mais do que o previsto. Continua em curso...'"></p>
+                            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                                <div class="h-full w-full origin-left rounded-full bg-brand-500" style="animation: invoice-scan-progress 45s linear forwards;"></div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
