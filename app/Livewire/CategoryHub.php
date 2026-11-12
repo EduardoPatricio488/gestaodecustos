@@ -445,10 +445,10 @@ class CategoryHub extends Component
             $path = $file->getRealPath();
             $contents = $path && is_file($path) ? file_get_contents($path) : false;
             if (! is_string($contents) || $contents === '') {
-                throw new \\RuntimeException('Não foi possível ler o ficheiro enviado.');
+                throw new \RuntimeException('Não foi possível ler o ficheiro enviado.');
             }
 
-            $result = app(\\App\\Services\\InvoiceScanService::class)->analyse(
+            $result = app(\App\\Services\\InvoiceScanService::class)->analyse(
                 $contents,
                 $file->getClientOriginalName(),
                 $file->getMimeType() ?: 'image/jpeg',
@@ -459,7 +459,7 @@ class CategoryHub extends Component
             $toNumber = static function ($value): ?float {
                 if ($value === null || $value === '') return null;
                 if (is_string($value)) {
-                    $value = str_replace([' ', "\\u{00A0}", '€'], '', trim($value));
+                    $value = str_replace([' ', "\u{00A0}", '€'], '', trim($value));
                     if (preg_match('/^\\d{1,3}(\\.\\d{3})+(,\\d+)?$/', $value)) {
                         $value = str_replace(['.', ','], ['', '.'], $value);
                     } else {
@@ -505,8 +505,8 @@ class CategoryHub extends Component
             $this->scannedData['amount'] = $amount;
             $this->scanSuccess = true;
             $this->dispatch('toast', variant: 'success', text: 'Fatura analisada. Confirma os dados antes de guardar.');
-        } catch (\\Throwable $exception) {
-            \\Illuminate\\Support\\Facades\\Log::error('CategoryHub invoice scan failed.', [
+        } catch (\Throwable $exception) {
+            \Illuminate\\Support\\Facades\\Log::error('CategoryHub invoice scan failed.', [
                 'message' => $exception->getMessage(),
                 'user_id' => auth()->id(),
                 'workspace_id' => auth()->user()?->current_workspace_id,
