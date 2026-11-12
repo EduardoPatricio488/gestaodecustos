@@ -106,6 +106,7 @@ PROMPT;
                 'max_price' => [
                     'prompt' => 0,
                     'completion' => 0,
+                    'image' => 0,
                 ],
             ],
             'messages' => [[
