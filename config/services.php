@@ -60,7 +60,12 @@ return [
 
     'openrouter' => [
         'api_key' => env('OPENROUTER_API_KEY'),
-        'model' => env('AI_MODEL', 'openrouter/free'),
+        // Modelos gratuitos com suporte a imagem. Não adicionar modelos pagos a esta lista.
+        'model' => env('AI_MODEL', 'google/gemma-4-26b-a4b-it:free'),
+        'invoice_fallback_models' => [
+            'google/gemma-4-26b-a4b-it:free',
+            'thinkingmachines/inkling-2-small:free',
+        ],
     ],
 
     'market_data' => [
