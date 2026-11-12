@@ -38,6 +38,23 @@ class InvoiceScanService
             [$fileContents, $mimeType] = $this->prepareImage($fileContents, $mimeType);
         }
 
+        // Parse selectable-text PDFs locally. Never call a hosted PDF parser:
+        // auxiliary file-parsing services may incur charges even with a free model.
+        $pdfText = null;
+        if ($isPdf) {
+            try {
+                $pdfText = trim((new \\Smalot\\PdfParser\\Parser())->parseContent($fileContents)->getText());
+            } catch (\\Throwable $exception) {
+                Log::notice('Invoice scanner: local PDF text extraction failed.', [
+                    'exception' => $exception::class,
+                ]);
+            }
+
+            if (! is_string($pdfText) || mb_strlen($pdfText) < 20) {
+                throw new RuntimeException('Este PDF não contém texto selecionável suficiente. Para manter a análise totalmente gratuita, envia uma fotografia JPG/PNG da fatura ou um PDF com texto selecionável. Não é utilizado OCR externo nem foi criado qualquer movimento.');
+            }
+        }
+
         $quota = app(OpenRouterQuotaService::class)->dailyQuota();
         if (($quota['available'] ?? false) && (int) ($quota['remaining'] ?? 0) <= 0) {
             throw new RuntimeException('A quota diária gratuita do OpenRouter está esgotada. A reposição ocorre às 00:00 UTC.');
@@ -73,7 +90,7 @@ PROMPT;
         $encoded = base64_encode($fileContents);
         $part = $isImage
             ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$encoded, 'detail' => 'high']]
-            : ['type' => 'file', 'file' => ['filename' => basename($filename), 'file_data' => 'data:application/pdf;base64,'.$encoded]];
+            : ['type' => 'text', 'text' => "Texto extraído localmente do PDF (sem serviço externo de parsing):\\n".$pdfText];
 
         $payload = [
             'model' => self::MODEL,
@@ -96,13 +113,6 @@ PROMPT;
                 'content' => [['type' => 'text', 'text' => $prompt], $part],
             ]],
         ];
-
-        if ($isPdf) {
-            $payload['plugins'] = [[
-                'id' => 'file-parser',
-                'pdf' => ['engine' => 'cloudflare-ai'],
-            ]];
-        }
 
         $response = Http::withToken(config('services.openrouter.api_key'))
             ->acceptJson()
@@ -132,26 +142,6 @@ PROMPT;
                 throw new RuntimeException('A chave OpenRouter é inválida ou não tem permissões. Confirma OPENROUTER_API_KEY.');
             }
             throw new RuntimeException('Não foi possível analisar a fatura (HTTP '.$status.'): '.$message);
-        }
-
-        if ($isPdf) {
-            $annotations = $response->json('choices.0.message.annotations', []);
-            $parsedParts = collect($annotations)
-                ->filter(static fn ($annotation) => data_get($annotation, 'type') === 'file')
-                ->flatMap(static fn ($annotation) => data_get($annotation, 'file.content', []));
-
-            $hasReadableContent = $parsedParts->contains(static function ($part): bool {
-                if (data_get($part, 'type') === 'text') {
-                    return trim((string) data_get($part, 'text', '')) !== '';
-                }
-
-                return data_get($part, 'type') === 'image_url'
-                    && filled(data_get($part, 'image_url.url'));
-            });
-
-            if (! $hasReadableContent) {
-                throw new RuntimeException('O parser gratuito não conseguiu extrair conteúdo legível deste PDF. Não foi criada qualquer despesa. Envia um PDF com texto selecionável ou converte as páginas digitalizadas em imagens JPG/PNG; o OCR pago não é utilizado.');
-            }
         }
 
         $content = $response->json('choices.0.message.content');
