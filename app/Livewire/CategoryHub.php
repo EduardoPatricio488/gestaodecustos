@@ -255,9 +255,11 @@ class CategoryHub extends Component
 
             // Guarda uma impressão digital da imagem e procura o mesmo produto
             // associado à mesma imagem em despesas já registadas neste workspace.
-            $invoiceFingerprint = $this->pendingDocumentPath
-                ? hash_file('sha256', Storage::disk('public')->path($this->pendingDocumentPath))
+            $pendingDisk = Storage::disk('public');
+            $pendingFilePath = $this->pendingDocumentPath && $pendingDisk->exists($this->pendingDocumentPath)
+                ? $pendingDisk->path($this->pendingDocumentPath)
                 : null;
+            $invoiceFingerprint = $pendingFilePath ? hash_file('sha256', $pendingFilePath) : null;
             if (is_string($invoiceFingerprint) && $invoiceFingerprint !== '') {
                 $this->meta['invoice_fingerprint'] = $invoiceFingerprint;
                 $normalizedItemName = Str::lower(Str::squish((string) ($this->meta['item_name'] ?? '')));
