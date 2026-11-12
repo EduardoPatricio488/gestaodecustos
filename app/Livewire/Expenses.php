@@ -264,7 +264,7 @@ PROMPT;
                         : $exception->getMessage(),
                 ], now()->addMinutes(20));
             }
-        })->onConnection('background');
+        })->afterResponse();
     }
 
     public function checkInvoiceScan(): void
