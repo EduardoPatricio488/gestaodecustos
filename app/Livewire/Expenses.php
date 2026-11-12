@@ -82,7 +82,10 @@ class Expenses extends Component
         $this->invoiceScanId = $scanId;
         $this->isScanningInvoice = true;
 
-        \Illuminate\Support\Facades\Cache::put($cacheKey, ['status' => 'processing'], now()->addMinutes(20));
+        \Illuminate\Support\Facades\Cache::put($cacheKey, [
+            'status' => 'processing',
+            'started_at' => now()->timestamp,
+        ], now()->addMinutes(20));
 
         $categoryOptions = $categories->map(fn ($category) => [
             'name' => $category->name,
@@ -103,8 +106,7 @@ class Expenses extends Component
             return;
         }
 
-        // A análise corre numa ligação de background, num processo separado.
-        // Assim, o pedido Livewire termina sem ficar ocupado durante a chamada à IA.
+        // A análise é colocada na fila da base de dados para não bloquear o pedido Livewire.
         $processInvoiceScan = function () use ($cacheKey, $storedPath, $documentName, $documentMime, $categoryOptions, $apiKey, $appUrl, $userId, $workspaceId) {
             @set_time_limit(180);
 
@@ -266,10 +268,23 @@ PROMPT;
             }
         };
 
-        // Executa diretamente para garantir que o resultado é escrito na cache
-        // antes de verificar o estado e atualizar a interface.
-        $processInvoiceScan();
-        $this->checkInvoiceScan();
+        try {
+            dispatch($processInvoiceScan)->onConnection('database')->onQueue('default');
+        } catch (\Throwable $exception) {
+            \Illuminate\Support\Facades\Log::error('Expenses invoice scanner: could not enqueue analysis.', [
+                'message' => $exception->getMessage(),
+                'user_id' => $userId,
+                'workspace_id' => $workspaceId,
+            ]);
+
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($storedPath);
+            \Illuminate\Support\Facades\Cache::put($cacheKey, [
+                'status' => 'failed',
+                'error' => 'Não foi possível iniciar o processamento em segundo plano. Confirma se o serviço de filas está ativo e tenta novamente.',
+            ], now()->addMinutes(20));
+
+            $this->checkInvoiceScan();
+        }
     }
 
     public function checkInvoiceScan(): void
@@ -282,8 +297,22 @@ PROMPT;
         $cacheKey = 'invoice_scan:'.$user->id.':'.$this->invoiceScanId;
         $scan = \Illuminate\Support\Facades\Cache::get($cacheKey);
 
-        if (! is_array($scan) || ($scan['status'] ?? null) === 'processing') {
+        if (! is_array($scan)) {
             return;
+        }
+
+        if (($scan['status'] ?? null) === 'processing') {
+            $startedAt = (int) ($scan['started_at'] ?? now()->timestamp);
+
+            if (now()->timestamp - $startedAt <= 180) {
+                return;
+            }
+
+            $scan = [
+                'status' => 'failed',
+                'error' => 'A análise excedeu o tempo máximo de espera. A fila pode não estar ativa. Tenta novamente; não foi criada qualquer despesa.',
+            ];
+            \Illuminate\Support\Facades\Cache::put($cacheKey, $scan, now()->addMinutes(5));
         }
 
         $this->isScanningInvoice = false;
