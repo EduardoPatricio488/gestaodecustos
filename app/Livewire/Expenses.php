@@ -110,11 +110,6 @@ class Expenses extends Component
         $workspaceId = (int) $user->current_workspace_id;
         $documentName = $this->scannerReceipt->getClientOriginalName();
         $documentMime = $this->scannerReceipt->getMimeType() ?: 'image/jpeg';
-        $primaryModel = config('services.openrouter.model', 'google/gemma-4-26b-a4b-it:free');
-        if ($primaryModel === 'openrouter/free') {
-            $primaryModel = 'google/gemma-4-26b-a4b-it:free';
-        }
-        $fallbackModels = config('services.openrouter.invoice_fallback_models', []);
         $apiKey = config('services.openrouter.api_key');
         $appUrl = config('app.url');
 
@@ -128,7 +123,7 @@ class Expenses extends Component
 
         // A análise é executada depois de a resposta Livewire ser enviada.
         // O modal pode continuar a consultar o estado sem ficar preso ao pedido HTTP da IA.
-        dispatch(function () use ($cacheKey, $storedPath, $documentName, $documentMime, $categoryOptions, $primaryModel, $fallbackModels, $apiKey, $appUrl, $userId, $workspaceId) {
+        dispatch(function () use ($cacheKey, $storedPath, $documentName, $documentMime, $categoryOptions, $apiKey, $appUrl, $userId, $workspaceId) {
             @set_time_limit(180);
 
             try {
@@ -184,14 +179,14 @@ Devolve exatamente esta estrutura:
 {"category":null,"amount":null,"date":null,"time":null,"quantity":null,"unit":null,"store":null,"description":null,"item_name":null,"subcategory":null,"unit_price":null,"vat_rate":null,"gross_amount":null,"net_amount":null,"vat_amount":null,"tax_incidence":null,"amount_tendered":null,"change_amount":null,"payment_condition":null,"payment_method":null,"company_nif":null,"customer_nif":null,"invoice_number":null,"notes":null}
 PROMPT;
 
-                $models = array_values(array_unique(array_filter(array_merge([$primaryModel], $fallbackModels))));
                 $response = \Illuminate\Support\Facades\Http::withHeaders([
                     'Authorization' => 'Bearer '.$apiKey,
                     'Content-Type' => 'application/json',
                     'HTTP-Referer' => $appUrl,
                     'X-Title' => 'Finance Pro AI',
                 ])->connectTimeout(8)->timeout(100)->post('https://openrouter.ai/api/v1/chat/completions', [
-                    'models' => $models,
+                    // Modelo utilizado na versão do scanner confirmada como funcional.
+                    'model' => 'google/gemini-2.5-flash',
                     'temperature' => 0,
                     'max_tokens' => 3200,
                     'messages' => [[
@@ -201,7 +196,15 @@ PROMPT;
                 ]);
 
                 if (! $response->successful()) {
-                    throw new \RuntimeException('A OpenRouter devolveu um erro: '.($response->json('error.message') ?? 'erro de comunicação.'));
+                    $providerError = $response->json('error', []);
+                    \Illuminate\Support\Facades\Log::warning('Expenses invoice scanner: OpenRouter request failed.', [
+                        'http_status' => $response->status(),
+                        'provider_error' => $providerError,
+                        'user_id' => $userId,
+                        'workspace_id' => $workspaceId,
+                    ]);
+
+                    throw new \RuntimeException('A OpenRouter devolveu um erro: '.(data_get($providerError, 'message') ?: 'erro de comunicação (HTTP '.$response->status().').'));
                 }
 
                 $content = $response->json('choices.0.message.content');
