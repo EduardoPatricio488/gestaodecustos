@@ -78,7 +78,7 @@ PROMPT;
         $payload = [
             'model' => self::MODEL,
             'temperature' => 0,
-            'max_tokens' => 3000,
+            'max_tokens' => 5000,
             'messages' => [[
                 'role' => 'user',
                 'content' => [['type' => 'text', 'text' => $prompt], $part],
