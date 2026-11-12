@@ -43,8 +43,8 @@ class InvoiceScanService
         $pdfText = null;
         if ($isPdf) {
             try {
-                $pdfText = trim((new \\Smalot\\PdfParser\\Parser())->parseContent($fileContents)->getText());
-            } catch (\\Throwable $exception) {
+                $pdfText = trim((new \Smalot\PdfParser\Parser())->parseContent($fileContents)->getText());
+            } catch (\Throwable $exception) {
                 Log::notice('Invoice scanner: local PDF text extraction failed.', [
                     'exception' => $exception::class,
                 ]);
