@@ -166,6 +166,19 @@
             <flux:icon name="chevron-left" class="size-3 text-zinc-600 dark:text-zinc-300" />
         </button>
 
+        {{-- Botão de atualização fixo ao centro do cartão --}}
+        <button
+            type="button"
+            wire:click="refreshMarketPrices"
+            wire:loading.attr="disabled"
+            wire:target="refreshMarketPrices"
+            title="Atualizar cotações"
+            aria-label="Atualizar cotações"
+            class="absolute left-1/2 top-1/2 z-30 flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50/95 text-emerald-600 shadow-lg backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-emerald-100 disabled:cursor-wait disabled:opacity-50 dark:border-emerald-400/30 dark:bg-zinc-900/95 dark:text-emerald-400 dark:hover:bg-emerald-400/20">
+            <flux:icon name="arrow-path" class="size-4" wire:loading.remove wire:target="refreshMarketPrices" />
+            <flux:icon name="arrow-path" class="size-4 animate-spin" wire:loading wire:target="refreshMarketPrices" />
+        </button>
+
         {{-- Contentor do Ticker --}}
         <div x-ref="tickerContainer" class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2 flex-nowrap touch-pan-x snap-x">
             @foreach($tickers as $symbol => $data)
@@ -179,19 +192,6 @@
                         {{ $data['change'] >= 0 ? '▲' : '▼' }}{{ abs(round($data['change'], 1)) }}%
                     </span>
                 </div>
-                @if($loop->iteration === (int) ceil(count($tickers) / 2))
-                    <button
-                        type="button"
-                        wire:click="refreshMarketPrices"
-                        wire:loading.attr="disabled"
-                        wire:target="refreshMarketPrices"
-                        title="Atualizar cotações"
-                        aria-label="Atualizar cotações"
-                        class="shrink-0 flex size-10 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-sm transition-all duration-200 hover:scale-110 hover:bg-emerald-100 hover:shadow-md disabled:cursor-wait disabled:opacity-50 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400 dark:hover:bg-emerald-400/20">
-                        <flux:icon name="arrow-path" class="size-4" wire:loading.remove wire:target="refreshMarketPrices" />
-                        <flux:icon name="arrow-path" class="size-4 animate-spin" wire:loading wire:target="refreshMarketPrices" />
-                    </button>
-                @endif
             @endforeach
         </div>
 
