@@ -94,6 +94,10 @@ class CategoryHub extends Component
 
     public array $aiQuota = [];
 
+    public ?array $duplicateExpenseWarning = null;
+
+    public bool $allowDuplicateExpense = false;
+
     public function refreshScannerQuota(): void
     {
         $this->aiQuota = app(\App\Services\OpenRouterQuotaService::class)->dailyQuota(true);
@@ -248,6 +252,46 @@ class CategoryHub extends Component
             }
             $this->pendingDocumentName = $pendingScan['document_name'] ?? null;
             $this->pendingDocumentMime = $pendingScan['document_mime'] ?? null;
+
+            // Guarda uma impressão digital da imagem e procura o mesmo produto
+            // associado à mesma imagem em despesas já registadas neste workspace.
+            $invoiceFingerprint = $this->pendingDocumentPath
+                ? hash_file('sha256', Storage::disk('public')->path($this->pendingDocumentPath))
+                : null;
+            if (is_string($invoiceFingerprint) && $invoiceFingerprint !== '') {
+                $this->meta['invoice_fingerprint'] = $invoiceFingerprint;
+                $normalizedItemName = Str::lower(Str::squish((string) ($this->meta['item_name'] ?? '')));
+                if ($normalizedItemName !== '') {
+                    $user = auth()->user();
+                    $existingExpensesQuery = Expense::query()
+                        ->where('workspace_id', $user->current_workspace_id)
+                        ->whereNotNull('receipt_path')
+                        ->when($user->currentWorkspace?->type === 'personal', fn ($query) => $query->where('user_id', $user->id));
+                    foreach ($existingExpensesQuery->get(['id', 'description', 'amount', 'spent_at', 'receipt_path', 'metadata']) as $existingExpense) {
+                        $existingMeta = is_array($existingExpense->metadata) ? $existingExpense->metadata : [];
+                        $existingItemName = Str::lower(Str::squish((string) ($existingMeta['item_name'] ?? $existingExpense->description ?? '')));
+                        if ($existingItemName !== $normalizedItemName) {
+                            continue;
+                        }
+
+                        $existingFingerprint = $existingMeta['invoice_fingerprint'] ?? null;
+                        if (! $existingFingerprint && $existingExpense->receipt_path && Storage::disk('public')->exists($existingExpense->receipt_path)) {
+                            $existingFingerprint = hash_file('sha256', Storage::disk('public')->path($existingExpense->receipt_path));
+                        }
+
+                        if (is_string($existingFingerprint) && hash_equals($existingFingerprint, $invoiceFingerprint)) {
+                            $this->duplicateExpenseWarning = [
+                                'id' => $existingExpense->id,
+                                'product' => $this->meta['item_name'],
+                                'amount' => (float) $existingExpense->amount,
+                                'date' => $existingExpense->spent_at?->format('d/m/Y'),
+                            ];
+                            break;
+                        }
+                    }
+                }
+            }
+
             $this->scanSuccess = true;
             $this->scannedData = $result;
             $this->openScannedExpenseForm = true;
@@ -710,6 +754,8 @@ PROMPT;
     public function openCreateModal(): void
     {
         $this->reset(['amount', 'description', 'subcategory', 'receipt', 'document', 'meta', 'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId', 'pendingDocumentPath', 'pendingDocumentName', 'pendingDocumentMime', 'savedDocumentPath']);
+        $this->duplicateExpenseWarning = null;
+        $this->allowDuplicateExpense = false;
         $this->spent_at = now()->format('Y-m-d');
         $this->transportPassMode = false;
         $this->transportPassName = 'Passe mensal';
@@ -787,8 +833,41 @@ PROMPT;
     // ─────────────────────────────────────────────────────────────────
     //  SAVE
     // ─────────────────────────────────────────────────────────────────
+    public function confirmDuplicateExpense(): void
+    {
+        if (! $this->duplicateExpenseWarning) {
+            return;
+        }
+
+        $this->allowDuplicateExpense = true;
+        $this->duplicateExpenseWarning = null;
+        $this->save();
+    }
+
+    public function cancelDuplicateExpense(): void
+    {
+        if ($this->pendingDocumentPath) {
+            Storage::disk('public')->delete($this->pendingDocumentPath);
+        }
+
+        session()->forget('pending_expense_scan_preview:'.auth()->user()->current_workspace_id.':'.auth()->id());
+        $this->reset([
+            'amount', 'description', 'subcategory', 'receipt', 'document', 'meta',
+            'scannedData', 'scanSuccess', 'scanError', 'editingId', 'bankAccountId',
+            'pendingDocumentPath', 'pendingDocumentName', 'pendingDocumentMime',
+            'savedDocumentPath', 'duplicateExpenseWarning', 'allowDuplicateExpense',
+        ]);
+        $this->spent_at = now()->format('Y-m-d');
+        $this->dispatch('modal-close-add-expense');
+        $this->dispatch('toast', text: 'Registo cancelado. Não foi adicionada uma despesa duplicada.');
+    }
+
     public function save(): void
     {
+        if ($this->duplicateExpenseWarning && ! $this->allowDuplicateExpense) {
+            return;
+        }
+
         if (str_starts_with((string) $this->slug, 'transporte') && $this->transportPassMode) {
             $this->saveTransportPass();
             return;
