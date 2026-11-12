@@ -151,7 +151,7 @@ class Expenses extends Component
             return;
         }
 
-        $scanId = (string) \Illuminate\Support\\Str::uuid();
+        $scanId = (string) \Illuminate\Support\Str::uuid();
         $cacheKey = 'invoice_scan:'.$user->id.':'.$user->current_workspace_id.':'.$scanId;
         $this->invoiceScanId = $scanId;
         $this->invoiceScanStartedAt = now()->timestamp;
@@ -170,7 +170,7 @@ class Expenses extends Component
         ])->values()->all();
 
         try {
-            dispatch(new \App\Jobs\\ProcessInvoiceScan(
+            dispatch(new \App\Jobs\ProcessInvoiceScan(
                 $cacheKey,
                 $storedPath,
                 $this->scannerReceipt->getClientOriginalName(),
@@ -181,7 +181,7 @@ class Expenses extends Component
                 'category',
             ));
         } catch (\Throwable $exception) {
-            \Illuminate\Support\Facades\\Log::error('Expenses invoice scanner: could not enqueue analysis.', [
+            \Illuminate\Support\Facades\Log::error('Expenses invoice scanner: could not enqueue analysis.', [
                 'message' => $exception->getMessage(),
                 'user_id' => $user->id,
                 'workspace_id' => $user->current_workspace_id,
