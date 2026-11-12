@@ -746,6 +746,17 @@
                 </div>
             </div>
             <div class="flex shrink-0 items-center gap-1">
+                <button
+                    type="button"
+                    wire:click="refreshInvestmentPrices"
+                    wire:loading.attr="disabled"
+                    wire:target="refreshInvestmentPrices"
+                    aria-label="Atualizar preços dos investimentos"
+                    title="Atualizar preços dos investimentos"
+                    class="flex size-7 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-emerald-50 hover:text-emerald-600 disabled:cursor-wait disabled:opacity-50 dark:hover:bg-emerald-400/10 dark:hover:text-emerald-400">
+                    <flux:icon name="arrow-path" class="size-4" wire:loading.remove wire:target="refreshInvestmentPrices" />
+                    <flux:icon name="arrow-path" class="size-4 animate-spin" wire:loading wire:target="refreshInvestmentPrices" />
+                </button>
                 <span class="mr-1 text-[9px] font-semibold tabular-nums text-zinc-400" x-text="(activeInvestment + 1) + ' / ' + items.length"></span>
                 <button type="button" x-on:click="previous()" aria-label="Ativo anterior" title="Ativo anterior" class="flex size-7 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-emerald-600 dark:hover:bg-zinc-800 dark:hover:text-emerald-400">
                     <flux:icon name="chevron-left" class="size-4" />
