@@ -65,6 +65,25 @@ class Dashboard extends Component
 
             Cache::forget("dashboard:investments:v3:{$workspace->id}:{$user->id}");
             Cache::forget("dashboard:account-overview:v1:{$workspace->id}:{$user->id}");
+
+            $updatedInvestments = Investment::where('workspace_id', $workspace->id)
+                ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                ->get(['symbol', 'name', 'quantity', 'average_price', 'current_price', 'fees'])
+                ->map(function ($investment) use ($workspace) {
+                    $invested = ((float) $investment->quantity * (float) $investment->average_price) + (float) ($investment->fees ?? 0);
+                    $current = (float) $investment->quantity * (float) ($investment->current_price ?: $investment->average_price);
+                    $profit = round($current - $invested, 2);
+
+                    return [
+                        'symbol' => $investment->symbol ?: 'Ativo',
+                        'name' => $investment->name ?: $investment->symbol,
+                        'profit' => $profit,
+                        'profit_label' => ($profit >= 0 ? '+' : '').$workspace->money($profit),
+                        'percent_label' => ($invested > 0 && $profit >= 0 ? '+' : '').number_format($invested > 0 ? ($profit / $invested) * 100 : 0, 2, ',', ' ').'%',
+                    ];
+                })->values()->all();
+
+            $this->dispatch('dashboard-investments-updated', items: $updatedInvestments);
             $this->dispatch('toast', text: 'Preços dos investimentos atualizados com sucesso.');
         } finally {
             $this->refreshingInvestmentPrices = false;
