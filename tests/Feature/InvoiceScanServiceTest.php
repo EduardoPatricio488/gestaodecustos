@@ -44,6 +44,9 @@ test('invoice scanner uses only openrouter free and returns normalised data', fu
     Http::assertSent(fn (Request $request) =>
         str_ends_with($request->url(), '/chat/completions')
         && $request['model'] === 'openrouter/free'
+        && data_get($request->data(), 'reasoning.effort') === 'none'
+        && data_get($request->data(), 'response_format.type') === 'json_object'
+        && ! array_key_exists('models', $request->data())
     );
     Http::assertSentCount(2);
 });
@@ -67,6 +70,31 @@ test('invoice scanner rejects an unreadable response without retrying', function
         'image/jpeg',
     ))->toThrow(RuntimeException::class);
 
+    Http::assertSentCount(2);
+});
+
+
+test('invoice scanner reports free-router capacity errors without retrying or paid fallback', function () {
+    Http::fake([
+        'https://openrouter.ai/api/v1/key' => Http::response([
+            'data' => ['free_model_daily_requests' => ['used' => 0, 'limit' => 50, 'remaining' => 50]],
+        ]),
+        'https://openrouter.ai/api/v1/chat/completions' => Http::response([
+            'error' => ['message' => 'Provider temporarily rate-limited upstream.'],
+        ], 429),
+    ]);
+
+    expect(fn () => app(InvoiceScanService::class)->analyse(
+        'fake image bytes',
+        'fatura.jpg',
+        'image/jpeg',
+    ))->toThrow(RuntimeException::class, 'temporariamente indisponível');
+
+    Http::assertSent(fn (Request $request) =>
+        str_ends_with($request->url(), '/chat/completions')
+        && $request['model'] === 'openrouter/free'
+        && ! array_key_exists('models', $request->data())
+    );
     Http::assertSentCount(2);
 });
 
