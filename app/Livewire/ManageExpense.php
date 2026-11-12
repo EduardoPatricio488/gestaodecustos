@@ -177,7 +177,7 @@ class ManageExpense extends Component
                 ? $this->hubConfigs[$selectedCat->slug]['subs']
                 : ['Geral', 'Outros'];
 
-            $result = app(\App\Services\\InvoiceScanService::class)->analyse(
+            $result = app(\App\Services\InvoiceScanService::class)->analyse(
                 $contents,
                 $this->receipt->getClientOriginalName(),
                 $this->receipt->getMimeType() ?: 'image/jpeg',
@@ -214,7 +214,7 @@ class ManageExpense extends Component
             $this->scanSuccess = true;
             $this->dispatch('scan-completed');
         } catch (\Throwable $exception) {
-            \Illuminate\Support\Facades\\Log::error('ManageExpense invoice scan failed.', [
+            \Illuminate\Support\Facades\Log::error('ManageExpense invoice scan failed.', [
                 'message' => $exception->getMessage(),
                 'user_id' => auth()->id(),
                 'workspace_id' => auth()->user()?->current_workspace_id,
