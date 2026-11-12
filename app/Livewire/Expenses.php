@@ -158,8 +158,8 @@ PROMPT;
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => 'Finance Pro AI',
-            ])->connectTimeout(10)
-                ->timeout(60)
+            ])->connectTimeout(5)
+                ->timeout(25)
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
                     'temperature' => 0,
@@ -220,9 +220,10 @@ PROMPT;
                 throw new \Exception($detail.' Podes tentar novamente ou escolher a categoria manualmente.');
             }
 
-            // Uma categoria isolada não significa que a fatura foi extraída.
-            // Se valor, data, estabelecimento e descrição vierem vazios, tenta novamente
-            // com o mesmo modelo gratuito e a mesma imagem, pedindo apenas os campos essenciais.
+            // Não repetir automaticamente o pedido multimodal: evita duplicar consumo de quota.
+            // Se a primeira resposta não tiver dados suficientes, a análise termina com erro claro
+            // e o utilizador pode decidir quando voltar a tentar.
+
             $hasEssentialData = collect(['amount', 'date', 'store', 'description'])
                 ->contains(fn ($field) => isset($result[$field]) && $result[$field] !== '');
 
@@ -343,7 +344,7 @@ PROMPT;
                 'message' => $e->getMessage(),
                 'user_id' => auth()->id(),
             ]);
-            $this->scannerError = 'A IA demorou demasiado tempo a responder. A fatura continua carregada; tenta novamente dentro de alguns segundos.';
+            $this->scannerError = 'A OpenRouter não respondeu dentro de 25 segundos. A fatura continua carregada e não foi criada qualquer despesa. Podes tentar novamente mais tarde.';
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Expenses invoice scanner: '.$e->getMessage());
             $this->scannerError = 'Não foi possível analisar a fatura. '.$e->getMessage();
