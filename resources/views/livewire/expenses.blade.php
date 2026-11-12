@@ -102,17 +102,20 @@
                         @endif
                         <div wire:loading wire:target="scannerReceipt" class="mt-3 text-xs font-bold text-brand-500">A carregar imagem...</div>
                     </div>
+                    <div wire:loading.flex wire:target="scanInvoiceAndDetectCategory" class="flex-col rounded-xl border border-brand-500/20 bg-brand-500/5 px-4 py-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <flux:icon name="arrow-path" class="size-4 animate-spin text-brand-500" />
+                            <p class="text-xs font-bold text-brand-600 dark:text-brand-400">A analisar a tua fatura...</p>
+                        </div>
+                        <p class="mt-1 text-[11px] text-zinc-500" x-text="scanSecondsRemaining > 0 ? 'Estimativa: cerca de ' + scanSecondsRemaining + ' segundos restantes' : 'A análise está a demorar mais do que o previsto. Continua em curso...'"></p>
+                        <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                            <div class="h-full w-full origin-left rounded-full bg-brand-500" style="animation: invoice-scan-progress 45s linear forwards;"></div>
+                        </div>
+                        <p class="mt-2 text-[10px] text-zinc-400">Podes aguardar — não feches esta janela.</p>
+                    </div>
                     @if($isScanningInvoice)
-                        <div class="rounded-xl border border-brand-500/20 bg-brand-500/5 px-4 py-3 text-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <flux:icon name="arrow-path" class="size-4 animate-spin text-brand-500" />
-                                <p class="text-xs font-bold text-brand-600 dark:text-brand-400">A analisar a tua fatura...</p>
-                            </div>
-                            <p class="mt-1 text-[11px] text-zinc-500" x-text="scanSecondsRemaining > 0 ? 'Estimativa: cerca de ' + scanSecondsRemaining + ' segundos restantes' : 'A análise está a demorar mais do que o previsto. Continua em curso...'"></p>
-                            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-                                <div class="h-full w-full origin-left rounded-full bg-brand-500" style="animation: invoice-scan-progress 45s linear forwards;"></div>
-                            </div>
-                            <p class="mt-2 text-[10px] text-zinc-400">Podes aguardar — não feches esta janela.</p>
+                        <div class="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-center text-[11px] text-amber-600 dark:text-amber-400">
+                            A análise foi submetida e está a aguardar a resposta. Esta janela será atualizada automaticamente.
                         </div>
                     @endif
                     <div class="flex flex-col-reverse sm:flex-row gap-3">
