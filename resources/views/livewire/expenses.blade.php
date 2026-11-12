@@ -108,7 +108,12 @@
                             @if($isScanningInvoice)
                                 <flux:icon name="arrow-path" class="size-4 animate-spin" /> A analisar fatura...
                             @else
-                                <flux:icon name="sparkles" class="size-4" /> Analisar fatura
+                                <span wire:loading.remove wire:target="scanInvoiceAndDetectCategory" class="inline-flex items-center gap-2">
+                                    <flux:icon name="sparkles" class="size-4" /> Analisar fatura
+                                </span>
+                                <span wire:loading.inline-flex wire:target="scanInvoiceAndDetectCategory" class="items-center gap-2">
+                                    <flux:icon name="arrow-path" class="size-4 animate-spin" /> A analisar fatura...
+                                </span>
                             @endif
                         </button>
                     </div>
