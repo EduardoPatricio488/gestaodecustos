@@ -60,6 +60,10 @@ return [
 
     'openrouter' => [
         'api_key' => env('OPENROUTER_API_KEY'),
+        // Margem de segurança abaixo do limite de 20 pedidos/minuto dos modelos gratuitos.
+        'requests_per_minute' => (int) env('OPENROUTER_REQUESTS_PER_MINUTE', 18),
+        'connect_timeout' => (int) env('OPENROUTER_CONNECT_TIMEOUT', 8),
+        'request_timeout' => (int) env('OPENROUTER_REQUEST_TIMEOUT', 45),
         // Modelos gratuitos com suporte a imagem. Não adicionar modelos pagos a esta lista.
         'model' => env('AI_MODEL', 'google/gemma-4-26b-a4b-it:free'),
         'invoice_fallback_models' => [
