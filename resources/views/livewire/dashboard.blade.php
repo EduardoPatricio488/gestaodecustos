@@ -756,19 +756,6 @@
             </div>
         </div>
 
-        <button
-            type="button"
-            wire:click="refreshInvestmentPrices"
-            wire:loading.attr="disabled"
-            wire:target="refreshInvestmentPrices"
-            title="Atualizar apenas os preços dos investimentos"
-            aria-label="Atualizar preços dos investimentos"
-            class="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-xs font-black text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md disabled:cursor-wait disabled:opacity-60 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400 dark:hover:bg-emerald-400/20">
-            <flux:icon name="arrow-path" class="size-4" wire:loading.remove wire:target="refreshInvestmentPrices" />
-            <flux:icon name="arrow-path" class="size-4 animate-spin" wire:loading wire:target="refreshInvestmentPrices" />
-            <span wire:loading.remove wire:target="refreshInvestmentPrices">Atualizar preços</span>
-            <span wire:loading wire:target="refreshInvestmentPrices">A atualizar...</span>
-        </button>
     </div>
 </div>
 
