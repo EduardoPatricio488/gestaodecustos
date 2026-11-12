@@ -212,6 +212,7 @@ class Expenses extends Component
         }
 
         $user = auth()->user();
+        $workspaceId = (int) $user->current_workspace_id;
         $cacheKey = 'invoice_scan:'.$user->id.':'.$this->invoiceScanId;
         $scan = \Illuminate\Support\Facades\Cache::get($cacheKey);
 
@@ -225,6 +226,15 @@ class Expenses extends Component
             $this->invoiceScanId = null;
             $this->invoiceScanStartedAt = null;
             $this->scannerError = 'Não foi recebido qualquer resultado do processamento após 3 minutos. Verifica se o worker da fila está ativo e tenta novamente.';
+            return;
+        }
+
+        if ((int) ($scan['user_id'] ?? $user->id) !== (int) $user->id
+            || (int) ($scan['workspace_id'] ?? $workspaceId) !== $workspaceId) {
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
+            $this->isScanningInvoice = false;
+            $this->invoiceScanId = null;
+            $this->scannerError = 'O workspace foi alterado durante a análise. Por segurança, inicia novamente a leitura da fatura.';
             return;
         }
 
@@ -244,24 +254,41 @@ class Expenses extends Component
 
         $this->isScanningInvoice = false;
         $this->invoiceScanId = null;
-        \Illuminate\Support\Facades\Cache::forget($cacheKey);
+        $this->invoiceScanStartedAt = null;
 
         if (($scan['status'] ?? null) !== 'completed') {
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
             $this->scannerError = $scan['error'] ?? 'Não foi possível analisar a fatura.';
             return;
         }
 
-        session()->put('pending_expense_scan:'.$user->current_workspace_id.':'.$user->id, [
+        $categoryQuery = Category::where('workspace_id', $workspaceId)
+            ->where('hidden_from_sidebar', false)
+            ->where('slug', $scan['category_slug'] ?? '');
+
+        if ($user->currentWorkspace?->type === 'personal') {
+            $categoryQuery->where('user_id', $user->id);
+        }
+
+        $category = $categoryQuery->first();
+
+        if (! $category || empty($scan['document_path']) || empty($scan['data'])) {
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
+            $this->scannerError = 'O resultado da análise já não corresponde a uma categoria válida deste workspace. Tenta novamente.';
+            return;
+        }
+
+        session()->put('pending_expense_scan:'.$workspaceId.':'.$user->id, [
             'data' => $scan['data'],
             'document_path' => $scan['document_path'],
-            'document_name' => $scan['document_name'],
-            'document_mime' => $scan['document_mime'],
+            'document_name' => $scan['document_name'] ?? 'fatura',
+            'document_mime' => $scan['document_mime'] ?? 'application/octet-stream',
         ]);
 
-        // Força um carregamento completo para que o CategoryHub::mount()
-        // leia a análise guardada na sessão e abra o formulário de revisão.
+        \Illuminate\Support\Facades\Cache::forget($cacheKey);
+
         $this->redirect(route('hub.category', [
-            'slug' => $scan['category_slug'],
+            'slug' => $category->slug,
             'open_scan_review' => 1,
         ]));
     }
