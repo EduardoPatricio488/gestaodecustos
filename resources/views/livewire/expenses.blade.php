@@ -1,4 +1,4 @@
-<div class="space-y-8 pb-24">
+<div class="space-y-8 pb-24" @if($isScanningInvoice) wire:poll.3s.keep-alive="checkInvoiceScan" @endif>
     <div class="p-2 sm:p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden">
         <div class="flex flex-col sm:flex-row items-center justify-between w-full px-2 sm:px-4 gap-4">
             <div class="flex items-center gap-8 justify-between sm:justify-start w-full sm:w-auto">
@@ -77,7 +77,7 @@
                     @endif
                 </div>
 
-                <div x-show="activeTab === 'scanner'" x-cloak class="space-y-5" @if($isScanningInvoice) wire:poll.5s="checkInvoiceScan" @endif>
+                <div x-show="activeTab === 'scanner'" x-cloak class="space-y-5">
                     @if($scannerError)
                         <div class="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">
                             <flux:icon name="exclamation-triangle" class="size-4 shrink-0" />
