@@ -160,123 +160,66 @@ class ManageExpense extends Component
         if (! $this->receipt) {
             $this->scanError = 'Nenhum ficheiro selecionado.';
             $this->isScanning = false;
-
             return;
         }
 
         try {
             $this->refreshScannerQuota();
+
             if (($this->aiQuota['available'] ?? false) && (int) ($this->aiQuota['remaining'] ?? 0) <= 0) {
-                throw new \Exception('A quota diária gratuita do OpenRouter está esgotada. A reposição ocorre às 00:00 UTC.');
+                throw new \RuntimeException('A quota diária gratuita do OpenRouter está esgotada. A reposição ocorre às 00:00 UTC.');
             }
-            $imageFullPath = $this->receipt->getRealPath();
-            $imageData = base64_encode(file_get_contents($imageFullPath));
-            $mimeType = $this->receipt->getMimeType() ?: 'image/jpeg';
 
-            $selectedCat = Category::where('workspace_id', auth()->user()->current_workspace_id)
-                ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
+            $user = auth()->user();
+            $selectedCategory = Category::where('workspace_id', $user->current_workspace_id)
+                ->when($user->currentWorkspace?->type === 'personal', fn ($query) => $query->where('user_id', $user->id))
                 ->find($this->category_id);
-            $subsStr = ($selectedCat && isset($this->hubConfigs[$selectedCat->slug]))
-                ? implode(', ', $this->hubConfigs[$selectedCat->slug]['subs'])
-                : 'Geral, Outros';
 
-            $prompt = <<<PROMPT
-Analisa esta fatura/recibo português por inteiro, incluindo cabeçalho, artigos, totais e rodapé. Devolve APENAS JSON válido, sem markdown.
-Extrai todos os dados impressos; não inventes nem calcules dados ausentes. Usa null quando ilegível ou inexistente.
-amount é o total final pago; date YYYY-MM-DD; time HH:MM; quantity e valores monetários são números decimais com ponto.
-gross_amount é o valor ilíquido, net_amount é a base tributável, vat_amount é o IVA e vat_rate a taxa. Não confundas NIF do emitente com NIF do cliente.
-subcategory deve ser escolhida desta lista: {$subsStr}.
-Devolve exatamente esta estrutura:
-{"amount":null,"item_name":null,"date":null,"time":null,"quantity":null,"unit":null,"store":null,"description":null,"subcategory":null,"unit_price":null,"vat_rate":null,"gross_amount":null,"net_amount":null,"vat_amount":null,"tax_incidence":null,"amount_tendered":null,"change_amount":null,"payment_condition":null,"payment_method":null,"company_nif":null,"customer_nif":null,"invoice_number":null,"notes":null}
-PROMPT;
+            $subcategories = ($selectedCategory && isset($this->hubConfigs[$selectedCategory->slug]))
+                ? $this->hubConfigs[$selectedCategory->slug]['subs']
+                : ['Geral', 'Outros'];
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.config('services.openrouter.api_key'),
-                'Content-Type' => 'application/json',
-            ])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))->timeout((int) config('limits.ai.request_timeout_seconds', 30))->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => config('services.openrouter.model', 'openrouter/free'),
-                'max_tokens' => 3500,
-                'messages' => [
-                    [
-                        'role' => 'user',
-                        'content' => [
-                            ['type' => 'text', 'text' => $prompt],
-                            ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$imageData, 'detail' => 'high']],
-                        ],
-                    ],
-                ],
+            $result = app(\App\Services\InvoiceScanService::class)->analyse(
+                $this->receipt->getRealPath(),
+                $this->receipt->getClientOriginalName(),
+                $this->receipt->getMimeType() ?: 'image/jpeg',
+                ['subcategories' => $subcategories]
+            );
+
+            $metaFields = [
+                'item_name', 'time', 'quantity', 'unit', 'unit_price', 'vat_rate',
+                'gross_amount', 'net_amount', 'vat_amount', 'tax_incidence',
+                'amount_tendered', 'change_amount', 'payment_condition', 'payment_method',
+                'company_nif', 'customer_nif', 'invoice_number', 'notes',
+            ];
+
+            foreach ($metaFields as $field) {
+                if (isset($result[$field]) && $result[$field] !== '') {
+                    $this->meta[$field] = $result[$field];
+                }
+            }
+
+            if (filled($result['store'] ?? null)) {
+                $this->meta['local'] = trim((string) $result['store']);
+            }
+
+            $this->scannedData = $result;
+            $this->amount = $result['amount'];
+            $this->spent_at = $result['date'] ?? $this->spent_at;
+            $this->description = trim((string) (
+                $result['description'] ?? $result['item_name'] ?? $result['store'] ?? ''
+            ));
+            $this->subcategory = $result['subcategory'] ?? $this->subcategory;
+            $this->scanSuccess = true;
+            $this->dispatch('scan-completed');
+        } catch (\Throwable $exception) {
+            \Illuminate\Support\Facades\Log::warning('ManageExpense invoice scan failed.', [
+                'message' => $exception->getMessage(),
+                'user_id' => auth()->id(),
+                'workspace_id' => auth()->user()->current_workspace_id,
             ]);
 
-            if (! $response->successful()) {
-                throw new \Exception('Erro na API: '.($response->json('error.message') ?? 'resposta não reconhecida.'));
-            }
-
-            $responseContent = $response->json('choices.0.message.content');
-            if (is_array($responseContent)) {
-                $responseContent = collect($responseContent)
-                    ->map(fn ($part) => is_string($part) ? $part : data_get($part, 'text', data_get($part, 'content', '')))
-                    ->filter(fn ($part) => is_string($part) && trim($part) !== '')
-                    ->implode("\\n");
-            }
-            $rawText = preg_replace('/```json|```/i', '', (string) $responseContent);
-            $rawText = trim($rawText);
-
-            if (preg_match('/\{.*\}/s', $rawText, $matches)) {
-                $result = json_decode($matches[0], true);
-                if (! is_array($result)) {
-                    throw new \Exception('A IA não devolveu JSON válido.');
-                }
-                $amount = $result['amount'] ?? null;
-                if (is_string($amount)) {
-                    $amount = str_replace([' ', "\u{00A0}"], '', $amount);
-                    if (preg_match('/^\d{1,3}(\.\d{3})+(,\d+)?$/', $amount)) {
-                        $amount = str_replace(['.', ','], ['', '.'], $amount);
-                    } else {
-                        $amount = str_replace(',', '.', $amount);
-                    }
-                    $amount = (float) filter_var($amount, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-                }
-
-                $date = $result['date'] ?? null;
-                try {
-                    $date = $date ? Carbon::parse($date)->format('Y-m-d') : null;
-                } catch (\Exception $e) {
-                    $date = null;
-                }
-
-                $metaFields = [
-                    'item_name', 'time', 'quantity', 'unit', 'unit_price', 'vat_rate',
-                    'gross_amount', 'net_amount', 'vat_amount', 'tax_incidence',
-                    'amount_tendered', 'change_amount', 'payment_condition', 'payment_method',
-                    'company_nif', 'customer_nif', 'invoice_number', 'notes',
-                ];
-                foreach ($metaFields as $field) {
-                    if (isset($result[$field]) && $result[$field] !== '') {
-                        $this->meta[$field] = $result[$field];
-                    }
-                }
-                if (isset($result['store']) && trim((string) $result['store']) !== '') {
-                    $this->meta['local'] = trim((string) $result['store']);
-                }
-                if (isset($result['tax']) && ! isset($this->meta['vat_amount'])) {
-                    $this->meta['vat_amount'] = $result['tax'];
-                }
-                $this->scannedData = $result;
-                $this->scannedData['amount'] = $amount;
-                $this->scannedData['date'] = $date;
-                $this->amount = $amount;
-                if ($date !== null) {
-                    $this->spent_at = $date;
-                }
-                $this->description = trim((string) ($result['description'] ?? $result['item_name'] ?? $result['store'] ?? ''));
-                $this->subcategory = $result['subcategory'] ?? $this->subcategory;
-                $this->scanSuccess = true;
-                $this->dispatch('scan-completed');
-            } else {
-                throw new \Exception('A IA não conseguiu devolver os dados da fatura em JSON.');
-            }
-        } catch (\Exception $e) {
-            $this->scanError = 'Não foi possível analisar a fatura: '.$e->getMessage();
+            $this->scanError = 'Não foi possível analisar a fatura: '.$exception->getMessage();
         } finally {
             $this->isScanning = false;
             $this->refreshScannerQuota();
