@@ -78,9 +78,19 @@ PROMPT;
         $payload = [
             'model' => self::MODEL,
             'temperature' => 0,
-            'max_tokens' => 5000,
-            'reasoning' => ['effort' => 'none'],
-            'response_format' => ['type' => 'json_object'],
+            // Invoice extraction needs a compact response; a lower output cap and
+            // no strict JSON-mode requirement let the free router consider more
+            // image-capable free models.
+            'max_tokens' => 1200,
+            // Keep provider-level failover enabled and hard-cap provider pricing
+            // at zero. The openrouter/free router itself selects only free models.
+            'provider' => [
+                'allow_fallbacks' => true,
+                'max_price' => [
+                    'prompt' => 0,
+                    'completion' => 0,
+                ],
+            ],
             'messages' => [[
                 'role' => 'user',
                 'content' => [['type' => 'text', 'text' => $prompt], $part],
