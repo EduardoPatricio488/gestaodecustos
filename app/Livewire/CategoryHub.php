@@ -429,6 +429,8 @@ class CategoryHub extends Component
     // ─────────────────────────────────────────────────────────────────
     public function scanReceiptWithAI(): void
     {
+        if ($this->isScanning) return;
+
         $this->scanSuccess = false;
         $this->scanError = '';
         $this->scannedData = [];
