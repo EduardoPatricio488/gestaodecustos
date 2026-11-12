@@ -122,6 +122,26 @@ PROMPT;
             throw new RuntimeException('Não foi possível analisar a fatura (HTTP '.$status.'): '.$message);
         }
 
+        if ($isPdf) {
+            $annotations = $response->json('choices.0.message.annotations', []);
+            $parsedParts = collect($annotations)
+                ->filter(static fn ($annotation) => data_get($annotation, 'type') === 'file')
+                ->flatMap(static fn ($annotation) => data_get($annotation, 'file.content', []));
+
+            $hasReadableContent = $parsedParts->contains(static function ($part): bool {
+                if (data_get($part, 'type') === 'text') {
+                    return trim((string) data_get($part, 'text', '')) !== '';
+                }
+
+                return data_get($part, 'type') === 'image_url'
+                    && filled(data_get($part, 'image_url.url'));
+            });
+
+            if (! $hasReadableContent) {
+                throw new RuntimeException('O parser gratuito não conseguiu extrair conteúdo legível deste PDF. Não foi criada qualquer despesa. Envia um PDF com texto selecionável ou converte as páginas digitalizadas em imagens JPG/PNG; o OCR pago não é utilizado.');
+            }
+        }
+
         $content = $response->json('choices.0.message.content');
         if (is_array($content)) {
             $content = collect($content)
