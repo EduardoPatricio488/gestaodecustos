@@ -129,15 +129,19 @@ class Expenses extends Component
         ]);
 
         $user = auth()->user();
-        $workspace = $user->currentWorkspace;
         $categoriesQuery = Category::where('workspace_id', $user->current_workspace_id)
             ->where('hidden_from_sidebar', false);
-        if ($workspace?->type === 'personal') {
+        if ($user->currentWorkspace?->type === 'personal') {
             $categoriesQuery->where('user_id', $user->id);
         }
         $categories = $categoriesQuery->orderBy('name')->get(['id', 'name', 'slug']);
         if ($categories->isEmpty()) {
             $this->scannerError = 'Não existem categorias disponíveis para classificar a fatura.';
+            return;
+        }
+
+        if (blank(config('services.openrouter.api_key'))) {
+            $this->scannerError = 'A chave OpenRouter não está configurada.';
             return;
         }
 
@@ -147,272 +151,50 @@ class Expenses extends Component
             return;
         }
 
-        $scanId = (string) \Illuminate\Support\Str::uuid();
-        $cacheKey = 'invoice_scan:'.$user->id.':'.$scanId;
+        $scanId = (string) \\Illuminate\\Support\\Str::uuid();
+        $cacheKey = 'invoice_scan:'.$user->id.':'.$user->current_workspace_id.':'.$scanId;
         $this->invoiceScanId = $scanId;
         $this->invoiceScanStartedAt = now()->timestamp;
         $this->isScanningInvoice = true;
 
-        \Illuminate\Support\Facades\Cache::put($cacheKey, [
+        \\Illuminate\\Support\\Facades\\Cache::put($cacheKey, [
             'status' => 'processing',
             'started_at' => now()->timestamp,
+            'user_id' => (int) $user->id,
+            'workspace_id' => (int) $user->current_workspace_id,
         ], now()->addMinutes(20));
 
         $categoryOptions = $categories->map(fn ($category) => [
             'name' => $category->name,
             'slug' => $category->slug,
         ])->values()->all();
-        $userId = (int) $user->id;
-        $workspaceId = (int) $user->current_workspace_id;
-        $documentName = $this->scannerReceipt->getClientOriginalName();
-        $documentMime = $this->scannerReceipt->getMimeType() ?: 'image/jpeg';
-        $apiKey = config('services.openrouter.api_key');
-        $appUrl = config('app.url');
-
-        if (blank($apiKey)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($storedPath);
-            \Illuminate\Support\Facades\Cache::forget($cacheKey);
-            $this->isScanningInvoice = false;
-            $this->scannerError = 'A chave da IA não está configurada.';
-            return;
-        }
-
-        // A análise é colocada na fila da base de dados para não bloquear o pedido Livewire.
-        $processInvoiceScan = function () use ($cacheKey, $storedPath, $documentName, $documentMime, $categoryOptions, $apiKey, $appUrl, $userId, $workspaceId) {
-            @set_time_limit(180);
-
-            try {
-                $filePath = \Illuminate\Support\Facades\Storage::disk('public')->path($storedPath);
-                if (! is_file($filePath)) {
-                    throw new \RuntimeException('O ficheiro temporário da fatura já não está disponível.');
-                }
-
-                $fileContents = file_get_contents($filePath);
-                if (! is_string($fileContents) || $fileContents === '') {
-                    throw new \RuntimeException('Não foi possível ler o conteúdo da fatura.');
-                }
-
-                $mimeType = $documentMime;
-                if (str_starts_with($mimeType, 'image/') && function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
-                    $sourceImage = @imagecreatefromstring($fileContents);
-                    if ($sourceImage !== false) {
-                        $originalWidth = imagesx($sourceImage);
-                        $originalHeight = imagesy($sourceImage);
-                        $scale = min(1, 2200 / max($originalWidth, $originalHeight));
-                        $targetWidth = max(1, (int) round($originalWidth * $scale));
-                        $targetHeight = max(1, (int) round($originalHeight * $scale));
-                        $resizedImage = imagecreatetruecolor($targetWidth, $targetHeight);
-                        $white = imagecolorallocate($resizedImage, 255, 255, 255);
-                        imagefill($resizedImage, 0, 0, $white);
-                        imagecopyresampled($resizedImage, $sourceImage, 0, 0, 0, 0, $targetWidth, $targetHeight, $originalWidth, $originalHeight);
-                        ob_start();
-                        imagejpeg($resizedImage, null, 88);
-                        $compressedImage = ob_get_clean();
-                        if (is_string($compressedImage) && $compressedImage !== '') {
-                            $fileContents = $compressedImage;
-                            $mimeType = 'image/jpeg';
-                        }
-                        imagedestroy($resizedImage);
-                        imagedestroy($sourceImage);
-                    }
-                }
-
-                // Protege a quota gratuita: limita globalmente os pedidos e consulta
-                // o saldo diário da chave antes de consumir uma chamada de inferência.
-                $requestsPerMinute = max(1, (int) config('services.openrouter.requests_per_minute', 18));
-                $rateLimitKey = 'openrouter:invoice-scans:global';
-                $rateLimiter = app(\Illuminate\Cache\RateLimiter::class);
-
-                if ($rateLimiter->tooManyAttempts($rateLimitKey, $requestsPerMinute)) {
-                    $seconds = max(1, $rateLimiter->availableIn($rateLimitKey));
-                    throw new \RuntimeException('O limite de segurança da IA foi atingido. Aguarda '.$seconds.' segundos antes de voltares a analisar uma fatura.');
-                }
-
-                $rateLimiter->hit($rateLimitKey, 60);
-
-                $quotaResponse = \Illuminate\Support\Facades\Http::withToken($apiKey)
-                    ->connectTimeout(5)
-                    ->timeout(10)
-                    ->get('https://openrouter.ai/api/v1/key');
-
-                if (in_array($quotaResponse->status(), [401, 403], true)) {
-                    throw new \RuntimeException('A chave OpenRouter é inválida ou não tem permissões. Confirma OPENROUTER_API_KEY nas variáveis de ambiente.');
-                }
-
-                if ($quotaResponse->successful()) {
-                    $dailyQuota = $quotaResponse->json('data.free_model_daily_requests');
-                    if (is_array($dailyQuota) && isset($dailyQuota['remaining']) && (int) $dailyQuota['remaining'] <= 0) {
-                        $used = (int) ($dailyQuota['used'] ?? 0);
-                        $limit = (int) ($dailyQuota['limit'] ?? 0);
-                        throw new \RuntimeException('A quota diária gratuita do OpenRouter está esgotada ('.$used.'/'.$limit.' pedidos). A quota renova às 00:00 UTC. Não foi enviada nenhuma análise desta fatura.');
-                    }
-                } elseif ($quotaResponse->status() === 429) {
-                    throw new \RuntimeException('O OpenRouter está a limitar temporariamente as consultas de quota. Aguarda alguns segundos e tenta novamente.');
-                } else {
-                    \Illuminate\Support\Facades\Log::notice('Expenses invoice scanner: could not pre-check OpenRouter quota; proceeding with inference.', [
-                        'http_status' => $quotaResponse->status(),
-                        'user_id' => $userId,
-                    ]);
-                }
-
-                $fileData = base64_encode($fileContents);
-                $contentPart = str_starts_with($mimeType, 'image/')
-                    ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData, 'detail' => 'high']]
-                    : ['type' => 'file', 'file' => ['filename' => $documentName, 'file_data' => 'data:'.$mimeType.';base64,'.$fileData]];
-
-                $categoryNames = json_encode(array_column($categoryOptions, 'name'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                $prompt = <<<PROMPT
-Analisa a fatura portuguesa na imagem ou PDF, incluindo cabeçalho, linhas de artigos, totais e rodapé. Devolve APENAS JSON válido, sem markdown.
-A categoria tem de ser exatamente uma destas: {$categoryNames}.
-Extrai os campos visíveis. Não inventes nem calcules dados ausentes. Usa null quando não estiverem impressos ou legíveis.
-amount = total final efetivamente pago; gross_amount = total ilíquido; net_amount = base tributável; vat_amount = IVA total.
-date = YYYY-MM-DD; time = HH:MM; quantity e valores monetários são números decimais com ponto.
-Não confundas NIF do emitente com NIF do cliente. payment_method: Dinheiro, Multibanco, Cartão, MB Way, Transferência ou null.
-Devolve exatamente esta estrutura:
-{"category":null,"amount":null,"date":null,"time":null,"quantity":null,"unit":null,"store":null,"description":null,"item_name":null,"subcategory":null,"unit_price":null,"vat_rate":null,"gross_amount":null,"net_amount":null,"vat_amount":null,"tax_incidence":null,"amount_tendered":null,"change_amount":null,"payment_condition":null,"payment_method":null,"company_nif":null,"customer_nif":null,"invoice_number":null,"notes":null}
-PROMPT;
-
-                $response = \Illuminate\Support\Facades\Http::withHeaders([
-                    'Authorization' => 'Bearer '.$apiKey,
-                    'Content-Type' => 'application/json',
-                    'HTTP-Referer' => $appUrl,
-                    'X-Title' => 'Finance Pro AI',
-                ])->connectTimeout((int) config('services.openrouter.connect_timeout', 8))
-                    ->timeout((int) config('services.openrouter.request_timeout', 45))
-                    ->post('https://openrouter.ai/api/v1/chat/completions', [
-                    // Modelo utilizado na versão do scanner confirmada como funcional.
-                    'model' => 'openrouter/free',
-                    'temperature' => 0,
-                    'max_tokens' => 3200,
-                    'messages' => [[
-                        'role' => 'user',
-                        'content' => [['type' => 'text', 'text' => $prompt], $contentPart],
-                    ]],
-                ]);
-
-                if (! $response->successful()) {
-                    $providerError = $response->json('error', []);
-                    \Illuminate\Support\Facades\Log::warning('Expenses invoice scanner: OpenRouter request failed.', [
-                        'http_status' => $response->status(),
-                        'provider_error' => $providerError,
-                        'user_id' => $userId,
-                        'workspace_id' => $workspaceId,
-                    ]);
-
-                    $status = $response->status();
-                    $providerMessage = (string) (data_get($providerError, 'message') ?: 'erro de comunicação');
-                    $providerCode = data_get($providerError, 'metadata.provider_code');
-
-                    if ($status === 429) {
-                        $retryAfter = (int) $response->header('Retry-After', 0);
-                        $waitMessage = $retryAfter > 0 ? ' Tenta novamente daqui a '.$retryAfter.' segundos.' : ' Aguarda alguns minutos antes de tentar novamente.';
-                        throw new \RuntimeException('O OpenRouter atingiu um limite de pedidos ou o fornecedor gratuito está sem capacidade. '.$providerMessage.$waitMessage);
-                    }
-
-                    if ($status === 402) {
-                        throw new \RuntimeException('O OpenRouter recusou o pedido por limite de créditos/orçamento (HTTP 402). Confirma o saldo e os limites da chave na tua conta OpenRouter.');
-                    }
-
-                    if ($status === 408 || $status >= 500) {
-                        throw new \RuntimeException('O serviço OpenRouter/fornecedor está temporariamente indisponível (HTTP '.$status.'). Não foi criada qualquer despesa. Tenta novamente mais tarde.');
-                    }
-
-                    throw new \RuntimeException('A OpenRouter devolveu um erro (HTTP '.$status.'): '.$providerMessage.($providerCode ? ' Código do fornecedor: '.$providerCode.'.' : '.'));
-                }
-
-                $content = $response->json('choices.0.message.content');
-                if (is_array($content)) {
-                    $content = collect($content)
-                        ->map(fn ($part) => is_string($part) ? $part : data_get($part, 'text', data_get($part, 'content', '')))
-                        ->filter(fn ($part) => is_string($part) && trim($part) !== '')
-                        ->implode("\n");
-                }
-
-                $raw = trim((string) $content);
-                $raw = preg_replace('/^\x60{3}(?:json)?\s*|\s*\x60{3}$/i', '', $raw);
-                $result = json_decode($raw, true);
-                if (! is_array($result) && preg_match('/\{.*\}/s', $raw, $matches)) {
-                    $result = json_decode($matches[0], true);
-                }
-
-                if (! is_array($result)) {
-                    throw new \RuntimeException('A IA não conseguiu devolver os dados num formato válido. Podes tentar novamente ou escolher a categoria manualmente.');
-                }
-
-                $hasEssentialData = collect(['amount', 'date', 'store', 'description'])
-                    ->contains(fn ($field) => isset($result[$field]) && $result[$field] !== '');
-                if (! $hasEssentialData) {
-                    throw new \RuntimeException('O modelo recebeu a fatura, mas não conseguiu ler os dados essenciais. Tenta novamente mais tarde.');
-                }
-
-                $finishReason = $response->json('choices.0.finish_reason') ?: '';
-                $suggestedCategory = trim((string) ($result['category'] ?? ''));
-                $category = collect($categoryOptions)->first(fn ($item) => mb_strtolower(trim($item['name'])) === mb_strtolower($suggestedCategory));
-                if (! $category && $finishReason === 'length') {
-                    $category = collect($categoryOptions)->first(fn ($item) => mb_strtolower(trim($item['name'])) === 'outros')
-                        ?? $categoryOptions[0];
-                    $result['category'] = $category['name'];
-                }
-                if (! $category) {
-                    throw new \RuntimeException('A IA não conseguiu associar a fatura a uma categoria existente. Experimenta a escolha manual.');
-                }
-
-                $amount = $result['amount'] ?? null;
-                if (is_string($amount)) {
-                    $amount = str_replace([' ', "\u{00A0}", '€'], '', $amount);
-                    $amount = preg_match('/^\d{1,3}(\.\d{3})+(,\d+)?$/', $amount)
-                        ? str_replace(['.', ','], ['', '.'], $amount)
-                        : str_replace(',', '.', $amount);
-                }
-                $result['amount'] = is_numeric($amount) ? (float) $amount : null;
-                if (! empty($result['date'])) {
-                    try {
-                        $result['date'] = \Carbon\Carbon::parse($result['date'])->format('Y-m-d');
-                    } catch (\Throwable) {
-                        $result['date'] = null;
-                    }
-                }
-
-                \Illuminate\Support\Facades\Cache::put($cacheKey, [
-                    'status' => 'completed',
-                    'data' => $result,
-                    'category_slug' => $category['slug'],
-                    'document_path' => $storedPath,
-                    'document_name' => $documentName,
-                    'document_mime' => $mimeType,
-                ], now()->addMinutes(20));
-            } catch (\Throwable $exception) {
-                \Illuminate\Support\Facades\Log::warning('Expenses invoice scanner background analysis failed.', [
-                    'message' => $exception->getMessage(),
-                    'user_id' => $userId,
-                    'workspace_id' => $workspaceId,
-                ]);
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($storedPath);
-                \Illuminate\Support\Facades\Cache::put($cacheKey, [
-                    'status' => 'failed',
-                    'error' => $exception instanceof \Illuminate\Http\Client\ConnectionException
-                        ? 'A OpenRouter não respondeu dentro do tempo limite. A fatura continua carregada e não foi criada qualquer despesa.'
-                        : $exception->getMessage(),
-                ], now()->addMinutes(20));
-            }
-        };
 
         try {
-            dispatch($processInvoiceScan)->onConnection('database')->onQueue('default');
-        } catch (\Throwable $exception) {
-            \Illuminate\Support\Facades\Log::error('Expenses invoice scanner: could not enqueue analysis.', [
+            dispatch(new \\App\\Jobs\\ProcessInvoiceScan(
+                $cacheKey,
+                $storedPath,
+                $this->scannerReceipt->getClientOriginalName(),
+                $this->scannerReceipt->getMimeType() ?: 'image/jpeg',
+                $categoryOptions,
+                (int) $user->id,
+                (int) $user->current_workspace_id,
+                'category',
+            ));
+        } catch (\\Throwable $exception) {
+            \\Illuminate\\Support\\Facades\\Log::error('Expenses invoice scanner: could not enqueue analysis.', [
                 'message' => $exception->getMessage(),
-                'user_id' => $userId,
-                'workspace_id' => $workspaceId,
+                'user_id' => $user->id,
+                'workspace_id' => $user->current_workspace_id,
             ]);
 
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($storedPath);
-            \Illuminate\Support\Facades\Cache::put($cacheKey, [
+            \\Illuminate\\Support\\Facades\\Cache::put($cacheKey, [
                 'status' => 'failed',
-                'error' => 'Não foi possível iniciar o processamento em segundo plano. Confirma se o serviço de filas está ativo e tenta novamente.',
+                'error' => 'Não foi possível iniciar o processamento em segundo plano. Confirma se o worker da fila está ativo e tenta novamente.',
             ], now()->addMinutes(20));
 
-            $this->checkInvoiceScan();
+            $this->isScanningInvoice = false;
+            $this->invoiceScanId = null;
+            $this->scannerError = 'Não foi possível iniciar o processamento em segundo plano. Confirma se o worker da fila está ativo e tenta novamente.';
         }
     }
 
@@ -423,7 +205,7 @@ PROMPT;
         }
 
         $user = auth()->user();
-        $cacheKey = 'invoice_scan:'.$user->id.':'.$this->invoiceScanId;
+        $cacheKey = 'invoice_scan:'.$user->id.':'.$user->current_workspace_id.':'.$this->invoiceScanId;
         $scan = \Illuminate\Support\Facades\Cache::get($cacheKey);
 
         if (! is_array($scan)) {
