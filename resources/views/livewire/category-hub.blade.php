@@ -100,7 +100,7 @@
         x-data="{
             scannerOpen: false,
             reviewOpen: false,
-            formOpen: false,
+            formOpen: @js($openScannedExpenseForm),
             transportPassMode: false,
             scannerPreview: null,
             uploadingFile: false,
