@@ -154,7 +154,7 @@ PROMPT;
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => 'Finance Pro AI',
-            ->connectTimeout(10)
+            ])->connectTimeout(10)
                 ->timeout(60)
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
                     'model' => config('services.openrouter.model', 'openrouter/free'),
@@ -340,8 +340,14 @@ PROMPT;
                 'user_id' => auth()->id(),
             ]);
             $this->scannerError = 'A IA demorou demasiado tempo a responder. A fatura continua carregada; tenta novamente dentro de alguns segundos.';
-        } catch (\\Throwable $e) {
-            \\Illuminate\\Support\\Facades\\Log::error('Expenses invoice scanner: '.$e->getMessage());
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            \Illuminate\Support\Facades\Log::warning('Expenses invoice scanner timed out or lost connection to OpenRouter.', [
+                'message' => $e->getMessage(),
+                'user_id' => auth()->id(),
+            ]);
+            $this->scannerError = 'A IA demorou demasiado tempo a responder. A fatura continua carregada; tenta novamente dentro de alguns segundos.';
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Expenses invoice scanner: '.$e->getMessage());
             $this->scannerError = 'Não foi possível analisar a fatura. '.$e->getMessage();
         } finally {
             $this->isScanningInvoice = false;
