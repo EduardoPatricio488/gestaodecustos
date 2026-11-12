@@ -27,6 +27,8 @@ class Expenses extends Component
 
     public ?string $invoiceScanId = null;
 
+    public ?int $invoiceScanStartedAt = null;
+
     public string $scannerError = '';
 
     public function updatedScannerReceipt(): void
@@ -35,6 +37,7 @@ class Expenses extends Component
         $this->scannerError = '';
         $this->isScanningInvoice = false;
         $this->invoiceScanId = null;
+        $this->invoiceScanStartedAt = null;
 
         try {
             $this->validate([
@@ -80,6 +83,7 @@ class Expenses extends Component
         $scanId = (string) \Illuminate\Support\Str::uuid();
         $cacheKey = 'invoice_scan:'.$user->id.':'.$scanId;
         $this->invoiceScanId = $scanId;
+        $this->invoiceScanStartedAt = now()->timestamp;
         $this->isScanningInvoice = true;
 
         \Illuminate\Support\Facades\Cache::put($cacheKey, [
@@ -146,6 +150,44 @@ class Expenses extends Component
                     }
                 }
 
+                // Protege a quota gratuita: limita globalmente os pedidos e consulta
+                // o saldo diário da chave antes de consumir uma chamada de inferência.
+                $requestsPerMinute = max(1, (int) config('services.openrouter.requests_per_minute', 18));
+                $rateLimitKey = 'openrouter:invoice-scans:global';
+                $rateLimiter = app(\Illuminate\Cache\RateLimiter::class);
+
+                if ($rateLimiter->tooManyAttempts($rateLimitKey, $requestsPerMinute)) {
+                    $seconds = max(1, $rateLimiter->availableIn($rateLimitKey));
+                    throw new \RuntimeException('O limite de segurança da IA foi atingido. Aguarda '.$seconds.' segundos antes de voltares a analisar uma fatura.');
+                }
+
+                $rateLimiter->hit($rateLimitKey, 60);
+
+                $quotaResponse = \Illuminate\Support\Facades\Http::withToken($apiKey)
+                    ->connectTimeout(5)
+                    ->timeout(10)
+                    ->get('https://openrouter.ai/api/v1/key');
+
+                if (in_array($quotaResponse->status(), [401, 403], true)) {
+                    throw new \RuntimeException('A chave OpenRouter é inválida ou não tem permissões. Confirma OPENROUTER_API_KEY nas variáveis de ambiente.');
+                }
+
+                if ($quotaResponse->successful()) {
+                    $dailyQuota = $quotaResponse->json('data.free_model_daily_requests');
+                    if (is_array($dailyQuota) && isset($dailyQuota['remaining']) && (int) $dailyQuota['remaining'] <= 0) {
+                        $used = (int) ($dailyQuota['used'] ?? 0);
+                        $limit = (int) ($dailyQuota['limit'] ?? 0);
+                        throw new \RuntimeException('A quota diária gratuita do OpenRouter está esgotada ('.$used.'/'.$limit.' pedidos). A quota renova às 00:00 UTC. Não foi enviada nenhuma análise desta fatura.');
+                    }
+                } elseif ($quotaResponse->status() === 429) {
+                    throw new \RuntimeException('O OpenRouter está a limitar temporariamente as consultas de quota. Aguarda alguns segundos e tenta novamente.');
+                } else {
+                    \Illuminate\Support\Facades\Log::notice('Expenses invoice scanner: could not pre-check OpenRouter quota; proceeding with inference.', [
+                        'http_status' => $quotaResponse->status(),
+                        'user_id' => $userId,
+                    ]);
+                }
+
                 $fileData = base64_encode($fileContents);
                 $contentPart = str_starts_with($mimeType, 'image/')
                     ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$fileData, 'detail' => 'high']]
@@ -168,7 +210,9 @@ PROMPT;
                     'Content-Type' => 'application/json',
                     'HTTP-Referer' => $appUrl,
                     'X-Title' => 'Finance Pro AI',
-                ])->connectTimeout(8)->timeout(100)->post('https://openrouter.ai/api/v1/chat/completions', [
+                ])->connectTimeout((int) config('services.openrouter.connect_timeout', 8))
+                    ->timeout((int) config('services.openrouter.request_timeout', 45))
+                    ->post('https://openrouter.ai/api/v1/chat/completions', [
                     // Modelo utilizado na versão do scanner confirmada como funcional.
                     'model' => 'openrouter/free',
                     'temperature' => 0,
@@ -188,7 +232,25 @@ PROMPT;
                         'workspace_id' => $workspaceId,
                     ]);
 
-                    throw new \RuntimeException('A OpenRouter devolveu um erro: '.(data_get($providerError, 'message') ?: 'erro de comunicação (HTTP '.$response->status().').'));
+                    $status = $response->status();
+                    $providerMessage = (string) (data_get($providerError, 'message') ?: 'erro de comunicação');
+                    $providerCode = data_get($providerError, 'metadata.provider_code');
+
+                    if ($status === 429) {
+                        $retryAfter = (int) $response->header('Retry-After', 0);
+                        $waitMessage = $retryAfter > 0 ? ' Tenta novamente daqui a '.$retryAfter.' segundos.' : ' Aguarda alguns minutos antes de tentar novamente.';
+                        throw new \RuntimeException('O OpenRouter atingiu um limite de pedidos ou o fornecedor gratuito está sem capacidade. '.$providerMessage.$waitMessage);
+                    }
+
+                    if ($status === 402) {
+                        throw new \RuntimeException('O OpenRouter recusou o pedido por limite de créditos/orçamento (HTTP 402). Confirma o saldo e os limites da chave na tua conta OpenRouter.');
+                    }
+
+                    if ($status === 408 || $status >= 500) {
+                        throw new \RuntimeException('O serviço OpenRouter/fornecedor está temporariamente indisponível (HTTP '.$status.'). Não foi criada qualquer despesa. Tenta novamente mais tarde.');
+                    }
+
+                    throw new \RuntimeException('A OpenRouter devolveu um erro (HTTP '.$status.'): '.$providerMessage.($providerCode ? ' Código do fornecedor: '.$providerCode.'.' : '.'));
                 }
 
                 $content = $response->json('choices.0.message.content');
@@ -298,6 +360,15 @@ PROMPT;
         $scan = \Illuminate\Support\Facades\Cache::get($cacheKey);
 
         if (! is_array($scan)) {
+            $startedAt = $this->invoiceScanStartedAt ?? now()->timestamp;
+            if (now()->timestamp - $startedAt <= 180) {
+                return;
+            }
+
+            $this->isScanningInvoice = false;
+            $this->invoiceScanId = null;
+            $this->invoiceScanStartedAt = null;
+            $this->scannerError = 'Não foi recebido qualquer resultado do processamento após 3 minutos. Verifica se o worker da fila está ativo e tenta novamente.';
             return;
         }
 
