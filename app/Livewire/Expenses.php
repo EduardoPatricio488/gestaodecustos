@@ -152,10 +152,32 @@ class Expenses extends Component
             return;
         }
 
-        $scanId = (string) \Illuminate\Support\Str::uuid();
+        $fingerprint = hash_file('sha256', \Illuminate\Support\Facades\Storage::disk('public')->path($storedPath));
+        if (! is_string($fingerprint) || $fingerprint === '') {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($storedPath);
+            $this->scannerError = 'Não foi possível validar o ficheiro enviado.';
+            return;
+        }
+
+        // A mesma fatura no mesmo workspace reutiliza a análise em curso ou já concluída.
+        $scanId = hash('sha256', $user->id.':'.$user->current_workspace_id.':'.$fingerprint);
         $cacheKey = 'invoice_scan:'.$user->id.':'.$scanId;
         $documentName = $this->scannerReceipt->getClientOriginalName();
         $documentMime = $this->scannerReceipt->getMimeType() ?: 'application/octet-stream';
+        $existingScan = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+        if (is_array($existingScan) && in_array($existingScan['status'] ?? null, ['processing', 'completed'], true)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($storedPath);
+            $this->invoiceScanId = $scanId;
+            $this->invoiceScanStartedAt = (int) ($existingScan['started_at'] ?? now()->timestamp);
+            $this->isScanningInvoice = true;
+            $this->scannerReceipt = null;
+            $this->checkInvoiceScan();
+            return;
+        }
+
+        // Uma análise que falhou pode ser repetida pelo utilizador.
+        \Illuminate\Support\Facades\Cache::forget($cacheKey);
 
         $this->invoiceScanId = $scanId;
         $this->invoiceScanStartedAt = now()->timestamp;
@@ -166,6 +188,7 @@ class Expenses extends Component
             'started_at' => now()->timestamp,
             'user_id' => (int) $user->id,
             'workspace_id' => (int) $user->current_workspace_id,
+            'fingerprint' => $fingerprint,
         ], now()->addMinutes(30));
 
         $categoryOptions = $categories->map(fn ($category) => [
