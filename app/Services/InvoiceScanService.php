@@ -9,7 +9,7 @@ use RuntimeException;
 
 class InvoiceScanService
 {
-    public const MODEL = 'openrouter/free';
+    public const MODEL = 'google/gemma-4-26b-a4b-it:free';
 
     public function analyse(
         string $fileContents,
@@ -79,6 +79,8 @@ PROMPT;
             'model' => self::MODEL,
             'temperature' => 0,
             'max_tokens' => 5000,
+            'reasoning' => ['effort' => 'none'],
+            'response_format' => ['type' => 'json_object'],
             'messages' => [[
                 'role' => 'user',
                 'content' => [['type' => 'text', 'text' => $prompt], $part],
