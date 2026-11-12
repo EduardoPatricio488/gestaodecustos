@@ -9,7 +9,7 @@ use RuntimeException;
 
 class InvoiceScanService
 {
-    public const MODEL = 'google/gemma-4-26b-a4b-it:free';
+    public const MODEL = 'openrouter/free';
 
     public function analyse(
         string $fileContents,
@@ -112,8 +112,8 @@ PROMPT;
                 'provider_error' => $response->json('error'),
             ]);
 
-            if ($status === 429) {
-                throw new RuntimeException('O OpenRouter está a limitar pedidos ou o fornecedor gratuito não tem capacidade. '.$message);
+            if (in_array($status, [429, 502, 503, 504], true)) {
+                throw new RuntimeException('O serviço gratuito do OpenRouter está temporariamente indisponível (HTTP '.$status.'). A fatura não foi processada nem foi criada qualquer despesa. Não será usado qualquer modelo pago; tenta novamente mais tarde.');
             }
             if ($status === 402) {
                 throw new RuntimeException('O OpenRouter recusou o pedido por limite de créditos/orçamento. Não foi criada qualquer despesa.');
