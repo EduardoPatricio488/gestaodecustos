@@ -151,13 +151,13 @@ class Expenses extends Component
             return;
         }
 
-        $scanId = (string) \\Illuminate\\Support\\Str::uuid();
+        $scanId = (string) \Illuminate\\Support\\Str::uuid();
         $cacheKey = 'invoice_scan:'.$user->id.':'.$user->current_workspace_id.':'.$scanId;
         $this->invoiceScanId = $scanId;
         $this->invoiceScanStartedAt = now()->timestamp;
         $this->isScanningInvoice = true;
 
-        \\Illuminate\\Support\\Facades\\Cache::put($cacheKey, [
+        \Illuminate\\Support\\Facades\\Cache::put($cacheKey, [
             'status' => 'processing',
             'started_at' => now()->timestamp,
             'user_id' => (int) $user->id,
@@ -170,7 +170,7 @@ class Expenses extends Component
         ])->values()->all();
 
         try {
-            dispatch(new \\App\\Jobs\\ProcessInvoiceScan(
+            dispatch(new \App\\Jobs\\ProcessInvoiceScan(
                 $cacheKey,
                 $storedPath,
                 $this->scannerReceipt->getClientOriginalName(),
@@ -180,14 +180,14 @@ class Expenses extends Component
                 (int) $user->current_workspace_id,
                 'category',
             ));
-        } catch (\\Throwable $exception) {
-            \\Illuminate\\Support\\Facades\\Log::error('Expenses invoice scanner: could not enqueue analysis.', [
+        } catch (\Throwable $exception) {
+            \Illuminate\\Support\\Facades\\Log::error('Expenses invoice scanner: could not enqueue analysis.', [
                 'message' => $exception->getMessage(),
                 'user_id' => $user->id,
                 'workspace_id' => $user->current_workspace_id,
             ]);
 
-            \\Illuminate\\Support\\Facades\\Cache::put($cacheKey, [
+            \Illuminate\\Support\\Facades\\Cache::put($cacheKey, [
                 'status' => 'failed',
                 'error' => 'Não foi possível iniciar o processamento em segundo plano. Confirma se o worker da fila está ativo e tenta novamente.',
             ], now()->addMinutes(20));
