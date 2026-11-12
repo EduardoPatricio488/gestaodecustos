@@ -111,6 +111,9 @@ class Expenses extends Component
         $documentName = $this->scannerReceipt->getClientOriginalName();
         $documentMime = $this->scannerReceipt->getMimeType() ?: 'image/jpeg';
         $primaryModel = config('services.openrouter.model', 'google/gemma-4-26b-a4b-it:free');
+        if ($primaryModel === 'openrouter/free') {
+            $primaryModel = 'google/gemma-4-26b-a4b-it:free';
+        }
         $fallbackModels = config('services.openrouter.invoice_fallback_models', []);
         $apiKey = config('services.openrouter.api_key');
         $appUrl = config('app.url');
