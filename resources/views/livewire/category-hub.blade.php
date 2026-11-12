@@ -104,6 +104,16 @@
             transportPassMode: false,
             scannerPreview: null,
             uploadingFile: false,
+            scanSecondsRemaining: 45,
+            scanTimer: null,
+            startInvoiceTimer() {
+                this.scanSecondsRemaining = 45;
+                if (this.scanTimer) clearInterval(this.scanTimer);
+                this.scanTimer = setInterval(() => {
+                    if (this.scanSecondsRemaining > 0) this.scanSecondsRemaining--;
+                    else clearInterval(this.scanTimer);
+                }, 1000);
+            },
             confirmAndSave() {
                 $wire.save();
             },
@@ -141,8 +151,8 @@
 
             <div class="grid grid-cols-2 sm:flex items-center gap-3 w-full sm:w-auto bg-white dark:bg-zinc-900 p-2 sm:p-3 rounded-2xl sm:rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
                 <button type="button"
-                    wire:click="openScannerModal"
-                    @click="scannerPreview = null; scannerOpen = true"
+                    wire:click="openInvoiceScanner"
+                    @click="scannerOpen = true; scanSecondsRemaining = 45"
                     class="flex items-center justify-center gap-2 px-3 h-10 sm:h-11 rounded-xl sm:rounded-2xl text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10 font-black uppercase text-[10px] sm:text-sm transition-colors">
                     <flux:icon name="sparkles" class="size-4" />
                     Scanner IA
@@ -719,126 +729,126 @@
         </div>
     </div> {{-- FIM DO CONTAINER DO HISTÓRICO --}}
 
-    {{-- ══════════════════════════════════════════════════════════════ --}}
-    {{-- MODAL 1 — SCANNER IA                                          --}}
-    {{-- ══════════════════════════════════════════════════════════════ --}}
+    <div x-show="scannerOpen" x-cloak x-transition.opacity
+        x-on:click="scannerOpen = false"
+        class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"></div>
 
-    {{-- Backdrop --}}
-    <div x-show="scannerOpen" x-cloak
-        x-transition:enter="transition-opacity ease-out duration-75"
-        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-        x-transition:leave="transition-opacity ease-in duration-75"
-        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-        @click="scannerOpen = false"
-        class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"></div>
-
-    {{-- Panel --}}
-    <div x-show="scannerOpen" x-cloak @click.self="scannerOpen = false"
-        class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
-        <div @click.stop x-show="scannerOpen"
-            x-transition:enter="transition ease-out duration-100 transform"
-            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-75 transform"
-            x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-            class="relative w-full max-w-lg bg-zinc-950 rounded-[1.8rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl max-h-[95vh] flex flex-col overflow-hidden">
-
-            {{-- Loader Animado --}}
-            <div wire:loading wire:target="scanReceiptWithAI"
-                 class="absolute inset-0 bg-zinc-950/95 backdrop-blur-md z-50 flex flex-col items-center justify-center rounded-[1.8rem] sm:rounded-[2.5rem] gap-6">
-                <div class="relative">
-                    <div class="size-16 sm:size-20 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin"></div>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <flux:icon name="sparkles" class="size-6 sm:size-7 text-brand-400 animate-pulse" />
+    <div x-show="scannerOpen" x-cloak x-transition
+        x-on:click.self="scannerOpen = false"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        aria-modal="true"
+        role="dialog"
+    >
+        <div x-show="scannerOpen"
+            class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+            <div class="border-b border-zinc-100 px-6 py-5 dark:border-zinc-800">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0">
+                        <p class="text-[9px] font-black uppercase tracking-[0.2em] text-brand-500">Novo movimento</p>
+                        <h2 class="mt-1 text-xl font-black italic tracking-tight text-zinc-900 dark:text-white">Nova despesa</h2>
+                        <p class="mt-1 text-xs font-medium text-zinc-500">Digitaliza uma fatura com IA para registar a despesa em <span class="font-bold text-brand-600">{{ $title }}</span>.</p>
                     </div>
-                </div>
-                <div class="text-center space-y-1">
-                    <p class="text-brand-400 font-black uppercase tracking-[0.4em] text-[10px]">IA a processar...</p>
-                    <p class="text-zinc-600 text-[9px] uppercase tracking-widest">Extração Vision em curso</p>
-                </div>
-            </div>
-
-            <div class="absolute -top-24 -left-24 size-64 bg-brand-500/10 blur-[100px] rounded-full animate-pulse pointer-events-none"></div>
-
-            <div class="p-6 sm:p-10 space-y-6 sm:space-y-8 overflow-y-auto custom-scrollbar">
-
-                {{-- Cabeçalho do Modal --}}
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2.5 sm:p-3 bg-brand-500/10 rounded-xl sm:rounded-2xl text-brand-400">
-                            <flux:icon name="sparkles" class="size-5 sm:size-6" />
-                        </div>
-                        <div>
-                            <h2 class="text-base sm:text-lg font-black text-white uppercase italic tracking-tighter leading-none">Scanner IA Vision</h2>
-                            <p class="text-[8px] sm:text-[9px] text-zinc-500 font-bold uppercase tracking-widest italic mt-1">Processamento de Faturas</p>
-                        </div>
-                    </div>
-                    <button type="button" @click="scannerOpen = false" class="rounded-full p-2 hover:bg-white/5 text-zinc-500 transition-colors">
+                    <button type="button" x-on:click="scannerOpen = false" class="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" aria-label="Fechar scanner">
                         <flux:icon name="x-mark" class="size-5" />
                     </button>
                 </div>
+            </div>
 
-                @include('livewire.partials.openrouter-quota', ['aiQuota' => $aiQuota])
-
-                {{-- Erro do Scan --}}
-                @if($scanError)
-                <div class="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3">
-                    <flux:icon name="exclamation-triangle" class="size-4 text-red-400 shrink-0 mt-0.5" />
-                    <p class="text-xs text-red-300 font-medium">{{ $scanError }}</p>
-                </div>
-                @endif
-
-                {{-- Dropzone / Upload --}}
-                <div class="relative bg-zinc-900/50 rounded-[1.5rem] sm:rounded-[2.5rem] p-6 sm:p-10 border-2 border-dashed border-zinc-800 hover:border-brand-500/50 transition-all text-center">
-                   <input
-                        id="receiptInput"
-                        type="file"
-                        accept="image/*"
-                        wire:model="receipt"
-                        class="block w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-brand-600 file:text-white hover:file:bg-brand-700 cursor-pointer"
-                    >
-
-                    <div class="mt-4">
-                        @if ($receipt && !$errors->has('receipt'))
-                            <div class="relative inline-block">
-                                <img src="{{ $receipt->temporaryUrl() }}" alt="Pré-visualização do comprovativo" class="size-32 sm:size-44 object-cover rounded-2xl sm:rounded-3xl border-4 border-brand-500/50 shadow-2xl mx-auto">
-                                <div class="animate-scan-line"></div>
-                            </div>
-                        @endif
-
-                        @error('receipt') <p class="text-red-500 text-[10px] mt-2 font-bold uppercase">{{ $message }}</p> @enderror
-
-                        <div wire:loading wire:target="receipt" class="mt-4">
-                            <div class="flex items-center justify-center gap-3">
-                                <div class="size-4 border-2 border-brand-500/20 border-t-brand-500 rounded-full animate-spin"></div>
-                                <p class="text-[9px] font-black text-brand-400 uppercase tracking-widest">A carregar...</p>
-                            </div>
+            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6" @if($isScanning) wire:poll.5s="checkCategoryInvoiceScan" @endif>
+                <div class="space-y-5">
+                    @if($scanError)
+                        <div class="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">
+                            <flux:icon name="exclamation-triangle" class="size-4 shrink-0" />
+                            <span>{{ $scanError }}</span>
                         </div>
+                    @endif
+
+                    <div class="rounded-2xl border border-brand-500/20 bg-brand-500/5 px-4 py-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex min-w-0 items-center gap-2">
+                                <flux:icon name="sparkles" class="size-4 shrink-0 text-brand-500" />
+                                <span class="text-[10px] font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-200">Quota da IA · OpenRouter</span>
+                            </div>
+                            @if($loadingOpenRouterQuota ?? false)
+                                <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-zinc-500">
+                                    <flux:icon name="arrow-path" class="size-3 animate-spin" /> A consultar...
+                                </span>
+                            @elseif($aiQuota['available'] ?? false)
+                                <span class="text-xs font-black tabular-nums {{ (int) $aiQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
+                                    {{ number_format((int) $aiQuota['remaining']) }} / {{ number_format((int) $aiQuota['limit']) }} disponíveis hoje
+                                </span>
+                            @endif
+                        </div>
+                        @if($aiQuota['available'] ?? false)
+                            <div class="mt-2 flex items-center justify-between gap-3">
+                                <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                                    <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ min(100, (int) $aiQuota['percent']) }}%"></div>
+                                </div>
+                                <span class="shrink-0 text-[9px] font-bold text-zinc-500">{{ number_format((int) $aiQuota['used']) }} utilizados</span>
+                            </div>
+                            @if((int) $aiQuota['remaining'] <= 0)
+                                <p class="mt-2 text-[10px] font-semibold text-red-500">A quota diária gratuita está esgotada. A quota renova às 00:00 UTC.</p>
+                            @else
+                                <p class="mt-2 text-[10px] text-zinc-500">Quota diária de pedidos gratuitos da tua chave OpenRouter. Atualizada automaticamente ao abrir esta janela.</p>
+                            @endif
+                        @elseif(!empty($aiQuota['error']))
+                            <p class="mt-2 text-[10px] text-amber-600 dark:text-amber-400">{{ $aiQuota['error'] }}</p>
+                        @else
+                            <p class="mt-2 text-[10px] text-zinc-500">A quota diária será consultada quando abrires o scanner.</p>
+                        @endif
+                    </div>
+
+                    <div class="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/70 p-4 text-center dark:border-zinc-700 dark:bg-zinc-950/40 sm:p-5">
+                        <input type="file" wire:model="scannerReceipt" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
+                        @if($scannerReceipt)
+                            <div class="mt-4 flex flex-col items-center gap-2">
+                                @if(str_starts_with($scannerReceipt->getMimeType() ?? '', 'image/'))
+                                    <img src="{{ $scannerReceipt->temporaryUrl() }}" alt="Pré-visualização da fatura" class="max-h-44 rounded-xl border border-zinc-200 object-contain shadow-lg dark:border-zinc-700" />
+                                @else
+                                    <div class="rounded-xl bg-red-50 px-6 py-4 text-xs font-black text-red-600 dark:bg-red-950/30">PDF carregado</div>
+                                @endif
+                                <span class="text-[10px] font-bold text-emerald-600">Fatura carregada com sucesso</span>
+                            </div>
+                        @else
+                            <p class="mt-3 text-xs font-bold text-zinc-500">Seleciona uma fotografia, imagem ou PDF da fatura</p>
+                            <p class="mt-1 text-[10px] text-zinc-400">PDF, JPG, PNG ou WEBP · Máximo 20 MB</p>
+                        @endif
+                        <div wire:loading wire:target="scannerReceipt" class="mt-3 text-xs font-bold text-brand-500">A carregar imagem...</div>
+                    </div>
+
+                    @if($isScanning)
+                        <div class="rounded-xl border border-brand-500/20 bg-brand-500/5 px-4 py-3 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <flux:icon name="arrow-path" class="size-4 animate-spin text-brand-500" />
+                                <p class="text-xs font-bold text-brand-600 dark:text-brand-400">A analisar a tua fatura...</p>
+                            </div>
+                            <p class="mt-1 text-[11px] text-zinc-500" x-text="scanSecondsRemaining > 0 ? 'Estimativa: cerca de ' + scanSecondsRemaining + ' segundos restantes' : 'A análise está a demorar mais do que o previsto. Continua em curso...'"></p>
+                            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                                <div class="h-full w-full origin-left rounded-full bg-brand-500" style="animation: invoice-scan-progress 45s linear forwards;"></div>
+                            </div>
+                            <p class="mt-2 text-[10px] text-zinc-400">Podes aguardar — não feches esta janela.</p>
+                        </div>
+                    @endif
+
+                    <div class="flex flex-col-reverse gap-3 sm:flex-row">
+                        <button type="button" x-on:click="scannerOpen = false" class="flex-1 rounded-xl border border-zinc-200 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500 dark:border-zinc-700">Cancelar</button>
+                        <button type="button" wire:click="scanInvoiceForCategory" x-on:click="startInvoiceTimer()" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceForCategory" @disabled(! $scannerReceipt || $isScanning || (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0)) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
+                            @if($isScanning)
+                                <flux:icon name="arrow-path" class="size-4 animate-spin" /> A analisar fatura...
+                            @else
+                                <span wire:loading.remove wire:target="scanInvoiceForCategory" class="inline-flex items-center gap-2">
+                                    <flux:icon name="sparkles" class="size-4" /> Analisar fatura
+                                </span>
+                                <span wire:loading.inline-flex wire:target="scanInvoiceForCategory" class="items-center gap-2">
+                                    <flux:icon name="arrow-path" class="size-4 animate-spin" /> A analisar fatura...
+                                </span>
+                            @endif
+                        </button>
                     </div>
                 </div>
-
-                {{-- Botões de Ação --}}
-                <div class="flex gap-3 sm:gap-4 pb-2">
-                    <button type="button" @click="scannerOpen = false; scannerPreview = null"
-                        class="flex-1 h-12 sm:h-14 text-zinc-500 font-bold uppercase text-[10px] sm:text-xs tracking-widest">
-                        Cancelar
-                    </button>
-                    <button
-                        type="button"
-                        wire:click="scanReceiptWithAI"
-                        wire:loading.attr="disabled"
-                        wire:target="receipt, scanReceiptWithAI"
-                        @disabled(! $receipt || (($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0))
-                        class="flex-[2] h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-brand-600 text-white font-black uppercase shadow-xl disabled:opacity-50 transition-all text-xs sm:text-sm"
-                    >
-                        <span wire:loading.remove wire:target="receipt, scanReceiptWithAI">@if(($aiQuota['available'] ?? false) && (int) ($aiQuota['remaining'] ?? 0) <= 0)Quota esgotada@else Iniciar Extração@endif</span>
-                        <span wire:loading wire:target="receipt">Aguarde...</span>
-                        <span wire:loading wire:target="scanReceiptWithAI">A ler com IA...</span>
-                    </button>
-                </div>
-
-            </div>{{-- /scrollable content --}}
-        </div>{{-- /panel scanner --}}
-    </div>{{-- /modal 1 --}}
+            </div>
+        </div>
+    </div>
 
     {{-- ══════════════════════════════════════════════════════════════ --}}
     {{-- MODAL 2 — REVISÃO IA                                          --}}
@@ -1199,7 +1209,7 @@
                             <input wire:model="meta.payment_method" type="text" placeholder="Ex.: Multibanco, MB Way, Dinheiro..." class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white">
                         </label>
                         <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Pago com / Conta</span>
-                            <select wire:model.live="bankAccountId" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white"><option value="">💵 Dinheiro físico</option>@foreach($this->bankAccounts as $acc)<option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>@endforeach</select>
+                            <select wire:model.live="bankAccountId" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white"><option value="">💵 Dinheiro físico</option>@if($slug === 'alimentacao')<option value="meal_card">💳 Cartão subsídio de alimentação</option>@endif @foreach($this->bankAccounts as $acc)<option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>@endforeach</select>
                         </label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <label class="block space-y-2"><span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Valor entregue (€)</span><input wire:model="meta.amount_tendered" type="number" min="0" step="0.01" placeholder="0,00" class="w-full h-12 rounded-xl border-0 bg-zinc-50 px-4 text-sm font-bold dark:bg-zinc-900 dark:text-white"></label>
@@ -1314,7 +1324,7 @@
         <div class="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="duplicate-expense-title">
             <div class="w-full max-w-md rounded-3xl border border-amber-200 bg-white p-6 shadow-2xl dark:border-amber-900/60 dark:bg-zinc-900">
                 <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
-                    <flux:icon name="alert-triangle" class="size-7" />
+                    <flux:icon name="exclamation-triangle" class="size-7" />
                 </div>
                 <h2 id="duplicate-expense-title" class="text-center text-lg font-black text-zinc-900 dark:text-white">Possível despesa duplicada</h2>
                 <p class="mt-2 text-center text-sm text-zinc-600 dark:text-zinc-300">
@@ -1382,8 +1392,6 @@
             });
         });
     </script>
-
-@endif {{-- Fecho de segurança da condição do template --}}
 
 </div>{{-- /FIM DO WRAPPER x-data root --}}
 </div>{{-- /FIM DO WRAPPER DE COR --}}

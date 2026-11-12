@@ -8,6 +8,7 @@ use App\Models\Expense;
 use App\Models\PriceHistory;
 use App\Services\PriceComparisonService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -67,6 +68,12 @@ class CategoryHub extends Component
     public $receipt;
 
     public $document;
+
+    public $scannerReceipt;
+
+    public ?string $invoiceScanId = null;
+
+    public ?int $invoiceScanStartedAt = null;
 
     public ?string $pendingDocumentPath = null;
 
@@ -167,9 +174,30 @@ class CategoryHub extends Component
         $this->refreshScannerQuota();
 
         $pendingScanKey = 'pending_expense_scan:'.auth()->user()->current_workspace_id.':'.auth()->id();
-        $pendingScan = request()->boolean('open_scan_review')
-            ? session()->get($pendingScanKey)
-            : null;
+        $pendingScan = null;
+        if (request()->boolean('open_scan_review')) {
+            $scanId = request()->query('scan_id');
+            if (is_string($scanId) && Str::isUuid($scanId)) {
+                $scanCacheKey = 'invoice_scan:'.auth()->id().':'.auth()->user()->current_workspace_id.':'.$scanId;
+                $cachedScan = Cache::get($scanCacheKey);
+                if (
+                    is_array($cachedScan)
+                    && ($cachedScan['status'] ?? null) === 'completed'
+                    && (int) ($cachedScan['user_id'] ?? 0) === (int) auth()->id()
+                    && (int) ($cachedScan['workspace_id'] ?? 0) === (int) auth()->user()->current_workspace_id
+                    && is_array($cachedScan['data'] ?? null)
+                ) {
+                    $pendingScan = [
+                        'data' => $cachedScan['data'],
+                        'document_path' => $cachedScan['document_path'] ?? null,
+                        'document_name' => $cachedScan['document_name'] ?? null,
+                        'document_mime' => $cachedScan['document_mime'] ?? null,
+                    ];
+                }
+            }
+
+            $pendingScan ??= session()->get($pendingScanKey);
+        }
 
         if (request()->boolean('open_scan_review') && is_array($pendingScan)) {
             $result = $pendingScan['data'] ?? $pendingScan;
@@ -297,6 +325,7 @@ class CategoryHub extends Component
             $this->scanSuccess = true;
             $this->scannedData = $result;
             $this->openScannedExpenseForm = true;
+            $this->dispatch('open-scanned-expense-form');
 
             // Só limpa os dados temporários depois de os carregar para o formulário.
             session()->forget($pendingScanKey);
@@ -538,13 +567,173 @@ class CategoryHub extends Component
         $this->transportPassPaidByCompany = false;
     }
 
-    public function openScannerModal(): void
+    public function openInvoiceScanner(): void
     {
-        $this->resetValidation('receipt');
+        $this->resetValidation('scannerReceipt');
         $this->scanError = '';
-        $this->scannedData = [];
-        $this->scanSuccess = false;
-        $this->receipt = null;
+        $this->scannerReceipt = null;
+        $this->isScanning = false;
+        $this->invoiceScanId = null;
+        $this->invoiceScanStartedAt = null;
+        $this->refreshScannerQuota();
+    }
+
+    public function updatedScannerReceipt(): void
+    {
+        $this->resetValidation('scannerReceipt');
+        $this->scanError = '';
+
+        try {
+            $this->validate([
+                'scannerReceipt' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:20480',
+            ]);
+        } catch (ValidationException $exception) {
+            $this->scanError = 'Ficheiro inválido: '.collect($exception->errors())->flatten()->first();
+            $this->scannerReceipt = null;
+        }
+    }
+
+    public function scanInvoiceForCategory(): void
+    {
+        if ($this->isScanning) {
+            return;
+        }
+
+        if (auth()->user()->isViewer()) {
+            $this->scanError = 'Apenas utilizadores com permissões de edição podem criar despesas.';
+            return;
+        }
+
+        $this->scanError = '';
+
+        try {
+            $this->validate([
+                'scannerReceipt' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:20480',
+            ]);
+        } catch (ValidationException $exception) {
+            $this->scanError = 'Ficheiro inválido: '.collect($exception->errors())->flatten()->first();
+            return;
+        }
+
+        $user = auth()->user();
+        if (blank(config('services.openrouter.api_key'))) {
+            $this->scanError = 'A chave OpenRouter não está configurada.';
+            return;
+        }
+
+        if (($this->aiQuota['available'] ?? false) && (int) ($this->aiQuota['remaining'] ?? 0) <= 0) {
+            $this->scanError = 'A quota diária gratuita do OpenRouter está esgotada. A reposição ocorre às 00:00 UTC.';
+            return;
+        }
+
+        $storedPath = $this->scannerReceipt->store('expenses/pending-scans', 'public');
+        if (! $storedPath) {
+            $this->scanError = 'Não foi possível guardar temporariamente a fatura.';
+            return;
+        }
+
+        $scanId = (string) Str::uuid();
+        $cacheKey = 'invoice_scan:'.$user->id.':'.$user->current_workspace_id.':'.$scanId;
+        $this->invoiceScanId = $scanId;
+        $this->invoiceScanStartedAt = now()->timestamp;
+        $this->isScanning = true;
+
+        Cache::put($cacheKey, [
+            'status' => 'processing',
+            'started_at' => now()->timestamp,
+            'user_id' => (int) $user->id,
+            'workspace_id' => (int) $user->current_workspace_id,
+        ], now()->addMinutes(20));
+
+        try {
+            dispatch(new \App\Jobs\ProcessInvoiceScan(
+                $cacheKey,
+                $storedPath,
+                $this->scannerReceipt->getClientOriginalName(),
+                $this->scannerReceipt->getMimeType() ?: 'image/jpeg',
+                array_values($this->subcategories),
+                (int) $user->id,
+                (int) $user->current_workspace_id,
+                'subcategory',
+            ));
+        } catch (\Throwable $exception) {
+            Log::error('CategoryHub invoice scanner: could not enqueue analysis.', [
+                'message' => $exception->getMessage(),
+                'user_id' => $user->id,
+                'workspace_id' => $user->current_workspace_id,
+            ]);
+
+            Cache::put($cacheKey, [
+                'status' => 'failed',
+                'error' => 'Não foi possível iniciar o processamento em segundo plano. Confirma se o worker da fila está ativo e tenta novamente.',
+            ], now()->addMinutes(20));
+
+            $this->isScanning = false;
+            $this->invoiceScanId = null;
+            $this->invoiceScanStartedAt = null;
+            $this->scanError = 'Não foi possível iniciar o processamento em segundo plano. Confirma se o worker da fila está ativo e tenta novamente.';
+        }
+    }
+
+    public function checkCategoryInvoiceScan(): void
+    {
+        if (! $this->isScanning || blank($this->invoiceScanId)) {
+            return;
+        }
+
+        $user = auth()->user();
+        $cacheKey = 'invoice_scan:'.$user->id.':'.$user->current_workspace_id.':'.$this->invoiceScanId;
+        $scan = Cache::get($cacheKey);
+
+        if (! is_array($scan)) {
+            $startedAt = $this->invoiceScanStartedAt ?? now()->timestamp;
+            if (now()->timestamp - $startedAt <= 180) {
+                return;
+            }
+
+            $this->isScanning = false;
+            $this->invoiceScanId = null;
+            $this->invoiceScanStartedAt = null;
+            $this->scanError = 'Não foi recebido qualquer resultado do processamento após 3 minutos. Verifica se o worker da fila está ativo e tenta novamente.';
+            return;
+        }
+
+        if (($scan['status'] ?? null) === 'processing') {
+            $startedAt = (int) ($scan['started_at'] ?? now()->timestamp);
+            if (now()->timestamp - $startedAt <= 180) {
+                return;
+            }
+
+            $scan = [
+                'status' => 'failed',
+                'error' => 'A análise excedeu o tempo máximo de espera. A fila pode não estar ativa. Tenta novamente; não foi criada qualquer despesa.',
+            ];
+            Cache::put($cacheKey, $scan, now()->addMinutes(5));
+        }
+
+        $scanId = $this->invoiceScanId;
+        $this->isScanning = false;
+        $this->invoiceScanId = null;
+        $this->invoiceScanStartedAt = null;
+
+        if (($scan['status'] ?? null) !== 'completed') {
+            $this->scanError = $scan['error'] ?? 'Não foi possível analisar a fatura.';
+            return;
+        }
+
+        Cache::put($cacheKey, $scan, now()->addMinutes(10));
+        session()->put('pending_expense_scan:'.$user->current_workspace_id.':'.$user->id, [
+            'data' => $scan['data'],
+            'document_path' => $scan['document_path'],
+            'document_name' => $scan['document_name'],
+            'document_mime' => $scan['document_mime'],
+        ]);
+
+        $this->redirect(route('hub.category', [
+            'slug' => $this->slug,
+            'open_scan_review' => 1,
+            'scan_id' => $scanId,
+        ]));
     }
 
     public function editExpense(int $id)
@@ -565,7 +754,6 @@ class CategoryHub extends Component
         $this->spent_at = $expense->spent_at->format('Y-m-d');
         $this->subcategory = trim($expense->subcategory);
         $this->description = $expense->description;
-        $this->bankAccountId = $expense->bank_account_id ?: '';
         if (! in_array($this->subcategory, $this->subcategories)) {
             $this->customSubcategory = $this->subcategory;
             $this->subcategory = 'Outro';
@@ -573,6 +761,9 @@ class CategoryHub extends Component
         // Carregar os metadados (campos personalizados)
         $metaRaw = $expense->metadata;
         $this->meta = is_array($metaRaw) ? $metaRaw : (json_decode($metaRaw, true) ?? []);
+        $this->bankAccountId = ($this->meta['payment_source'] ?? null) === 'meal_card'
+            ? 'meal_card'
+            : ($expense->bank_account_id ?: '');
 
         // Abre o modal via Alpine
         $this->dispatch('open-add-expense-modal');
@@ -614,7 +805,8 @@ class CategoryHub extends Component
 
         $this->allowDuplicateExpense = true;
         $this->duplicateExpenseWarning = null;
-        $this->save();
+        $this->openScannedExpenseForm = true;
+        $this->dispatch('open-scanned-expense-form');
     }
 
     public function cancelDuplicateExpense(): void
@@ -659,7 +851,9 @@ class CategoryHub extends Component
             throw $e;
         }
 
-        if ($this->bankAccountId) {
+        $isMealCardPayment = $this->bankAccountId === 'meal_card';
+
+        if ($this->bankAccountId && ! $isMealCardPayment) {
             $accountQuery = BankAccount::where('workspace_id', auth()->user()->current_workspace_id);
 
             if (auth()->user()->currentWorkspace?->type === 'personal') {
@@ -700,6 +894,13 @@ class CategoryHub extends Component
             'user_id' => auth()->id(),
         ]);
 
+        $metadata = $this->meta;
+        if ($isMealCardPayment) {
+            $metadata['payment_source'] = 'meal_card';
+        } elseif (($metadata['payment_source'] ?? null) === 'meal_card') {
+            unset($metadata['payment_source']);
+        }
+
         $data = [
             'user_id' => auth()->id(),
             'category_id' => $category->id,
@@ -710,8 +911,8 @@ class CategoryHub extends Component
             'description' => $this->description,
             'spent_at' => $this->spent_at,
             'workspace_id' => auth()->user()->current_workspace_id,
-            'bank_account_id' => $this->bankAccountId ?: null,
-            'metadata' => ! empty($this->meta) ? $this->meta : null,
+            'bank_account_id' => $isMealCardPayment ? null : ($this->bankAccountId ?: null),
+            'metadata' => ! empty($metadata) ? $metadata : null,
         ];
 
         $existingExpense = $this->editingId

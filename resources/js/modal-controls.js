@@ -93,6 +93,12 @@
     const normalizeModal = (modal) => {
         if (!isModal(modal) || modal.getAttribute('data-finance-pro-modal-normalized') === '1') return;
 
+        if (modal.hasAttribute('data-no-global-close')) {
+            hideExtraCloseControls(modal, null);
+            modal.setAttribute('data-finance-pro-modal-normalized', '1');
+            return;
+        }
+
         const existing = Array.from(modal.querySelectorAll('button')).find((button) => {
             if (button.matches('[data-flux-modal-close], [aria-label="Fechar modal"], [aria-label="Close modal"], [title="Fechar"], [title="Close"]')) return true;
             const label = (button.getAttribute('aria-label') || '').trim();

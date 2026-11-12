@@ -3,9 +3,11 @@
 namespace App\Livewire\Hub;
 
 use App\Models\Reminder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -16,6 +18,8 @@ use Livewire\WithPagination;
 class RemindersHub extends Component
 {
     use WithPagination;
+
+    public bool $dashboardMode = false;
 
     // --- ESTADO DO FORMULÁRIO (CAMPOS DO MODELO) ---
     public $title = '';
@@ -44,6 +48,11 @@ class RemindersHub extends Component
     public $openModal = false; // Sincronizado com x-data no Blade
 
     public $editingReminderId = null;
+
+    public function mount(bool $dashboardMode = false): void
+    {
+        $this->dashboardMode = $dashboardMode;
+    }
 
     /**
      * ESTATÍSTICAS PARA OS CARDS DO TOPO (STATS)
@@ -121,6 +130,7 @@ class RemindersHub extends Component
         }
 
         $this->closeModal();
+        $this->dispatch('dashboard-record-created');
     }
 
     /**
@@ -156,8 +166,15 @@ class RemindersHub extends Component
         $this->dispatch('toast', text: 'Lembrete removido.');
     }
 
-    public function openReminderModal($id = null)
+    #[On('calendar-reminder-create')]
+    public function openReminderModal($id = null, ?string $date = null)
     {
+        if ($this->dashboardMode && auth()->user()->isViewer()) {
+            $this->dispatch('toast', variant: 'error', text: 'Apenas utilizadores com permissões de edição podem criar lembretes.');
+
+            return;
+        }
+
         $this->resetForm();
         if ($id) {
             $reminder = Reminder::where('workspace_id', auth()->user()->current_workspace_id)
@@ -170,6 +187,9 @@ class RemindersHub extends Component
             $this->frequency = $reminder->frequency;
             $this->category = $reminder->category;
             $this->notes = $reminder->notes;
+        }
+        if ($date && ! $id) {
+            $this->remind_at = Carbon::parse($date)->setTime(9, 0)->format('Y-m-d\TH:i');
         }
         $this->openModal = true; // Abre o modal no Alpine.js
     }

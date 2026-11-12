@@ -1,4 +1,5 @@
-<div class="space-y-8 pb-24">
+<div class="{{ $dashboardMode ? '' : 'space-y-8 pb-24' }}">
+    @unless($dashboardMode)
     <div class="p-2 sm:p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden">
         <div class="flex flex-col sm:flex-row items-center justify-between w-full px-2 sm:px-4 gap-4">
             <div class="flex items-center gap-8 justify-between sm:justify-start w-full sm:w-auto">
@@ -23,19 +24,43 @@
         </div>
         <div class="p-6 bg-zinc-50/50 dark:bg-zinc-950/20 border-t border-zinc-100 dark:border-zinc-800">{{ $expenses->links() }}</div>
     </div>
+    @endunless
+
     <div
-        x-data="{ open: false, activeTab: 'category', scanSecondsRemaining: 45, scanTimer: null, startInvoiceTimer() { this.scanSecondsRemaining = 45; if (this.scanTimer) clearInterval(this.scanTimer); this.scanTimer = setInterval(() => { if (this.scanSecondsRemaining > 0) this.scanSecondsRemaining--; else clearInterval(this.scanTimer); }, 1000); } }"
-        x-on:open-expense-category-picker.window="open = true; activeTab = 'scanner'; $wire.call('refreshOpenRouterQuota')"
+        x-data="{
+            open: false,
+            activeTab: 'category',
+            scanSecondsRemaining: 45,
+            scanTimeoutRemaining: 180,
+            scanTimer: null,
+            startInvoiceTimer() {
+                this.scanSecondsRemaining = 45;
+                this.scanTimeoutRemaining = 180;
+                if (this.scanTimer) clearInterval(this.scanTimer);
+                this.scanTimer = setInterval(() => {
+                    if (this.scanSecondsRemaining > 0) this.scanSecondsRemaining--;
+                    if (this.scanTimeoutRemaining > 0) this.scanTimeoutRemaining--;
+                    if (this.scanTimeoutRemaining === 0) clearInterval(this.scanTimer);
+                }, 1000);
+            },
+            formatScanTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                return String(minutes).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+            }
+        }"
+        x-on:open-expense-category-picker.window="open = true; activeTab = 'scanner'; $nextTick(() => setTimeout(() => { if (open) $wire.call('refreshOpenRouterQuota') }, 600))"
         x-on:keydown.escape.window="open = false"
         x-show="open"
         x-cloak
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 {{ $dashboardMode ? 'z-[70]' : 'z-50' }}"
         aria-modal="true"
         role="dialog"
+        data-no-global-close
     >
-        <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60 backdrop-blur-sm" x-on:click="open = false"></div>
+        <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60" x-on:click="open = false"></div>
 
-        <div x-show="open" x-transition class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
+        <div x-show="open" x-transition class="absolute inset-0 {{ $dashboardMode ? 'lg:left-64' : '' }} flex items-center justify-center p-4">
+        <div class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
             <div class="border-b border-zinc-100 px-6 py-5 dark:border-zinc-800">
                 <div class="min-w-0">
                     <p class="text-[9px] font-black uppercase tracking-[0.2em] text-brand-500">Novo movimento</p>
@@ -142,15 +167,23 @@
                             <flux:icon name="arrow-path" class="size-4 animate-spin text-brand-500" />
                             <p class="text-xs font-bold text-brand-600 dark:text-brand-400">A analisar a tua fatura...</p>
                         </div>
-                        <p class="mt-1 text-[11px] text-zinc-500" x-text="scanSecondsRemaining > 0 ? 'Estimativa: cerca de ' + scanSecondsRemaining + ' segundos restantes' : 'A análise está a demorar mais do que o previsto. Continua em curso...'"></p>
+                        <p class="mt-1 text-[11px] text-zinc-500" x-text="scanSecondsRemaining > 0 ? 'Estimativa: cerca de ' + formatScanTime(scanSecondsRemaining) + ' restantes' : 'A análise está a demorar mais do que o previsto. Continua em curso...'"></p>
                         <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-                            <div class="h-full w-full origin-left rounded-full bg-brand-500" style="animation: invoice-scan-progress 45s linear forwards;"></div>
+                            <div class="h-full rounded-full bg-brand-500 transition-[width] duration-1000" x-bind:style="'width: ' + ((180 - scanTimeoutRemaining) / 180 * 100) + '%'"></div>
                         </div>
                         <p class="mt-2 text-[10px] text-zinc-400">Podes aguardar — não feches esta janela.</p>
                     </div>
                     @if($isScanningInvoice)
-                        <div class="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-center text-[11px] text-amber-600 dark:text-amber-400">
-                            A análise foi submetida e está a aguardar a resposta. Esta janela será atualizada automaticamente.
+                        <div role="status" aria-live="polite" class="rounded-xl border border-brand-500/20 bg-brand-500/5 px-4 py-3 text-center">
+                            <div class="flex items-center justify-center gap-2 text-xs font-bold text-brand-600 dark:text-brand-400">
+                                <flux:icon name="arrow-path" class="size-4 animate-spin" />
+                                <span x-text="scanSecondsRemaining > 0 ? 'A IA está a analisar a fatura — estimativa: ' + formatScanTime(scanSecondsRemaining) : 'A análise está a demorar mais do que o previsto, continua em curso.'"></span>
+                            </div>
+                            <p class="mt-1 text-[10px] text-zinc-500" x-text="'Tempo máximo de espera: ' + formatScanTime(scanTimeoutRemaining)"></p>
+                            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                                <div class="h-full rounded-full bg-brand-500 transition-[width] duration-1000" x-bind:style="'width: ' + ((180 - scanTimeoutRemaining) / 180 * 100) + '%'"></div>
+                            </div>
+                            <p class="mt-2 text-[10px] text-zinc-400">A janela é atualizada automaticamente.</p>
                         </div>
                     @endif
                     <div class="flex flex-col-reverse sm:flex-row gap-3">
@@ -168,6 +201,7 @@
                             @endif
                         </button>
                     </div>
+                </div>
                 </div>
             </div>
         </div>

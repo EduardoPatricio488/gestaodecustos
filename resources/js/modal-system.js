@@ -41,6 +41,11 @@
         if (heading && !dialog.hasAttribute('aria-labelledby')) dialog.setAttribute('aria-labelledby', heading.id);
         if (!heading && !dialog.hasAttribute('aria-label')) dialog.setAttribute('aria-label', 'Janela de diálogo');
 
+        if (dialog.hasAttribute('data-no-global-close')) {
+            dialog.querySelectorAll('.finance-pro-modal-close, [data-modal-close="true"]').forEach((button) => button.remove());
+            return;
+        }
+
         let button = findExistingTopClose(dialog);
         if (!button) {
             button = document.createElement('button');

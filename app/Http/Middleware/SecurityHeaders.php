@@ -20,10 +20,10 @@ class SecurityHeaders
 
         // Permitir o servidor Vite apenas em ambiente local, sem alargar a CSP em produção.
         $viteDevSources = app()->environment('local')
-            ? ' http://localhost:5173 http://127.0.0.1:5173'
+            ? ' http://localhost:5173 http://127.0.0.1:5173 http://localhost:5174 http://127.0.0.1:5174'
             : '';
         $viteDevConnections = app()->environment('local')
-            ? ' http://localhost:5173 http://127.0.0.1:5173 ws://localhost:5173 ws://127.0.0.1:5173'
+            ? ' http://localhost:5173 http://127.0.0.1:5173 http://localhost:5174 http://127.0.0.1:5174 ws://localhost:5173 ws://127.0.0.1:5173 ws://localhost:5174 ws://127.0.0.1:5174'
             : '';
 
         $response->headers->set('Content-Security-Policy', implode('; ', [

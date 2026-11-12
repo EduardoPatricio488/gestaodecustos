@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto space-y-10 pb-20" x-data="{ modal: @entangle('openModal') }">
+<div class="{{ $dashboardMode ? '' : 'max-w-7xl mx-auto space-y-10 pb-20' }}" x-data="{ modal: @entangle('openModal') }">
 
     {{-- ── ESTILOS DE ALTA FIDELIDADE ── --}}
     @once
@@ -22,6 +22,7 @@
         [x-cloak] { display: none !important; }
     </style>
     @endonce
+    @unless($dashboardMode)
 {{-- ── 2. CABEÇALHO DE CONTROLO (TOTALMENTE RESPONSIVO) ── --}}
     <div class="flex flex-col xl:flex-row gap-6 items-center justify-between bg-white dark:bg-zinc-900/50 p-6 lg:p-8 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 shadow-sm w-full">
 
@@ -158,17 +159,7 @@
         @endforelse
     </div>
 
-
-
-
-
-
-
-
-
-
-
-
+    @endunless
 
 {{-- ── 4. MODAL ALPINE (ULTRA FLUIDO + CAMPOS ESCUROS + TEXTO PRETO) ── --}}
 <div x-show="modal" x-cloak

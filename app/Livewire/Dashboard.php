@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Carbon\Carbon;
 use App\Models\BankAccount;
 use App\Models\Category;
+use App\Models\DailyMealAllowance;
 use App\Models\Debt;
 use App\Models\Expense;
 use App\Models\FitnessActivity;
@@ -43,6 +44,25 @@ use Livewire\Component;
 class Dashboard extends Component
 {
     public bool $refreshingInvestmentPrices = false;
+
+    #[On('dashboard-record-created')]
+    public function refreshAfterQuickCreate(): void
+    {
+        $this->forgetDashboardPeriodCaches();
+    }
+
+    private function forgetDashboardPeriodCaches(): void
+    {
+        $user = Auth::user();
+        $workspaceId = $user->current_workspace_id;
+        $userId = $user->id;
+        $monthStart = Carbon::createFromFormat('Y-m', $this->dashboardSelectedMonth ?: now()->format('Y-m'))->startOfMonth()->toDateString();
+        $yearStart = Carbon::create((int) ($this->dashboardSelectedYear ?: now()->year), 1, 1)->toDateString();
+
+        Cache::forget("dashboard:period-totals:{$workspaceId}:{$userId}:month:{$monthStart}");
+        Cache::forget("dashboard:period-totals:{$workspaceId}:{$userId}:year:{$yearStart}");
+        Cache::forget("dashboard:subscriptions-monthly:{$workspaceId}:{$userId}");
+    }
 
     public function refreshInvestmentPrices(): void
     {
@@ -1059,6 +1079,34 @@ class Dashboard extends Component
             ->reject(fn (RecurringIncome $income) => ($income->metadata['income_type'] ?? null) === 'meal_card_allowance')
             ->filter(fn (RecurringIncome $income) => ($income->metadata['contract_status'] ?? ($income->is_active ? 'active' : 'suspended')) === 'active')
             ->values();
+        $dashboardMealCardSalaryContracts = $dashboardSalaryContracts
+            ->filter(fn (RecurringIncome $income): bool => ($income->metadata['meal_allowance_destination'] ?? null) === 'meal_card')
+            ->values();
+        $mealCardIncomeIds = $dashboardMealCardSalaryContracts
+            ->map(fn (RecurringIncome $income): ?int => ! empty($income->metadata['meal_card_income_id'])
+                ? (int) $income->metadata['meal_card_income_id']
+                : null)
+            ->filter()
+            ->unique()
+            ->values();
+        $mealCardIncomeCreatedAt = $mealCardIncomeIds->isEmpty()
+            ? collect()
+            : RecurringIncome::where('workspace_id', $currentWs->id)
+                ->where('user_id', $user->id)
+                ->whereIn('id', $mealCardIncomeIds)
+                ->pluck('created_at', 'id');
+        $dashboardMealCardReferenceDate = $dashboardMealCardSalaryContracts
+            ->map(function (RecurringIncome $income) use ($mealCardIncomeCreatedAt): ?string {
+                $mealCardIncomeId = (int) ($income->metadata['meal_card_income_id'] ?? 0);
+                $createdAt = $mealCardIncomeId ? $mealCardIncomeCreatedAt->get($mealCardIncomeId) : null;
+
+                return $createdAt
+                    ? Carbon::parse($createdAt)->toDateString()
+                    : $income->created_at?->toDateString();
+            })
+            ->filter()
+            ->sort()
+            ->first();
 
         $dashboardProjectedSalaryNet = round($dashboardSalaryContracts->sum(function (RecurringIncome $income): float {
             $metadata = $income->metadata ?? [];
@@ -1068,11 +1116,7 @@ class Dashboard extends Component
         }), 2);
         // O cartão de alimentação respeita as datas de início e fim do contrato
         // que originou o subsídio, usando o período atualmente selecionado no dashboard.
-        $dashboardMealAllowanceContracts = $dashboardSalaryContracts->filter(function (RecurringIncome $income) use ($periodStart, $periodEnd): bool {
-            if (($income->metadata['meal_allowance_destination'] ?? null) !== 'meal_card') {
-                return false;
-            }
-
+        $dashboardMealAllowanceContracts = $dashboardMealCardSalaryContracts->filter(function (RecurringIncome $income) use ($periodStart, $periodEnd): bool {
             $metadata = $income->metadata ?? [];
             $startDate = $metadata['start_date'] ?? $income->created_at?->toDateString();
             $endDate = $metadata['end_date'] ?? null;
@@ -1093,8 +1137,7 @@ class Dashboard extends Component
         $dashboardProjectedMealAllowance = $this->dashboardPeriodType === 'year' ? 0.0 : $dashboardMealAllowanceMonthlyProjection;
 
         // Projeção anual limitada aos meses em que o contrato esteve em vigor (máximo de 11 meses).
-        $dashboardMealAllowanceAnnualProjection = round($dashboardSalaryContracts
-            ->filter(fn (RecurringIncome $income): bool => ($income->metadata['meal_allowance_destination'] ?? null) === 'meal_card')
+        $dashboardMealAllowanceAnnualProjection = round($dashboardMealCardSalaryContracts
             ->sum(function (RecurringIncome $income) use ($periodStart, $periodEnd): float {
             $metadata = $income->metadata ?? [];
             $contractStart = Carbon::parse($metadata['start_date'] ?? $income->created_at?->toDateString() ?? $periodStart->toDateString())->startOfMonth();
@@ -1147,7 +1190,7 @@ class Dashboard extends Component
                 $accountExpensesUntilPeriod = (float) Expense::where('workspace_id', $currentWs->id)
                     ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
                     ->where('bank_account_id', $dashboardBankCardAccount->id)
-                    ->when($bankBalanceReferenceDate, fn ($q) => $q->whereDate('spent_at', '>=', $bankBalanceReferenceDate))
+                    ->when($bankBalanceReferenceDate, fn ($q) => $q->whereDate('spent_at', '>', $bankBalanceReferenceDate))
                     ->where('spent_at', '<=', $bankBalancePeriodEnd)
                     ->sum(DB::raw('COALESCE(amount_converted, amount)'));
 
@@ -1180,7 +1223,9 @@ class Dashboard extends Component
             ? Expense::where('workspace_id', $currentWs->id)
                 ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
                 ->where('bank_account_id', $dashboardBankCardAccount->id)
+                ->when($dashboardBankCardAccount->created_at, fn ($q, $createdAt) => $q->whereDate('spent_at', '>', $createdAt->toDateString()))
                 ->whereBetween('spent_at', [$periodStart, $periodEnd])
+                ->with('category')
                 ->orderByDesc('spent_at')
                 ->limit(30)
                 ->get()
@@ -1234,6 +1279,56 @@ class Dashboard extends Component
         } elseif ($this->dashboardPeriodType === 'year') {
             $dashboardProjectedMealAllowance = $dashboardMealAllowanceAnnualProjection;
         }
+
+        $mealAllowanceAdjustment = $dashboardMealCardSalaryContracts->isEmpty()
+            ? 0.0
+            : (float) DailyMealAllowance::where('workspace_id', $currentWs->id)
+                ->where('user_id', $user->id)
+                ->whereIn('recurring_income_id', $dashboardMealCardSalaryContracts->modelKeys())
+                ->whereBetween('allowance_date', [$periodStart, $periodEnd])
+                ->sum(DB::raw('received_amount - expected_amount'));
+        $dashboardProjectedMealAllowance = round($dashboardProjectedMealAllowance + $mealAllowanceAdjustment, 2);
+
+        $mealCardExpenseQuery = Expense::where('workspace_id', $currentWs->id)
+            ->where('user_id', $user->id)
+            ->where('metadata->payment_source', 'meal_card')
+            ->whereBetween('spent_at', [$periodStart, $periodEnd]);
+        if ($dashboardMealCardReferenceDate) {
+            $mealCardExpenseQuery->whereDate('spent_at', '>', $dashboardMealCardReferenceDate);
+        } else {
+            $mealCardExpenseQuery->whereRaw('1 = 0');
+        }
+        $dashboardMealCardExpensesTotal = round((float) (clone $mealCardExpenseQuery)
+            ->sum(DB::raw('COALESCE(amount_converted, amount)')), 2);
+        $dashboardMealCardBalance = round($dashboardProjectedMealAllowance - $dashboardMealCardExpensesTotal, 2);
+        $dashboardMealCardExpenses = (clone $mealCardExpenseQuery)
+            ->with('category')
+            ->orderByDesc('spent_at')
+            ->orderByDesc('id')
+            ->limit(30)
+            ->get();
+        $dashboardMealCardHistory = $dashboardMealCardPayments
+            ->map(fn (SalaryPayment $payment): array => [
+                'type' => 'payment',
+                'date' => $payment->paid_at ?? Carbon::create((int) $payment->payment_year, (int) $payment->payment_month, 1),
+                'title' => $payment->recurringIncome?->description ?? 'Subsídio de alimentação',
+                'subtitle' => 'Período: '.str_pad((string) $payment->payment_month, 2, '0', STR_PAD_LEFT).'/'.$payment->payment_year
+                    .' · '.($payment->paid_at?->format('d/m/Y') ?? 'Sem data de pagamento'),
+                'amount' => (float) $payment->meal_allowance,
+                'status' => $payment->status,
+            ])
+            ->concat($dashboardMealCardExpenses->map(fn (Expense $expense): array => [
+                'type' => 'expense',
+                'date' => $expense->spent_at,
+                'title' => $expense->description ?: ($expense->category?->name ?? 'Despesa no cartão de refeição'),
+                'subtitle' => $expense->spent_at?->format('d/m/Y').' · '.($expense->category?->name ?? 'Alimentação'),
+                'amount' => (float) ($expense->amount_converted ?? $expense->amount),
+                'status' => null,
+                'category_slug' => $expense->category?->slug ?: Str::slug($expense->category?->name ?? 'Alimentação'),
+                'expense_id' => $expense->id,
+            ]))
+            ->sortByDesc(fn (array $movement): int => $movement['date']->getTimestamp())
+            ->values();
 
         $projectedSalaryHistoryExtras = Income::with('bankAccount')
             ->where('workspace_id', $currentWs->id)
@@ -1343,6 +1438,10 @@ class Dashboard extends Component
             'dashboardBankCardExpenses' => $dashboardBankCardExpenses,
             'isCurrentDashboardPeriod' => $isCurrentDashboardPeriod,
             'dashboardProjectedMealAllowance' => $dashboardProjectedMealAllowance,
+            'mealAllowanceAdjustment' => $mealAllowanceAdjustment,
+            'dashboardMealCardBalance' => $dashboardMealCardBalance,
+            'dashboardMealCardExpensesTotal' => $dashboardMealCardExpensesTotal,
+            'dashboardMealCardHistory' => $dashboardMealCardHistory,
             'dashboardMealAllowanceAnnualProjection' => $dashboardMealAllowanceAnnualProjection,
             'dashboardMealAllowanceMonthlyProjection' => $dashboardMealAllowanceMonthlyProjection,
             'dashboardSalaryLabels' => $dashboardSalaryLabels,

@@ -1,10 +1,18 @@
-<div x-data="{ categoryModal: {{ $category ? 'false' : 'true' }}, formModal: {{ $category ? 'true' : 'false' }} }" class="min-h-[calc(100vh-8rem)]">
+<div
+    x-data="{ categoryModal: @js($modalOpen && ! $category), formModal: @js($modalOpen && (bool) $category) }"
+    x-on:dashboard-expense-create.window="categoryModal = true; formModal = false"
+    x-on:dashboard-expense-category-form-opened.window="categoryModal = false; formModal = true"
+    x-on:dashboard-expense-modal-opened.window="categoryModal = true; formModal = false"
+    x-on:dashboard-expense-modal-closed.window="categoryModal = false; formModal = false"
+    class="{{ $dashboardMode ? '' : 'min-h-[calc(100vh-8rem)]' }}"
+>
     {{-- Página deliberadamente vazia: o registo acontece através dos modais, como nas páginas de categorias. --}}
 
     {{-- MODAL 1: ESCOLHA DA CATEGORIA --}}
-    <div x-show="categoryModal" x-cloak class="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+    <div x-show="categoryModal" x-cloak class="fixed inset-0 z-[70]" role="dialog" aria-modal="true">
         <div x-show="categoryModal" x-transition.opacity class="absolute inset-0 bg-black/70 backdrop-blur-md" x-on:click="categoryModal = false; $wire.cancel()"></div>
-        <div x-show="categoryModal" x-transition class="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
+        <div x-show="categoryModal" x-transition class="absolute inset-0 flex items-center justify-center p-4 sm:p-6 lg:left-64">
+        <div class="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
             <div class="flex items-center justify-between gap-4 px-6 py-5 sm:px-8 border-b border-zinc-100 dark:border-zinc-800">
                 <div>
                     <p class="text-[9px] font-black uppercase tracking-[0.25em] text-brand-500">Nova despesa</p>
@@ -30,13 +38,15 @@
                 @endif
             </div>
         </div>
+        </div>
     </div>
 
     {{-- MODAL 2: FORMULÁRIO DINÂMICO DA CATEGORIA --}}
     @if($category)
-        <div x-show="formModal" x-cloak class="fixed inset-0 z-[71] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+        <div x-show="formModal" x-cloak class="fixed inset-0 z-[71]" role="dialog" aria-modal="true">
             <div x-show="formModal" x-transition.opacity class="absolute inset-0 bg-black/70 backdrop-blur-md" x-on:click="formModal = false; $wire.cancel()"></div>
-            <div x-show="formModal" x-transition class="relative w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
+            <div x-show="formModal" x-transition class="absolute inset-0 flex items-center justify-center p-4 sm:p-6 lg:left-64">
+            <div class="relative w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
                 <div class="relative overflow-hidden bg-zinc-950 px-6 py-5 sm:px-8 sm:py-6">
                     <div class="absolute -right-16 -top-20 size-52 rounded-full blur-3xl opacity-20" style="background: {{ $category->color ?? '#6366f1' }}"></div>
                     <div class="relative flex items-center justify-between gap-4">
@@ -89,6 +99,7 @@
                         <flux:button type="submit" variant="primary" wire:target="save" class="flex-1 h-13 rounded-2xl font-black uppercase tracking-widest text-[9px] shadow-xl shadow-brand-500/20"><span wire:loading.remove wire:target="save">{{ $isEditing ? 'Guardar alterações' : 'Registar despesa' }}</span><span wire:loading wire:target="save" class="flex items-center justify-center gap-2"><flux:icon name="arrow-path" class="size-4 animate-spin" /> A processar...</span></flux:button>
                     </div>
                 </form>
+            </div>
             </div>
         </div>
     @endif

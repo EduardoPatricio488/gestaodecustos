@@ -1502,21 +1502,7 @@ $hasStoreAccess = $hasLockInAccess;
     @endif
 
     @php
-        // SINCRONIZAÇÃO TOTAL: Puxa todas as categorias do workspace atual
-        // Ordena pela coluna 'order' (definida pelo drag-and-drop)
-        $sidebarCategories = \App\Models\Category::where('workspace_id', $workspaceId)
-            ->whereNotNull('slug')
-            ->where('slug', '!=', '')
-            ->where(function ($query) {
-                $query->where('hidden_from_sidebar', false)
-                    ->orWhereRaw("LOWER(TRIM(name)) = 'outros'");
-            })
-            ->orderByRaw("CASE WHEN LOWER(TRIM(name)) = 'outros' THEN 1 ELSE 0 END ASC")
-            ->orderBy('order', 'asc')
-            ->orderBy('name', 'asc')
-            ->get()
-            ->unique(fn (\App\Models\Category $category) => mb_strtolower(trim($category->name), 'UTF-8'))
-            ->values();
+        $sidebarCategories = \App\Models\Category::sidebarForWorkspace($workspaceId);
 
         $catCounts = is_array($catCounts ?? null) ? $catCounts : [];
     @endphp
@@ -2095,16 +2081,28 @@ $hasStoreAccess = $hasLockInAccess;
         toast.setAttribute('role', 'status');
         toast.innerHTML = `
             <div class="app-action-toast__icon">${hasXp ? '🏆' : '✓'}</div>
-            <div>
-                <p class="app-action-toast__title">${hasXp ? 'Recompensa desbloqueada' : 'Concluído'}</p>
+            <div class="app-action-toast__content">
+                <p class="app-action-toast__title">${detail.actionUrl ? 'Registo criado' : (hasXp ? 'Recompensa desbloqueada' : 'Concluído')}</p>
                 <p class="app-action-toast__text"></p>
             </div>
         `;
         toast.querySelector('.app-action-toast__text').textContent = text;
 
+        if (typeof detail.actionUrl === 'string') {
+            const actionUrl = new URL(detail.actionUrl, window.location.origin);
+            if (actionUrl.origin === window.location.origin) {
+                const action = document.createElement('a');
+                action.href = actionUrl.href;
+                action.className = 'app-action-toast__action';
+                action.textContent = detail.actionLabel || 'Ver registo';
+                toast.querySelector('.app-action-toast__content').appendChild(action);
+            }
+        }
+
         document.body.appendChild(toast);
-        window.setTimeout(() => toast.classList.add('app-action-toast--leaving'), 4200);
-        window.setTimeout(() => toast.remove(), 4600);
+        const lifetime = toast.querySelector('.app-action-toast__action') ? 9000 : 4200;
+        window.setTimeout(() => toast.classList.add('app-action-toast--leaving'), lifetime);
+        window.setTimeout(() => toast.remove(), lifetime + 400);
     });
 </script>
 </body>

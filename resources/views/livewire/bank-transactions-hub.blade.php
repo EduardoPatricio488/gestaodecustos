@@ -1,4 +1,5 @@
-<div class="min-h-screen space-y-8 pb-16">
+<div class="{{ $dashboardMode ? '' : 'min-h-screen space-y-8 pb-16' }}">
+    @unless($dashboardMode)
     <section class="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
         <div class="pointer-events-none absolute -right-16 -top-20 size-72 rounded-full bg-blue-500/10 blur-3xl"></div>
         <div class="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
@@ -55,6 +56,7 @@
         </div>
         <p class="text-[11px] leading-relaxed text-zinc-400">Esta página apresenta movimentos registados no Finance Pro IA, incluindo operações importadas de extratos bancários. Não existe ligação automática ao banco nem importação automática de operações MB WAY.</p>
     </section>
+    @endunless
 
     @if($showEditModal)
         <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-zinc-950/60 p-4" wire:key="edit-bank-movement-modal">

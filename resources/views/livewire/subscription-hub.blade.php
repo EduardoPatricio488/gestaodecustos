@@ -1,4 +1,4 @@
-<div class="space-y-10 pb-20">
+<div class="{{ $dashboardMode ? '' : 'space-y-10 pb-20' }}">
     @php
         $cycleLabels = ['monthly' => 'Mensal', 'quarterly' => 'Trimestral', 'semiannual' => 'Semestral', 'annual' => 'Anual'];
         $statusLabels = ['active' => 'Ativa', 'paused' => 'Pausada', 'cancelled' => 'Cancelada'];
@@ -10,6 +10,7 @@
         ];
     @endphp
 
+    @unless($dashboardMode)
     <div class="relative">
         <div class="absolute -top-10 left-0 size-64 bg-brand-500/5 blur-[100px] rounded-full pointer-events-none"></div>
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10 px-2">
@@ -119,10 +120,12 @@
         </div>
     </div>
 
+    @endunless
+
     @if($showExtraModal)
     <div x-data="{ open: false, show(){requestAnimationFrame(()=>{this.open=true;document.documentElement.classList.add('overflow-hidden')})}, close(){this.open=false;document.documentElement.classList.remove('overflow-hidden');setTimeout(()=> $wire.closeExtraModal(),50)} }" x-init="show()" x-on:keydown.escape.window="close()">
-        <div x-show="open" x-cloak x-transition.opacity.duration.50ms @click="close()" class="fixed inset-0 z-50 bg-zinc-950/70"></div>
-        <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-4 will-change-transform">
+        <div x-show="open" x-cloak x-transition.opacity.duration.50ms @click="close()" class="fixed inset-0 {{ $dashboardMode ? 'z-[69]' : 'z-50' }} bg-zinc-950/70"></div>
+        <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 {{ $dashboardMode ? 'z-[70] lg:left-64 lg:w-[calc(100vw-16rem)]' : 'z-50' }} flex items-center justify-center p-4 will-change-transform">
             <div @click.stop x-show="open" x-transition:enter="transition duration-65 ease-[cubic-bezier(.18,.89,.32,1.28)] transform-gpu" x-transition:enter-start="opacity-0 scale-[0.997] translate-y-0.5" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="transition duration-50 ease-[cubic-bezier(.4,0,.2,1)] transform-gpu" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-[0.985] translate-y-1" class="relative w-full max-w-2xl rounded-[2rem] overflow-hidden bg-white/10 dark:bg-zinc-900/10 backdrop-blur-sm border border-white/15 dark:border-white/10 shadow-[0_6px_22px_-4px_rgba(0,0,0,0.45)]">
                 <form wire:submit.prevent="save" class="flex max-h-[86vh] flex-col">
                     <div class="shrink-0 p-6 pb-4 flex items-center gap-4 bg-white/10 dark:bg-zinc-900/10 border-b border-white/10"><div class="p-3 rounded-2xl bg-brand-600/30 text-brand-300 shadow"><flux:icon name="credit-card" class="size-5" /></div><div class="flex-1 min-w-0"><h2 class="text-xl font-black uppercase italic tracking-tight text-white">{{ $editingId ? 'Editar Assinatura' : 'Nova Assinatura' }}</h2><p class="text-[10px] text-brand-300 font-black uppercase tracking-widest italic mt-1.5">Configuração completa de custo recorrente</p></div><button type="button" @click="close()" class="rounded-full p-2 hover:bg-white/10 text-zinc-300 hover:text-white transition-all active:scale-90"><flux:icon name="x-mark" class="size-5" /></button></div>
@@ -189,7 +192,9 @@
         </div>
     @endif
 
-    <footer class="pt-20 pb-10 text-center border-t border-zinc-100 dark:border-zinc-800 mt-20 opacity-60"><p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">(c) {{ date('Y') }} {{ config('app.name') }} - Sistema de Monitorizacao</p></footer>
+    @unless($dashboardMode)
+        <footer class="pt-20 pb-10 text-center border-t border-zinc-100 dark:border-zinc-800 mt-20 opacity-60"><p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.4em]">(c) {{ date('Y') }} {{ config('app.name') }} - Sistema de Monitorizacao</p></footer>
+    @endunless
 
     @if($showPlatformPlanModal)
         @php

@@ -300,6 +300,17 @@ class SecurityHardeningTest extends TestCase
     $this->assertStringContainsString("base-uri 'self'", $csp);
 }
 
+public function test_local_content_security_policy_allows_vite_fallback_port(): void
+{
+    $this->app->instance('env', 'local');
+
+    $response = $this->get('/');
+    $csp = $response->headers->get('Content-Security-Policy');
+
+    $this->assertStringContainsString('http://localhost:5174', $csp);
+    $this->assertStringContainsString('ws://localhost:5174', $csp);
+}
+
     public function test_notification_links_cannot_redirect_to_external_hosts(): void
     {
         $user = User::factory()->create();

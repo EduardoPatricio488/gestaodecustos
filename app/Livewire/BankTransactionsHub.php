@@ -10,11 +10,14 @@ use App\Models\Income;
 use App\Services\BusinessAccessService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class BankTransactionsHub extends Component
 {
+    public bool $dashboardMode = false;
+
     public bool $showEditModal = false;
     public ?int $editingMovementId = null;
     public string $editingMovementType = '';
@@ -32,6 +35,11 @@ class BankTransactionsHub extends Component
     public ?int $editCategoryId = null;
     public bool $canConvertTransferToExpense = false;
     public bool $showConvertExpenseOptions = false;
+
+    public function mount(bool $dashboardMode = false): void
+    {
+        $this->dashboardMode = $dashboardMode;
+    }
 
     private function authorizeMutation(): void
     {
@@ -51,8 +59,15 @@ class BankTransactionsHub extends Component
             ->when($user->currentWorkspace?->type === 'personal', fn ($query) => $query->where('user_id', $user->id));
     }
 
-    public function openNewTransfer(): void
+    #[On('calendar-bank-transfer-create')]
+    public function openNewTransfer(?string $date = null): void
     {
+        if ($this->dashboardMode && auth()->user()->isViewer()) {
+            $this->dispatch('toast', variant: 'error', text: 'Apenas utilizadores com permissões de edição podem registar transferências.');
+
+            return;
+        }
+
         $this->authorizeMutation();
         $this->resetValidation();
         $this->editingMovementId = null;
@@ -62,7 +77,7 @@ class BankTransactionsHub extends Component
         $this->editCategoryId = null;
         $this->editDescription = '';
         $this->editAmount = '';
-        $this->editDate = now()->format('Y-m-d');
+        $this->editDate = $date ?: now()->format('Y-m-d');
         $this->editFromAccountId = null;
         $this->editToAccountId = null;
         $this->editRecipient = '';
@@ -70,6 +85,18 @@ class BankTransactionsHub extends Component
         $this->editTransferMethod = 'bank_transfer';
         $this->editStatus = 'completed';
         $this->showEditModal = true;
+    }
+
+    #[On('calendar-bank-transfer-edit')]
+    public function editCalendarTransfer(int $transferId): void
+    {
+        if ($this->dashboardMode && auth()->user()->isViewer()) {
+            $this->dispatch('toast', variant: 'error', text: 'Apenas utilizadores com permissões de edição podem alterar transferências.');
+
+            return;
+        }
+
+        $this->editMovement('transfer-'.$transferId);
     }
 
     public function editMovement(string $key): void
@@ -298,6 +325,7 @@ class BankTransactionsHub extends Component
         });
 
         $this->showEditModal = false;
+        $this->dispatch('dashboard-record-created');
         $this->dispatch('toast', variant: 'success', text: $this->editingMovementId ? 'Movimento atualizado com sucesso.' : 'Transferência registada com sucesso.');
     }
 

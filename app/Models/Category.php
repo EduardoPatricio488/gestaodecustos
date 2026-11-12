@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Traits\BelongsToWorkspace;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class Category extends Model
@@ -87,6 +89,30 @@ class Category extends Model
         });
 
         return $count;
+    }
+
+    public function scopeSidebarVisible(Builder $query): Builder
+    {
+        return $query
+            ->whereNotNull('slug')
+            ->where('slug', '!=', '')
+            ->where(function (Builder $query): void {
+                $query->where('hidden_from_sidebar', false)
+                    ->orWhereRaw("LOWER(TRIM(name)) = 'outros'");
+            })
+            ->orderByRaw("CASE WHEN LOWER(TRIM(name)) = 'outros' THEN 1 ELSE 0 END ASC")
+            ->orderBy('order')
+            ->orderBy('name');
+    }
+
+    public static function sidebarForWorkspace(int $workspaceId): Collection
+    {
+        return static::query()
+            ->where('workspace_id', $workspaceId)
+            ->sidebarVisible()
+            ->get()
+            ->unique(fn (Category $category) => mb_strtolower(trim($category->name), 'UTF-8'))
+            ->values();
     }
 
     private static function slugExistsInWorkspace(string $slug, ?int $workspaceId, ?int $exceptId = null): bool

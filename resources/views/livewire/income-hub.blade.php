@@ -1,5 +1,6 @@
-<div class="space-y-10 pb-20">
+<div class="{{ $dashboardMode ? '' : 'space-y-10 pb-20' }}">
 
+    @unless($dashboardMode)
     {{-- ================================================================== --}}
     {{-- HEADER · RESPONSIVO                                               --}}
     {{-- ================================================================== --}}
@@ -1477,6 +1478,32 @@
     </div>
 </div>
 
+    @endunless
+@if($showCalendarBonusContractPicker)
+    <div class="fixed inset-0 z-[80] flex items-center justify-center bg-zinc-950/60 p-4" role="dialog" aria-modal="true" data-no-global-close>
+        <div class="w-full max-w-lg rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+            <div class="mb-5 flex items-start justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-black text-zinc-900 dark:text-white">Escolher contrato para o prémio</h2>
+                    <p class="mt-1 text-sm text-zinc-500">O prémio ficará associado a um rendimento fixo de emprego.</p>
+                </div>
+                <button type="button" wire:click="closeCalendarBonusPicker" aria-label="Fechar" class="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    <flux:icon name="x-mark" class="size-5" />
+                </button>
+            </div>
+            <div class="space-y-2">
+                @foreach($calendarBonusContracts as $salary)
+                    <button type="button" wire:click="openCalendarBonusForContract({{ $salary['id'] }})" class="flex w-full items-center justify-between rounded-2xl border border-zinc-200 px-4 py-3 text-left transition hover:border-amber-400 hover:bg-amber-50 dark:border-zinc-700 dark:hover:bg-amber-500/10">
+                        <span class="font-bold text-zinc-800 dark:text-white">{{ $salary['description'] }}</span>
+                        <flux:icon name="chevron-right" class="size-4 text-zinc-400" />
+                    </button>
+                @endforeach
+            </div>
+            <button type="button" wire:click="closeCalendarBonusPicker" class="mt-5 w-full rounded-xl py-3 text-sm font-bold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
+        </div>
+    </div>
+@endif
+
 @if($showSalaryBonusModal)
 <div
     x-data="{
@@ -1580,6 +1607,7 @@
 </div>
 @endif
 
+    @unless($dashboardMode)
 @if($salaryIncomeHistoryContract)
 <div
     x-data="{ open: true, close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); } }"
@@ -3072,7 +3100,9 @@
 
 
 
-    </div>@if($showExtraModal)
+</div>
+    @endunless
+@if($showExtraModal)
 
 <div
     x-data="{
@@ -3084,9 +3114,9 @@
     x-on:modal-close-receita-extra.window="close()"
     x-on:keydown.escape.window="close()"
 >
-    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
+    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 {{ $dashboardMode ? 'z-[69]' : 'z-50' }} bg-zinc-950/80 backdrop-blur-sm"></div>
 
-    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 {{ $dashboardMode ? 'z-[70] lg:left-64 lg:w-[calc(100vw-16rem)]' : 'z-50' }} flex items-center justify-center p-3 sm:p-6">
         <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
 
             <form wire:submit.prevent="saveExtra" class="flex flex-col" autocomplete="off">
@@ -3143,7 +3173,7 @@
                         @endif
                     </div>
 
-                    @if($salaryContractOptions->isNotEmpty() && ! $extraSalaryId)
+                    @if(! $extraSalaryId)
                         <div class="relative">
                             <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-emerald-600 z-10">Associar ao contrato</label>
                             <select wire:model.live="extraSalaryId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none">
@@ -3201,8 +3231,7 @@
                 <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
                     <button type="button" @click="close(); $wire.closeExtraModal()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
                     <button
-                        wire:click="saveExtra"
-                        @click="close()"
+                        type="submit"
                         wire:loading.attr="disabled"
                         wire:target="saveExtra"
                         class="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20 transition-all disabled:opacity-60">
@@ -3214,6 +3243,7 @@
     </div>
 </div>
 @endif
+@unless($dashboardMode)
 
 {{-- ══════════════════════════════════════════════════════════════ --}}
 {{-- MODAL: SALÁRIO FIXO · PREMIUM + FLUIDO --}}
@@ -3507,4 +3537,5 @@
         </p>
     </footer>
 
+@endunless
 </div> {{-- FECHA A DIV RAIZ DO FICHEIRO --}}

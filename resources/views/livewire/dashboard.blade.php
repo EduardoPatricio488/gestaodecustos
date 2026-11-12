@@ -626,7 +626,10 @@
             <span>Movimentos</span>
         </a>
 
-        <div x-data="{ openQuickCreate: false }" class="relative">
+        <div
+            x-data="{ openQuickCreate: false }"
+            class="relative"
+        >
             <button type="button" x-on:click="openQuickCreate = !openQuickCreate" x-on:keydown.escape.window="openQuickCreate = false"
                 :aria-expanded="openQuickCreate.toString()" aria-label="Adicionar novo registo"
                 class="group flex size-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:scale-105 hover:shadow-xl active:scale-95">
@@ -636,22 +639,27 @@
             <div x-cloak x-show="openQuickCreate" x-transition.origin.top.right x-on:click.outside="openQuickCreate = false"
                 class="absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
                 <p class="px-3 pb-2 pt-1 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">Criar novo registo</p>
-                <a href="{{ route('expenses', ['open_new' => 1]) }}" wire:navigate x-on:click="openQuickCreate = false"
-                    class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-rose-50 dark:hover:bg-rose-950/30">
+                <button type="button" x-on:click="openQuickCreate = false; Livewire.dispatch('open-expense-category-picker')"
+                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-rose-50 dark:hover:bg-rose-950/30">
                     <span class="flex size-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300"><span class="text-sm font-black leading-none">▤</span></span>
                     <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova despesa</span>
-                </a>
-                <a href="{{ route('hub.subscriptions', ['open_extra' => 1]) }}" wire:navigate x-on:click="openQuickCreate = false"
-                    class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-violet-50 dark:hover:bg-violet-950/30">
-                    <span class="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300"><flux:icon name="arrow-path" class="size-4" /></span>
-                    <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova subscrição</span>
-                </a>
-                <a href="{{ route('hub.incomes', ['open_extra' => 1]) }}" wire:navigate x-on:click="openQuickCreate = false"
-                    class="flex items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
+                </button>
+                <button type="button" x-on:click="openQuickCreate = false; Livewire.dispatch('dashboard-income-create')"
+                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
                     <span class="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300"><span class="text-sm font-black leading-none">€</span></span>
                     <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova receita extra</span>
-                </a>
+                </button>
+                <button type="button" x-on:click="openQuickCreate = false; Livewire.dispatch('dashboard-subscription-create')"
+                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-violet-50 dark:hover:bg-violet-950/30">
+                    <span class="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300"><flux:icon name="arrow-path" class="size-4" /></span>
+                    <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova subscrição</span>
+                </button>
             </div>
+
+            <livewire:expenses :dashboard-mode="true" />
+            <livewire:expense-form :dashboard-mode="true" />
+            <livewire:subscription-hub :dashboard-mode="true" />
+            <livewire:income-hub :dashboard-mode="true" />
         </div>
     </div>
 </div>
@@ -938,7 +946,7 @@
                         <div class="flex items-center gap-2"><span class="text-[10px] font-black italic tracking-[0.18em] text-white/80">FP</span><div class="flex size-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 backdrop-blur-sm"><flux:icon name="cake" variant="outline" class="size-5 text-emerald-100" /></div></div>
                     </div>
                     <div class="flex items-center gap-3 py-2"><div class="relative h-9 w-12 overflow-hidden rounded-md border border-amber-100/40 bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 shadow-inner"><span class="absolute left-1/2 top-0 h-full w-px bg-amber-800/25"></span><span class="absolute left-0 top-1/2 h-px w-full bg-amber-800/25"></span><span class="absolute left-1/4 top-0 h-full w-px bg-amber-800/20"></span><span class="absolute right-1/4 top-0 h-full w-px bg-amber-800/20"></span></div><flux:icon name="wifi" variant="outline" class="size-5 rotate-90 text-white/65" /><span class="ml-auto text-[9px] font-bold uppercase tracking-[0.18em] text-emerald-100/65">{{ $dashboardPeriodType === 'year' ? 'Benefício no ano' : 'Benefício mensal' }}</span></div>
-                    <div><p class="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-100/75">{{ $dashboardPeriodType === 'year' ? 'Total do período' : 'Valor projetado' }}</p><p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-4xl">{{ number_format($dashboardProjectedMealAllowance, 2, ',', ' ') }} <span class="text-xl text-emerald-200">€</span></p></div>
+                    <div><p class="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-100/75">{{ $dashboardPeriodType === 'year' ? 'Saldo estimado no ano' : 'Saldo estimado' }}</p><p class="mt-1 text-3xl font-black tracking-tight tabular-nums text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-4xl">{{ number_format($dashboardMealCardBalance, 2, ',', ' ') }} <span class="text-xl text-emerald-200">€</span></p></div>
                     <div class="flex items-end justify-between gap-3 border-t border-white/15 pt-2">
                         <div class="min-w-0 transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''"><p class="text-[8px] font-bold uppercase tracking-[0.16em] text-emerald-100/65">Atribuído por</p><p class="mt-1 truncate text-[11px] font-bold text-white">MIND</p></div>
                         <div class="shrink-0 text-right transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''"><p class="text-[8px] font-bold uppercase tracking-[0.16em] text-emerald-100/65">{{ $dashboardPeriodType === 'year' ? 'Total no ano' : 'Projeção anual' }}</p><p class="mt-1 text-xs font-bold tabular-nums text-white">{{ number_format($dashboardMealAllowanceAnnualProjection, 2, ',', ' ') }} €</p></div>
@@ -953,7 +961,7 @@
                             <p class="mt-1 text-xs text-emerald-100/75">Configuração dos contratos ativos</p>
                         </div>
                         <div class="relative grid grid-cols-2 gap-3 transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
-                            <div class="rounded-xl border border-white/15 bg-black/15 p-3"><p class="text-[8px] font-bold uppercase tracking-wider text-emerald-100/65">{{ $dashboardPeriodType === 'year' ? 'Total no ano' : 'Valor mensal' }}</p><p class="mt-1 text-base font-black tabular-nums">{{ number_format($dashboardProjectedMealAllowance, 2, ',', ' ') }} €</p></div>
+                            <div class="rounded-xl border border-white/15 bg-black/15 p-3"><p class="text-[8px] font-bold uppercase tracking-wider text-emerald-100/65">{{ $dashboardPeriodType === 'year' ? 'Saldo estimado no ano' : 'Saldo estimado' }}</p><p class="mt-1 text-base font-black tabular-nums">{{ number_format($dashboardMealCardBalance, 2, ',', ' ') }} €</p></div>
                             <div class="rounded-xl border border-white/15 bg-black/15 p-3"><p class="text-[8px] font-bold uppercase tracking-wider text-emerald-100/65">{{ $dashboardPeriodType === 'year' ? 'Total registado' : 'Projeção anual' }}</p><p class="mt-1 text-base font-black tabular-nums">{{ number_format($dashboardMealAllowanceAnnualProjection, 2, ',', ' ') }} €</p></div>
                         </div>
                         <div class="relative space-y-2 transition-all duration-300" :class="privacyMode ? 'blur-md select-none' : ''">
@@ -1151,7 +1159,7 @@
                     @empty
                     @endforelse
                     @forelse($dashboardBankCardExpenses as $movement)
-                        <div class="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-700"><div class="min-w-0"><p class="truncate text-xs font-bold text-zinc-900 dark:text-white">{{ $movement->description ?: 'Despesa bancária' }}</p><p class="mt-1 text-[10px] text-zinc-500">{{ $movement->spent_at?->format('d/m/Y') }}</p></div><p class="shrink-0 text-sm font-black text-red-600">− {{ number_format((float) ($movement->amount_converted ?? $movement->amount), 2, ',', ' ') }} €</p></div>
+                        <a href="{{ route('hub.category', ['slug' => $movement->category?->slug ?: ($movement->category?->name ? \Illuminate\Support\Str::slug($movement->category->name) : 'todas-as-categorias'), 'open_expense' => $movement->id]) }}" wire:navigate aria-label="Abrir registo: {{ $movement->description ?: 'Despesa bancária' }}" class="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 transition hover:border-red-300 hover:bg-red-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-zinc-700 dark:hover:border-red-700 dark:hover:bg-red-950/20"><div class="min-w-0"><p class="truncate text-xs font-bold text-zinc-900 dark:text-white">{{ $movement->description ?: 'Despesa bancária' }}</p><p class="mt-1 text-[10px] text-zinc-500">{{ $movement->spent_at?->format('d/m/Y') }} · {{ $movement->category?->name ?? 'Categoria não indicada' }}</p></div><p class="shrink-0 text-sm font-black text-red-600">− {{ number_format((float) ($movement->amount_converted ?? $movement->amount), 2, ',', ' ') }} €</p></a>
                     @empty
                     @endforelse
                     @if($dashboardBankCardIncomes->isEmpty() && $dashboardBankCardExpenses->isEmpty())
@@ -1175,7 +1183,7 @@
                 </div>
                 <div x-show="activeModalTab === 'summary'" x-cloak class="min-h-0 flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30"><p class="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">{{ $dashboardPeriodType === 'year' ? 'Total no ano selecionado' : 'Projeção mensal' }}</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($dashboardProjectedMealAllowance, 2, ',', ' ') }} €</p><p class="mt-1 text-[10px] text-zinc-500">{{ $dashboardPeriodType === 'year' ? 'Soma dos pagamentos registados no ano selecionado' : 'Soma dos valores mensais configurados' }}</p></div>
+                        <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30"><p class="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">{{ $dashboardPeriodType === 'year' ? 'Saldo estimado no ano' : 'Saldo estimado no cartão' }}</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($dashboardMealCardBalance, 2, ',', ' ') }} €</p><p class="mt-1 text-[10px] text-zinc-500">Base: {{ number_format($dashboardProjectedMealAllowance - $mealAllowanceAdjustment, 2, ',', ' ') }} € · ajustes diários: {{ $mealAllowanceAdjustment > 0 ? '+' : ($mealAllowanceAdjustment < 0 ? '−' : '') }}{{ number_format(abs($mealAllowanceAdjustment), 2, ',', ' ') }} € · despesas: −{{ number_format($dashboardMealCardExpensesTotal, 2, ',', ' ') }} €</p></div>
                         <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"><p class="text-[10px] font-black uppercase tracking-wider text-zinc-500">{{ $dashboardPeriodType === 'year' ? 'Total registado no ano' : 'Projeção anual' }}</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($dashboardMealAllowanceAnnualProjection, 2, ',', ' ') }} €</p><p class="mt-1 text-[10px] text-zinc-500">{{ $dashboardPeriodType === 'year' ? 'Soma dos pagamentos registados no ano selecionado' : 'Estimativa mensal × 11 meses' }}</p></div>
                         <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"><p class="text-[10px] font-black uppercase tracking-wider text-zinc-500">Registos de pagamento</p><p class="mt-1 text-xl font-black tabular-nums text-zinc-900 dark:text-white">{{ $projectedSalaryHistoryPayments->count() }}</p><p class="mt-1 text-[10px] text-zinc-500">Pagamentos salariais guardados</p></div>
                     </div>
@@ -1184,6 +1192,7 @@
                         <div class="mt-3 space-y-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
                             <p>O valor mensal corresponde à soma do subsídio de alimentação configurado em cada contrato ativo. O valor diário e os dias de trabalho definidos no contrato determinam a projeção mensal.</p>
                             <p>A estimativa anual apresentada no cartão corresponde à projeção mensal × 11 meses, considerando que o subsídio poderá não ser pago durante o mês de férias.</p>
+                            <p>O saldo estimado subtrai as despesas pagas com o cartão e registadas no período selecionado. Não representa o saldo real disponibilizado pelo emissor do cartão.</p>
                             <p><strong>Importante:</strong> a projeção não confirma que o valor já tenha sido recebido. O estado e a data do pagamento devem ser consultados no separador Histórico.</p>
                         </div>
                     </div>
@@ -1200,14 +1209,20 @@
                     </div>
                 </div>
                 <div x-show="activeModalTab === 'history'" x-cloak class="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 sm:p-6">
-                    <div><h4 class="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-200">Histórico de pagamentos salariais</h4><p class="mt-1 text-[10px] text-zinc-500">Inclui pagamentos pagos e pendentes e o subsídio de alimentação registado em cada um.</p></div>
-                    @forelse($projectedSalaryHistoryPayments as $payment)
-                        <div class="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700">
-                            <div class="flex flex-wrap items-center justify-between gap-2"><div><p class="text-sm font-bold text-zinc-900 dark:text-white">{{ $payment->recurringIncome?->description ?? 'Subsídio de alimentação' }}</p><p class="mt-1 text-[10px] text-zinc-500">Período: {{ str_pad((string) $payment->payment_month, 2, '0', STR_PAD_LEFT) }}/{{ $payment->payment_year }} · {{ $payment->paid_at?->format('d/m/Y') ?? 'Sem data de pagamento' }}</p></div><span class="rounded-full px-2.5 py-1 text-[9px] font-black uppercase {{ $payment->status === 'paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' }}">{{ $payment->status === 'paid' ? 'Pago' : 'Pendente' }}</span></div>
-                            <div class="mt-3 flex flex-wrap items-end justify-between gap-3"><div><p class="text-[10px] text-zinc-500">Subsídio registado</p><p class="mt-1 text-lg font-black text-emerald-600 dark:text-emerald-300">{{ number_format((float) $payment->meal_allowance, 2, ',', ' ') }} €</p></div><p class="text-[10px] text-zinc-500">O estado indica se o pagamento salarial associado foi marcado como pago.</p></div>
+                    <div><h4 class="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-200">Histórico do subsídio de alimentação</h4><p class="mt-1 text-[10px] text-zinc-500">{{ $dashboardPeriodLabel }} · Pagamentos do benefício e despesas efetuadas com o cartão · Total de despesas: −{{ number_format($dashboardMealCardExpensesTotal, 2, ',', ' ') }} €</p></div>
+                    @forelse($dashboardMealCardHistory as $movement)
+                        @php
+                            $isMealCardExpense = $movement['type'] === 'expense';
+                        @endphp
+                        <div class="relative flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-700 {{ $isMealCardExpense ? 'cursor-pointer transition hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/20' : '' }}">
+                            <div class="min-w-0"><p class="truncate text-xs font-bold text-zinc-900 dark:text-white">{{ $movement['title'] }}</p><p class="mt-1 text-[10px] text-zinc-500">{{ $movement['subtitle'] }}</p></div>
+                            <div class="shrink-0 text-right"><span class="rounded-full px-2 py-1 text-[9px] font-black uppercase {{ $isMealCardExpense ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' : ($movement['status'] === 'paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300') }}">{{ $isMealCardExpense ? 'Despesa' : ($movement['status'] === 'paid' ? 'Pago' : 'Pendente') }}</span><p class="mt-1 text-sm font-black {{ $isMealCardExpense ? 'text-red-600' : 'text-emerald-600 dark:text-emerald-300' }}">{{ $isMealCardExpense ? '−' : '+' }} {{ number_format($movement['amount'], 2, ',', ' ') }} €</p></div>
+                        @if($isMealCardExpense)
+                            <a href="{{ route('hub.category', ['slug' => $movement['category_slug'], 'open_expense' => $movement['expense_id']]) }}" wire:navigate aria-label="Abrir registo: {{ $movement['title'] }}" class="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"></a>
+                        @endif
                         </div>
                     @empty
-                        <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Ainda não existem registos mensais de pagamento com subsídio de alimentação.</p>
+                        <p class="rounded-xl bg-zinc-50 p-4 text-xs text-zinc-500 dark:bg-zinc-800">Ainda não existem movimentos registados no cartão neste período.</p>
                     @endforelse
                 </div>
                 <div class="border-t border-zinc-100 p-4 text-right dark:border-zinc-800"><button type="button" x-on:click="showMealHistory = false; activeModalTab = 'summary'" class="rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900">Fechar</button></div>

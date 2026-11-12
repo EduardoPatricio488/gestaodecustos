@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Category;
 use App\Models\Expense;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -20,6 +21,10 @@ class Expenses extends Component
     public ?int $filterCategory = null;
 
     public bool $openCreateAfterCategory = false;
+
+    public bool $dashboardMode = false;
+
+    public ?string $calendarCreateDate = null;
 
     public $scannerReceipt;
 
@@ -131,12 +136,7 @@ class Expenses extends Component
         ]);
 
         $user = auth()->user();
-        $categoriesQuery = Category::where('workspace_id', $user->current_workspace_id)
-            ->where('hidden_from_sidebar', false);
-        if ($user->currentWorkspace?->type === 'personal') {
-            $categoriesQuery->where('user_id', $user->id);
-        }
-        $categories = $categoriesQuery->orderBy('name')->get(['id', 'name', 'slug']);
+        $categories = Category::sidebarForWorkspace($user->current_workspace_id);
         if ($categories->isEmpty()) {
             $this->scannerError = 'Não existem categorias disponíveis para classificar a fatura.';
             return;
@@ -237,15 +237,17 @@ class Expenses extends Component
             \Illuminate\Support\Facades\Cache::put($cacheKey, $scan, now()->addMinutes(5));
         }
 
+        $scanId = $this->invoiceScanId;
         $this->isScanningInvoice = false;
         $this->invoiceScanId = null;
-        \Illuminate\Support\Facades\Cache::forget($cacheKey);
 
         if (($scan['status'] ?? null) !== 'completed') {
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
             $this->scannerError = $scan['error'] ?? 'Não foi possível analisar a fatura.';
             return;
         }
 
+        \Illuminate\Support\Facades\Cache::put($cacheKey, $scan, now()->addMinutes(10));
         session()->put('pending_expense_scan:'.$user->current_workspace_id.':'.$user->id, [
             'data' => $scan['data'],
             'document_path' => $scan['document_path'],
@@ -258,11 +260,13 @@ class Expenses extends Component
         $this->redirect(route('hub.category', [
             'slug' => $scan['category_slug'],
             'open_scan_review' => 1,
+            'scan_id' => $scanId,
         ]));
     }
 
-    public function mount(): void
+    public function mount(bool $dashboardMode = false): void
     {
+        $this->dashboardMode = $dashboardMode;
         $this->openCreateAfterCategory = request()->boolean('open_new');
 
         if ($this->openCreateAfterCategory) {
@@ -293,6 +297,23 @@ class Expenses extends Component
         $this->redirect(route('expenses.create'), navigate: true);
     }
 
+    #[On('calendar-expense-create')]
+    public function openCalendarExpensePicker(?string $date = null): void
+    {
+        if (! $this->dashboardMode) {
+            return;
+        }
+
+        if (auth()->user()->isViewer()) {
+            $this->dispatch('toast', variant: 'error', text: 'Apenas utilizadores com permissões de edição podem criar registos.');
+
+            return;
+        }
+
+        $this->calendarCreateDate = $date;
+        $this->dispatch('open-expense-category-picker');
+    }
+
     /**
      * Abre a página da categoria escolhida.
      */
@@ -305,10 +326,20 @@ class Expenses extends Component
         }
 
         $category = Category::where('workspace_id', auth()->user()->current_workspace_id)
-            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
-            ->where('hidden_from_sidebar', false)
+            ->sidebarVisible()
             ->whereKey($categoryId)
             ->firstOrFail();
+
+        if ($this->dashboardMode) {
+            $this->dispatch(
+                'dashboard-expense-category-selected',
+                categoryId: $category->id,
+                date: $this->calendarCreateDate,
+            );
+            $this->calendarCreateDate = null;
+
+            return;
+        }
 
         $this->redirect(route('hub.category', [
             'slug' => $category->slug,
@@ -359,6 +390,18 @@ class Expenses extends Component
     {
         $user = auth()->user();
         $isPersonalWorkspace = $user->currentWorkspace?->type === 'personal';
+        $categories = Category::sidebarForWorkspace($user->current_workspace_id);
+
+        if ($this->dashboardMode) {
+            return view('livewire.expenses', [
+                'expenses' => collect(),
+                'categories' => $categories,
+                'monthTotal' => 0,
+                'isShared' => false,
+                'canEdit' => ! $user->isViewer(),
+                'canDelete' => $user->isOwner(),
+            ]);
+        }
 
         // O trait filtra pelo workspace; em workspaces pessoais, cada utilizador
         // deve ver apenas os seus próprios registos.
@@ -387,11 +430,7 @@ class Expenses extends Component
 
         return view('livewire.expenses', [
             'expenses' => $expenses,
-            'categories' => Category::where('workspace_id', $user->current_workspace_id)
-                ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
-                ->where('hidden_from_sidebar', false)
-                ->orderBy('name')
-                ->get(),
+            'categories' => $categories,
             'monthTotal' => $monthTotal,
             'isShared' => $user->currentWorkspace->users()->count() > 1,
 

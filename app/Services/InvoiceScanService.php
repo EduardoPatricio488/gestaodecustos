@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Cache\RateLimiter;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -36,6 +37,21 @@ class InvoiceScanService
 
         if ($isImage) {
             [$fileContents, $mimeType] = $this->prepareImage($fileContents, $mimeType);
+        }
+
+        $pdfText = null;
+        if ($isPdf) {
+            try {
+                $pdfText = trim((new \Smalot\PdfParser\Parser())->parseContent($fileContents)->getText());
+            } catch (\Throwable $exception) {
+                Log::notice('Invoice scanner: local PDF text extraction failed.', [
+                    'exception' => $exception::class,
+                ]);
+            }
+
+            if (! is_string($pdfText) || mb_strlen($pdfText) < 20) {
+                throw new RuntimeException('Este PDF não contém texto selecionável suficiente. Para manter a análise gratuita, envia uma fotografia JPG/PNG da fatura ou um PDF com texto selecionável. Não foi enviado qualquer pedido de IA.');
+            }
         }
 
         $quota = app(OpenRouterQuotaService::class)->dailyQuota();
@@ -73,93 +89,131 @@ PROMPT;
         $encoded = base64_encode($fileContents);
         $part = $isImage
             ? ['type' => 'image_url', 'image_url' => ['url' => 'data:'.$mimeType.';base64,'.$encoded, 'detail' => 'high']]
-            : ['type' => 'file', 'file' => ['filename' => basename($filename), 'file_data' => 'data:application/pdf;base64,'.$encoded]];
+            : ['type' => 'text', 'text' => "Texto extraído localmente do PDF (sem serviço externo de parsing):\n".$pdfText];
 
-        $payload = [
-            'model' => self::MODEL,
-            'temperature' => 0,
-            'max_tokens' => 3000,
-            'messages' => [[
-                'role' => 'user',
-                'content' => [['type' => 'text', 'text' => $prompt], $part],
-            ]],
+        $response = null;
+        $lastStatus = null;
+        $result = null;
+        $lastFinishReason = null;
+        $models = [
+            'google/gemma-4-31b-it:free',
+            'nvidia/nemotron-3.5-super-vl:free',
+            self::MODEL,
         ];
 
-        if ($isPdf) {
-            $payload['plugins'] = [[
-                'id' => 'file-parser',
-                'pdf' => ['engine' => 'cloudflare-ai'],
-            ]];
-        }
+        foreach ($models as $model) {
+            $payload = [
+                'model' => $model,
+                'temperature' => 0,
+                'max_tokens' => 4000,
+                'provider' => [
+                    'allow_fallbacks' => true,
+                    'max_price' => [
+                        'prompt' => 0,
+                        'completion' => 0,
+                        'image' => 0,
+                    ],
+                ],
+                'messages' => [[
+                    'role' => 'user',
+                    'content' => [['type' => 'text', 'text' => $prompt], $part],
+                ]],
+            ];
 
-        $response = Http::withToken(config('services.openrouter.api_key'))
-            ->acceptJson()
-            ->withHeaders([
-                'HTTP-Referer' => (string) config('app.url'),
-                'X-Title' => 'Finance Pro AI',
-            ])
-            ->connectTimeout((int) config('services.openrouter.connect_timeout', 8))
-            ->timeout((int) config('services.openrouter.request_timeout', 45))
-            ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
+            if ($model === 'nvidia/nemotron-3.5-super-vl:free') {
+                $payload['reasoning'] = ['enabled' => false];
+            }
 
-        if (! $response->successful()) {
-            $status = $response->status();
-            $message = (string) ($response->json('error.message') ?: 'Erro de comunicação com o OpenRouter.');
+            try {
+                $response = Http::withToken(config('services.openrouter.api_key'))
+                    ->acceptJson()
+                    ->withHeaders([
+                        'HTTP-Referer' => (string) config('app.url'),
+                        'X-Title' => 'Finance Pro AI',
+                    ])
+                    ->connectTimeout((int) config('services.openrouter.connect_timeout', 8))
+                    ->timeout(min(30, (int) config('services.openrouter.request_timeout', 45)))
+                    ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
+            } catch (ConnectionException $exception) {
+                $response = null;
+                $lastStatus = null;
+                Log::warning('Invoice scanner: free OpenRouter route timed out; trying fallback.', [
+                    'model' => $model,
+                    'exception' => $exception::class,
+                ]);
+
+                continue;
+            }
+
+            if ($response->successful()) {
+                $content = $response->json('choices.0.message.content');
+                if (is_array($content)) {
+                    $content = collect($content)
+                        ->map(static fn ($part) => is_string($part) ? $part : data_get($part, 'text', data_get($part, 'content', '')))
+                        ->filter(static fn ($part) => is_string($part) && trim($part) !== '')
+                        ->implode("\n");
+                }
+
+                $raw = trim((string) $content);
+                $raw = preg_replace('/^\x60{3}(?:json)?\s*|\s*\x60{3}$/i', '', $raw);
+                $candidateResult = json_decode($raw, true);
+
+                if (! is_array($candidateResult) && preg_match('/\{.*\}/s', $raw, $matches)) {
+                    $candidateResult = json_decode($matches[0], true);
+                }
+
+                $lastFinishReason = $response->json('choices.0.finish_reason');
+                if (is_array($candidateResult)) {
+                    $result = $candidateResult;
+                    break;
+                }
+
+                Log::warning('Invoice scanner: free model returned an invalid response; trying fallback.', [
+                    'model' => $model,
+                    'response_id' => $response->json('id'),
+                    'finish_reason' => $lastFinishReason,
+                    'content_length' => strlen($raw),
+                    'json_error' => json_last_error_msg(),
+                ]);
+
+                continue;
+            }
+
+            $lastStatus = $response->status();
             Log::warning('Invoice scanner: OpenRouter request failed.', [
-                'http_status' => $status,
+                'model' => $model,
+                'http_status' => $lastStatus,
                 'provider_error' => $response->json('error'),
             ]);
 
-            if ($status === 429) {
-                throw new RuntimeException('O OpenRouter está a limitar pedidos ou o fornecedor gratuito não tem capacidade. '.$message);
+            if (! in_array($lastStatus, [404, 429, 502, 503, 504], true)) {
+                break;
             }
-            if ($status === 402) {
+        }
+
+        if (! is_array($result) && ! $response?->successful()) {
+            if ($lastStatus === 402) {
                 throw new RuntimeException('O OpenRouter recusou o pedido por limite de créditos/orçamento. Não foi criada qualquer despesa.');
             }
-            if ($status === 401 || $status === 403) {
+            if ($lastStatus === 401 || $lastStatus === 403) {
                 throw new RuntimeException('A chave OpenRouter é inválida ou não tem permissões. Confirma OPENROUTER_API_KEY.');
             }
-            throw new RuntimeException('Não foi possível analisar a fatura (HTTP '.$status.'): '.$message);
-        }
-
-        if ($isPdf) {
-            $annotations = $response->json('choices.0.message.annotations', []);
-            $parsedParts = collect($annotations)
-                ->filter(static fn ($annotation) => data_get($annotation, 'type') === 'file')
-                ->flatMap(static fn ($annotation) => data_get($annotation, 'file.content', []));
-
-            $hasReadableContent = $parsedParts->contains(static function ($part): bool {
-                if (data_get($part, 'type') === 'text') {
-                    return trim((string) data_get($part, 'text', '')) !== '';
-                }
-
-                return data_get($part, 'type') === 'image_url'
-                    && filled(data_get($part, 'image_url.url'));
-            });
-
-            if (! $hasReadableContent) {
-                throw new RuntimeException('O parser gratuito não conseguiu extrair conteúdo legível deste PDF. Não foi criada qualquer despesa. Envia um PDF com texto selecionável ou converte as páginas digitalizadas em imagens JPG/PNG; o OCR pago não é utilizado.');
+            if ($response === null) {
+                throw new RuntimeException('Os fornecedores gratuitos do OpenRouter não responderam a tempo. Não foi criada qualquer despesa nem utilizado um modelo pago; tenta novamente mais tarde.');
             }
+            if ($lastStatus === 404) {
+                throw new RuntimeException('O OpenRouter não encontrou um endpoint gratuito permitido pelas preferências da conta. Não foi criada qualquer despesa nem utilizado um modelo pago; verifica as preferências de privacidade e guardrails da conta.');
+            }
+
+            throw new RuntimeException('Os fornecedores gratuitos do OpenRouter estão temporariamente indisponíveis (HTTP '.$lastStatus.'). Não foi criada qualquer despesa nem utilizado um modelo pago; tenta novamente mais tarde.');
         }
 
-        $content = $response->json('choices.0.message.content');
-        if (is_array($content)) {
-            $content = collect($content)
-                ->map(static fn ($part) => is_string($part) ? $part : data_get($part, 'text', data_get($part, 'content', '')))
-                ->filter(static fn ($part) => is_string($part) && trim($part) !== '')
-                ->implode("\n");
-        }
+        if (! is_array($result)) {
+            $message = $lastFinishReason === 'length'
+                ? 'A resposta da IA foi cortada. As rotas gratuitas alternativas também não concluíram a análise; não foi criada qualquer despesa.'
+                : 'A IA não devolveu uma leitura completa e válida através das rotas gratuitas disponíveis. Não foi criada qualquer despesa; tenta novamente ou preenche os dados manualmente.';
 
-        $raw = trim((string) $content);
-        $raw = preg_replace('/^\x60{3}(?:json)?\s*|\s*\x60{3}$/i', '', $raw);
-        $result = json_decode($raw, true);
-
-        if (! is_array($result) && preg_match('/\{.*\}/s', $raw, $matches)) {
-            $result = json_decode($matches[0], true);
-        }
-
-        if (! is_array($result) || ($response->json('choices.0.finish_reason') === 'length')) {
-            throw new RuntimeException('A IA não devolveu uma leitura completa e válida. Não foi criada qualquer despesa; tenta novamente ou preenche os dados manualmente.');
+            throw new RuntimeException($message);
         }
 
         $aliases = [

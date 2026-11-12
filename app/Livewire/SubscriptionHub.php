@@ -10,12 +10,15 @@ use App\Models\SubscriptionPlan;
 use App\Services\SubscriptionCycleService;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Stripe\StripeClient;
 
 #[Layout('components.layouts.app')]
 class SubscriptionHub extends Component
 {
+    public bool $dashboardMode = false;
+
     public $name;
 
     public $amount;
@@ -82,10 +85,32 @@ class SubscriptionHub extends Component
 
     public array $paymentHistory = [];
 
-    public function mount(): void
+    public function mount(bool $dashboardMode = false): void
     {
+        $this->dashboardMode = $dashboardMode;
+
         if (request()->boolean('open_extra')) {
             $this->openExtraModal();
+        }
+    }
+
+    #[On('dashboard-subscription-create')]
+    public function openDashboardSubscriptionModal(?string $date = null): void
+    {
+        if (! $this->dashboardMode) {
+            return;
+        }
+
+        if (auth()->user()->isViewer()) {
+            $this->dispatch('toast', variant: 'error', text: 'Apenas utilizadores com permissões de edição podem criar assinaturas.');
+
+            return;
+        }
+
+        $this->openExtraModal();
+        if ($date) {
+            $this->started_at = $date;
+            $this->billing_day = (int) Carbon::parse($date)->day;
         }
     }
 
@@ -440,7 +465,25 @@ class SubscriptionHub extends Component
             $msg = 'Assinatura ativada! '.$user->xpToastText(20, 'assinatura registada');
         }
 
+        $isCreating = ! $this->editingId;
         $this->reset(['name', 'amount', 'category_id', 'billing_day', 'payment_method', 'started_at', 'renewal_date', 'notes', 'notify_days_before', 'editingId']);
+
+        if ($this->dashboardMode && $isCreating) {
+            $this->showExtraModal = false;
+            $this->dispatch('dashboard-record-created');
+            $this->dispatch('dashboard-quick-create-saved');
+            $this->dispatch(
+                'toast',
+                variant: 'success',
+                text: $msg.' Queres ir para a página deste registo?',
+                actionUrl: route('hub.subscriptions'),
+                actionLabel: 'Ver registo',
+            );
+
+            return;
+        }
+
+        $this->showExtraModal = false;
         $this->dispatch('modal-close-add-sub');
         $this->dispatch('toast', text: $msg);
     }
@@ -501,10 +544,27 @@ class SubscriptionHub extends Component
         $user->awardXp(20, 'passe mensal registado');
         $this->reset(['transportPassAmount', 'transportPassPaidByCompany']);
         $this->transportPassMode = false;
-        $this->dispatch('modal-close-add-sub');
         $message = $paidByCompany
             ? 'Passe registado. Como é pago pela empresa, não entra nas tuas contas.'
             : 'Passe mensal adicionado às assinaturas.';
+
+        $this->showExtraModal = false;
+
+        if ($this->dashboardMode) {
+            $this->dispatch('dashboard-record-created');
+            $this->dispatch('dashboard-quick-create-saved');
+            $this->dispatch(
+                'toast',
+                variant: 'success',
+                text: $message.' Queres ir para a página deste registo?',
+                actionUrl: route('hub.subscriptions'),
+                actionLabel: 'Ver registo',
+            );
+
+            return;
+        }
+
+        $this->dispatch('modal-close-add-sub');
         $this->dispatch('toast', text: $message);
     }
 
@@ -554,6 +614,28 @@ class SubscriptionHub extends Component
             ->whereIn('name', $subCatNames)
             ->orderBy('name')
             ->get();
+
+        if ($this->dashboardMode) {
+            return view('livewire.subscription-hub', [
+                'subscriptions' => collect(),
+                'totalMonthly' => 0,
+                'totalAnnual' => 0,
+                'companyPaidMonthly' => 0,
+                'companyPaidAnnual' => 0,
+                'totalMonthlyIncludingCompany' => 0,
+                'companyPaidAlreadyPaid' => 0,
+                'upcoming' => 0,
+                'nextSub' => null,
+                'activeCount' => 0,
+                'pausedCount' => 0,
+                'cancelledCount' => 0,
+                'averageMonthly' => 0,
+                'categories' => $subscriptionCategories,
+                'platformPlan' => null,
+                'platformPayments' => collect(),
+                'platformCashierSubscription' => null,
+            ]);
+        }
 
         $baseQuery = Subscription::where('workspace_id', $wsId)
             ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))

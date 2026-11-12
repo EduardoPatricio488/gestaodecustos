@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Category;
 use App\Models\Expense;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('components.layouts.app')]
@@ -22,8 +23,14 @@ class ExpenseForm extends Component
 
     public array $fieldValues = [];
 
-    public function mount(?int $id = null): void
+    public bool $dashboardMode = false;
+
+    public bool $modalOpen = true;
+
+    public function mount(?int $id = null, bool $dashboardMode = false): void
     {
+        $this->dashboardMode = $dashboardMode;
+        $this->modalOpen = ! $dashboardMode;
         $this->spent_at = now()->toDateString();
 
         $requestedCategoryId = request()->integer('category');
@@ -48,6 +55,41 @@ class ExpenseForm extends Component
         }
 
         $this->syncFieldValues();
+    }
+
+    #[On('dashboard-expense-create')]
+    public function openDashboardCreate(?string $date = null): void
+    {
+        if (! $this->dashboardMode) {
+            return;
+        }
+
+        $this->resetValidation();
+        $this->amount = '';
+        $this->description = '';
+        $this->category_id = null;
+        $this->spent_at = $date ?: now()->toDateString();
+        $this->fieldValues = [];
+        $this->modalOpen = true;
+        $this->dispatch('dashboard-expense-modal-opened');
+    }
+
+    #[On('dashboard-expense-category-selected')]
+    public function openDashboardCategoryCreate(int $categoryId, ?string $date = null): void
+    {
+        if (! $this->dashboardMode) {
+            return;
+        }
+
+        $this->resetValidation();
+        $this->amount = '';
+        $this->description = '';
+        $this->category_id = null;
+        $this->spent_at = $date ?: ($this->spent_at ?: now()->toDateString());
+        $this->fieldValues = [];
+        $this->setCategory($categoryId);
+        $this->modalOpen = true;
+        $this->dispatch('dashboard-expense-category-form-opened');
     }
 
     public function setCategory(int $categoryId): void
@@ -108,7 +150,25 @@ class ExpenseForm extends Component
         } else {
             Expense::create($payload);
             $user->awardXp(20, 'despesa registada');
-            session()->flash('ok', 'Nova despesa adicionada! '.$user->xpToastText(20, 'despesa registada'));
+            $message = 'Nova despesa adicionada! '.$user->xpToastText(20, 'despesa registada');
+
+            if ($this->dashboardMode) {
+                $this->modalOpen = false;
+                $this->dispatch('dashboard-expense-modal-closed');
+                $this->dispatch('dashboard-record-created');
+                $categorySlug = $category->slug ?: Category::uniqueSlugFor($category->name, $category->workspace_id, $category->id);
+                $this->dispatch(
+                    'toast',
+                    variant: 'success',
+                    text: $message.' Queres ir para a página deste registo?',
+                    actionUrl: route('hub.category', ['slug' => $categorySlug]),
+                    actionLabel: 'Ver registo',
+                );
+
+                return;
+            }
+
+            session()->flash('ok', $message);
             session()->flash('xp_award', $user->xpToastText(20, 'despesa registada'));
         }
 
@@ -117,14 +177,20 @@ class ExpenseForm extends Component
 
     public function cancel(): void
     {
+        if ($this->dashboardMode) {
+            $this->modalOpen = false;
+            $this->dispatch('dashboard-expense-modal-closed');
+
+            return;
+        }
+
         $this->redirect(route('expenses'), navigate: true);
     }
 
     private function categoryQuery()
     {
         return Category::where('workspace_id', auth()->user()->current_workspace_id)
-            ->when(auth()->user()->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', auth()->id()))
-            ->where('hidden_from_sidebar', false);
+            ->sidebarVisible();
     }
 
     private function fieldRule($field): string
@@ -165,7 +231,7 @@ class ExpenseForm extends Component
 
         return view('livewire.expense-form', [
             'category' => $category,
-            'categories' => $this->categoryQuery()->orderBy('name')->get(),
+            'categories' => $this->categoryQuery()->with('fields')->orderBy('name')->get(),
             'isEditing' => (bool) $this->expenseId,
         ]);
     }

@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -28,6 +29,8 @@ use Livewire\WithFileUploads;
 class IncomeHub extends Component
 {
     use WithFileUploads;
+
+    public bool $dashboardMode = false;
 
     // Receita Extra
     public $description = '';
@@ -151,6 +154,12 @@ class IncomeHub extends Component
     public bool $showSalaryBonusModal = false;
 
     public ?int $salaryBonusId = null;
+
+    public bool $showCalendarBonusContractPicker = false;
+
+    public array $calendarBonusContracts = [];
+
+    public string $calendarBonusDate = '';
 
     public ?int $salaryIncomeHistoryId = null;
 
@@ -757,8 +766,9 @@ class IncomeHub extends Component
     // Edição de rendimento fixo
     public ?int $editingFixedId = null;
 
-    public function mount()
+    public function mount(bool $dashboardMode = false)
     {
+        $this->dashboardMode = $dashboardMode;
         $user = auth()->user();
 
         $this->workspaceId = $user->current_workspace_id;
@@ -789,6 +799,76 @@ class IncomeHub extends Component
         }
 
         return $query->orderBy('name')->get();
+    }
+
+    #[On('dashboard-income-create')]
+    public function openDashboardIncomeModal(?string $date = null): void
+    {
+        if (! $this->dashboardMode) {
+            return;
+        }
+
+        if (auth()->user()->isViewer()) {
+            $this->dispatch('toast', variant: 'error', text: 'Apenas utilizadores com permissões de edição podem criar registos.');
+
+            return;
+        }
+
+        $this->openExtraModal();
+        $this->received_at = $date ?: now()->format('Y-m-d');
+    }
+
+    #[On('calendar-bonus-create')]
+    public function openCalendarBonusPicker(?string $date = null): void
+    {
+        if (! $this->dashboardMode) {
+            return;
+        }
+
+        if (auth()->user()->isViewer()) {
+            $this->dispatch('toast', variant: 'error', text: 'Apenas utilizadores com permissões de edição podem criar prémios.');
+
+            return;
+        }
+
+        $this->calendarBonusContracts = RecurringIncome::query()
+            ->where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->where('source', 'emprego')
+            ->whereNull('metadata->income_type')
+            ->orderBy('description')
+            ->get(['id', 'description'])
+            ->map(fn (RecurringIncome $salary): array => [
+                'id' => $salary->id,
+                'description' => $salary->description,
+            ])
+            ->all();
+
+        if ($this->calendarBonusContracts === []) {
+            $this->dispatch('toast', variant: 'error', text: 'Regista primeiro um rendimento fixo de emprego para poderes associar um prémio.');
+
+            return;
+        }
+
+        $this->calendarBonusDate = $date ?: now()->format('Y-m-d');
+        $this->showCalendarBonusContractPicker = true;
+    }
+
+    public function openCalendarBonusForContract(int $salaryId): void
+    {
+        abort_unless($this->dashboardMode && $this->showCalendarBonusContractPicker, 404);
+        abort_unless(collect($this->calendarBonusContracts)->contains('id', $salaryId), 404);
+
+        $this->showCalendarBonusContractPicker = false;
+        $this->editSalaryBonus($salaryId);
+        $this->recBonusDate = $this->calendarBonusDate;
+    }
+
+    public function closeCalendarBonusPicker(): void
+    {
+        $this->showCalendarBonusContractPicker = false;
+        $this->calendarBonusContracts = [];
+        $this->calendarBonusDate = '';
     }
 
     public function saveExtra()
@@ -890,6 +970,21 @@ class IncomeHub extends Component
         $this->frequency = 'pontual';
         $this->showExtraModal = false;
         $this->dispatch('modal-close-receita-extra');
+
+        if ($this->dashboardMode && ! $wasEditing) {
+            $this->dispatch('dashboard-record-created');
+            $this->dispatch('dashboard-quick-create-saved');
+            $this->dispatch(
+                'toast',
+                variant: 'success',
+                text: $user->xpToastText(25, 'receita registada').' Queres ir para a página deste registo?',
+                actionUrl: route('hub.incomes'),
+                actionLabel: 'Ver registo',
+            );
+
+            return;
+        }
+
         $this->dispatch('toast', variant: 'success', text: $wasEditing ? 'Serviço extra atualizado.' : $user->xpToastText(25, 'receita registada'));
     }
 
@@ -1717,6 +1812,9 @@ class IncomeHub extends Component
 
         $this->showSalaryBonusModal = false;
         $this->dispatch('modal-close-salary-bonus');
+        if ($this->dashboardMode) {
+            $this->dispatch('dashboard-record-created');
+        }
         $this->dispatch('toast', text: 'Prémio do contrato atualizado.');
         $this->reset(['salaryBonusId', 'recBonusGross', 'recBonusNet']);
         $this->recBonusType = 'none';
@@ -2560,6 +2658,13 @@ class IncomeHub extends Component
             ->where('source', 'emprego')
             ->where('user_id', $user->id)
             ->reject(fn (RecurringIncome $income) => ($income->metadata['income_type'] ?? null) === 'meal_card_allowance');
+
+        if ($this->dashboardMode) {
+            return view('livewire.income-hub', [
+                'salaryContractOptions' => $allSalaryContracts,
+            ]);
+        }
+
         $salaryContracts = $allSalaryContracts->values();
         foreach ($salaryContracts as $salaryContract) {
             $this->serviceFixedPrices[$salaryContract->id] ??= (float) ($salaryContract->metadata['service_unit_price'] ?? 0);
