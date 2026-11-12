@@ -43,7 +43,9 @@ test('invoice scanner uses only openrouter free and returns normalised data', fu
 
     Http::assertSent(fn (Request $request) =>
         str_ends_with($request->url(), '/chat/completions')
-        && $request['model'] === 'openrouter/free'
+        && $request['model'] === 'google/gemma-4-26b-a4b-it:free'
+        && data_get($request->data(), 'reasoning.effort') === 'none'
+        && data_get($request->data(), 'response_format.type') === 'json_object'
     );
     Http::assertSentCount(2);
 });
