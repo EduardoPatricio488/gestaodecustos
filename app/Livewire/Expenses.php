@@ -334,12 +334,6 @@ PROMPT;
                 'slug' => $category->slug,
                 'open_scan_review' => 1,
             ]), navigate: true);
-        } catch (\\Illuminate\\Http\\Client\\ConnectionException $e) {
-            \\Illuminate\\Support\\Facades\\Log::warning('Expenses invoice scanner timed out or lost connection to OpenRouter.', [
-                'message' => $e->getMessage(),
-                'user_id' => auth()->id(),
-            ]);
-            $this->scannerError = 'A IA demorou demasiado tempo a responder. A fatura continua carregada; tenta novamente dentro de alguns segundos.';
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             \Illuminate\Support\Facades\Log::warning('Expenses invoice scanner timed out or lost connection to OpenRouter.', [
                 'message' => $e->getMessage(),
