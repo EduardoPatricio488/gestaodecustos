@@ -1310,6 +1310,33 @@
 
 
 
+    @if($duplicateExpenseWarning)
+        <div class="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="duplicate-expense-title">
+            <div class="w-full max-w-md rounded-3xl border border-amber-200 bg-white p-6 shadow-2xl dark:border-amber-900/60 dark:bg-zinc-900">
+                <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
+                    <flux:icon name="alert-triangle" class="size-7" />
+                </div>
+                <h2 id="duplicate-expense-title" class="text-center text-lg font-black text-zinc-900 dark:text-white">Possível despesa duplicada</h2>
+                <p class="mt-2 text-center text-sm text-zinc-600 dark:text-zinc-300">
+                    Esta fotografia já foi utilizada numa despesa e a IA identificou novamente o produto
+                    <strong class="text-zinc-900 dark:text-white">{{ $duplicateExpenseWarning['product'] }}</strong>.
+                </p>
+                <div class="mt-4 rounded-2xl bg-zinc-50 p-4 text-sm dark:bg-zinc-800">
+                    <div class="flex justify-between gap-3"><span class="text-zinc-500">Registo existente</span><strong>#{{ $duplicateExpenseWarning['id'] }}</strong></div>
+                    <div class="mt-2 flex justify-between gap-3"><span class="text-zinc-500">Valor</span><strong>{{ number_format($duplicateExpenseWarning['amount'], 2, ',', '.') }} €</strong></div>
+                    @if($duplicateExpenseWarning['date'])
+                        <div class="mt-2 flex justify-between gap-3"><span class="text-zinc-500">Data</span><strong>{{ $duplicateExpenseWarning['date'] }}</strong></div>
+                    @endif
+                </div>
+                <p class="mt-4 text-center text-xs text-zinc-500">Queres adicionar esta despesa novamente?</p>
+                <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row">
+                    <button type="button" wire:click="cancelDuplicateExpense" class="flex-1 rounded-xl border border-zinc-200 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-600 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancelar</button>
+                    <button type="button" wire:click="confirmDuplicateExpense" wire:loading.attr="disabled" class="flex-1 rounded-xl bg-amber-500 px-4 py-3 text-xs font-black uppercase tracking-wider text-white transition hover:bg-amber-600 disabled:opacity-50">Adicionar novamente</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- ── RODAPÉ DE PROTOCOLO ── --}}
     <footer class="pt-16 pb-12 text-center opacity-40 mx-4 border-t border-zinc-100 dark:border-zinc-800 mt-10">
         <div class="flex flex-col items-center gap-3">
