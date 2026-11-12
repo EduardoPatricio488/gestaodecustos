@@ -25,7 +25,7 @@
     </div>
     <div
         x-data="{ open: false, activeTab: 'category', scanSecondsRemaining: 45, scanTimer: null, startInvoiceTimer() { this.scanSecondsRemaining = 45; if (this.scanTimer) clearInterval(this.scanTimer); this.scanTimer = setInterval(() => { if (this.scanSecondsRemaining > 0) this.scanSecondsRemaining--; else clearInterval(this.scanTimer); }, 1000); } }"
-        x-on:open-expense-category-picker.window="open = true; activeTab = 'scanner'"
+        x-on:open-expense-category-picker.window="open = true; activeTab = 'scanner'; $wire.call('refreshOpenRouterQuota')"
         x-on:keydown.escape.window="open = false"
         x-show="open"
         x-cloak
@@ -84,6 +84,41 @@
                             <span>{{ $scannerError }}</span>
                         </div>
                     @endif
+
+                    <div class="rounded-2xl border border-brand-500/20 bg-brand-500/5 px-4 py-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex min-w-0 items-center gap-2">
+                                <flux:icon name="sparkles" class="size-4 shrink-0 text-brand-500" />
+                                <span class="text-[10px] font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-200">Quota da IA · OpenRouter</span>
+                            </div>
+                            @if($loadingOpenRouterQuota)
+                                <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-zinc-500">
+                                    <flux:icon name="arrow-path" class="size-3 animate-spin" /> A consultar...
+                                </span>
+                            @elseif($openRouterQuota)
+                                <span class="text-xs font-black tabular-nums {{ $openRouterQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
+                                    {{ number_format($openRouterQuota['remaining']) }} / {{ number_format($openRouterQuota['limit']) }} disponíveis hoje
+                                </span>
+                            @endif
+                        </div>
+                        @if($openRouterQuota)
+                            <div class="mt-2 flex items-center justify-between gap-3">
+                                <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                                    <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ $openRouterQuota['limit'] > 0 ? min(100, ($openRouterQuota['used'] / $openRouterQuota['limit']) * 100) : 0 }}%"></div>
+                                </div>
+                                <span class="shrink-0 text-[9px] font-bold text-zinc-500">{{ $openRouterQuota['used'] }} utilizados</span>
+                            </div>
+                            @if($openRouterQuota['remaining'] <= 0)
+                                <p class="mt-2 text-[10px] font-semibold text-red-500">A quota diária gratuita está esgotada. A quota renova às 00:00 UTC.</p>
+                            @else
+                                <p class="mt-2 text-[10px] text-zinc-500">Quota diária de pedidos gratuitos da tua chave OpenRouter. Atualizada automaticamente ao abrir esta janela.</p>
+                            @endif
+                        @elseif($openRouterQuotaError)
+                            <p class="mt-2 text-[10px] text-amber-600 dark:text-amber-400">{{ $openRouterQuotaError }}</p>
+                        @else
+                            <p class="mt-2 text-[10px] text-zinc-500">A quota diária será consultada quando abrires o scanner.</p>
+                        @endif
+                    </div>
 
                     <div class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 sm:p-5 text-center">
                         <input type="file" wire:model="scannerReceipt" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
