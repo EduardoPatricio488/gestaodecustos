@@ -56,6 +56,10 @@ class Expenses extends Component
 
     public function scanInvoiceAndDetectCategory(): void
     {
+        // A análise multimodal pode demorar mais do que o limite PHP habitual de 30 segundos.
+        // Evita que o PHP termine o pedido antes de o tratamento de timeout da OpenRouter ser executado.
+        @set_time_limit(120);
+
         if (auth()->user()->isViewer()) {
             $this->scannerError = 'Apenas utilizadores com permissões de edição podem criar despesas.';
             return;
