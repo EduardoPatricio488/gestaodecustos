@@ -105,7 +105,7 @@ class Expenses extends Component
 
         // A análise corre numa ligação de background, num processo separado.
         // Assim, o pedido Livewire termina sem ficar ocupado durante a chamada à IA.
-        dispatch(function () use ($cacheKey, $storedPath, $documentName, $documentMime, $categoryOptions, $apiKey, $appUrl, $userId, $workspaceId) {
+        $processInvoiceScan = function () use ($cacheKey, $storedPath, $documentName, $documentMime, $categoryOptions, $apiKey, $appUrl, $userId, $workspaceId) {
             @set_time_limit(180);
 
             try {
@@ -264,10 +264,11 @@ PROMPT;
                         : $exception->getMessage(),
                 ], now()->addMinutes(20));
             }
-        })->onConnection('sync');
+        };
 
-        // A ligação sync só regressa depois de a análise terminar.
-        // Lemos imediatamente o resultado para apresentar o erro ou abrir a revisão.
+        // Executa diretamente para garantir que o resultado é escrito na cache
+        // antes de verificar o estado e atualizar a interface.
+        $processInvoiceScan();
         $this->checkInvoiceScan();
     }
 
