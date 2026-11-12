@@ -105,7 +105,7 @@ test('invoice scanner reports free-router capacity errors without retrying or pa
 });
 
 test('invoice scanner extracts selectable PDF text locally without a hosted parser', function () {
-    $pdf = \\Barryvdh\\DomPDF\\Facade\\Pdf::loadHTML(
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML(
         '<html><body>Fatura de teste. Total pago 25.50 EUR. Loja Teste. Data 12/11/2026.</body></html>'
     )->output();
 
