@@ -104,7 +104,11 @@ test('invoice scanner reports free-router capacity errors without retrying or pa
     Http::assertSentCount(2);
 });
 
-test('invoice scanner enables the pdf parser for pdf files', function () {
+test('invoice scanner extracts selectable PDF text locally without a hosted parser', function () {
+    $pdf = \\Barryvdh\\DomPDF\\Facade\\Pdf::loadHTML(
+        '<html><body>Fatura de teste. Total pago 25.50 EUR. Loja Teste. Data 12/11/2026.</body></html>'
+    )->output();
+
     Http::fake([
         'https://openrouter.ai/api/v1/key' => Http::response([
             'data' => ['free_model_daily_requests' => ['used' => 0, 'limit' => 50, 'remaining' => 50]],
@@ -112,53 +116,35 @@ test('invoice scanner enables the pdf parser for pdf files', function () {
         'https://openrouter.ai/api/v1/chat/completions' => Http::response([
             'choices' => [[
                 'finish_reason' => 'stop',
-                'message' => [
-                    'content' => '{"amount":25.50,"date":"2026-11-12","store":"Teste PDF"}',
-                    'annotations' => [[
-                        'type' => 'file',
-                        'file' => ['content' => [['type' => 'text', 'text' => 'Fatura de teste, total 25.50 EUR.']]],
-                    ]],
-                ],
+                'message' => ['content' => '{"amount":25.50,"date":"2026-11-12","store":"Teste PDF"}'],
             ]],
         ]),
     ]);
 
-    app(InvoiceScanService::class)->analyse(
-        '%PDF-1.4 fake pdf bytes',
-        'fatura.pdf',
-        'application/pdf',
-    );
+    app(InvoiceScanService::class)->analyse($pdf, 'fatura.pdf', 'application/pdf');
 
     Http::assertSent(fn (Request $request) =>
         str_ends_with($request->url(), '/chat/completions')
         && $request['model'] === 'openrouter/free'
-        && data_get($request->data(), 'plugins.0.id') === 'file-parser'
-        && data_get($request->data(), 'plugins.0.pdf.engine') === 'cloudflare-ai'
+        && ! array_key_exists('plugins', $request->data())
+        && str_contains((string) data_get($request->data(), 'messages.0.content.1.text'), 'Fatura de teste')
+        && data_get($request->data(), 'provider.max_price.prompt') === 0
+        && data_get($request->data(), 'provider.max_price.completion') === 0
     );
 });
 
-
-test('invoice scanner refuses pdfs that the free parser could not read', function () {
+test('invoice scanner rejects scanned or unreadable PDFs locally without external parsing', function () {
     Http::fake([
         'https://openrouter.ai/api/v1/key' => Http::response([
             'data' => ['free_model_daily_requests' => ['used' => 0, 'limit' => 50, 'remaining' => 50]],
         ]),
-        'https://openrouter.ai/api/v1/chat/completions' => Http::response([
-            'choices' => [[
-                'finish_reason' => 'stop',
-                'message' => [
-                    'content' => '{"amount":25.50,"date":"2026-11-12","store":"Inventado pelo modelo"}',
-                    'annotations' => [],
-                ],
-            ]],
-        ]),
     ]);
 
     expect(fn () => app(InvoiceScanService::class)->analyse(
-        '%PDF-1.4 scanned fake pdf',
+        '%PDF-1.4 scanned fake pdf without selectable text',
         'fatura-digitalizada.pdf',
         'application/pdf',
-    ))->toThrow(RuntimeException::class, 'parser gratuito');
+    ))->toThrow(RuntimeException::class, 'texto selecionável');
 
-    Http::assertSentCount(2);
+    Http::assertNotSent(fn (Request $request) => str_ends_with($request->url(), '/chat/completions'));
 });
