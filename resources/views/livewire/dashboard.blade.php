@@ -731,6 +731,69 @@
     </div>
 @endif
 
+    @php
+        $dashboardInvestmentCards = collect($dashboardInvestments ?? [])->map(function ($investment) use ($currentWs) {
+            $invested = round(((float) $investment['quantity'] * (float) $investment['average_price']) + (float) $investment['fees'], 2);
+            $current = round((float) $investment['quantity'] * (float) $investment['current_price'], 2);
+            $profit = round($current - $invested, 2);
+
+            return [
+                'symbol' => $investment['symbol'] ?: 'Ativo',
+                'name' => $investment['name'] ?: $investment['symbol'],
+                'profit' => $profit,
+                'profit_label' => ($profit >= 0 ? '+' : '').$currentWs->money($profit),
+                'percent_label' => ($invested > 0 && $profit >= 0 ? '+' : '').number_format($invested > 0 ? ($profit / $invested) * 100 : 0, 2, ',', ' ').'%',
+            ];
+        })->values()->all();
+    @endphp
+
+    <div class="mb-4 flex flex-wrap items-center gap-2.5">
+        <div
+            x-data="{ items: @js($dashboardInvestmentCards), activeInvestment: 0, next() { if (this.items.length) this.activeInvestment = (this.activeInvestment + 1) % this.items.length }, previous() { if (this.items.length) this.activeInvestment = (this.activeInvestment - 1 + this.items.length) % this.items.length } }"
+            x-init="$wire.on('dashboard-investments-updated', event => { items = event.detail.items; activeInvestment = 0; })"
+            x-show="items.length > 0"
+            x-cloak
+            class="flex min-w-0 items-center justify-between gap-3 self-start rounded-2xl border border-emerald-200/70 bg-white/80 px-3 py-2 shadow-sm shadow-emerald-950/5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md dark:border-emerald-400/15 dark:bg-zinc-900/80 lg:min-w-[270px] lg:self-auto"
+        >
+            <div class="flex min-w-0 items-center gap-2.5">
+                <span class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400">
+                    <flux:icon name="chart-bar" class="size-4" />
+                </span>
+                <div class="min-w-0">
+                    <p class="text-[9px] font-black uppercase tracking-wider text-zinc-400">Lucro dos investimentos</p>
+                    <div class="flex min-w-0 items-baseline gap-2">
+                        <span class="truncate text-xs font-black text-zinc-800 dark:text-zinc-100" x-text="items[activeInvestment]?.symbol"></span>
+                        <span class="truncate text-sm font-black tabular-nums" :class="items[activeInvestment]?.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'" x-text="items[activeInvestment]?.profit_label"></span>
+                        <span class="shrink-0 text-[10px] font-bold tabular-nums" :class="items[activeInvestment]?.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'" x-text="items[activeInvestment]?.percent_label"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex shrink-0 items-center gap-1">
+                <span class="mr-1 text-[9px] font-semibold tabular-nums text-zinc-400" x-text="(activeInvestment + 1) + ' / ' + items.length"></span>
+                <button type="button" x-on:click="previous()" aria-label="Ativo anterior" title="Ativo anterior" class="flex size-7 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-emerald-600 dark:hover:bg-zinc-800 dark:hover:text-emerald-400">
+                    <flux:icon name="chevron-left" class="size-4" />
+                </button>
+                <button type="button" x-on:click="next()" aria-label="Ativo seguinte" title="Ativo seguinte" class="flex size-7 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-emerald-600 dark:hover:bg-zinc-800 dark:hover:text-emerald-400">
+                    <flux:icon name="chevron-right" class="size-4" />
+                </button>
+            </div>
+        </div>
+
+        <button
+            type="button"
+            wire:click="refreshInvestmentPrices"
+            wire:loading.attr="disabled"
+            wire:target="refreshInvestmentPrices"
+            title="Atualizar apenas os preços dos investimentos"
+            aria-label="Atualizar preços dos investimentos"
+            class="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-xs font-black text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md disabled:cursor-wait disabled:opacity-60 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400 dark:hover:bg-emerald-400/20">
+            <flux:icon name="arrow-path" class="size-4" wire:loading.remove wire:target="refreshInvestmentPrices" />
+            <flux:icon name="arrow-path" class="size-4 animate-spin" wire:loading wire:target="refreshInvestmentPrices" />
+            <span wire:loading.remove wire:target="refreshInvestmentPrices">Atualizar preços</span>
+            <span wire:loading wire:target="refreshInvestmentPrices">A atualizar...</span>
+        </button>
+    </div>
+
     {{-- MENU DE ÂNCORAS: navegação rápida pelas secções da dashboard --}}
     <nav aria-label="Menu de Âncoras" class="sticky top-2 z-30 flex w-full min-w-0 flex-col gap-2 overflow-hidden rounded-2xl border border-sky-200/80 bg-gradient-to-r from-white via-sky-50/95 to-blue-50/90 p-2.5 shadow-lg shadow-sky-950/10 backdrop-blur-xl dark:border-sky-400/20 dark:from-zinc-950 dark:via-slate-900 dark:to-blue-950/40 sm:flex-row sm:items-center sm:gap-3 sm:px-4">
         <div class="flex shrink-0 items-center gap-2 px-1 sm:border-r sm:border-sky-200 sm:pr-3 dark:sm:border-sky-400/20">
@@ -945,12 +1008,6 @@
                         </div>
                     </div>
                     <div class="flex shrink-0 items-center gap-2">
-                        <button type="button" wire:click="refreshInvestmentPrices" wire:loading.attr="disabled" wire:target="refreshInvestmentPrices" class="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-300 bg-white/90 px-3 py-2.5 text-[11px] font-black text-sky-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-wait disabled:opacity-60 dark:border-sky-400/30 dark:bg-slate-800 dark:text-sky-300 dark:hover:bg-slate-700">
-                            <flux:icon name="arrow-path" class="size-4" wire:loading.remove wire:target="refreshInvestmentPrices" />
-                            <flux:icon name="arrow-path" class="size-4 animate-spin" wire:loading wire:target="refreshInvestmentPrices" />
-                            <span wire:loading.remove wire:target="refreshInvestmentPrices">Atualizar preços</span>
-                            <span wire:loading wire:target="refreshInvestmentPrices">A atualizar...</span>
-                        </button>
                         <a href="{{ route('hub.investments') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-[11px] font-black text-white shadow-md shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-400">
                             Ver investimentos
                             <flux:icon name="arrow-up-right" class="size-4" />
