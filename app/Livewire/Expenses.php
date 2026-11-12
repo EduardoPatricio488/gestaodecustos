@@ -264,7 +264,11 @@ PROMPT;
                         : $exception->getMessage(),
                 ], now()->addMinutes(20));
             }
-        })->afterResponse();
+        })->onConnection('sync');
+
+        // A ligação sync só regressa depois de a análise terminar.
+        // Lemos imediatamente o resultado para apresentar o erro ou abrir a revisão.
+        $this->checkInvoiceScan();
     }
 
     public function checkInvoiceScan(): void
