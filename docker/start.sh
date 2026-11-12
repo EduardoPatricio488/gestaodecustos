@@ -7,11 +7,7 @@ export PORT="${PORT:-10000}"
 echo "==> A gerar configuração Nginx na porta $PORT..."
 envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
-# Desativar queue worker se QUEUE_CONNECTION=sync
-if [ "${QUEUE_CONNECTION:-sync}" = "sync" ]; then
-    echo "==> QUEUE_CONNECTION=sync, queue worker desativado"
-    sed -i '/^\[program:laravel-queue\]/,/^$/d' /etc/supervisord.conf 2>/dev/null || true
-fi
+# O scanner usa explicitamente a ligação database; o worker é iniciado pelo Supervisor.
 
 # Preparar a aplicação antes de aceitar pedidos.
 # O arranque do container fica ligeiramente mais lento, mas evita que os
