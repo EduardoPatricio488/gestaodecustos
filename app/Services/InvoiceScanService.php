@@ -78,7 +78,9 @@ PROMPT;
         $payload = [
             'model' => self::MODEL,
             'temperature' => 0,
-            'max_tokens' => 3000,
+            'max_tokens' => 5000,
+            'reasoning' => ['effort' => 'none'],
+            'response_format' => ['type' => 'json_object'],
             'messages' => [[
                 'role' => 'user',
                 'content' => [['type' => 'text', 'text' => $prompt], $part],
@@ -110,8 +112,8 @@ PROMPT;
                 'provider_error' => $response->json('error'),
             ]);
 
-            if ($status === 429) {
-                throw new RuntimeException('O OpenRouter está a limitar pedidos ou o fornecedor gratuito não tem capacidade. '.$message);
+            if (in_array($status, [429, 502, 503, 504], true)) {
+                throw new RuntimeException('O serviço gratuito do OpenRouter está temporariamente indisponível (HTTP '.$status.'). A fatura não foi processada nem foi criada qualquer despesa. Não será usado qualquer modelo pago; tenta novamente mais tarde.');
             }
             if ($status === 402) {
                 throw new RuntimeException('O OpenRouter recusou o pedido por limite de créditos/orçamento. Não foi criada qualquer despesa.');
@@ -158,8 +160,28 @@ PROMPT;
             $result = json_decode($matches[0], true);
         }
 
-        if (! is_array($result) || ($response->json('choices.0.finish_reason') === 'length')) {
-            throw new RuntimeException('A IA não devolveu uma leitura completa e válida. Não foi criada qualquer despesa; tenta novamente ou preenche os dados manualmente.');
+        $finishReason = $response->json('choices.0.finish_reason');
+        if (! is_array($result) || $finishReason === 'length') {
+            // Regista apenas metadados técnicos. Nunca guardar o conteúdo da fatura,
+            // a imagem enviada, NIFs ou outros dados pessoais nos logs.
+            Log::warning('Invoice scanner: invalid AI response.', [
+                'provider' => 'openrouter',
+                'model' => $response->json('model'),
+                'response_id' => $response->json('id'),
+                'finish_reason' => $finishReason,
+                'content_type' => get_debug_type($content),
+                'content_length' => is_string($raw) ? strlen($raw) : 0,
+                'json_error' => json_last_error_msg(),
+                'usage' => $response->json('usage'),
+                'image_mime_type' => $isImage ? $mimeType : null,
+                'image_bytes' => $isImage ? strlen($fileContents) : null,
+            ]);
+
+            $message = $finishReason === 'length'
+                ? 'A resposta da IA foi cortada antes de terminar. Não foi criada qualquer despesa; tenta novamente mais tarde.'
+                : 'A resposta da IA não veio num formato estruturado válido. Não foi criada qualquer despesa; tenta novamente mais tarde.';
+
+            throw new RuntimeException($message);
         }
 
         $aliases = [
