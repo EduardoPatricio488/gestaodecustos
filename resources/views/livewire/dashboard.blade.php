@@ -179,6 +179,19 @@
                         {{ $data['change'] >= 0 ? '▲' : '▼' }}{{ abs(round($data['change'], 1)) }}%
                     </span>
                 </div>
+                @if($loop->iteration === (int) ceil(count($tickers) / 2))
+                    <button
+                        type="button"
+                        wire:click="refreshMarketPrices"
+                        wire:loading.attr="disabled"
+                        wire:target="refreshMarketPrices"
+                        title="Atualizar cotações"
+                        aria-label="Atualizar cotações"
+                        class="shrink-0 flex size-10 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-sm transition-all duration-200 hover:scale-110 hover:bg-emerald-100 hover:shadow-md disabled:cursor-wait disabled:opacity-50 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400 dark:hover:bg-emerald-400/20">
+                        <flux:icon name="arrow-path" class="size-4" wire:loading.remove wire:target="refreshMarketPrices" />
+                        <flux:icon name="arrow-path" class="size-4 animate-spin" wire:loading wire:target="refreshMarketPrices" />
+                    </button>
+                @endif
             @endforeach
         </div>
 
