@@ -1005,7 +1005,7 @@ test('salary contract history includes all years and excludes entries linked to 
         ]);
     }
 
-    Livewire::test(IncomeHub::class)
+    $history = Livewire::test(IncomeHub::class)
         ->assertSee('Receitas extra e prémios · '.now()->year)
         ->assertSee('Serviços extra')
         ->assertSee('Adicionar serviço')
@@ -1014,8 +1014,15 @@ test('salary contract history includes all years and excludes entries linked to 
         ->assertSee('125,00')
         ->call('openSalaryIncomeHistory', $salary->id)
         ->assertSee('Entrada deste ano')
-        ->assertSee('Prémio do ano passado')
-        ->assertDontSee('Entrada de outro contrato');
+        ->assertSee('Prémio do ano passado');
+
+    $historyDescriptions = $history->viewData('salaryIncomeHistory')
+        ->pluck('description')
+        ->all();
+
+    expect($historyDescriptions)->toContain('Entrada deste ano')
+        ->and($historyDescriptions)->toContain('Prémio do ano passado')
+        ->and($historyDescriptions)->not->toContain('Entrada de outro contrato');
 });
 
 test('received salary bonus contributes to the current month only when received this month and once to annual totals', function () {
