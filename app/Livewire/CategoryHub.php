@@ -82,6 +82,8 @@ class CategoryHub extends Component
 
     public $isScanning = false;
 
+    public bool $openScannedExpenseForm = false;
+
     public $scannedData = [];
 
     public $editingId = null;
@@ -160,7 +162,10 @@ class CategoryHub extends Component
         $this->setHubConfig();
         $this->refreshScannerQuota();
 
-        $pendingScan = session()->pull('pending_expense_scan:'.auth()->user()->current_workspace_id.':'.auth()->id());
+        $pendingScanKey = 'pending_expense_scan:'.auth()->user()->current_workspace_id.':'.auth()->id();
+        $pendingScan = request()->boolean('open_scan_review')
+            ? session()->get($pendingScanKey)
+            : null;
 
         if (request()->boolean('open_scan_review') && is_array($pendingScan)) {
             $result = $pendingScan['data'] ?? $pendingScan;
@@ -245,7 +250,10 @@ class CategoryHub extends Component
             $this->pendingDocumentMime = $pendingScan['document_mime'] ?? null;
             $this->scanSuccess = true;
             $this->scannedData = $result;
-            $this->dispatch('open-scanned-expense-form');
+            $this->openScannedExpenseForm = true;
+
+            // Só limpa os dados temporários depois de os carregar para o formulário.
+            session()->forget($pendingScanKey);
         }
 
         $categoryQuery = Category::where('name', $this->dbName)
