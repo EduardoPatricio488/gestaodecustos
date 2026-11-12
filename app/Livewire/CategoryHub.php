@@ -448,7 +448,7 @@ class CategoryHub extends Component
                 throw new \RuntimeException('Não foi possível ler o ficheiro enviado.');
             }
 
-            $result = app(\App\\Services\\InvoiceScanService::class)->analyse(
+            $result = app(\App\Services\\InvoiceScanService::class)->analyse(
                 $contents,
                 $file->getClientOriginalName(),
                 $file->getMimeType() ?: 'image/jpeg',
@@ -506,7 +506,7 @@ class CategoryHub extends Component
             $this->scanSuccess = true;
             $this->dispatch('toast', variant: 'success', text: 'Fatura analisada. Confirma os dados antes de guardar.');
         } catch (\Throwable $exception) {
-            \Illuminate\\Support\\Facades\\Log::error('CategoryHub invoice scan failed.', [
+            \Illuminate\Support\Facades\\Log::error('CategoryHub invoice scan failed.', [
                 'message' => $exception->getMessage(),
                 'user_id' => auth()->id(),
                 'workspace_id' => auth()->user()?->current_workspace_id,
