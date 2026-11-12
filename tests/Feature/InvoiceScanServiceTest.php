@@ -99,7 +99,7 @@ test('invoice scanner enables the pdf parser for pdf files', function () {
 
     Http::assertSent(fn (Request $request) =>
         str_ends_with($request->url(), '/chat/completions')
-        && $request['model'] === 'openrouter/free'
+        && $request['model'] === 'google/gemma-4-26b-a4b-it:free'
         && data_get($request->data(), 'plugins.0.id') === 'file-parser'
         && data_get($request->data(), 'plugins.0.pdf.engine') === 'cloudflare-ai'
     );
