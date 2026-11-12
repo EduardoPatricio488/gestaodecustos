@@ -161,7 +161,10 @@ PROMPT;
             ])->connectTimeout(5)
                 ->timeout(25)
                 ->post('https://openrouter.ai/api/v1/chat/completions', [
-                    'model' => config('services.openrouter.model', 'openrouter/free'),
+                    'models' => array_values(array_unique(array_filter(array_merge(
+                        [config('services.openrouter.model', 'google/gemma-4-26b-a4b-it:free')],
+                        config('services.openrouter.invoice_fallback_models', [])
+                    )))),
                     'temperature' => 0,
                     'max_tokens' => 3200,
                     'messages' => [[
@@ -220,58 +223,8 @@ PROMPT;
                 throw new \Exception($detail.' Podes tentar novamente ou escolher a categoria manualmente.');
             }
 
-            // Não repetir automaticamente o pedido multimodal: evita duplicar consumo de quota.
-            // Se a primeira resposta não tiver dados suficientes, a análise termina com erro claro
-            // e o utilizador pode decidir quando voltar a tentar.
-
-            $hasEssentialData = collect(['amount', 'date', 'store', 'description'])
-                ->contains(fn ($field) => isset($result[$field]) && $result[$field] !== '');
-
-            if (! $hasEssentialData) {
-                $retryPrompt = "Lê novamente a fatura inteira e completa os campos em falta. Responde apenas com JSON válido, sem markdown. Não inventes; usa null quando ausente/ilegível. ".
-                    "A categoria tem de ser exatamente uma destas: ".
-                    json_encode($categories->pluck('name')->values()->all(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).
-                    ". amount é o total final pago; gross_amount ilíquido; net_amount base tributável; vat_amount IVA; date YYYY-MM-DD; time HH:MM. ".
-                    '{"category":null,"amount":null,"date":null,"time":null,"quantity":null,"unit":null,"store":null,"description":null,"item_name":null,"subcategory":null,"unit_price":null,"vat_rate":null,"gross_amount":null,"net_amount":null,"vat_amount":null,"tax_incidence":null,"amount_tendered":null,"change_amount":null,"payment_condition":null,"payment_method":null,"company_nif":null,"customer_nif":null,"invoice_number":null,"notes":null}';
-
-                $retryResponse = \Illuminate\Support\Facades\Http::withHeaders([
-                    'Authorization' => 'Bearer '.$apiKey,
-                    'Content-Type' => 'application/json',
-                    'HTTP-Referer' => config('app.url'),
-                    'X-Title' => 'Finance Pro AI',
-                ])->connectTimeout(4)->timeout(20)
-                    ->post('https://openrouter.ai/api/v1/chat/completions', [
-                        'model' => config('services.openrouter.model', 'openrouter/free'),
-                        'temperature' => 0,
-                        'max_tokens' => 2400,
-                        'messages' => [[
-                            'role' => 'user',
-                            'content' => [['type' => 'text', 'text' => $retryPrompt], $contentPart],
-                        ]],
-                    ]);
-
-                if ($retryResponse->successful()) {
-                    $retryRaw = $retryResponse->json('choices.0.message.content');
-                    if (is_array($retryRaw)) {
-                        $retryRaw = collect($retryRaw)
-                            ->map(fn ($part) => is_string($part) ? $part : data_get($part, 'text', data_get($part, 'content', '')))
-                            ->filter(fn ($part) => is_string($part) && trim($part) !== '')
-                            ->implode("\\n");
-                    }
-                    $retryRaw = trim(preg_replace('/^\\x60{3}(?:json)?\\s*|\\s*\\x60{3}$/i', '', (string) $retryRaw));
-                    $retryResult = json_decode($retryRaw, true);
-                    if (! is_array($retryResult) && preg_match('/\\{.*\\}/s', $retryRaw, $retryMatches)) {
-                        $retryResult = json_decode($retryMatches[0], true);
-                    }
-                    if (is_array($retryResult)) {
-                        foreach (['category', 'amount', 'date', 'time', 'quantity', 'unit', 'store', 'description', 'item_name', 'subcategory', 'unit_price', 'vat_rate', 'gross_amount', 'net_amount', 'vat_amount', 'tax_incidence', 'amount_tendered', 'change_amount', 'payment_condition', 'payment_method', 'company_nif', 'customer_nif', 'invoice_number', 'notes'] as $field) {
-                            if ((! isset($result[$field]) || $result[$field] === '') && isset($retryResult[$field]) && $retryResult[$field] !== '') {
-                                $result[$field] = $retryResult[$field];
-                            }
-                        }
-                    }
-                }
-            }
+            // Não repetir o pedido multimodal: evita duplicar consumo de quota.
+            // Se a resposta não trouxer dados essenciais, informar o utilizador e terminar.
 
             $hasEssentialData = collect(['amount', 'date', 'store', 'description'])
                 ->contains(fn ($field) => isset($result[$field]) && $result[$field] !== '');
@@ -344,7 +297,7 @@ PROMPT;
                 'message' => $e->getMessage(),
                 'user_id' => auth()->id(),
             ]);
-            $this->scannerError = 'A OpenRouter não respondeu dentro de 25 segundos. A fatura continua carregada e não foi criada qualquer despesa. Podes tentar novamente mais tarde.';
+            $this->scannerError = 'A OpenRouter não respondeu dentro do limite de tempo. A fatura continua carregada e não foi criada qualquer despesa. Podes tentar novamente mais tarde.';
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Expenses invoice scanner: '.$e->getMessage());
             $this->scannerError = 'Não foi possível analisar a fatura. '.$e->getMessage();
