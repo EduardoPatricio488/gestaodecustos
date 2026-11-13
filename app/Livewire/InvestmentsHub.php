@@ -1317,14 +1317,18 @@ class InvestmentsHub extends Component
 
                 return $asset;
             })->values();
-        $totalInvested = $myAssets->sum('cost');
-        $currentPortfolioValue = $myAssets->sum('current_value');
-        $totalEstimatedTax = $myAssets->sum(fn ($asset) => ($asset->type !== 'Divida' && $asset->pnl > 0) ? $asset->pnl * 0.28 : 0);
+        // Mantém os registos individuais na tabela, mas usa os grupos para os totais da carteira.
+        $portfolioAssets = $myAssets;
+        $myAssets = $individualAssets;
+
+        $totalInvested = $portfolioAssets->sum('cost');
+        $currentPortfolioValue = $portfolioAssets->sum('current_value');
+        $totalEstimatedTax = $portfolioAssets->sum(fn ($asset) => ($asset->type !== 'Divida' && $asset->pnl > 0) ? $asset->pnl * 0.28 : 0);
         $totalProfit = $currentPortfolioValue - $totalInvested;
         $totalPnlPct = $totalInvested > 0 ? ($totalProfit / $totalInvested) * 100 : 0;
         $displayValue = $this->showNetValues ? ($currentPortfolioValue - $totalEstimatedTax) : $currentPortfolioValue;
         $displayProfit = $this->showNetValues ? ($totalProfit - $totalEstimatedTax) : $totalProfit;
-        $composition = $myAssets->groupBy('type')->map(fn ($group) => ['total' => $group->sum('current_value'), 'percent' => $currentPortfolioValue > 0 ? round(($group->sum('current_value') / $currentPortfolioValue) * 100, 1) : 0]);
+        $composition = $portfolioAssets->groupBy('type')->map(fn ($group) => ['total' => $group->sum('current_value'), 'percent' => $currentPortfolioValue > 0 ? round(($group->sum('current_value') / $currentPortfolioValue) * 100, 1) : 0]);
 
         $bankAccounts = BankAccount::where('workspace_id', $user->current_workspace_id)
             ->whereNotIn('type', ['investimento', 'investimentos'])
