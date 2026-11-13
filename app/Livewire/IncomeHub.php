@@ -807,6 +807,20 @@ class IncomeHub extends Component
         return $query->orderBy('name')->get();
     }
 
+    #[Computed]
+    public function rentalBankAccounts()
+    {
+        $user = auth()->user();
+        $query = BankAccount::where('workspace_id', $user->current_workspace_id)
+            ->whereNotIn('type', ['investimento', 'investimentos']);
+
+        if ($user->currentWorkspace?->type === 'personal') {
+            $query->where('user_id', $user->id);
+        }
+
+        return $query->orderBy('name')->get();
+    }
+
     #[On('dashboard-income-create')]
     public function openDashboardIncomeModal(?string $date = null): void
     {
@@ -1550,6 +1564,10 @@ class IncomeHub extends Component
 
         // LÓGICA DE DECISÃO: Qual modal abrir?
         if ($record->source === 'imobiliario') {
+            if (filled($this->recBankAccountId) && ! $this->rentalBankAccounts->contains('id', (int) $this->recBankAccountId)) {
+                $this->recBankAccountId = '';
+            }
+
             // Puxar dados da "metadata" para o modal de rendas
             $meta = $record->metadata;
             $this->recRentalGross = $meta['rental_gross'] ?? $record->amount;
@@ -1962,6 +1980,12 @@ class IncomeHub extends Component
             'recRentalGross' => 'required|numeric|min:0.01',
             'recDay' => 'required|integer|between:1,31',
         ]);
+
+        if (filled($this->recBankAccountId) && ! $this->rentalBankAccounts->contains('id', (int) $this->recBankAccountId)) {
+            throw \\Illuminate\\Validation\\ValidationException::withMessages([
+                'recBankAccountId' => 'Seleciona uma conta bancária válida. As contas de investimento não podem receber este rendimento.',
+            ]);
+        }
 
         $data = [
             'description' => $this->recDescription,
