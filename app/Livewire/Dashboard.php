@@ -85,7 +85,7 @@ class Dashboard extends Component
             $refresher = app(InvestmentsHub::class);
             $result = $refresher->refreshPrices(true);
 
-            Cache::forget("dashboard:investments:v3:{$workspace->id}:{$user->id}");
+            Cache::forget("dashboard:investments:v5:{$workspace->id}:{$user->id}");
             Cache::forget("dashboard:account-overview:v1:{$workspace->id}:{$user->id}");
 
             $updatedInvestments = Investment::where('workspace_id', $workspace->id)
@@ -152,7 +152,7 @@ class Dashboard extends Component
         }
 
         Cache::forget("dashboard:account-overview:v1:{$currentWs->id}:{$user->id}");
-        Cache::forget("dashboard:investments:v4:{$currentWs->id}:{$user->id}");
+        Cache::forget("dashboard:investments:v5:{$currentWs->id}:{$user->id}");
 
         $this->dispatch('account-overview-refreshed');
     }
@@ -788,7 +788,7 @@ class Dashboard extends Component
         $totalMonthIncome = $monthTotals['income'] + ($isCurrentDashboardPeriod ? $fixedIncome : 0);
         // Resumo de investimentos: usa as mesmas cotações guardadas no portefólio,
         // sem preços fixos ou valores de mercado inventados na Dashboard.
-        $myInvestments = Cache::remember("dashboard:investments:v3:{$currentWs->id}:{$user->id}", 60, fn () => Investment::where('workspace_id', $currentWs->id)
+        $myInvestments = Cache::remember("dashboard:investments:v5:{$currentWs->id}:{$user->id}", 60, fn () => Investment::where('workspace_id', $currentWs->id)
             ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
             ->get(['id', 'workspace_id', 'symbol', 'name', 'type', 'quantity', 'average_price', 'current_price', 'fees', 'updated_at'])
             ->groupBy(fn ($investment) => mb_strtolower(trim((string) ($investment->symbol ?: ($investment->name.'|'.$investment->type)))))
@@ -805,6 +805,7 @@ class Dashboard extends Component
                     'average_price' => $quantity > 0 ? $cost / $quantity : 0,
                     'current_price' => (float) ($latest->current_price ?: $latest->average_price),
                     'fees' => (float) $positions->sum(fn ($position) => (float) ($position->fees ?? 0)),
+                    'positions_count' => $positions->count(),
                     'updated_at' => $positions->max(fn ($position) => $position->updated_at?->timestamp),
                 ];
             })->values()->all());
