@@ -366,7 +366,7 @@
 </style>
 
 {{-- 3. HEADER PRINCIPAL COM CLIMA DINÂMICO E MODAL DETALHADO --}}
-<div class="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-4"
+<div class="relative isolate overflow-hidden rounded-[2rem] border border-zinc-200/70 bg-white/70 px-5 py-5 shadow-sm dark:border-white/10 dark:bg-zinc-900/40 flex flex-col md:flex-row md:items-center justify-between gap-8 pt-4"
      x-data="{
         loading: true,
         error: '',
@@ -467,7 +467,8 @@
      }"
      x-init="init()"
 >
-    <div class="flex items-center gap-5">
+    <span aria-hidden="true" class="pointer-events-none absolute inset-0 dashboard-flag-wash"></span>
+    <div class="relative z-10 flex items-center gap-5">
         {{-- Avatar Dinâmico --}}
         <div class="size-16 rounded-[1.5rem] flex items-center justify-center text-4xl shadow-2xl shrink-0 transition-all duration-500"
              style="background-color: {{ auth()->user()->profile_color }}15; border: 2px solid {{ auth()->user()->profile_color }}30;">
@@ -502,7 +503,6 @@
                 {{-- WIDGET CLICÁVEL (TRIGGER) --}}
                 <flux:modal.trigger name="weather-details">
                     <button type="button" class="group relative isolate flex items-center gap-2 overflow-hidden rounded-full border border-zinc-200/80 bg-white/90 px-3 py-1 shadow-sm transition-all duration-300 hover:border-brand-500/50 hover:shadow-lg dark:border-white/10 dark:bg-zinc-800/70 cursor-pointer">
-                        <span aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 rounded-full dashboard-flag-wash"></span>
                         <span class="relative z-10 flex items-center gap-2">
                             <flux:icon name="map-pin" variant="micro" class="size-3 text-zinc-500 group-hover:text-brand-500" />
                             <span class="text-[9px] font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-200" x-text="data.city"></span>
