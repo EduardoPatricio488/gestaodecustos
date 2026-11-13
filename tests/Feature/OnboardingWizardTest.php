@@ -699,6 +699,97 @@ test('onboarding subscription step lists only the current user subscriptions fro
         ->assertDontSee('Assinatura de outro utilizador');
 });
 
+test('onboarding subscription step edits an existing subscription instead of creating a duplicate', function () {
+    [$user, $workspace] = onboardingWorkspace();
+    $category = Category::create([
+        'user_id' => $user->id,
+        'workspace_id' => $workspace->id,
+        'name' => 'Streaming',
+        'slug' => 'streaming',
+    ]);
+    $account = BankAccount::create([
+        'workspace_id' => $workspace->id,
+        'user_id' => $user->id,
+        'name' => 'Conta principal',
+        'type' => 'corrente',
+        'balance' => 500,
+        'currency' => 'EUR',
+    ]);
+    $subscription = Subscription::create([
+        'user_id' => $user->id,
+        'workspace_id' => $workspace->id,
+        'category_id' => $category->id,
+        'bank_account_id' => $account->id,
+        'name' => 'Streaming antigo',
+        'amount' => 10,
+        'billing_day' => 12,
+        'cycle' => 'monthly',
+        'status' => 'active',
+        'is_active' => true,
+        'started_at' => '2026-10-01',
+        'renewal_date' => '2026-11-01',
+    ]);
+
+    Livewire::test(OnboardingSubscription::class)
+        ->call('edit', $subscription->id)
+        ->assertSet('showExtraModal', true)
+        ->assertSet('editingId', $subscription->id)
+        ->assertSet('name', 'Streaming antigo')
+        ->set('name', 'Streaming atualizado')
+        ->set('amount', 15)
+        ->set('bank_account_id', $account->id)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSet('showExtraModal', false)
+        ->assertSee('Streaming atualizado');
+
+    expect(Subscription::where('workspace_id', $workspace->id)->count())->toBe(1)
+        ->and($subscription->fresh()->name)->toBe('Streaming atualizado')
+        ->and((float) $subscription->fresh()->amount)->toBe(15.0);
+});
+
+test('onboarding subscription step deletes only the selected users subscription', function () {
+    [$user, $workspace] = onboardingWorkspace();
+    $category = Category::create([
+        'user_id' => $user->id,
+        'workspace_id' => $workspace->id,
+        'name' => 'Streaming',
+        'slug' => 'streaming',
+    ]);
+    $subscription = Subscription::create([
+        'user_id' => $user->id,
+        'workspace_id' => $workspace->id,
+        'category_id' => $category->id,
+        'name' => 'Assinatura a eliminar',
+        'amount' => 10,
+        'billing_day' => 12,
+        'cycle' => 'monthly',
+        'status' => 'active',
+        'is_active' => true,
+    ]);
+    $otherUser = User::factory()->create();
+    $otherSubscription = Subscription::create([
+        'user_id' => $otherUser->id,
+        'workspace_id' => $workspace->id,
+        'category_id' => $category->id,
+        'name' => 'Assinatura de outro utilizador',
+        'amount' => 5,
+        'billing_day' => 10,
+        'cycle' => 'monthly',
+        'status' => 'active',
+        'is_active' => true,
+    ]);
+
+    Livewire::test(OnboardingSubscription::class)
+        ->assertSee('Assinatura a eliminar')
+        ->call('delete', $subscription->id)
+        ->assertDontSee('Assinatura a eliminar')
+        ->assertSee('Assinatura de outro utilizador');
+
+    expect(Subscription::find($subscription->id))->toBeNull()
+        ->and(Subscription::find($otherSubscription->id))->not->toBeNull();
+});
+
 test('onboarding subscription dialog is layered above its backdrop', function () {
     onboardingWorkspace();
 
