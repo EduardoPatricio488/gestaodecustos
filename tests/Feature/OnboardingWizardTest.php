@@ -654,6 +654,51 @@ test('subscription saves once when explicitly confirmed', function () {
     expect(Subscription::where('workspace_id', $workspace->id)->where('name', 'Serviço exemplo')->count())->toBe(1);
 });
 
+test('onboarding subscription step lists only the current user subscriptions from the active workspace', function () {
+    [$user, $workspace] = onboardingWorkspace();
+    $category = Category::create([
+        'user_id' => $user->id,
+        'workspace_id' => $workspace->id,
+        'name' => 'Streaming',
+        'slug' => 'streaming',
+    ]);
+
+    Subscription::create([
+        'user_id' => $user->id,
+        'workspace_id' => $workspace->id,
+        'category_id' => $category->id,
+        'name' => 'Netflix',
+        'amount' => 12.99,
+        'billing_day' => 15,
+        'cycle' => 'monthly',
+        'status' => 'active',
+        'is_active' => true,
+        'started_at' => '2026-10-01',
+        'renewal_date' => '2026-12-01',
+    ]);
+
+    $otherUser = User::factory()->create();
+    Subscription::create([
+        'user_id' => $otherUser->id,
+        'workspace_id' => $workspace->id,
+        'category_id' => $category->id,
+        'name' => 'Assinatura de outro utilizador',
+        'amount' => 5,
+        'billing_day' => 10,
+        'cycle' => 'monthly',
+        'status' => 'active',
+        'is_active' => true,
+    ]);
+
+    Livewire::test(OnboardingSubscription::class)
+        ->assertSee('Assinaturas guardadas')
+        ->assertSee('Netflix')
+        ->assertSee('Streaming')
+        ->assertSee('12,99')
+        ->assertSee('Mensal')
+        ->assertDontSee('Assinatura de outro utilizador');
+});
+
 test('onboarding subscription dialog is layered above its backdrop', function () {
     onboardingWorkspace();
 
