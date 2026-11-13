@@ -788,17 +788,29 @@ class Dashboard extends Component
         $totalMonthIncome = $monthTotals['income'] + ($isCurrentDashboardPeriod ? $fixedIncome : 0);
         // Resumo de investimentos: usa as mesmas cotações guardadas no portefólio,
         // sem preços fixos ou valores de mercado inventados na Dashboard.
-        $myInvestments = Cache::remember("dashboard:investments:v6:{$currentWs->id}:{$user->id}", 60, fn () => Investment::where('workspace_id', $currentWs->id)
+        $myInvestments = Cache::remember("dashboard:investments:v7:{$currentWs->id}:{$user->id}", 60, fn () => Investment::where('workspace_id', $currentWs->id)
             ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
-            ->get(['id', 'workspace_id', 'symbol', 'name', 'type', 'series', 'quantity', 'average_price', 'current_price', 'fees', 'updated_at'])
+            ->get(['id', 'workspace_id', 'symbol', 'name', 'type', 'series', 'product_type', 'issuer', 'broker', 'quantity', 'average_price', 'current_price', 'fees', 'updated_at'])
             ->groupBy(function ($investment) {
                 $type = mb_strtolower(trim((string) $investment->type));
                 $name = mb_strtolower(trim((string) $investment->name));
 
                 // Certificados da mesma série são o mesmo produto, mesmo que cada registo
                 // tenha um identificador individual diferente no campo symbol.
+                $broker = mb_strtolower(trim((string) $investment->broker));
+                $series = mb_strtolower(trim((string) $investment->series));
+                $productType = mb_strtolower(trim((string) $investment->product_type));
+                $issuer = mb_strtolower(trim((string) $investment->issuer));
+
+                // Consolidar subscrições individuais do mesmo produto importadas do AforroNet.
+                if ($broker === 'aforronet' && $type === 'divida') {
+                    return 'aforronet|'.$productType.'|'.$series.'|'.$issuer.'|'.$name;
+                }
+
+                // Certificados da mesma série são o mesmo produto, mesmo que cada registo
+                // tenha um identificador individual diferente no campo symbol.
                 if ($type === 'divida' && str_contains($name, 'certificados de aforro')) {
-                    return 'aforro|'.$name.'|'.mb_strtolower(trim((string) $investment->series));
+                    return 'aforro|'.$name.'|'.$series;
                 }
 
                 return mb_strtolower(trim((string) ($investment->symbol ?: ($investment->name.'|'.$investment->type))));
