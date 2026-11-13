@@ -89,6 +89,27 @@ class DashboardQuickCreateTest extends TestCase
             ->assertDontSee('Conta de outro utilizador');
     }
 
+    public function test_subscription_renewal_date_is_calculated_from_start_date_and_billing_cycle(): void
+    {
+        $this->travelTo(\\Carbon\\Carbon::parse('2026-11-13 12:00:00'));
+        $this->signInWithWorkspace();
+
+        $subscription = Livewire::test(SubscriptionHub::class)
+            ->set('started_at', '2026-10-01')
+            ->set('billing_cycle', 'monthly')
+            ->assertSet('renewal_date', '2026-12-01')
+            ->set('billing_cycle', 'quarterly')
+            ->assertSet('renewal_date', '2027-01-01')
+            ->set('billing_cycle', 'semiannual')
+            ->assertSet('renewal_date', '2027-04-01')
+            ->set('billing_cycle', 'annual')
+            ->assertSet('renewal_date', '2027-10-01')
+            ->set('started_at', '2026-11-20')
+            ->assertSet('renewal_date', '2027-11-20');
+
+        $this->assertSame('2027-11-20', $subscription->get('renewal_date'));
+    }
+
     public function test_calendar_scheduled_record_modal_offers_the_existing_create_flows(): void
     {
         $this->signInWithWorkspace();
