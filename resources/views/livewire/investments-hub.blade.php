@@ -599,7 +599,7 @@
                             {{ $filterType === 'Todos'
                                 ? 'border-indigo-500 bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
                                 : 'border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:text-indigo-400' }}">
-                        <flux:icon name="layers" class="size-3.5" />
+                        <flux:icon name="chart-pie" class="size-3.5" />
                         Todas as classes
                     </button>
                     <p class="text-lg sm:text-xl font-black dark:text-white italic tracking-tighter">
