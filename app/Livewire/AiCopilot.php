@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Exceptions\AiProviderException;
 use App\Models\AiActionLog;
 use App\Models\AiConversation;
 use App\Models\Workspace;
@@ -95,7 +96,9 @@ class AiCopilot extends Component
             report($e);
             $this->messages[] = [
                 'role' => 'assistant',
-                'content' => 'Não consegui concluir o pedido neste momento. Não alterei os teus dados.',
+                'content' => $e instanceof AiProviderException
+                    ? $e->getMessage()
+                    : 'Não consegui concluir o pedido neste momento. Não alterei os teus dados.',
             ];
         } finally {
             $this->isLoading = false;

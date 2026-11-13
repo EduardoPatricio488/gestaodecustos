@@ -2,10 +2,14 @@
 
 namespace App\Services\AI;
 
+use App\Exceptions\AiProviderException;
 use App\Models\AiActionLog;
 use App\Models\AiConversation;
 use App\Models\AiMemory;
 use App\Models\AiMessage;
+use App\Models\Expense;
+use App\Models\Income;
+use App\Models\SalaryPayment;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Models\Workspace;
@@ -18,6 +22,16 @@ use RuntimeException;
 
 class AiBrainService
 {
+    private const PERSONAL_REPORT_HEADINGS = [
+        'resultados' => 'Resultados',
+        'o que penso' => 'O que penso',
+        'cenarios' => 'Cenários',
+        'pontos fortes' => 'Pontos fortes',
+        'pontos negativos' => 'Pontos negativos',
+        'o que aconselho' => 'O que aconselho',
+        'resumo' => 'Resumo',
+    ];
+
     public function __construct(
         private readonly ContextEngine $contextEngine,
         private readonly FinancialIntelligenceService $intelligence,
@@ -165,7 +179,9 @@ class AiBrainService
             $conversation->messages()->create([
                 'user_id' => $user->id,
                 'role' => 'assistant',
-                'content' => 'Não consegui concluir este pedido neste momento. Não alterei os teus dados.',
+                'content' => $e instanceof AiProviderException
+                    ? $e->getMessage()
+                    : 'Não consegui concluir este pedido neste momento. Não alterei os teus dados.',
                 'is_error' => true,
                 'metadata' => ['intent' => $intent],
                 'latency_ms' => (int) round((microtime(true) - $startedAt) * 1000),
@@ -174,10 +190,6 @@ class AiBrainService
         }
     }
 
-    /**
-     * Gera um relatório executivo completo numa única chamada, reutilizando o
-     * contexto financeiro rico do AI Brain mas sem histórico nem ciclo de tools.
-     */
     public function generateExecutiveReport(User $user, Workspace $workspace): array
     {
         $this->assertAiAccess($user);
@@ -190,32 +202,353 @@ class AiBrainService
             'path' => request()->path(),
             'period' => now()->format('Y-m'),
         ]);
-        $memories = $this->memories($user, $workspace);
         $intent = $this->intentDetector->detect('diagnóstico financeiro executivo mensal');
-        $systemPrompt = $this->systemPrompt($context, $snapshot, $memories, $intent);
+        $reportSnapshot = $workspace->type === 'personal'
+            ? $this->personalReportSnapshot($user, $workspace, $snapshot)
+            : $snapshot;
+        $reportMemories = $workspace->type === 'personal' ? [] : $this->memories($user, $workspace);
+        $systemPrompt = $this->systemPrompt($context, $reportSnapshot, $reportMemories, $intent);
+        $reportRequest = $workspace->type === 'personal'
+            ? 'Prepara uma análise financeira para '.now()->translatedFormat('F Y')." em português de Portugal. Sê direto e dá a tua opinião fundamentada, como um consultor financeiro prudente. Desenvolve todos os tópicos de forma útil, idealmente num total de 500 a 700 palavras, sem introdução genérica, repetições ou parágrafos longos.\n\nUsa exatamente estes sete títulos, nesta ordem e cada um numa linha própria: **Resultados**, **O que penso**, **Cenários**, **Pontos fortes**, **Pontos negativos**, **O que aconselho** e **Resumo**. Em cada tópico organiza a resposta em pontos começados por hífen; sempre que os dados o permitirem, inclui dois a quatro pontos e desenvolve cada um em duas ou três frases. Não acrescentes texto só para atingir o número de palavras nem inventes informação quando faltarem dados. Nos resultados, destaca o que for mais relevante entre investimentos, rendimentos, objetivos e despesas. Na opinião, interpreta os resultados, explica porquê e o que significam para a situação financeira; não te concentres apenas nas despesas. Em cenários, apresenta possibilidades condicionais realistas, com as respetivas hipóteses e consequências. Nos pontos fortes e negativos, explica a relevância dos aspetos observados e distingue riscos de dados em falta; se não houver base, diz isso sem inventar. Nos conselhos, indica ações prioritárias e específicas, explicando a sua utilidade. No resumo, sintetiza a avaliação global, a prioridade mais importante e os principais dados por confirmar, sem repetir as outras secções.\n\nUsa exclusivamente os dados financeiros atuais da análise determinística, não valores de memórias antigas. Indica valores monetários e percentagens exatamente como foram fornecidos pelo backend, com a moeda ou o símbolo %; não calcules nem arredondes outros valores. Os totais por categoria são somas, não despesas individuais. Distingue receitas registadas, salários registados como pagos e rendimentos recorrentes previstos, que podem sobrepor-se: não os somes nem interpretes a ausência de registos como prova de que não houve recebimento. Não calcules nem apresentes saldo mensal ou disponível, pois não há base suficiente. O custo pessoal de subscrições no backend exclui as marcadas como pagas pela empresa. Uma assinatura ativa não prova que seja paga pelo utilizador; não atribuas pagador a nenhuma assinatura individual sem prova.\n\nSe usares a projeção de despesas, identifica-a como extrapolação incerta que não acrescenta despesas futuras agendadas nem prevê gastos irregulares. Uma categoria concentrada pode incluir uma despesa pontual; pede confirmação antes de a tratar como recorrente. Outros cenários devem ser apenas qualitativos, com hipóteses explícitas, sem cortes arbitrários ou valores inventados. Não sugiras cortar despesas essenciais sem saber se são ajustáveis. Não inventes composição de despesas, rentabilidades, características dos investimentos ou recomendações personalizadas de compra e venda. Distingue valorizações não realizadas de rendimentos efetivos."
+            : 'Prepara um diagnóstico financeiro para '.now()->translatedFormat('F Y')." como um consultor financeiro profissional, claro e direto. Escreve em português de Portugal, idealmente entre 100 e 160 palavras, sem introduções genéricas nem repetir os mesmos números.\n\nUsa estas secções curtas:\n- **Situação atual:** a conclusão mais importante, fundamentada em 1 ou 2 valores relevantes.\n- **Cenários:** apresenta o cenário de despesas ao ritmo atual e, quando fornecido pelo backend, o cenário alternativo de reduzir em 10% apenas as despesas ainda por ocorrer. Identifica a hipótese e a diferença estimada; esclarece que nenhum cenário acrescenta despesas futuras agendadas. Se não houver base suficiente, diz isso em vez de inventar previsões.\n- **Atenção:** o risco ou oportunidade mais relevante dos registos, incluindo investimentos ou orçamento apenas se fizer diferença.\n- **Próximos passos:** até 2 ações concretas, priorizadas e ligadas aos dados; se faltarem dados, propõe registá-los ou confirmá-los.\n\nOs movimentos de receitas, salários pagos e rendimento recorrente são fontes distintas que podem sobrepor-se: não os somes nem assumas que um rendimento recorrente já foi recebido. Distingue sempre registos até hoje de movimentos futuros, valores previstos de recebidos, e estimativas de factos. Uma projeção pelo ritmo diário é apenas um cenário hipotético, não uma garantia nem prevê despesas irregulares. Não assumas que não houve gastos por não haver registos. Não inventes dados, cenários numéricos, rentabilidades ou saldo disponível e não dês ordens de compra ou venda. Prefere os dados atuais do backend a memórias antigas.";
 
+        $reportMode = "\n\nMODO DE RELATÓRIO: não executes nem solicites ferramentas. Estás apenas a analisar os dados já fornecidos pelo backend.";
         $messages = [
             [
                 'role' => 'system',
-                'content' => $systemPrompt."\n\nMODO DE RELATÓRIO: não executes nem solicites ferramentas. Estás apenas a analisar os dados já fornecidos pelo backend.",
+                'content' => $systemPrompt.$reportMode,
             ],
             [
                 'role' => 'user',
-                'content' => "Prepara um diagnóstico financeiro executivo completo para ".now()->translatedFormat('F Y').".\n\nOrganiza a resposta com estas secções, sem omitir uma secção quando existirem dados relevantes:\n1. RESUMO EXECUTIVO — estado geral e principal conclusão.\n2. INDICADORES FINANCEIROS — receitas recorrentes, receitas efetivamente registadas, despesas, poupança prevista e real, taxas e património/investimentos quando disponíveis.\n3. ANÁLISE DE DESPESAS — categorias, orçamento, ritmo diário e previsão de fim do mês.\n4. INVESTIMENTOS E PATRIMÓNIO — valor atual, composição apenas se fornecida, riscos e limitações dos dados.\n5. EVOLUÇÃO MENSAL — comparação com o mês anterior apenas quando exista base comparável.\n6. FACTOS — lista objetiva dos números confirmados.\n7. INFERÊNCIAS E RISCOS — separa claramente interpretações de factos e não tires conclusões a partir de dados em falta.\n8. RECOMENDAÇÕES — exatamente 3 ações concretas, ordenadas por prioridade e adequadas à situação real.\n\nExplica explicitamente quando um valor é orçamentado/recorrente e ainda não foi recebido/registado. Não confundas ausência de despesas registadas com prova de ausência de consumo. Não inventes composição de carteira, saldo de caixa, transações ou evolução. Usa tabelas ou listas curtas quando melhorarem a leitura. Mantém detalhe suficiente para ser um relatório útil, não uma resposta curta.",
+                'content' => $reportRequest,
             ],
         ];
 
-        $response = $this->provider($messages, null, true, 2800);
-        $content = trim((string) data_get($response, 'choices.0.message.content', ''));
+        $tokens = 0;
+        $maxReportTokens = $workspace->type === 'personal' ? 4000 : 2800;
+        $compatibilityMode = false;
+        $qualitativeRetry = false;
+        $failureReason = null;
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $model = $attempt === 0 && ! $compatibilityMode ? 'google/gemma-4-31b-it:free' : 'openrouter/free';
+            $disableReasoning = ! $compatibilityMode || ($attempt > 0 && $failureReason === 'truncated');
+            try {
+                $response = $this->provider($messages, null, true, $maxReportTokens, $disableReasoning, $model, $attempt === 0 && ! $compatibilityMode ? ['openrouter/free'] : []);
+            } catch (AiProviderException $exception) {
+                if ($exception->getCode() !== 400 || $compatibilityMode) {
+                    throw $exception;
+                }
 
-        if ($content === '') {
-            throw new RuntimeException('O modelo não devolveu conteúdo para o relatório.');
+                $compatibilityMode = true;
+                Log::notice('CFO report: retrying rejected request with compatible parameters', [
+                    'status' => 400,
+                    'requested_model' => $model,
+                ]);
+                $response = $this->provider($messages, null, true, $maxReportTokens, false, 'openrouter/free');
+            }
+            $tokens += (int) data_get($response, 'usage.total_tokens', 0);
+            $rawContent = data_get($response, 'choices.0.message.content');
+            $content = is_string($rawContent) ? trim($rawContent) : '';
+            if (is_array($rawContent)) {
+                $content = collect($rawContent)
+                    ->map(fn ($part) => is_string($part) ? $part : data_get($part, 'text'))
+                    ->filter(fn ($part) => is_string($part) && trim($part) !== '')
+                    ->implode("\n");
+                $content = trim($content);
+            }
+            $finishReason = data_get($response, 'choices.0.finish_reason');
+
+            $failureReason = null;
+            if ($content === '') {
+                $failureReason = 'empty';
+            } elseif ($this->isClearlyCorruptedReport($content)) {
+                $failureReason = 'corrupted';
+            } elseif ($workspace->type === 'personal') {
+                [$normalized, $failureReason] = $this->normalizePersonalReport($content);
+                if ($normalized !== null && ! $this->hasSupportedReportValues($normalized, $reportSnapshot)) {
+                    $failureReason = 'unsupported_values';
+                } elseif ($normalized !== null) {
+                    $content = $normalized;
+                }
+            }
+            if ($finishReason === 'length') {
+                $failureReason = 'truncated';
+            }
+
+            if ($failureReason === null) {
+                if ($qualitativeRetry) {
+                    $content = "_Nota: esta análise privilegiou uma abordagem qualitativa porque não foi possível confirmar todos os valores da primeira resposta._\n\n".$content;
+                }
+
+                return [
+                    'content' => $content,
+                    'snapshot' => $snapshot,
+                    'tokens' => $tokens,
+                ];
+            }
+
+            Log::warning('CFO report invalid or incomplete', [
+                'attempt' => $attempt + 1,
+                'model' => data_get($response, 'model'),
+                'finish_reason' => $finishReason,
+                'validation_reason' => $failureReason,
+                'content_length' => mb_strlen($content),
+                'total_tokens' => (int) data_get($response, 'usage.total_tokens', 0),
+            ]);
+            $qualitativeRetry = $workspace->type === 'personal' && $failureReason === 'unsupported_values';
+            if ($qualitativeRetry) {
+                $messages[0]['content'] = $this->systemPrompt($context, $reportSnapshot, $reportMemories, $intent, true).$reportMode;
+                $messages[1]['content'] = "Prepara uma análise financeira em português de Portugal, com opiniões fundamentadas nos dados fornecidos. Não escrevas montantes monetários nem percentagens, incluindo em cenários. Não inventes informações ou cálculos. Descreve resultados, investimentos, rendimentos, despesas e riscos qualitativamente quando houver dados, distinguindo valores previstos de recebidos e cenários de factos.\n\nUsa estes sete títulos, cada um numa linha própria: **Resultados**, **O que penso**, **Cenários**, **Pontos fortes**, **Pontos negativos**, **O que aconselho** e **Resumo**. Em cada tópico apresenta pontos organizados e desenvolve-os de forma útil, sem repetir ou inventar informação. Inclui hipóteses explícitas nos cenários e conselhos concretos e prudentes.";
+
+                continue;
+            }
+            $retryInstruction = $workspace->type === 'personal'
+                ? 'A tentativa anterior não passou nas verificações. Não faças cálculos nem inventes montantes ou percentagens; usa apenas os valores atuais fornecidos pelo backend. Inclui os sete títulos pedidos, cada um com conteúdo.'
+                : 'A tentativa anterior não foi concluída.';
+            $lengthInstruction = $workspace->type === 'personal'
+                ? ($failureReason === 'truncated'
+                    ? ' Ignora o intervalo anterior: produz cerca de 300 a 400 palavras, mantendo os sete títulos e pontos úteis, sem repetir informação.'
+                    : ' Em vez do intervalo anterior, produz cerca de 400 a 500 palavras, mantendo os sete títulos e desenvolvendo os pontos sem repetir informação.')
+                : ' Ignora os limites de palavras anteriores: produz uma versão mais concisa, com cerca de 200 a 300 palavras, e termina todas as secções.';
+            $messages[1]['content'] = $reportRequest."\n\n".$retryInstruction.$lengthInstruction;
         }
 
+        $message = match ($failureReason) {
+            'truncated' => 'A última resposta da IA foi cortada e o relatório ficou incompleto. Tenta novamente mais tarde.',
+            'empty' => 'A última resposta da IA veio vazia. Tenta novamente mais tarde.',
+            'unsupported_values' => 'A última resposta da IA apresentou valores que não foi possível confirmar. Tenta novamente mais tarde.',
+            default => 'O relatório não passou nas verificações de formato ou valores em duas tentativas. Tenta novamente mais tarde.',
+        };
+
+        throw new AiProviderException($message);
+    }
+
+    public function isClearlyCorruptedReport(string $content): bool
+    {
+        preg_match_all('/\p{L}/u', $content, $letters);
+        preg_match_all('/[^\p{Latin}\P{L}]/u', $content, $nonLatin);
+
+        return count($nonLatin[0]) >= 8 && count($nonLatin[0]) > count($letters[0]) * 0.08;
+    }
+
+    private function normalizePersonalReport(string $content): array
+    {
+        [$sections, $failure] = $this->personalReportSections($content);
+        if ($sections === null) {
+            return [null, $failure];
+        }
+
+        $formatted = [];
+        foreach (self::PERSONAL_REPORT_HEADINGS as $name => $title) {
+            $formatted[] = '**'.$title."**\n".$sections[$name];
+        }
+
+        return [implode("\n\n", $formatted), null];
+    }
+
+    public function personalReportSections(string $content): array
+    {
+        preg_match_all('/[\p{L}\p{N}]+(?:[.,\'’_-][\p{L}\p{N}]+)*/u', $content, $words);
+        if (count($words[0]) < 35) {
+            return [null, 'too_short'];
+        }
+
+        $aliases = [
+            'pontos fracos' => 'pontos negativos',
+            'o que aconselha' => 'o que aconselho',
+            'o que ele aconselha' => 'o que aconselho',
+            'recomendacoes' => 'o que aconselho',
+        ];
+        $labels = 'resultados|o que penso|cen[aá]rios|pontos fortes|pontos negativos|pontos fracos|o que aconselha|o que aconselho|o que ele aconselha|recomenda[cç][oõ]es|resumo';
+        $pattern = '/^\s*(?:#{1,6}\s*)?(?:(?:\d+[.)]|[-•]|\*(?!\*))\s+)?'
+            .'(?:(?:\*{1,3}|__)('.$labels.')(?:\s*:\s*(?:\*{1,3}|__)|(?:\*{1,3}|__)\s*[:–—-]\s*|(?:\*{1,3}|__)\s*$)'
+            .'|('.$labels.')(?:\s*:\s*|\s+[-–—]\s+|\s*$))(.*)$/iu';
+        $sections = [];
+        $preamble = [];
+        $currentSection = null;
+        foreach (preg_split('/\R/u', $content) as $line) {
+            if (preg_match($pattern, $line, $match)) {
+                $name = Str::lower(Str::ascii($match[1] !== '' ? $match[1] : $match[2]));
+                $name = $aliases[$name] ?? $name;
+                if (array_key_exists($name, $sections)) {
+                    return [null, 'duplicate_section'];
+                }
+                $currentSection = $name;
+                $sections[$name] = [];
+                if (trim($match[3]) !== '') {
+                    $sections[$name][] = $match[3];
+                }
+            } elseif ($currentSection !== null) {
+                $sections[$currentSection][] = $line;
+            } else {
+                $preamble[] = $line;
+            }
+        }
+        $formatted = [];
+        foreach (self::PERSONAL_REPORT_HEADINGS as $name => $title) {
+            $lines = $sections[$name] ?? [];
+            $body = trim(implode("\n", $lines));
+            if ($body === '') {
+                return [null, 'missing_or_empty_sections'];
+            }
+            if ($name === 'resultados' && trim(implode("\n", $preamble)) !== '') {
+                $body = trim(implode("\n", $preamble))."\n\n".$body;
+            }
+            $body = collect(preg_split('/\R/u', $body))
+                ->map(fn (string $line) => trim($line) !== '' && ! preg_match('/^\s*(?:[-*•]|\d+[.)])\s+\S/u', $line) ? '- '.trim($line) : $line)
+                ->implode("\n");
+            $formatted[$name] = $body;
+        }
+
+        return [$formatted, null];
+    }
+
+    private function hasSupportedReportValues(string $content, array $snapshot): bool
+    {
+        $amounts = [];
+        $percentages = [];
+        $collect = function (array $data) use (&$collect, &$amounts, &$percentages): void {
+            foreach ($data as $key => $value) {
+                if (is_array($value)) {
+                    $collect($value);
+                } elseif ((is_int($value) || is_float($value)) && ! in_array($key, ['id', 'quantity', 'expense_record_count'], true)) {
+                    if (str_ends_with((string) $key, '_percent')) {
+                        $percentages[] = (float) $value;
+                    } else {
+                        $amounts[] = (float) $value;
+                    }
+                }
+            }
+        };
+        $collect($snapshot);
+
+        $currency = preg_quote((string) ($snapshot['currency'] ?? 'EUR'), '/');
+        $symbol = match ($snapshot['currency'] ?? 'EUR') {
+            'EUR' => '€',
+            'USD' => '\$',
+            'GBP' => '£',
+            'BRL' => 'R\$',
+            'JPY' => '¥',
+            default => '',
+        };
+        $unit = $symbol !== '' ? $currency.'|'.$symbol : $currency;
+        $number = '[+-]?\d(?:[\d., \x{00a0}\x{202f}]*\d)?';
+        $suffixCount = preg_match_all('/(?<![\p{L}\d])('.$number.')[\p{Zs}\t]*(%|'.$unit.')(?!\p{L})/iu', $content, $suffixes, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        $prefixCount = preg_match_all('/(?<!\p{L})('.$unit.')[\p{Zs}\t]*('.$number.')/iu', $content, $prefixes, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        if ($suffixCount === false || $prefixCount === false) {
+            throw new RuntimeException('Não foi possível verificar os valores do relatório.');
+        }
+
+        $suffixUnitOffsets = [];
+        foreach ($suffixes as $match) {
+            $values = $match[2][0] === '%' ? $percentages : $amounts;
+            if (! $this->reportValueExists($match[1][0], $values)) {
+                return false;
+            }
+            $suffixUnitOffsets[] = $match[2][1];
+        }
+        foreach ($prefixes as $match) {
+            if (in_array($match[1][1], $suffixUnitOffsets, true)) {
+                continue;
+            }
+            if (! $this->reportValueExists($match[2][0], $amounts)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function reportValueExists(string $formatted, array $values): bool
+    {
+        $number = preg_replace('/[\p{Zs}]/u', '', $formatted);
+        $comma = strrpos($number, ',');
+        $dot = strrpos($number, '.');
+        if ($comma !== false && $dot !== false) {
+            $number = $comma > $dot
+                ? str_replace(',', '.', str_replace('.', '', $number))
+                : str_replace(',', '', $number);
+        } elseif ($comma !== false) {
+            $number = str_replace(',', '.', $number);
+        } elseif ($dot !== false && preg_match('/^[+-]?\d{1,3}(?:\.\d{3})+$/', $number)) {
+            $number = str_replace('.', '', $number);
+        }
+
+        foreach ($values as $value) {
+            if (abs((float) $number - $value) < 0.000001) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function personalReportSnapshot(User $user, Workspace $workspace, array $snapshot): array
+    {
+        $today = now();
+        $start = $today->copy()->startOfMonth()->toDateString();
+        $cutoff = $today->toDateString();
+        $end = $today->copy()->endOfMonth()->toDateString();
+        $expenses = Expense::where('workspace_id', $workspace->id)
+            ->where('user_id', $user->id)
+            ->where('is_company', false)
+            ->whereDate('spent_at', '>=', $start)
+            ->whereDate('spent_at', '<=', $cutoff)
+            ->with('category:id,name')
+            ->get();
+        $amount = fn ($record): float => (float) ($record->amount_converted ?? $record->amount);
+        $spent = round((float) $expenses->sum($amount), 2);
+        $income = Income::where('workspace_id', $workspace->id)
+            ->where('user_id', $user->id)
+            ->whereDate('received_at', '>=', $start)
+            ->whereDate('received_at', '<=', $cutoff)
+            ->get();
+        $salary = SalaryPayment::where('workspace_id', $workspace->id)
+            ->where('user_id', $user->id)
+            ->where('status', 'paid')
+            ->whereDate('paid_at', '>=', $start)
+            ->whereDate('paid_at', '<=', $cutoff)
+            ->sum('net_received');
+        $futureExpenses = Expense::where('workspace_id', $workspace->id)
+            ->where('user_id', $user->id)
+            ->where('is_company', false)
+            ->whereDate('spent_at', '>', $cutoff)
+            ->whereDate('spent_at', '<=', $end)
+            ->get();
+        $hasForecastBase = $today->day >= 7 && $expenses->count() >= 3;
+        $projectedExpenses = $hasForecastBase ? round($spent / $today->day * $today->daysInMonth, 2) : null;
+
         return [
-            'content' => $content,
-            'snapshot' => $snapshot,
-            'tokens' => (int) data_get($response, 'usage.total_tokens', 0),
+            'kind' => 'personal',
+            'period' => $today->format('Y-m'),
+            'as_of' => $cutoff,
+            'currency' => $snapshot['currency'],
+            'recorded_income_through_today' => round((float) $income->sum($amount), 2),
+            'salary_payments_through_today' => round((float) $salary, 2),
+            'active_recurring_income' => $snapshot['income_recurring'],
+            'recorded_expenses_through_today' => $spent,
+            'expense_record_count' => $expenses->count(),
+            'future_dated_expenses' => round((float) $futureExpenses->sum($amount), 2),
+            'top_expense_categories' => $expenses
+                ->groupBy(fn (Expense $expense): string => $expense->category?->name ?: 'Sem categoria')
+                ->map(fn ($records): float => round((float) $records->sum($amount), 2))
+                ->sortDesc()
+                ->take(3)
+                ->all(),
+            'forecast' => [
+                'projected_month_end_expenses' => $projectedExpenses,
+                'method' => 'Despesas registadas até hoje divididas pelos dias decorridos e multiplicadas pelos dias do mês.',
+                'limitation' => 'Extrapolação do ritmo atual; não acrescenta despesas futuras agendadas nem prevê gastos irregulares.',
+                'minimum_data' => 'Pelo menos 7 dias decorridos e 3 despesas registadas.',
+            ],
+            'budget' => ['total_budget' => $snapshot['budget']['total_budget']],
+            'investment_value' => $snapshot['investment_value'],
+            'investment_cost' => $snapshot['investment_cost'],
+            'investment_profit_loss' => $snapshot['investment_profit_loss'],
+            'investment_profit_loss_percent' => $snapshot['investment_profit_loss_percent'],
+            'investments' => $snapshot['investments'],
+            'goals' => $snapshot['goals'],
+            'active_personal_subscription_cost' => $snapshot['active_subscription_cost'],
         ];
     }
 
@@ -281,26 +614,56 @@ class AiBrainService
         return null;
     }
 
-    private function provider(array $messages, ?string $forcedTool = null, bool $disableTools = false, int $maxTokens = 1600): array
+    private function provider(array $messages, ?string $forcedTool = null, bool $disableTools = false, int $maxTokens = 1600, bool $disableReasoning = false, string $model = 'openrouter/free', array $fallbackModels = []): array
     {
         $apiKey = config('services.openrouter.api_key');
         if (blank($apiKey)) {
-            throw new RuntimeException('O serviço de IA não está configurado.');
+            throw new AiProviderException('O serviço de IA não está configurado. Verifica a chave do OpenRouter.');
         }
         $payload = [
-            'model' => config('services.openrouter.model', 'openai/gpt-4o-mini'),
+            'model' => $model,
             'messages' => $messages,
-            'tool_choice' => $disableTools ? 'none' : ($forcedTool ? ['type' => 'function', 'function' => ['name' => $forcedTool]] : 'auto'),
             'max_tokens' => max(256, min(4000, $maxTokens)),
+            'provider' => ['max_price' => ['prompt' => 0, 'completion' => 0]],
         ];
+        if ($fallbackModels) {
+            $payload['models'] = $fallbackModels;
+        }
+        if ($disableReasoning) {
+            $payload['reasoning'] = ['enabled' => false];
+        }
         if (! $disableTools) {
             $payload['tools'] = $this->tools->definitions();
+            $payload['tool_choice'] = $forcedTool ? ['type' => 'function', 'function' => ['name' => $forcedTool]] : 'auto';
         }
         $response = Http::withHeaders(['Authorization' => 'Bearer '.$apiKey, 'Content-Type' => 'application/json', 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')])->connectTimeout((int) config('limits.ai.connect_timeout_seconds', 5))
             ->timeout((int) config('limits.ai.request_timeout_seconds', 30))
             ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
         if (! $response->successful()) {
-            throw new RuntimeException('Provider indisponível (HTTP '.$response->status().').');
+            $providerMessage = $response->json('error.message');
+            $providerMessage = is_string($providerMessage) ? Str::lower($providerMessage) : '';
+            $errorCategory = match (true) {
+                Str::contains($providerMessage, ['context length', 'context window']) => 'context_limit',
+                Str::contains($providerMessage, ['invalid model', 'model not found', 'not a valid model']) => 'invalid_model',
+                Str::contains($providerMessage, ['invalid parameter', 'invalid request', 'unrecognized request']) => 'invalid_parameters',
+                Str::contains($providerMessage, ['provider returned error', 'provider error']) => 'provider_error',
+                default => 'unspecified',
+            };
+            Log::warning('AI provider request rejected', [
+                'status' => $response->status(),
+                'requested_model' => $model,
+                'has_fallback_models' => $fallbackModels !== [],
+                'reasoning_disabled' => $disableReasoning,
+                'error_category' => $errorCategory,
+            ]);
+            throw new AiProviderException(match ($response->status()) {
+                400 => 'O OpenRouter rejeitou o pedido (HTTP 400). Verifica a configuração do modelo ou tenta novamente mais tarde.',
+                401 => 'A chave do OpenRouter foi rejeitada. Verifica a configuração da chave.',
+                402 => 'O OpenRouter recusou o pedido por falta de créditos ou por um limite da conta. Verifica os limites da chave.',
+                403 => 'O OpenRouter não autorizou o pedido. Verifica a chave e os limites da conta.',
+                429 => 'O limite de pedidos foi atingido ou os modelos gratuitos estão sem capacidade. Tenta novamente mais tarde.',
+                default => 'O serviço OpenRouter está indisponível (HTTP '.$response->status().'). Tenta novamente mais tarde.',
+            }, $response->status());
         }
         $json = $response->json();
         if (! is_array($json) || ! isset($json['choices'][0]['message'])) {
@@ -347,7 +710,7 @@ class AiBrainService
         }
     }
 
-    private function systemPrompt(array $context, array $snapshot, array $memories, array $intent): string
+    private function systemPrompt(array $context, array $snapshot, array $memories, array $intent, bool $qualitativeReport = false): string
     {
         $contextJson = json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $snapshotJson = json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -360,6 +723,9 @@ class AiBrainService
             'business', 'company' => 'EMPRESARIAL',
             default => 'DESCONHECIDO',
         };
+        $responseRule = $qualitativeReport
+            ? 'Para este relatório, não apresentes montantes monetários nem percentagens. Analisa os dados qualitativamente.'
+            : 'Responde de forma curta por defeito e usa os números reais disponíveis.';
 
         return <<<PROMPT
 És o Finance Pro AI — Financial Copilot. Fala sempre em Português de Portugal.
@@ -386,7 +752,7 @@ REGRAS ABSOLUTAS
 9. Operações destrutivas exigem confirmação explícita e separada.
 10. Para investimentos, impostos ou temas legais, apresenta informação e incerteza; não prometas retornos nem inventes regras.
 11. Distingue FACTO, INFERÊNCIA, ESTIMATIVA e RECOMENDAÇÃO quando isso evitar confusão.
-12. Responde de forma curta por defeito e usa os números reais disponíveis.
+12. {$responseRule}
 13. Quando receberes uma pergunta de seguimento, usa o histórico recente e o contexto financeiro do workspace atual.
 
 INTENÇÃO DETERMINÍSTICA DETETADA

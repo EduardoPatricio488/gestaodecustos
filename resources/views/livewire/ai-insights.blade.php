@@ -15,6 +15,30 @@
             </div>
             <h1 class="text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic">CFO Inteligente</h1>
             <p class="text-zinc-500 font-medium text-sm max-w-md">O teu consultor financeiro processou os teus ativos e hábitos.</p>
+
+            <div x-data x-on:cfo-report-finished.window="$wire.refreshAiQuota()"
+                 wire:init="refreshAiQuota" wire:poll.60s="refreshAiQuota" class="mt-3 text-xs text-zinc-500">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span class="font-semibold">Quota IA · OpenRouter</span>
+                    @if($aiQuota === null)
+                        <span role="status">A consultar...</span>
+                    @elseif($aiQuota['available'])
+                        <span>{{ number_format($aiQuota['used'], 0, ',', '.') }} utilizados</span>
+                        <span class="{{ $aiQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
+                            {{ number_format($aiQuota['remaining'], 0, ',', '.') }} restantes / {{ number_format($aiQuota['limit'], 0, ',', '.') }}
+                        </span>
+                    @else
+                        <span class="text-amber-700 dark:text-amber-400" role="status">Quota indisponível. {{ $aiQuota['error'] }}</span>
+                    @endif
+                    <button type="button" wire:click="refreshAiQuota" wire:loading.attr="disabled" wire:target="refreshAiQuota"
+                            class="font-semibold text-brand-600 hover:text-brand-700 disabled:opacity-50">
+                        Atualizar quota
+                    </button>
+                </div>
+                @if($aiQuota !== null && $aiQuota['available'])
+                    <p class="mt-1 text-[11px] text-zinc-400">Pedidos partilhados com outras funções · Renova às 00:00 UTC · Um relatório pode consumir mais de um pedido. Outros limites podem aplicar-se.</p>
+                @endif
+            </div>
         </div>
 
         <div class="flex items-center gap-3 flex-wrap flex-shrink-0">
@@ -123,29 +147,10 @@
         </div>
     </div>
 
-    {{-- 3. ESTADO: A GERAR (ecrã dramático mantido) --}}
+    {{-- 3. ESTADO: A GERAR --}}
     <div wire:loading wire:target="generateInsights"
          class="glass-card p-10 bg-zinc-950 text-white rounded-[3rem] border border-zinc-800 shadow-2xl"
-         x-data="{
-            messages: [
-                '🔍 A espiar as tuas despesas com o Uber Eats...',
-                '💸 A contar quantas vezes foste ao café este mês...',
-                '📊 A perguntar ao Banco de Portugal se estás bem...',
-                '🧮 A fazer contas que a tua professora de matemática não aprovaria...',
-                '🤖 A treinar a IA com os teus erros financeiros...',
-                '😬 A descobrir quanto gastaste em subscrições que te esqueceste...',
-                '📈 A inventar um gráfico que te faça sentir bem...',
-                '🏦 A negociar com os algoritmos em teu nome...',
-                '💡 Quase lá... a IA está a tomar um café antes de te julgar...',
-                '✍️ A escrever o relatório com luvas para não deixar impressões digitais...',
-            ],
-            current: 0,
-            init() {
-                setInterval(() => {
-                    this.current = (this.current + 1) % this.messages.length;
-                }, 2500);
-            }
-         }"
+         role="status" aria-live="polite"
     >
         <div class="flex flex-col items-center justify-center gap-8 py-6 text-center">
             <div class="relative">
@@ -158,21 +163,28 @@
 
             <div class="space-y-3 max-w-md">
                 <p class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Inteligência Artificial em Ação</p>
-                <p class="text-lg font-black text-white italic transition-all duration-500" x-text="messages[current]"></p>
+                <p class="text-lg font-black text-white italic">A preparar o teu diagnóstico financeiro</p>
             </div>
 
             <div class="w-full max-w-sm space-y-2">
                 <div class="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-brand-500 to-emerald-500 rounded-full" style="animation: progress 8s ease-in-out forwards;"></div>
+                    <div class="h-full w-1/3 bg-gradient-to-r from-brand-500 to-emerald-500 rounded-full animate-pulse"></div>
                 </div>
-                <p class="text-[9px] font-black text-zinc-600 uppercase tracking-widest">A processar o teu perfil financeiro...</p>
+                <p class="text-xs text-zinc-400">O fornecedor pode demorar e a aplicação pode tentar novamente. Mantém esta página aberta.</p>
             </div>
         </div>
     </div>
 
+    @if($analysisError)
+        <p role="alert" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{{ $analysisError }}</p>
+    @endif
+    @if($aiAnalysis && $reportNeedsReview)
+        <p role="alert" class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">Este relatório foi gerado antes da verificação de valores e pode conter erros. Atualiza-o antes de o utilizar.</p>
+    @endif
+
     {{-- 4. ESTADO VAZIO (ainda sem relatório) --}}
     @if(!$aiAnalysis)
-        <div wire:loading.remove wire:target="generateInsights"
+        <div id="diagnostico-financeiro" wire:loading.remove wire:target="generateInsights"
              class="relative overflow-hidden bg-gradient-to-br from-zinc-950 via-zinc-900 to-brand-900 text-white p-10 rounded-[3rem] border border-brand-500/20 shadow-2xl">
             <div class="absolute -top-10 -right-10 size-56 bg-brand-500/10 blur-[100px] rounded-full"></div>
             <div class="relative z-10 flex flex-col md:flex-row items-center gap-10">
@@ -182,17 +194,17 @@
                 <div class="flex-1">
                     <h2 class="text-2xl font-black uppercase italic tracking-tighter">Ainda não geraste o teu diagnóstico</h2>
                     <p class="text-zinc-400 text-sm font-medium mt-2 max-w-lg">
-                        A IA analisa o teu padrão de gastos, receitas e poupança para te dar um diagnóstico escrito, em segundos.
+                        A IA analisa os teus registos e apresenta sugestões e cenários quando existem dados suficientes.
                     </p>
                     <div class="flex flex-wrap gap-4 mt-5">
                         <div class="flex items-center gap-2 text-[10px] font-black uppercase text-zinc-400">
-                            <flux:icon name="check-circle" class="size-4 text-emerald-500" /> Deteta riscos de saldo negativo
+                            <flux:icon name="check-circle" class="size-4 text-emerald-500" /> Analisa despesas registadas
                         </div>
                         <div class="flex items-center gap-2 text-[10px] font-black uppercase text-zinc-400">
-                            <flux:icon name="check-circle" class="size-4 text-emerald-500" /> Sinaliza subscrições esquecidas
+                            <flux:icon name="check-circle" class="size-4 text-emerald-500" /> Apresenta cenários possíveis
                         </div>
                         <div class="flex items-center gap-2 text-[10px] font-black uppercase text-zinc-400">
-                            <flux:icon name="check-circle" class="size-4 text-emerald-500" /> Compara com o teu histórico
+                            <flux:icon name="check-circle" class="size-4 text-emerald-500" /> Sugere próximos passos
                         </div>
                     </div>
                 </div>
@@ -202,7 +214,7 @@
 
     {{-- 5. RELATÓRIO DA IA --}}
     @if($aiAnalysis)
-        <div wire:loading.class="opacity-40 pointer-events-none" wire:target="generateInsights"
+        <div id="diagnostico-financeiro" wire:loading.class="opacity-40 pointer-events-none" wire:target="generateInsights"
              class="glass-card p-10 bg-zinc-950 text-white rounded-[3rem] border-2 border-brand-500 shadow-[0_0_50px_-12px_rgba(16,185,129,0.3)] transition-opacity duration-300">
             <div class="flex flex-wrap items-center justify-between gap-4 mb-8 border-b border-white/10 pb-6">
                 <div class="flex items-center gap-4">
@@ -210,8 +222,8 @@
                         <flux:icon name="chat-bubble-left-right" class="size-6 text-brand-400" />
                     </div>
                     <div>
-                        <h2 class="text-lg font-black uppercase tracking-tighter">Diagnóstico Digital</h2>
-                        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Análise baseada no teu património real</p>
+                        <h2 class="text-lg font-black uppercase tracking-tighter">Diagnóstico financeiro</h2>
+                        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Análise financeira por tópicos</p>
                     </div>
                 </div>
                 @isset($reportGeneratedAt)
@@ -223,75 +235,48 @@
 @endisset
             </div>
 
-            <div class="prose prose-invert max-w-none
-                prose-h3:text-brand-400 prose-h3:uppercase prose-h3:text-sm prose-h3:tracking-widest
-                prose-p:text-zinc-300 prose-p:leading-relaxed
-                prose-strong:text-white prose-strong:font-black
-                prose-li:text-zinc-400">
-                {!! Str::markdown($aiAnalysis, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
+            @php
+                $reportMarkdown = preg_replace(
+                    '/^[ \t]*\*\*(Resultados|O que penso|Cenários|Pontos fortes|Pontos negativos|O que aconselho|Resumo):?\*\*[ \t]*$/imu',
+                    '### $1',
+                    $aiAnalysis
+                );
+            @endphp
+            <div class="cfo-report">
+                {!! Str::markdown($reportMarkdown, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
             </div>
 
             <div class="mt-8 pt-6 border-t border-white/5 flex justify-between items-center">
-                <span class="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em]">Gemini 1.5 Flash Engine</span>
-                <flux:badge variant="success" size="sm" class="bg-brand-500/10 text-brand-400 border-none">+150 XP GANHOS</flux:badge>
+                <span class="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em]">OpenRouter</span>
             </div>
         </div>
     @endif
 
-    {{-- 6. VERIFICAÇÕES ALGORÍTMICAS --}}
-    <div class="space-y-4" x-data="{ filter: 'all' }">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <h2 class="text-xs font-black uppercase tracking-[0.3em] text-zinc-400">Verificações de Segurança</h2>
-                @if(count($insights) > 0)
-                    <span class="text-[9px] font-black bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded-full">{{ count($insights) }}</span>
-                @endif
-            </div>
-
-            @if(count($insights) > 1)
-                <div class="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                    <button x-on:click="filter = 'all'" :class="filter === 'all' ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-800 dark:text-white' : 'text-zinc-400'" class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Todos</button>
-                    <button x-on:click="filter = 'danger'" :class="filter === 'danger' ? 'bg-white dark:bg-zinc-800 shadow-sm text-red-500' : 'text-zinc-400'" class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Riscos</button>
-                    <button x-on:click="filter = 'info'" :class="filter === 'info' ? 'bg-white dark:bg-zinc-800 shadow-sm text-blue-500' : 'text-zinc-400'" class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Avisos</button>
-                </div>
-            @endif
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @forelse($insights as $insight)
-               <div x-show="filter === 'all' || filter === '{{ $insight['type'] }}'"
-     class="glass-card p-6 border-l-4 shadow-sm flex gap-5 transition-all hover:translate-x-1
-    {{ $insight['type'] === 'danger' ? 'border-red-500 bg-red-50/10' : ($insight['type'] === 'warning' ? 'border-amber-500 bg-amber-50/10' : 'border-blue-500 bg-blue-50/10') }}">
-    <div class="mt-1">
-                        @if($insight['type'] === 'danger')
-    <flux:icon name="x-circle" class="size-6 text-red-500" />
-@elseif($insight['type'] === 'warning')
-    <flux:icon name="bell" class="size-6 text-amber-500" />
-@else
-    <flux:icon name="information-circle" class="size-6 text-blue-500" />
-@endif
-                    </div>
-                    <div class="flex-1">
-                        <h4 class="font-black text-sm uppercase dark:text-white leading-none tracking-tight">{{ $insight['title'] }}</h4>
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-2 leading-relaxed font-medium">{{ $insight['text'] }}</p>
-                        @isset($insight['route'])
-                            <a href="{{ $insight['route'] }}" wire:navigate class="inline-flex items-center gap-1 mt-3 text-[10px] font-black uppercase tracking-widest text-brand-600 hover:underline">
-                                Resolver agora <flux:icon name="arrow-right" class="size-3" />
-                            </a>
-                        @endisset
-                    </div>
-                </div>
-            @empty
-                <div class="col-span-2 p-12 text-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-[3rem]">
-                    <flux:icon name="check-badge" class="size-10 text-zinc-200 dark:text-zinc-800 mx-auto mb-4" />
-                    <p class="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Nenhum risco crítico detetado algoritmicamente.</p>
-                </div>
-            @endforelse
-        </div>
-    </div>
 </div>
 
 <style>
+    .cfo-report { color: #d4d4d8; line-height: 1.75; overflow-wrap: anywhere; }
+    .cfo-report h3 {
+        margin: 2rem 0 1rem;
+        padding: 0.8rem 1rem;
+        border: 1px solid rgba(52, 211, 153, 0.2);
+        border-left: 4px solid #34d399;
+        border-radius: 0.75rem;
+        background: rgba(16, 185, 129, 0.08);
+        color: #6ee7b7;
+        font-size: 1.05rem;
+        font-weight: 800;
+        line-height: 1.4;
+    }
+    .cfo-report h3:first-child { margin-top: 0; }
+    .cfo-report p { margin: 0.75rem 0; }
+    .cfo-report ul, .cfo-report ol { margin: 0.75rem 0; padding-left: 1.5rem; }
+    .cfo-report ul { list-style-type: disc; }
+    .cfo-report ol { list-style-type: decimal; }
+    .cfo-report li { margin: 0.6rem 0; padding-left: 0.2rem; }
+    .cfo-report li::marker { color: #34d399; }
+    .cfo-report strong { color: #fff; font-weight: 700; }
+
     @keyframes progress {
         0% { width: 0%; }
         20% { width: 25%; }

@@ -29,7 +29,7 @@ class PersonalCalendarMealAllowanceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_today_button_returns_to_current_month_across_year_boundaries(): void
+    public function test_summary_date_returns_to_today_across_year_boundaries(): void
     {
         $this->travelTo(Carbon::parse('2027-01-15'));
         $user = User::factory()->create();
@@ -38,21 +38,30 @@ class PersonalCalendarMealAllowanceTest extends TestCase
         $this->actingAs($user);
 
         Livewire::test(PersonalCalendar::class)
-            ->assertSeeHtml('wire:click="goToToday"')
-            ->assertSee('Mês atual')
+            ->assertDontSeeHtml('wire:click="goToToday"')
+            ->assertDontSeeHtml('aria-label="Mês anterior"')
+            ->assertDontSeeHtml('aria-label="Mês seguinte"')
+            ->assertDontSee('Mês atual')
+            ->assertSeeHtml('wire:click="resetSummaryDate"')
             ->assertDontSeeHtml('id="calendar-search"')
             ->assertSeeHtml('aria-label="Filtros"')
             ->assertDontSee('Próximos pagamentos · 15 dias')
             ->assertDontSee('Previsto vs. confirmado · mês')
-            ->call('prevMonth')
+            ->set('summaryDayInput', 10)
+            ->set('summaryMonthInput', 12)
+            ->set('summaryYearInput', 2026)
+            ->call('applySummaryDate')
             ->assertSet('month', 12)
             ->assertSet('year', 2026)
-            ->call('goToToday')
+            ->call('resetSummaryDate')
             ->assertSet('month', 1)
             ->assertSet('year', 2027)
-            ->call('nextMonth')
+            ->set('summaryDayInput', 10)
+            ->set('summaryMonthInput', 2)
+            ->set('summaryYearInput', 2027)
+            ->call('applySummaryDate')
             ->assertSet('month', 2)
-            ->call('goToToday')
+            ->call('resetSummaryDate')
             ->assertSet('month', 1)
             ->assertSet('year', 2027);
     }
@@ -101,6 +110,84 @@ class PersonalCalendarMealAllowanceTest extends TestCase
         $calendar->set('search', 'almoço');
         $this->assertTrue($calendar->instance()->visibleDayEvents->has('2026-11-12'));
         $this->assertFalse($calendar->instance()->visibleDayEvents->has('2026-11-13'));
+    }
+
+    public function test_symbol_filters_distinguish_meal_statuses_and_other_calendar_indicators(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-13 19:00:00'));
+        $user = User::factory()->create();
+        $workspace = Workspace::factory()->create(['owner_id' => $user->id]);
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+        $this->actingAs($user);
+        $contract = $this->createMealAllowanceContract($user, $workspace);
+        foreach (['2026-11-11' => 5, '2026-11-12' => 0] as $date => $amount) {
+            DailyMealAllowance::create([
+                'recurring_income_id' => $contract->id, 'user_id' => $user->id,
+                'workspace_id' => $workspace->id, 'allowance_date' => $date,
+                'expected_amount' => 10.46, 'received_amount' => $amount,
+            ]);
+        }
+        CalendarVacation::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id,
+            'start_date' => '2026-11-16', 'end_date' => '2026-11-16',
+        ]);
+        Reminder::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id,
+            'title' => 'Lembrete de teste', 'remind_at' => '2026-11-13 09:00:00',
+        ]);
+        Income::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id,
+            'amount' => 100, 'description' => 'Receita de teste', 'received_at' => '2026-11-13',
+        ]);
+
+        $calendar = Livewire::test(PersonalCalendar::class)
+            ->assertSeeHtml('wire:click="toggleFilter(\'meal_allowance_partial\')"')
+            ->assertSeeHtml('wire:click="toggleFilter(\'holidays\')"')
+            ->assertSeeHtml('wire:click="toggleFilter(\'vacations\')"');
+        $summary = $calendar->instance()->monthSummary;
+
+        $calendar->call('toggleFilter', 'meal_allowance_partial');
+        $events = $calendar->instance()->visibleDayEvents->flatten(1);
+        $this->assertCount(1, $events);
+        $this->assertSame('2026-11-11', $events->first()['date']);
+        $this->assertSame('partial', $events->first()['status']);
+        $calendar->assertSeeHtml('aria-pressed="true"');
+
+        $calendar->call('toggleFilter', 'meal_allowance_missed');
+        $this->assertEqualsCanonicalizing(
+            ['partial', 'missed'],
+            $calendar->instance()->visibleDayEvents->flatten(1)->pluck('status')->all(),
+        );
+        $calendar->call('toggleFilter', 'meal_allowance_partial')->call('toggleFilter', 'meal_allowance_missed');
+        $this->assertGreaterThan(2, $calendar->instance()->visibleDayEvents->flatten(1)->count());
+
+        foreach ([
+            'meal_allowance' => ['meal_allowance', 'expected'],
+            'paydays' => ['payday', null],
+            'work_milestones' => ['work_milestone', null],
+            'vacations' => ['vacation', null],
+            'holidays' => ['public_holiday', null],
+        ] as $filter => [$subtype, $status]) {
+            $calendar->call('toggleFilter', $filter);
+            $events = $calendar->instance()->visibleDayEvents->flatten(1);
+            $this->assertNotEmpty($events, $filter);
+            $this->assertTrue($events->every(fn ($event) => ($event['subtype'] ?? null) === $subtype), $filter);
+            if ($status) {
+                $this->assertTrue($events->contains('status', $status));
+                $this->assertFalse($events->contains('status', 'partial'));
+                $this->assertFalse($events->contains('status', 'missed'));
+            }
+            $calendar->call('toggleFilter', $filter);
+        }
+
+        $calendar->call('toggleFilter', 'reminders');
+        $this->assertSame(['Lembrete de teste'], $calendar->instance()->visibleDayEvents->flatten(1)->pluck('label')->all());
+        $calendar->call('toggleFilter', 'reminders')->call('toggleFilter', 'incomes');
+        $events = $calendar->instance()->visibleDayEvents->flatten(1);
+        $this->assertTrue($events->contains('label', 'Receita de teste'));
+        $this->assertFalse($events->contains(fn ($event) => in_array($event['subtype'] ?? null, ['meal_allowance', 'payday'], true)));
+        $this->assertSame($summary, $calendar->instance()->monthSummary);
+        $this->assertMatchesRegularExpression('~wire:click="openDayDetail\(\'2026-11-01\'\)"[^>]*data-day-type="holiday"~', $calendar->html());
     }
 
     public function test_expense_comparison_uses_previous_month_and_current_workspace(): void
@@ -170,32 +257,157 @@ class PersonalCalendarMealAllowanceTest extends TestCase
         }
 
         $calendar = Livewire::test(PersonalCalendar::class)
-            ->assertSee('Totais do mês selecionado até hoje 12/11/2026')
+            ->assertSeeHtml('aria-label="Escolher data dos totais: 12/11/2026"')
+            ->assertDontSee('Totais do mês selecionado até')
             ->assertSee('Total até hoje')
             ->assertSee('Entradas menos saídas do mês')
+            ->assertSee('Despesas, assinaturas e parcelas incluídas.')
             ->assertSee('30,20€')
             ->assertSee('12,50€')
             ->assertSee('17,70€')
-            ->assertSee('Inclui uma conta no total para calcular o risco.');
+            ->assertSee('Média diária do balanço')
+            ->assertSee('1,48€')
+            ->assertSee('12 dias decorridos')
+            ->assertDontSee('Risco hoje');
         $summary = $calendar->instance()->monthSummary;
         $this->assertSame([30.2, 12.5, 17.7], [$summary['income'], $summary['outflow'], $summary['net_total']]);
-        $this->assertFalse($summary['risk_available']);
+        $this->assertSame([12, 1.48], [$summary['elapsed_days'], $summary['daily_average']]);
 
-        $calendar->call('prevMonth');
+        $calendar->call('prevMonth')->assertSee('0,94€')->assertSee('31 dias decorridos');
         $summary = $calendar->instance()->monthSummary;
         $this->assertSame([40.0, 11.0, 29.0], [$summary['income'], $summary['outflow'], $summary['net_total']]);
+        $this->assertSame([31, 0.94], [$summary['elapsed_days'], $summary['daily_average']]);
 
         $calendar->call('nextMonth')->call('nextMonth')
-            ->assertSee('O mês selecionado ainda não começou.');
+            ->assertSee('O mês selecionado ainda não começou.')
+            ->assertSee('Sem dias decorridos neste mês.');
         $summary = $calendar->instance()->monthSummary;
         $this->assertSame([0.0, 0.0, 0.0], [$summary['income'], $summary['outflow'], $summary['net_total']]);
+        $this->assertSame([0, null], [$summary['elapsed_days'], $summary['daily_average']]);
 
         Expense::create([
             'user_id' => $user->id, 'workspace_id' => $workspace->id,
             'amount' => 50, 'description' => 'Despesa adicional', 'spent_at' => '2026-11-12',
         ]);
-        $calendar = Livewire::test(PersonalCalendar::class)->assertSee('-32,30€');
+        $calendar = Livewire::test(PersonalCalendar::class)->assertSee('-32,30€')->assertSee('-2,69€');
         $this->assertSame(-32.3, $calendar->instance()->monthSummary['net_total']);
+        $this->assertSame(-2.69, $calendar->instance()->monthSummary['daily_average']);
+    }
+
+    public function test_summary_date_filters_totals_and_synchronizes_calendar_month(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-12 12:00:00'));
+        $user = User::factory()->create();
+        $workspace = Workspace::factory()->create(['owner_id' => $user->id]);
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+        $this->actingAs($user);
+
+        foreach ([
+            ['2026-11-11', 10],
+            ['2026-11-12', 20],
+            ['2026-11-13', 30],
+            ['2026-11-14', 40],
+            ['2026-12-02', 50],
+            ['2027-01-10', 100],
+        ] as [$date, $amount]) {
+            Income::create([
+                'user_id' => $user->id, 'workspace_id' => $workspace->id,
+                'amount' => $amount, 'description' => 'Receita', 'received_at' => $date,
+            ]);
+        }
+        Expense::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id,
+            'amount' => 5, 'description' => 'Despesa', 'spent_at' => '2026-11-13',
+        ]);
+
+        $calendar = Livewire::test(PersonalCalendar::class)
+            ->assertSeeHtml('aria-controls="calendar-summary-date"')
+            ->assertSee('Voltar a hoje')
+            ->assertSeeHtml('id="summary-day"')
+            ->assertSeeHtml('id="summary-month"')
+            ->assertSeeHtml('id="summary-year"')
+            ->assertDontSee('Ver totais')
+            ->set('summaryDayInput', 11)
+            ->call('applySummaryDate')
+            ->assertSeeHtml('aria-label="Escolher data dos totais: 11/11/2026"')
+            ->assertSee('Total até à data');
+        $summary = $calendar->instance()->monthSummary;
+        $this->assertSame([10.0, 0.0, 10.0, 11, 0.91], [
+            $summary['income'], $summary['outflow'], $summary['net_total'], $summary['elapsed_days'], $summary['daily_average'],
+        ]);
+
+        $calendar->set('summaryDayInput', 12)->call('applySummaryDate');
+        $this->assertSame(10.0, $calendar->instance()->monthSummary['income']);
+        $calendar->set('summaryDayInput', 13)
+            ->call('applySummaryDate')
+            ->assertSee('Inclui valores previstos até à data selecionada.');
+        $summary = $calendar->instance()->monthSummary;
+        $this->assertSame([60.0, 5.0, 55.0, 13, 4.23], [
+            $summary['income'], $summary['outflow'], $summary['net_total'], $summary['elapsed_days'], $summary['daily_average'],
+        ]);
+
+        $calendar->set('summaryDayInput', 2)->set('summaryMonthInput', 12)->call('applySummaryDate')
+            ->assertSet('month', 12)
+            ->assertSet('year', 2026)
+            ->assertSeeHtml('aria-label="Escolher data dos totais: 02/12/2026"');
+        $this->assertSame([50.0, 2, 25.0], [
+            $calendar->instance()->monthSummary['income'],
+            $calendar->instance()->monthSummary['elapsed_days'],
+            $calendar->instance()->monthSummary['daily_average'],
+        ]);
+        $calendar->call('prevMonth')->assertSet('month', 11)->assertSet('summaryDayInput', 2)->assertSet('summaryMonthInput', 11);
+        $calendar->call('nextMonth')->assertSet('summaryDayInput', 2)->assertSet('summaryMonthInput', 12);
+        $calendar->set('summaryDayInput', 31)->set('summaryMonthInput', 1)->set('summaryYearInput', 2027)->call('applySummaryDate')
+            ->assertSet('year', 2027)->assertSet('month', 1)
+            ->call('nextMonth')->assertSet('summaryDayInput', 28)->assertSet('summaryMonthInput', 2);
+
+        $calendar->set('summaryDayInput', 30)->call('applySummaryDate')
+            ->assertHasErrors(['summaryDayInput'])
+            ->assertSee('Este dia não existe no mês e ano selecionados.')
+            ->assertSet('month', 2)
+            ->assertSeeHtml('aria-label="Escolher data dos totais: 28/02/2027"');
+        $calendar->call('resetSummaryDate')
+            ->assertHasNoErrors()
+            ->assertSet('month', 11)
+            ->assertSet('year', 2026)
+            ->assertSet('summaryDayInput', 12)
+            ->assertSet('summaryMonthInput', 11)
+            ->assertSet('summaryYearInput', 2026)
+            ->assertSeeHtml('aria-label="Escolher data dos totais: 12/11/2026"');
+        $this->assertSame(10.0, $calendar->instance()->monthSummary['income']);
+
+        $this->travelTo(Carbon::parse('2026-11-13 00:00:00'));
+        $calendar->call('refreshCalendarClock')
+            ->assertSet('summaryDayInput', 13)
+            ->assertSet('summaryMonthInput', 11)
+            ->assertSet('summaryYearInput', 2026)
+            ->assertSeeHtml('aria-label="Escolher data dos totais: 13/11/2026"');
+    }
+
+    public function test_daily_average_counts_empty_days_and_leap_months(): void
+    {
+        $this->travelTo(Carbon::parse('2024-03-01 19:00:00'));
+        $user = User::factory()->create();
+        $workspace = Workspace::factory()->create(['owner_id' => $user->id]);
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+        $this->actingAs($user);
+        Income::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id,
+            'amount' => 29, 'description' => 'Receita', 'received_at' => '2024-02-15',
+        ]);
+
+        $calendar = Livewire::test(PersonalCalendar::class)
+            ->assertSee('0,00€')
+            ->assertSee('1 dia decorrido');
+        $this->assertSame([1, 0.0], [
+            $calendar->instance()->monthSummary['elapsed_days'],
+            $calendar->instance()->monthSummary['daily_average'],
+        ]);
+        $calendar->call('prevMonth')->assertSee('1,00€')->assertSee('29 dias decorridos');
+        $this->assertSame([29, 1.0], [
+            $calendar->instance()->monthSummary['elapsed_days'],
+            $calendar->instance()->monthSummary['daily_average'],
+        ]);
     }
 
     public function test_today_entries_are_counted_at_six_without_delaying_outflows(): void
@@ -225,6 +437,7 @@ class PersonalCalendarMealAllowanceTest extends TestCase
         $summary = $calendar->instance()->monthSummary;
         $forecast = $calendar->instance()->monthlyFinanceInsights;
         $this->assertSame([10.0, 5.0, 5.0], [$summary['income'], $summary['outflow'], $summary['net_total']]);
+        $this->assertSame(0.42, $summary['daily_average']);
 
         $this->travelTo(Carbon::parse('2026-11-12 17:59:59'));
         $calendar->call('refreshCalendarClock');
@@ -234,11 +447,12 @@ class PersonalCalendarMealAllowanceTest extends TestCase
         $calendar->call('refreshCalendarClock');
         $summary = $calendar->instance()->monthSummary;
         $this->assertSame([120.91, 5.0, 115.91], [$summary['income'], $summary['outflow'], $summary['net_total']]);
+        $this->assertSame(9.66, $summary['daily_average']);
         $this->assertSame($forecast, $calendar->instance()->monthlyFinanceInsights);
         $calendar->assertSee('Pago');
     }
 
-    public function test_today_risk_uses_account_movements_up_to_today_in_any_selected_month(): void
+    public function test_account_balance_and_risk_projection_still_use_movements_up_to_today(): void
     {
         $this->travelTo(Carbon::parse('2026-11-12 19:00:00'));
         $user = User::factory()->create();
@@ -264,22 +478,20 @@ class PersonalCalendarMealAllowanceTest extends TestCase
             ]);
         }
 
-        $calendar = Livewire::test(PersonalCalendar::class)
-            ->assertSee('Sem risco')
-            ->assertSee('Saldo atual 70,00 €');
-        $this->assertSame(70.0, $calendar->instance()->monthSummary['current_balance']);
+        $calendar = Livewire::test(PersonalCalendar::class);
+        $this->assertSame(70.0, $calendar->instance()->currentAccountBalance['balance']);
         $this->assertSame(-30.0, $calendar->instance()->cashProjection['final_balance']);
-        $calendar->call('prevMonth')->assertSee('Saldo atual 70,00 €');
-        $calendar->call('nextMonth')->call('nextMonth')->assertSee('Saldo atual 70,00 €');
+        $calendar->call('prevMonth');
+        $this->assertSame(70.0, $calendar->instance()->currentAccountBalance['balance']);
+        $calendar->call('nextMonth')->call('nextMonth');
+        $this->assertSame(70.0, $calendar->instance()->currentAccountBalance['balance']);
 
         Expense::create([
             'user_id' => $user->id, 'workspace_id' => $workspace->id,
             'bank_account_id' => $account->id, 'amount' => 100,
             'description' => 'Despesa de hoje', 'spent_at' => '2026-11-12',
         ]);
-        Livewire::test(PersonalCalendar::class)
-            ->assertSee('Em risco')
-            ->assertSee('Saldo atual -30,00 €');
+        $this->assertSame(-30.0, Livewire::test(PersonalCalendar::class)->instance()->currentAccountBalance['balance']);
     }
 
     public function test_risk_projection_starts_from_included_account_balance_and_carries_into_next_month(): void
@@ -342,8 +554,7 @@ class PersonalCalendarMealAllowanceTest extends TestCase
             'name' => 'Outra moeda', 'balance' => 100, 'currency' => 'USD', 'include_in_total' => true,
         ]);
 
-        $calendar = Livewire::test(PersonalCalendar::class)
-            ->assertSee('Não é possível somar contas de moedas diferentes nesta previsão.');
+        $calendar = Livewire::test(PersonalCalendar::class);
         $this->assertSame('currency', $calendar->instance()->cashProjection['reason']);
     }
 
@@ -654,7 +865,8 @@ class PersonalCalendarMealAllowanceTest extends TestCase
             ->assertSee('Entradas previstas no mês')
             ->assertSee('Saídas previstas no mês')
             ->assertSee('Saldo previsto do mês')
-            ->assertSee('Maior saída do mês')
+            ->assertSee('Balanço do ano')
+            ->assertDontSee('Maior saída do mês')
             ->assertSee('6,00 €')
             ->assertSee('Croissant Nutela')
             ->assertDontSee('Início do trabalho')
@@ -1027,6 +1239,57 @@ class PersonalCalendarMealAllowanceTest extends TestCase
         $this->assertSame('Despesa maior', $calendar->instance()->monthlyFinanceInsights['largest_expense']['label']);
     }
 
+    public function test_annual_balance_covers_the_selected_year_and_includes_forecasts(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-12 17:00:00'));
+        $user = User::factory()->create();
+        $workspace = Workspace::factory()->create(['owner_id' => $user->id]);
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+        $this->actingAs($user);
+
+        foreach ([['2026-01-01', 100], ['2026-12-31', 200], ['2027-01-01', 20]] as [$date, $amount]) {
+            Income::create([
+                'user_id' => $user->id, 'workspace_id' => $workspace->id,
+                'description' => 'Receita', 'amount' => $amount, 'received_at' => $date,
+            ]);
+        }
+        foreach ([['2026-01-02', 10], ['2026-12-30', 400]] as [$date, $amount]) {
+            Expense::create([
+                'user_id' => $user->id, 'workspace_id' => $workspace->id,
+                'description' => 'Despesa', 'amount' => $amount, 'spent_at' => $date,
+            ]);
+        }
+        foreach ([['owed', 20], ['owe', 50]] as [$type, $amount]) {
+            Debt::create([
+                'user_id' => $user->id, 'workspace_id' => $workspace->id,
+                'type' => $type, 'person_name' => 'Pessoa', 'amount' => $amount,
+                'due_at' => '2026-12-15', 'is_paid' => false,
+            ]);
+        }
+        $category = Category::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id,
+            'name' => 'Assinaturas', 'slug' => 'assinaturas',
+        ]);
+        Subscription::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id,
+            'category_id' => $category->id, 'name' => 'Mensal', 'amount' => 5,
+            'billing_day' => 1, 'cycle' => 'monthly', 'started_at' => '2026-01-01',
+            'is_active' => true, 'paid_by_company' => false,
+        ]);
+
+        $calendar = Livewire::test(PersonalCalendar::class)
+            ->assertSee('Balanço do ano 2026')
+            ->assertSee('-200,00 €')
+            ->assertDontSee('Maior saída do mês')
+            ->call('toggleFilter', 'holidays');
+        $this->assertSame(-200.0, $calendar->instance()->annualFinanceInsights['balance']);
+
+        $calendar->set('summaryYearInput', 2027)->call('applySummaryDate')
+            ->assertSee('Balanço do ano 2027')
+            ->assertSee('-40,00 €');
+        $this->assertSame(-40.0, $calendar->instance()->annualFinanceInsights['balance']);
+    }
+
     public function test_monthly_forecast_uses_the_selected_future_month(): void
     {
         $this->travelTo(Carbon::parse('2026-11-12 17:00:00'));
@@ -1149,15 +1412,15 @@ class PersonalCalendarMealAllowanceTest extends TestCase
             ->assertSeeHtml('data-day-type="working"')
             ->assertSeeHtml('data-day-type="non-working"')
             ->assertSeeHtml('data-day-type="holiday"')
-            ->assertSee('Símbolos')
+            ->assertDontSeeHtml('aria-controls="calendar-symbols"')
+            ->assertDontSee('Número de registos')
             ->assertSee('Receita ou salário')
             ->assertSee('Subsídio de alimentação')
             ->assertSee('Subsídio parcial')
-            ->assertSee('Número de registos')
             ->assertSee('Dias úteis')
             ->assertSee('Dias não úteis')
             ->assertSee('Feriados')
-            ->assertSeeInOrder(['Registar férias', 'Símbolos', 'Dias úteis'])
+            ->assertSeeInOrder(['Registar férias', 'Dias úteis'])
             ->assertDontSee('Não útil');
     }
 
@@ -1171,7 +1434,7 @@ class PersonalCalendarMealAllowanceTest extends TestCase
 
         $calendar = Livewire::test(PersonalCalendar::class);
         $this->assertMatchesRegularExpression(
-            '~wire:click="openDayDetail\(\'2026-11-12\'\)"[^>]*aria-current="date"[^>]*ring-indigo-500~',
+            '~wire:click="openDayDetail\(\'2026-11-12\'\)"[^>]*aria-current="date"[^>]*>(?:(?!wire:click="openDayDetail).)*?class="[^"]*bg-sky-600 text-base[^"]*"[^>]*>\s*12\s*</span>~s',
             $calendar->html()
         );
         $calendar->call('nextMonth')->assertDontSeeHtml('aria-current="date"');
@@ -1179,9 +1442,10 @@ class PersonalCalendarMealAllowanceTest extends TestCase
         $this->travelTo(Carbon::parse('2026-11-13 00:00:00'));
         $calendar->call('refreshCalendarClock');
         $this->assertMatchesRegularExpression(
-            '~wire:click="openDayDetail\(\'2026-11-13\'\)"[^>]*aria-current="date"[^>]*ring-indigo-500~',
+            '~wire:click="openDayDetail\(\'2026-11-13\'\)"[^>]*aria-current="date"[^>]*>(?:(?!wire:click="openDayDetail).)*?class="[^"]*bg-sky-600 text-base[^"]*"[^>]*>\s*13\s*</span>~s',
             $calendar->html()
         );
+        $this->assertDoesNotMatchRegularExpression('~aria-current="date"[^>]*\bring-~', $calendar->html());
         $this->assertSame(1, substr_count($calendar->html(), 'aria-current="date"'));
     }
 
@@ -1225,6 +1489,8 @@ class PersonalCalendarMealAllowanceTest extends TestCase
         $response->sendContent();
         $content = ob_get_clean();
         $text = (new Parser)->parseContent($content)->getText();
+        $this->assertStringContainsString('O mês num olhar', $text);
+        $this->assertMatchesRegularExpression('/REGISTOS\s+3\s+DIAS COM REGISTOS\s+3/u', $text);
         $this->assertStringContainsString('Receita novembro', $text);
         $this->assertStringContainsString('Despesa novembro', $text);
         $this->assertStringContainsString('10/11/2026', $text);
@@ -1232,6 +1498,34 @@ class PersonalCalendarMealAllowanceTest extends TestCase
         $this->assertStringNotContainsString('Despesa dezembro', $text);
         $this->assertStringNotContainsString('Despesa outro workspace', $text);
         $calendar->call('exportPdf')->assertFileDownloaded('Calendario_2026-11.pdf', contentType: 'application/pdf');
+    }
+
+    public function test_calendar_pdf_preserves_records_across_multiple_pages(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-13 12:00:00'));
+        $user = User::factory()->create();
+        $workspace = Workspace::factory()->create(['owner_id' => $user->id, 'type' => 'personal']);
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+        $this->actingAs($user);
+
+        for ($number = 1; $number <= 65; $number++) {
+            Expense::create([
+                'user_id' => $user->id, 'workspace_id' => $workspace->id,
+                'description' => sprintf('Despesa de paginação %02d', $number),
+                'amount' => $number, 'spent_at' => '2026-11-13',
+            ]);
+        }
+
+        $response = Livewire::test(PersonalCalendar::class)->instance()->exportPdf();
+        ob_start();
+        $response->sendContent();
+        $document = (new Parser)->parseContent(ob_get_clean());
+        $text = $document->getText();
+
+        $this->assertGreaterThan(1, count($document->getPages()));
+        for ($number = 1; $number <= 65; $number++) {
+            $this->assertStringContainsString(sprintf('Despesa de paginação %02d', $number), $text);
+        }
     }
 
     public function test_calendar_pdf_requires_business_export_permission(): void
@@ -1435,6 +1729,47 @@ class PersonalCalendarMealAllowanceTest extends TestCase
         $this->assertSame(20.92, $summary['foregone_allowance']);
     }
 
+    public function test_daily_salary_projection_is_pending_until_six_and_on_future_days(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-13 17:59:59'));
+        $user = User::factory()->create();
+        $workspace = Workspace::factory()->create(['owner_id' => $user->id]);
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+        $this->actingAs($user);
+        $contract = $this->createMealAllowanceContract($user, $workspace);
+        $contract->update(['metadata' => array_merge($contract->metadata, ['meal_allowance_destination' => 'same'])]);
+
+        $calendar = Livewire::test(PersonalCalendar::class)
+            ->call('toggleFilter', 'incomes')
+            ->call('openDayDetail', '2026-11-12')
+            ->assertSee('Salário diário estimado')
+            ->assertDontSee('À espera')
+            ->call('openDayDetail', '2026-11-13')
+            ->assertSee('À espera')
+            ->call('openDayDetail', '2026-11-16')
+            ->assertSee('À espera');
+
+        $response = $calendar->instance()->exportPdf();
+        ob_start();
+        $response->sendContent();
+        $text = (new Parser)->parseContent(ob_get_clean())->getText();
+        $afterPastHeading = explode('12/11/2026', $text, 2)[1];
+        $pastDay = explode('13/11/2026', $afterPastHeading, 2)[0];
+        $today = explode('16/11/2026', explode('13/11/2026', $afterPastHeading, 2)[1], 2)[0];
+        $this->assertStringContainsString('Salário diário estimado', $pastDay);
+        $this->assertStringNotContainsString('À espera', $pastDay);
+        $this->assertStringContainsString('Salário diário estimado', $today);
+        $this->assertStringContainsString('À espera', $today);
+
+        $this->travelTo(Carbon::parse('2026-11-13 18:00:00'));
+        $calendar->call('refreshCalendarClock')
+            ->call('openDayDetail', '2026-11-13')
+            ->assertSee('Salário diário estimado')
+            ->assertDontSee('À espera')
+            ->call('openDayDetail', '2026-11-16')
+            ->assertSee('À espera');
+    }
+
     public function test_daily_meal_allowance_is_pending_from_midnight_until_six(): void
     {
         $weekday = Carbon::parse('2026-11-13');
@@ -1452,6 +1787,13 @@ class PersonalCalendarMealAllowanceTest extends TestCase
             ->assertSee('Subsídio de alimentação')
             ->assertSee('À espera')
             ->assertSee('+10,46€');
+        foreach (['80,45', '10,46'] as $amount) {
+            $this->assertMatchesRegularExpression(
+                '~class="text-sm font-black shrink-0 text-orange-600 dark:text-orange-400">\s*\+'.preg_quote($amount, '~').'€~u',
+                $calendar->html(),
+            );
+        }
+        $this->assertSame(2, substr_count($calendar->html(), 'tracking-wider text-orange-600 dark:text-orange-400">'));
         $this->assertSame('expected', $calendar->instance()->selectedDayEvents->firstWhere('subtype', 'meal_allowance')['status']);
 
         $calendar->call('closeDayDetail')
@@ -1471,11 +1813,18 @@ class PersonalCalendarMealAllowanceTest extends TestCase
             ->assertSee('À espera');
 
         $this->travelTo($weekday->copy()->setTime(18, 0));
-        Livewire::test(PersonalCalendar::class)
+        $paidCalendar = Livewire::test(PersonalCalendar::class)
             ->call('openDayDetail', $weekday->toDateString())
             ->assertSee('Subsídio de alimentação')
             ->assertSee('Pago')
-            ->assertSee('+10,46€')
+            ->assertSee('+10,46€');
+        foreach (['80,45', '10,46'] as $amount) {
+            $this->assertMatchesRegularExpression(
+                '~class="text-sm font-black shrink-0 text-emerald-600">\s*\+'.preg_quote($amount, '~').'€~u',
+                $paidCalendar->html(),
+            );
+        }
+        $paidCalendar
             ->call('closeDayDetail')
             ->call('openDayDetail', '2026-11-16')
             ->assertSee('À espera');

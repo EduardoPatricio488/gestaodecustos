@@ -2,14 +2,17 @@
 
 namespace App\Livewire;
 
+use App\Exceptions\AiProviderException;
 use App\Mail\CfoReportMail;
 use App\Models\AiActionLog;
 use App\Models\AiMemory;
+use App\Models\User;
 use App\Services\AI\AiBrainService;
 use App\Services\AI\ContextEngine;
 use App\Services\AI\FinancialHealthScoreService;
 use App\Services\AI\FinancialIntelligenceService;
 use App\Services\FinanceScoreService;
+use App\Services\OpenRouterQuotaService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -24,22 +27,41 @@ class AiInsights extends Component
 
     public string $aiAnalysis = '';
 
+    public ?string $analysisError = null;
+
     public ?string $lastGeneratedAt = null;
+
+    public ?array $aiQuota = null;
+
+    public bool $reportNeedsReview = false;
 
     public function mount(): void
     {
         $cached = Cache::get($this->cacheKey());
         if ($cached) {
-            $this->aiAnalysis = $cached['text'] ?? '';
-            $this->lastGeneratedAt = $cached['at'] ?? null;
+            $text = $cached['text'] ?? '';
+            if (app(AiBrainService::class)->isClearlyCorruptedReport($text)) {
+                $this->analysisError = 'O diagnóstico guardado está ilegível. Gera um novo relatório.';
+            } else {
+                $workspace = app(ContextEngine::class)->resolveWorkspace(auth()->user());
+                if ($workspace?->type === 'personal') {
+                    $text = preg_replace('/^([ \t]*(?:\*\*|#{1,6}[ \t]+))O que aconselha(?=:?(?:\*\*)?[ \t]*$)/imu', '${1}O que aconselho', $text);
+                }
+                $this->aiAnalysis = $text;
+                $this->lastGeneratedAt = $cached['at'] ?? null;
+                $this->reportNeedsReview = $workspace?->type === 'personal' && ($cached['numeric_check_version'] ?? 0) < 1;
+            }
         }
     }
 
     private function cacheKey(): string
     {
-        $workspaceId = auth()->user()?->current_workspace_id ?? 'none';
+        return self::reportCacheKey(auth()->user());
+    }
 
-        return 'ai-insights:'.auth()->id().':workspace:'.$workspaceId;
+    public static function reportCacheKey(User $user): string
+    {
+        return 'ai-insights:'.$user->id.':workspace:'.($user->current_workspace_id ?? 'none');
     }
 
     private function xpKey(int $workspaceId): string
@@ -47,10 +69,16 @@ class AiInsights extends Component
         return 'ai-insights:xp:'.auth()->id().':workspace:'.$workspaceId.':'.now()->toDateString();
     }
 
+    public function refreshAiQuota(OpenRouterQuotaService $quotaService): void
+    {
+        $this->aiQuota = $quotaService->dailyQuota(true);
+    }
+
     public function generateInsights(AiBrainService $brain): void
     {
         set_time_limit(120);
         $this->isAnalyzing = true;
+        $this->analysisError = null;
         $user = auth()->user();
         $workspace = app(ContextEngine::class)->resolveWorkspace($user);
 
@@ -65,7 +93,12 @@ class AiInsights extends Component
             $result = $brain->generateExecutiveReport($user, $workspace);
             $this->aiAnalysis = $result['content'] ?? 'Não foi possível gerar o diagnóstico.';
             $this->lastGeneratedAt = now()->toIso8601String();
-            Cache::put($this->cacheKey(), ['text' => $this->aiAnalysis, 'at' => $this->lastGeneratedAt], now()->addDays(7));
+            $this->reportNeedsReview = false;
+            Cache::put($this->cacheKey(), [
+                'text' => $this->aiAnalysis,
+                'at' => $this->lastGeneratedAt,
+                'numeric_check_version' => $workspace->type === 'personal' ? 1 : 0,
+            ], now()->addDays(7));
 
             // Regista a análise no Action Center: a geração do relatório é uma ação concluída da IA.
             AiActionLog::create([
@@ -184,10 +217,12 @@ class AiInsights extends Component
             }
         } catch (\Throwable $e) {
             report($e);
-            $this->aiAnalysis = 'Não consegui concluir esta análise neste momento. Os teus dados não foram inventados nem alterados.';
-            $this->dispatch('toast', variant: 'error', text: 'O AI Brain não está disponível neste momento.');
+            $this->analysisError = $e instanceof AiProviderException
+                ? $e->getMessage()
+                : 'Não consegui concluir esta análise neste momento. Os teus dados não foram inventados nem alterados.';
         } finally {
             $this->isAnalyzing = false;
+            $this->dispatch('cfo-report-finished');
         }
     }
 
@@ -211,14 +246,6 @@ class AiInsights extends Component
             )['score'] ?? null;
         }
 
-        $manualInsights = [];
-        if ($earned > 0 && $spent > $earned) {
-            $manualInsights[] = ['type' => 'danger', 'icon' => 'arrow-trending-down', 'title' => 'Saldo Negativo', 'text' => 'Estás a gastar mais do que o rendimento registado neste período.'];
-        }
-        if ($earned > 0 && ($spent / $earned) > 0.9) {
-            $manualInsights[] = ['type' => 'warning', 'icon' => 'bell', 'title' => 'Margem Crítica', 'text' => 'Mais de 90% do rendimento registado está comprometido com gastos.'];
-        }
-
         return view('livewire.ai-intelligence-page', [
             'totalEarned' => $earned,
             'totalSpent' => $spent,
@@ -228,7 +255,6 @@ class AiInsights extends Component
             'earnedDelta' => data_get($changes, 'income_percent'),
             'spentDelta' => data_get($changes, 'expenses_percent'),
             'netWorthDelta' => null,
-            'insights' => $manualInsights,
             'reportGeneratedAt' => $this->lastGeneratedAt ? Carbon::parse($this->lastGeneratedAt) : null,
         ]);
     }

@@ -4,11 +4,12 @@ namespace App\Livewire;
 
 use App\Models\AiActionLog;
 use App\Models\AiInsight;
-use App\Models\AiMemory;
+use App\Services\AI\AiBrainService;
 use App\Services\AI\ContextEngine;
 use App\Services\AI\FinancialHealthScoreService;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -16,7 +17,11 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class AiControlCenter extends Component
 {
-    public string $feedback = '';
+    public string $insightFilter = 'all';
+
+    public string $insightCategory = 'all';
+
+    public ?string $insightActionError = null;
 
     public function mount(): void
     {
@@ -42,44 +47,57 @@ class AiControlCenter extends Component
     #[On('cfo-report-generated')]
     public function refreshAfterCfoReport(): void
     {
-        // O evento força a atualização do diagnóstico, dos insights e dos contadores.
+        // O evento força a atualização dos insights e dos contadores.
     }
 
     public function markRead(int $id): void
     {
-        $this->insightQuery()->whereKey($id)->update(['read_at' => now()]);
+        $updated = $this->insightQuery()->visible()->whereNull('read_at')->whereKey($id)->update(['read_at' => now()]);
+        $this->insightActionError = $updated ? null : 'O alerta já não está disponível ou já foi lido.';
+        if ($updated) {
+            $this->dispatch('toast', variant: 'success', text: 'Alerta marcado como lido.');
+        }
+    }
+
+    public function resetInsightFilters(): void
+    {
+        $this->insightFilter = 'all';
+        $this->insightCategory = 'all';
+    }
+
+    public function showUnreadInsights(): void
+    {
+        $this->insightFilter = 'unread';
+        $this->insightCategory = 'all';
     }
 
     public function dismiss(int $id): void
     {
-        $this->insightQuery()->whereKey($id)->update(['dismissed_at' => now()]);
+        $updated = $this->insightQuery()->visible()->whereKey($id)->update(['dismissed_at' => now()]);
+        $this->insightActionError = $updated ? null : 'O alerta já não está disponível.';
+        if ($updated) {
+            $this->dispatch('toast', variant: 'success', text: 'Alerta dispensado.');
+        }
     }
 
     public function feedback(int $id, string $value): void
     {
         if (! in_array($value, ['useful', 'not_useful', 'more'], true)) {
-            return;
+            throw ValidationException::withMessages(['feedback' => 'Escolhe uma avaliação válida.']);
         }
 
-        $insight = $this->insightQuery()->whereKey($id)->firstOrFail();
+        $insight = $this->insightQuery()->visible()->whereKey($id)->first();
+        if (! $insight) {
+            $this->insightActionError = 'O alerta já não está disponível.';
+
+            return;
+        }
         $data = $insight->data ?? [];
         $data['feedback'] = $value;
         $data['feedback_at'] = now()->toIso8601String();
         $insight->update(['data' => $data]);
-        $this->feedback = $value;
-        $this->dispatch('toast', variant: 'success', text: 'Obrigado pelo teu feedback. A IA vai ter isso em conta.');
-    }
-
-    public function forgetMemory(int $id): void
-    {
-        AiMemory::query()->whereKey($id)->where('user_id', auth()->id())->delete();
-        $this->dispatch('toast', variant: 'success', text: 'Memória apagada.');
-    }
-
-    public function clearMemories(): void
-    {
-        AiMemory::query()->where('user_id', auth()->id())->delete();
-        $this->dispatch('toast', variant: 'success', text: 'Toda a memória da IA foi apagada.');
+        $this->insightActionError = null;
+        $this->dispatch('toast', variant: 'success', text: 'Obrigado pelo teu feedback.');
     }
 
     private function insightQuery()
@@ -108,24 +126,33 @@ class AiControlCenter extends Component
             ? AiActionLog::query()->where('user_id', auth()->id())->where('workspace_id', $workspace->id)->latest()->limit(20)->get()
             : collect();
 
-        $memories = AiMemory::query()->active()->where('user_id', auth()->id())->where(function ($q) use ($workspace) {
-            $q->whereNull('workspace_id');
-            if ($workspace) {
-                $q->orWhere('workspace_id', $workspace->id);
+        $reportSections = null;
+        $reportStatus = 'missing';
+        $reportNeedsReview = false;
+        $cachedReport = $workspace ? Cache::get(AiInsights::reportCacheKey(auth()->user())) : null;
+        if ($cachedReport) {
+            $text = data_get($cachedReport, 'text');
+            $brain = app(AiBrainService::class);
+            $reportStatus = 'unavailable';
+            if ($workspace->type === 'personal' && is_string($text) && ! $brain->isClearlyCorruptedReport($text)) {
+                [$reportSections] = $brain->personalReportSections($text);
+                $reportNeedsReview = ($cachedReport['numeric_check_version'] ?? 0) < 1;
             }
-        })->latest()->limit(30)->get();
-
-        $latestDiagnosis = $workspace
-            ? Cache::get('ai-insights:'.auth()->id().':workspace:'.(auth()->user()?->current_workspace_id ?? 'none'))
-            : null;
+        }
 
         $stats = [
             'unread' => $insights->whereNull('read_at')->count(),
-            'critical' => $insights->whereIn('priority', ['critical', 'high'])->count(),
+            'critical' => $insights->whereNull('read_at')->whereIn('priority', ['critical', 'high'])->count(),
             'pending_actions' => $actions->whereIn('status', ['pending', 'awaiting_confirmation'])->count(),
             'completed_actions' => $actions->where('status', 'completed')->count(),
+            'failed_actions' => $actions->where('status', 'failed')->count(),
         ];
 
-        return view('livewire.ai-control-center', compact('health', 'insights', 'actions', 'memories', 'workspace', 'stats', 'latestDiagnosis'));
+        $visibleInsights = $insights
+            ->when($this->insightFilter === 'unread', fn ($items) => $items->whereNull('read_at'))
+            ->when($this->insightFilter === 'important', fn ($items) => $items->whereIn('priority', ['high', 'critical']))
+            ->when($this->insightCategory !== 'all', fn ($items) => $items->where('category', $this->insightCategory));
+
+        return view('livewire.ai-control-center', compact('health', 'insights', 'visibleInsights', 'actions', 'workspace', 'stats', 'reportSections', 'reportStatus', 'reportNeedsReview'));
     }
 }

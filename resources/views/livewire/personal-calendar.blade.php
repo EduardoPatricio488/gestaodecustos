@@ -54,24 +54,7 @@
                 <flux:icon name="adjustments-horizontal" class="size-5" />
             </button>
 
-            <div class="flex max-w-full flex-wrap items-center justify-end gap-2">
-                <div class="flex h-11 items-center rounded-2xl border border-zinc-200 bg-white p-1 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <button type="button" aria-label="Mês anterior" wire:click="prevMonth" class="rounded-xl p-1.5 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-indigo-600 sm:p-2 dark:hover:bg-zinc-800">
-                        <flux:icon name="chevron-left" class="size-4" />
-                    </button>
-                    <div class="min-w-[75px] px-1 text-center sm:min-w-[125px] sm:px-3">
-                        <span class="text-[10px] font-black uppercase tracking-tight sm:text-xs dark:text-white">{{ $currentMonthName }} {{ $year }}</span>
-                    </div>
-                    <button type="button" aria-label="Mês seguinte" wire:click="nextMonth" class="rounded-xl p-1.5 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-indigo-600 sm:p-2 dark:hover:bg-zinc-800">
-                        <flux:icon name="chevron-right" class="size-4" />
-                    </button>
-                </div>
-
-                <button type="button" wire:click="goToToday" class="h-11 rounded-2xl border border-zinc-200 bg-white px-4 text-xs font-black uppercase tracking-wider text-indigo-600 shadow-sm transition hover:bg-indigo-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-indigo-400 dark:hover:bg-zinc-800">
-                    Mês atual
-                </button>
-            </div>
-            <div class="flex w-full flex-wrap justify-end gap-2">
+            <div class="flex flex-wrap justify-end gap-2">
                 <button type="button" wire:click="exportPdf" wire:loading.attr="disabled" wire:target="exportPdf" title="Exporta todos os registos do mês, mesmo com filtros ativos" class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 text-xs font-black uppercase tracking-wider text-zinc-600 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800">
                     <flux:icon name="arrow-down-tray" class="size-4" />
                     Exportar PDF
@@ -88,87 +71,81 @@
         </div>
     </div>
 
-    {{-- ── RESUMO ATÉ HOJE ── --}}
-    <div class="space-y-3">
-        <p class="text-sm font-bold text-zinc-500 sm:text-base dark:text-zinc-400">
-            Totais do mês selecionado até hoje {{ now()->format('d/m/Y') }}
-        </p>
-        @if(sprintf('%04d-%02d', $year, $month) > now()->format('Y-m'))
+    {{-- ── RESUMO POR DATA ── --}}
+    <div x-data="{ summaryDateOpen: false }" class="space-y-3">
+        <button type="button" aria-label="Escolher data dos totais: {{ \Carbon\Carbon::parse($monthSummary['cutoff'])->format('d/m/Y') }}" aria-controls="calendar-summary-date" :aria-expanded="summaryDateOpen.toString()" @click="summaryDateOpen = !summaryDateOpen" class="group inline-flex max-w-full items-center gap-3 rounded-2xl border border-indigo-100 bg-white px-3 py-2 text-left shadow-sm transition hover:border-indigo-300 hover:shadow-md dark:border-indigo-900/50 dark:bg-zinc-900 dark:hover:border-indigo-700">
+            <span class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition group-hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400">
+                <flux:icon name="calendar-days" class="size-5" />
+            </span>
+            <span class="text-lg font-black tabular-nums tracking-tight text-zinc-800 dark:text-white">{{ \Carbon\Carbon::parse($monthSummary['cutoff'])->format('d/m/Y') }}</span>
+            <flux:icon name="chevron-down" class="size-4 shrink-0 text-indigo-500 transition-transform" x-bind:class="{ 'rotate-180': summaryDateOpen }" />
+        </button>
+        <div id="calendar-summary-date" x-show="summaryDateOpen" x-collapse x-cloak>
+            <form wire:submit="applySummaryDate" class="inline-block max-w-full space-y-3 rounded-2xl bg-white p-4 dark:bg-zinc-800/60">
+                <p class="text-base font-medium text-zinc-600 dark:text-zinc-400">Escolhe a data para ver os registos desde o início desse mês.</p>
+                <div class="flex flex-wrap items-end gap-3">
+                    <div>
+                        <label for="summary-day" class="mb-1 block text-xs font-bold text-zinc-600 dark:text-zinc-300">Dia</label>
+                        <select id="summary-day" wire:model="summaryDayInput" wire:change="applySummaryDate" class="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
+                            @for($day = 1; $day <= 31; $day++)
+                                <option value="{{ $day }}">{{ sprintf('%02d', $day) }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    <div>
+                        <label for="summary-month" class="mb-1 block text-xs font-bold text-zinc-600 dark:text-zinc-300">Mês</label>
+                        <select id="summary-month" wire:model="summaryMonthInput" wire:change="applySummaryDate" class="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
+                            @foreach(['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] as $index => $monthName)
+                                <option value="{{ $index + 1 }}">{{ $monthName }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label for="summary-year" class="mb-1 block text-xs font-bold text-zinc-600 dark:text-zinc-300">Ano</label>
+                        <input id="summary-year" type="number" min="1" max="9999" step="1" wire:model="summaryYearInput" wire:change="applySummaryDate" class="h-10 w-24 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
+                    </div>
+                    <button type="button" wire:click="resetSummaryDate" @click="summaryDateOpen = false" class="h-10 rounded-xl border border-zinc-200 px-4 text-xs font-bold text-indigo-600 transition hover:bg-indigo-50 dark:border-zinc-700 dark:text-indigo-400 dark:hover:bg-zinc-800">Voltar a hoje</button>
+                </div>
+                @foreach(['summaryDayInput', 'summaryMonthInput', 'summaryYearInput'] as $field)
+                    @error($field)
+                        <p role="alert" class="text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                @endforeach
+            </form>
+        </div>
+        @if($monthSummary['includes_forecast'])
+            <p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Inclui valores previstos até à data selecionada.</p>
+        @elseif($monthSummary['elapsed_days'] === 0)
             <p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">O mês selecionado ainda não começou.</p>
         @endif
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
-                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Entradas até hoje</p>
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">{{ $monthSummary['is_today'] ? 'Entradas até hoje' : 'Entradas até à data' }}</p>
                 <p class="text-2xl font-black text-emerald-600 italic tabular-nums">{{ number_format($monthSummary['income'], 2, ',', '.') }}€</p>
-                <p class="mt-1 text-[9px] text-zinc-500">Entradas de hoje contam a partir das 18h.</p>
-            </div>
-            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
-                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Saídas até hoje</p>
-                <p class="text-2xl font-black text-red-500 italic tabular-nums">{{ number_format($monthSummary['outflow'], 2, ',', '.') }}€</p>
-            </div>
-            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
-                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Total até hoje</p>
-                <p class="text-2xl font-black italic tabular-nums {{ $monthSummary['net_total'] < 0 ? 'text-red-500' : 'text-emerald-600' }}">{{ number_format($monthSummary['net_total'], 2, ',', '.') }}€</p>
-                <p class="mt-1 text-[9px] text-zinc-500">Entradas menos saídas do mês</p>
-            </div>
-            <div class="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-3xl p-5 shadow-xl">
-                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 mb-2">Risco hoje</p>
-                @if($monthSummary['risk_available'])
-                    <p class="text-sm font-black {{ $monthSummary['current_balance'] < 0 ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400' }}">
-                        {{ $monthSummary['current_balance'] < 0 ? 'Em risco' : 'Sem risco' }}
-                    </p>
-                    <p class="text-[9px] mt-1 {{ $monthSummary['current_balance'] > 0 ? 'text-emerald-700 dark:text-emerald-400' : ($monthSummary['current_balance'] < 0 ? 'text-red-700 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-400') }}">
-                        Saldo atual {{ number_format($monthSummary['current_balance'], 2, ',', '.') }} €
-                    </p>
-                    <p class="mt-1 text-[9px] text-zinc-600 dark:text-zinc-400">Risco baseado apenas no saldo das contas incluídas e movimentos até hoje; não inclui previsões futuras.</p>
-                @else
-                    <p class="text-xs font-bold text-zinc-600 dark:text-zinc-400">
-                        {{ match ($this->currentAccountBalance['reason']) {
-                            'no_accounts' => 'Inclui uma conta no total para calcular o risco.',
-                            'currency' => 'Não é possível somar contas de moedas diferentes nesta previsão.',
-                        } }}
-                    </p>
+                @if($monthSummary['is_today'])
+                    <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Entradas de hoje contam a partir das 18h.</p>
                 @endif
             </div>
-        </div>
-    </div>
-
-    {{-- ── 2. BARRA DE FILTROS (COLLAPSIBLE) ── --}}
-    <div x-show="filterOpen" x-collapse x-cloak>
-        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 flex flex-wrap gap-4 shadow-sm mb-6">
-            @php
-                // Classes Tailwind escritas por extenso (não concatenadas) para o compilador conseguir detetá-las.
-                $filterStyles = [
-                    'emerald' => ['active' => 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-emerald-500/50'],
-                    'red' => ['active' => 'border-red-500 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-red-500/50'],
-                    'blue' => ['active' => 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-blue-500/50'],
-                    'purple' => ['active' => 'border-purple-500 bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-purple-500/50'],
-                    'amber' => ['active' => 'border-amber-500 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-amber-500/50'],
-                    'orange' => ['active' => 'border-orange-500 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-orange-500/50'],
-                    'indigo' => ['active' => 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-indigo-500/50'],
-                ];
-            @endphp
-            @foreach([
-                'incomes' => ['label' => 'Receitas', 'color' => 'emerald'],
-                'expenses' => ['label' => 'Despesas', 'color' => 'red'],
-                'transfers' => ['label' => 'Transferências', 'color' => 'blue'],
-                'subscriptions' => ['label' => 'Assinaturas', 'color' => 'purple'],
-                'debts' => ['label' => 'Parcelas', 'color' => 'amber'],
-                'fitness' => ['label' => 'Treino', 'color' => 'orange'],
-                'reminders' => ['label' => 'Lembretes', 'color' => 'indigo']
-            ] as $key => $filter)
-                @php
-                    $isActive = in_array($key, $activeFilters, true);
-                    $style = $filterStyles[$filter['color']];
-                @endphp
-                <button
-                    wire:click="toggleFilter('{{ $key }}')"
-                    class="flex items-center gap-3 px-5 py-2.5 rounded-2xl border-2 transition-all group {{ $isActive ? $style['active'] : $style['idle'].' text-zinc-500 group-hover:text-zinc-800 dark:group-hover:text-white' }}"
-                >
-                    <div class="size-3 rounded-full bg-{{ $filter['color'] }}-500 shadow-[0_0_8px_rgba(var(--{{ $filter['color'] }}-500),0.4)]"></div>
-                    <span class="text-[11px] font-black uppercase tracking-widest">{{ $filter['label'] }}</span>
-                </button>
-            @endforeach
+            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">{{ $monthSummary['is_today'] ? 'Saídas até hoje' : 'Saídas até à data' }}</p>
+                <p class="text-2xl font-black text-red-500 italic tabular-nums">{{ number_format($monthSummary['outflow'], 2, ',', '.') }}€</p>
+                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Despesas, assinaturas e parcelas incluídas.</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">{{ $monthSummary['is_today'] ? 'Total até hoje' : 'Total até à data' }}</p>
+                <p class="text-2xl font-black italic tabular-nums {{ $monthSummary['net_total'] < 0 ? 'text-red-500' : 'text-emerald-600' }}">{{ number_format($monthSummary['net_total'], 2, ',', '.') }}€</p>
+                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Entradas menos saídas do mês</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Média diária do balanço</p>
+                @if($monthSummary['daily_average'] !== null)
+                    <p class="text-2xl font-black italic tabular-nums {{ $monthSummary['daily_average'] < 0 ? 'text-red-500' : ($monthSummary['daily_average'] > 0 ? 'text-emerald-600' : 'text-zinc-500') }}">{{ number_format($monthSummary['daily_average'], 2, ',', '.') }}€</p>
+                    <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Entradas menos saídas ÷ {{ $monthSummary['elapsed_days'] }} {{ $monthSummary['elapsed_days'] === 1 ? 'dia' : 'dias' }} {{ $monthSummary['includes_forecast'] ? ($monthSummary['elapsed_days'] === 1 ? 'considerado' : 'considerados') : ($monthSummary['elapsed_days'] === 1 ? 'decorrido' : 'decorridos') }}</p>
+                @else
+                    <p class="text-2xl font-black text-zinc-400">—</p>
+                    <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Sem dias decorridos neste mês.</p>
+                @endif
+            </div>
         </div>
     </div>
 
@@ -184,28 +161,37 @@
             'text-indigo-500' => 'text-indigo-600 dark:text-indigo-400',
         ];
     @endphp
-    <div x-data="{ legendOpen: false }" class="space-y-3 px-1 text-[11px] font-bold text-zinc-600 sm:text-xs dark:text-zinc-400">
-        <button type="button" aria-controls="calendar-symbols" :aria-expanded="legendOpen.toString()" @click="legendOpen = !legendOpen" class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-500 transition hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400">
-            <flux:icon name="information-circle" class="size-5" />
-            Símbolos
-            <flux:icon name="chevron-down" class="size-4 transition-transform" x-bind:class="{ 'rotate-180': legendOpen }" />
-        </button>
-        <div id="calendar-symbols" aria-label="Legenda dos símbolos" x-show="legendOpen" x-collapse x-cloak class="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            <span class="flex items-center gap-2"><flux:icon name="banknotes" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-emerald-600'] }}" />Receita ou salário</span>
-            <span class="flex items-center gap-2"><flux:icon name="banknotes" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-amber-500'] }}" />Parcela</span>
-            <span class="flex items-center gap-2"><flux:icon name="cake" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-emerald-600'] }}" />Subsídio de alimentação</span>
-            <span class="flex items-center gap-2"><flux:icon name="cake" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-amber-500'] }}" />Subsídio parcial</span>
-            <span class="flex items-center gap-2"><flux:icon name="cake" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-red-500'] }}" />Subsídio não recebido</span>
-            <span class="flex items-center gap-2"><flux:icon name="credit-card" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-red-500'] }}" />Despesa</span>
-            <span class="flex items-center gap-2"><flux:icon name="arrow-path" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-purple-500'] }}" />Assinatura</span>
-            <span class="flex items-center gap-2"><flux:icon name="arrows-right-left" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-blue-500'] }}" />Transferência</span>
-            <span class="flex items-center gap-2"><flux:icon name="bolt" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-orange-500'] }}" />Treino</span>
-            <span class="flex items-center gap-2"><flux:icon name="bell" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-indigo-500'] }}" />Lembrete</span>
-            <span class="flex items-center gap-2"><flux:icon name="calendar-days" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-amber-500'] }}" />Feriado</span>
-            <span class="flex items-center gap-2"><flux:icon name="calendar-days" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-emerald-600'] }}" />Dia de pagamento</span>
-            <span class="flex items-center gap-2"><flux:icon name="briefcase" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-indigo-500'] }}" />Marco de trabalho</span>
-            <span class="flex items-center gap-2"><flux:icon name="sun" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-emerald-600'] }}" />Férias</span>
-            <span class="flex items-center gap-2"><span class="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[8px] text-white">2</span>Número de registos</span>
+    {{-- ── 2. BARRA DE FILTROS (COLLAPSIBLE) ── --}}
+    <div x-show="filterOpen" x-collapse x-cloak>
+        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 flex flex-wrap gap-4 shadow-sm mb-6">
+            <p class="w-full text-base font-medium text-zinc-500 dark:text-zinc-400">Seleciona um ou mais símbolos. Sem seleção, são mostrados todos os registos.</p>
+            @php
+                // Classes Tailwind escritas por extenso (não concatenadas) para o compilador conseguir detetá-las.
+                $filterStyles = [
+                    'emerald' => ['active' => 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-emerald-500/50'],
+                    'red' => ['active' => 'border-red-500 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-red-500/50'],
+                    'blue' => ['active' => 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-blue-500/50'],
+                    'purple' => ['active' => 'border-purple-500 bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-purple-500/50'],
+                    'amber' => ['active' => 'border-amber-500 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-amber-500/50'],
+                    'orange' => ['active' => 'border-orange-500 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-orange-500/50'],
+                    'indigo' => ['active' => 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400', 'idle' => 'border-zinc-100 dark:border-zinc-800 hover:border-indigo-500/50'],
+                ];
+            @endphp
+            @foreach(\App\Livewire\PersonalCalendar::CALENDAR_FILTERS as $key => $filter)
+                @php
+                    $isActive = in_array($key, $activeFilters, true);
+                    $style = $filterStyles[$filter['color']];
+                @endphp
+                <button
+                    type="button"
+                    wire:click="toggleFilter('{{ $key }}')"
+                    aria-pressed="{{ $isActive ? 'true' : 'false' }}"
+                    class="flex items-center gap-3 px-5 py-2.5 rounded-2xl border-2 transition-all group {{ $isActive ? $style['active'] : $style['idle'].' text-zinc-500 group-hover:text-zinc-800 dark:group-hover:text-white' }}"
+                >
+                    <flux:icon :name="$filter['icon']" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-'.$filter['color'].'-500'] }}" />
+                    <span class="text-[11px] font-black uppercase tracking-widest">{{ $filter['label'] }}</span>
+                </button>
+            @endforeach
         </div>
     </div>
 
@@ -237,7 +223,7 @@
                 @php
                     $dateKey = sprintf('%04d-%02d-%02d', $year, $month, $day);
                     $events = $this->visibleDayEvents->get($dateKey, collect());
-                    $dayHolidays = $events->where('subtype', 'public_holiday');
+                    $dayHolidays = $this->dayEvents->get($dateKey, collect())->where('subtype', 'public_holiday');
                     $isWeekend = \Carbon\Carbon::parse($dateKey)->isWeekend();
                     $dayType = $dayHolidays->isNotEmpty() ? 'holiday' : ($isWeekend ? 'non-working' : 'working');
                     $isToday = $dateKey === now()->format('Y-m-d');
@@ -270,21 +256,18 @@
                     wire:click="openDayDetail('{{ $dateKey }}')"
                     data-day-type="{{ $dayType }}"
                     @if($isToday) aria-current="date" @endif
-                    class="relative min-h-[110px] sm:min-h-[150px] border-r border-b border-zinc-100 dark:border-zinc-800 p-3 transition-all hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group/day cursor-pointer {{ $dayType === 'holiday' ? 'bg-amber-50/80 dark:bg-amber-950/20' : ($dayType === 'non-working' ? 'bg-zinc-100/70 dark:bg-zinc-950/50' : 'bg-emerald-50/30 dark:bg-emerald-950/10') }} {{ $isToday ? 'z-10 ring-2 ring-inset ring-indigo-500 dark:ring-indigo-400' : '' }}"
+                    class="relative min-h-[110px] sm:min-h-[150px] border-r border-b border-zinc-100 dark:border-zinc-800 p-3 transition-all hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group/day cursor-pointer {{ $dayType === 'holiday' ? 'bg-amber-50/80 dark:bg-amber-950/20' : ($dayType === 'non-working' ? 'bg-zinc-100/70 dark:bg-zinc-950/50' : 'bg-emerald-50/30 dark:bg-emerald-950/10') }}"
                 >
                     {{-- Cabeçalho da Célula --}}
                     <div class="flex flex-col items-start gap-1 sm:flex-row sm:items-start sm:justify-between">
                         <div class="inline-flex items-center gap-1">
                             <span @class([
-                                'text-sm font-black transition-all group-hover/day:scale-110',
-                                'text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 size-8 flex items-center justify-center rounded-xl' => $isToday,
-                                'text-zinc-400 dark:text-zinc-600' => !$isToday
+                                'font-black transition-all group-hover/day:scale-110',
+                                'size-8 sm:size-9 flex items-center justify-center rounded-full bg-sky-600 text-base text-white dark:bg-sky-500' => $isToday,
+                                'text-sm text-zinc-400 dark:text-zinc-600' => !$isToday
                             ])>
                                 {{ sprintf('%02d', $day) }}
                             </span>
-                            @if($isToday)
-                                <span class="hidden text-[8px] font-black uppercase text-indigo-600 sm:inline dark:text-indigo-400">Hoje</span>
-                            @endif
                         </div>
                         @if($hasFinancialRecords)
                             <span
@@ -307,13 +290,13 @@
                                     @class([
                                         'relative inline-flex items-center justify-center bg-white/70 dark:bg-zinc-900/50',
                                         $calendarEvent['calendar_icon_color'],
-                                        'size-7 rounded-lg' => $calendarEvent['calendar_icon_count'] > 1,
-                                        'size-5 rounded-md' => $calendarEvent['calendar_icon_count'] === 1,
+                                        'size-7 sm:size-8 rounded-lg' => $calendarEvent['calendar_icon_count'] > 1,
+                                        'size-6 rounded-md' => $calendarEvent['calendar_icon_count'] === 1,
                                     ])
                                 >
                                     <flux:icon
                                         name="{{ $calendarEvent['calendar_icon'] }}"
-                                        class="{{ $calendarEvent['calendar_icon_count'] > 1 ? 'size-5' : 'size-3.5' }}"
+                                        class="{{ $calendarEvent['calendar_icon_count'] > 1 ? 'size-6' : 'size-5' }}"
                                     />
                                     @if($calendarEvent['calendar_icon_count'] > 1)
                                         <span class="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-zinc-900 px-1 text-[8px] font-black leading-none text-white dark:bg-white dark:text-zinc-900">
@@ -350,7 +333,7 @@
     </div>
 
     {{-- ── 4. INDICADORES FINANCEIROS DO MÊS ── --}}
-    <p class="text-sm font-bold text-zinc-500 sm:text-base dark:text-zinc-400">Previsão para todo o mês de {{ $currentMonthName }}</p>
+    <p class="text-sm font-bold text-zinc-500 sm:text-base dark:text-zinc-400">Previsão para todo o mês de {{ $currentMonthName }} e balanço anual</p>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 !mb-0">
         <div class="rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-emerald-900/50 dark:bg-zinc-900">
             <div class="flex items-center gap-3">
@@ -408,23 +391,16 @@
         <div class="rounded-3xl border border-amber-100 bg-white p-5 shadow-sm dark:border-amber-900/50 dark:bg-zinc-900">
             <div class="flex items-center gap-3">
                 <div class="rounded-2xl bg-amber-500/10 p-3 text-amber-600 dark:text-amber-400">
-                    <flux:icon name="receipt-percent" class="size-5" />
+                    <flux:icon name="scale" class="size-5" />
                 </div>
                 <div class="min-w-0">
-                    <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Maior saída do mês</h4>
-                    @if($monthlyFinanceInsights['largest_expense'])
-                        <p class="mt-1 truncate text-sm font-black text-zinc-800 dark:text-white">{{ $monthlyFinanceInsights['largest_expense']['label'] }}</p>
-                    @else
-                        <p class="mt-1 text-sm font-black text-zinc-400">Sem saídas previstas</p>
-                    @endif
+                    <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Balanço do ano {{ $year }}</h4>
+                    <p class="mt-1 text-xl font-black tabular-nums {{ $annualFinanceInsights['balance'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : ($annualFinanceInsights['balance'] < 0 ? 'text-red-500' : 'text-zinc-400') }}">{{ number_format($annualFinanceInsights['balance'], 2, ',', '.') }} €</p>
                 </div>
             </div>
-            @if($monthlyFinanceInsights['largest_expense'])
-                <p class="mt-3 text-[10px] font-semibold text-zinc-400">
-                    −{{ number_format($monthlyFinanceInsights['largest_expense']['amount'], 2, ',', '.') }} € · {{ \Carbon\Carbon::parse($monthlyFinanceInsights['largest_expense']['date'])->format('d/m') }}
-                </p>
-            @else
-                <p class="mt-3 text-[10px] font-semibold text-zinc-400">Ainda não há saídas previstas</p>
+            <p class="mt-3 text-[10px] font-semibold text-zinc-400">Entradas menos saídas de janeiro a dezembro, incluindo previsões</p>
+            @if($annualFinanceInsights['has_unknown_subscriptions'])
+                <p class="mt-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400">Assinaturas sem ciclo ou data definidos não entram na previsão.</p>
             @endif
         </div>
     </div>
@@ -699,6 +675,7 @@
                     @endif
                     @forelse($this->selectedDayEvents as $event)
                         @php($isMealAllowanceEvent = ($event['subtype'] ?? null) === 'meal_allowance')
+                        @php($isWaiting = ($isMealAllowanceEvent && $event['status'] === 'expected') || (($event['subtype'] ?? null) === 'salary_projection' && $event['date'] >= $pendingFromDate))
                         @if($isMealAllowanceEvent)
                             @php($formKey = 'mealAllowanceForms.'.$event['contract_id'])
                         @endif
@@ -718,19 +695,21 @@
                                         <span class="text-sm font-bold text-zinc-800 dark:text-zinc-200 truncate">{{ $event['label'] }}</span>
                                     </div>
                                     @if($isMealAllowanceEvent)
-                                        <span class="ml-8 mt-1 inline-block text-[9px] font-black uppercase tracking-wider {{ $event['color'] }}">
+                                        <span class="ml-8 mt-1 inline-block text-[9px] font-black uppercase tracking-wider {{ $isWaiting ? 'text-orange-600 dark:text-orange-400' : $event['color'] }}">
                                             {{ match ($event['status']) { 'expected' => 'À espera', 'received' => 'Pago', 'partial' => 'Parcial', 'missed' => 'Não recebido' } }}
                                         </span>
                                         @if($event['notes'])
                                             <span class="ml-8 mt-1 block text-[10px] font-medium text-zinc-500">{{ $event['notes'] }}</span>
                                         @endif
+                                    @elseif($isWaiting)
+                                        <span class="ml-8 mt-1 inline-block text-[9px] font-black uppercase tracking-wider text-orange-600 dark:text-orange-400">À espera</span>
                                     @endif
                                     @if(isset($event['meta']))
                                         <span class="ml-8 mt-1 block text-[10px] font-medium text-zinc-500">{{ $event['meta'] }}</span>
                                     @endif
                                 </div>
                                 @if(isset($event['amount']))
-                                    <span class="text-sm font-black shrink-0 {{ $event['color'] }}">
+                                    <span class="text-sm font-black shrink-0 {{ $isWaiting ? 'text-orange-600 dark:text-orange-400' : $event['color'] }}">
                                         {{ in_array($event['type'], ['income', 'salary']) ? '+' : ($event['type'] === 'transfer' ? '' : '-') }}{{ number_format($event['amount'], 2, ',', '.') }}€
                                     </span>
                                 @endif

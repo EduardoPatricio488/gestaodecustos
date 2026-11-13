@@ -18,10 +18,12 @@ use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Services\BusinessAccessService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -52,20 +54,37 @@ class PersonalCalendar extends Component
 
     public string $search = '';
 
-    private const FILTER_TYPE_MAP = [
-        'incomes' => ['income', 'salary'],
-        'expenses' => ['expense'],
-        'subscriptions' => ['subscription'],
-        'transfers' => ['transfer'],
-        'debts' => ['debt'],
-        'fitness' => ['fitness'],
-        'reminders' => ['reminder'],
+    #[Locked]
+    public ?string $summaryDate = null;
+
+    public $summaryDayInput;
+
+    public $summaryMonthInput;
+
+    public $summaryYearInput;
+
+    public const CALENDAR_FILTERS = [
+        'incomes' => ['label' => 'Receita ou salário', 'icon' => 'banknotes', 'color' => 'emerald'],
+        'debts' => ['label' => 'Parcela', 'icon' => 'banknotes', 'color' => 'amber'],
+        'meal_allowance' => ['label' => 'Subsídio de alimentação', 'icon' => 'cake', 'color' => 'emerald'],
+        'meal_allowance_partial' => ['label' => 'Subsídio parcial', 'icon' => 'cake', 'color' => 'amber'],
+        'meal_allowance_missed' => ['label' => 'Subsídio não recebido', 'icon' => 'cake', 'color' => 'red'],
+        'expenses' => ['label' => 'Despesa', 'icon' => 'credit-card', 'color' => 'red'],
+        'subscriptions' => ['label' => 'Assinatura', 'icon' => 'arrow-path', 'color' => 'purple'],
+        'transfers' => ['label' => 'Transferência', 'icon' => 'arrows-right-left', 'color' => 'blue'],
+        'fitness' => ['label' => 'Treino', 'icon' => 'bolt', 'color' => 'orange'],
+        'reminders' => ['label' => 'Lembrete', 'icon' => 'bell', 'color' => 'indigo'],
+        'holidays' => ['label' => 'Feriado', 'icon' => 'calendar-days', 'color' => 'amber'],
+        'paydays' => ['label' => 'Dia de pagamento', 'icon' => 'calendar-days', 'color' => 'emerald'],
+        'work_milestones' => ['label' => 'Marco de trabalho', 'icon' => 'briefcase', 'color' => 'indigo'],
+        'vacations' => ['label' => 'Férias', 'icon' => 'sun', 'color' => 'emerald'],
     ];
 
     public function mount()
     {
         $this->month = now()->month;
         $this->year = now()->year;
+        $this->setSummaryDateInputs(now());
     }
 
     public function toggleFilter(string $key)
@@ -327,8 +346,7 @@ class PersonalCalendar extends Component
             );
         }
 
-        $this->month = Carbon::parse($targetDate)->month;
-        $this->year = Carbon::parse($targetDate)->year;
+        $this->showMonth(Carbon::parse($targetDate));
         $this->selectedDayKey = $targetDate;
         $this->editingEventKey = null;
         $this->eventEditForm = [];
@@ -908,23 +926,71 @@ class PersonalCalendar extends Component
 
     public function prevMonth()
     {
-        $date = Carbon::create($this->year, $this->month, 1)->subMonth();
-        $this->month = $date->month;
-        $this->year = $date->year;
+        $this->showMonth(Carbon::create($this->year, $this->month, 1)->subMonth());
     }
 
     public function nextMonth()
     {
-        $date = Carbon::create($this->year, $this->month, 1)->addMonth();
-        $this->month = $date->month;
-        $this->year = $date->year;
+        $this->showMonth(Carbon::create($this->year, $this->month, 1)->addMonth());
     }
 
     public function goToToday(): void
     {
-        $today = now();
-        $this->month = $today->month;
-        $this->year = $today->year;
+        $this->showMonth(now());
+    }
+
+    private function showMonth(CarbonInterface $date): void
+    {
+        $this->month = $date->month;
+        $this->year = $date->year;
+
+        if ($this->summaryDate !== null) {
+            $day = Carbon::parse($this->summaryDate)->day;
+            $this->summaryDate = $date->copy()->startOfMonth()->day(min($day, $date->daysInMonth))->toDateString();
+            $this->setSummaryDateInputs(Carbon::parse($this->summaryDate));
+        }
+    }
+
+    private function setSummaryDateInputs(CarbonInterface $date): void
+    {
+        $this->summaryDayInput = $date->day;
+        $this->summaryMonthInput = $date->month;
+        $this->summaryYearInput = $date->year;
+    }
+
+    public function applySummaryDate(): void
+    {
+        $this->validate([
+            'summaryDayInput' => ['required', 'integer', 'between:1,31'],
+            'summaryMonthInput' => ['required', 'integer', 'between:1,12'],
+            'summaryYearInput' => ['required', 'integer', 'between:1,9999'],
+        ], [
+            'summaryDayInput.*' => 'Seleciona um dia válido.',
+            'summaryMonthInput.*' => 'Seleciona um mês válido.',
+            'summaryYearInput.*' => 'Indica um ano entre 1 e 9999.',
+        ]);
+
+        $day = (int) $this->summaryDayInput;
+        $month = (int) $this->summaryMonthInput;
+        $year = (int) $this->summaryYearInput;
+        if (! checkdate($month, $day, $year)) {
+            $this->addError('summaryDayInput', 'Este dia não existe no mês e ano selecionados.');
+
+            return;
+        }
+
+        $date = Carbon::create($year, $month, $day)->startOfDay();
+        $this->month = $date->month;
+        $this->year = $date->year;
+        $this->summaryDate = $date->isSameDay(now()) ? null : $date->toDateString();
+    }
+
+    public function resetSummaryDate(): void
+    {
+        $this->summaryDate = null;
+        $this->setSummaryDateInputs(now());
+        $this->showMonth(now());
+        $this->resetValidation(['summaryDayInput', 'summaryMonthInput', 'summaryYearInput']);
     }
 
     public function exportPdf()
@@ -968,8 +1034,7 @@ class PersonalCalendar extends Component
         abort_unless($date && $date->toDateString() === $dateKey, 404);
         abort_unless($this->upcomingPayments->contains('date', $dateKey), 404);
 
-        $this->month = $date->month;
-        $this->year = $date->year;
+        $this->showMonth($date);
         $this->search = '';
         $this->activeFilters = [];
         unset($this->dayEvents, $this->visibleDayEvents);
@@ -978,6 +1043,10 @@ class PersonalCalendar extends Component
 
     public function refreshCalendarClock(): int
     {
+        if ($this->summaryDate === null) {
+            $this->setSummaryDateInputs(now());
+        }
+
         return $this->nextCalendarRefreshDelay();
     }
 
@@ -1495,13 +1564,19 @@ class PersonalCalendar extends Component
             return $this->dayEvents;
         }
 
-        $allowedTypes = collect($this->activeFilters)
-            ->flatMap(fn ($key) => self::FILTER_TYPE_MAP[$key] ?? [])
+        $allowedIndicators = collect($this->activeFilters)
+            ->map(fn ($key) => self::CALENDAR_FILTERS[$key] ?? null)
+            ->filter()
+            ->map(fn ($filter) => $filter['icon'].'|text-'.$filter['color'].'-500')
             ->all();
 
         return $this->dayEvents
             ->map(fn ($events) => $events->filter(fn (array $event): bool =>
-                (empty($this->activeFilters) || in_array($event['type'], $allowedTypes, true))
+                (empty($this->activeFilters) || in_array(
+                    ($event['calendar_icon'] ?? '').'|'.($event['color'] === 'text-emerald-600' ? 'text-emerald-500' : $event['color']),
+                    $allowedIndicators,
+                    true,
+                ))
                 && ($search === ''
                     || mb_stripos($event['label'], $search) !== false
                     || mb_stripos($event['meta'] ?? '', $search) !== false)))
@@ -1746,32 +1821,68 @@ class PersonalCalendar extends Component
     {
         $now = now();
         $today = $now->toDateString();
-        $includeTodayIncome = $now->format('H:i:s') >= '18:00:00';
+        $cutoff = $this->summaryDate ?? $today;
+        $includeCutoffIncome = $cutoff !== $today || $now->format('H:i:s') >= '18:00:00';
         $events = $this->dayEvents->flatten(1)
-            ->filter(fn (array $event): bool => $event['date'] <= $today);
+            ->filter(fn (array $event): bool => $event['date'] <= $cutoff);
 
         $income = round((float) $events
             ->whereIn('type', ['income', 'salary'])
-            ->filter(fn (array $event): bool => $event['date'] < $today || $includeTodayIncome)
+            ->filter(fn (array $event): bool => $event['date'] < $cutoff || $includeCutoffIncome)
             ->sum(fn ($event) => (float) ($event['amount'] ?? 0)), 2);
 
         $outflow = round((float) $events
             ->whereIn('type', ['expense', 'subscription', 'debt'])
             ->sum(fn ($event) => (float) ($event['amount'] ?? 0)), 2);
 
+        $month = Carbon::create($this->year, $this->month, 1)->startOfMonth();
+        $cutoffDate = Carbon::parse($cutoff)->startOfDay();
+        $elapsedDays = $month->greaterThan($cutoffDate)
+            ? 0
+            : ($month->format('Y-m') === $cutoffDate->format('Y-m') ? $cutoffDate->day : $month->daysInMonth);
+        $netTotal = round($income - $outflow, 2);
+
         return [
             'income' => $income,
             'outflow' => $outflow,
-            'net_total' => round($income - $outflow, 2),
-            'current_balance' => $this->currentAccountBalance['balance'],
-            'risk_available' => $this->currentAccountBalance['available'],
+            'net_total' => $netTotal,
+            'elapsed_days' => $elapsedDays,
+            'daily_average' => $elapsedDays > 0 ? round($netTotal / $elapsedDays, 2) : null,
+            'cutoff' => $cutoff,
+            'is_today' => $cutoff === $today,
+            'includes_forecast' => $cutoff > $today,
         ];
     }
 
     #[Computed]
     public function monthlyFinanceInsights(): array
     {
-        $events = $this->dayEvents->flatten(1);
+        return $this->financeInsightsForEvents($this->dayEvents->flatten(1));
+    }
+
+    #[Computed]
+    public function annualFinanceInsights(): array
+    {
+        $balance = 0.0;
+        $hasUnknownSubscriptions = false;
+
+        for ($month = 1; $month <= 12; $month++) {
+            $events = $month === $this->month
+                ? $this->dayEvents
+                : $this->eventsForMonth(Carbon::create($this->year, $month, 1));
+            $insights = $this->financeInsightsForEvents($events->flatten(1));
+            $balance += $insights['balance'];
+            $hasUnknownSubscriptions = $hasUnknownSubscriptions || $insights['has_unknown_subscriptions'];
+        }
+
+        return [
+            'balance' => round($balance, 2),
+            'has_unknown_subscriptions' => $hasUnknownSubscriptions,
+        ];
+    }
+
+    private function financeInsightsForEvents(Collection $events): array
+    {
         $paidSalaryEvents = $events
             ->where('subtype', 'salary_payment');
         $incomeEvents = $events->filter(fn (array $event): bool =>
@@ -1827,6 +1938,7 @@ class PersonalCalendar extends Component
             'currentMonthName' => $currentDate->translatedFormat('F'),
             'monthSummary' => $this->monthSummary,
             'monthlyFinanceInsights' => $this->monthlyFinanceInsights,
+            'annualFinanceInsights' => $this->annualFinanceInsights,
             'riskDays' => $this->cashRiskDays,
             'calendarRefreshDelay' => $this->nextCalendarRefreshDelay(),
         ]);

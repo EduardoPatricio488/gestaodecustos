@@ -67,6 +67,10 @@
             </div>
         </div>
 
+        <div id="memoria-ia" class="glass-card scroll-mt-24 rounded-[2.5rem] border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <livewire:profile.ai-memory-settings />
+        </div>
+
         {{-- 4. SECÇÃO: DADOS DE IDENTIDADE --}}
         <div class="space-y-6">
             <div class="flex items-center gap-3 px-4">

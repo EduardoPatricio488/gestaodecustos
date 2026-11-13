@@ -94,7 +94,7 @@ class FinancialIntelligenceService
             ->where('workspace_id', $workspace->id)
             ->when($ownerId, fn ($q) => $q->where('user_id', $ownerId))
             ->where('is_active', true)
-            ->get(['id', 'name', 'amount', 'cycle', 'renewal_date']);
+            ->get(['id', 'name', 'amount', 'cycle', 'renewal_date', 'paid_by_company']);
 
         $investmentRecords = Investment::query()
             ->where('workspace_id', $workspace->id)
