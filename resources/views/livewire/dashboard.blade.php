@@ -95,6 +95,8 @@
 
     @php
         $firstName = explode(' ', auth()->user()->name)[0] ?? auth()->user()->name;
+        $birthCountry = auth()->user()->country_of_origin ?: 'Portugal';
+        $birthCountryCode = array_search($birthCountry, config('countries', []), true) ?: 'PT';
         $currentWs = auth()->user()->currentWorkspace;
         $others = $currentWs
             ? $currentWs->users->where('id', '!=', auth()->id())->pluck('name')->map(fn($name) => explode(' ', $name)[0])
@@ -351,14 +353,17 @@
 
 <style>
     .dashboard-flag-wash {
-        background: linear-gradient(105deg, rgba(0, 104, 71, .10) 0%, rgba(0, 104, 71, .10) 39%, rgba(255, 255, 255, .18) 39%, rgba(255, 255, 255, .18) 61%, rgba(218, 41, 28, .10) 61%, rgba(218, 41, 28, .10) 100%);
-        background-size: 180% 100%;
-        animation: dashboard-flag-drift 18s ease-in-out infinite alternate;
-        opacity: .9;
+        background-color: rgba(161, 161, 170, .08);
+        background-size: 115% auto;
+        background-position: 50% 50%;
+        background-repeat: no-repeat;
+        opacity: .22;
+        animation: dashboard-flag-drift 24s ease-in-out infinite alternate;
     }
+    .dark .dashboard-flag-wash { opacity: .16; }
     @keyframes dashboard-flag-drift {
-        from { background-position: 0% 50%; }
-        to { background-position: 100% 50%; }
+        from { background-position: 42% 50%; }
+        to { background-position: 58% 50%; }
     }
     @media (prefers-reduced-motion: reduce) {
         .dashboard-flag-wash { animation: none; }
@@ -467,7 +472,9 @@
      }"
      x-init="init()"
 >
-    <span aria-hidden="true" class="pointer-events-none absolute inset-0 dashboard-flag-wash"></span>
+    <span aria-hidden="true"
+          class="pointer-events-none absolute inset-0 dashboard-flag-wash"
+          style="background-image: linear-gradient(rgba(255,255,255,.76), rgba(255,255,255,.76)), url('https://flagcdn.com/w1280/{{ strtolower($birthCountryCode) }}.jpg');"></span>
     <div class="relative z-10 flex items-center gap-5">
         {{-- Avatar Dinâmico --}}
         <div class="size-16 rounded-[1.5rem] flex items-center justify-center text-4xl shadow-2xl shrink-0 transition-all duration-500"
