@@ -134,7 +134,7 @@ class SubscriptionHub extends Component
             ->whereKey($sub->bank_account_id)
             ->value('id');
         $this->started_at = $sub->started_at?->format('Y-m-d');
-        $this->renewal_date = $sub->renewal_date?->format('Y-m-d');
+        $this->syncRenewalDate();
         $this->notes = $sub->notes;
         $this->notify_before_billing = $sub->notify_before_billing;
         $this->notify_days_before = $sub->notify_days_before;
@@ -387,6 +387,7 @@ class SubscriptionHub extends Component
     public function openExtraModal()
     {
         $this->reset(['name', 'amount', 'billing_day', 'category_id', 'billing_cycle', 'bank_account_id', 'status', 'started_at', 'renewal_date', 'notes', 'notify_before_billing', 'notify_days_before', 'editingId']);
+        $this->syncRenewalDate();
         $this->transportPassMode = false;
         $this->transportPassName = 'Passe mensal';
         $this->transportPassAmount = null;
@@ -399,6 +400,42 @@ class SubscriptionHub extends Component
     public function closeExtraModal()
     {
         $this->showExtraModal = false;
+    }
+
+    public function updatedBillingCycle(): void
+    {
+        $this->syncRenewalDate();
+    }
+
+    public function updatedStartedAt(): void
+    {
+        $this->syncRenewalDate();
+    }
+
+    private function syncRenewalDate(): void
+    {
+        $intervalMonths = match ($this->billing_cycle) {
+            'quarterly' => 3,
+            'semiannual' => 6,
+            'annual' => 12,
+            default => 1,
+        };
+
+        $anchor = filled($this->started_at)
+            ? Carbon::parse($this->started_at)->startOfDay()
+            : Carbon::today();
+
+        $today = Carbon::today();
+        $monthsElapsed = max(0, (($today->year - $anchor->year) * 12) + $today->month - $anchor->month);
+        $cycles = max(1, intdiv($monthsElapsed, $intervalMonths));
+        $renewal = $anchor->copy()->addMonthsNoOverflow($intervalMonths * $cycles);
+
+        while ($renewal->lt($today)) {
+            $cycles++;
+            $renewal = $anchor->copy()->addMonthsNoOverflow($intervalMonths * $cycles);
+        }
+
+        $this->renewal_date = $renewal->toDateString();
     }
 
     public function duplicate($id)
@@ -416,6 +453,8 @@ class SubscriptionHub extends Component
             $this->saveTransportPass();
             return;
         }
+
+        $this->syncRenewalDate();
 
         $data = $this->validate([
             'name' => 'required',
