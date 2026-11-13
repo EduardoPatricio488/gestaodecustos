@@ -1,27 +1,5 @@
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
-        <div class="xl:col-span-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 space-y-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/30 flex items-center justify-center">
-                    <span class="text-red-600 font-black text-xs">S</span>
-                </div>
-                <div>
-                    <h2 class="font-black dark:text-white">Como obter o PDF Santander</h2>
-                    <p class="text-[11px] text-zinc-400">Só precisas de alguns passos.</p>
-                </div>
-            </div>
-            <ol class="space-y-3 text-sm text-zinc-600 dark:text-zinc-300">
-                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">1</span><span>Abre a aplicação do <strong>Santander</strong>.</span></li>
-                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">2</span><span>Entra em <strong>Contas</strong>.</span></li>
-                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">3</span><span>Seleciona a conta e abre <strong>Movimentos</strong>.</span></li>
-                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">4</span><span>Carrega em <strong>PDF</strong> para gerar o extrato.</span></li>
-                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">5</span><span>Guarda o PDF no dispositivo e carrega-o aqui.</span></li>
-            </ol>
-            <div class="rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 p-3 text-xs text-blue-800 dark:text-blue-200">
-                <strong>Privacidade:</strong> o Finance Pro lê as datas, descrições e valores dos movimentos. Não precisa do teu PIN, palavra-passe ou códigos de acesso ao banco.
-            </div>
-        </div>
-
-        <div class="xl:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-5">
+    <div class="grid grid-cols-1 gap-5">
+        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-5">
             <div>
                 <h2 class="text-lg font-black dark:text-white">Carregar extrato bancário</h2>
                 <p class="text-xs text-zinc-400 mt-1">Começa por carregar o PDF exportado pela aplicação Santander.</p>
@@ -49,6 +27,28 @@
                     @endif
                 </div>
             </form>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 space-y-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/30 flex items-center justify-center">
+                    <span class="text-red-600 font-black text-xs">S</span>
+                </div>
+                <div>
+                    <h2 class="font-black dark:text-white">Como obter o PDF Santander</h2>
+                    <p class="text-[11px] text-zinc-400">Só precisas de alguns passos.</p>
+                </div>
+            </div>
+            <ol class="space-y-3 text-sm text-zinc-600 dark:text-zinc-300">
+                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">1</span><span>Abre a aplicação do <strong>Santander</strong>.</span></li>
+                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">2</span><span>Entra em <strong>Contas</strong>.</span></li>
+                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">3</span><span>Seleciona a conta e abre <strong>Movimentos</strong>.</span></li>
+                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">4</span><span>Carrega em <strong>PDF</strong> para gerar o extrato.</span></li>
+                <li class="flex gap-3"><span class="w-6 h-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">5</span><span>Guarda o PDF no dispositivo e carrega-o aqui.</span></li>
+            </ol>
+            <div class="rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 p-3 text-xs text-blue-800 dark:text-blue-200">
+                <strong>Privacidade:</strong> o Finance Pro lê as datas, descrições e valores dos movimentos. Não precisa do teu PIN, palavra-passe ou códigos de acesso ao banco.
+            </div>
         </div>
     </div>
 
