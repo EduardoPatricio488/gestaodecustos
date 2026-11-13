@@ -19,6 +19,7 @@ class OnboardingStatement extends StatementImportHub
     {
         $this->authorizeOnboardingWrite();
         $this->showImportForm = true;
+        $this->dispatch('onboarding-statement-import-opened');
     }
 
     public function updatedStatementFile(): void
