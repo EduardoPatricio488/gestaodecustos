@@ -1025,7 +1025,7 @@ class CategoryHub extends Component
             'started_at' => $startDate->toDateString(),
             'renewal_date' => $startDate->copy()->addMonthNoOverflow()->toDateString(),
             'notes' => $paidByCompany
-                ? 'Passe de transporte pago pela empresa. Excluído dos cálculos financeiros pessoais.'
+                ? 'Passe de transporte pago pela empresa. Excluído dos cálculos financeiros.'
                 : 'Passe mensal de transporte.',
             'notify_before_billing' => false,
             'paid_by_company' => $paidByCompany,
