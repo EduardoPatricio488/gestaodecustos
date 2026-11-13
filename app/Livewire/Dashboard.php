@@ -90,11 +90,14 @@ class Dashboard extends Component
 
             $updatedInvestments = Investment::where('workspace_id', $workspace->id)
                 ->when($workspace->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
-                ->get(['symbol', 'name', 'quantity', 'average_price', 'current_price', 'fees'])
-                ->map(function ($investment) use ($workspace) {
-                    $invested = ((float) $investment->quantity * (float) $investment->average_price) + (float) ($investment->fees ?? 0);
-                    $current = (float) $investment->quantity * (float) ($investment->current_price ?: $investment->average_price);
+                ->get(['symbol', 'name', 'type', 'quantity', 'average_price', 'current_price', 'fees'])
+                ->groupBy(fn ($investment) => mb_strtolower(trim((string) ($investment->symbol ?: ($investment->name.'|'.$investment->type)))))
+                ->map(function ($positions) use ($workspace) {
+                    $quantity = (float) $positions->sum(fn ($position) => (float) $position->quantity);
+                    $invested = (float) $positions->sum(fn ($position) => ((float) $position->quantity * (float) $position->average_price) + (float) ($position->fees ?? 0));
+                    $current = (float) $positions->sum(fn ($position) => (float) $position->quantity * (float) ($position->current_price ?: $position->average_price));
                     $profit = round($current - $invested, 2);
+                    $investment = $positions->first();
 
                     return [
                         'symbol' => $investment->symbol ?: 'Ativo',
@@ -148,7 +151,7 @@ class Dashboard extends Component
         }
 
         Cache::forget("dashboard:account-overview:v1:{$currentWs->id}:{$user->id}");
-        Cache::forget("dashboard:investments:v3:{$currentWs->id}:{$user->id}");
+        Cache::forget("dashboard:investments:v4:{$currentWs->id}:{$user->id}");
 
         $this->dispatch('account-overview-refreshed');
     }
@@ -787,16 +790,23 @@ class Dashboard extends Component
         $myInvestments = Cache::remember("dashboard:investments:v3:{$currentWs->id}:{$user->id}", 60, fn () => Investment::where('workspace_id', $currentWs->id)
             ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
             ->get(['id', 'workspace_id', 'symbol', 'name', 'type', 'quantity', 'average_price', 'current_price', 'fees', 'updated_at'])
-            ->map(fn ($investment) => [
-                'symbol' => $investment->symbol,
-                'name' => $investment->name,
-                'type' => $investment->type,
-                'quantity' => (float) $investment->quantity,
-                'average_price' => (float) $investment->average_price,
-                'current_price' => (float) ($investment->current_price ?: $investment->average_price),
-                'fees' => (float) ($investment->fees ?? 0),
-                'updated_at' => $investment->updated_at?->timestamp,
-            ])->values()->all());
+            ->groupBy(fn ($investment) => mb_strtolower(trim((string) ($investment->symbol ?: ($investment->name.'|'.$investment->type)))))
+            ->map(function ($positions) {
+                $quantity = (float) $positions->sum(fn ($position) => (float) $position->quantity);
+                $cost = (float) $positions->sum(fn ($position) => (float) $position->quantity * (float) $position->average_price);
+                $latest = $positions->sortByDesc(fn ($position) => $position->updated_at?->timestamp ?? 0)->first();
+
+                return [
+                    'symbol' => $latest->symbol,
+                    'name' => $latest->name,
+                    'type' => $latest->type,
+                    'quantity' => $quantity,
+                    'average_price' => $quantity > 0 ? $cost / $quantity : 0,
+                    'current_price' => (float) ($latest->current_price ?: $latest->average_price),
+                    'fees' => (float) $positions->sum(fn ($position) => (float) ($position->fees ?? 0)),
+                    'updated_at' => $positions->max(fn ($position) => $position->updated_at?->timestamp),
+                ];
+            })->values()->all());
 
         $portfolioValue = round(collect($myInvestments)->sum(fn (array $investment): float => $investment['quantity'] * $investment['current_price']), 2);
         $dashboardInvestmentsTotalInvested = round(collect($myInvestments)->sum(fn (array $investment): float => ($investment['quantity'] * $investment['average_price']) + $investment['fees']), 2);
