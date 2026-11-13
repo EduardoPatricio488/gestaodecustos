@@ -1,6 +1,7 @@
 <div
     class="fixed inset-0 z-[999] flex items-center justify-center p-4"
-    x-data="{ open: @entangle('show') }"
+    x-data="{ open: @entangle('show'), wide: false }"
+    x-on:onboarding-statement-import-opened.window="wide = true"
     x-show="open"
     x-cloak
 >
@@ -8,7 +9,8 @@
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
     {{-- Painel --}}
-    <div class="relative w-full {{ $step === 7 ? 'max-w-5xl' : 'max-w-2xl' }} bg-white dark:bg-zinc-950 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden"
+    <div class="relative w-full max-w-2xl bg-white dark:bg-zinc-950 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden"
+         :class="wide ? '!max-w-5xl' : ''"
          style="max-height: 90vh;">
 
         {{-- Barra de progresso no topo --}}
