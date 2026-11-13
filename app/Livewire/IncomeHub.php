@@ -799,7 +799,8 @@ class IncomeHub extends Component
     public function bankAccounts()
     {
         $user = auth()->user();
-        $query = BankAccount::where('workspace_id', $user->current_workspace_id);
+        $query = BankAccount::where('workspace_id', $user->current_workspace_id)
+            ->whereNotIn('type', ['investimento', 'investimentos']);
 
         if ($user->currentWorkspace?->type === 'personal') {
             $query->where('user_id', $user->id);
