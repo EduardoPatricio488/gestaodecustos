@@ -590,9 +590,22 @@
                         </p>
                     </div>
                 </div>
-                <p class="text-lg sm:text-xl font-black dark:text-white italic tracking-tighter">
-                    {{ number_format($currentValue, 2, ',', ' ') }} €
-                </p>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button
+                        type="button"
+                        wire:click="setFilter('Todos')"
+                        aria-label="Mostrar todos os ativos, sem filtro por classe"
+                        class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-[9px] font-black uppercase tracking-widest transition-all
+                            {{ $filterType === 'Todos'
+                                ? 'border-indigo-500 bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                                : 'border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:text-indigo-400' }}">
+                        <flux:icon name="layers" class="size-3.5" />
+                        Todas as classes
+                    </button>
+                    <p class="text-lg sm:text-xl font-black dark:text-white italic tracking-tighter">
+                        {{ number_format($currentValue, 2, ',', ' ') }} €
+                    </p>
+                </div>
             </div>
 
             {{-- Barra Combinada --}}
