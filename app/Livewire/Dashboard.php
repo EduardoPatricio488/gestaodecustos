@@ -848,7 +848,7 @@ class Dashboard extends Component
         $dashboardInvestmentsProfitPercent = $dashboardInvestmentsTotalInvested > 0
             ? round(($dashboardInvestmentsProfit / $dashboardInvestmentsTotalInvested) * 100, 2)
             : 0;
-        $dashboardInvestmentsCount = count($myInvestments);
+        $dashboardInvestmentsCount = (int) collect($myInvestments)->sum(fn (array $investment): int => (int) ($investment['positions_count'] ?? 1));
         $dashboardInvestmentsLastUpdatedTimestamp = collect($myInvestments)->max('updated_at');
         $dashboardInvestmentsLastUpdated = $dashboardInvestmentsLastUpdatedTimestamp
             ? now()->setTimestamp($dashboardInvestmentsLastUpdatedTimestamp)->format('d/m/Y · H:i')
