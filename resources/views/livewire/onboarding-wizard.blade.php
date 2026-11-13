@@ -8,7 +8,7 @@
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
     {{-- Painel --}}
-    <div class="relative w-full max-w-2xl bg-white dark:bg-zinc-950 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden"
+    <div class="relative w-full {{ $step === 7 ? 'max-w-5xl' : 'max-w-2xl' }} bg-white dark:bg-zinc-950 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden"
          style="max-height: 90vh;">
 
         {{-- Barra de progresso no topo --}}
