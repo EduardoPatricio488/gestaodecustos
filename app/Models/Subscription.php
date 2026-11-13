@@ -20,6 +20,7 @@ class Subscription extends Model
         'cycle',
         'is_active',
         'payment_method',
+        'bank_account_id',
         'status',
         'started_at',
         'renewal_date',
@@ -46,6 +47,11 @@ class Subscription extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(SubscriptionPayment::class)->orderByDesc('billing_date');
+    }
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
     }
 
     public function category(): BelongsTo
