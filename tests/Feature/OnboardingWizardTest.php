@@ -213,6 +213,82 @@ test('rental income rejects investment accounts as its destination', function ()
     expect(RecurringIncome::where('workspace_id', $workspace->id)->count())->toBe(0);
 });
 
+test('onboarding income lists saved records grouped by source and excludes meal card allowance', function () {
+    [$user, $workspace] = onboardingWorkspace();
+
+    RecurringIncome::create([
+        'user_id' => $user->id,
+        'workspace_id' => $workspace->id,
+        'description' => 'Renda do apartamento',
+        'amount' => 650,
+        'day_of_month' => 8,
+        'source' => 'imobiliario',
+        'frequency' => 'mensal',
+        'is_active' => true,
+        'metadata' => ['property_type' => 'arrendamento'],
+    ]);
+
+    RecurringIncome::create([
+        'user_id' => $user->id,
+        'workspace_id' => $workspace->id,
+        'description' => 'Subsídio de alimentação (cartão)',
+        'amount' => 150,
+        'day_of_month' => 25,
+        'source' => 'emprego',
+        'frequency' => 'mensal',
+        'is_active' => true,
+        'metadata' => ['income_type' => 'meal_card_allowance'],
+    ]);
+
+    $otherUser = User::factory()->create();
+    $otherWorkspace = Workspace::create([
+        'name' => 'Outro espaço',
+        'owner_id' => $otherUser->id,
+        'type' => 'personal',
+    ]);
+    RecurringIncome::create([
+        'user_id' => $otherUser->id,
+        'workspace_id' => $otherWorkspace->id,
+        'description' => 'Rendimento privado',
+        'amount' => 900,
+        'day_of_month' => 1,
+        'source' => 'outro',
+        'frequency' => 'mensal',
+        'is_active' => true,
+    ]);
+
+    Livewire::test(OnboardingIncome::class)
+        ->assertSee('Cada rendimento é guardado separadamente quando confirmares o respetivo formulário.')
+        ->assertSee('Rendimento imobiliário')
+        ->assertSee('Renda do apartamento')
+        ->assertSeeHtml('data-income-source="imobiliario"')
+        ->assertDontSee('Subsídio de alimentação (cartão)')
+        ->assertDontSee('Rendimento privado');
+});
+
+test('salary saved in the previous onboarding step appears under employment in additional incomes', function () {
+    [$user, $workspace] = onboardingWorkspace();
+
+    Livewire::test(OnboardingSalary::class)
+        ->set('recDescription', 'Empresa do passo anterior')
+        ->set('recSalaryGross', 1500)
+        ->call('saveEmployment')
+        ->assertHasNoErrors();
+
+    $salary = RecurringIncome::where('workspace_id', $workspace->id)
+        ->where('user_id', $user->id)
+        ->where('source', 'emprego')
+        ->whereNull('metadata->income_type')
+        ->where('description', 'Empresa do passo anterior')
+        ->firstOrFail();
+
+    Livewire::test(OnboardingIncome::class)
+        ->assertSee('Contrato de trabalho')
+        ->assertSee('Empresa do passo anterior')
+        ->assertSee(number_format((float) $salary->amount, 2, ',', ' ').' €')
+        ->assertSeeHtml('data-income-source="emprego"');
+});
+
 test('additional employment scanner fills the form without saving', function () {
     Storage::fake('local');
     config(['services.openrouter.api_key' => 'fake-test-key']);
