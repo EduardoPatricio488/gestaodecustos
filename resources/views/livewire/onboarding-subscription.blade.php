@@ -51,7 +51,17 @@
                             Renovação: {{ $subscription->renewal_date?->format('d/m/Y') ?? '—' }}
                         </p>
                     </div>
-                    <p class="shrink-0 text-base font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format((float) $subscription->amount, 2, ',', '.') }} €</p>
+                    <div class="flex shrink-0 flex-col items-end gap-3">
+                        <p class="text-base font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format((float) $subscription->amount, 2, ',', '.') }} €</p>
+                        <div class="flex items-center gap-2">
+                            <button type="button" wire:click="edit({{ $subscription->id }})" class="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-indigo-800 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-300">
+                                <flux:icon name="pencil-square" class="size-3.5" /> Editar
+                            </button>
+                            <button type="button" wire:click="delete({{ $subscription->id }})" wire:confirm="Tens a certeza de que pretendes eliminar esta assinatura?" class="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-rose-600 transition hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/30">
+                                <flux:icon name="trash" class="size-3.5" /> Eliminar
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </article>
         @empty
