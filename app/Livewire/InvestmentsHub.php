@@ -1271,7 +1271,7 @@ class InvestmentsHub extends Component
         if ($this->filterType !== 'Todos') {
             $query->where('type', $this->filterType);
         }
-        $myAssets = $query->latest()->get()->map(function ($asset) {
+        $individualAssets = $query->latest()->get()->map(function ($asset) {
             $cost = (float) $asset->quantity * (float) $asset->average_price + (float) ($asset->fees ?? 0);
             $currentValue = (float) $asset->quantity * ($asset->current_price ?: (float) $asset->average_price);
             $asset->cost = $cost;
@@ -1281,6 +1281,42 @@ class InvestmentsHub extends Component
 
             return $asset;
         });
+
+        // Agrupa posições do mesmo instrumento sem fundir nem apagar os registos originais.
+        $myAssets = $individualAssets
+            ->groupBy(function ($asset) {
+                $type = mb_strtolower(trim((string) $asset->type));
+                $name = mb_strtolower(trim((string) $asset->name));
+
+                if ($type === 'divida' && str_contains($name, 'certificados de aforro')) {
+                    return 'aforro|'.$name.'|'.mb_strtolower(trim((string) $asset->series)).'|'.mb_strtolower(trim((string) $asset->issuer));
+                }
+
+                $symbol = mb_strtoupper(trim((string) $asset->symbol));
+
+                return $symbol !== ''
+                    ? $type.'|'.$symbol
+                    : $type.'|asset|'.$asset->id;
+            })
+            ->map(function ($positions) {
+                $asset = clone $positions->first();
+                $quantity = (float) $positions->sum(fn ($position) => (float) $position->quantity);
+                $cost = (float) $positions->sum('cost');
+                $currentValue = (float) $positions->sum('current_value');
+                $purchaseValue = (float) $positions->sum(fn ($position) => (float) $position->quantity * (float) $position->average_price);
+
+                $asset->quantity = $quantity;
+                $asset->average_price = $quantity > 0 ? $purchaseValue / $quantity : 0;
+                $asset->fees = (float) $positions->sum(fn ($position) => (float) ($position->fees ?? 0));
+                $asset->cost = $cost;
+                $asset->current_value = $currentValue;
+                $asset->pnl = $currentValue - $cost;
+                $asset->pnl_percent = $cost > 0 ? ($asset->pnl / $cost) * 100 : 0;
+                $asset->position_count = $positions->count();
+                $asset->positions = $positions->values();
+
+                return $asset;
+            })->values();
         $totalInvested = $myAssets->sum('cost');
         $currentPortfolioValue = $myAssets->sum('current_value');
         $totalEstimatedTax = $myAssets->sum(fn ($asset) => ($asset->type !== 'Divida' && $asset->pnl > 0) ? $asset->pnl * 0.28 : 0);
