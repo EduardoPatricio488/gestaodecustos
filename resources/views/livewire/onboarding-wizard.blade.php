@@ -292,18 +292,24 @@
                 Fonte de Rendimento
             </label>
 
-            <select
-                wire:model.live="salarySource"
-                class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-emerald-500 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white outline-none transition-all appearance-none cursor-pointer"
-            >
-                <option value="emprego">💼 Emprego (Contrato de trabalho)</option>
-                <option value="freelance">💻 Trabalho Independente / Recibos Verdes</option>
-                <option value="investimento">📈 Rendimentos de Investimentos / Dividendos</option>
-                <option value="imobiliario">🏠 Rendas e Exploração Imobiliária</option>
-                <option value="reforma">👴 Reforma / Pensão de Velhice</option>
-                <option value="bolsa">🎓 Bolsa de Estudo / Apoio à Formação</option>
-                <option value="outro">✨ Outra Fonte</option>
-            </select>
+            @if($salarySource === 'emprego')
+                <div class="flex w-full items-center rounded-2xl border-2 border-zinc-200 bg-zinc-50 px-5 py-4 text-sm font-bold text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200" aria-readonly="true">
+                    💼 Emprego (Contrato de trabalho)
+                </div>
+            @else
+                <select
+                    wire:model.live="salarySource"
+                    class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-emerald-500 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white outline-none transition-all appearance-none cursor-pointer"
+                >
+                    <option value="emprego">💼 Emprego (Contrato de trabalho)</option>
+                    <option value="freelance">💻 Trabalho Independente / Recibos Verdes</option>
+                    <option value="investimento">📈 Rendimentos de Investimentos / Dividendos</option>
+                    <option value="imobiliario">🏠 Rendas e Exploração Imobiliária</option>
+                    <option value="reforma">👴 Reforma / Pensão de Velhice</option>
+                    <option value="bolsa">🎓 Bolsa de Estudo / Apoio à Formação</option>
+                    <option value="outro">✨ Outra Fonte</option>
+                </select>
+            @endif
         </div>
 
 
