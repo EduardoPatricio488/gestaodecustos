@@ -802,15 +802,24 @@ class Dashboard extends Component
                 $productType = mb_strtolower(trim((string) $investment->product_type));
                 $issuer = mb_strtolower(trim((string) $investment->issuer));
 
-                // Consolidar subscrições individuais do mesmo produto importadas do AforroNet.
-                if ($broker === 'aforronet' && $type === 'divida') {
-                    return 'aforronet|'.$productType.'|'.$series.'|'.$issuer.'|'.$name;
+                // Consolidar subscrições do mesmo produto, independentemente do
+                // identificador individual que venha no nome, símbolo ou registo.
+                if ($type === 'divida' && str_contains($name, 'certificados de aforro')) {
+                    $normalizedName = preg_replace('/\\s*[—–-]\\s*\\d+\\s*$/u', '', $name);
+                    $normalizedName = preg_replace('/\\s+/', ' ', trim((string) $normalizedName));
+                    $seriesKey = $series;
+
+                    if ($seriesKey === '' && preg_match('/série\\s*([a-z]+)/iu', $normalizedName, $matches)) {
+                        $seriesKey = mb_strtolower($matches[1]);
+                    }
+
+                    return 'aforro|'.$normalizedName.'|'.$seriesKey;
                 }
 
-                // Certificados da mesma série são o mesmo produto, mesmo que cada registo
-                // tenha um identificador individual diferente no campo symbol.
-                if ($type === 'divida' && str_contains($name, 'certificados de aforro')) {
-                    return 'aforro|'.$name.'|'.$series;
+                // Consolidar também outros produtos de dívida do AforroNet,
+                // mantendo separados produtos, séries e emitentes diferentes.
+                if ($broker === 'aforronet' && $type === 'divida') {
+                    return 'aforronet|'.$productType.'|'.$series.'|'.$issuer.'|'.$name;
                 }
 
                 return mb_strtolower(trim((string) ($investment->symbol ?: ($investment->name.'|'.$investment->type))));
