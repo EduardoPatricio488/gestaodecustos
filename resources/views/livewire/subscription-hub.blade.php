@@ -147,7 +147,7 @@
                                 <button type="button" wire:click="$set('transportPassMode', true)" class="h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all {{ $transportPassMode ? 'bg-brand-600 text-white shadow-lg' : 'text-zinc-500 hover:bg-white dark:text-zinc-400 dark:hover:bg-zinc-800' }}">Passe mensal</button>
                             </div>
                         @endif
-                        @if($transportPassMode && !$editingId)
+                        @if($transportPassMode)
                             <div class="space-y-5">
                                 <div class="rounded-2xl border border-sky-200 bg-sky-50 p-4 dark:border-sky-900 dark:bg-sky-950/30">
                                     <p class="text-xs font-black uppercase tracking-widest text-sky-700 dark:text-sky-300">Passe mensal de transporte</p>
