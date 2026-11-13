@@ -142,7 +142,14 @@ class SubscriptionHub extends Component
         $this->notes = $sub->notes;
         $this->notify_before_billing = (bool) $sub->notify_before_billing;
         $this->notify_days_before = $sub->notify_days_before;
-        $this->transportPassMode = false;
+        $this->transportPassMode = (bool) $sub->paid_by_company;
+        if ($this->transportPassMode) {
+            $this->transportPassName = $sub->name;
+            $this->transportPassAmount = $sub->amount;
+            $this->transportPassStartedAt = $sub->started_at?->format('Y-m-d') ?? now()->format('Y-m-d');
+            $this->transportPassPaymentMethod = $sub->payment_method ?: 'card';
+            $this->transportPassPaidByCompany = true;
+        }
         $this->showExtraModal = true;
     }
 
@@ -594,16 +601,12 @@ class SubscriptionHub extends Component
         }
 
         $startDate = Carbon::parse($this->transportPassStartedAt);
-        Subscription::create([
-            'user_id' => $user->id,
-            'workspace_id' => $workspaceId,
+        $subscriptionData = [
             'category_id' => $category->id,
             'name' => trim($this->transportPassName),
             'amount' => $this->transportPassAmount,
             'billing_day' => $startDate->day,
             'cycle' => 'monthly',
-            'status' => 'active',
-            'is_active' => true,
             'payment_method' => $this->transportPassPaymentMethod,
             'started_at' => $startDate->toDateString(),
             'renewal_date' => $startDate->copy()->addMonthNoOverflow()->toDateString(),
@@ -612,29 +615,39 @@ class SubscriptionHub extends Component
                 : 'Passe mensal de transporte.',
             'notify_before_billing' => false,
             'paid_by_company' => $paidByCompany,
-        ]);
+        ];
 
-        \Illuminate\Support\Facades\Cache::forget("dashboard:subscriptions-monthly:{$workspaceId}:{$user->id}");
-        $user->awardXp(20, 'passe mensal registado');
-        $this->reset(['transportPassAmount', 'transportPassPaidByCompany']);
+        if ($this->editingId) {
+            Subscription::query()
+                ->where('workspace_id', $workspaceId)
+                ->where('user_id', $user->id)
+                ->findOrFail($this->editingId)
+                ->update($subscriptionData);
+
+            $message = 'Passe mensal atualizado!';
+        } else {
+            Subscription::create(array_merge($subscriptionData, [
+                'user_id' => $user->id,
+                'workspace_id' => $workspaceId,
+                'status' => 'active',
+                'is_active' => true,
+            ]));
+
+            $user->awardXp(20, 'passe mensal registado');
+            $message = $paidByCompany
+                ? 'Passe registado. Como é pago pela empresa, não entra nas tuas contas.'
+                : 'Passe mensal adicionado às assinaturas.';
+        }
+
+        Illuminate\Support\Facades\Cache::forget("dashboard:subscriptions-monthly:{$workspaceId}:{$user->id}");
+        $this->reset(['transportPassName', 'transportPassAmount', 'transportPassStartedAt', 'transportPassPaymentMethod', 'transportPassPaidByCompany', 'editingId']);
         $this->transportPassMode = false;
-        $message = $paidByCompany
-            ? 'Passe registado. Como é pago pela empresa, não entra nas tuas contas.'
-            : 'Passe mensal adicionado às assinaturas.';
-
         $this->showExtraModal = false;
 
         if ($this->dashboardMode) {
             $this->dispatch('dashboard-record-created');
             $this->dispatch('dashboard-quick-create-saved');
-            $this->dispatch(
-                'toast',
-                variant: 'success',
-                text: $message.' Queres ir para a página deste registo?',
-                actionUrl: route('hub.subscriptions'),
-                actionLabel: 'Ver registo',
-            );
-
+            $this->dispatch('toast', variant: 'success', text: $message);
             return;
         }
 
