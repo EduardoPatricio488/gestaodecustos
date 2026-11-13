@@ -174,6 +174,21 @@ class OnboardingWizard extends Component
         $this->show = ! $user->onboarding_completed;
         $this->bankAccounts = [$this->newBankAccount()];
 
+        // Detetar um salário já guardado para apresentar o registo existente no passo.
+        $workspaceId = $user->current_workspace_id ?? $user->workspaces()->first()?->id;
+        if ($workspaceId) {
+            $this->savedSalaryId = RecurringIncome::query()
+                ->where('workspace_id', $workspaceId)
+                ->where('user_id', $user->id)
+                ->where('source', 'emprego')
+                ->where(function ($query) {
+                    $query->whereNull('metadata->income_type')
+                        ->orWhere('metadata->income_type', '!=', 'meal_card_allowance');
+                })
+                ->latest('id')
+                ->value('id');
+        }
+
         // Carregar o nome atual do workspace para o input
         if ($user->currentWorkspace) {
             $this->workspaceName = $user->currentWorkspace->name;
