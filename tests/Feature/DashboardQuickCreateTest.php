@@ -91,7 +91,7 @@ class DashboardQuickCreateTest extends TestCase
 
     public function test_subscription_renewal_date_is_calculated_from_start_date_and_billing_cycle(): void
     {
-        $this->travelTo(\\Carbon\\Carbon::parse('2026-11-13 12:00:00'));
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-13 12:00:00'));
         $this->signInWithWorkspace();
 
         $subscription = Livewire::test(SubscriptionHub::class)
