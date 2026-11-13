@@ -37,6 +37,34 @@ class OnboardingSalary extends IncomeHub
         }
     }
 
+    public function createNewContract(): void
+    {
+        $this->assertWorkspaceAccess();
+        $this->onboardingSalaryId = null;
+        $this->editingFixedId = null;
+        $this->newEmployment(false);
+        $this->resetValidation();
+    }
+
+    public function editExistingContract(int $salaryId): void
+    {
+        $this->assertWorkspaceAccess(false);
+        $salary = RecurringIncome::query()
+            ->where('workspace_id', $this->onboardingWorkspaceId)
+            ->where('user_id', auth()->id())
+            ->where('source', 'emprego')
+            ->where(function ($query): void {
+                $query->whereNull('metadata->income_type')
+                    ->orWhere('metadata->income_type', '!=', 'meal_card_allowance');
+            })
+            ->findOrFail($salaryId);
+
+        $this->onboardingSalaryId = $salary->id;
+        $this->editingFixedId = $salary->id;
+        $this->editFixed($salary->id, false);
+        $this->resetValidation();
+    }
+
     public function scanEmploymentContract(): void
     {
         $this->assertWorkspaceAccess();
@@ -120,6 +148,17 @@ class OnboardingSalary extends IncomeHub
 
     public function render()
     {
-        return view('livewire.onboarding-salary');
+        $savedEmploymentContracts = RecurringIncome::query()
+            ->where('workspace_id', $this->onboardingWorkspaceId)
+            ->where('user_id', auth()->id())
+            ->where('source', 'emprego')
+            ->where(function ($query): void {
+                $query->whereNull('metadata->income_type')
+                    ->orWhere('metadata->income_type', '!=', 'meal_card_allowance');
+            })
+            ->latest('id')
+            ->get();
+
+        return view('livewire.onboarding-salary', compact('savedEmploymentContracts'));
     }
 }
