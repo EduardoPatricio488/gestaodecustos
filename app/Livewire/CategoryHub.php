@@ -155,7 +155,8 @@ class CategoryHub extends Component
     #[Computed]
     public function bankAccounts()
     {
-        $query = BankAccount::where('workspace_id', auth()->user()->current_workspace_id);
+        $query = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+            ->whereNotIn('type', ['investimento', 'investimentos']);
         if (auth()->user()->currentWorkspace?->type === 'personal') {
             $query->where('user_id', auth()->id());
         }
