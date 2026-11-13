@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -1982,7 +1983,7 @@ class IncomeHub extends Component
         ]);
 
         if (filled($this->recBankAccountId) && ! $this->rentalBankAccounts->contains('id', (int) $this->recBankAccountId)) {
-            throw \\Illuminate\\Validation\\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'recBankAccountId' => 'Seleciona uma conta bancária válida. As contas de investimento não podem receber este rendimento.',
             ]);
         }
