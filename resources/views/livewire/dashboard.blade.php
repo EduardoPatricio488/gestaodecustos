@@ -358,13 +358,8 @@
         background-position: center;
         background-repeat: no-repeat;
         opacity: .30;
-        filter: url(#dashboardFlagWave);
-        will-change: filter;
     }
     .dark .dashboard-flag-wash { opacity: .22; }
-    @media (prefers-reduced-motion: reduce) {
-        .dashboard-flag-wash { filter: none; }
-    }
 </style>
 
 {{-- 3. HEADER PRINCIPAL COM CLIMA DINÂMICO E MODAL DETALHADO --}}
@@ -469,17 +464,6 @@
      }"
      x-init="init()"
 >
-    <svg aria-hidden="true" class="pointer-events-none absolute size-0 overflow-hidden" xmlns="http://www.w3.org/2000/svg">
-        <filter id="dashboardFlagWave" x="-8%" y="-8%" width="116%" height="116%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.055" numOctaves="2" seed="7" result="flagNoise">
-                <animate attributeName="baseFrequency"
-                         dur="5s"
-                         values="0.012 0.055;0.018 0.075;0.012 0.055"
-                         repeatCount="indefinite" />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="flagNoise" scale="9" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-    </svg>
     <span aria-hidden="true"
           class="pointer-events-none absolute inset-0 dashboard-flag-wash"
           style="background-image: linear-gradient(rgba(255,255,255,.76), rgba(255,255,255,.76)), url('https://flagcdn.com/w1280/{{ strtolower($birthCountryCode) }}.jpg');"></span>
