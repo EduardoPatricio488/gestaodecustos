@@ -744,7 +744,7 @@ class SubscriptionHub extends Component
             'averageMonthly' => $activeCount ? $totalMonthly / $activeCount : 0,
             'categories' => $subscriptionCategories,
             'bankAccounts' => $bankAccounts,
-            'platformPlan => $platformPlan,
+            'platformPlan' => $platformPlan,
             'platformPayments' => $platformPayments,
             'platformCashierSubscription' => $cashierSub,
         ]);
