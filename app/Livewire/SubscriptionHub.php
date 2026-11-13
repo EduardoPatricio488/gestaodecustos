@@ -523,13 +523,7 @@ class SubscriptionHub extends Component
             $this->showExtraModal = false;
             $this->dispatch('dashboard-record-created');
             $this->dispatch('dashboard-quick-create-saved');
-            $this->dispatch(
-                'toast',
-                variant: 'success',
-                text: $msg.' Queres ir para a página deste registo?',
-                actionUrl: route('hub.subscriptions'),
-                actionLabel: 'Ver registo',
-            );
+            $this->dispatch('toast', variant: 'success', text: $msg);
 
             return;
         }
