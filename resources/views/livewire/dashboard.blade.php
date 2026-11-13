@@ -738,11 +738,12 @@
             return [
                 'symbol' => $investment['symbol'] ?: 'Ativo',
                 'name' => $investment['name'] ?: $investment['symbol'],
+                'type' => $investment['type'] ?? '',
                 'profit' => $profit,
                 'profit_label' => ($profit >= 0 ? '+' : '').$currentWs->money($profit),
                 'percent_label' => ($invested > 0 && $profit >= 0 ? '+' : '').number_format($invested > 0 ? ($profit / $invested) * 100 : 0, 2, ',', ' ').'%',
             ];
-        })->values()->all();
+        })->sortBy(fn ($investment) => mb_strtolower(trim((string) ($investment['type'] ?? ''))) === 'etf' ? 0 : 1)->values()->all();
     @endphp
 
     <div class="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2.5">
