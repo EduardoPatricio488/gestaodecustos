@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\AuthorizesOnboardingWorkspace;
 use App\Models\BankAccount;
+use App\Models\RecurringIncome;
 
 class OnboardingIncome extends IncomeHub
 {
@@ -119,6 +120,42 @@ class OnboardingIncome extends IncomeHub
 
     public function render()
     {
-        return view('livewire.onboarding-income');
+        $sourceLabels = [
+            'emprego' => 'Contrato de trabalho',
+            'imobiliario' => 'Rendimento imobiliário',
+            'freelance' => 'Trabalho independente',
+            'investimento' => 'Rendimento de investimentos',
+            'reforma' => 'Reforma / pensão',
+            'bolsa' => 'Bolsa de estudo',
+            'outro' => 'Outros rendimentos',
+        ];
+
+        $savedIncomes = RecurringIncome::query()
+            ->with('bankAccount:id,name')
+            ->where('workspace_id', $this->onboardingWorkspaceId)
+            ->where('user_id', auth()->id())
+            ->whereIn('source', array_keys($sourceLabels))
+            ->where(function ($query): void {
+                // O subsídio de alimentação em cartão é um registo auxiliar do contrato,
+                // não uma fonte de rendimento independente.
+                $query->where('source', '!=', 'emprego')
+                    ->orWhereNull('metadata->income_type');
+            })
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+
+        $savedIncomeGroups = collect($sourceLabels)
+            ->map(function (string $label, string $source) use ($savedIncomes): array {
+                return [
+                    'source' => $source,
+                    'label' => $label,
+                    'records' => $savedIncomes->where('source', $source)->values(),
+                ];
+            })
+            ->filter(fn (array $group): bool => $group['records']->isNotEmpty())
+            ->values();
+
+        return view('livewire.onboarding-income', compact('savedIncomeGroups'));
     }
 }
