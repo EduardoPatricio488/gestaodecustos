@@ -80,11 +80,16 @@
                         <div class="relative">
                             <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-blue-600 z-10">Onde entra este valor?</label>
                             <select wire:model="recBankAccountId" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold dark:text-white outline-none focus:border-blue-500 transition-all">
-                                <option value="">💵 Dinheiro Físico</option>
-                                @foreach($this->bankAccounts as $acc)
-                                    <option value="{{ $acc->id }}">🏦 {{ $acc->name }}</option>
-                                @endforeach
+                                <option value="">💵 Dinheiro físico</option>
+                                @if($this->rentalBankAccounts->isNotEmpty())
+                                    <optgroup label="🏦 Conta do banco">
+                                        @foreach($this->rentalBankAccounts as $acc)
+                                            <option value="{{ $acc->id }}">{{ $acc->name }}</option>
+                                        @endforeach
+                                    </optgroup>
+                                @endif
                             </select>
+                            @error('recBankAccountId') <p class="mt-1 text-xs font-semibold text-rose-500">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>
