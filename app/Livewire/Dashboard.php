@@ -103,11 +103,12 @@ class Dashboard extends Component
                     return [
                         'symbol' => $investment->symbol ?: 'Ativo',
                         'name' => $investment->name ?: $investment->symbol,
+                        'type' => $investment->type,
                         'profit' => $profit,
                         'profit_label' => ($profit >= 0 ? '+' : '').$workspace->money($profit),
                         'percent_label' => ($invested > 0 && $profit >= 0 ? '+' : '').number_format($invested > 0 ? ($profit / $invested) * 100 : 0, 2, ',', ' ').'%',
                     ];
-                })->values()->all();
+                })->sortBy(fn (array $investment) => mb_strtolower(trim((string) ($investment['type'] ?? ''))) === 'etf' ? 0 : 1)->values()->all();
 
             $this->dispatch('dashboard-investments-updated', items: $updatedInvestments);
             if ($result === false) {
