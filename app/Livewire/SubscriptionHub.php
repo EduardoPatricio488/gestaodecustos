@@ -136,9 +136,10 @@ class SubscriptionHub extends Component
         $this->started_at = $sub->started_at?->format('Y-m-d');
         $this->syncRenewalDate();
         $this->notes = $sub->notes;
-        $this->notify_before_billing = $sub->notify_before_billing;
+        $this->notify_before_billing = (bool) $sub->notify_before_billing;
         $this->notify_days_before = $sub->notify_days_before;
-        $this->dispatch('modal-show-add-sub');
+        $this->transportPassMode = false;
+        $this->showExtraModal = true;
     }
 
     public function openPaymentHistory(int $id): void
