@@ -925,6 +925,18 @@ class OnboardingWizard extends Component
 
     public function render()
     {
-        return view('livewire.onboarding-wizard');
+        $user = auth()->user();
+        $workspaceId = $user?->current_workspace_id
+            ?? $user?->workspaces()->first()?->id;
+
+        $savedBankAccounts = $workspaceId
+            ? BankAccount::query()
+                ->where('workspace_id', $workspaceId)
+                ->where('user_id', $user->id)
+                ->orderBy('name')
+                ->get(['id', 'name', 'bank_name', 'type', 'balance', 'currency'])
+            : collect();
+
+        return view('livewire.onboarding-wizard', compact('savedBankAccounts'));
     }
 }
