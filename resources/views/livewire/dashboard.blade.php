@@ -349,6 +349,22 @@
 
 
 
+<style>
+    .dashboard-flag-wash {
+        background: linear-gradient(105deg, rgba(0, 104, 71, .10) 0%, rgba(0, 104, 71, .10) 39%, rgba(255, 255, 255, .18) 39%, rgba(255, 255, 255, .18) 61%, rgba(218, 41, 28, .10) 61%, rgba(218, 41, 28, .10) 100%);
+        background-size: 180% 100%;
+        animation: dashboard-flag-drift 18s ease-in-out infinite alternate;
+        opacity: .9;
+    }
+    @keyframes dashboard-flag-drift {
+        from { background-position: 0% 50%; }
+        to { background-position: 100% 50%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .dashboard-flag-wash { animation: none; }
+    }
+</style>
+
 {{-- 3. HEADER PRINCIPAL COM CLIMA DINÂMICO E MODAL DETALHADO --}}
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-4"
      x-data="{
@@ -485,18 +501,19 @@
 
                 {{-- WIDGET CLICÁVEL (TRIGGER) --}}
                 <flux:modal.trigger name="weather-details">
-                    <button type="button" class="group flex items-center gap-2 px-3 py-1 bg-white dark:bg-zinc-800/40 rounded-full border border-zinc-200 dark:border-white/5 hover:border-brand-500/50 hover:shadow-lg transition-all duration-300 cursor-pointer">
-                        <flux:icon name="map-pin" variant="micro" class="size-3 text-zinc-400 group-hover:text-brand-500" />
-                        <span class="text-[9px] font-black uppercase text-zinc-500 tracking-wider" x-text="data.city"></span>
-
-                        <div class="h-3 w-px bg-zinc-300 dark:bg-zinc-700 mx-0.5"></div>
-
-                        <div class="flex items-center gap-1.5">
-                            <template x-if="getWeatherIcon(data.code) === 'sun'"><flux:icon name="sun" variant="micro" class="size-3 text-amber-500 animate-spin-slow" /></template>
-                            <template x-if="getWeatherIcon(data.code) === 'cloud'"><flux:icon name="cloud" variant="micro" class="size-3 text-zinc-400" /></template>
-                            <template x-if="getWeatherIcon(data.code) === 'bolt'"><flux:icon name="bolt" variant="micro" class="size-3 text-blue-400" /></template>
-                            <span class="text-[10px] font-black text-zinc-700 dark:text-zinc-200 uppercase italic" x-text="data.temp + '°C'"></span>
-                        </div>
+                    <button type="button" class="group relative isolate flex items-center gap-2 overflow-hidden rounded-full border border-zinc-200/80 bg-white/90 px-3 py-1 shadow-sm transition-all duration-300 hover:border-brand-500/50 hover:shadow-lg dark:border-white/10 dark:bg-zinc-800/70 cursor-pointer">
+                        <span aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 rounded-full dashboard-flag-wash"></span>
+                        <span class="relative z-10 flex items-center gap-2">
+                            <flux:icon name="map-pin" variant="micro" class="size-3 text-zinc-500 group-hover:text-brand-500" />
+                            <span class="text-[9px] font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-200" x-text="data.city"></span>
+                            <span class="mx-0.5 h-3 w-px bg-zinc-300/80 dark:bg-zinc-600"></span>
+                            <span class="flex items-center gap-1.5">
+                                <template x-if="getWeatherIcon(data.code) === 'sun'"><flux:icon name="sun" variant="micro" class="size-3 text-amber-500 animate-spin-slow" /></template>
+                                <template x-if="getWeatherIcon(data.code) === 'cloud'"><flux:icon name="cloud" variant="micro" class="size-3 text-zinc-500 dark:text-zinc-300" /></template>
+                                <template x-if="getWeatherIcon(data.code) === 'bolt'"><flux:icon name="bolt" variant="micro" class="size-3 text-blue-500" /></template>
+                                <span class="text-[10px] font-black italic uppercase text-zinc-800 dark:text-white" x-text="data.temp + '°C'"></span>
+                            </span>
+                        </span>
                     </button>
                 </flux:modal.trigger>
             </div>
