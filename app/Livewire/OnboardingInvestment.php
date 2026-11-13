@@ -50,7 +50,7 @@ class OnboardingInvestment extends InvestmentsHub
         $this->onboardingSaved = true;
     }
 
-    public function toggleXtbInvestment(int $id): void
+    public function toggleInvestment(int $id): void
     {
         $this->authorizeOnboardingWrite();
         $this->resetValidation();
@@ -72,7 +72,7 @@ class OnboardingInvestment extends InvestmentsHub
         $this->onboardingSaved = false;
     }
 
-    public function saveXtbInvestment(): void
+    public function saveInvestment(): void
     {
         $this->authorizeOnboardingWrite();
         abort_unless($this->expandedInvestmentId, 404);
