@@ -24,12 +24,27 @@ class OnboardingSubscription extends SubscriptionHub
         parent::openExtraModal();
     }
 
+    public function edit($id): void
+    {
+        $this->authorizeOnboardingWrite();
+        $this->onboardingSaved = false;
+        $this->resetValidation();
+        parent::edit($id);
+        $this->showExtraModal = true;
+    }
+
     public function save()
     {
         $this->authorizeOnboardingWrite();
-        $this->editingId = null;
         parent::save();
         $this->onboardingSaved = true;
+    }
+
+    public function delete($id): void
+    {
+        $this->authorizeOnboardingWrite();
+        $this->onboardingSaved = false;
+        parent::delete($id);
     }
 
     public function render()
