@@ -201,13 +201,18 @@
             <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" wire:click="closePaymentHistory"></div>
             <section class="relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
                 <header class="flex items-center justify-between gap-4 border-b border-zinc-200 p-5 dark:border-zinc-800">
-                    <div><p class="text-[10px] font-black uppercase tracking-widest text-brand-600">Histórico de pagamentos</p><h3 class="mt-1 text-xl font-black text-zinc-900 dark:text-white">{{ $paymentHistoryTitle }}</h3><p class="mt-1 text-xs text-zinc-500">{{ count($paymentHistory) }} mensalidade(s) registada(s)</p></div>
+                    <div><p class="text-[10px] font-black uppercase tracking-widest text-brand-600">Histórico de pagamentos</p><h3 class="mt-1 text-xl font-black text-zinc-900 dark:text-white">{{ $paymentHistoryTitle }}</h3><p class="mt-1 text-xs text-zinc-500">{{ $paymentHistoryCount }} ciclo(s) desde o início até hoje</p></div>
                     <button type="button" wire:click="closePaymentHistory" class="rounded-xl p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"><flux:icon name="x-mark" class="size-5" /></button>
                 </header>
-                <div class="max-h-[65vh] overflow-y-auto p-5">
+                <div class="border-b border-zinc-100 bg-emerald-50/70 px-5 py-4 dark:border-zinc-800 dark:bg-emerald-500/5">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Total estimado gasto desde o início</p>
+                    <p class="mt-1 text-3xl font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format($paymentHistoryTotal, 2, ',', '.') }} €</p>
+                    <p class="mt-1 text-[10px] text-zinc-500">Calculado com base no valor e na periodicidade da assinatura, incluindo os ciclos até hoje.</p>
+                </div>
+                <div class="max-h-[55vh] overflow-y-auto p-5">
                     @forelse($paymentHistory as $payment)
                         <article class="flex flex-col gap-3 border-b border-zinc-100 py-4 first:pt-0 last:border-0 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
-                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Mensalidade de {{ $payment['billing_date'] }}</p><p class="mt-1 text-xs text-zinc-500">{{ $payment['source'] }} · Registada em {{ $payment['paid_at'] }}</p></div>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Mensalidade de {{ $payment['billing_date'] }}</p><p class="mt-1 text-xs text-zinc-500">{{ $payment['source'] }}</p></div>
                             <p class="text-base font-black tabular-nums text-blue-600">{{ number_format($payment['amount'], 2, ',', '.') }} €</p>
                         </article>
                     @empty
