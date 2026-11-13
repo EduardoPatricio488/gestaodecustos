@@ -79,7 +79,7 @@
                         </div>
                         <p class="text-xs text-zinc-500 dark:text-zinc-400">O valor atual é calculado a partir da quantidade e do preço atual. A origem e os identificadores de importação mantêm-se para evitar duplicados. Uma nova importação pode atualizar os dados novamente.</p>
                         <div class="flex flex-wrap justify-between gap-2">
-                            <button type="button" wire:click="deleteAsset({{ $investment->id }})" wire:confirm="Eliminar este investimento e os rendimentos associados? Uma nova importação do relatório pode voltar a criá-lo." class="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2 text-sm font-bold text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:hover:bg-rose-950/30">
+                            <button type="button" wire:click="deleteAsset({{ $investment->id }})" wire:confirm="Eliminar este investimento e os rendimentos associados?" class="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2 text-sm font-bold text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:hover:bg-rose-950/30">
                                 <flux:icon name="trash" class="size-4" /> Eliminar
                             </button>
                             <button type="submit" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700">Guardar alterações</button>
