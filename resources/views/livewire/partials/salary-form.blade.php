@@ -177,14 +177,15 @@
                         <div class="mt-4">
                             <label class="text-[9px] font-black text-zinc-400 uppercase block mb-1">Onde entra o subsídio de alimentação?</label>
                             <select wire:model.live="recMealDestination" class="w-full h-11 bg-white dark:bg-zinc-800 border border-amber-100 dark:border-amber-900/30 rounded-xl px-4 font-bold text-sm text-zinc-900 dark:text-white">
-                                <option value="same">Mesmo destino do salário</option>
                                 <option value="meal_card">Cartão de refeição separado</option>
+                                <optgroup label="Banco">
+                                    @foreach($this->bankAccounts->where('user_id', auth()->id()) as $acc)
+                                        <option value="bank:{{ $acc->id }}">{{ $acc->name }}</option>
+                                    @endforeach
+                                </optgroup>
                                 <option value="cash">Dinheiro físico</option>
-                                @foreach($this->bankAccounts->where('user_id', auth()->id()) as $acc)
-                                    <option value="bank:{{ $acc->id }}">🏦 Para a conta - {{ $acc->name }}</option>
-                                @endforeach
                             </select>
-                            <p class="text-[9px] text-zinc-500 mt-2">Escolhe a conta bancária ou indica se o subsídio é carregado num cartão à parte.</p>
+                            <p class="text-[9px] text-zinc-500 mt-2">Escolhe cartão de refeição separado, uma conta bancária ou dinheiro físico.</p>
                         </div>
                         <p class="text-[10px] font-bold text-amber-700 dark:text-amber-300 mt-3">
                             Estimativa anual ({{ number_format($recMealAllowance * $recWorkingDays, 2, ',', ' ') }} € × 11): {{ number_format($recMealAllowance * $recWorkingDays * 11, 2, ',', ' ') }} €
