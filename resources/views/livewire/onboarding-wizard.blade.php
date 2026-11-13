@@ -1130,49 +1130,166 @@
 
 
             {{-- ─────────────────────────────────── --}}
-            {{-- PASSO 6: CONCLUÍDO                  --}}
+            {{-- PASSO 10: CONCLUÍDO                  --}}
             {{-- ─────────────────────────────────── --}}
             @if($step === 10)
-            <div class="p-10 space-y-8 text-center">
-                <div class="space-y-4">
-                    <div class="size-24 bg-gradient-to-br from-emerald-400 to-indigo-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl shadow-indigo-500/30 animate-bounce">
+            <div class="p-6 sm:p-9 space-y-9">
+                {{-- CONCLUSÃO --}}
+                <div class="space-y-4 text-center">
+                    <div class="relative mx-auto flex size-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-emerald-400 via-teal-500 to-indigo-600 shadow-2xl shadow-emerald-500/20">
                         <flux:icon name="check-circle" class="size-12 text-white" />
+                        <span class="absolute -right-2 -top-2 flex size-9 items-center justify-center rounded-full border-4 border-white bg-amber-400 text-lg dark:border-zinc-950">✦</span>
                     </div>
                     <div>
-                        <h2 class="text-3xl font-black italic tracking-tighter dark:text-white">Tudo pronto! 🎉</h2>
-                        <p class="text-zinc-500 font-medium mt-2">O teu espaço financeiro está configurado. Agora é hora de explorar!</p>
+                        <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                            <flux:icon name="check-badge" class="size-4" /> Configuração concluída
+                        </span>
+                        <h2 class="mt-3 text-3xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-4xl">Está tudo pronto para começares! 🎉</h2>
+                        <p class="mx-auto mt-3 max-w-2xl text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                            O teu espaço financeiro está preparado. Agora podes acompanhar o teu dinheiro, perceber para onde vai e tomar decisões com mais confiança — tudo num só lugar.
+                        </p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-                    <a href="{{ route('dashboard') }}" wire:navigate
-                        class="p-5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl hover:border-indigo-400 transition-all group">
-                        <flux:icon name="squares-2x2" class="size-6 text-indigo-500 mb-2" />
-                        <p class="text-sm font-black dark:text-white group-hover:text-indigo-600 transition-colors">Dashboard</p>
-                        <p class="text-[10px] text-zinc-400 mt-0.5">Ver resumo financeiro</p>
-                    </a>
-                    <a href="{{ route('hub.incomes') }}" wire:navigate
-                        class="p-5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 rounded-2xl hover:border-emerald-400 transition-all group">
-                        <flux:icon name="arrow-trending-up" class="size-6 text-emerald-500 mb-2" />
-                        <p class="text-sm font-black dark:text-white group-hover:text-emerald-600 transition-colors">Receitas</p>
-                        <p class="text-[10px] text-zinc-400 mt-0.5">Gerir rendimentos</p>
-                    </a>
-                    <a href="{{ route('social.hub') }}" wire:navigate
-                        class="p-5 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30 rounded-2xl hover:border-purple-400 transition-all group">
-                        <flux:icon name="globe-alt" class="size-6 text-purple-500 mb-2" />
-                        <p class="text-sm font-black dark:text-white group-hover:text-purple-600 transition-colors">Finance Connect</p>
-                        <p class="text-[10px] text-zinc-400 mt-0.5">Rede social financeira</p>
-                    </a>
-                </div>
+                {{-- O QUE PODES FAZER --}}
+                <section class="space-y-4">
+                    <div class="text-left">
+                        <h3 class="text-lg font-black tracking-tight text-zinc-900 dark:text-white">O teu dinheiro. Todas as ferramentas.</h3>
+                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Descobre o que podes fazer no Finance Pro.</p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300"><flux:icon name="chart-pie" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Dashboard financeiro</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Consulta saldos, receitas, despesas, património e indicadores num resumo central.</p></div>
+                        </div>
+                        <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"><flux:icon name="arrow-left-right" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Receitas e despesas</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Organiza salários, outros rendimentos, despesas recorrentes e movimentos do dia a dia.</p></div>
+                        </div>
+                        <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300"><flux:icon name="building-library" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Contas e investimentos</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Centraliza contas bancárias, acompanha investimentos e consulta a evolução do teu património.</p></div>
+                        </div>
+                        <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300"><flux:icon name="file-up" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Importação inteligente</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Importa extratos e relatórios suportados para reduzir o trabalho de registo manual.</p></div>
+                        </div>
+                        <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300"><flux:icon name="sparkles" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Inteligência artificial</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Usa as ferramentas de IA disponíveis no teu plano para analisar informação e apoiar decisões.</p></div>
+                        </div>
+                        <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300"><flux:icon name="target" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Objetivos e controlo</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Define objetivos, acompanha hábitos financeiros e mantém as tuas subscrições sob controlo.</p></div>
+                        </div>
+                        <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900 sm:col-span-2">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-fuchsia-100 text-fuchsia-600 dark:bg-fuchsia-500/15 dark:text-fuchsia-300"><flux:icon name="users" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Finance Connect</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Explora a comunidade financeira, partilha conquistas e acompanha outros membros.</p></div>
+                        </div>
+                    </div>
+                </section>
+
+                {{-- PLANOS --}}
+                <section class="space-y-4">
+                    <div class="text-center">
+                        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">Escolhe como queres evoluir</span>
+                        <h3 class="mt-2 text-xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-2xl">Tira ainda mais partido do Finance Pro</h3>
+                        <p class="mx-auto mt-2 max-w-xl text-xs leading-5 text-zinc-500 dark:text-zinc-400">Começa gratuitamente e faz upgrade quando quiseres desbloquear mais ferramentas.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                        {{-- FREE --}}
+                        <div class="flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 text-left dark:border-zinc-800 dark:bg-zinc-900">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-sm font-black text-zinc-900 dark:text-white">Free</p>
+                                <span class="rounded-full bg-zinc-100 px-2.5 py-1 text-[9px] font-black uppercase text-zinc-500 dark:bg-zinc-800">Para começar</span>
+                            </div>
+                            <p class="mt-3 text-3xl font-black text-zinc-900 dark:text-white">0€<span class="text-xs font-semibold text-zinc-400"> / mês</span></p>
+                            <p class="mt-2 min-h-10 text-xs leading-5 text-zinc-500">O essencial para começares a organizar as tuas finanças pessoais.</p>
+                            <ul class="mt-4 flex-1 space-y-2.5 text-xs text-zinc-600 dark:text-zinc-300">
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-emerald-500" /> Gestão pessoal simples</li>
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-emerald-500" /> Controlo financeiro básico</li>
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-emerald-500" /> Sem mensalidade</li>
+                            </ul>
+                            <p class="mt-5 rounded-xl bg-zinc-100 px-3 py-2.5 text-center text-[10px] font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">Continua gratuitamente</p>
+                        </div>
+
+                        {{-- PRO --}}
+                        <div class="relative flex flex-col rounded-2xl border-2 border-emerald-500 bg-emerald-50/60 p-5 text-left shadow-lg shadow-emerald-500/10 dark:bg-emerald-500/5">
+                            <span class="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-emerald-600 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-white">Recomendado</span>
+                            <div class="mt-1 flex items-center justify-between gap-2">
+                                <p class="text-sm font-black text-zinc-900 dark:text-white">Pro</p>
+                                <flux:icon name="sparkles" class="size-5 text-emerald-600" />
+                            </div>
+                            <p class="mt-3 text-3xl font-black text-zinc-900 dark:text-white">5€<span class="text-xs font-semibold text-zinc-400"> / mês</span></p>
+                            <p class="mt-2 min-h-10 text-xs leading-5 text-zinc-600 dark:text-zinc-400">Para quem quer aprofundar a análise e automatizar a gestão pessoal.</p>
+                            <ul class="mt-4 flex-1 space-y-2.5 text-xs text-zinc-700 dark:text-zinc-200">
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-emerald-600" /> Tudo o que o Free oferece</li>
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-emerald-600" /> IA Pilot</li>
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-emerald-600" /> Relatórios avançados</li>
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-emerald-600" /> Inventário</li>
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-emerald-600" /> Experiência sem anúncios</li>
+                            </ul>
+                            <a href="{{ route('hub.pricing') }}" wire:navigate class="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700">
+                                Conhecer o plano Pro <flux:icon name="arrow-up-right" class="size-4" />
+                            </a>
+                        </div>
+
+                        {{-- BUSINESS --}}
+                        <div class="flex flex-col rounded-2xl border border-violet-300 bg-zinc-950 p-5 text-left shadow-lg shadow-violet-500/10 dark:border-violet-500/40">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-sm font-black text-white">Business</p>
+                                <span class="rounded-full bg-violet-500/15 px-2.5 py-1 text-[9px] font-black uppercase text-violet-300">Para empresas</span>
+                            </div>
+                            <p class="mt-3 text-3xl font-black text-white">10€<span class="text-xs font-semibold text-zinc-400"> / mês</span></p>
+                            <p class="mt-2 min-h-10 text-xs leading-5 text-zinc-400">Para gerir a atividade empresarial com ferramentas dedicadas.</p>
+                            <ul class="mt-4 flex-1 space-y-2.5 text-xs text-zinc-200">
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-violet-400" /> Funcionalidades do Pro</li>
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-violet-400" /> Área Empresa</li>
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-violet-400" /> Inventário e relatórios avançados</li>
+                                <li class="flex gap-2"><flux:icon name="check" class="size-4 shrink-0 text-violet-400" /> Suporte prioritário</li>
+                            </ul>
+                            <a href="{{ route('hub.pricing') }}" wire:navigate class="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-xs font-black text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-700">
+                                Conhecer o Business <flux:icon name="arrow-up-right" class="size-4" />
+                            </a>
+                        </div>
+                    </div>
+                    <p class="text-center text-[10px] leading-5 text-zinc-400">Preços mensais apresentados em euros. Podes consultar os detalhes e aderir a qualquer plano na página de Planos e Mensalidades.</p>
+                </section>
+
+                {{-- ATALHOS --}}
+                <section class="space-y-3">
+                    <div class="text-left">
+                        <h3 class="text-base font-black text-zinc-900 dark:text-white">Por onde queres começar?</h3>
+                        <p class="mt-1 text-xs text-zinc-500">Os teus principais espaços estão à distância de um clique.</p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <a href="{{ route('dashboard') }}" wire:navigate class="group rounded-2xl border border-indigo-100 bg-indigo-50 p-4 text-left transition hover:border-indigo-400 dark:border-indigo-900/40 dark:bg-indigo-500/10">
+                            <flux:icon name="squares-2x2" class="mb-2 size-6 text-indigo-500" />
+                            <p class="text-sm font-black text-zinc-900 transition group-hover:text-indigo-600 dark:text-white">Dashboard</p>
+                            <p class="mt-1 text-[10px] text-zinc-500">Ver o teu resumo financeiro</p>
+                        </a>
+                        <a href="{{ route('hub.incomes') }}" wire:navigate class="group rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-left transition hover:border-emerald-400 dark:border-emerald-900/40 dark:bg-emerald-500/10">
+                            <flux:icon name="arrow-trending-up" class="mb-2 size-6 text-emerald-500" />
+                            <p class="text-sm font-black text-zinc-900 transition group-hover:text-emerald-600 dark:text-white">Receitas</p>
+                            <p class="mt-1 text-[10px] text-zinc-500">Gerir salários e rendimentos</p>
+                        </a>
+                        <a href="{{ route('social.hub') }}" wire:navigate class="group rounded-2xl border border-fuchsia-100 bg-fuchsia-50 p-4 text-left transition hover:border-fuchsia-400 dark:border-fuchsia-900/40 dark:bg-fuchsia-500/10">
+                            <flux:icon name="users" class="mb-2 size-6 text-fuchsia-500" />
+                            <p class="text-sm font-black text-zinc-900 transition group-hover:text-fuchsia-600 dark:text-white">Finance Connect</p>
+                            <p class="mt-1 text-[10px] text-zinc-500">Explorar a comunidade</p>
+                        </a>
+                    </div>
+                </section>
 
                 @include('livewire.partials.onboarding-footer', [
                     'footerStep' => $step, 'footerTotal' => $totalSteps,
                     'footerPrevious' => 'previousStep', 'footerSkip' => null,
                     'footerNext' => 'completeOnboarding', 'footerSubmit' => false,
-                    'footerNextLabel' => 'Entrar na Plataforma', 'footerLoadingTarget' => 'completeOnboarding',
+                    'footerNextLabel' => 'Entrar no Finance Pro', 'footerLoadingTarget' => 'completeOnboarding',
                 ])
             </div>
-            @endif
+            @endif      @endif
 
         </div>
     </div>
