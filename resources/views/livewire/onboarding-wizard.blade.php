@@ -1163,7 +1163,7 @@
                             <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Dashboard financeiro</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Consulta saldos, receitas, despesas, património e indicadores num resumo central.</p></div>
                         </div>
                         <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900">
-                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"><flux:icon name="arrow-left-right" class="size-5" /></span>
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"><flux:icon name="arrows-right-left" class="size-5" /></span>
                             <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Receitas e despesas</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Organiza salários, outros rendimentos, despesas recorrentes e movimentos do dia a dia.</p></div>
                         </div>
                         <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900">
