@@ -52,11 +52,21 @@
                                         · {{ $income->bankAccount?->name ?? 'Dinheiro físico' }}
                                     </p>
                                 </div>
-                                <div class="flex shrink-0 items-center justify-between gap-4 sm:justify-end">
-                                    <span class="text-sm font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format((float) $income->amount, 2, ',', ' ') }} €</span>
-                                    <span class="text-[10px] font-bold uppercase {{ $income->is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400' }}">
-                                        {{ $income->is_active ? 'Ativo' : 'Inativo' }}
-                                    </span>
+                                <div class="flex shrink-0 flex-wrap items-center justify-between gap-3 sm:justify-end">
+                                    <div class="text-right">
+                                        <p class="text-sm font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format((float) $income->amount, 2, ',', ' ') }} €</p>
+                                        <span class="text-[10px] font-bold uppercase {{ $income->is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400' }}">
+                                            {{ $income->is_active ? 'Ativo' : 'Inativo' }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" wire:click="editSavedIncome({{ $income->id }})" class="rounded-lg border border-sky-200 px-3 py-2 text-[11px] font-bold text-sky-700 transition hover:bg-sky-50 dark:border-sky-900 dark:text-sky-300 dark:hover:bg-sky-950">
+                                            <flux:icon name="pencil" class="mr-1 inline size-3.5" /> Editar
+                                        </button>
+                                        <button type="button" wire:click="deleteSavedIncome({{ $income->id }})" wire:confirm="Tens a certeza de que pretendes eliminar este rendimento?" class="rounded-lg border border-red-200 px-3 py-2 text-[11px] font-bold text-red-600 transition hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950">
+                                            <flux:icon name="trash" class="mr-1 inline size-3.5" /> Eliminar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         @endforeach
