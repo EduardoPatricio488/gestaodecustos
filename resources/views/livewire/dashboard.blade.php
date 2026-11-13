@@ -354,16 +354,24 @@
 <style>
     .dashboard-flag-wash {
         background-color: rgba(161, 161, 170, .08);
-        background-size: 100% 100%;
-        background-position: center;
+        background-size: 150% auto;
+        background-position: 0% 50%;
         background-repeat: no-repeat;
         opacity: .30;
         filter: url(#dashboardFlagWave);
-        will-change: filter;
+        animation: dashboard-flag-drift 12s ease-in-out infinite alternate;
+        will-change: background-position, filter;
     }
     .dark .dashboard-flag-wash { opacity: .22; }
+    @keyframes dashboard-flag-drift {
+        from { background-position: 0% 50%; }
+        to { background-position: 100% 50%; }
+    }
     @media (prefers-reduced-motion: reduce) {
-        .dashboard-flag-wash { filter: none; }
+        .dashboard-flag-wash {
+            filter: none;
+            animation: none;
+        }
     }
 </style>
 
