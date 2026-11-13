@@ -128,10 +128,10 @@
             <div @click.stop x-show="open" x-transition:enter="transition duration-65 ease-[cubic-bezier(.18,.89,.32,1.28)] transform-gpu" x-transition:enter-start="opacity-0 scale-[0.997] translate-y-0.5" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="transition duration-50 ease-[cubic-bezier(.4,0,.2,1)] transform-gpu" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-[0.985] translate-y-1" class="relative w-full max-w-2xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
                 <form wire:submit.prevent="save" class="flex max-h-[86vh] flex-col">
                     <div class="flex shrink-0 items-center gap-4 border-b border-zinc-100 p-6 pb-4 dark:border-zinc-800">
-                        <div class="rounded-2xl bg-brand-600 p-3 text-white shadow"><flux:icon name="credit-card" class="size-5" /></div>
+                        <div class="rounded-2xl bg-brand-600 p-3 text-white shadow"><flux:icon name="{{ $transportPassMode ? 'train-front' : 'credit-card' }}" class="size-5" /></div>
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-xl font-black uppercase italic tracking-tight text-zinc-900 dark:text-white">{{ $editingId ? 'Editar Assinatura' : 'Nova Assinatura' }}</h2>
-                            <p class="mt-1.5 text-[10px] font-black uppercase italic tracking-widest text-zinc-400">Configuração completa de custo recorrente</p>
+                            <h2 class="text-xl font-black uppercase italic tracking-tight text-zinc-900 dark:text-white">{{ $transportPassMode ? ($editingId ? 'Editar Passe Mensal' : 'Novo Passe Mensal') : ($editingId ? 'Editar Assinatura' : 'Nova Assinatura') }}</h2>
+                            <p class="mt-1.5 text-[10px] font-black uppercase italic tracking-widest text-zinc-400">{{ $transportPassMode ? 'Configuração do passe mensal de transporte' : 'Configuração completa de custo recorrente' }}</p>
                         </div>
                         <button type="button" @click="close()" aria-label="Fechar janela" class="rounded-full p-2 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-white"><flux:icon name="x-mark" class="size-5" /></button>
                     </div>
@@ -189,7 +189,7 @@
                         </div>
                         @endif
                     </div>
-                    <div class="flex shrink-0 flex-col gap-3 border-t border-zinc-100 bg-white p-6 pt-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row"><button type="button" @click="close()" class="h-14 w-full rounded-2xl text-xs font-bold uppercase tracking-widest text-zinc-500 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button><button type="submit" wire:loading.attr="disabled" wire:target="save" class="h-14 w-full rounded-2xl bg-brand-600 text-white font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 transition-all hover:bg-brand-500 disabled:opacity-60"><span wire:loading.remove wire:target="save">{{ $editingId ? 'Atualizar Assinatura' : ($transportPassMode ? 'Criar Passe Mensal' : 'Guardar Assinatura') }}</span><span wire:loading wire:target="save">A guardar...</span></button></div>
+                    <div class="flex shrink-0 flex-col gap-3 border-t border-zinc-100 bg-white p-6 pt-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row"><button type="button" @click="close()" class="h-14 w-full rounded-2xl text-xs font-bold uppercase tracking-widest text-zinc-500 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button><button type="submit" wire:loading.attr="disabled" wire:target="save" class="h-14 w-full rounded-2xl bg-brand-600 text-white font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 transition-all hover:bg-brand-500 disabled:opacity-60"><span wire:loading.remove wire:target="save">{{ $editingId ? ($transportPassMode ? 'Atualizar Passe Mensal' : 'Atualizar Assinatura') : ($transportPassMode ? 'Criar Passe Mensal' : 'Guardar Assinatura') }}</span><span wire:loading wire:target="save">A guardar...</span></button></div>
                 </form>
             </div>
         </div>
