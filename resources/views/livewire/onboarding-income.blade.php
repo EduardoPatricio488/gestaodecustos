@@ -2,7 +2,7 @@
     <p class="text-sm font-bold text-zinc-800 dark:text-zinc-200">Para que fonte de rendimento é este registo?</p>
     <div class="grid gap-2 sm:grid-cols-2">
         @foreach([
-            ['emprego', 'briefcase', 'Salário / Contrato de Trabalho'],
+            ['emprego', 'briefcase', 'Estágio / Contrato de Trabalho'],
             ['renda', 'home', 'Renda Imobiliária'],
             ['freelance', 'computer-desktop', 'Freelance / Trabalho Independente'],
             ['investimento', 'chart-bar-square', 'Rendimento de Investimento'],
