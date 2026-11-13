@@ -656,6 +656,42 @@ class OnboardingWizard extends Component
 
     private function saveBankAccounts(): void
     {
+        $user = auth()->user();
+        $workspace = $user->current_workspace_id
+            ? $user->workspaces()->whereKey($user->current_workspace_id)->first()
+            : $user->workspaces()->first();
+
+        if (! $workspace) {
+            $this->addError('bankAccounts', 'Não existe um espaço financeiro acessível para guardar as contas.');
+
+            return;
+        }
+
+        // Se já existem contas guardadas e o utilizador não preencheu nem está a editar
+        // nenhuma conta neste passo, permite avançar sem validar o formulário vazio.
+        $hasSavedAccount = BankAccount::query()
+            ->where('workspace_id', $workspace->id)
+            ->where('user_id', $user->id)
+            ->whereNotIn('type', ['investimento', 'investimentos'])
+            ->exists();
+
+        $hasFormData = collect($this->bankAccounts)->contains(function ($account, $index) {
+            if (! empty($this->savedAccountIds[$index])) {
+                return true;
+            }
+
+            return collect($account)
+                ->except(['entry_mode', 'proof_message', 'color', 'currency', 'type', 'icon', 'is_business', 'include_in_total'])
+                ->contains(fn ($value) => $value !== null && $value !== '');
+        });
+
+        if ($hasSavedAccount && ! $hasFormData) {
+            $this->step++;
+            $this->prepareSalaryWorkspace();
+
+            return;
+        }
+
         $validated = $this->validate([
             'bankAccounts' => 'required|array|min:1',
             'bankAccounts.*.name' => 'required|string|max:100',
