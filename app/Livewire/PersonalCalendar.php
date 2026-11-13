@@ -16,6 +16,8 @@ use App\Models\Reminder;
 use App\Models\SalaryPayment;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
+use App\Services\BusinessAccessService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -653,6 +655,10 @@ class PersonalCalendar extends Component
 
     private function calendarEventIndicator(array $event): array
     {
+        if (($event['subtype'] ?? null) === 'meal_allowance') {
+            return ['calendar_icon' => 'cake', 'calendar_icon_label' => 'Subsídio de alimentação'];
+        }
+
         if (($event['subtype'] ?? null) === 'payday') {
             return ['calendar_icon' => 'calendar-days', 'calendar_icon_label' => 'Dia de pagamento'];
         }
@@ -789,7 +795,7 @@ class PersonalCalendar extends Component
         return $date;
     }
 
-    private function mealAllowanceScheduleDates(RecurringIncome $income, Carbon $monthStart, array $excludedDateKeys = [], bool $hideTodayBeforeCutoff = true): \Illuminate\Support\Collection
+    private function mealAllowanceScheduleDates(RecurringIncome $income, Carbon $monthStart, array $excludedDateKeys = []): \Illuminate\Support\Collection
     {
         $metadata = $income->metadata ?? [];
         $monthStart = $monthStart->copy()->startOfMonth();
@@ -802,8 +808,6 @@ class PersonalCalendar extends Component
             : $monthEnd->copy();
         $rangeStart = $contractStart->greaterThan($monthStart) ? $contractStart : $monthStart;
         $rangeEnd = $contractEnd->lessThan($monthEnd) ? $contractEnd : $monthEnd;
-        $today = now()->toDateString();
-        $allowToday = now()->format('H:i:s') >= '18:00:00';
 
         if ($rangeEnd->lessThan($rangeStart)) {
             return collect();
@@ -824,7 +828,7 @@ class PersonalCalendar extends Component
             }
 
             $scheduledWorkingDays++;
-            if (isset($excludedDateKeys[$dateKey]) || ($hideTodayBeforeCutoff && $dateKey === $today && ! $allowToday)) {
+            if (isset($excludedDateKeys[$dateKey])) {
                 continue;
             }
 
@@ -848,7 +852,6 @@ class PersonalCalendar extends Component
                 $income,
                 $monthStart ?? Carbon::create($this->year, $this->month, 1),
                 [],
-                false,
             )->count());
         }
 
@@ -924,6 +927,41 @@ class PersonalCalendar extends Component
         $this->year = $today->year;
     }
 
+    public function exportPdf()
+    {
+        $this->validate([
+            'year' => 'required|integer|between:1,9999',
+            'month' => 'required|integer|between:1,12',
+        ]);
+
+        $user = auth()->user();
+        $workspace = $user->workspaces()->whereKey($user->current_workspace_id)->first();
+        abort_unless($workspace, 403);
+        if (in_array($workspace->type, ['business', 'company'], true)) {
+            app(BusinessAccessService::class)->assert('export_reports', $user, $workspace);
+        }
+
+        $month = Carbon::create($this->year, $this->month, 1)->startOfMonth();
+
+        $pdf = Pdf::loadView('pdf.personal-calendar', [
+            'month' => $month,
+            'events' => $this->dayEvents,
+            'workspace' => $workspace,
+            'generatedAt' => now(),
+        ])
+            ->setPaper('a4')
+            ->setOptions(['isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans'])
+            ->output();
+
+        return response()->streamDownload(
+            static function () use ($pdf): void {
+                echo $pdf;
+            },
+            'Calendario_'.$month->format('Y-m').'.pdf',
+            ['Content-Type' => 'application/pdf'],
+        );
+    }
+
     public function openUpcomingPayment(string $dateKey): void
     {
         $date = Carbon::createFromFormat('!Y-m-d', $dateKey);
@@ -960,7 +998,7 @@ class PersonalCalendar extends Component
         return $this->eventsForMonth(Carbon::create($this->year, $this->month, 1));
     }
 
-    private function eventsForMonth(Carbon $month, bool $includeTodayMealAllowance = false): Collection
+    private function eventsForMonth(Carbon $month): Collection
     {
         $workspaceId = auth()->user()->current_workspace_id;
         $start = $month->copy()->startOfMonth();
@@ -1146,8 +1184,8 @@ class PersonalCalendar extends Component
                 ->whereBetween('allowance_date', [$start->toDateString(), $end->toDateString()])
                 ->get()
                 ->keyBy(fn (DailyMealAllowance $record) => $record->recurring_income_id.':'.$record->allowance_date->format('Y-m-d'));
-        $dailyMealAllowanceEvents = $mealAllowanceContracts->flatMap(function (RecurringIncome $income) use ($start, $dailyAllowanceRecords, $vacationDateKeys, $includeTodayMealAllowance) {
-            $scheduledDates = $this->mealAllowanceScheduleDates($income, $start, $vacationDateKeys, ! $includeTodayMealAllowance);
+        $dailyMealAllowanceEvents = $mealAllowanceContracts->flatMap(function (RecurringIncome $income) use ($start, $dailyAllowanceRecords, $vacationDateKeys) {
+            $scheduledDates = $this->mealAllowanceScheduleDates($income, $start, $vacationDateKeys);
             $expectedAmount = $this->mealAllowanceDailyAmount($income, $start);
 
             if ($expectedAmount <= 0) {
@@ -1479,7 +1517,7 @@ class PersonalCalendar extends Component
             ->whereBetween('spent_at', [$previousMonth->copy()->startOfMonth(), $previousMonth->copy()->endOfMonth()])
             ->get(['amount', 'amount_converted'])
             ->sum(fn (Expense $expense): float => (float) ($expense->amount_converted ?? $expense->amount));
-        $current = $this->monthlyFinanceInsights['spent'];
+        $current = $this->dayEvents->flatten(1)->where('type', 'expense')->sum('amount');
 
         return [
             'previous' => round($previous, 2),
@@ -1547,9 +1585,7 @@ class PersonalCalendar extends Component
     public function paymentSummary(): array
     {
         $month = Carbon::create($this->year, $this->month, 1);
-        $events = $month->isSameMonth(now()) && now()->format('H:i:s') < '18:00:00'
-            ? $this->eventsForMonth($month, true)->flatten(1)
-            : $this->dayEvents->flatten(1);
+        $events = $this->dayEvents->flatten(1);
         $today = now()->toDateString();
         $paidSalary = SalaryPayment::with('recurringIncome')
             ->where('workspace_id', auth()->user()->current_workspace_id)
@@ -1608,7 +1644,7 @@ class PersonalCalendar extends Component
     }
 
     #[Computed]
-    public function cashProjection(): array
+    public function currentAccountBalance(): array
     {
         $user = auth()->user();
         $workspaceId = $user->current_workspace_id;
@@ -1616,32 +1652,54 @@ class PersonalCalendar extends Component
             ->when($user->currentWorkspace?->type === 'personal', fn ($query) => $query->where('user_id', $user->id))
             ->where('include_in_total', true)
             ->get(['id', 'balance', 'currency']);
-        $targetMonth = Carbon::create($this->year, $this->month, 1)->startOfMonth();
-        $today = Carbon::parse(now()->toDateString())->startOfDay();
         if ($accounts->isEmpty()) {
-            return ['available' => false, 'reason' => 'no_accounts', 'risk_days' => collect(), 'final_balance' => null];
-        }
-        if ($targetMonth->copy()->endOfMonth()->lessThan($today)) {
-            return ['available' => false, 'reason' => 'past', 'risk_days' => collect(), 'final_balance' => null];
+            return ['available' => false, 'reason' => 'no_accounts', 'balance' => null, 'projection_balance' => null, 'account_ids' => []];
         }
         $workspaceCurrency = strtoupper((string) ($user->currentWorkspace?->currency ?: 'EUR'));
         if ($accounts->contains(fn (BankAccount $account): bool => strtoupper((string) $account->currency) !== $workspaceCurrency)) {
-            return ['available' => false, 'reason' => 'currency', 'risk_days' => collect(), 'final_balance' => null];
+            return ['available' => false, 'reason' => 'currency', 'balance' => null, 'projection_balance' => null, 'account_ids' => []];
         }
 
         $accountIds = $accounts->modelKeys();
         $balance = (float) $accounts->sum('balance');
+        $projectionBalance = $balance;
         foreach ([
-            [Income::class, 1],
-            [Expense::class, -1],
-        ] as [$model, $sign]) {
-            $balance += $sign * (float) $model::where('workspace_id', $workspaceId)
+            [Income::class, 'received_at', 1],
+            [Expense::class, 'spent_at', -1],
+        ] as [$model, $dateColumn, $sign]) {
+            $records = $model::where('workspace_id', $workspaceId)
                 ->when($user->currentWorkspace?->type === 'personal', fn ($query) => $query->where('user_id', $user->id))
                 ->whereIn('bank_account_id', $accountIds)
-                ->get(['amount', 'amount_converted'])
-                ->sum(fn ($record): float => (float) ($record->amount_converted ?? $record->amount));
+                ->get(['amount', 'amount_converted', $dateColumn]);
+            $recordAmount = fn ($record): float => (float) ($record->amount_converted ?? $record->amount);
+            $balance += $sign * (float) $records
+                ->filter(fn ($record): bool => $record->{$dateColumn}->toDateString() <= now()->toDateString())
+                ->sum($recordAmount);
+            $projectionBalance += $sign * (float) $records->sum($recordAmount);
         }
 
+        return ['available' => true, 'reason' => null, 'balance' => $balance, 'projection_balance' => $projectionBalance, 'account_ids' => $accountIds];
+    }
+
+    #[Computed]
+    public function cashProjection(): array
+    {
+        $currentBalance = $this->currentAccountBalance;
+        if ($currentBalance['reason'] === 'no_accounts') {
+            return ['available' => false, 'reason' => $currentBalance['reason'], 'risk_days' => collect(), 'final_balance' => null];
+        }
+
+        $targetMonth = Carbon::create($this->year, $this->month, 1)->startOfMonth();
+        $today = Carbon::parse(now()->toDateString())->startOfDay();
+        if ($targetMonth->copy()->endOfMonth()->lessThan($today)) {
+            return ['available' => false, 'reason' => 'past', 'risk_days' => collect(), 'final_balance' => null];
+        }
+        if (! $currentBalance['available']) {
+            return ['available' => false, 'reason' => $currentBalance['reason'], 'risk_days' => collect(), 'final_balance' => null];
+        }
+
+        $accountIds = $currentBalance['account_ids'];
+        $balance = $currentBalance['projection_balance'];
         $riskDays = collect();
         for ($month = $today->copy()->startOfMonth(); $month->lessThanOrEqualTo($targetMonth); $month->addMonthNoOverflow()) {
             $eventsByDate = $month->isSameMonth($targetMonth) ? $this->dayEvents : $this->eventsForMonth($month);
@@ -1686,27 +1744,27 @@ class PersonalCalendar extends Component
     #[Computed]
     public function monthSummary(): array
     {
-        $events = $this->dayEvents->flatten(1);
+        $now = now();
+        $today = $now->toDateString();
+        $includeTodayIncome = $now->format('H:i:s') >= '18:00:00';
+        $events = $this->dayEvents->flatten(1)
+            ->filter(fn (array $event): bool => $event['date'] <= $today);
 
-        $income = (float) $events
+        $income = round((float) $events
             ->whereIn('type', ['income', 'salary'])
-            ->sum(fn ($event) => (float) ($event['amount'] ?? 0));
+            ->filter(fn (array $event): bool => $event['date'] < $today || $includeTodayIncome)
+            ->sum(fn ($event) => (float) ($event['amount'] ?? 0)), 2);
 
-        $outflow = (float) $events
+        $outflow = round((float) $events
             ->whereIn('type', ['expense', 'subscription', 'debt'])
-            ->sum(fn ($event) => (float) ($event['amount'] ?? 0));
-
-        $fixedOutflow = (float) $events
-            ->whereIn('type', ['subscription', 'debt'])
-            ->sum(fn ($event) => (float) ($event['amount'] ?? 0));
+            ->sum(fn ($event) => (float) ($event['amount'] ?? 0)), 2);
 
         return [
             'income' => $income,
             'outflow' => $outflow,
-            'fixed_outflow' => $fixedOutflow,
-            'projected_balance' => $this->cashProjection['final_balance'],
-            'risk_available' => $this->cashProjection['available'],
-            'risk_days' => $this->cashRiskDays->count(),
+            'net_total' => round($income - $outflow, 2),
+            'current_balance' => $this->currentAccountBalance['balance'],
+            'risk_available' => $this->currentAccountBalance['available'],
         ];
     }
 
@@ -1714,23 +1772,12 @@ class PersonalCalendar extends Component
     public function monthlyFinanceInsights(): array
     {
         $events = $this->dayEvents->flatten(1);
-        $today = now()->toDateString();
         $paidSalaryEvents = $events
-            ->where('subtype', 'salary_payment')
-            ->filter(fn (array $event): bool => ($event['salary_payment_paid_at'] ?? '') <= $today);
-        $receivedEvents = $events->reject(fn (array $event): bool => ($event['subtype'] ?? null) === 'salary_payment')
-            ->filter(function (array $event) use ($today): bool {
-            if ($event['type'] === 'income') {
-                return $event['date'] <= $today;
-            }
-
-            if (($event['subtype'] ?? null) === 'salary_projection') {
-                return $event['date'] <= $today;
-            }
-
-            return ($event['subtype'] ?? null) === 'meal_allowance'
-                && $event['date'] <= $today;
-        });
+            ->where('subtype', 'salary_payment');
+        $incomeEvents = $events->filter(fn (array $event): bool =>
+            $event['type'] === 'income'
+                || in_array($event['subtype'] ?? null, ['salary_projection', 'meal_allowance', 'recurring_income'], true)
+                || ($event['type'] === 'debt' && ($event['debt_direction'] ?? null) === 'owed'));
         $paidSalaryTotal = $paidSalaryEvents
             ->groupBy('salary_payment_id')
             ->sum(function ($paymentEvents): float {
@@ -1741,18 +1788,23 @@ class PersonalCalendar extends Component
 
                 return (float) ($firstEvent['salary_payment_total'] ?? $paymentEvents->sum('amount')) + $overrideDelta;
             });
-        $expenses = $events->where('type', 'expense');
+        $outflows = $events->filter(fn (array $event): bool =>
+            $event['type'] === 'expense'
+                || ($event['type'] === 'subscription' && ($event['schedule_known'] ?? true))
+                || ($event['type'] === 'debt' && ($event['debt_direction'] ?? null) === 'owe'));
         $received = round(
-            (float) $receivedEvents->sum(fn (array $event): float => (float) ($event['amount'] ?? 0)) + $paidSalaryTotal,
+            (float) $incomeEvents->sum(fn (array $event): float => (float) ($event['amount'] ?? 0)) + $paidSalaryTotal,
             2,
         );
-        $spent = round((float) $expenses->sum(fn (array $event): float => (float) ($event['amount'] ?? 0)), 2);
-        $largestExpense = $expenses->sortByDesc('amount')->first();
+        $spent = round((float) $outflows->sum(fn (array $event): float => (float) ($event['amount'] ?? 0)), 2);
+        $largestExpense = $outflows->sortByDesc('amount')->first();
 
         return [
             'received' => $received,
             'spent' => $spent,
             'balance' => round($received - $spent, 2),
+            'has_unknown_subscriptions' => $events->contains(fn (array $event): bool =>
+                $event['type'] === 'subscription' && ! ($event['schedule_known'] ?? true)),
             'largest_expense' => $largestExpense ? [
                 'label' => $largestExpense['label'],
                 'amount' => (float) $largestExpense['amount'],

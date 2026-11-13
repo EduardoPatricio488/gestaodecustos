@@ -35,96 +35,105 @@
     }"
 >
     {{-- ── 1. HEADER & CONTROLO DE NAVEGAÇÃO ── --}}
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div class="flex items-center gap-6">
-            <div class="relative group">
-                <div class="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full group-hover:bg-indigo-500/40 transition-all duration-700"></div>
-                <div class="relative p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl shadow-indigo-500/10">
-                    <flux:icon name="calendar-days" class="w-10 h-10 text-indigo-600" />
-                </div>
+    <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="flex min-w-0 basis-full items-center gap-4 xl:min-w-[220px] xl:flex-1 xl:basis-0">
+            <div class="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-indigo-600 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <flux:icon name="calendar-days" class="size-7" />
             </div>
 
-            <div>
-                <div class="flex items-center gap-2">
-                    <label for="calendar-search" class="sr-only">Pesquisar registos no mês</label>
-                    <input id="calendar-search" type="search" wire:model.live.debounce.300ms="search" placeholder="Pesquisar registos neste mês" class="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-800 shadow-sm focus:border-indigo-400 focus:ring-indigo-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white">
-                    @if($search !== '')
-                        <button type="button" wire:click="$set('search', '')" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">Limpar</button>
-                    @endif
-                </div>
-                @if(trim($search) !== '')
-                    <p aria-live="polite" class="mt-1 text-[10px] font-semibold text-zinc-500">{{ $this->visibleDayEvents->flatten(1)->count() }} registo(s) encontrado(s) neste mês. Os indicadores financeiros não são filtrados.</p>
-                @endif
-            </div>
-
-            <div>
-                <h1 class="text-3xl sm:text-2xl sm:text-3xl md:text-4xl font-black dark:text-white uppercase tracking-tighter italic leading-none">
+            <div class="min-w-0">
+                <h1 class="text-2xl font-black uppercase italic leading-none tracking-tighter sm:text-3xl dark:text-white">
                     Terminal <span class="text-zinc-400 dark:text-zinc-600">Cronológico</span>
                 </h1>
-                <p class="text-sm text-zinc-500 font-medium italic mt-2">Sincronização global de fluxos financeiros e atividades</p>
+                <p class="mt-1 text-xs font-medium text-zinc-500 sm:text-sm">Sincronização global de fluxos financeiros e atividades</p>
             </div>
         </div>
 
-        {{-- Controlos de Meses + Botão Filtro --}}
-        <div class="flex flex-wrap items-center gap-3">
-            <div class="flex items-center bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                <button wire:click="prevMonth" class="p-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl text-zinc-400 hover:text-indigo-600 transition-all">
-                    <flux:icon name="chevron-left" class="size-4" />
-                </button>
-                <div class="px-6 text-center min-w-[150px]">
-                    <span class="text-sm font-black uppercase tracking-tight dark:text-white">{{ $currentMonthName }} {{ $year }}</span>
-                </div>
-                <button wire:click="nextMonth" class="p-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl text-zinc-400 hover:text-indigo-600 transition-all">
-                    <flux:icon name="chevron-right" class="size-4" />
-                </button>
-            </div>
-
-            <button type="button" wire:click="goToToday" class="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-wider text-indigo-600 shadow-sm transition hover:bg-indigo-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-indigo-400 dark:hover:bg-zinc-800">
-                Hoje
-            </button>
-
-            {{-- Botão Filtros --}}
-            <button @click="filterOpen = !filterOpen" :class="filterOpen ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-zinc-900 text-zinc-500'" class="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:scale-105">
+        <div class="ml-auto flex max-w-full flex-wrap items-start justify-end gap-3">
+            <button type="button" aria-label="Filtros" :aria-expanded="filterOpen.toString()" @click="filterOpen = !filterOpen" :class="filterOpen ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-zinc-900 text-zinc-500'" class="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all hover:scale-105">
                 <flux:icon name="adjustments-horizontal" class="size-5" />
             </button>
+
+            <div class="flex max-w-full flex-wrap items-center justify-end gap-2">
+                <div class="flex h-11 items-center rounded-2xl border border-zinc-200 bg-white p-1 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                    <button type="button" aria-label="Mês anterior" wire:click="prevMonth" class="rounded-xl p-1.5 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-indigo-600 sm:p-2 dark:hover:bg-zinc-800">
+                        <flux:icon name="chevron-left" class="size-4" />
+                    </button>
+                    <div class="min-w-[75px] px-1 text-center sm:min-w-[125px] sm:px-3">
+                        <span class="text-[10px] font-black uppercase tracking-tight sm:text-xs dark:text-white">{{ $currentMonthName }} {{ $year }}</span>
+                    </div>
+                    <button type="button" aria-label="Mês seguinte" wire:click="nextMonth" class="rounded-xl p-1.5 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-indigo-600 sm:p-2 dark:hover:bg-zinc-800">
+                        <flux:icon name="chevron-right" class="size-4" />
+                    </button>
+                </div>
+
+                <button type="button" wire:click="goToToday" class="h-11 rounded-2xl border border-zinc-200 bg-white px-4 text-xs font-black uppercase tracking-wider text-indigo-600 shadow-sm transition hover:bg-indigo-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-indigo-400 dark:hover:bg-zinc-800">
+                    Mês atual
+                </button>
+            </div>
+            <div class="flex w-full flex-wrap justify-end gap-2">
+                <button type="button" wire:click="exportPdf" wire:loading.attr="disabled" wire:target="exportPdf" title="Exporta todos os registos do mês, mesmo com filtros ativos" class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 text-xs font-black uppercase tracking-wider text-zinc-600 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800">
+                    <flux:icon name="arrow-down-tray" class="size-4" />
+                    Exportar PDF
+                </button>
+                <button
+                    type="button"
+                    wire:click="openVacationModal"
+                    class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 text-xs font-black uppercase tracking-wider text-emerald-700 shadow-sm transition hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300 dark:hover:bg-emerald-950/50"
+                >
+                    <flux:icon name="sun" class="size-4 shrink-0" />
+                    Registar férias
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── RESUMO ATÉ HOJE ── --}}
+    <div class="space-y-3">
+        <p class="text-sm font-bold text-zinc-500 sm:text-base dark:text-zinc-400">
+            Totais do mês selecionado até hoje {{ now()->format('d/m/Y') }}
+        </p>
+        @if(sprintf('%04d-%02d', $year, $month) > now()->format('Y-m'))
+            <p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">O mês selecionado ainda não começou.</p>
+        @endif
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Entradas até hoje</p>
+                <p class="text-2xl font-black text-emerald-600 italic tabular-nums">{{ number_format($monthSummary['income'], 2, ',', '.') }}€</p>
+                <p class="mt-1 text-[9px] text-zinc-500">Entradas de hoje contam a partir das 18h.</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Saídas até hoje</p>
+                <p class="text-2xl font-black text-red-500 italic tabular-nums">{{ number_format($monthSummary['outflow'], 2, ',', '.') }}€</p>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Total até hoje</p>
+                <p class="text-2xl font-black italic tabular-nums {{ $monthSummary['net_total'] < 0 ? 'text-red-500' : 'text-emerald-600' }}">{{ number_format($monthSummary['net_total'], 2, ',', '.') }}€</p>
+                <p class="mt-1 text-[9px] text-zinc-500">Entradas menos saídas do mês</p>
+            </div>
+            <div class="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-3xl p-5 shadow-xl">
+                <p class="text-[9px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 mb-2">Risco hoje</p>
+                @if($monthSummary['risk_available'])
+                    <p class="text-sm font-black {{ $monthSummary['current_balance'] < 0 ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400' }}">
+                        {{ $monthSummary['current_balance'] < 0 ? 'Em risco' : 'Sem risco' }}
+                    </p>
+                    <p class="text-[9px] mt-1 {{ $monthSummary['current_balance'] > 0 ? 'text-emerald-700 dark:text-emerald-400' : ($monthSummary['current_balance'] < 0 ? 'text-red-700 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-400') }}">
+                        Saldo atual {{ number_format($monthSummary['current_balance'], 2, ',', '.') }} €
+                    </p>
+                    <p class="mt-1 text-[9px] text-zinc-600 dark:text-zinc-400">Risco baseado apenas no saldo das contas incluídas e movimentos até hoje; não inclui previsões futuras.</p>
+                @else
+                    <p class="text-xs font-bold text-zinc-600 dark:text-zinc-400">
+                        {{ match ($this->currentAccountBalance['reason']) {
+                            'no_accounts' => 'Inclui uma conta no total para calcular o risco.',
+                            'currency' => 'Não é possível somar contas de moedas diferentes nesta previsão.',
+                        } }}
+                    </p>
+                @endif
+            </div>
         </div>
     </div>
 
     {{-- ── 2. BARRA DE FILTROS (COLLAPSIBLE) ── --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
-            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Entradas previstas</p>
-            <p class="text-2xl font-black text-emerald-600 italic tabular-nums">{{ number_format($monthSummary['income'], 0, ',', '.') }}€</p>
-        </div>
-        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
-            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Saidas previstas</p>
-            <p class="text-2xl font-black text-red-500 italic tabular-nums">{{ number_format($monthSummary['outflow'], 0, ',', '.') }}€</p>
-        </div>
-        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
-            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Vencimentos fixos</p>
-            <p class="text-2xl font-black text-amber-500 italic tabular-nums">{{ number_format($monthSummary['fixed_outflow'], 0, ',', '.') }}€</p>
-        </div>
-        <div class="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-3xl p-5 shadow-xl">
-            <p class="text-[9px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 mb-2">Dias de risco</p>
-            @if($monthSummary['risk_available'])
-                <p class="text-2xl font-black {{ $monthSummary['risk_days'] > 0 ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400' }} italic tabular-nums">{{ $monthSummary['risk_days'] }}</p>
-                <p class="text-[9px] mt-1 {{ $monthSummary['projected_balance'] > 0 ? 'text-emerald-700 dark:text-emerald-400' : ($monthSummary['projected_balance'] < 0 ? 'text-red-700 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-400') }}">
-                    saldo final previsto {{ number_format($monthSummary['projected_balance'], 0, ',', '.') }}€
-                </p>
-                <p class="mt-1 text-[9px] text-zinc-600 dark:text-zinc-400">Saldo das contas incluídas; movimentos ligados já estão refletidos no saldo.</p>
-                <p class="mt-1 text-[9px] text-zinc-600 dark:text-zinc-400">Salários previstos requerem uma conta incluída; subsídio em cartão não entra no saldo bancário.</p>
-            @else
-                <p class="text-xs font-bold text-zinc-600 dark:text-zinc-400">
-                    {{ match ($this->cashProjection['reason']) {
-                        'no_accounts' => 'Inclui uma conta no total para calcular o risco.',
-                        'past' => 'A previsão está disponível apenas a partir de hoje.',
-                        'currency' => 'Não é possível somar contas de moedas diferentes nesta previsão.',
-                    } }}
-                </p>
-            @endif
-        </div>
-    </div>
-
     <div x-show="filterOpen" x-collapse x-cloak>
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 flex flex-wrap gap-4 shadow-sm mb-6">
             @php
@@ -163,17 +172,6 @@
         </div>
     </div>
 
-    <div class="flex justify-end">
-        <button
-            type="button"
-            wire:click="openVacationModal"
-            class="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-xs font-black uppercase tracking-wider text-emerald-700 shadow-sm transition hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300 dark:hover:bg-emerald-950/50"
-        >
-            <flux:icon name="sun" class="size-4" />
-            Registar férias
-        </button>
-    </div>
-
     @php
         $calendarIndicatorColors = [
             'text-emerald-500' => 'text-emerald-600 dark:text-emerald-400',
@@ -186,21 +184,29 @@
             'text-indigo-500' => 'text-indigo-600 dark:text-indigo-400',
         ];
     @endphp
-    <div aria-label="Legenda dos símbolos" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-zinc-200 bg-white px-5 py-3 text-[9px] font-black uppercase tracking-wider text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <span class="text-zinc-400">Símbolos</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="banknotes" class="size-3.5 {{ $calendarIndicatorColors['text-emerald-600'] }}" />Receita, salário ou subsídio</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="banknotes" class="size-3.5 {{ $calendarIndicatorColors['text-amber-500'] }}" />Parcela ou subsídio parcial</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="banknotes" class="size-3.5 {{ $calendarIndicatorColors['text-red-500'] }}" />Subsídio não recebido</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="credit-card" class="size-3.5 {{ $calendarIndicatorColors['text-red-500'] }}" />Despesa</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="arrow-path" class="size-3.5 {{ $calendarIndicatorColors['text-purple-500'] }}" />Assinatura</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="arrows-right-left" class="size-3.5 {{ $calendarIndicatorColors['text-blue-500'] }}" />Transferência</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="bolt" class="size-3.5 {{ $calendarIndicatorColors['text-orange-500'] }}" />Treino</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="bell" class="size-3.5 {{ $calendarIndicatorColors['text-indigo-500'] }}" />Lembrete</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="calendar-days" class="size-3.5 {{ $calendarIndicatorColors['text-amber-500'] }}" />Feriado</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="calendar-days" class="size-3.5 {{ $calendarIndicatorColors['text-emerald-600'] }}" />Dia de pagamento</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="briefcase" class="size-3.5 {{ $calendarIndicatorColors['text-indigo-500'] }}" />Marco de trabalho</span>
-        <span class="inline-flex items-center gap-1.5"><flux:icon name="sun" class="size-3.5 {{ $calendarIndicatorColors['text-emerald-600'] }}" />Férias</span>
-        <span class="inline-flex items-center gap-1.5"><span class="inline-flex size-4 items-center justify-center rounded-full bg-indigo-600 text-[8px] text-white">2</span>Número de registos</span>
+    <div x-data="{ legendOpen: false }" class="space-y-3 px-1 text-[11px] font-bold text-zinc-600 sm:text-xs dark:text-zinc-400">
+        <button type="button" aria-controls="calendar-symbols" :aria-expanded="legendOpen.toString()" @click="legendOpen = !legendOpen" class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-500 transition hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400">
+            <flux:icon name="information-circle" class="size-5" />
+            Símbolos
+            <flux:icon name="chevron-down" class="size-4 transition-transform" x-bind:class="{ 'rotate-180': legendOpen }" />
+        </button>
+        <div id="calendar-symbols" aria-label="Legenda dos símbolos" x-show="legendOpen" x-collapse x-cloak class="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <span class="flex items-center gap-2"><flux:icon name="banknotes" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-emerald-600'] }}" />Receita ou salário</span>
+            <span class="flex items-center gap-2"><flux:icon name="banknotes" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-amber-500'] }}" />Parcela</span>
+            <span class="flex items-center gap-2"><flux:icon name="cake" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-emerald-600'] }}" />Subsídio de alimentação</span>
+            <span class="flex items-center gap-2"><flux:icon name="cake" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-amber-500'] }}" />Subsídio parcial</span>
+            <span class="flex items-center gap-2"><flux:icon name="cake" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-red-500'] }}" />Subsídio não recebido</span>
+            <span class="flex items-center gap-2"><flux:icon name="credit-card" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-red-500'] }}" />Despesa</span>
+            <span class="flex items-center gap-2"><flux:icon name="arrow-path" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-purple-500'] }}" />Assinatura</span>
+            <span class="flex items-center gap-2"><flux:icon name="arrows-right-left" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-blue-500'] }}" />Transferência</span>
+            <span class="flex items-center gap-2"><flux:icon name="bolt" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-orange-500'] }}" />Treino</span>
+            <span class="flex items-center gap-2"><flux:icon name="bell" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-indigo-500'] }}" />Lembrete</span>
+            <span class="flex items-center gap-2"><flux:icon name="calendar-days" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-amber-500'] }}" />Feriado</span>
+            <span class="flex items-center gap-2"><flux:icon name="calendar-days" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-emerald-600'] }}" />Dia de pagamento</span>
+            <span class="flex items-center gap-2"><flux:icon name="briefcase" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-indigo-500'] }}" />Marco de trabalho</span>
+            <span class="flex items-center gap-2"><flux:icon name="sun" class="size-4 shrink-0 {{ $calendarIndicatorColors['text-emerald-600'] }}" />Férias</span>
+            <span class="flex items-center gap-2"><span class="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[8px] text-white">2</span>Número de registos</span>
+        </div>
     </div>
 
     {{-- ── 3. GRELHA DO CALENDÁRIO OTIMIZADA ── --}}
@@ -263,17 +269,23 @@
                 <div
                     wire:click="openDayDetail('{{ $dateKey }}')"
                     data-day-type="{{ $dayType }}"
-                    class="relative min-h-[110px] sm:min-h-[150px] border-r border-b border-zinc-100 dark:border-zinc-800 p-3 transition-all hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group/day cursor-pointer {{ $dayType === 'holiday' ? 'bg-amber-50/80 dark:bg-amber-950/20' : ($dayType === 'non-working' ? 'bg-zinc-100/70 dark:bg-zinc-950/50' : 'bg-emerald-50/30 dark:bg-emerald-950/10') }}"
+                    @if($isToday) aria-current="date" @endif
+                    class="relative min-h-[110px] sm:min-h-[150px] border-r border-b border-zinc-100 dark:border-zinc-800 p-3 transition-all hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 group/day cursor-pointer {{ $dayType === 'holiday' ? 'bg-amber-50/80 dark:bg-amber-950/20' : ($dayType === 'non-working' ? 'bg-zinc-100/70 dark:bg-zinc-950/50' : 'bg-emerald-50/30 dark:bg-emerald-950/10') }} {{ $isToday ? 'z-10 ring-2 ring-inset ring-indigo-500 dark:ring-indigo-400' : '' }}"
                 >
                     {{-- Cabeçalho da Célula --}}
                     <div class="flex flex-col items-start gap-1 sm:flex-row sm:items-start sm:justify-between">
-                        <span @class([
-                            'text-sm font-black transition-all group-hover/day:scale-110',
-                            'text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 size-8 flex items-center justify-center rounded-xl' => $isToday,
-                            'text-zinc-400 dark:text-zinc-600' => !$isToday
-                        ])>
-                            {{ sprintf('%02d', $day) }}
-                        </span>
+                        <div class="inline-flex items-center gap-1">
+                            <span @class([
+                                'text-sm font-black transition-all group-hover/day:scale-110',
+                                'text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 size-8 flex items-center justify-center rounded-xl' => $isToday,
+                                'text-zinc-400 dark:text-zinc-600' => !$isToday
+                            ])>
+                                {{ sprintf('%02d', $day) }}
+                            </span>
+                            @if($isToday)
+                                <span class="hidden text-[8px] font-black uppercase text-indigo-600 sm:inline dark:text-indigo-400">Hoje</span>
+                            @endif
+                        </div>
                         @if($hasFinancialRecords)
                             <span
                                 title="{{ $isPendingDay ? 'Total previsto (pendente)' : 'Total do dia' }}"
@@ -337,37 +349,8 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div class="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h3 class="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-200">Próximos pagamentos · 15 dias</h3>
-            <p class="mt-1 text-[10px] text-zinc-500">Despesas e assinaturas ainda não confirmadas como pagas.</p>
-            @if($this->dayEvents->flatten(1)->contains(fn ($event) => ($event['type'] ?? null) === 'subscription' && ($event['schedule_known'] ?? true) === false))
-                <p class="mt-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400">Assinaturas sem ciclo ou data definidos não entram nas previsões.</p>
-            @endif
-            <div class="mt-3 max-h-64 space-y-2 overflow-y-auto">
-                @forelse($this->upcomingPayments as $payment)
-                    <button type="button" wire:click="openUpcomingPayment('{{ $payment['date'] }}')" class="flex w-full items-center justify-between gap-3 rounded-xl bg-zinc-50 px-3 py-2 text-left hover:bg-zinc-100 dark:bg-zinc-800/50 dark:hover:bg-zinc-800">
-                        <span class="min-w-0 truncate text-xs font-bold text-zinc-700 dark:text-zinc-200">{{ $payment['label'] }}</span>
-                        <span class="shrink-0 text-[10px] font-bold text-zinc-500">{{ \Carbon\Carbon::parse($payment['date'])->format('d/m') }} · {{ number_format($payment['outstanding_amount'], 2, ',', '.') }} €</span>
-                    </button>
-                @empty
-                    <p class="py-2 text-xs text-zinc-400">Sem pagamentos pendentes neste período.</p>
-                @endforelse
-            </div>
-        </div>
-        <div class="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h3 class="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-200">Previsto vs. confirmado · mês</h3>
-            <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
-                <div><p class="text-zinc-500">Recebido</p><p class="font-black text-emerald-700 dark:text-emerald-400">{{ number_format($this->paymentSummary['received'], 2, ',', '.') }} €</p></div>
-                <div><p class="text-zinc-500">Por receber</p><p class="font-black text-amber-700 dark:text-amber-400">{{ number_format($this->paymentSummary['receivable'], 2, ',', '.') }} €</p></div>
-                <div><p class="text-zinc-500">Pago</p><p class="font-black text-red-700 dark:text-red-400">{{ number_format($this->paymentSummary['paid'], 2, ',', '.') }} €</p></div>
-                <div><p class="text-zinc-500">Por pagar</p><p class="font-black text-amber-700 dark:text-amber-400">{{ number_format($this->paymentSummary['payable'], 2, ',', '.') }} €</p></div>
-            </div>
-            <p class="mt-3 text-[10px] text-zinc-500">Só os pagamentos registados contam como confirmados; valores previstos não são confirmação de pagamento.</p>
-        </div>
-    </div>
-
     {{-- ── 4. INDICADORES FINANCEIROS DO MÊS ── --}}
+    <p class="text-sm font-bold text-zinc-500 sm:text-base dark:text-zinc-400">Previsão para todo o mês de {{ $currentMonthName }}</p>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 !mb-0">
         <div class="rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-emerald-900/50 dark:bg-zinc-900">
             <div class="flex items-center gap-3">
@@ -375,11 +358,11 @@
                     <flux:icon name="arrow-down-left" class="size-5" />
                 </div>
                 <div>
-                    <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Total ganho no mês</h4>
+                    <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Entradas previstas no mês</h4>
                     <p class="mt-1 text-xl font-black tabular-nums text-emerald-600 dark:text-emerald-400">{{ number_format($monthlyFinanceInsights['received'], 2, ',', '.') }} €</p>
                 </div>
             </div>
-            <p class="mt-3 text-[10px] font-semibold text-zinc-400">Receitas registadas, salário e subsídio previstos até hoje</p>
+            <p class="mt-3 text-[10px] font-semibold text-zinc-400">Receitas, salários, subsídio e valores a receber no mês</p>
         </div>
 
         <div class="rounded-3xl border border-red-100 bg-white p-5 shadow-sm dark:border-red-900/50 dark:bg-zinc-900">
@@ -388,11 +371,14 @@
                     <flux:icon name="arrow-up-right" class="size-5" />
                 </div>
                 <div>
-                    <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Total gasto no mês</h4>
+                    <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Saídas previstas no mês</h4>
                     <p class="mt-1 text-xl font-black tabular-nums text-red-500">{{ number_format($monthlyFinanceInsights['spent'], 2, ',', '.') }} €</p>
                 </div>
             </div>
-            <p class="mt-3 text-[10px] font-semibold text-zinc-400">Despesas registadas neste mês</p>
+            <p class="mt-3 text-[10px] font-semibold text-zinc-400">Despesas, assinaturas e parcelas do mês</p>
+            @if($monthlyFinanceInsights['has_unknown_subscriptions'])
+                <p class="mt-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400">Assinaturas sem ciclo ou data definidos não entram na previsão.</p>
+            @endif
             <p class="mt-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-400">
                 Despesas registadas:
                 @if($this->expenseComparison['difference'] > 0)
@@ -412,11 +398,11 @@
                     <flux:icon name="scale" class="size-5" />
                 </div>
                 <div>
-                    <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Saldo registado</h4>
+                    <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Saldo previsto do mês</h4>
                     <p class="mt-1 text-xl font-black tabular-nums {{ $monthlyFinanceInsights['balance'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : ($monthlyFinanceInsights['balance'] < 0 ? 'text-red-500' : 'text-zinc-400') }}">{{ number_format($monthlyFinanceInsights['balance'], 2, ',', '.') }} €</p>
                 </div>
             </div>
-            <p class="mt-3 text-[10px] font-semibold text-zinc-400">Total recebido menos despesas registadas</p>
+            <p class="mt-3 text-[10px] font-semibold text-zinc-400">Entradas previstas menos saídas previstas</p>
         </div>
 
         <div class="rounded-3xl border border-amber-100 bg-white p-5 shadow-sm dark:border-amber-900/50 dark:bg-zinc-900">
@@ -425,11 +411,11 @@
                     <flux:icon name="receipt-percent" class="size-5" />
                 </div>
                 <div class="min-w-0">
-                    <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Maior despesa</h4>
+                    <h4 class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Maior saída do mês</h4>
                     @if($monthlyFinanceInsights['largest_expense'])
                         <p class="mt-1 truncate text-sm font-black text-zinc-800 dark:text-white">{{ $monthlyFinanceInsights['largest_expense']['label'] }}</p>
                     @else
-                        <p class="mt-1 text-sm font-black text-zinc-400">Sem despesas</p>
+                        <p class="mt-1 text-sm font-black text-zinc-400">Sem saídas previstas</p>
                     @endif
                 </div>
             </div>
@@ -438,7 +424,7 @@
                     −{{ number_format($monthlyFinanceInsights['largest_expense']['amount'], 2, ',', '.') }} € · {{ \Carbon\Carbon::parse($monthlyFinanceInsights['largest_expense']['date'])->format('d/m') }}
                 </p>
             @else
-                <p class="mt-3 text-[10px] font-semibold text-zinc-400">Ainda não há despesas registadas</p>
+                <p class="mt-3 text-[10px] font-semibold text-zinc-400">Ainda não há saídas previstas</p>
             @endif
         </div>
     </div>
@@ -720,19 +706,27 @@
                             <div class="flex items-center justify-between gap-3">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-3">
-                                        <div class="size-2.5 rounded-full shrink-0 {{ str_replace('text', 'bg', $event['color']) }}"></div>
+                                        @if($event['calendar_icon'])
+                                            <span role="img" aria-label="Ícone: {{ $event['calendar_icon_label'] }}" class="inline-flex size-5 shrink-0 items-center justify-center {{ $calendarIndicatorColors[$event['color']] ?? $event['color'] }}">
+                                                <flux:icon name="{{ $event['calendar_icon'] }}" class="size-5" />
+                                            </span>
+                                        @else
+                                            <span class="inline-flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
+                                                <span class="size-2.5 rounded-full {{ str_replace('text', 'bg', $event['color']) }}"></span>
+                                            </span>
+                                        @endif
                                         <span class="text-sm font-bold text-zinc-800 dark:text-zinc-200 truncate">{{ $event['label'] }}</span>
                                     </div>
                                     @if($isMealAllowanceEvent)
-                                        <span class="ml-5 mt-1 inline-block text-[9px] font-black uppercase tracking-wider {{ $event['color'] }}">
+                                        <span class="ml-8 mt-1 inline-block text-[9px] font-black uppercase tracking-wider {{ $event['color'] }}">
                                             {{ match ($event['status']) { 'expected' => 'À espera', 'received' => 'Pago', 'partial' => 'Parcial', 'missed' => 'Não recebido' } }}
                                         </span>
                                         @if($event['notes'])
-                                            <span class="ml-5 mt-1 block text-[10px] font-medium text-zinc-500">{{ $event['notes'] }}</span>
+                                            <span class="ml-8 mt-1 block text-[10px] font-medium text-zinc-500">{{ $event['notes'] }}</span>
                                         @endif
                                     @endif
                                     @if(isset($event['meta']))
-                                        <span class="ml-5 mt-1 block text-[10px] font-medium text-zinc-500">{{ $event['meta'] }}</span>
+                                        <span class="ml-8 mt-1 block text-[10px] font-medium text-zinc-500">{{ $event['meta'] }}</span>
                                     @endif
                                 </div>
                                 @if(isset($event['amount']))
@@ -742,7 +736,7 @@
                                 @endif
                             </div>
                             @if(($event['subtype'] ?? null) === 'payday')
-                                <div class="ml-5 mt-3 space-y-1 text-xs text-zinc-600 dark:text-zinc-300">
+                                <div class="ml-8 mt-3 space-y-1 text-xs text-zinc-600 dark:text-zinc-300">
                                     <div class="flex justify-between gap-3">
                                         <span>Salário líquido mensal previsto</span>
                                         <span class="font-black tabular-nums">{{ number_format($event['payday_net_salary'], 2, ',', '.') }} €</span>
@@ -757,19 +751,19 @@
                                 <button
                                     type="button"
                                     wire:click="editBankTransfer({{ $event['transfer_id'] }})"
-                                    class="ml-5 mt-2 text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                                    class="ml-8 mt-2 text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
                                 >Editar</button>
                             @elseif($isMealAllowanceEvent && !auth()->user()->isViewer() && $this->editingEventKey !== $event['event_key'])
                                 <button
                                     type="button"
                                     wire:click="beginEditMealAllowance({{ $event['contract_id'] }}, '{{ $event['date'] }}')"
-                                    class="ml-5 mt-2 text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                                    class="ml-8 mt-2 text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
                                 >Editar</button>
                             @elseif(($event['editable'] ?? false) && !auth()->user()->isViewer() && !$isMealAllowanceEvent)
                                 <button
                                     type="button"
                                     wire:click="beginEditEvent('{{ $event['event_key'] }}')"
-                                    class="ml-5 mt-2 text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                                    class="ml-8 mt-2 text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
                                 >Editar</button>
                             @endif
                             @if(!$isMealAllowanceEvent && ($this->editingEventKey ?? null) === ($event['event_key'] ?? null))
