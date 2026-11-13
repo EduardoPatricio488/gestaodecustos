@@ -854,24 +854,16 @@
 
                             {{-- AÇÕES --}}
                             <td class="p-4 sm:p-6 text-center" @click.stop>
-                                <div class="flex items-center justify-center gap-2">
-
-                                    <flux:button
-                                        wire:click="editAsset({{ $asset->id }})"
-                                        variant="ghost"
-                                        icon="pencil-square"
-                                        size="sm"
-                                        class="text-zinc-400 hover:text-indigo-600 rounded-xl" />
-
-                                    <flux:button
-                                        wire:click="deleteAsset({{ $asset->id }})"
-                                        wire:confirm="Remover ativo?"
-                                        variant="ghost"
-                                        icon="trash"
-                                        size="sm"
-                                        class="text-zinc-400 hover:text-red-600 rounded-xl" />
-
-                                </div>
+                                @if(($asset->position_count ?? 1) > 1)
+                                    <span class="inline-flex rounded-lg bg-indigo-500/10 px-2 py-1 text-[9px] font-black text-indigo-500">
+                                        {{ $asset->position_count }} posições
+                                    </span>
+                                @else
+                                    <div class="flex items-center justify-center gap-2">
+                                        <flux:button wire:click="editAsset({{ $asset->id }})" variant="ghost" icon="pencil-square" size="sm" class="text-zinc-400 hover:text-indigo-600 rounded-xl" />
+                                        <flux:button wire:click="deleteAsset({{ $asset->id }})" wire:confirm="Remover ativo?" variant="ghost" icon="trash" size="sm" class="text-zinc-400 hover:text-red-600 rounded-xl" />
+                                    </div>
+                                @endif
                             </td>
                         </tr>
 
@@ -1093,6 +1085,29 @@
                                     </div>
 
                                 </div>
+
+                                @if(($asset->position_count ?? 1) > 1)
+                                    <div class="mt-5 rounded-2xl border border-indigo-200 dark:border-indigo-900/50 bg-white dark:bg-zinc-900 p-5">
+                                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-indigo-500">Posições individuais</p>
+                                            <span class="text-[10px] font-bold text-zinc-400">Os registos continuam separados</span>
+                                        </div>
+                                        <div class="space-y-2">
+                                            @foreach($asset->positions as $position)
+                                                <div wire:key="grouped-position-{{ $position->id }}" class="flex flex-wrap items-center justify-between gap-3 border-b last:border-0 border-zinc-100 dark:border-zinc-800 py-2">
+                                                    <div>
+                                                        <p class="text-xs font-black dark:text-white">{{ $position->name }}</p>
+                                                        <p class="text-[10px] text-zinc-500">{{ $position->symbol }} · {{ number_format($position->quantity, 4, ',', ' ') }} unidades · Capital: {{ number_format($position->cost, 2, ',', ' ') }} €</p>
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <flux:button wire:click="editAsset({{ $position->id }})" variant="ghost" icon="pencil-square" size="sm" class="text-zinc-400 hover:text-indigo-600" />
+                                                        <flux:button wire:click="deleteAsset({{ $position->id }})" wire:confirm="Remover esta posição individual?" variant="ghost" icon="trash" size="sm" class="text-zinc-400 hover:text-red-600" />
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
                             </td>
                         </tr>
 
@@ -1249,4 +1264,3 @@
 </footer>
 
 </div> {{-- FIM DA DIV RAIZ --}}
-
