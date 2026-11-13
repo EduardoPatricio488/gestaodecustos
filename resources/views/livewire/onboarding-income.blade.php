@@ -17,6 +17,59 @@
         @endforeach
     </div>
     <p class="text-xs text-zinc-500">Cada rendimento é guardado separadamente quando confirmares o respetivo formulário.</p>
+
+    @if($savedIncomeGroups->isNotEmpty())
+        <div class="space-y-4 pt-2" data-onboarding-saved-income-groups>
+            @foreach($savedIncomeGroups as $group)
+                <section class="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900" data-income-source="{{ $group['source'] }}">
+                    <div class="flex items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-200">{{ $group['label'] }}</h3>
+                        <span class="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                            {{ $group['records']->count() }} {{ $group['records']->count() === 1 ? 'registo' : 'registos' }}
+                        </span>
+                    </div>
+
+                    <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        @foreach($group['records'] as $income)
+                            @php
+                                $frequencyLabels = [
+                                    'diario' => 'Diário',
+                                    'semanal' => 'Semanal',
+                                    'quinzenal' => 'Quinzenal',
+                                    'mensal' => 'Mensal',
+                                    'trimestral' => 'Trimestral',
+                                    'semestral' => 'Semestral',
+                                    'anual' => 'Anual',
+                                    'pontual' => 'Pontual',
+                                ];
+                            @endphp
+                            <div class="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="min-w-0">
+                                    <p class="truncate text-sm font-bold text-zinc-800 dark:text-zinc-100">{{ $income->description }}</p>
+                                    <p class="mt-1 text-[11px] text-zinc-500">
+                                        {{ $frequencyLabels[$income->frequency] ?? ucfirst(str_replace('_', ' ', $income->frequency)) }}
+                                        @if($income->day_of_month) · Dia {{ $income->day_of_month }} @endif
+                                        · {{ $income->bankAccount?->name ?? 'Dinheiro físico' }}
+                                    </p>
+                                </div>
+                                <div class="flex shrink-0 items-center justify-between gap-4 sm:justify-end">
+                                    <span class="text-sm font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format((float) $income->amount, 2, ',', ' ') }} €</span>
+                                    <span class="text-[10px] font-bold uppercase {{ $income->is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400' }}">
+                                        {{ $income->is_active ? 'Ativo' : 'Inativo' }}
+                                    </span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endforeach
+        </div>
+    @else
+        <p class="rounded-2xl border border-dashed border-zinc-200 px-4 py-5 text-center text-xs text-zinc-500 dark:border-zinc-700">
+            Ainda não tens rendimentos guardados.
+        </p>
+    @endif
+
     @if($onboardingSaved)<p role="status" class="text-sm font-bold text-emerald-600">Rendimento guardado. Podes adicionar outro ou continuar.</p>@endif
     @include('livewire.partials.employment-modal', ['onboardingModal' => true])
     @include('livewire.partials.income-source-modals', ['onboardingModal' => true])
