@@ -1092,6 +1092,10 @@
                                             </div>
                                             <p class="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
                                                 {{ rtrim(rtrim(number_format($investment['quantity'], 8, ',', ' '), '0'), ',') }} unidades
+                                                @if(($investment['positions_count'] ?? 1) > 1)
+                                                    <span class="mx-1">·</span>
+                                                    <span class="font-bold text-sky-700 dark:text-sky-300">{{ $investment['positions_count'] }} posições abertas</span>
+                                                @endif
                                                 <span class="mx-1">·</span>
                                                 Cotação atual: <span class="font-semibold text-zinc-700 dark:text-zinc-200" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($investment['current_price']) }}</span>
                                             </p>
