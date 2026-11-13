@@ -42,6 +42,53 @@ class DashboardQuickCreateTest extends TestCase
             ->assertSet('showExtraModal', true);
     }
 
+    public function test_subscription_modal_lists_only_the_current_users_bank_accounts_and_hides_investment_accounts(): void
+    {
+        [$user, $workspace] = $this->signInWithWorkspace();
+        $otherUser = User::factory()->create();
+
+        BankAccount::create([
+            'workspace_id' => $workspace->id,
+            'user_id' => $user->id,
+            'name' => 'Conta à ordem',
+            'bank_name' => 'Banco de teste',
+            'type' => 'corrente',
+            'balance' => 500,
+            'currency' => 'EUR',
+            'include_in_total' => true,
+        ]);
+
+        foreach (['XTB', 'AforroNet'] as $investmentAccountName) {
+            BankAccount::create([
+                'workspace_id' => $workspace->id,
+                'user_id' => $user->id,
+                'name' => $investmentAccountName,
+                'type' => 'investimentos',
+                'balance' => 0,
+                'currency' => 'EUR',
+                'include_in_total' => false,
+            ]);
+        }
+
+        BankAccount::create([
+            'workspace_id' => $workspace->id,
+            'user_id' => $otherUser->id,
+            'name' => 'Conta de outro utilizador',
+            'bank_name' => 'Outro banco',
+            'type' => 'corrente',
+            'balance' => 250,
+            'currency' => 'EUR',
+            'include_in_total' => true,
+        ]);
+
+        Livewire::test(SubscriptionHub::class)
+            ->call('openExtraModal')
+            ->assertSee('Conta à ordem')
+            ->assertDontSee('XTB')
+            ->assertDontSee('AforroNet')
+            ->assertDontSee('Conta de outro utilizador');
+    }
+
     public function test_calendar_scheduled_record_modal_offers_the_existing_create_flows(): void
     {
         $this->signInWithWorkspace();
