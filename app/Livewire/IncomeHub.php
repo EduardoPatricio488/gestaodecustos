@@ -190,7 +190,7 @@ class IncomeHub extends Component
 
     public string $recSalaryDestination = 'cash';
 
-    public string $recMealDestination = 'same';
+    public string $recMealDestination = 'cash';
 
     public bool $recHolidayAllowanceSameAsSalary = true;
 
@@ -581,7 +581,7 @@ class IncomeHub extends Component
                 'required',
                 'string',
                 Rule::in(array_merge(
-                    ['same', 'meal_card', 'cash'],
+                    ['meal_card', 'cash'],
                     $this->bankAccounts
                         ->where('user_id', auth()->id())
                         ->map(fn (BankAccount $account): string => 'bank:'.$account->id)
@@ -1281,7 +1281,7 @@ class IncomeHub extends Component
         $this->recBonusSocialSecurityPercentage = 11;
         $this->recBonusSocialSecurityAmount = 0;
         $this->recSalaryDestination = 'cash';
-        $this->recMealDestination = 'same';
+        $this->recMealDestination = 'cash';
         $this->recDay = 25;
         $this->recAmount = 0;
         $this->recOriginalMonthlyTotal = 0;
@@ -1610,9 +1610,9 @@ class IncomeHub extends Component
             $this->recMealAllowance = $meta['meal_allowance'] ?? 0;
             $this->recWorkingDays = $meta['working_days'] ?? 22;
             $this->recMealDestination = match ($meta['meal_allowance_destination'] ?? 'same') {
-                'bank' => ! empty($meta['meal_bank_account_id']) ? 'bank:'.$meta['meal_bank_account_id'] : 'same',
+                'bank' => ! empty($meta['meal_bank_account_id']) ? 'bank:'.$meta['meal_bank_account_id'] : 'cash',
                 'meal_card', 'cash' => $meta['meal_allowance_destination'],
-                default => 'same',
+                default => 'cash',
             };
             $this->recHolidayAllowanceSameAsSalary = (bool) ($meta['holiday_allowance_same_as_salary'] ?? true);
             $this->recHolidayAllowanceGross = $meta['holiday_allowance_gross'] ?? 0;
