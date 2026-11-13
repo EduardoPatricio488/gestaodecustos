@@ -1257,31 +1257,6 @@
                     <p class="text-center text-[10px] leading-5 text-zinc-400">Preços mensais apresentados em euros. Podes consultar os detalhes e aderir a qualquer plano na página de Planos e Mensalidades.</p>
                 </section>
 
-                {{-- ATALHOS --}}
-                <section class="space-y-3">
-                    <div class="text-left">
-                        <h3 class="text-base font-black text-zinc-900 dark:text-white">Por onde queres começar?</h3>
-                        <p class="mt-1 text-xs text-zinc-500">Os teus principais espaços estão à distância de um clique.</p>
-                    </div>
-                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <a href="{{ route('dashboard') }}" wire:navigate class="group rounded-2xl border border-indigo-100 bg-indigo-50 p-4 text-left transition hover:border-indigo-400 dark:border-indigo-900/40 dark:bg-indigo-500/10">
-                            <flux:icon name="squares-2x2" class="mb-2 size-6 text-indigo-500" />
-                            <p class="text-sm font-black text-zinc-900 transition group-hover:text-indigo-600 dark:text-white">Dashboard</p>
-                            <p class="mt-1 text-[10px] text-zinc-500">Ver o teu resumo financeiro</p>
-                        </a>
-                        <a href="{{ route('hub.incomes') }}" wire:navigate class="group rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-left transition hover:border-emerald-400 dark:border-emerald-900/40 dark:bg-emerald-500/10">
-                            <flux:icon name="arrow-trending-up" class="mb-2 size-6 text-emerald-500" />
-                            <p class="text-sm font-black text-zinc-900 transition group-hover:text-emerald-600 dark:text-white">Receitas</p>
-                            <p class="mt-1 text-[10px] text-zinc-500">Gerir salários e rendimentos</p>
-                        </a>
-                        <a href="{{ route('social.hub') }}" wire:navigate class="group rounded-2xl border border-fuchsia-100 bg-fuchsia-50 p-4 text-left transition hover:border-fuchsia-400 dark:border-fuchsia-900/40 dark:bg-fuchsia-500/10">
-                            <flux:icon name="users" class="mb-2 size-6 text-fuchsia-500" />
-                            <p class="text-sm font-black text-zinc-900 transition group-hover:text-fuchsia-600 dark:text-white">Finance Connect</p>
-                            <p class="mt-1 text-[10px] text-zinc-500">Explorar a comunidade</p>
-                        </a>
-                    </div>
-                </section>
-
                 @include('livewire.partials.onboarding-footer', [
                     'footerStep' => $step, 'footerTotal' => $totalSteps,
                     'footerPrevious' => 'previousStep', 'footerSkip' => null,
