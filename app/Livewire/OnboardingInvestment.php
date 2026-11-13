@@ -161,6 +161,7 @@ class OnboardingInvestment extends InvestmentsHub
         $this->authorizeOnboardingWrite();
         $user = auth()->user();
         $bankAccounts = BankAccount::where('workspace_id', $user->current_workspace_id)
+            ->whereNotIn('type', ['investimento', 'investimentos'])
             ->when($user->currentWorkspace?->type === 'personal', fn ($query) => $query->where('user_id', $user->id))
             ->orderBy('name')->get();
         $xtbInvestments = $this->investmentQuery()->orderBy('name')->orderBy('id')->get();
