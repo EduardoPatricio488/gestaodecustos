@@ -166,6 +166,25 @@
         </div>
     </div>
 
+    @if($savedBankAccounts->isNotEmpty())
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30" role="status">
+            <p class="text-sm font-black text-emerald-800 dark:text-emerald-300">
+                Já tens {{ $savedBankAccounts->count() }} {{ $savedBankAccounts->count() === 1 ? 'conta guardada' : 'contas guardadas' }}.
+            </p>
+            <div class="mt-3 space-y-2">
+                @foreach($savedBankAccounts as $savedAccount)
+                    <div class="flex items-center justify-between gap-3 rounded-xl bg-white/80 px-3 py-2 text-xs dark:bg-zinc-900/70">
+                        <div class="min-w-0">
+                            <p class="truncate font-bold text-zinc-800 dark:text-zinc-100">{{ $savedAccount->name }}</p>
+                            <p class="text-zinc-500">{{ $savedAccount->bank_name ?: ucfirst(str_replace('_', ' ', $savedAccount->type)) }}</p>
+                        </div>
+                        <p class="shrink-0 font-black tabular-nums text-zinc-700 dark:text-zinc-200">{{ number_format((float) $savedAccount->balance, 2, ',', ' ') }} {{ $savedAccount->currency }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <div class="space-y-4">
         @foreach($bankAccounts as $index => $account)
             <div wire:key="onboarding-bank-account-{{ $index }}" class="p-5 rounded-2xl border-2 border-zinc-100 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 space-y-4">
