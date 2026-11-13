@@ -1289,7 +1289,7 @@
                     'footerNextLabel' => 'Entrar no Finance Pro', 'footerLoadingTarget' => 'completeOnboarding',
                 ])
             </div>
-            @endif      @endif
+            @endif
 
         </div>
     </div>
