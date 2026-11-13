@@ -1289,6 +1289,7 @@ class InvestmentsHub extends Component
         $composition = $myAssets->groupBy('type')->map(fn ($group) => ['total' => $group->sum('current_value'), 'percent' => $currentPortfolioValue > 0 ? round(($group->sum('current_value') / $currentPortfolioValue) * 100, 1) : 0]);
 
         $bankAccounts = BankAccount::where('workspace_id', $user->current_workspace_id)
+            ->whereNotIn('type', ['investimento', 'investimentos'])
             ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
             ->where('status', '!=', 'archived')->orderBy('name')->get();
 
