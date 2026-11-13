@@ -789,7 +789,7 @@ class Dashboard extends Component
         $totalMonthIncome = $monthTotals['income'] + ($isCurrentDashboardPeriod ? $fixedIncome : 0);
         // Resumo de investimentos: usa as mesmas cotações guardadas no portefólio,
         // sem preços fixos ou valores de mercado inventados na Dashboard.
-        $myInvestments = Cache::remember("dashboard:investments:v7:{$currentWs->id}:{$user->id}", 60, fn () => Investment::where('workspace_id', $currentWs->id)
+        $myInvestments = Cache::remember("dashboard:investments:v8:{$currentWs->id}:{$user->id}", 60, fn () => Investment::where('workspace_id', $currentWs->id)
             ->when($currentWs->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
             ->get(['id', 'workspace_id', 'symbol', 'name', 'type', 'series', 'product_type', 'issuer', 'broker', 'quantity', 'average_price', 'current_price', 'fees', 'updated_at'])
             ->groupBy(function ($investment) {
