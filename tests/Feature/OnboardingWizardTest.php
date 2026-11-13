@@ -136,6 +136,83 @@ test('additional income shows validation and saves only when confirmed', functio
     expect((float) $income->amount)->toBe(500.0);
 });
 
+test('rental income destination offers physical cash and bank accounts but excludes investments', function () {
+    [$user, $workspace] = onboardingWorkspace();
+
+    $account = BankAccount::create([
+        'workspace_id' => $workspace->id,
+        'user_id' => $user->id,
+        'name' => 'Conta à ordem',
+        'bank_name' => 'Banco de teste',
+        'type' => 'corrente',
+        'balance' => 500,
+        'currency' => 'EUR',
+    ]);
+
+    BankAccount::create([
+        'workspace_id' => $workspace->id,
+        'user_id' => $user->id,
+        'name' => 'XTB',
+        'type' => 'investimentos',
+        'balance' => 0,
+        'currency' => 'EUR',
+    ]);
+
+    BankAccount::create([
+        'workspace_id' => $workspace->id,
+        'user_id' => $user->id,
+        'name' => 'AforroNet',
+        'type' => 'investimento',
+        'balance' => 0,
+        'currency' => 'EUR',
+    ]);
+
+    Livewire::test(OnboardingIncome::class)
+        ->call('openIncomeSource', 'renda')
+        ->assertSee('Onde entra este valor?')
+        ->assertSee('Dinheiro físico')
+        ->assertSee('Conta do banco')
+        ->assertSee('Conta à ordem')
+        ->assertDontSee('XTB')
+        ->assertDontSee('AforroNet')
+        ->set('recDescription', 'Renda do apartamento')
+        ->set('recRentalGross', 650)
+        ->set('recDay', 8)
+        ->set('recBankAccountId', (string) $account->id)
+        ->call('saveRental')
+        ->assertHasNoErrors();
+
+    $income = RecurringIncome::where('workspace_id', $workspace->id)
+        ->where('description', 'Renda do apartamento')
+        ->firstOrFail();
+
+    expect($income->bank_account_id)->toBe($account->id);
+});
+
+test('rental income rejects investment accounts as its destination', function () {
+    [$user, $workspace] = onboardingWorkspace();
+
+    $investmentAccount = BankAccount::create([
+        'workspace_id' => $workspace->id,
+        'user_id' => $user->id,
+        'name' => 'XTB',
+        'type' => 'investimentos',
+        'balance' => 0,
+        'currency' => 'EUR',
+    ]);
+
+    Livewire::test(OnboardingIncome::class)
+        ->call('openIncomeSource', 'renda')
+        ->set('recDescription', 'Renda de teste')
+        ->set('recRentalGross', 500)
+        ->set('recDay', 10)
+        ->set('recBankAccountId', (string) $investmentAccount->id)
+        ->call('saveRental')
+        ->assertHasErrors(['recBankAccountId']);
+
+    expect(RecurringIncome::where('workspace_id', $workspace->id)->count())->toBe(0);
+});
+
 test('additional employment scanner fills the form without saving', function () {
     Storage::fake('local');
     config(['services.openrouter.api_key' => 'fake-test-key']);
