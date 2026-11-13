@@ -551,6 +551,63 @@ class OnboardingWizard extends Component
         $this->resetValidation();
     }
 
+    public function editSavedBankAccount(int $accountId): void
+    {
+        $user = auth()->user();
+        $workspaceId = $user->current_workspace_id ?? $user->workspaces()->first()?->id;
+
+        $account = BankAccount::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('user_id', $user->id)
+            ->whereNotIn('type', ['investimento', 'investimentos'])
+            ->findOrFail($accountId);
+
+        $this->bankAccounts = [[
+            'name' => $account->name,
+            'type' => $account->type,
+            'balance' => $account->balance,
+            'bank_name' => $account->bank_name ?? '',
+            'currency' => $account->currency,
+            'account_number' => $account->account_number ?? '',
+            'iban' => $account->iban ?? '',
+            'holder_name' => $account->holder_name ?? '',
+            'swift' => $account->swift ?? '',
+            'color' => $account->color ?? '#6366f1',
+            'icon' => $account->icon ?? 'building-library',
+            'alert_below' => $account->alert_below,
+            'is_business' => (bool) $account->is_business,
+            'include_in_total' => (bool) $account->include_in_total,
+            'entry_mode' => 'manual',
+            'proof_message' => '',
+        ]];
+        $this->ibanProofs = [null];
+        $this->savedAccountIds = [$account->id];
+        $this->resetValidation();
+    }
+
+    public function deleteSavedBankAccount(int $accountId): void
+    {
+        $user = auth()->user();
+        $workspaceId = $user->current_workspace_id ?? $user->workspaces()->first()?->id;
+
+        $account = BankAccount::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('user_id', $user->id)
+            ->whereNotIn('type', ['investimento', 'investimentos'])
+            ->findOrFail($accountId);
+
+        $account->delete();
+
+        foreach ($this->savedAccountIds as $index => $savedId) {
+            if ((int) $savedId === $accountId) {
+                $this->savedAccountIds[$index] = null;
+                $this->bankAccounts[$index] = $this->newBankAccount();
+            }
+        }
+
+        $this->dispatch('notify', type: 'success', message: 'Conta bancária eliminada.');
+    }
+
     private function newBankAccount(): array
     {
         return [
@@ -935,7 +992,7 @@ class OnboardingWizard extends Component
                 ->where('user_id', $user->id)
                 ->whereNotIn('type', ['investimento', 'investimentos'])
                 ->orderBy('name')
-                ->get(['id', 'name', 'bank_name', 'type', 'balance', 'currency'])
+                ->get()
             : collect();
 
         return view('livewire.onboarding-wizard', compact('savedBankAccounts'));
