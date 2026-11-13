@@ -11,6 +11,9 @@ use Livewire\Volt\Component;
 new #[Layout('layouts.guest')] class extends Component
 {
     public string $name = '';
+    public string $date_of_birth = '';
+    public string $country_of_origin = 'Portugal';
+    public string $work_country = 'PT';
     public string $email = '';
     public string $password = '';
     public string $password_confirmation = '';
@@ -48,6 +51,9 @@ new #[Layout('layouts.guest')] class extends Component
         try {
             $validated = $this->validate([
                 'name' => ['required', 'string', 'max:255'],
+                'date_of_birth' => ['required', 'date', 'before_or_equal:today'],
+                'country_of_origin' => ['required', \Illuminate\Validation\Rule::in(array_values(config('countries')))],
+                'work_country' => ['required', \Illuminate\Validation\Rule::in(array_keys(config('countries')))],
                 'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
                 'password' => ['required', 'string', Rules\Password::defaults(), 'confirmed'],
             ]);
@@ -58,6 +64,9 @@ new #[Layout('layouts.guest')] class extends Component
             // 2. Criar o utilizador
             $user = User::create([
                 'name' => $validated['name'],
+                'date_of_birth' => $validated['date_of_birth'],
+                'country_of_origin' => $validated['country_of_origin'],
+                'work_country' => $validated['work_country'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
             ]);
@@ -73,7 +82,13 @@ new #[Layout('layouts.guest')] class extends Component
                 \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\VerifyAccountMail($code));
                 \Illuminate\Support\Facades\Log::info("E-mail enviado para: " . $user->email);
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erro ao enviar e-mail: " . $e->getMessage());
+                report($e);
+                $user->forceFill([
+                    'verification_code_hash' => null,
+                    'verification_code_expires_at' => null,
+                    'verification_code_attempts' => 0,
+                ])->save();
+                session()->flash('verification-mail-error', 'Não foi possível enviar o código. Tenta reenviá-lo.');
             }
 
             event(new \Illuminate\Auth\Events\Registered($user));
@@ -158,6 +173,43 @@ new #[Layout('layouts.guest')] class extends Component
                 />
             </div>
             <x-input-error :messages="$errors->get('name')" class="text-[11px]" />
+        </div>
+
+        {{-- DATA DE NASCIMENTO --}}
+        <x-birth-date-age>
+            <label for="date_of_birth" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Data de nascimento</label>
+            <input
+                wire:model="date_of_birth"
+                id="date_of_birth"
+                type="date"
+                x-ref="birthDate"
+                aria-describedby="birth-date-age"
+                max="{{ now()->toDateString() }}"
+                required
+                class="w-full h-11 px-4 bg-zinc-50 dark:bg-zinc-900 border @error('date_of_birth') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
+            />
+            <x-input-error :messages="$errors->get('date_of_birth')" class="text-[11px]" />
+        </x-birth-date-age>
+
+        <div class="space-y-1.5">
+            <label for="country_of_origin" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">País de origem</label>
+            <select
+                wire:model="country_of_origin"
+                id="country_of_origin"
+                required
+                class="w-full h-11 px-4 bg-zinc-50 dark:bg-zinc-900 border @error('country_of_origin') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
+            >
+                <x-country-options :use-names="true" />
+            </select>
+            <x-input-error :messages="$errors->get('country_of_origin')" class="text-[11px]" />
+        </div>
+
+        <div class="space-y-1.5">
+            <label for="work_country" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">País de trabalho</label>
+            <select wire:model="work_country" id="work_country" required class="w-full h-11 px-4 bg-zinc-50 dark:bg-zinc-900 border @error('work_country') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all">
+                <x-country-options />
+            </select>
+            <x-input-error :messages="$errors->get('work_country')" class="text-[11px]" />
         </div>
 
         {{-- EMAIL (Manteve-se igual) --}}

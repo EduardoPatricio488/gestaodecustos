@@ -93,6 +93,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 
     protected $fillable = [
         'name',
+        'date_of_birth',
+        'country_of_origin',
+        'work_country',
         'profile_emoji',
         'profile_color',
         'last_login_at', // <-- ADICIONAR ESTE
@@ -128,6 +131,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     {
         return [
             'email_verified_at' => 'datetime',
+            'date_of_birth' => 'date',
             'password' => 'hashed',
             'last_login_at' => 'datetime',
             'last_ip' => SometimesEncrypted::class,

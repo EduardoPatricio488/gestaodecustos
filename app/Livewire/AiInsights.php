@@ -76,7 +76,7 @@ class AiInsights extends Component
 
     public function generateInsights(AiBrainService $brain): void
     {
-        set_time_limit(120);
+        set_time_limit(390);
         $this->isAnalyzing = true;
         $this->analysisError = null;
         $user = auth()->user();

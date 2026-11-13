@@ -11,12 +11,12 @@ use App\Models\BankTransitItem;
 use App\Models\Workspace;
 use App\Services\BancoService;
 use App\Services\BusinessAccessService;
+use App\Services\IbanProofService;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
-use Smalot\PdfParser\Parser;
 
 #[Layout('components.layouts.app')]
 class BancoHub extends Component
@@ -152,55 +152,15 @@ class BancoHub extends Component
         ]);
 
         try {
-            $text = (new Parser())->parseFile($this->ibanProof->getRealPath())->getText();
-            $text = preg_replace('/\\s+/u', ' ', mb_strtoupper($text));
-
-            if (! preg_match('/PT(?:\\s*[0-9]){23}/u', $text, $ibanMatch)) {
-                throw new \RuntimeException('Não foi possível encontrar um IBAN português no documento.');
+            $extracted = app(IbanProofService::class)->extract($this->ibanProof->getRealPath(), $this->acc_holder);
+            foreach (['iban', 'currency', 'bank_name', 'name', 'color', 'icon', 'swift', 'account_number'] as $field) {
+                if (array_key_exists($field, $extracted)) {
+                    $this->{'acc_'.$field} = $extracted[$field];
+                }
             }
-
-            $iban = preg_replace('/\\s+/', '', $ibanMatch[0]);
-            if (strlen($iban) !== 25) {
-                throw new \RuntimeException('O IBAN extraído não tem um formato válido.');
+            if (array_key_exists('holder_name', $extracted)) {
+                $this->acc_holder = $extracted['holder_name'];
             }
-
-            $this->acc_iban = $iban;
-            $bankCode = substr($iban, 4, 4);
-            $bank = match ($bankCode) {
-                '0018' => 'Santander',
-                '0035' => 'Caixa Geral de Depósitos',
-                '0007' => 'Novo Banco',
-                '0033' => 'Millennium BCP',
-                '0010' => 'Banco BPI',
-                default => '',
-            };
-
-            if ($bank !== '') {
-                $this->acc_bank_name = $bank;
-                $this->acc_name = 'Conta '.$bank;
-                $this->acc_color = $bank === 'Santander' ? '#EC0000' : $this->acc_color;
-                $this->acc_icon = 'building-library';
-            }
-
-            if (preg_match('/\\b([A-Z]{4}PT[A-Z0-9]{2}(?:[A-Z0-9]{3})?)\\b/u', $text, $swiftMatch)) {
-                $this->acc_swift = $swiftMatch[1];
-            }
-
-            if (preg_match('/TITULAR\\s+(.+?)(?=\\s+(?:IBAN|BIC|SWIFT|DATA|CONTA)\\b|$)/u', $text, $holderMatch)) {
-                $this->acc_holder = trim($holderMatch[1]);
-            }
-
-            if (preg_match('/\\bCONTA\\s*:?[ \\t]*([0-9][0-9 ]{7,24}?)(?=\\s+(?:IBAN|BIC|SWIFT|TITULAR|DATA)\\b|$)/u', $text, $accountMatch)) {
-                $this->acc_account_number = trim($accountMatch[1]);
-            }
-
-            if ($bank === 'Santander') {
-                $this->acc_swift = 'TOTAPTPL';
-                $holderName = trim(mb_convert_case(mb_strtolower($this->acc_holder), MB_CASE_TITLE, 'UTF-8'));
-                $this->acc_name = 'Santander'.($holderName !== '' ? ' - '.$holderName : '');
-            }
-
-            $this->acc_currency = 'EUR';
             $this->accountEntryMode = 'manual';
             $this->ibanProofMessage = 'Comprovativo lido. Confirma os dados e introduz o saldo atual da conta.';
             $this->dispatch('toast', variant: 'success', text: 'Comprovativo analisado. Confirma os dados da conta.');

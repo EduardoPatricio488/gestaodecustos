@@ -28,6 +28,14 @@ Este documento descreve apenas funcionalidades identificadas no projecto actual.
 - Fitness e integração Strava configurável
 - PWA/offline para fluxos suportados
 
+Na configuração inicial e no módulo Banco é possível importar comprovativos de IBAN português em PDF com texto legível (até 5 MB). A leitura preenche os dados identificados; é necessário confirmá-los e introduzir o saldo antes de guardar.
+
+Na configuração inicial, o formulário de salário é o mesmo do módulo Receitas, incluindo a estimativa fiscal e o scanner de contratos por fotografia. A análise envia a imagem ao OpenRouter e os dados detetados devem ser revistos antes de guardar.
+
+A configuração inicial inclui ainda passos opcionais para outras fontes de rendimento, investimentos, importação de extratos e assinaturas, com os formulários dos respetivos módulos. Os extratos são pré-visualizados e os movimentos selecionados antes da confirmação.
+
+No passo de investimentos, é também possível analisar e importar relatórios XTB (Excel ou CSV) e extratos AforroNet em PDF, revendo as posições antes da confirmação. Se o OpenRouter estiver configurado, a análise XTB envia um resumo das posições e respetivos valores para validação por IA.
+
 ## Business
 
 - Onboarding empresarial
@@ -71,6 +79,7 @@ Este documento descreve apenas funcionalidades identificadas no projecto actual.
 - Health Score
 - feedback de insights
 - revisões agendadas determinísticas
+- O CFO pessoal inclui a secção Valores vs Idade/País. A referência salarial usa o país de trabalho e a faixa etária, quando disponíveis. Fonte: [Eurostat, EARN_SES22_20 — remuneração mensal bruta média](https://ec.europa.eu/eurostat/databrowser/product/page/EARN_SES22_20), dados do inquérito de 2022, descarregados em 13/11/2026 e filtrados para setores B-S exceto administração pública, empresas com pelo menos 10 trabalhadores e ambos os sexos. Os valores históricos incluem trabalhadores a tempo inteiro e parcial, são apresentados em euros e não representam custo de vida. Não há referência para todos os países; a comparação com o salário base bruto atual é apenas indicativa, não equivalendo ao salário total, e não deve ser feita com valores líquidos.
 
 ## Subscrições e loja
 

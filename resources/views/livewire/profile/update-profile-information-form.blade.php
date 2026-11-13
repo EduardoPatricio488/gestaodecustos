@@ -10,25 +10,37 @@ new class extends Component
 {
     public string $name = '';
     public string $email = ''; // Mantemos para exibição, mas não para edição
+    public ?string $date_of_birth = null;
+    public string $country_of_origin = 'Portugal';
+    public ?string $work_country = null;
 
     public function mount(): void
     {
-        $this->name = Auth::user()->name;
-        $this->email = Auth::user()->email;
+        $user = Auth::user();
+
+        $this->name = $user->name;
+        $this->email = $user->email;
+        $this->date_of_birth = $user->date_of_birth?->toDateString();
+        $this->country_of_origin = $user->country_of_origin ?: 'Portugal';
+        $this->work_country = $user->work_country;
     }
 
     public function updateProfileInformation(): void
     {
         $user = Auth::user();
 
-        // 1. Validamos apenas o nome (removemos o email daqui)
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
+            'date_of_birth' => ['nullable', 'date', 'before_or_equal:today'],
+            'country_of_origin' => ['required', 'string', 'max:100', Rule::in([...array_values(config('countries')), $user->country_of_origin])],
+            'work_country' => ['nullable', Rule::in(array_keys(config('countries')))],
         ]);
 
-        // 2. Atualizamos apenas o nome
         $user->fill([
             'name' => $validated['name'],
+            'date_of_birth' => $validated['date_of_birth'] ?: null,
+            'country_of_origin' => $validated['country_of_origin'],
+            'work_country' => $validated['work_country'] ?: null,
         ]);
 
         // O email nunca será alterado aqui, mesmo que o utilizador tente forçar pelo browser
@@ -53,7 +65,7 @@ new class extends Component
 <section class="space-y-6 text-left">
     <header>
         <flux:heading size="lg" class="font-black">Informações do Perfil</flux:heading>
-        <flux:subheading>Atualiza o teu nome de exibição e gere a tua identidade.</flux:subheading>
+        <flux:subheading>Atualiza os teus dados de exibição e gere a tua identidade.</flux:subheading>
     </header>
 
     <form wire:submit="updateProfileInformation" class="mt-6 space-y-6">
@@ -67,6 +79,22 @@ new class extends Component
             autocomplete="name"
             placeholder="Como queres ser chamado?"
         />
+
+        <x-birth-date-age :initial-date="$date_of_birth">
+            <flux:input wire:model="date_of_birth" label="Data de nascimento" type="date" x-ref="birthDate" aria-describedby="birth-date-age" max="{{ now()->toDateString() }}" />
+        </x-birth-date-age>
+
+        <flux:select wire:model="country_of_origin" label="País de origem" required>
+            @if ($country_of_origin && ! in_array($country_of_origin, config('countries'), true))
+                <option value="{{ $country_of_origin }}">{{ $country_of_origin }}</option>
+            @endif
+            <x-country-options :use-names="true" />
+        </flux:select>
+
+        <flux:select wire:model="work_country" label="País de trabalho" description="Usado para contextualizar a comparação salarial.">
+            <option value="">Seleciona o país de trabalho</option>
+            <x-country-options />
+        </flux:select>
 
         {{-- EMAIL: BLOQUEADO (Readonly + Visual de Cadeado) --}}
         <div class="space-y-4">

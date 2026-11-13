@@ -75,6 +75,45 @@
                 <x-input-error :messages="$errors->get('name')" class="text-[11px]" />
             </div>
 
+            {{-- DATA DE NASCIMENTO --}}
+            <x-birth-date-age>
+                <label for="date_of_birth" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Data de nascimento</label>
+                <input
+                    id="date_of_birth"
+                    name="date_of_birth"
+                    type="date"
+                    x-ref="birthDate"
+                    aria-describedby="birth-date-age"
+                    value="{{ old('date_of_birth') }}"
+                    max="{{ now()->toDateString() }}"
+                    required
+                    autocomplete="bday"
+                    class="w-full h-11 px-4 bg-zinc-50 dark:bg-zinc-900 border {{ $errors->has('date_of_birth') ? 'border-red-400 dark:border-red-700' : 'border-zinc-200 dark:border-zinc-800' }} rounded-xl text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+                <x-input-error :messages="$errors->get('date_of_birth')" class="text-[11px]" />
+            </x-birth-date-age>
+
+            <div class="space-y-1.5">
+                <label for="country_of_origin" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">País de origem</label>
+                <select
+                    id="country_of_origin"
+                    name="country_of_origin"
+                    required
+                    class="w-full h-11 px-4 bg-zinc-50 dark:bg-zinc-900 border {{ $errors->has('country_of_origin') ? 'border-red-400 dark:border-red-700' : 'border-zinc-200 dark:border-zinc-800' }} rounded-xl text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                >
+                    <x-country-options :use-names="true" :selected="old('country_of_origin', 'Portugal')" />
+                </select>
+                <x-input-error :messages="$errors->get('country_of_origin')" class="text-[11px]" />
+            </div>
+
+            <div class="space-y-1.5">
+                <label for="work_country" class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">País de trabalho</label>
+                <select id="work_country" name="work_country" required class="w-full h-11 px-4 bg-zinc-50 dark:bg-zinc-900 border {{ $errors->has('work_country') ? 'border-red-400 dark:border-red-700' : 'border-zinc-200 dark:border-zinc-800' }} rounded-xl text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all">
+                    <x-country-options :selected="old('work_country', 'PT')" />
+                </select>
+                <x-input-error :messages="$errors->get('work_country')" class="text-[11px]" />
+            </div>
+
             {{-- EMAIL --}}
             <div class="space-y-1.5">
                 <label class="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Email</label>

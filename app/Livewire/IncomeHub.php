@@ -519,12 +519,12 @@ class IncomeHub extends Component
         }
     }
 
-    public function saveEmployment()
+    public function saveEmployment(bool $closeModal = true): ?int
     {
         if (auth()->user()->isViewer()) {
             $this->dispatch('toast', variant: 'error', text: 'Ação negada.');
 
-            return;
+            return null;
         }
 
         // 1. Validação básica
@@ -678,7 +678,7 @@ class IncomeHub extends Component
                 ->exists(), 422, 'Conta bancária do subsídio de alimentação inválida.');
         }
 
-        DB::transaction(function () use ($data, $isSeparateMealCard, &$mealCardIncomeId): void {
+        $salaryId = DB::transaction(function () use ($data, $isSeparateMealCard, &$mealCardIncomeId): int {
             if ($this->editingFixedId) {
                 $salary = RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)
                     ->where('user_id', auth()->id())
@@ -734,12 +734,16 @@ class IncomeHub extends Component
                 $salary->metadata = array_diff_key($salary->metadata ?? [], ['meal_card_income_id' => true]);
                 $salary->save();
             }
+
+            return $salary->id;
         });
 
         // 4. Fechar e avisar
         $this->contractScanPhoto = null;
         $this->salaryFormMode = 'manual';
-        $this->dispatch('modal-close-emprego');
+        if ($closeModal) {
+            $this->dispatch('modal-close-emprego');
+        }
         $this->dispatch('toast', text: 'Contrato gravado com sucesso! ✅');
 
         // 5. Reset aos campos
@@ -761,6 +765,8 @@ class IncomeHub extends Component
         $this->recHolidayAllowanceSameAsSalary = true;
         $this->recChristmasAllowanceSameAsSalary = true;
         $this->recIrsJovemYear = 1;
+
+        return $salaryId;
     }
 
     // Edição de rendimento fixo
@@ -1207,7 +1213,7 @@ class IncomeHub extends Component
         $this->dispatch('modal-show-receita-extra');
     }
 
-    public function newEmployment(): void
+    public function newEmployment(bool $showModal = true): void
     {
         if (auth()->user()->isViewer()) {
             $this->dispatch('toast', variant: 'error', text: 'Ação negada.');
@@ -1268,7 +1274,9 @@ class IncomeHub extends Component
         $this->recBankAccountId = '';
 
         $this->recalculateEmploymentSalary();
-        $this->dispatch('modal-show-emprego');
+        if ($showModal) {
+            $this->dispatch('modal-show-emprego');
+        }
     }
 
     public function openSalaryDetails(int $id): void
@@ -1524,7 +1532,7 @@ class IncomeHub extends Component
         $this->showRaiseModal = false;
     }
 
-    public function editFixed($id)
+    public function editFixed($id, bool $showModal = true)
     {
         $record = RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)
             ->findOrFail($id);
@@ -1609,7 +1617,9 @@ class IncomeHub extends Component
             $this->recalculateBonusAmounts();
 
             $this->closeSalaryDetails();
-            $this->dispatch('modal-show-emprego');
+            if ($showModal) {
+                $this->dispatch('modal-show-emprego');
+            }
         } elseif ($record->source === 'freelance') {
             $meta = $record->metadata;
             $this->recFreelanceActivity = $meta['freelance_activity'] ?? '';
@@ -2251,7 +2261,7 @@ class IncomeHub extends Component
         $this->reset(['recDescription', 'recOtherSourceDetail', 'recOtherAmount', 'recAmount', 'recDay']);
     }
 
-    private function recalculateEmploymentSalary(): void
+    protected function recalculateEmploymentSalary(): void
     {
         if ((float) $this->recSalaryGross <= 0) {
             $this->reset([

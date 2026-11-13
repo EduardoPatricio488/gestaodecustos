@@ -4,36 +4,47 @@ namespace App\Livewire;
 
 use App\Models\BankAccount;
 use App\Models\RecurringIncome;
+use App\Services\BusinessAccessService;
+use App\Services\IbanProofService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class OnboardingWizard extends Component
 {
+    use WithFileUploads;
+
     public int $step = 1;
 
-    public int $totalSteps = 6;
+    public int $totalSteps = 10;
 
     public bool $show = true;
 
-    // =========================================================
-    // PASSO 2 — CONTAS BANCÁRIAS
-    // =========================================================
-
-    public array $bankAccounts = [
-        [
-            'name' => '',
-            'bank_name' => '',
-            'type' => 'corrente',
-            'balance' => 0,
-            'iban' => '',
-        ],
-    ];
+    #[Locked]
+    public array $encouragementIndexes = [];
 
     // =========================================================
-    // PASSO 2 — FONTE DE RENDIMENTO
+    // PASSO 3 — CONTAS BANCÁRIAS
+    // =========================================================
+
+    public array $bankAccounts = [];
+
+    public array $ibanProofs = [null];
+
+    #[Locked]
+    public array $savedAccountIds = [null];
+
+    // =========================================================
+    // PASSO 4 — FONTE DE RENDIMENTO
     // =========================================================
 
     public string $salarySource = 'emprego';
+
+    #[Locked]
+    public ?int $savedSalaryId = null;
 
     public string $otherSourceDetail = '';
 
@@ -157,7 +168,11 @@ class OnboardingWizard extends Component
     public function mount()
     {
         $user = auth()->user();
+        foreach (range(1, $this->totalSteps) as $step) {
+            $this->encouragementIndexes[$step] = random_int(0, 2);
+        }
         $this->show = ! $user->onboarding_completed;
+        $this->bankAccounts = [$this->newBankAccount()];
 
         // Carregar o nome atual do workspace para o input
         if ($user->currentWorkspace) {
@@ -467,24 +482,29 @@ class OnboardingWizard extends Component
     public function nextStep()
     {
         if ($this->step === 2) {
-            $this->saveBankAccounts();
+            $this->saveWorkspace();
 
             return;
         }
 
         if ($this->step === 3) {
-            $this->saveStepSalary();
+            $this->saveBankAccounts();
 
             return;
         }
 
         if ($this->step === 4) {
-            $this->saveStep3();
+            if ($this->salarySource === 'emprego') {
+                $this->addError('salary', 'Usa o formulário de salário para guardar e continuar.');
+
+                return;
+            }
+            $this->saveStepSalary();
 
             return;
         }
 
-        if ($this->step === 5) {
+        if ($this->step === 9) {
             $this->saveStep4();
 
             return;
@@ -494,68 +514,141 @@ class OnboardingWizard extends Component
     }
 
     // =========================================================
-    // GUARDAR PASSO 2 — CONTAS BANCÁRIAS
+    // GUARDAR PASSO 3 — CONTAS BANCÁRIAS
     // =========================================================
 
     public function addBankAccount(): void
     {
-        $this->bankAccounts[] = [
-            'name' => '',
-            'bank_name' => '',
-            'type' => 'corrente',
-            'balance' => 0,
-            'iban' => '',
-        ];
+        $this->bankAccounts[] = $this->newBankAccount();
+        $this->ibanProofs[] = null;
+        $this->savedAccountIds[] = null;
     }
 
     public function removeBankAccount(int $index): void
     {
-        if (count($this->bankAccounts) === 1) {
+        if (count($this->bankAccounts) === 1 || ! array_key_exists($index, $this->bankAccounts)) {
             return;
         }
 
-        unset($this->bankAccounts[$index]);
-        $this->bankAccounts = array_values($this->bankAccounts);
+        array_splice($this->bankAccounts, $index, 1);
+        array_splice($this->ibanProofs, $index, 1);
+        array_splice($this->savedAccountIds, $index, 1);
+        $this->resetValidation();
+    }
+
+    private function newBankAccount(): array
+    {
+        return [
+            'name' => '', 'type' => 'corrente', 'balance' => null, 'bank_name' => '',
+            'currency' => 'EUR', 'account_number' => '', 'iban' => '', 'holder_name' => '',
+            'swift' => '', 'color' => '#6366f1', 'icon' => 'building-library', 'alert_below' => null,
+            'is_business' => false, 'include_in_total' => true, 'entry_mode' => 'manual', 'proof_message' => '',
+        ];
+    }
+
+    public function updatedIbanProofs($file, $index): void
+    {
+        if (! is_numeric($index) || ! array_key_exists((int) $index, $this->bankAccounts)) {
+            $this->addError('ibanProofs', 'Não foi possível identificar a conta para importar o comprovativo.');
+
+            return;
+        }
+
+        $index = (int) $index;
+        $field = 'ibanProofs.'.$index;
+        $this->resetValidation($field);
+        $this->bankAccounts[$index]['proof_message'] = '';
+        $this->validate([
+            $field => 'required|file|mimes:pdf|max:5120',
+        ], [
+            $field.'.mimes' => 'Carrega um comprovativo em formato PDF.',
+            $field.'.max' => 'O ficheiro não pode ultrapassar 5 MB.',
+        ]);
+
+        try {
+            $holder = $this->bankAccounts[$index]['holder_name'] ?? '';
+            $extracted = app(IbanProofService::class)->extract($this->ibanProofs[$index]->getRealPath(), is_string($holder) ? $holder : '');
+            $this->bankAccounts[$index] = array_replace($this->bankAccounts[$index], $extracted, [
+                'entry_mode' => 'manual',
+                'proof_message' => 'Comprovativo lido. Confirma os dados e introduz o saldo atual da conta.',
+            ]);
+        } catch (\Throwable $exception) {
+            if (! $exception instanceof \RuntimeException) {
+                report($exception);
+            }
+            $this->addError($field, $exception instanceof \RuntimeException
+                ? $exception->getMessage()
+                : 'Não foi possível ler este PDF. Confirma que é um comprovativo de IBAN legível.');
+        }
     }
 
     private function saveBankAccounts(): void
     {
-        $accounts = collect($this->bankAccounts)
-            ->filter(fn (array $account) => trim($account['name'] ?? '') !== '')
-            ->values();
-
-        $this->validate([
-            'bankAccounts.*.name' => 'nullable|string|max:100',
+        $validated = $this->validate([
+            'bankAccounts' => 'required|array|min:1',
+            'bankAccounts.*.name' => 'required|string|max:100',
             'bankAccounts.*.bank_name' => 'nullable|string|max:100',
-            'bankAccounts.*.type' => 'required|string|in:corrente,poupanca,credito,cash',
+            'bankAccounts.*.type' => 'required|in:corrente,poupanca,cash,credito,investimento,tesouraria,paypal,outro',
             'bankAccounts.*.balance' => 'required|numeric',
+            'bankAccounts.*.currency' => 'required|in:EUR,USD,GBP,CHF',
             'bankAccounts.*.iban' => 'nullable|string|max:34',
+            'bankAccounts.*.account_number' => 'nullable|string|max:30',
+            'bankAccounts.*.holder_name' => 'nullable|string|max:255',
+            'bankAccounts.*.swift' => 'nullable|string|max:11',
+            'bankAccounts.*.color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'bankAccounts.*.alert_below' => 'nullable|numeric',
+            'bankAccounts.*.is_business' => 'required|boolean',
+            'bankAccounts.*.include_in_total' => 'required|boolean',
         ]);
 
         $user = auth()->user();
-        $workspaceId = $user->current_workspace_id ?? $user->workspaces()->first()?->id;
+        $workspace = $user->current_workspace_id
+            ? $user->workspaces()->whereKey($user->current_workspace_id)->first()
+            : $user->workspaces()->first();
+        if (! $workspace) {
+            $this->addError('bankAccounts', 'Não existe um espaço financeiro acessível para guardar as contas.');
 
-        if ($workspaceId) {
-            foreach ($accounts as $account) {
-                BankAccount::create([
-                    'workspace_id' => $workspaceId,
+            return;
+        }
+        if (in_array($workspace->type, ['business', 'company'], true)) {
+            app(BusinessAccessService::class)->assert('manage_financials', $user, $workspace);
+        }
+
+        $ids = DB::transaction(function () use ($validated, $user, $workspace): array {
+            $ids = [];
+            foreach ($validated['bankAccounts'] as $index => $account) {
+                $record = isset($this->savedAccountIds[$index])
+                    ? BankAccount::where('workspace_id', $workspace->id)->where('user_id', $user->id)->findOrFail($this->savedAccountIds[$index])
+                    : new BankAccount;
+                $record->fill([
+                    'workspace_id' => $workspace->id,
                     'user_id' => $user->id,
                     'name' => trim($account['name']),
                     'bank_name' => trim($account['bank_name'] ?? '') ?: null,
-                    'type' => $account['type'] ?? 'corrente',
-                    'balance' => (float) ($account['balance'] ?? 0),
+                    'type' => $account['type'],
+                    'balance' => (float) $account['balance'],
                     'iban' => trim($account['iban'] ?? '') ?: null,
-                    'currency' => 'EUR',
-                    'is_business' => false,
-                    'include_in_total' => true,
-                ]);
+                    'currency' => $account['currency'],
+                    'account_number' => trim($account['account_number'] ?? '') ?: null,
+                    'holder_name' => trim($account['holder_name'] ?? '') ?: null,
+                    'swift' => trim($account['swift'] ?? '') ?: null,
+                    'color' => $account['color'],
+                    'icon' => 'building-library',
+                    'alert_below' => $account['alert_below'] === '' ? null : $account['alert_below'],
+                    'is_business' => $account['is_business'],
+                    'include_in_total' => $account['include_in_total'],
+                ])->save();
+                $ids[] = $record->id;
             }
-        }
 
+            return $ids;
+        });
+        $this->savedAccountIds = $ids;
         $this->step++;
+        $this->prepareSalaryWorkspace();
     }
 
-    // GUARDAR PASSO 3 — RENDIMENTO
+    // GUARDAR PASSO 4 — RENDIMENTO
     // =========================================================
 
     private function saveStepSalary()
@@ -717,10 +810,10 @@ class OnboardingWizard extends Component
     }
 
     // =========================================================
-    // PASSO 3 — WORKSPACE
+    // PASSO 2 — WORKSPACE
     // =========================================================
 
-    public function saveStep3()
+    public function saveWorkspace()
     {
         if ($this->workspaceName) {
             $user = auth()->user();
@@ -747,7 +840,7 @@ class OnboardingWizard extends Component
     }
 
     // =========================================================
-    // PASSO 4 — CATEGORIA
+    // PASSO 9 — CATEGORIA
     // =========================================================
 
     public function saveStep4()
@@ -764,6 +857,7 @@ class OnboardingWizard extends Component
     public function skipStep()
     {
         $this->step++;
+        $this->prepareSalaryWorkspace();
     }
 
     // =========================================================
@@ -773,6 +867,28 @@ class OnboardingWizard extends Component
     {
         if ($this->step > 1) {
             $this->step--;
+        }
+    }
+
+    #[On('onboarding-salary-saved')]
+    public function salarySaved(int $salaryId): void
+    {
+        abort_unless($this->step === 4 && $this->salarySource === 'emprego', 403);
+        $salary = RecurringIncome::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->where('source', 'emprego')
+            ->findOrFail($salaryId);
+        abort_if(($salary->metadata['income_type'] ?? null) === 'meal_card_allowance', 404);
+        $this->savedSalaryId = $salary->id;
+        $this->step++;
+    }
+
+    private function prepareSalaryWorkspace(): void
+    {
+        $user = auth()->user();
+        if ($this->step === 4 && ! $user->current_workspace_id && ($workspace = $user->workspaces()->first())) {
+            $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+            $user->setRelation('currentWorkspace', $workspace);
         }
     }
 

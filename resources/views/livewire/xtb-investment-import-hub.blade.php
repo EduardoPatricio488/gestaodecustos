@@ -1,4 +1,7 @@
 <div class="space-y-8">
+    @if(!empty($onboardingModal) && $onboardingImportStatus)
+        <p role="status" class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">{{ $onboardingImportStatus }}</p>
+    @endif
     <div class="flex flex-wrap gap-2 rounded-2xl border border-zinc-200 bg-white p-1.5 dark:border-zinc-800 dark:bg-zinc-900">
         <button type="button" wire:click="switchProvider('xtb')" class="flex-1 rounded-xl px-5 py-3 text-xs font-black uppercase tracking-wider transition {{ $activeProvider === 'xtb' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}">XTB</button>
         <button type="button" wire:click="switchProvider('aforronet')" class="flex-1 rounded-xl px-5 py-3 text-xs font-black uppercase tracking-wider transition {{ $activeProvider === 'aforronet' ? 'bg-teal-700 text-white shadow-sm' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}">AforroNet</button>
@@ -47,6 +50,10 @@
                         <span wire:loading.remove wire:target="analyzeReport">Analisar relatório com IA</span>
                         <span wire:loading wire:target="analyzeReport">A analisar posições...</span>
                     </flux:button>
+                    @if(!empty($onboardingModal))
+                    <details class="w-full">
+                        <summary class="cursor-pointer rounded-xl border border-sky-200 p-4 text-sm font-bold text-sky-700 dark:border-sky-800 dark:text-sky-300">Como obter o relatório na XTB</summary>
+                    @endif
                     {{-- GUIA VISUAL: EXPORTAR RELATÓRIO XTB --}}
     <section class="overflow-hidden rounded-3xl border border-sky-200 dark:border-sky-900/60 bg-white dark:bg-zinc-900 shadow-sm">
         <div class="border-b border-sky-100 dark:border-sky-900/50 bg-sky-50/70 dark:bg-sky-950/20 px-6 py-5 sm:px-8">
@@ -91,6 +98,9 @@
             <p class="text-xs leading-relaxed text-amber-900 dark:text-amber-200"><strong>Importante:</strong> não envies o ZIP diretamente. Depois de o extraires, seleciona o ficheiro Excel (.xlsx ou .xls) que está dentro da pasta extraída. Também são aceites ficheiros CSV.</p>
         </div>
     </section>
+                    @if(!empty($onboardingModal))
+                    </details>
+                    @endif
 
     @if($previewReady)
                         <flux:button type="button" variant="ghost" wire:click="clearReport">Limpar</flux:button>
@@ -158,7 +168,7 @@
                 <p class="text-xs text-zinc-500">A importação atualiza posições XTB existentes e cria as que ainda não estão registadas.</p>
                 <div class="flex gap-3">
                     <flux:button type="button" variant="ghost" wire:click="clearReport">Cancelar</flux:button>
-                    <flux:button type="button" variant="primary" icon="arrow-down-tray" wire:click="importPositions" wire:loading.attr="disabled" wire:target="importPositions">
+                    <flux:button type="button" variant="primary" icon="arrow-down-tray" wire:click="importPositions" wire:loading.attr="disabled" wire:target="importPositions,reportFile,analyzeReport">
                         <span wire:loading.remove wire:target="importPositions">Confirmar e importar</span><span wire:loading wire:target="importPositions">A importar...</span>
                     </flux:button>
                 </div>
@@ -238,7 +248,7 @@
                         <p class="text-xs text-zinc-500">A soma das subscrições foi validada contra o total do PDF. O capital de aquisição é 1,00 € por unidade.</p>
                         <div class="flex gap-3">
                             <button type="button" wire:click="clearAforroNet" class="rounded-xl px-4 py-2 text-xs font-bold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button>
-                            <button type="button" wire:click="importAforroNetPosition" wire:loading.attr="disabled" wire:target="importAforroNetPosition" class="rounded-xl bg-teal-700 px-5 py-2.5 text-xs font-black text-white hover:bg-teal-800 disabled:opacity-60">
+                            <button type="button" wire:click="importAforroNetPosition" wire:loading.attr="disabled" wire:target="importAforroNetPosition,aforroNetFile,analyzeAforroNetFile" class="rounded-xl bg-teal-700 px-5 py-2.5 text-xs font-black text-white hover:bg-teal-800 disabled:opacity-60">
                                 <span wire:loading.remove wire:target="importAforroNetPosition">Confirmar e importar</span><span wire:loading wire:target="importAforroNetPosition">A importar...</span>
                             </button>
                         </div>

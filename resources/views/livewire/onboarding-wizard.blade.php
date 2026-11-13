@@ -18,65 +18,125 @@
         </div>
 
         <div class="overflow-y-auto custom-scrollbar" style="max-height: calc(90vh - 6px)">
+            @php
+                $stepEncouragement = [
+                    1 => [
+                        'Grandes planos começam com um pequeno passo — e, felizmente, sem calculadora olímpica.',
+                        'Preparado para pôr as finanças em ordem? Prometemos não pedir flexões!',
+                        'Vamos dar um GPS ao teu dinheiro. Sem recalcular a rota a cada café.',
+                    ],
+                    2 => [
+                        'Um bom nome para o teu espaço: mais fácil de encontrar do que as chaves de manhã.',
+                        'Dá um nome ao teu espaço financeiro. «Fortuna secreta» também é uma opção!',
+                        'O teu dinheiro merece uma morada com estilo — sem renda nem condomínio.',
+                    ],
+                    3 => [
+                        'Dá uma casa ao teu dinheiro. Ele promete não deixar as meias espalhadas!',
+                        'Contas organizadas, dinheiro localizado — as moedas do sofá continuam por tua conta.',
+                        'Adiciona as tuas contas: até o mealheiro merece um lugar na equipa.',
+                    ],
+                    4 => [
+                        'Vamos conhecer os teus rendimentos — os euros também gostam de se apresentar.',
+                        'Configura o teu salário: fazer contas aos impostos sem calculadora é que era castigo.',
+                        'Dá os detalhes do salário e deixa as contas connosco. O café continua a ser contigo.',
+                    ],
+                    5 => [
+                        'Toda a ajuda conta — até os euros gostam de ter mais do que uma porta de entrada.',
+                        'Rendas, trabalhos extra ou pensões: os teus rendimentos querem fazer parte da festa.',
+                        'Cada fonte de rendimento conta. Até os euros gostam de trabalhar em equipa.',
+                    ],
+                    6 => [
+                        'O dinheiro não cresce em árvores, mas um portefólio organizado já é um bom começo.',
+                        'Regista os teus investimentos: acompanhar o crescimento é melhor do que olhar para um vaso vazio.',
+                        'A tua carteira de investimentos merece atenção — e não ocupa espaço no bolso.',
+                    ],
+                    7 => [
+                        'Traz o extrato: hoje os teus movimentos não precisam de jogar às escondidas.',
+                        'Importa o extrato e deixa os movimentos aparecerem. Os recibos já se podem reformar.',
+                        'Um extrato de cada vez: até os movimentos bancários precisam de ser apresentados.',
+                    ],
+                    8 => [
+                        'Vamos conhecer as assinaturas antes que uma delas se renove em modo ninja.',
+                        'Regista as tuas assinaturas: até o streaming merece um papel nos créditos.',
+                        'Descobre para onde vão os pagamentos recorrentes — sem caça ao tesouro no extrato.',
+                    ],
+                    9 => [
+                        'Explora os teus hubs: organizar despesas é menos assustador do que procurar aquele recibo.',
+                        'Há um hub para cada plano. Não precisas de um mapa do tesouro para os encontrar.',
+                        'Explora as ferramentas ao teu ritmo: nenhuma foge se fizeres uma pausa para café.',
+                    ],
+                    10 => [
+                        'Missão cumprida! O teu dinheiro já tem mapa — agora falta-lhe só não fugir para os saldos.',
+                        'Tudo pronto! As tuas finanças já têm um ponto de partida e tu mereces um aplauso.',
+                        'Chegaste ao fim da configuração. A calculadora agradece o trabalho em equipa!',
+                    ],
+                ];
+            @endphp
+            @if(isset($stepEncouragement[$step], $encouragementIndexes[$step]))
+                <p class="mx-5 mt-5 flex items-start gap-3 rounded-2xl bg-indigo-50 px-4 py-3 text-sm font-semibold leading-6 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300 sm:mx-9">
+                    <flux:icon name="sparkles" class="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+                    <span data-onboarding-encouragement>{{ $stepEncouragement[$step][$encouragementIndexes[$step]] }}</span>
+                </p>
+            @endif
 
             {{-- ─────────────────────────────────── --}}
             {{-- PASSO 1: BOAS-VINDAS                --}}
             {{-- ─────────────────────────────────── --}}
             @if($step === 1)
-            <div class="p-10 space-y-8">
-                <div class="text-center space-y-4">
-                    <div class="size-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl shadow-indigo-500/30">
-                        <flux:icon name="sparkles" class="size-10 text-white" />
-                    </div>
-                    <div>
-                        <h1 class="text-3xl font-black italic tracking-tighter dark:text-white">
-                            Bem-vindo, {{ auth()->user()->name }}! 👋
-                        </h1>
-                        <p class="text-zinc-500 font-medium mt-2">Vamos configurar o teu espaço financeiro em menos de 2 minutos.</p>
+            <div class="p-6 sm:p-9 space-y-6">
+                <div class="flex items-center justify-between gap-4">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-indigo-700 dark:text-indigo-300">
+                        <flux:icon name="sparkles" class="size-4" />
+                        Primeiros passos
+                    </span>
+                    <span class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Passo 1 de {{ $totalSteps }}</span>
+                </div>
+
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-zinc-900 dark:text-white">
+                        Bem-vindo, {{ auth()->user()->name }}! 👋
+                    </h1>
+                    <p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                        Vamos preparar o teu espaço financeiro. Podes saltar alguns passos e completar os dados mais tarde.
+                    </p>
+                </div>
+
+                <div>
+                    <h2 class="mb-3 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">O que podes explorar</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div class="flex items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3.5">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400"><flux:icon name="chart-bar-square" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Visão financeira</p><p class="mt-0.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">Acompanha receitas, despesas e investimentos.</p></div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3.5">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"><flux:icon name="arrow-trending-up" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Receitas e despesas</p><p class="mt-0.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">Organiza salários, rendimentos e gastos.</p></div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3.5">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400"><flux:icon name="sparkles" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Ferramentas de IA</p><p class="mt-0.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">Analisa faturas e consulta o CFO Inteligente.</p></div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3.5">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400"><flux:icon name="trophy" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Metas e progresso</p><p class="mt-0.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">Define objetivos e acompanha as tuas conquistas.</p></div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3.5">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400"><flux:icon name="globe-alt" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Finance Connect</p><p class="mt-0.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">Partilha conquistas e segue outros membros.</p></div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3.5">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-500/15 text-sky-700 dark:text-sky-400"><flux:icon name="building-office" class="size-5" /></span>
+                            <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Área empresarial</p><p class="mt-0.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">Gere o teu negócio com o plano Business.</p></div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl p-5">
-                        <flux:icon name="chart-bar-square" class="size-7 text-indigo-500 mb-3" />
-                        <p class="text-sm font-black dark:text-white">Dashboard Financeiro</p>
-                        <p class="text-xs text-zinc-500 mt-1">Visão completa das tuas receitas, despesas e investimentos.</p>
-                    </div>
-                    <div class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 rounded-2xl p-5">
-                        <flux:icon name="arrow-trending-up" class="size-7 text-emerald-500 mb-3" />
-                        <p class="text-sm font-black dark:text-white">Controlo de Receitas</p>
-                        <p class="text-xs text-zinc-500 mt-1">Regista salários, rendimentos extra e acompanha tudo.</p>
-                    </div>
-                    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30 rounded-2xl p-5">
-                        <flux:icon name="sparkles" class="size-7 text-amber-500 mb-3" />
-                        <p class="text-sm font-black dark:text-white">Scanner IA de Faturas</p>
-                        <p class="text-xs text-zinc-500 mt-1">Fotografa qualquer fatura e a IA extrai os dados automaticamente.</p>
-                    </div>
-                    <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30 rounded-2xl p-5">
-                        <flux:icon name="globe-alt" class="size-7 text-purple-500 mb-3" />
-                        <p class="text-sm font-black dark:text-white">Finance Connect</p>
-                        <p class="text-xs text-zinc-500 mt-1">Rede social financeira — partilha conquistas e segue amigos.</p>
-                    </div>
-                    <div class="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30 rounded-2xl p-5">
-                        <flux:icon name="trophy" class="size-7 text-rose-500 mb-3" />
-                        <p class="text-sm font-black dark:text-white">Metas & Gamificação</p>
-                        <p class="text-xs text-zinc-500 mt-1">Define objetivos, ganha XP e sobe de nível financeiro.</p>
-                    </div>
-                    <div class="bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800/30 rounded-2xl p-5">
-                        <flux:icon name="building-office" class="size-7 text-sky-500 mb-3" />
-                        <p class="text-sm font-black dark:text-white">Área Empresarial</p>
-                        <p class="text-xs text-zinc-500 mt-1">Faturação, clientes, P&L e gestão completa de negócio.</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between pt-2">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Passo 1 de {{ $totalSteps }}</p>
-                    <button wire:click="nextStep"
-                        class="flex items-center gap-2 px-8 h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02]">
-                        Começar
-                        <flux:icon name="arrow-right" class="size-4" />
-                    </button>
-                </div>
+                @include('livewire.partials.onboarding-footer', [
+                    'footerStep' => $step, 'footerTotal' => $totalSteps,
+                    'footerPrevious' => null, 'footerSkip' => null,
+                    'footerNext' => 'nextStep', 'footerSubmit' => false,
+                    'footerNextLabel' => 'Começar configuração', 'footerLoadingTarget' => 'nextStep',
+                ])
             </div>
             @endif
 
@@ -90,10 +150,10 @@
 
 
 {{-- ─────────────────────────────────── --}}
-{{-- PASSO 2: CONTAS BANCÁRIAS           --}}
+{{-- PASSO 3: CONTAS BANCÁRIAS           --}}
 {{-- ─────────────────────────────────── --}}
-@if($step === 2)
-<div class="p-10 space-y-8">
+@if($step === 3)
+<div class="p-6 sm:p-10 space-y-8">
     <div class="flex items-center gap-4">
         <div class="size-14 bg-sky-600 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
             <flux:icon name="building-library" class="size-7 text-white" />
@@ -113,21 +173,26 @@
                         <button type="button" wire:click="removeBankAccount({{ $index }})" class="text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-600">Remover</button>
                     @endif
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input type="text" wire:model="bankAccounts.{{ $index }}.name" placeholder="Nome da conta (ex.: Conta principal)" class="w-full bg-white dark:bg-zinc-950 border-2 border-zinc-200 dark:border-zinc-800 focus:border-sky-500 rounded-2xl py-3.5 px-4 text-sm font-bold dark:text-white outline-none transition-all">
-                    <input type="text" wire:model="bankAccounts.{{ $index }}.bank_name" placeholder="Banco (opcional)" class="w-full bg-white dark:bg-zinc-950 border-2 border-zinc-200 dark:border-zinc-800 focus:border-sky-500 rounded-2xl py-3.5 px-4 text-sm font-bold dark:text-white outline-none transition-all">
-                    <select wire:model="bankAccounts.{{ $index }}.type" class="w-full bg-white dark:bg-zinc-950 border-2 border-zinc-200 dark:border-zinc-800 focus:border-sky-500 rounded-2xl py-3.5 px-4 text-sm font-bold dark:text-white outline-none transition-all">
-                        <option value="corrente">Conta à ordem</option>
-                        <option value="poupanca">Conta poupança</option>
-                        <option value="credito">Cartão de crédito</option>
-                        <option value="cash">Carteira / Dinheiro</option>
-                    </select>
-                    <input type="number" step="0.01" wire:model="bankAccounts.{{ $index }}.balance" placeholder="Saldo atual (€)" class="w-full bg-white dark:bg-zinc-950 border-2 border-zinc-200 dark:border-zinc-800 focus:border-sky-500 rounded-2xl py-3.5 px-4 text-sm font-bold dark:text-white outline-none transition-all">
-                    <input type="text" wire:model="bankAccounts.{{ $index }}.iban" placeholder="IBAN (opcional)" class="sm:col-span-2 w-full bg-white dark:bg-zinc-950 border-2 border-zinc-200 dark:border-zinc-800 focus:border-sky-500 rounded-2xl py-3.5 px-4 text-sm font-bold dark:text-white outline-none transition-all">
-                </div>
+                @php
+                    $accountFields = [];
+                    foreach (['name', 'type', 'balance', 'bank_name', 'currency', 'account_number', 'iban', 'holder_name', 'swift', 'color', 'alert_below', 'is_business', 'include_in_total'] as $field) {
+                        $accountFields[$field] = "bankAccounts.$index.$field";
+                    }
+                @endphp
+                @include('livewire.partials.bank-account-form', [
+                    'accountFields' => $accountFields,
+                    'modePath' => "bankAccounts.$index.entry_mode", 'entryMode' => $account['entry_mode'],
+                    'proofPath' => "ibanProofs.$index", 'proofInputId' => "onboarding-iban-proof-$index",
+                    'proofMessage' => $account['proof_message'], 'formColor' => $account['color'],
+                ])
             </div>
         @endforeach
         <button type="button" wire:click="addBankAccount" class="w-full h-12 border-2 border-dashed border-sky-200 dark:border-sky-900 text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all">+ Adicionar outra conta</button>
+        @error('bankAccounts') <p role="alert" class="text-xs text-red-600">{{ $message }}</p> @enderror
+        @error('ibanProofs') <p role="alert" class="text-xs text-red-600">{{ $message }}</p> @enderror
+        @if(collect($savedAccountIds)->contains(fn ($id) => $id !== null))
+            <p class="text-xs text-zinc-500">Remover uma conta deste passo não apaga uma conta já guardada no Banco.</p>
+        @endif
     </div>
 
     <div class="bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800/30 rounded-2xl p-4 flex items-start gap-3">
@@ -135,20 +200,20 @@
         <p class="text-xs text-zinc-600 dark:text-zinc-400 font-medium">O saldo inicial serve apenas para começar o teu controlo financeiro. Podes alterar estes dados mais tarde.</p>
     </div>
 
-    <div class="flex items-center justify-between pt-2">
-        <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Passo 2 de {{ $totalSteps }}</p>
-        <div class="flex items-center gap-3">
-            <button wire:click="skipStep" class="px-5 h-12 text-zinc-400 hover:text-zinc-600 font-bold uppercase text-xs tracking-widest transition-colors">Saltar</button>
-            <button wire:click="nextStep" class="flex items-center gap-2 px-8 h-12 bg-sky-600 hover:bg-sky-700 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg shadow-sky-500/20 transition-all hover:scale-[1.02]">Guardar e Continuar <flux:icon name="arrow-right" class="size-4" /></button>
-        </div>
-    </div>
+    @include('livewire.partials.onboarding-footer', [
+        'footerStep' => $step, 'footerTotal' => $totalSteps,
+        'footerPrevious' => 'previousStep', 'footerSkip' => 'skipStep',
+        'footerNext' => 'nextStep', 'footerSubmit' => false,
+        'footerNextLabel' => 'Guardar e Continuar',
+        'footerLoadingTarget' => 'nextStep,'.implode(',', array_map(fn ($index) => 'ibanProofs.'.$index, array_keys($bankAccounts))),
+    ])
 </div>
 @endif
 
-{{-- PASSO 3: FONTE DE RENDIMENTO        --}}
+{{-- PASSO 4: FONTE DE RENDIMENTO        --}}
 {{-- ─────────────────────────────────── --}}
-@if($step === 3)
-<div class="p-10 space-y-8">
+@if($step === 4)
+<div class="p-5 sm:p-10 space-y-8">
 
     {{-- HEADER --}}
     <div class="flex items-center gap-4">
@@ -210,6 +275,13 @@
     </div>
 
 
+    <div class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 rounded-2xl p-4 flex items-start gap-3">
+        <flux:icon name="shield-check" class="size-5 text-emerald-500 shrink-0 mt-0.5" />
+        <p class="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+            Os teus dados guardados são privados e só tu (e quem convidares para o teu workspace) os pode ver. Se usares o scanner, a fotografia é enviada ao fornecedor de IA.
+        </p>
+    </div>
+
     {{-- FONTE DE RENDIMENTO --}}
     <div class="space-y-5">
 
@@ -237,323 +309,19 @@
 {{-- 💼 EMPREGO                          --}}
 {{-- ═══════════════════════════════════ --}}
 @if($salarySource === 'emprego')
+            @php
+                $user = auth()->user();
+                $activeWorkspace = $user->current_workspace_id ? $user->workspaces()->whereKey($user->current_workspace_id)->first() : null;
+                $canManageOnboarding = $activeWorkspace && ! $user->isViewer()
+                    && (! in_array($activeWorkspace->type, ['business', 'company'], true)
+                        || app(\App\Services\BusinessAccessService::class)->can('manage_financials', $user, $activeWorkspace));
+            @endphp
+            @if($canManageOnboarding)
+                <livewire:onboarding-salary :salary-id="$savedSalaryId" :footer-total="$totalSteps" :key="'onboarding-salary-'.($savedSalaryId ?? 'new')" />
+            @else
+                <p class="rounded-2xl bg-rose-50 p-4 text-sm text-rose-700">Não existe um espaço financeiro ativo com permissão para guardar o salário. Podes saltar este passo.</p>
+            @endif
 
-    {{-- DESCRIÇÃO --}}
-    <div class="relative">
-        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-emerald-600 z-10">
-            Descrição
-        </label>
-
-        <input
-            type="text"
-            wire:model="salaryDescription"
-            placeholder="Ex: Salário Mensal - Empresa X"
-            class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-emerald-500 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white outline-none transition-all"
-        >
-    </div>
-
-
-    {{-- BRUTO / LÍQUIDO --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-        {{-- VALOR BRUTO --}}
-        <div class="relative group">
-
-            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-zinc-400 z-10">
-                Valor Bruto (€)
-            </label>
-
-            <input
-                type="number"
-                step="0.01"
-                min="0"
-                wire:model.live="salaryGross"
-                placeholder="0,00"
-                class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-indigo-500 rounded-2xl py-4 px-5 text-xl font-black text-zinc-500 outline-none transition-all"
-            >
-
-        </div>
-
-
-        {{-- VALOR LÍQUIDO --}}
-        <div class="relative group">
-
-            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-emerald-600 z-10">
-                Valor Líquido (€)
-            </label>
-
-            <input
-                type="number"
-                step="0.01"
-                wire:model.live="salaryAmount"
-                placeholder="0,00"
-                class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-emerald-500/30 rounded-2xl py-4 px-5 text-xl font-black text-emerald-600 outline-none transition-all"
-            >
-
-        </div>
-
-    </div>
-
-
-    {{-- ═══════════════════════════════════ --}}
-    {{-- 🍽️ SUBSÍDIO DE ALIMENTAÇÃO         --}}
-    {{-- ═══════════════════════════════════ --}}
-
-    <div class="mt-2 p-5 bg-amber-50 dark:bg-amber-500/10 rounded-[1.5rem] border border-amber-200 dark:border-amber-500/20">
-
-        <div class="flex items-center gap-2 mb-4">
-
-            <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
-                <span class="text-lg">🍽️</span>
-            </div>
-
-            <div>
-                <h3 class="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
-                    Subsídio de Alimentação
-                </h3>
-
-                <p class="text-[10px] text-amber-600/70 dark:text-amber-400/70 mt-0.5">
-                    Personaliza o valor recebido por dia
-                </p>
-            </div>
-
-        </div>
-
-
-        {{-- VALOR / DIAS --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-            {{-- VALOR POR DIA --}}
-            <div class="relative">
-
-                <label class="absolute left-4 -top-2.5 px-2 bg-amber-50 dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 z-10">
-                    Valor por dia
-                </label>
-
-                <div class="relative">
-
-                    <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        wire:model.live="mealAllowance"
-                        placeholder="0,00"
-                        class="w-full bg-white dark:bg-zinc-900 border-2 border-amber-200 dark:border-amber-500/20 focus:border-amber-500 rounded-2xl py-4 px-5 pr-16 text-xl font-black text-zinc-700 dark:text-white outline-none transition-all"
-                    >
-
-                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-400">
-                        €/dia
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            {{-- DIAS TRABALHADOS --}}
-            <div class="relative">
-
-                <label class="absolute left-4 -top-2.5 px-2 bg-amber-50 dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 z-10">
-                    Dias trabalhados
-                </label>
-
-                <div class="relative">
-
-                    <input
-                        type="number"
-                        min="1"
-                        max="31"
-                        wire:model.live="workingDays"
-                        placeholder="22"
-                        class="w-full bg-white dark:bg-zinc-900 border-2 border-amber-200 dark:border-amber-500/20 focus:border-amber-500 rounded-2xl py-4 px-5 pr-16 text-xl font-black text-zinc-700 dark:text-white outline-none transition-all"
-                    >
-
-                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-400">
-                        dias
-                    </span>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        {{-- TOTAL MENSAL --}}
-        <div class="mt-4 bg-white/70 dark:bg-zinc-900/70 rounded-2xl p-4 border border-amber-200/70 dark:border-amber-500/10">
-
-            <div class="flex items-center justify-between">
-
-                <div>
-
-                    <p class="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                        Subsídio mensal estimado
-                    </p>
-
-                    <p class="text-[10px] text-zinc-400 mt-1">
-                        {{ number_format((float) $mealAllowance, 2, ',', ' ') }} €
-                        ×
-                        {{ $workingDays }} dias
-                    </p>
-
-                </div>
-
-                <p class="text-xl font-black text-amber-700 dark:text-amber-300">
-                    {{ number_format(
-                        (float) $mealAllowance * (int) $workingDays,
-                        2,
-                        ',',
-                        ' '
-                    ) }} €
-                </p>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    {{-- ═══════════════════════════════════ --}}
-    {{-- AUDIT                              --}}
-    {{-- ═══════════════════════════════════ --}}
-
-    @if($salaryGross > 0 && $salaryAmount > 0)
-
-        <div class="p-6 bg-zinc-950 text-white rounded-[2rem] border border-white/10 shadow-2xl space-y-4">
-
-            <div class="flex items-center justify-between border-b border-white/10 pb-3">
-
-                <div class="flex items-center gap-2">
-
-                    <flux:icon
-                        name="calculator"
-                        class="size-4 text-emerald-400"
-                    />
-
-                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 italic">
-                        Breakdown de Descontos
-                    </h3>
-
-                </div>
-
-                <span class="text-[9px] font-black bg-white/5 px-2 py-0.5 rounded uppercase text-zinc-400">
-                    Audit Automático
-                </span>
-
-            </div>
-
-
-            <div class="space-y-2 font-mono text-[11px]">
-
-                {{-- SEGURANÇA SOCIAL --}}
-                <div class="flex justify-between text-zinc-400">
-
-                    <span>
-                        SEGURANÇA SOCIAL
-                    </span>
-
-                    <span class="font-bold text-red-400">
-                        - {{ number_format(
-                            $calculatedSS,
-                            2,
-                            ',',
-                            ' '
-                        ) }} €
-                    </span>
-
-                </div>
-
-
-                {{-- IRS --}}
-                <div class="flex justify-between text-zinc-400">
-
-                    <span>
-                        RETENÇÃO IRS
-                    </span>
-
-                    <span class="font-bold text-red-400">
-                        - {{ number_format(
-                            $calculatedIRS,
-                            2,
-                            ',',
-                            ' '
-                        ) }} €
-                    </span>
-
-                </div>
-
-
-                {{-- SUBSÍDIO --}}
-                <div class="flex justify-between text-zinc-400">
-
-                    <span>
-                        SUBSÍDIO ALIMENTAÇÃO
-                    </span>
-
-                    <span class="font-bold text-emerald-400">
-                        + {{ number_format(
-                            $calculatedSA,
-                            2,
-                            ',',
-                            ' '
-                        ) }} €
-                    </span>
-
-                </div>
-
-
-                {{-- TOTAL --}}
-                <div class="pt-3 border-t border-dashed border-white/10 flex justify-between items-center">
-
-                    <span class="text-zinc-500 font-black uppercase text-[9px]">
-                        Líquido estimado:
-                    </span>
-
-                    <span class="text-lg font-black text-white italic">
-                        {{ number_format(
-                            $salaryAmount,
-                            2,
-                            ',',
-                            ' '
-                        ) }} €
-                    </span>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-
-
-    {{-- ═══════════════════════════════════ --}}
-    {{-- DIA DE RECEBIMENTO                 --}}
-    {{-- ═══════════════════════════════════ --}}
-
-    <div class="relative w-40">
-
-        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-zinc-400 z-10">
-            Dia de Recebimento
-        </label>
-
-        <input
-            type="number"
-            min="1"
-            max="31"
-            wire:model.live="salaryDay"
-            class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-emerald-500 rounded-2xl py-4 px-5 text-xl font-black text-center dark:text-white outline-none transition-all"
-        >
-
-    </div>
-
-@endif
-
-
-        {{-- ═══════════════════════════════════ --}}
-        {{-- 💻 FREELANCE                         --}}
-        {{-- ═══════════════════════════════════ --}}
         @elseif($salarySource === 'freelance')
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1037,44 +805,15 @@
     </div>
 
 
-    {{-- AVISO DE PRIVACIDADE --}}
-    <div class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 rounded-2xl p-4 flex items-start gap-3">
-
-        <flux:icon name="shield-check" class="size-5 text-emerald-500 shrink-0 mt-0.5" />
-
-        <p class="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
-            Os teus dados são privados e só tu (e quem convidares para o teu workspace) os pode ver.
-        </p>
-
-    </div>
-
-
-    {{-- FOOTER --}}
-    <div class="flex items-center justify-between pt-2">
-    <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-        Passo {{ $step }} de {{ $totalSteps }}
-    </p>
-
-    <div class="flex items-center gap-3">
-        {{-- BOTÃO VOLTAR --}}
-        <button wire:click="previousStep"
-            class="px-5 h-12 text-zinc-400 hover:text-zinc-600 font-bold uppercase text-xs tracking-widest transition-colors flex items-center gap-2">
-            <flux:icon name="arrow-left" class="size-3" />
-            Voltar
-        </button>
-
-        <button wire:click="skipStep"
-            class="px-5 h-12 text-zinc-400 hover:text-zinc-600 font-bold uppercase text-xs tracking-widest transition-colors">
-            Saltar
-        </button>
-
-        <button wire:click="nextStep"
-            class="flex items-center gap-2 px-8 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]">
-            Guardar e Continuar
-            <flux:icon name="arrow-right" class="size-4" />
-        </button>
-    </div>
-</div>
+    @if($salarySource !== 'emprego' || ! $canManageOnboarding)
+        @include('livewire.partials.onboarding-footer', [
+            'footerStep' => $step, 'footerTotal' => $totalSteps,
+            'footerPrevious' => 'previousStep', 'footerSkip' => 'skipStep',
+            'footerNext' => 'nextStep', 'footerSubmit' => false,
+            'footerNextLabel' => $salarySource === 'emprego' ? null : 'Guardar e Continuar',
+            'footerLoadingTarget' => 'nextStep',
+        ])
+    @endif
 
 </div>
 @endif
@@ -1098,76 +837,72 @@
 
 
             {{-- ─────────────────────────────────── --}}
-            {{-- PASSO 4: WORKSPACE                  --}}
+            {{-- PASSO 2: WORKSPACE                  --}}
             {{-- ─────────────────────────────────── --}}
-            @if($step === 4)
-            <div class="p-10 space-y-8">
-                <div class="flex items-center gap-4">
-                    <div class="size-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
-                        <flux:icon name="user-group" class="size-7 text-white" />
+            @if($step === 2)
+            <form wire:submit.prevent="nextStep" class="space-y-6 p-5 sm:p-9">
+                <div class="flex items-center justify-between gap-4">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+                        <flux:icon name="squares-2x2" class="size-4" />
+                        Espaço financeiro
+                    </span>
+                    <span class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Passo 2 de {{ $totalSteps }}</span>
+                </div>
+
+                <div class="flex items-start gap-4">
+                    <div class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/20">
+                        <flux:icon name="user-group" class="size-6" />
                     </div>
-                    <div>
-                        <h2 class="text-2xl font-black italic tracking-tighter dark:text-white">O teu espaço financeiro</h2>
-                        <p class="text-sm text-zinc-500 mt-0.5">Dá um nome ao teu workspace — pode ser só para ti ou partilhado com família/sócios.</p>
+                    <div class="min-w-0">
+                        <h2 class="text-2xl font-black tracking-tight text-zinc-900 dark:text-white">O teu espaço financeiro</h2>
+                        <p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Escolhe um nome para identificares o espaço onde organizas as tuas finanças.</p>
                     </div>
                 </div>
 
-                <div class="space-y-5">
-                    <div class="relative">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-950 text-[10px] font-bold uppercase tracking-widest text-indigo-600 z-10">Nome do Workspace</label>
-                        <input type="text"
-    wire:model.blur="workspaceName" {{-- .blur garante que o valor é enviado ao sair do campo --}}
-    placeholder="Ex: Família Silva..."
-    class="w-full bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus:border-indigo-500 rounded-2xl py-4 px-5 text-sm font-bold dark:text-white outline-none transition-all"> </div>
+                <div class="space-y-4 rounded-3xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
+                    <div>
+                        <label for="onboarding-workspace-name" class="block text-sm font-bold text-zinc-900 dark:text-white">Nome do espaço</label>
+                        <p id="onboarding-workspace-help" class="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">Usa um nome que seja fácil de reconhecer.</p>
+                        <input id="onboarding-workspace-name" type="text" wire:model.blur="workspaceName" aria-describedby="onboarding-workspace-help"
+                            placeholder="Ex.: As Minhas Finanças"
+                            class="mt-3 h-12 w-full rounded-2xl border-2 border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white">
+                    </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <p class="text-xs font-bold text-zinc-700 dark:text-zinc-300">Precisas de inspiração?</p>
+                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Escolhe uma sugestão ou escreve o teu próprio nome.</p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
                         <button type="button" wire:click="$set('workspaceName', 'As Minhas Finanças')"
-                            class="p-4 bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 hover:border-indigo-400 rounded-2xl text-left transition-all group">
-                            <p class="text-lg mb-1">👤</p>
-                            <p class="text-xs font-black dark:text-white group-hover:text-indigo-600 transition-colors">Pessoal</p>
-                            <p class="text-[10px] text-zinc-400">Só para mim</p>
+                            class="rounded-2xl border p-3 text-left transition hover:border-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 {{ $workspaceName === 'As Minhas Finanças' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10' : 'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-950' }}">
+                            <span class="block text-lg" aria-hidden="true">👤</span>
+                            <span class="mt-1 block text-xs font-bold text-zinc-900 dark:text-white">As Minhas Finanças</span>
                         </button>
                         <button type="button" wire:click="$set('workspaceName', 'Família')"
-                            class="p-4 bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 hover:border-indigo-400 rounded-2xl text-left transition-all group">
-                            <p class="text-lg mb-1">👨‍👩‍👧</p>
-                            <p class="text-xs font-black dark:text-white group-hover:text-indigo-600 transition-colors">Familiar</p>
-                            <p class="text-[10px] text-zinc-400">Partilhado com família</p>
+                            class="rounded-2xl border p-3 text-left transition hover:border-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 {{ $workspaceName === 'Família' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10' : 'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-950' }}">
+                            <span class="block text-lg" aria-hidden="true">👨‍👩‍👧</span>
+                            <span class="mt-1 block text-xs font-bold text-zinc-900 dark:text-white">Família</span>
                         </button>
                         <button type="button" wire:click="$set('workspaceName', 'O Meu Negócio')"
-                            class="p-4 bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 hover:border-indigo-400 rounded-2xl text-left transition-all group">
-                            <p class="text-lg mb-1">🏢</p>
-                            <p class="text-xs font-black dark:text-white group-hover:text-indigo-600 transition-colors">Empresarial</p>
-                            <p class="text-[10px] text-zinc-400">Para o meu negócio</p>
+                            class="rounded-2xl border p-3 text-left transition hover:border-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 {{ $workspaceName === 'O Meu Negócio' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10' : 'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-950' }}">
+                            <span class="block text-lg" aria-hidden="true">🏢</span>
+                            <span class="mt-1 block text-xs font-bold text-zinc-900 dark:text-white">O Meu Negócio</span>
                         </button>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between pt-2">
-    <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-        Passo {{ $step }} de {{ $totalSteps }}
-    </p>
+                <div class="flex items-start gap-3 rounded-2xl border border-indigo-100 bg-indigo-50 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/30">
+                    <flux:icon name="information-circle" class="mt-0.5 size-5 shrink-0 text-indigo-500" />
+                    <p class="text-xs leading-5 text-zinc-600 dark:text-zinc-400">As sugestões alteram apenas o nome. Não criam outro espaço nem alteram quem tem acesso.</p>
+                </div>
 
-    <div class="flex items-center gap-3">
-        {{-- BOTÃO VOLTAR --}}
-        <button wire:click="previousStep"
-            class="px-5 h-12 text-zinc-400 hover:text-zinc-600 font-bold uppercase text-xs tracking-widest transition-colors flex items-center gap-2">
-            <flux:icon name="arrow-left" class="size-3" />
-            Voltar
-        </button>
-
-        <button wire:click="skipStep"
-            class="px-5 h-12 text-zinc-400 hover:text-zinc-600 font-bold uppercase text-xs tracking-widest transition-colors">
-            Saltar
-        </button>
-
-        <button wire:click="nextStep"
-            class="flex items-center gap-2 px-8 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]">
-            Continuar
-            <flux:icon name="arrow-right" class="size-4" />
-        </button>
-    </div>
-</div>
-            </div>
+                @include('livewire.partials.onboarding-footer', [
+                    'footerStep' => $step, 'footerTotal' => $totalSteps,
+                    'footerPrevious' => 'previousStep', 'footerSkip' => 'skipStep',
+                    'footerNext' => 'nextStep', 'footerSubmit' => true,
+                    'footerNextLabel' => 'Continuar', 'footerLoadingTarget' => 'nextStep',
+                ])
+            </form>
             @endif
 
 
@@ -1182,10 +917,64 @@
 
 
 
-{{-- ─────────────────────────────────── --}}
-{{-- PASSO 4: EXPLORAÇÃO DE HUBS         --}}
-{{-- ─────────────────────────────────── --}}
-@if($step === 5)
+@if($step >= 5 && $step <= 8)
+    @php
+        $extraSteps = [
+            5 => ['title' => 'Adiciona outros rendimentos', 'description' => 'Escolhe uma fonte para abrir o formulário correspondente.', 'icon' => 'banknotes'],
+            6 => ['title' => 'Organiza os teus investimentos', 'description' => 'Adiciona os ativos que já tens à tua carteira.', 'icon' => 'chart-bar-square'],
+            7 => ['title' => 'Importa um extrato bancário', 'description' => 'Analisa e revê os movimentos antes de os importar.', 'icon' => 'document-arrow-up'],
+            8 => ['title' => 'Organiza as tuas assinaturas', 'description' => 'Regista serviços recorrentes para acompanhares os seus custos.', 'icon' => 'credit-card'],
+        ];
+        $extraStep = $extraSteps[$step];
+    @endphp
+    <div class="space-y-6 p-5 sm:p-9">
+        <div class="flex items-start gap-4">
+            <div class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/20">
+                <flux:icon name="{{ $extraStep['icon'] }}" class="size-6" />
+            </div>
+            <div>
+                <h2 class="text-2xl font-black tracking-tight text-zinc-900 dark:text-white">{{ $extraStep['title'] }}</h2>
+                <p class="mt-2 text-sm leading-6 text-zinc-500">{{ $extraStep['description'] }}</p>
+            </div>
+        </div>
+
+        @php
+            $user = auth()->user();
+            $activeWorkspace = $user->current_workspace_id ? $user->workspaces()->whereKey($user->current_workspace_id)->first() : null;
+            $canManageOnboarding = $activeWorkspace && ! $user->isViewer()
+                && (! in_array($activeWorkspace->type, ['business', 'company'], true)
+                    || app(\App\Services\BusinessAccessService::class)->can('manage_financials', $user, $activeWorkspace));
+        @endphp
+        @if($canManageOnboarding)
+            @switch($step)
+                @case(5)
+                    <livewire:onboarding-income wire:key="onboarding-income" />
+                    @break
+                @case(6)
+                    <livewire:onboarding-investment wire:key="onboarding-investment" />
+                    @break
+                @case(7)
+                    <livewire:onboarding-statement wire:key="onboarding-statement" />
+                    @break
+                @case(8)
+                    <livewire:onboarding-subscription wire:key="onboarding-subscription" />
+                    @break
+            @endswitch
+        @else
+            <p class="rounded-2xl bg-rose-50 p-4 text-sm text-rose-700">Não existe um espaço financeiro ativo com permissão para guardar dados. Podes saltar este passo.</p>
+        @endif
+
+        @include('livewire.partials.onboarding-footer', [
+            'footerStep' => $step, 'footerTotal' => $totalSteps,
+            'footerPrevious' => 'previousStep', 'footerSkip' => 'skipStep',
+            'footerNext' => 'nextStep', 'footerSubmit' => false,
+            'footerNextLabel' => 'Continuar', 'footerLoadingTarget' => 'nextStep',
+        ])
+    </div>
+@endif
+
+{{-- EXPLORAÇÃO DE HUBS --}}
+@if($step === 9)
 <div class="p-10 space-y-8"
      wire:key="step-4-exploration"
      x-data="{
@@ -1275,24 +1064,12 @@
         </div>
     </div>
 
-    {{-- FOOTER --}}
-    <div class="flex items-center justify-between pt-2">
-        <p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Passo 5 de {{ $totalSteps }}</p>
-
-        <div class="flex items-center gap-3">
-            <button wire:click="previousStep"
-                class="px-5 h-12 text-zinc-400 hover:text-zinc-600 font-bold uppercase text-xs tracking-widest transition-colors flex items-center gap-2">
-                <flux:icon name="arrow-left" class="size-3" />
-                Voltar
-            </button>
-
-            <button wire:click="nextStep"
-                class="flex items-center gap-2 px-10 h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02]">
-                Concluído, Continuar
-                <flux:icon name="arrow-right" class="size-4" />
-            </button>
-        </div>
-    </div>
+    @include('livewire.partials.onboarding-footer', [
+        'footerStep' => $step, 'footerTotal' => $totalSteps,
+        'footerPrevious' => 'previousStep', 'footerSkip' => null,
+        'footerNext' => 'nextStep', 'footerSubmit' => false,
+        'footerNextLabel' => 'Concluído, Continuar', 'footerLoadingTarget' => 'nextStep',
+    ])
 </div>
 @endif
 
@@ -1320,7 +1097,7 @@
             {{-- ─────────────────────────────────── --}}
             {{-- PASSO 6: CONCLUÍDO                  --}}
             {{-- ─────────────────────────────────── --}}
-            @if($step === 6)
+            @if($step === 10)
             <div class="p-10 space-y-8 text-center">
                 <div class="space-y-4">
                     <div class="size-24 bg-gradient-to-br from-emerald-400 to-indigo-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl shadow-indigo-500/30 animate-bounce">
@@ -1353,22 +1130,12 @@
                     </a>
                 </div>
 
-               <div class="pt-4 space-y-4">
-    {{-- BOTÃO PRINCIPAL --}}
-    <button wire:click="completeOnboarding"
-        class="w-full h-14 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black uppercase tracking-widest text-sm rounded-2xl shadow-2xl shadow-indigo-500/20 transition-all hover:scale-[1.02]">
-        🚀 Entrar na Plataforma
-    </button>
-
-    {{-- BOTÃO VOLTAR (PEQUENO E POR BAIXO) --}}
-    <div class="text-center">
-        <button wire:click="previousStep"
-            class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-zinc-600 transition-colors flex items-center justify-center gap-2 mx-auto">
-            <flux:icon name="arrow-left" class="size-3" />
-            Corrigir dados anteriores
-        </button>
-    </div>
-</div>
+                @include('livewire.partials.onboarding-footer', [
+                    'footerStep' => $step, 'footerTotal' => $totalSteps,
+                    'footerPrevious' => 'previousStep', 'footerSkip' => null,
+                    'footerNext' => 'completeOnboarding', 'footerSubmit' => false,
+                    'footerNextLabel' => 'Entrar na Plataforma', 'footerLoadingTarget' => 'completeOnboarding',
+                ])
             </div>
             @endif
 

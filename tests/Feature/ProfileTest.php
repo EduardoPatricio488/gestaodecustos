@@ -24,6 +24,9 @@ test('profile information can be updated', function () {
 
     $component = Volt::test('profile.update-profile-information-form')
         ->set('name', 'Test User')
+        ->set('date_of_birth', '1990-01-15')
+        ->set('country_of_origin', 'Brasil')
+        ->set('work_country', 'FR')
         ->call('updateProfileInformation');
 
     $component
@@ -36,6 +39,48 @@ test('profile information can be updated', function () {
     // O email é bloqueado por design (não editável neste formulário)
     $this->assertSame('Test User', $user->name);
     $this->assertSame($originalEmail, $user->email);
+    $this->assertSame('1990-01-15', $user->date_of_birth->toDateString());
+    $this->assertSame('Brasil', $user->country_of_origin);
+    $this->assertSame('FR', $user->work_country);
+});
+
+test('profile rejects a future date of birth', function () {
+    $user = User::factory()->create([
+        'date_of_birth' => '1990-01-15',
+    ]);
+
+    $this->actingAs($user);
+
+    Volt::test('profile.update-profile-information-form')
+        ->set('date_of_birth', now()->addDay()->toDateString())
+        ->call('updateProfileInformation')
+        ->assertHasErrors(['date_of_birth']);
+
+    $this->assertSame('1990-01-15', $user->fresh()->date_of_birth->toDateString());
+});
+
+test('profile rejects an invalid work country without modifying the stored country', function () {
+    $user = User::factory()->create(['work_country' => 'PT']);
+    $this->actingAs($user);
+
+    Volt::test('profile.update-profile-information-form')
+        ->set('work_country', 'XX')
+        ->call('updateProfileInformation')
+        ->assertHasErrors(['work_country']);
+
+    $this->assertSame('PT', $user->fresh()->work_country);
+});
+
+test('an existing free-text country of origin is preserved when updating the profile', function () {
+    $user = User::factory()->create(['country_of_origin' => 'Nome antigo']);
+    $this->actingAs($user);
+
+    Volt::test('profile.update-profile-information-form')
+        ->set('name', 'Novo Nome')
+        ->call('updateProfileInformation')
+        ->assertHasNoErrors();
+
+    $this->assertSame('Nome antigo', $user->fresh()->country_of_origin);
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {

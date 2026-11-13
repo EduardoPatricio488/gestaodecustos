@@ -86,6 +86,12 @@ class AiBrainAvailabilityTest extends TestCase
             ."- Atualiza os registos financeiros quando houver alterações.\n"
             ."- Confirma os compromissos futuros antes de elaborar planos.\n"
             ."- Analisa a carteira em função dos objetivos e do risco.\n\n"
+            ."**Valores vs Idade/País**\n"
+            ."- A idade é apenas contexto para interpretar os registos pessoais disponíveis.\n"
+            ."- Compara as receitas registadas com as despesas registadas sem calcular um saldo.\n"
+            ."- O país de origem não indica necessariamente o país de residência.\n"
+            ."- Não existem médias de outras pessoas da mesma idade para comparar.\n"
+            ."- Regista mais movimentos ao longo do tempo para melhorar esta análise.\n\n"
             ."**Resumo**\n"
             ."- Analisa os resultados antes de decidir.\n"
             ."- Confirma os dados em falta.\n"
@@ -291,6 +297,11 @@ class AiBrainAvailabilityTest extends TestCase
     public function test_report_uses_current_records_for_its_short_run_rate_forecast(): void
     {
         $this->travelTo(Carbon::parse('2026-11-12 12:00:00'));
+        $this->user->forceFill([
+            'date_of_birth' => '1990-01-01',
+            'country_of_origin' => 'Brasil',
+            'work_country' => 'PT',
+        ])->save();
         foreach (['2026-11-01', '2026-11-06', '2026-11-12', '2026-11-30'] as $date) {
             Expense::create([
                 'user_id' => $this->user->id, 'workspace_id' => $this->workspace->id,
@@ -307,7 +318,7 @@ class AiBrainAvailabilityTest extends TestCase
             'choices' => [['message' => ['content' => $this->exampleReport()]]],
         ])]);
 
-        app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace);
+        $result = app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace);
 
         $request = Http::recorded()->first()[0];
         preg_match('/ANÁLISE DETERMINÍSTICA DO BACKEND\n(.*?)\n\nMEMÓRIA/s', $request['messages'][0]['content'], $matches);
@@ -315,6 +326,12 @@ class AiBrainAvailabilityTest extends TestCase
         $this->assertSame(30, data_get($evidence, 'recorded_expenses_through_today'));
         $this->assertSame(40, data_get($evidence, 'recorded_income_through_today'));
         $this->assertSame(10, data_get($evidence, 'future_dated_expenses'));
+        $this->assertSame(36, data_get($evidence, 'profile_context.age_years'));
+        $this->assertSame('Brasil', data_get($evidence, 'profile_context.country_of_origin'));
+        $this->assertSame('Portugal', data_get($evidence, 'salary_age_country_benchmark.work_country'));
+        $this->assertSame(1476, data_get($evidence, 'salary_age_country_benchmark.mean_monthly_gross_eur'));
+        $this->assertStringContainsString('1.476,00 EUR brutos por mês em Portugal', $result['content']);
+        $this->assertStringContainsString('Eurostat, EARN_SES22_20 (2022)', $result['content']);
         $this->assertSame(75, data_get($evidence, 'forecast.projected_month_end_expenses'));
         $this->assertArrayNotHasKey('alternative_month_end_expenses', $evidence['forecast']);
         $this->assertArrayNotHasKey('alternative_saving', $evidence['forecast']);
@@ -323,7 +340,8 @@ class AiBrainAvailabilityTest extends TestCase
         $this->assertStringContainsString('500 a 700 palavras', $request['messages'][1]['content']);
         $this->assertStringContainsString('pelo menos cinco pontos distintos', $request['messages'][1]['content']);
         $this->assertSame(4000, $request['max_tokens']);
-        $this->assertStringContainsString('**Resultados**, **O que penso**, **Cenários**, **Pontos fortes**, **Pontos negativos**, **O que aconselho** e **Resumo**', $request['messages'][1]['content']);
+        $this->assertStringContainsString('**Resultados**, **O que penso**, **Cenários**, **Pontos fortes**, **Pontos negativos**, **O que aconselho**, **Valores vs Idade/País** e **Resumo**', $request['messages'][1]['content']);
+        $this->assertStringContainsString('Não compares rendimentos líquidos com a média bruta', $request['messages'][1]['content']);
         $this->assertStringContainsString('não os somes', $request['messages'][1]['content']);
         $this->assertStringContainsString('despesa pontual', $request['messages'][1]['content']);
         $this->assertStringContainsString('sem cortes arbitrários', $request['messages'][1]['content']);
@@ -342,6 +360,18 @@ class AiBrainAvailabilityTest extends TestCase
             $request['messages'][0]['content'],
             '"projected_month_end_expenses":null',
         ) && ! str_contains($request['messages'][0]['content'], '"alternative_month_end_expenses"'));
+    }
+
+    public function test_report_explains_when_there_is_no_salary_reference_for_the_work_country(): void
+    {
+        $this->user->forceFill(['date_of_birth' => '1990-01-15', 'work_country' => 'BR'])->save();
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::response([
+            'choices' => [['message' => ['content' => $this->exampleReport()]]],
+        ])]);
+
+        $result = app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace);
+
+        $this->assertStringContainsString('Não há referência disponível para este país e faixa etária', $result['content']);
     }
 
     public function test_no_alternative_scenario_is_provided_when_the_month_has_ended(): void
@@ -442,6 +472,27 @@ class AiBrainAvailabilityTest extends TestCase
 
         $this->assertSame($this->exampleReport(), $result['content']);
         Http::assertSentCount(2);
+    }
+
+    public function test_repeated_truncation_uses_a_compact_final_attempt(): void
+    {
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::sequence()
+            ->push(['choices' => [['finish_reason' => 'length', 'message' => ['content' => 'Primeiro fragmento']]], 'usage' => ['total_tokens' => 100]])
+            ->push(['choices' => [['finish_reason' => 'length', 'message' => ['content' => 'Segundo fragmento']]], 'usage' => ['total_tokens' => 80]])
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $this->exampleReport()]]], 'usage' => ['total_tokens' => 60]])]);
+
+        $result = app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace);
+
+        $this->assertSame($this->exampleReport(), $result['content']);
+        $this->assertSame(240, $result['tokens']);
+        Http::assertSentCount(3);
+        $requests = Http::recorded();
+        $prompt = $requests[2][0]['messages'][1]['content'];
+        $this->assertStringContainsString('exatamente cinco pontos curtos e distintos', $prompt);
+        $this->assertStringContainsString('**Valores vs Idade/País**', $prompt);
+        $this->assertStringNotContainsString('500 a 700 palavras', $prompt);
+        $this->assertStringNotContainsString('Segundo fragmento', json_encode($requests[2][0]['messages']));
+        $this->assertSame(['enabled' => false], $requests[2][0]['reasoning']);
     }
 
     public function test_garbled_success_response_is_retried_with_a_different_model(): void
@@ -632,6 +683,22 @@ class AiBrainAvailabilityTest extends TestCase
         $this->assertStringContainsString('cada um com pelo menos cinco pontos distintos', $requests[1][0]['messages'][1]['content']);
     }
 
+    public function test_repeated_insufficient_points_use_a_compact_final_attempt(): void
+    {
+        $incomplete = str_replace("\n- Revê as prioridades quando houver mais informação.", '', $this->exampleReport());
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::sequence()
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $incomplete]]]])
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $incomplete]]]])
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $this->exampleReport()]]]])]);
+
+        $this->assertSame($this->exampleReport(), app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace)['content']);
+        Http::assertSentCount(3);
+        $requests = Http::recorded();
+        $this->assertStringContainsString('exatamente cinco pontos curtos e distintos', $requests[2][0]['messages'][1]['content']);
+        $this->assertStringContainsString('**Valores vs Idade/País**', $requests[2][0]['messages'][1]['content']);
+        $this->assertStringNotContainsString('500 a 700 palavras', $requests[2][0]['messages'][1]['content']);
+    }
+
     public function test_each_topic_requires_five_points(): void
     {
         $report = $this->exampleReport();
@@ -656,7 +723,7 @@ class AiBrainAvailabilityTest extends TestCase
         foreach ($variants as $variant) {
             $this->assertSame($report, app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace)['content']);
         }
-        Http::assertSentCount(14);
+        Http::assertSentCount(16);
     }
 
     public function test_nested_points_do_not_satisfy_the_minimum_and_previous_report_is_preserved(): void
@@ -673,7 +740,7 @@ class AiBrainAvailabilityTest extends TestCase
             ->call('generateInsights')
             ->assertSet('aiAnalysis', 'Relatório anterior')
             ->assertSee('A IA não apresentou pelo menos cinco pontos em cada tópico.');
-        Http::assertSentCount(2);
+        Http::assertSentCount(3);
         $this->assertSame('Relatório anterior', Cache::get($key)['text']);
         $this->assertSame(0, AiActionLog::count());
     }
@@ -757,6 +824,60 @@ class AiBrainAvailabilityTest extends TestCase
             $this->assertStringContainsString('A falta de registos não prova ausência de recebimentos ou gastos', $request['messages'][1]['content']);
         }
         $this->assertStringNotContainsString('Uma despesa hipotética de 200 EUR', json_encode($requests[1][0]['messages']));
+    }
+
+    public function test_compact_final_attempt_preserves_backend_value_references(): void
+    {
+        Expense::create([
+            'user_id' => $this->user->id, 'workspace_id' => $this->workspace->id,
+            'description' => 'Despesa', 'amount' => 1234.56, 'spent_at' => now()->toDateString(),
+        ]);
+        $attempt = 0;
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => function (Request $request) use (&$attempt) {
+            $attempt++;
+            if ($attempt === 1) {
+                return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $this->exampleReport()."\n- Despesa de 987654 EUR."]]]]);
+            }
+            if ($attempt === 2) {
+                return Http::response(['choices' => [['finish_reason' => 'length', 'message' => ['content' => 'Relatório incompleto']]]]);
+            }
+
+            $prompt = $request['messages'][1]['content'];
+            $references = json_decode(substr($prompt, strrpos($prompt, "\n\n[") + 2), true, 512, JSON_THROW_ON_ERROR);
+            $amount = collect($references)->firstWhere('campo', 'recorded_expenses_through_today');
+
+            return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $this->exampleReport()."\n- Despesas: ".$amount['marcador'].'.']]]]);
+        }]);
+
+        $result = app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace);
+
+        $this->assertStringContainsString('Despesas: 1.234,56 EUR.', $result['content']);
+        $this->assertStringNotContainsString('[[V', $result['content']);
+        Http::assertSentCount(3);
+        $requests = Http::recorded();
+        $this->assertStringContainsString('nem compares despesas projetadas com rendimentos', $requests[2][0]['messages'][1]['content']);
+        $this->assertStringContainsString('usa exclusivamente estes marcadores', $requests[2][0]['messages'][1]['content']);
+    }
+
+    public function test_compact_final_attempt_still_rejects_unconfirmed_values(): void
+    {
+        $key = AiInsights::reportCacheKey($this->user);
+        Cache::put($key, ['text' => 'Relatório anterior', 'at' => now()->toIso8601String(), 'numeric_check_version' => 1]);
+        $invalid = $this->exampleReport()."\n- Despesa de 987654 EUR.";
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::sequence()
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $invalid]]]])
+            ->push(['choices' => [['finish_reason' => 'length', 'message' => ['content' => 'Relatório incompleto']]]])
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $invalid]]]])]);
+
+        Livewire::test(AiInsights::class)
+            ->call('generateInsights')
+            ->assertSet('aiAnalysis', 'Relatório anterior')
+            ->assertSee('A última resposta da IA não apresentou valores que fosse possível confirmar.')
+            ->assertDontSee('987654 EUR');
+
+        Http::assertSentCount(3);
+        $this->assertSame('Relatório anterior', Cache::get($key)['text']);
+        $this->assertSame(0, AiActionLog::count());
     }
 
     public function test_retry_rejects_unknown_references_and_reports_without_values(): void
@@ -864,6 +985,7 @@ class AiBrainAvailabilityTest extends TestCase
 
             Livewire::test(AiInsights::class)
                 ->assertSet('aiAnalysis', str_replace($old, $new, $cachedReport))
+                ->assertSeeHtml('<h3>Valores vs Idade/País</h3>')
                 ->assertSeeHtml('<h3>O que aconselho</h3>')
                 ->assertDontSeeHtml('<h3>O que aconselha</h3>');
         }
@@ -902,6 +1024,8 @@ class AiBrainAvailabilityTest extends TestCase
 
     public function test_incomplete_report_is_not_presented_as_success_after_retry(): void
     {
+        $key = AiInsights::reportCacheKey($this->user);
+        Cache::put($key, ['text' => 'Relatório anterior', 'at' => now()->toIso8601String(), 'numeric_check_version' => 1]);
         Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::response([
             'choices' => [['finish_reason' => 'length', 'message' => ['content' => 'Relatório incompleto']]],
         ])]);
@@ -912,7 +1036,8 @@ class AiBrainAvailabilityTest extends TestCase
             ->assertSee('A última resposta da IA foi cortada e o relatório ficou incompleto.')
             ->assertDontSee('Relatório incompleto')
             ->assertSet('aiAnalysis', 'Relatório anterior');
-        Http::assertSentCount(2);
+        Http::assertSentCount(3);
+        $this->assertSame('Relatório anterior', Cache::get($key)['text']);
         $this->assertSame(0, AiActionLog::count());
     }
 

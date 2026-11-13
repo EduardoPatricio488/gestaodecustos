@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -32,6 +33,9 @@ class CreateNewUser implements CreatesNewUsers
     {
         Validator::make($input, [
             ...$this->profileRules(),
+            'date_of_birth' => ['required', 'date', 'before_or_equal:today'],
+            'country_of_origin' => ['required', Rule::in(array_values(config('countries')))],
+            'work_country' => ['required', Rule::in(array_keys(config('countries')))],
             'password' => $this->passwordRules(),
         ])->validate();
 
@@ -39,6 +43,9 @@ class CreateNewUser implements CreatesNewUsers
 
         $user = User::create([
             'name' => $input['name'],
+            'date_of_birth' => $input['date_of_birth'],
+            'country_of_origin' => $input['country_of_origin'],
+            'work_country' => $input['work_country'],
             'email' => $input['email'],
             'password' => $input['password'],
             'verification_code_hash' => hash('sha256', $verificationCode),

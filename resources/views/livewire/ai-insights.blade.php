@@ -240,7 +240,7 @@
 
             @php
                 $reportMarkdown = preg_replace(
-                    '/^[ \t]*\*\*(Resultados|O que penso|Cenários|Pontos fortes|Pontos negativos|O que aconselho|Resumo):?\*\*[ \t]*$/imu',
+                    '/^[ \t]*\*\*(Resultados|O que penso|Cenários|Pontos fortes|Pontos negativos|O que aconselho|Valores vs Idade(?:\/País)?|Resumo):?\*\*[ \t]*$/imu',
                     '### $1',
                     $aiAnalysis
                 );

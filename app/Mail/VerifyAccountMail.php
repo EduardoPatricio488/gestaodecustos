@@ -16,6 +16,10 @@ class VerifyAccountMail extends Mailable implements ShouldQueue
     public function __construct($code)
     {
         $this->code = $code;
+
+        if (app()->environment('local')) {
+            $this->onConnection('sync');
+        }
     }
 
     public function build()

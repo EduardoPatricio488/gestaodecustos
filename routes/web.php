@@ -497,17 +497,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::post('/email/verification-notification', function (Request $request) {
     $user = $request->user();
     $newCode = (string) random_int(100000, 999999);
-    $user->update([
+    $user->forceFill([
         'verification_code' => null,
         'verification_code_hash' => hash('sha256', $newCode),
         'verification_code_expires_at' => now()->addMinutes(10),
         'verification_code_attempts' => 0,
-    ]);
+    ])->save();
     try {
         Mail::to($user->email)->send(new VerifyAccountMail($newCode));
 
         return back()->with('status', 'verification-link-sent');
     } catch (Exception $e) {
+        report($e);
         $user->update([
             'verification_code_hash' => null,
             'verification_code_expires_at' => null,

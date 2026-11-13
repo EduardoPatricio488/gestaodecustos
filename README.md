@@ -148,6 +148,19 @@ composer run dev
 
 Se iniciares apenas `php artisan serve`, inicia também `php artisan schedule:work` noutro terminal para executar as tarefas agendadas.
 
+Para receber emails de teste no MailHog local, inicia o MailHog e configura no `.env`:
+
+```env
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtp
+MAIL_HOST=127.0.0.1
+MAIL_PORT=1025
+MAIL_USERNAME=
+MAIL_PASSWORD=
+```
+
+Consulta os emails em http://localhost:8025. Em ambiente `local`, os códigos de verificação são enviados imediatamente, sem depender de um worker; o MailHog não entrega emails a destinatários reais. Em produção mantém-se o envio pela fila configurada.
+
 ## Produção
 
 Para produção, configurar no host:

@@ -29,6 +29,7 @@ class AiBrainService
         'pontos fortes' => 'Pontos fortes',
         'pontos negativos' => 'Pontos negativos',
         'o que aconselho' => 'O que aconselho',
+        'valores vs idade/pais' => 'Valores vs Idade/País',
         'resumo' => 'Resumo',
     ];
 
@@ -210,7 +211,7 @@ class AiBrainService
         $systemPrompt = $this->systemPrompt($context, $reportSnapshot, $reportMemories, $intent);
         $personalReportGuardrails = 'Usa apenas os dados atuais fornecidos. Receitas registadas, salários pagos e rendimento recorrente previsto são fontes que podem sobrepor-se; não os somes nem assumas que um rendimento previsto foi recebido. A falta de registos não prova ausência de recebimentos ou gastos. Não determines saldo, défice ou equilíbrio financeiro, nem compares despesas projetadas com rendimentos: não há base suficiente para essas conclusões. A projeção de despesas é uma extrapolação incerta que não inclui despesas futuras agendadas nem prevê gastos irregulares. Totais por categoria não são necessariamente despesas individuais. Não inventes características, riscos, rentabilidades ou pagadores; a ausência de data de avaliação de um investimento não prova que o preço esteja desatualizado. Distingue valorização não realizada de rendimento efetivo. Não recomendes cortar despesas essenciais sem saber se são ajustáveis.';
         $reportRequest = $workspace->type === 'personal'
-            ? 'Prepara uma análise financeira para '.now()->translatedFormat('F Y')." em português de Portugal. Sê direto e dá a tua opinião fundamentada, como um consultor financeiro prudente. Desenvolve todos os tópicos de forma útil, idealmente num total de 500 a 700 palavras, sem introdução genérica, repetições ou parágrafos longos.\n\nUsa exatamente estes sete títulos, nesta ordem e cada um numa linha própria: **Resultados**, **O que penso**, **Cenários**, **Pontos fortes**, **Pontos negativos**, **O que aconselho** e **Resumo**. Em cada tópico, incluindo o Resumo, escreve pelo menos cinco pontos distintos, cada um numa linha própria começada por hífen. Desenvolve cada ponto de forma útil e concisa. Se faltarem dados, usa pontos para explicar limitações, informações por confirmar ou ações adequadas, sem inventar nem repetir factos. Não acrescentes texto só para atingir o número de palavras. Nos resultados, destaca o que for mais relevante entre investimentos, rendimentos, objetivos e despesas. Na opinião, interpreta os resultados, explica porquê e o que significam para a situação financeira; não te concentres apenas nas despesas. Em cenários, apresenta possibilidades condicionais realistas, com as respetivas hipóteses e consequências. Nos pontos fortes e negativos, explica a relevância dos aspetos observados e distingue riscos de dados em falta; se não houver base, diz isso sem inventar. Nos conselhos, indica ações prioritárias e específicas, explicando a sua utilidade. No resumo, sintetiza a avaliação global, a prioridade mais importante e os principais dados por confirmar, sem repetir as outras secções.\n\nUsa exclusivamente os dados financeiros atuais da análise determinística, não valores de memórias antigas. Indica valores monetários e percentagens exatamente como foram fornecidos pelo backend, com a moeda ou o símbolo %; não calcules nem arredondes outros valores. Os totais por categoria são somas, não despesas individuais. Distingue receitas registadas, salários registados como pagos e rendimentos recorrentes previstos, que podem sobrepor-se: não os somes nem interpretes a ausência de registos como prova de que não houve recebimento. Não calcules nem apresentes saldo mensal ou disponível, pois não há base suficiente. O custo pessoal de subscrições no backend exclui as marcadas como pagas pela empresa. Uma assinatura ativa não prova que seja paga pelo utilizador; não atribuas pagador a nenhuma assinatura individual sem prova.\n\nSe usares a projeção de despesas, identifica-a como extrapolação incerta que não acrescenta despesas futuras agendadas nem prevê gastos irregulares. Uma categoria concentrada pode incluir uma despesa pontual; pede confirmação antes de a tratar como recorrente. Outros cenários devem ser apenas qualitativos, com hipóteses explícitas, sem cortes arbitrários ou valores inventados. Não sugiras cortar despesas essenciais sem saber se são ajustáveis. Não inventes composição de despesas, rentabilidades, características dos investimentos ou recomendações personalizadas de compra e venda. Distingue valorizações não realizadas de rendimentos efetivos."
+            ? 'Prepara uma análise financeira para '.now()->translatedFormat('F Y')." em português de Portugal. Sê direto e dá a tua opinião fundamentada, como um consultor financeiro prudente. Desenvolve todos os tópicos de forma útil, idealmente num total de 500 a 700 palavras, sem introdução genérica, repetições ou parágrafos longos.\n\nUsa exatamente estes oito títulos, nesta ordem e cada um numa linha própria: **Resultados**, **O que penso**, **Cenários**, **Pontos fortes**, **Pontos negativos**, **O que aconselho**, **Valores vs Idade/País** e **Resumo**. Em cada tópico escreve pelo menos cinco pontos distintos, cada um numa linha própria começada por hífen. Desenvolve cada ponto de forma útil e concisa. Se faltarem dados, usa pontos para explicar limitações, informações por confirmar ou ações adequadas, sem inventar nem repetir factos. Não acrescentes texto só para atingir o número de palavras. Nos resultados, destaca o que for mais relevante entre investimentos, rendimentos, objetivos e despesas. Na opinião, interpreta os resultados, explica porquê e o que significam para a situação financeira; não te concentres apenas nas despesas. Em cenários, apresenta possibilidades condicionais realistas, com as respetivas hipóteses e consequências. Nos pontos fortes e negativos, explica a relevância dos aspetos observados e distingue riscos de dados em falta; se não houver base, diz isso sem inventar. Nos conselhos, indica ações prioritárias e específicas, explicando a sua utilidade. Em **Valores vs Idade/País**, compara as receitas e despesas pessoais registadas usando os dados atuais e a idade do utilizador apenas como contexto; usa o país de trabalho para a referência salarial e o país de origem apenas como contexto declarado, não como país de residência. Usa a referência salarial do Eurostat apenas quando estiver disponível no backend. Indica sempre a fonte, o ano de 2022, a faixa etária e que é uma média mensal bruta histórica. Compara apenas o salário base bruto registado, se existir na mesma moeda, como indicação aproximada e explicita que pode excluir complementos, que a média inclui tempo inteiro e parcial e que setor e horário podem diferir. Não compares rendimentos líquidos com a média bruta. Se não existir referência, salário bruto ou moeda comparável, explica a limitação e não inventes médias ou comparações. Não inventes referências de despesas ou custo de vida. Se a idade não estiver disponível, assinala essa limitação. Não calcules valores novos nesta secção. No resumo, sintetiza a avaliação global, a prioridade mais importante e os principais dados por confirmar, sem repetir as outras secções.\n\nUsa exclusivamente os dados financeiros atuais da análise determinística, não valores de memórias antigas. Indica valores monetários e percentagens exatamente como foram fornecidos pelo backend, com a moeda ou o símbolo %; não calcules nem arredondes outros valores. Os totais por categoria são somas, não despesas individuais. Distingue receitas registadas, salários registados como pagos e rendimentos recorrentes previstos, que podem sobrepor-se: não os somes nem interpretes a ausência de registos como prova de que não houve recebimento. Não calcules nem apresentes saldo mensal ou disponível, pois não há base suficiente. O custo pessoal de subscrições no backend exclui as marcadas como pagas pela empresa. Uma assinatura ativa não prova que seja paga pelo utilizador; não atribuas pagador a nenhuma assinatura individual sem prova.\n\nSe usares a projeção de despesas, identifica-a como extrapolação incerta que não acrescenta despesas futuras agendadas nem prevê gastos irregulares. Uma categoria concentrada pode incluir uma despesa pontual; pede confirmação antes de a tratar como recorrente. Outros cenários devem ser apenas qualitativos, com hipóteses explícitas, sem cortes arbitrários ou valores inventados. Não sugiras cortar despesas essenciais sem saber se são ajustáveis. Não inventes composição de despesas, rentabilidades, características dos investimentos ou recomendações personalizadas de compra e venda. Distingue valorizações não realizadas de rendimentos efetivos."
             : 'Prepara um diagnóstico financeiro para '.now()->translatedFormat('F Y')." como um consultor financeiro profissional, claro e direto. Escreve em português de Portugal, idealmente entre 100 e 160 palavras, sem introduções genéricas nem repetir os mesmos números.\n\nUsa estas secções curtas:\n- **Situação atual:** a conclusão mais importante, fundamentada em 1 ou 2 valores relevantes.\n- **Cenários:** apresenta o cenário de despesas ao ritmo atual e, quando fornecido pelo backend, o cenário alternativo de reduzir em 10% apenas as despesas ainda por ocorrer. Identifica a hipótese e a diferença estimada; esclarece que nenhum cenário acrescenta despesas futuras agendadas. Se não houver base suficiente, diz isso em vez de inventar previsões.\n- **Atenção:** o risco ou oportunidade mais relevante dos registos, incluindo investimentos ou orçamento apenas se fizer diferença.\n- **Próximos passos:** até 2 ações concretas, priorizadas e ligadas aos dados; se faltarem dados, propõe registá-los ou confirmá-los.\n\nOs movimentos de receitas, salários pagos e rendimento recorrente são fontes distintas que podem sobrepor-se: não os somes nem assumas que um rendimento recorrente já foi recebido. Distingue sempre registos até hoje de movimentos futuros, valores previstos de recebidos, e estimativas de factos. Uma projeção pelo ritmo diário é apenas um cenário hipotético, não uma garantia nem prevê despesas irregulares. Não assumas que não houve gastos por não haver registos. Não inventes dados, cenários numéricos, rentabilidades ou saldo disponível e não dês ordens de compra ou venda. Prefere os dados atuais do backend a memórias antigas.";
 
         if ($workspace->type === 'personal') {
@@ -233,8 +234,9 @@ class AiBrainService
         $maxReportTokens = $workspace->type === 'personal' ? 4000 : 2800;
         $compatibilityMode = false;
         $referenceValues = [];
+        $references = [];
         $failureReason = null;
-        for ($attempt = 0; $attempt < 2; $attempt++) {
+        for ($attempt = 0; $attempt < 3; $attempt++) {
             $model = $attempt === 0 && ! $compatibilityMode ? 'google/gemma-4-31b-it:free' : 'openrouter/free';
             $disableReasoning = ! $compatibilityMode || ($attempt > 0 && $failureReason === 'truncated');
             try {
@@ -282,6 +284,25 @@ class AiBrainService
                     $failureReason = 'unsupported_values';
                 } elseif ($normalized !== null && $failureReason === null) {
                     $content = $normalized;
+                    $benchmark = $reportSnapshot['salary_age_country_benchmark'];
+                    if ($benchmark['mean_monthly_gross_eur'] !== null) {
+                        $mean = number_format($benchmark['mean_monthly_gross_eur'], 2, ',', '.');
+                        $note = '- Referência histórica: '.$mean.' EUR brutos por mês em '.$benchmark['work_country'].', faixa '.$benchmark['age_group'].'. [Eurostat, EARN_SES22_20 (2022)]('.$benchmark['source_url'].'). Média de empresas com pelo menos 10 trabalhadores nos setores B-S, exceto administração pública; inclui tempo inteiro e parcial.';
+                        if (isset($benchmark['base_minus_historical_mean_eur'])) {
+                            $base = number_format($benchmark['recorded_monthly_base_gross'], 2, ',', '.');
+                            $difference = number_format($benchmark['base_minus_historical_mean_eur'], 2, ',', '.');
+                            $note .= "\n".'- Salário base bruto registado: '.$base.' EUR; diferença nominal face à média histórica: '.$difference.' EUR. Comparação apenas indicativa: o salário base pode excluir complementos e o horário, setor e ano podem ser diferentes.';
+                        } else {
+                            $note .= "\n".'- Sem um único salário base bruto registado em EUR, não é possível compará-lo diretamente com esta média.';
+                        }
+                        $content = Str::replaceFirst("**Valores vs Idade/País**\n", "**Valores vs Idade/País**\n".$note."\n", $content);
+                    } elseif ($user->date_of_birth || $user->work_country) {
+                        $content = Str::replaceFirst(
+                            "**Valores vs Idade/País**\n",
+                            "**Valores vs Idade/País**\n- ".$benchmark['availability']."\n",
+                            $content
+                        );
+                    }
                 }
             }
             if ($finishReason === 'length') {
@@ -304,6 +325,18 @@ class AiBrainService
                 'content_length' => mb_strlen($content),
                 'total_tokens' => (int) data_get($response, 'usage.total_tokens', 0),
             ]);
+            if ($attempt === 1) {
+                if ($workspace->type !== 'personal' || ! in_array($failureReason, ['truncated', 'insufficient_points'], true)) {
+                    break;
+                }
+
+                $messages[1]['content'] = "Cria um relatório conciso em português de Portugal, com exatamente cinco pontos curtos e distintos por tópico, cada um numa linha começada por hífen, sem introdução. Usa estes oito títulos, nesta ordem e cada um numa linha: **Resultados**, **O que penso**, **Cenários**, **Pontos fortes**, **Pontos negativos**, **O que aconselho**, **Valores vs Idade/País**, **Resumo**. Em Valores vs Idade/País, analisa os registos e usa a idade como contexto; usa apenas o país de trabalho para a referência salarial. Se disponível no backend, identifica a fonte, ano, faixa etária e limitações da média salarial bruta histórica. Compara-a apenas com o salário base bruto registado, se houver moeda comparável; explica que pode excluir complementos e que setor e horário podem diferir. Não compares salários líquidos com médias brutas nem inventes dados ou referências de despesas. Usa apenas os dados do backend e não calcules montantes ou percentagens.\n\n".$personalReportGuardrails;
+                if ($referenceValues !== []) {
+                    $messages[1]['content'] .= "\n\nUsa pelo menos um dos marcadores seguintes para apresentar um valor. Para montantes e percentagens usa exclusivamente estes marcadores, exatamente como estão, sem acrescentar símbolos; não escrevas outros valores monetários ou percentagens:\n\n".json_encode($references, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                }
+
+                continue;
+            }
             if ($workspace->type === 'personal' && $failureReason === 'unsupported_values') {
                 $references = [];
                 foreach ($this->reportNumericValues($reportSnapshot) as $entry) {
@@ -312,17 +345,17 @@ class AiBrainService
                     $referenceValues[$marker] = $formatted.($entry['percentage'] ? '%' : ' '.$reportSnapshot['currency']);
                     $references[] = ['marcador' => $marker, 'campo' => $entry['path'], 'valor' => $referenceValues[$marker]];
                 }
-                $messages[1]['content'] = $reportRequest."\n\nA resposta anterior continha valores que não foi possível confirmar. Para apresentar montantes monetários e percentagens, usa apenas os marcadores da lista abaixo exatamente como estão, sem acrescentar símbolos de moeda ou percentagem: serão substituídos automaticamente pelos valores fornecidos. Não escrevas outros montantes ou percentagens, nem inventes cálculos. Mantém os sete tópicos e desenvolve-os por pontos.\n\n".json_encode($references, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $messages[1]['content'] = $reportRequest."\n\nA resposta anterior continha valores que não foi possível confirmar. Para apresentar montantes monetários e percentagens, usa apenas os marcadores da lista abaixo exatamente como estão, sem acrescentar símbolos de moeda ou percentagem: serão substituídos automaticamente pelos valores fornecidos. Não escrevas outros montantes ou percentagens, nem inventes cálculos. Mantém os oito tópicos e desenvolve-os por pontos.\n\n".json_encode($references, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
                 continue;
             }
             $retryInstruction = $workspace->type === 'personal'
-                ? 'A tentativa anterior não passou nas verificações. Não faças cálculos nem inventes montantes ou percentagens; usa apenas os valores atuais fornecidos pelo backend. Inclui os sete títulos pedidos, cada um com pelo menos cinco pontos distintos.'
+                ? 'A tentativa anterior não passou nas verificações. Não faças cálculos nem inventes montantes ou percentagens; usa apenas os valores atuais fornecidos pelo backend. Inclui os oito títulos pedidos, cada um com pelo menos cinco pontos distintos.'
                 : 'A tentativa anterior não foi concluída.';
             $lengthInstruction = $workspace->type === 'personal'
                 ? ($failureReason === 'truncated'
-                    ? ' Ignora o intervalo anterior: produz cerca de 300 a 400 palavras, mantendo os sete títulos e pontos úteis, sem repetir informação.'
-                    : ' Em vez do intervalo anterior, produz cerca de 400 a 500 palavras, mantendo os sete títulos e desenvolvendo os pontos sem repetir informação.')
+                    ? ' Ignora o intervalo anterior: produz cerca de 300 a 400 palavras, mantendo os oito títulos e pontos úteis, sem repetir informação.'
+                    : ' Em vez do intervalo anterior, produz cerca de 400 a 500 palavras, mantendo os oito títulos e desenvolvendo os pontos sem repetir informação.')
                 : ' Ignora os limites de palavras anteriores: produz uma versão mais concisa, com cerca de 200 a 300 palavras, e termina todas as secções.';
             $messages[1]['content'] = $reportRequest."\n\n".$retryInstruction.$lengthInstruction;
         }
@@ -332,7 +365,7 @@ class AiBrainService
             'empty' => 'A última resposta da IA veio vazia. Tenta novamente mais tarde.',
             'unsupported_values' => 'A última resposta da IA não apresentou valores que fosse possível confirmar. Tenta novamente mais tarde.',
             'insufficient_points' => 'A IA não apresentou pelo menos cinco pontos em cada tópico. Tenta novamente mais tarde.',
-            default => 'O relatório não passou nas verificações de formato ou valores em duas tentativas. Tenta novamente mais tarde.',
+            default => 'O relatório não passou nas verificações de formato ou valores. Tenta novamente mais tarde.',
         };
 
         throw new AiProviderException($message);
@@ -373,8 +406,9 @@ class AiBrainService
             'o que aconselha' => 'o que aconselho',
             'o que ele aconselha' => 'o que aconselho',
             'recomendacoes' => 'o que aconselho',
+            'valores vs idade' => 'valores vs idade/pais',
         ];
-        $labels = 'resultados|o que penso|cen[aá]rios|pontos fortes|pontos negativos|pontos fracos|o que aconselha|o que aconselho|o que ele aconselha|recomenda[cç][oõ]es|resumo';
+        $labels = 'resultados|o que penso|cen[aá]rios|pontos fortes|pontos negativos|pontos fracos|o que aconselha|o que aconselho|o que ele aconselha|recomenda[cç][oõ]es|valores vs idade(?:\/pa[ií]s)?|resumo';
         $pattern = '/^\s*(?:#{1,6}\s*)?(?:(?:\d+[.)]|[-•]|\*(?!\*))\s+)?'
             .'(?:(?:\*{1,3}|__)('.$labels.')(?:\s*:\s*(?:\*{1,3}|__)|(?:\*{1,3}|__)\s*[:–—-]\s*|(?:\*{1,3}|__)\s*$)'
             .'|('.$labels.')(?:\s*:\s*|\s+[-–—]\s+|\s*$))(.*)$/iu';
@@ -404,6 +438,9 @@ class AiBrainService
             $lines = $sections[$name] ?? [];
             $body = trim(implode("\n", $lines));
             if ($body === '') {
+                if ($name === 'valores vs idade/pais' && ! $requireMinimumPoints) {
+                    continue;
+                }
                 return [null, 'missing_or_empty_sections'];
             }
             if ($requireMinimumPoints && $this->countReportPoints($lines) < 5) {
@@ -506,7 +543,7 @@ class AiBrainService
                 $field = $path === '' ? (string) $key : $path.'.'.$key;
                 if (is_array($value)) {
                     $collect($value, $field);
-                } elseif ((is_int($value) || is_float($value)) && ! in_array($key, ['id', 'quantity', 'expense_record_count'], true)) {
+                } elseif ((is_int($value) || is_float($value)) && ! in_array($key, ['id', 'quantity', 'expense_record_count', 'age_years'], true)) {
                     $values[] = ['path' => $field, 'value' => (float) $value, 'percentage' => str_ends_with((string) $key, '_percent')];
                 }
             }
@@ -560,12 +597,13 @@ class AiBrainService
             ->whereDate('received_at', '>=', $start)
             ->whereDate('received_at', '<=', $cutoff)
             ->get();
-        $salary = SalaryPayment::where('workspace_id', $workspace->id)
+        $salaryPayments = SalaryPayment::where('workspace_id', $workspace->id)
             ->where('user_id', $user->id)
             ->where('status', 'paid')
             ->whereDate('paid_at', '>=', $start)
             ->whereDate('paid_at', '<=', $cutoff)
-            ->sum('net_received');
+            ->get();
+        $salary = $salaryPayments->sum('net_received');
         $futureExpenses = Expense::where('workspace_id', $workspace->id)
             ->where('user_id', $user->id)
             ->where('is_company', false)
@@ -580,6 +618,11 @@ class AiBrainService
             'period' => $today->format('Y-m'),
             'as_of' => $cutoff,
             'currency' => $snapshot['currency'],
+            'profile_context' => [
+                'age_years' => $user->date_of_birth?->age,
+                'country_of_origin' => $user->country_of_origin ?: 'Portugal',
+            ],
+            'salary_age_country_benchmark' => app(SalaryAgeBenchmarkService::class)->forReport($user, $workspace, $salaryPayments),
             'recorded_income_through_today' => round((float) $income->sum($amount), 2),
             'salary_payments_through_today' => round((float) $salary, 2),
             'active_recurring_income' => $snapshot['income_recurring'],
