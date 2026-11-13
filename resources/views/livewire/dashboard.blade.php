@@ -1079,7 +1079,7 @@
                                     $investmentProfit = round($investmentCurrentValue - $investmentInvestedValue, 2);
                                     $investmentProfitPercent = $investmentInvestedValue > 0 ? ($investmentProfit / $investmentInvestedValue) * 100 : 0;
                                 @endphp
-                                <article wire:key="dashboard-investment-{{ $loop->index }}" class="rounded-2xl border border-sky-100 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+                                <article wire:key="dashboard-investment-{{ $loop->index }}" x-data="{ positionsExpanded: false }" class="rounded-2xl border border-sky-100 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
                                     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                                         <div class="min-w-0">
                                             <div class="flex flex-wrap items-center gap-2">
@@ -1095,7 +1095,10 @@
                                                 {{ rtrim(rtrim(number_format($investment['quantity'], 8, ',', ' '), '0'), ',') }} unidades
                                                 @if(($investment['positions_count'] ?? 1) > 1)
                                                     <span class="mx-1">·</span>
-                                                    <span class="font-bold text-sky-700 dark:text-sky-300">{{ $investment['positions_count'] }} posições abertas</span>
+                                                    <button type="button" x-on:click="positionsExpanded = !positionsExpanded" :aria-expanded="positionsExpanded.toString()" class="inline-flex items-center gap-1 font-bold text-sky-700 transition hover:text-sky-900 hover:underline dark:text-sky-300 dark:hover:text-sky-100">
+                                                        {{ $investment['positions_count'] }} posições abertas
+                                                        <flux:icon name="chevron-down" class="size-3 transition-transform duration-200" ::class="{ 'rotate-180': positionsExpanded }" />
+                                                    </button>
                                                 @endif
                                                 <span class="mx-1">·</span>
                                                 Cotação atual: <span class="font-semibold text-zinc-700 dark:text-zinc-200" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($investment['current_price']) }}</span>
@@ -1108,6 +1111,36 @@
                                             <div><p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Rentabilidade</p><p class="mt-1 text-xs font-black tabular-nums {{ $investmentProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}" :class="privacyMode ? 'blur-md select-none' : ''">{{ $investmentProfit >= 0 ? '+' : '' }}{{ number_format($investmentProfitPercent, 2, ',', ' ') }}%</p></div>
                                         </div>
                                     </div>
+
+                                    @if(($investment['positions_count'] ?? 1) > 1)
+                                        <div x-show="positionsExpanded" x-cloak x-transition.opacity.duration.200ms class="mt-4 space-y-2 border-t border-sky-100 pt-4 dark:border-slate-700">
+                                            <p class="text-[10px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Posições individuais</p>
+                                            @foreach($investment['positions'] ?? [] as $position)
+                                                @php
+                                                    $positionInvested = round(((float) $position['quantity'] * (float) $position['average_price']) + (float) $position['fees'], 2);
+                                                    $positionCurrent = round((float) $position['quantity'] * (float) $position['current_price'], 2);
+                                                    $positionProfit = round($positionCurrent - $positionInvested, 2);
+                                                    $positionProfitPercent = $positionInvested > 0 ? ($positionProfit / $positionInvested) * 100 : 0;
+                                                @endphp
+                                                <div wire:key="dashboard-investment-position-{{ $position['id'] }}" class="rounded-xl border border-zinc-100 bg-zinc-50/80 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
+                                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                        <div class="min-w-0">
+                                                            <p class="text-xs font-bold text-zinc-800 dark:text-zinc-100">{{ $position['name'] ?: ($position['symbol'] ?: 'Posição') }}</p>
+                                                            @if($position['symbol'])
+                                                                <p class="mt-0.5 text-[10px] font-semibold text-zinc-500 dark:text-zinc-400">{{ $position['symbol'] }}</p>
+                                                            @endif
+                                                            <p class="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">{{ rtrim(rtrim(number_format((float) $position['quantity'], 8, ',', ' '), '0'), ',') }} unidades · Compra média: {{ $currentWs->money($position['average_price']) }}</p>
+                                                        </div>
+                                                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+                                                            <div><p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Capital aplicado</p><p class="mt-1 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($positionInvested) }}</p></div>
+                                                            <div><p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Valor atual</p><p class="mt-1 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100" :class="privacyMode ? 'blur-md select-none' : ''">{{ $currentWs->money($positionCurrent) }}</p></div>
+                                                            <div><p class="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Lucro / prejuízo</p><p class="mt-1 text-xs font-black tabular-nums {{ $positionProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}" :class="privacyMode ? 'blur-md select-none' : ''">{{ $positionProfit >= 0 ? '+' : '' }}{{ $currentWs->money($positionProfit) }} <span class="text-[9px]">({{ $positionProfit >= 0 ? '+' : '' }}{{ number_format($positionProfitPercent, 2, ',', ' ') }}%)</span></p></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </article>
                             @endforeach
                         </div>
