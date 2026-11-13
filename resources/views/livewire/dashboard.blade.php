@@ -354,16 +354,29 @@
 <style>
     .dashboard-flag-wash {
         background-color: rgba(161, 161, 170, .08);
-        background-size: 115% auto;
-        background-position: 50% 50%;
+        background-size: 150% auto;
+        background-position: 0% 50%;
         background-repeat: no-repeat;
-        opacity: .22;
-        animation: dashboard-flag-drift 24s ease-in-out infinite alternate;
+        opacity: .30;
+        animation: dashboard-flag-drift 12s ease-in-out infinite alternate,
+                   dashboard-flag-breathe 7s ease-in-out infinite;
+        will-change: background-position, opacity;
     }
-    .dark .dashboard-flag-wash { opacity: .16; }
+    .dark .dashboard-flag-wash { opacity: .22; }
     @keyframes dashboard-flag-drift {
-        from { background-position: 42% 50%; }
-        to { background-position: 58% 50%; }
+        from { background-position: 0% 50%; }
+        to { background-position: 100% 50%; }
+    }
+    @keyframes dashboard-flag-breathe {
+        0%, 100% { opacity: .24; }
+        50% { opacity: .34; }
+    }
+    .dark .dashboard-flag-wash {
+        animation-name: dashboard-flag-drift, dashboard-flag-breathe-dark;
+    }
+    @keyframes dashboard-flag-breathe-dark {
+        0%, 100% { opacity: .17; }
+        50% { opacity: .25; }
     }
     @media (prefers-reduced-motion: reduce) {
         .dashboard-flag-wash { animation: none; }
