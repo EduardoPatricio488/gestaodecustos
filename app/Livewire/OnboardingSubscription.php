@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Livewire\Concerns\AuthorizesOnboardingWorkspace;
+use App\Models\Subscription;
 
 class OnboardingSubscription extends SubscriptionHub
 {
@@ -38,7 +39,14 @@ class OnboardingSubscription extends SubscriptionHub
         }
 
         $data = $this->showExtraModal ? parent::render()->getData() : [];
+        $savedSubscriptions = Subscription::query()
+            ->with(['category:id,name', 'bankAccount:id,name'])
+            ->where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
 
-        return view('livewire.onboarding-subscription', compact('data'));
+        return view('livewire.onboarding-subscription', compact('data', 'savedSubscriptions'));
     }
 }
