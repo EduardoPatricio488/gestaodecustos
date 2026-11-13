@@ -10,6 +10,7 @@ use App\Models\Income;
 use App\Models\Expense;
 use App\Models\RecurringIncome;
 use App\Services\DebtInstrumentCalculator;
+use App\Services\Investments\AforroNetSeriesEUpdater;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -1075,7 +1076,7 @@ class InvestmentsHub extends Component
         });
     }
 
-    public function refreshPrices(bool $silent = false): bool
+    public function refreshPrices(bool $silent = false): array|false
     {
         $this->isRefreshing = true;
 
@@ -1086,13 +1087,34 @@ class InvestmentsHub extends Component
                 ->get();
 
             $updated = 0;
+            $current = 0;
+            $partial = 0;
+            $aforroAssets = $assets->where('type', 'Divida')->where('broker', 'AforroNet')->where('series', 'E');
+            if ($aforroAssets->isNotEmpty()) {
+                $aforroResult = app(AforroNetSeriesEUpdater::class)->runForWorkspace($user->currentWorkspace, $user);
+                $updated += $aforroResult['updated'];
+                $current += $aforroResult['current'];
+                $partial += $aforroResult['partial'];
+            }
             foreach ($assets->where('type', 'Divida') as $debtAsset) {
-                if (! $debtAsset->operation_date || ! $debtAsset->interest_rate) {
+                if ($debtAsset->series === 'E' && ($debtAsset->broker === 'AforroNet' || $debtAsset->product_type === 'CA')) {
+                    continue;
+                }
+                if (! $debtAsset->operation_date || ! $debtAsset->interest_rate || ! in_array($debtAsset->product_type, ['CA', 'CT'], true)) {
                     continue;
                 }
 
-                $debtAsset->update(['current_price' => DebtInstrumentCalculator::process($debtAsset)]);
-                $updated++;
+                $incomeCount = $debtAsset->incomes()->count();
+                $price = DebtInstrumentCalculator::process($debtAsset);
+                $priceChanged = abs($price - (float) $debtAsset->current_price) >= 0.0000001;
+                if ($priceChanged) {
+                    $debtAsset->update(['current_price' => $price]);
+                }
+                if ($priceChanged || $debtAsset->incomes()->count() > $incomeCount) {
+                    $updated++;
+                } else {
+                    $current++;
+                }
             }
 
             $cryptoSymbols = $assets->where('type', 'Cripto')->pluck('symbol')->filter()->unique()->values()->toArray();
@@ -1129,11 +1151,19 @@ class InvestmentsHub extends Component
             }
 
             $this->lastUpdated = now()->format('H:i');
+            $unavailable = $assets->count() - $updated - $current - $partial;
             if (! $silent) {
-                $this->dispatch('toast', text: "{$updated} ativos atualizados com as cotações de mercado disponíveis.");
+                $message = "{$updated} ativos atualizados; {$current} sem alterações pendentes.";
+                if ($partial > 0) {
+                    $message .= " {$partial} atualizados parcialmente por falta de dados.";
+                }
+                if ($unavailable > 0) {
+                    $message .= " {$unavailable} não puderam ser atualizados.";
+                }
+                $this->dispatch('toast', variant: $unavailable > 0 || $partial > 0 ? 'error' : 'success', text: $message);
             }
 
-            return true;
+            return ['updated' => $updated, 'current' => $current, 'partial' => $partial, 'unavailable' => $unavailable];
         } catch (\Throwable $e) {
             Log::warning('InvestmentsHub: falha ao atualizar cotações', ['message' => $e->getMessage()]);
             if (! $silent) {

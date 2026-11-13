@@ -4,7 +4,12 @@ namespace App\Services\Investments;
 
 use App\Models\Investment;
 use App\Models\InvestmentIncome;
+use App\Models\User;
+use App\Models\Workspace;
 use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -22,25 +27,7 @@ class AforroNetSeriesEUpdater
      */
     public function run(): array
     {
-        $response = Http::acceptJson()->timeout(25)->retry(2, 500)->get(self::RATES_URL);
-        if (! $response->successful()) {
-            throw new RuntimeException('Não foi possível obter o histórico de taxas da Série E.');
-        }
-
-        $rates = $response->json();
-        $generatedAt = data_get($rates, 'generatedAt');
-        $monthlyRates = data_get($rates, 'series.E.monthlyBaseRates');
-
-        if (! is_array($monthlyRates) || ! $generatedAt) {
-            throw new RuntimeException('O ficheiro de taxas não tem o formato esperado.');
-        }
-
-        $snapshotDate = Carbon::parse($generatedAt);
-        if ($snapshotDate->lt(now()->subDays(60))) {
-            throw new RuntimeException('O histórico de taxas está desatualizado; atualização automática suspensa por segurança.');
-        }
-
-        $rateByMonth = collect($monthlyRates)->keyBy('month');
+        [$rateByMonth, $generatedAt] = $this->loadRates();
         $processed = 0;
         $skipped = 0;
 
@@ -67,6 +54,94 @@ class AforroNetSeriesEUpdater
         return ['processed' => $processed, 'skipped' => $skipped, 'generated_at' => $generatedAt];
     }
 
+    public function runForWorkspace(Workspace $workspace, User $user): array
+    {
+        $investments = Investment::query()
+            ->where('workspace_id', $workspace->id)
+            ->when($workspace->type === 'personal', fn ($query) => $query->where('user_id', $user->id))
+            ->where('broker', 'AforroNet')
+            ->where('series', 'E')
+            ->where('type', 'Divida')
+            ->get();
+        $current = 0;
+        $updated = 0;
+        $partial = 0;
+        $unavailable = 0;
+        $due = [];
+
+        foreach ($investments as $investment) {
+            if ($investment->product_type !== 'CA' || ! $investment->subscription_number || ! $investment->operation_date || ! $investment->valuation_date
+                || ! $investment->capitalization_date || $investment->quantity <= 0 || $investment->current_price <= 0
+                || $investment->operation_date->gt($investment->valuation_date)
+                || $investment->valuation_date->gte($investment->capitalization_date)) {
+                $unavailable++;
+            } elseif ($investment->capitalization_date->startOfDay()->gt(now()->startOfDay())) {
+                $current++;
+            } else {
+                $due[] = $investment;
+            }
+        }
+
+        if ($due === []) {
+            return ['updated' => $updated, 'current' => $current, 'partial' => $partial, 'unavailable' => $unavailable];
+        }
+
+        try {
+            [$rateByMonth] = $this->loadRates();
+        } catch (ConnectionException|RequestException|RuntimeException|InvalidFormatException $exception) {
+            Log::warning('AforroNet Série E rates unavailable', [
+                'exception' => $exception::class,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return ['updated' => $updated, 'current' => $current, 'partial' => $partial, 'unavailable' => $unavailable + count($due)];
+        }
+
+        foreach ($due as $investment) {
+            $changed = false;
+            while ($investment->capitalization_date && $investment->capitalization_date->startOfDay()->lte(now()->startOfDay())) {
+                $before = $investment->capitalization_date->toDateString();
+                $changed = $this->capitalizeIfDue($investment, $rateByMonth) || $changed;
+                $investment->refresh();
+                if (! $investment->capitalization_date || $investment->capitalization_date->toDateString() <= $before) {
+                    break;
+                }
+            }
+            if (! $investment->capitalization_date || $investment->capitalization_date->startOfDay()->lte(now()->startOfDay())) {
+                $changed ? $partial++ : $unavailable++;
+            } elseif ($changed) {
+                $updated++;
+            } else {
+                $current++;
+            }
+        }
+
+        return ['updated' => $updated, 'current' => $current, 'partial' => $partial, 'unavailable' => $unavailable];
+    }
+
+    private function loadRates(): array
+    {
+        $response = Http::acceptJson()->timeout(25)->retry(2, 500)->get(self::RATES_URL);
+        if (! $response->successful()) {
+            throw new RuntimeException('Não foi possível obter o histórico de taxas da Série E.');
+        }
+
+        $rates = $response->json();
+        $generatedAt = data_get($rates, 'generatedAt');
+        $monthlyRates = data_get($rates, 'series.E.monthlyBaseRates');
+
+        if (! is_array($monthlyRates) || ! is_string($generatedAt) || trim($generatedAt) === '') {
+            throw new RuntimeException('O ficheiro de taxas não tem o formato esperado.');
+        }
+
+        $snapshotDate = Carbon::parse($generatedAt);
+        if ($snapshotDate->lt(now()->subDays(60))) {
+            throw new RuntimeException('O histórico de taxas está desatualizado; atualização automática suspensa por segurança.');
+        }
+
+        return [collect($monthlyRates)->keyBy('month'), $generatedAt];
+    }
+
     private function capitalizeIfDue(Investment $investment, $rateByMonth): bool
     {
         return DB::transaction(function () use ($investment, $rateByMonth) {
@@ -81,7 +156,7 @@ class AforroNetSeriesEUpdater
             $rateRow = $rateByMonth->get($monthKey);
 
             // Não inventar uma taxa quando a fonte ainda não publicou o mês.
-            if (! $rateRow || ! isset($rateRow['basePct'])) {
+            if (! $rateRow || ! is_numeric($rateRow['basePct'] ?? null) || (float) $rateRow['basePct'] < 0) {
                 return false;
             }
 

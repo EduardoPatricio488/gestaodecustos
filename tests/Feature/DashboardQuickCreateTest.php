@@ -6,6 +6,7 @@ use App\Livewire\Dashboard;
 use App\Livewire\ExpenseForm;
 use App\Livewire\Expenses;
 use App\Livewire\IncomeHub;
+use App\Livewire\InvestmentsHub;
 use App\Livewire\BankTransactionsHub;
 use App\Livewire\PersonalCalendar;
 use App\Livewire\SubscriptionHub;
@@ -15,11 +16,14 @@ use App\Models\BankAccount;
 use App\Models\DailyMealAllowance;
 use App\Models\Expense;
 use App\Models\Income;
+use App\Models\Investment;
+use App\Models\InvestmentIncome;
 use App\Models\RecurringIncome;
 use App\Models\SalaryPayment;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\Investments\AforroNetSeriesEUpdater;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
@@ -371,9 +375,254 @@ class DashboardQuickCreateTest extends TestCase
             ->assertSee(route('hub.category', ['slug' => 'alimentacao', 'open_expense' => $bankExpense->id]));
     }
 
-    private function signInWithWorkspace(): array
+    public function test_investment_summary_refreshes_available_prices_and_reports_partial_updates(): void
     {
-        Http::fake(['*' => Http::response([], 200)]);
+        [$user, $workspace] = $this->signInWithWorkspace(false);
+        $workspace->update(['type' => 'personal']);
+        Http::fake(['api.coingecko.com/*' => Http::response(['bitcoin' => ['eur' => 150]]), '*' => Http::response([])]);
+
+        $bitcoin = Investment::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id, 'name' => 'Bitcoin',
+            'symbol' => 'BTC', 'type' => 'Cripto', 'quantity' => 2, 'average_price' => 80, 'current_price' => 100,
+        ]);
+        Investment::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id, 'name' => 'Manual',
+            'type' => 'Outro', 'quantity' => 1, 'average_price' => 10, 'current_price' => 10,
+        ]);
+        $otherUser = User::factory()->create();
+        $otherInvestment = Investment::withoutEvents(fn () => Investment::create([
+            'user_id' => $otherUser->id, 'workspace_id' => $workspace->id, 'name' => 'Outro utilizador',
+            'symbol' => 'BTC', 'type' => 'Cripto', 'quantity' => 1, 'average_price' => 70, 'current_price' => 90,
+        ]));
+
+        $dashboard = Livewire::test(Dashboard::class);
+        preg_match('/<section[^>]*id="dashboard-investimentos".*?<\/section>/s', $dashboard->html(), $section);
+        $this->assertNotEmpty($section);
+        $this->assertStringContainsString('wire:click="refreshInvestmentPrices"', $section[0]);
+        $this->assertStringContainsString('Atualizar preços', $section[0]);
+
+        $dashboard->call('refreshInvestmentPrices')
+            ->assertSee('1 ativo atualizado.')
+            ->assertSee('1 ativo não pôde ser atualizado.')
+            ->assertSee('310,00')
+            ->assertDispatched('dashboard-investments-updated');
+        $this->assertSame(150.0, $bitcoin->fresh()->current_price);
+        $this->assertSame(90.0, Investment::withoutGlobalScopes()->findOrFail($otherInvestment->id)->current_price);
+    }
+
+    public function test_investment_summary_reports_when_no_quotes_are_available(): void
+    {
+        [$user, $workspace] = $this->signInWithWorkspace(false);
+        $workspace->update(['type' => 'personal']);
+        Http::fake(['*' => Http::response([], 503)]);
+        $bitcoin = Investment::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id, 'name' => 'Bitcoin',
+            'symbol' => 'BTC', 'type' => 'Cripto', 'quantity' => 1, 'average_price' => 80, 'current_price' => 100,
+        ]);
+
+        Livewire::test(Dashboard::class)
+            ->call('refreshInvestmentPrices')
+            ->assertSee('Nenhuma cotação foi atualizada.')
+            ->assertSet('investmentRefreshFailed', true);
+        $this->assertSame(100.0, $bitcoin->fresh()->current_price);
+    }
+
+    public function test_investment_summary_updates_cached_values_even_if_refresh_fails(): void
+    {
+        [$user, $workspace] = $this->signInWithWorkspace();
+        $investment = Investment::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id, 'name' => 'Ativo',
+            'symbol' => 'BTC', 'type' => 'Cripto', 'quantity' => 1, 'average_price' => 80, 'current_price' => 100,
+        ]);
+        $this->mock(InvestmentsHub::class)->shouldReceive('refreshPrices')->once()->with(true)->andReturnUsing(function () use ($investment) {
+            $investment->update(['current_price' => 150]);
+
+            return false;
+        });
+
+        Livewire::test(Dashboard::class)
+            ->assertSee('100,00')
+            ->call('refreshInvestmentPrices')
+            ->assertSee('Não foi possível concluir a atualização.')
+            ->assertSee('150,00')
+            ->assertDispatched('dashboard-investments-updated');
+    }
+
+    public function test_investment_summary_updates_due_certificates_and_keeps_current_certificates_unchanged(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-13 12:00:00'));
+        $otherUser = User::factory()->create();
+        $otherWorkspace = Workspace::factory()->create(['owner_id' => $otherUser->id]);
+        [$user, $workspace] = $this->signInWithWorkspace(false);
+        $workspace->update(['type' => 'personal']);
+        Http::fake([
+            'igcp-aforro.primor.me/*' => Http::response([
+                'generatedAt' => now()->toIso8601String(),
+                'series' => ['E' => ['monthlyBaseRates' => [['month' => '2026-08', 'basePct' => 2]]]],
+            ]),
+            'api.coingecko.com/*' => Http::response(['bitcoin' => ['eur' => 150]]),
+            '*' => Http::response([]),
+        ]);
+        Investment::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id, 'name' => 'Bitcoin',
+            'symbol' => 'BTC', 'type' => 'Cripto', 'quantity' => 1, 'average_price' => 80, 'current_price' => 100,
+        ]);
+        $due = $this->createAforroCertificate($user, $workspace, ['valuation_date' => '2026-10-01', 'capitalization_date' => '2026-11-01']);
+        $current = $this->createAforroCertificate($user, $workspace, ['valuation_date' => '2026-10-01', 'capitalization_date' => '2027-01-01']);
+        $otherPersonal = Investment::withoutEvents(fn () => $this->createAforroCertificate($otherUser, $workspace, ['capitalization_date' => '2026-11-01']));
+        $otherWorkspaceAsset = Investment::withoutEvents(fn () => $this->createAforroCertificate($otherUser, $otherWorkspace, ['capitalization_date' => '2026-11-01']));
+
+        Livewire::test(Dashboard::class)
+            ->call('refreshInvestmentPrices')
+            ->assertSee('2 ativos atualizados.')
+            ->assertSee('1 ativo sem alterações pendentes.')
+            ->assertSet('investmentRefreshFailed', false);
+
+        $this->assertSame(1.0036, $due->fresh()->current_price);
+        $this->assertSame('2027-02-01', $due->fresh()->capitalization_date->toDateString());
+        $this->assertSame(1.0, $current->fresh()->current_price);
+        $this->assertSame(1.0, Investment::withoutGlobalScopes()->findOrFail($otherPersonal->id)->current_price);
+        $this->assertSame(1.0, Investment::withoutGlobalScopes()->findOrFail($otherWorkspaceAsset->id)->current_price);
+        $this->assertSame(1, InvestmentIncome::count());
+    }
+
+    public function test_investment_summary_updates_overdue_certificates_only_as_far_as_available_rates_allow(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-13 12:00:00'));
+        [$user, $workspace] = $this->signInWithWorkspace(false);
+        $certificate = $this->createAforroCertificate($user, $workspace, ['capitalization_date' => '2026-05-01']);
+        $rates = [
+            ['month' => '2026-02', 'basePct' => 2],
+            ['month' => '2026-05', 'basePct' => 2],
+        ];
+        Http::fake(function () use (&$rates) {
+            return Http::response(['generatedAt' => now()->toIso8601String(), 'series' => ['E' => ['monthlyBaseRates' => $rates]]]);
+        });
+
+        Livewire::test(Dashboard::class)
+            ->call('refreshInvestmentPrices')
+            ->assertSee('1 ativo atualizado parcialmente por falta de dados.')
+            ->assertSet('investmentRefreshFailed', true);
+        $this->assertSame(2, InvestmentIncome::where('investment_id', $certificate->id)->count());
+        $this->assertSame('2026-11-01', $certificate->fresh()->capitalization_date->toDateString());
+
+        $rates[] = ['month' => '2026-08', 'basePct' => 2];
+        $dashboard = Livewire::test(Dashboard::class)->call('refreshInvestmentPrices');
+        $dashboard->assertSee('1 ativo atualizado.')->assertSet('investmentRefreshFailed', false);
+        $dashboard->call('refreshInvestmentPrices')->assertSee('1 ativo sem alterações pendentes.');
+        $this->assertSame(3, InvestmentIncome::where('investment_id', $certificate->id)->count());
+        $this->assertSame('2027-02-01', $certificate->fresh()->capitalization_date->toDateString());
+    }
+
+    public function test_investment_summary_reports_stale_rates_without_blocking_other_assets(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-13 12:00:00'));
+        [$user, $workspace] = $this->signInWithWorkspace(false);
+        $certificate = $this->createAforroCertificate($user, $workspace, ['capitalization_date' => '2026-11-01']);
+        $this->createAforroCertificate($user, $workspace, ['capitalization_date' => null]);
+        Http::fake([
+            'igcp-aforro.primor.me/*' => Http::response([
+                'generatedAt' => now()->subDays(61)->toIso8601String(),
+                'series' => ['E' => ['monthlyBaseRates' => [['month' => '2026-08', 'basePct' => 2]]]],
+            ]),
+            'api.coingecko.com/*' => Http::response(['bitcoin' => ['eur' => 150]]),
+            '*' => Http::response([]),
+        ]);
+        Investment::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id, 'name' => 'Bitcoin',
+            'symbol' => 'BTC', 'type' => 'Cripto', 'quantity' => 1, 'average_price' => 80, 'current_price' => 100,
+        ]);
+
+        Livewire::test(Dashboard::class)
+            ->call('refreshInvestmentPrices')
+            ->assertSee('1 ativo atualizado.')
+            ->assertSee('2 ativos não puderam ser atualizados.')
+            ->assertSet('investmentRefreshFailed', true);
+        $this->assertSame(1.0, $certificate->fresh()->current_price);
+        $this->assertSame(0, InvestmentIncome::count());
+    }
+
+    public function test_investment_summary_refuses_invalid_rates_and_never_uses_the_generic_calculator_for_series_e(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-13 12:00:00'));
+        [$user, $workspace] = $this->signInWithWorkspace(false);
+        $imported = $this->createAforroCertificate($user, $workspace, ['capitalization_date' => '2026-11-01', 'interest_rate' => 3]);
+        $manual = $this->createAforroCertificate($user, $workspace, ['broker' => 'Outro', 'capitalization_date' => '2026-11-01', 'interest_rate' => 3]);
+        Http::fake(['*' => Http::response([
+            'generatedAt' => now()->toIso8601String(),
+            'series' => ['E' => ['monthlyBaseRates' => [['month' => '2026-08', 'basePct' => 'inválido']]]],
+        ])]);
+
+        Livewire::test(Dashboard::class)
+            ->call('refreshInvestmentPrices')
+            ->assertSee('Nenhuma cotação foi atualizada.')
+            ->assertSet('investmentRefreshFailed', true);
+        $this->assertSame(1.0, $imported->fresh()->current_price);
+        $this->assertSame(1.0, $manual->fresh()->current_price);
+        $this->assertSame(0, InvestmentIncome::count());
+    }
+
+    public function test_investment_summary_reports_unavailable_rate_provider_without_blocking_market_quotes(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-13 12:00:00'));
+        [$user, $workspace] = $this->signInWithWorkspace(false);
+        $certificate = $this->createAforroCertificate($user, $workspace, ['capitalization_date' => '2026-11-01']);
+        Investment::create([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id, 'name' => 'Bitcoin',
+            'symbol' => 'BTC', 'type' => 'Cripto', 'quantity' => 1, 'average_price' => 80, 'current_price' => 100,
+        ]);
+        Http::fake([
+            'igcp-aforro.primor.me/*' => Http::response([], 503),
+            'api.coingecko.com/*' => Http::response(['bitcoin' => ['eur' => 150]]),
+            '*' => Http::response([]),
+        ]);
+
+        Livewire::test(Dashboard::class)
+            ->call('refreshInvestmentPrices')
+            ->assertSee('1 ativo atualizado.')
+            ->assertSee('1 ativo não pôde ser atualizado.')
+            ->assertSet('investmentRefreshFailed', true);
+        $this->assertSame(1.0, $certificate->fresh()->current_price);
+        $this->assertSame(0, InvestmentIncome::count());
+    }
+
+    public function test_certificates_without_due_capitalization_do_not_request_rates_and_inconsistent_dates_are_rejected(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-13 12:00:00'));
+        [$user, $workspace] = $this->signInWithWorkspace(false);
+        $this->createAforroCertificate($user, $workspace, [
+            'valuation_date' => '2026-10-01', 'capitalization_date' => '2027-01-01',
+        ]);
+        $inconsistent = $this->createAforroCertificate($user, $workspace, [
+            'valuation_date' => '2026-11-02', 'capitalization_date' => '2026-11-01',
+        ]);
+        Http::fake();
+
+        $result = app(AforroNetSeriesEUpdater::class)->runForWorkspace($workspace, $user);
+
+        $this->assertSame(['updated' => 0, 'current' => 1, 'partial' => 0, 'unavailable' => 1], $result);
+        $this->assertSame(1.0, $inconsistent->fresh()->current_price);
+        $this->assertSame(0, InvestmentIncome::count());
+        Http::assertNothingSent();
+    }
+
+    private function createAforroCertificate(User $user, Workspace $workspace, array $overrides = []): Investment
+    {
+        return Investment::create(array_merge([
+            'user_id' => $user->id, 'workspace_id' => $workspace->id,
+            'name' => 'Certificado de teste', 'symbol' => 'CAF-E', 'type' => 'Divida',
+            'broker' => 'AforroNet', 'series' => 'E', 'product_type' => 'CA',
+            'subscription_number' => '12345678', 'operation_date' => '2026-02-01',
+            'valuation_date' => '2026-04-01', 'capitalization_date' => '2026-05-01',
+            'quantity' => 1000, 'average_price' => 1, 'current_price' => 1,
+        ], $overrides));
+    }
+
+    private function signInWithWorkspace(bool $fakeHttp = true): array
+    {
+        if ($fakeHttp) {
+            Http::fake(['*' => Http::response([], 200)]);
+        }
         $user = User::factory()->create();
         $workspace = Workspace::factory()->create(['owner_id' => $user->id]);
         $user->forceFill(['current_workspace_id' => $workspace->id])->save();

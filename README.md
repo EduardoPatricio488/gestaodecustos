@@ -27,6 +27,8 @@ O projecto foi estruturado para suportar utilizadores individuais, workspaces em
 - funcionalidades de família/gamificação;
 - Finance Connect / área social.
 
+Na atualização de investimentos, os Certificados de Aforro Série E importados do AforroNet são capitalizados apenas nos trimestres vencidos com taxas disponíveis num histórico comunitário recente. Sem capitalização vencida, mantêm o valor guardado; taxas em falta ou indisponíveis impedem a atualização completa.
+
 ### Business
 
 - onboarding e configuração empresarial;
@@ -222,9 +224,9 @@ AI_MODEL=...
 A aplicação deve degradar graciosamente quando uma API externa falha; integrações externas não devem ser tratadas como fonte de verdade dos valores financeiros internos.
 O chat do AI Brain usa `openrouter/free`, independentemente de `AI_MODEL`. O diagnóstico CFO tenta primeiro `google/gemma-4-31b-it:free`, com recurso ao encaminhamento gratuito se necessário. Ambos estão sujeitos à disponibilidade e aos limites dos modelos gratuitos.
 O diagnóstico pessoal usa um resumo dos registos, não a totalidade da conta. O custo pessoal de subscrições exclui as marcadas como pagas pela empresa. As projeções pelo ritmo diário são apenas cenários, podem incluir despesas pontuais e não acrescentam despesas futuras agendadas. Após alterar registos ou a lógica da análise, é necessário atualizar o relatório para substituir a versão em cache.
-O relatório pessoal apresenta resultados, opinião, cenários, pontos fortes, pontos negativos, conselhos e resumo por tópicos e pontos, procurando desenvolver a análise em 500 a 700 palavras quando os dados o permitirem.
+O relatório pessoal apresenta resultados, opinião, cenários, pontos fortes, pontos negativos, conselhos e resumo, com pelo menos cinco pontos por tópico, procurando desenvolver a análise em 500 a 700 palavras quando os dados o permitirem. Se faltarem dados, os pontos podem indicar limitações e informações a confirmar.
 Se o fornecedor devolver um relatório vazio, interrompido ou claramente inválido, o CFO tenta novamente uma versão mais concisa. Se rejeitar um pedido com HTTP 400, pode ser feita uma tentativa adicional com parâmetros simplificados; no máximo, são três pedidos ao fornecedor por geração, que podem consumir quota. Se não for concluída, o relatório anterior é preservado. As verificações de formato não garantem que a análise ou os valores estejam corretos.
-No diagnóstico pessoal, valores monetários e percentagens identificados no texto são comparados com o resumo atual antes de o relatório ser aceite. Se não forem confirmados, a segunda tentativa pede uma análise qualitativa, mantendo a verificação de valores; caso também falhe, o relatório anterior é preservado. Esta verificação é parcial: não valida todos os formatos, relações ou conclusões, pelo que a análise deve ser conferida.
+No diagnóstico pessoal, valores monetários e percentagens identificados no texto são comparados com o resumo atual antes de o relatório ser aceite. Se não forem confirmados, a segunda tentativa pode usar referências substituídas por valores do sistema, mantendo a verificação; caso também falhe, o relatório anterior é preservado. Esta verificação é parcial: não valida todos os formatos, relações ou conclusões, pelo que a análise deve ser conferida.
 A página CFO apresenta a quota diária de pedidos gratuitos devolvida pelo OpenRouter para a chave configurada, partilhada com outras funcionalidades. Um relatório pode consumir mais de um pedido; outros limites do fornecedor e da aplicação também se aplicam.
 No centro de inteligência, os cartões mostram o detalhe da saúde financeira, os alertas por ler e as operações recentes. Os contadores abrangem os últimos 30 alertas ativos e as últimas 20 operações; a poupança do Finance Score pessoal usa as receitas registadas no mês.
 Os destaques do diagnóstico reutilizam trechos do relatório pessoal guardado, sem novos pedidos de IA. Os dados persistentes da memória continuam consultáveis e elimináveis nas definições do perfil.

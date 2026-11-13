@@ -208,9 +208,14 @@ class AiBrainService
             : $snapshot;
         $reportMemories = $workspace->type === 'personal' ? [] : $this->memories($user, $workspace);
         $systemPrompt = $this->systemPrompt($context, $reportSnapshot, $reportMemories, $intent);
+        $personalReportGuardrails = 'Usa apenas os dados atuais fornecidos. Receitas registadas, salários pagos e rendimento recorrente previsto são fontes que podem sobrepor-se; não os somes nem assumas que um rendimento previsto foi recebido. A falta de registos não prova ausência de recebimentos ou gastos. Não determines saldo, défice ou equilíbrio financeiro, nem compares despesas projetadas com rendimentos: não há base suficiente para essas conclusões. A projeção de despesas é uma extrapolação incerta que não inclui despesas futuras agendadas nem prevê gastos irregulares. Totais por categoria não são necessariamente despesas individuais. Não inventes características, riscos, rentabilidades ou pagadores; a ausência de data de avaliação de um investimento não prova que o preço esteja desatualizado. Distingue valorização não realizada de rendimento efetivo. Não recomendes cortar despesas essenciais sem saber se são ajustáveis.';
         $reportRequest = $workspace->type === 'personal'
-            ? 'Prepara uma análise financeira para '.now()->translatedFormat('F Y')." em português de Portugal. Sê direto e dá a tua opinião fundamentada, como um consultor financeiro prudente. Desenvolve todos os tópicos de forma útil, idealmente num total de 500 a 700 palavras, sem introdução genérica, repetições ou parágrafos longos.\n\nUsa exatamente estes sete títulos, nesta ordem e cada um numa linha própria: **Resultados**, **O que penso**, **Cenários**, **Pontos fortes**, **Pontos negativos**, **O que aconselho** e **Resumo**. Em cada tópico organiza a resposta em pontos começados por hífen; sempre que os dados o permitirem, inclui dois a quatro pontos e desenvolve cada um em duas ou três frases. Não acrescentes texto só para atingir o número de palavras nem inventes informação quando faltarem dados. Nos resultados, destaca o que for mais relevante entre investimentos, rendimentos, objetivos e despesas. Na opinião, interpreta os resultados, explica porquê e o que significam para a situação financeira; não te concentres apenas nas despesas. Em cenários, apresenta possibilidades condicionais realistas, com as respetivas hipóteses e consequências. Nos pontos fortes e negativos, explica a relevância dos aspetos observados e distingue riscos de dados em falta; se não houver base, diz isso sem inventar. Nos conselhos, indica ações prioritárias e específicas, explicando a sua utilidade. No resumo, sintetiza a avaliação global, a prioridade mais importante e os principais dados por confirmar, sem repetir as outras secções.\n\nUsa exclusivamente os dados financeiros atuais da análise determinística, não valores de memórias antigas. Indica valores monetários e percentagens exatamente como foram fornecidos pelo backend, com a moeda ou o símbolo %; não calcules nem arredondes outros valores. Os totais por categoria são somas, não despesas individuais. Distingue receitas registadas, salários registados como pagos e rendimentos recorrentes previstos, que podem sobrepor-se: não os somes nem interpretes a ausência de registos como prova de que não houve recebimento. Não calcules nem apresentes saldo mensal ou disponível, pois não há base suficiente. O custo pessoal de subscrições no backend exclui as marcadas como pagas pela empresa. Uma assinatura ativa não prova que seja paga pelo utilizador; não atribuas pagador a nenhuma assinatura individual sem prova.\n\nSe usares a projeção de despesas, identifica-a como extrapolação incerta que não acrescenta despesas futuras agendadas nem prevê gastos irregulares. Uma categoria concentrada pode incluir uma despesa pontual; pede confirmação antes de a tratar como recorrente. Outros cenários devem ser apenas qualitativos, com hipóteses explícitas, sem cortes arbitrários ou valores inventados. Não sugiras cortar despesas essenciais sem saber se são ajustáveis. Não inventes composição de despesas, rentabilidades, características dos investimentos ou recomendações personalizadas de compra e venda. Distingue valorizações não realizadas de rendimentos efetivos."
+            ? 'Prepara uma análise financeira para '.now()->translatedFormat('F Y')." em português de Portugal. Sê direto e dá a tua opinião fundamentada, como um consultor financeiro prudente. Desenvolve todos os tópicos de forma útil, idealmente num total de 500 a 700 palavras, sem introdução genérica, repetições ou parágrafos longos.\n\nUsa exatamente estes sete títulos, nesta ordem e cada um numa linha própria: **Resultados**, **O que penso**, **Cenários**, **Pontos fortes**, **Pontos negativos**, **O que aconselho** e **Resumo**. Em cada tópico, incluindo o Resumo, escreve pelo menos cinco pontos distintos, cada um numa linha própria começada por hífen. Desenvolve cada ponto de forma útil e concisa. Se faltarem dados, usa pontos para explicar limitações, informações por confirmar ou ações adequadas, sem inventar nem repetir factos. Não acrescentes texto só para atingir o número de palavras. Nos resultados, destaca o que for mais relevante entre investimentos, rendimentos, objetivos e despesas. Na opinião, interpreta os resultados, explica porquê e o que significam para a situação financeira; não te concentres apenas nas despesas. Em cenários, apresenta possibilidades condicionais realistas, com as respetivas hipóteses e consequências. Nos pontos fortes e negativos, explica a relevância dos aspetos observados e distingue riscos de dados em falta; se não houver base, diz isso sem inventar. Nos conselhos, indica ações prioritárias e específicas, explicando a sua utilidade. No resumo, sintetiza a avaliação global, a prioridade mais importante e os principais dados por confirmar, sem repetir as outras secções.\n\nUsa exclusivamente os dados financeiros atuais da análise determinística, não valores de memórias antigas. Indica valores monetários e percentagens exatamente como foram fornecidos pelo backend, com a moeda ou o símbolo %; não calcules nem arredondes outros valores. Os totais por categoria são somas, não despesas individuais. Distingue receitas registadas, salários registados como pagos e rendimentos recorrentes previstos, que podem sobrepor-se: não os somes nem interpretes a ausência de registos como prova de que não houve recebimento. Não calcules nem apresentes saldo mensal ou disponível, pois não há base suficiente. O custo pessoal de subscrições no backend exclui as marcadas como pagas pela empresa. Uma assinatura ativa não prova que seja paga pelo utilizador; não atribuas pagador a nenhuma assinatura individual sem prova.\n\nSe usares a projeção de despesas, identifica-a como extrapolação incerta que não acrescenta despesas futuras agendadas nem prevê gastos irregulares. Uma categoria concentrada pode incluir uma despesa pontual; pede confirmação antes de a tratar como recorrente. Outros cenários devem ser apenas qualitativos, com hipóteses explícitas, sem cortes arbitrários ou valores inventados. Não sugiras cortar despesas essenciais sem saber se são ajustáveis. Não inventes composição de despesas, rentabilidades, características dos investimentos ou recomendações personalizadas de compra e venda. Distingue valorizações não realizadas de rendimentos efetivos."
             : 'Prepara um diagnóstico financeiro para '.now()->translatedFormat('F Y')." como um consultor financeiro profissional, claro e direto. Escreve em português de Portugal, idealmente entre 100 e 160 palavras, sem introduções genéricas nem repetir os mesmos números.\n\nUsa estas secções curtas:\n- **Situação atual:** a conclusão mais importante, fundamentada em 1 ou 2 valores relevantes.\n- **Cenários:** apresenta o cenário de despesas ao ritmo atual e, quando fornecido pelo backend, o cenário alternativo de reduzir em 10% apenas as despesas ainda por ocorrer. Identifica a hipótese e a diferença estimada; esclarece que nenhum cenário acrescenta despesas futuras agendadas. Se não houver base suficiente, diz isso em vez de inventar previsões.\n- **Atenção:** o risco ou oportunidade mais relevante dos registos, incluindo investimentos ou orçamento apenas se fizer diferença.\n- **Próximos passos:** até 2 ações concretas, priorizadas e ligadas aos dados; se faltarem dados, propõe registá-los ou confirmá-los.\n\nOs movimentos de receitas, salários pagos e rendimento recorrente são fontes distintas que podem sobrepor-se: não os somes nem assumas que um rendimento recorrente já foi recebido. Distingue sempre registos até hoje de movimentos futuros, valores previstos de recebidos, e estimativas de factos. Uma projeção pelo ritmo diário é apenas um cenário hipotético, não uma garantia nem prevê despesas irregulares. Não assumas que não houve gastos por não haver registos. Não inventes dados, cenários numéricos, rentabilidades ou saldo disponível e não dês ordens de compra ou venda. Prefere os dados atuais do backend a memórias antigas.";
+
+        if ($workspace->type === 'personal') {
+            $reportRequest .= "\n\n".$personalReportGuardrails;
+        }
 
         $reportMode = "\n\nMODO DE RELATÓRIO: não executes nem solicites ferramentas. Estás apenas a analisar os dados já fornecidos pelo backend.";
         $messages = [
@@ -227,7 +232,7 @@ class AiBrainService
         $tokens = 0;
         $maxReportTokens = $workspace->type === 'personal' ? 4000 : 2800;
         $compatibilityMode = false;
-        $qualitativeRetry = false;
+        $referenceValues = [];
         $failureReason = null;
         for ($attempt = 0; $attempt < 2; $attempt++) {
             $model = $attempt === 0 && ! $compatibilityMode ? 'google/gemma-4-31b-it:free' : 'openrouter/free';
@@ -265,9 +270,17 @@ class AiBrainService
                 $failureReason = 'corrupted';
             } elseif ($workspace->type === 'personal') {
                 [$normalized, $failureReason] = $this->normalizePersonalReport($content);
-                if ($normalized !== null && ! $this->hasSupportedReportValues($normalized, $reportSnapshot)) {
+                if ($normalized !== null && $referenceValues !== []) {
+                    $normalized = preg_replace_callback('/\[\[[^\]\r\n]{1,100}\]\]/u', function (array $match) use ($referenceValues): string {
+                        return $referenceValues[$match[0]] ?? $match[0];
+                    }, $normalized);
+                    if (str_contains($normalized, '[[') || str_contains($normalized, ']]')) {
+                        $failureReason = 'unsupported_values';
+                    }
+                }
+                if ($normalized !== null && $failureReason === null && ! $this->hasSupportedReportValues($normalized, $reportSnapshot, $referenceValues !== [])) {
                     $failureReason = 'unsupported_values';
-                } elseif ($normalized !== null) {
+                } elseif ($normalized !== null && $failureReason === null) {
                     $content = $normalized;
                 }
             }
@@ -276,10 +289,6 @@ class AiBrainService
             }
 
             if ($failureReason === null) {
-                if ($qualitativeRetry) {
-                    $content = "_Nota: esta análise privilegiou uma abordagem qualitativa porque não foi possível confirmar todos os valores da primeira resposta._\n\n".$content;
-                }
-
                 return [
                     'content' => $content,
                     'snapshot' => $snapshot,
@@ -295,15 +304,20 @@ class AiBrainService
                 'content_length' => mb_strlen($content),
                 'total_tokens' => (int) data_get($response, 'usage.total_tokens', 0),
             ]);
-            $qualitativeRetry = $workspace->type === 'personal' && $failureReason === 'unsupported_values';
-            if ($qualitativeRetry) {
-                $messages[0]['content'] = $this->systemPrompt($context, $reportSnapshot, $reportMemories, $intent, true).$reportMode;
-                $messages[1]['content'] = "Prepara uma análise financeira em português de Portugal, com opiniões fundamentadas nos dados fornecidos. Não escrevas montantes monetários nem percentagens, incluindo em cenários. Não inventes informações ou cálculos. Descreve resultados, investimentos, rendimentos, despesas e riscos qualitativamente quando houver dados, distinguindo valores previstos de recebidos e cenários de factos.\n\nUsa estes sete títulos, cada um numa linha própria: **Resultados**, **O que penso**, **Cenários**, **Pontos fortes**, **Pontos negativos**, **O que aconselho** e **Resumo**. Em cada tópico apresenta pontos organizados e desenvolve-os de forma útil, sem repetir ou inventar informação. Inclui hipóteses explícitas nos cenários e conselhos concretos e prudentes.";
+            if ($workspace->type === 'personal' && $failureReason === 'unsupported_values') {
+                $references = [];
+                foreach ($this->reportNumericValues($reportSnapshot) as $entry) {
+                    $marker = '[[V'.(count($references) + 1).']]';
+                    $formatted = rtrim(rtrim(number_format($entry['value'], 6, ',', '.'), '0'), ',');
+                    $referenceValues[$marker] = $formatted.($entry['percentage'] ? '%' : ' '.$reportSnapshot['currency']);
+                    $references[] = ['marcador' => $marker, 'campo' => $entry['path'], 'valor' => $referenceValues[$marker]];
+                }
+                $messages[1]['content'] = $reportRequest."\n\nA resposta anterior continha valores que não foi possível confirmar. Para apresentar montantes monetários e percentagens, usa apenas os marcadores da lista abaixo exatamente como estão, sem acrescentar símbolos de moeda ou percentagem: serão substituídos automaticamente pelos valores fornecidos. Não escrevas outros montantes ou percentagens, nem inventes cálculos. Mantém os sete tópicos e desenvolve-os por pontos.\n\n".json_encode($references, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
                 continue;
             }
             $retryInstruction = $workspace->type === 'personal'
-                ? 'A tentativa anterior não passou nas verificações. Não faças cálculos nem inventes montantes ou percentagens; usa apenas os valores atuais fornecidos pelo backend. Inclui os sete títulos pedidos, cada um com conteúdo.'
+                ? 'A tentativa anterior não passou nas verificações. Não faças cálculos nem inventes montantes ou percentagens; usa apenas os valores atuais fornecidos pelo backend. Inclui os sete títulos pedidos, cada um com pelo menos cinco pontos distintos.'
                 : 'A tentativa anterior não foi concluída.';
             $lengthInstruction = $workspace->type === 'personal'
                 ? ($failureReason === 'truncated'
@@ -316,7 +330,8 @@ class AiBrainService
         $message = match ($failureReason) {
             'truncated' => 'A última resposta da IA foi cortada e o relatório ficou incompleto. Tenta novamente mais tarde.',
             'empty' => 'A última resposta da IA veio vazia. Tenta novamente mais tarde.',
-            'unsupported_values' => 'A última resposta da IA apresentou valores que não foi possível confirmar. Tenta novamente mais tarde.',
+            'unsupported_values' => 'A última resposta da IA não apresentou valores que fosse possível confirmar. Tenta novamente mais tarde.',
+            'insufficient_points' => 'A IA não apresentou pelo menos cinco pontos em cada tópico. Tenta novamente mais tarde.',
             default => 'O relatório não passou nas verificações de formato ou valores em duas tentativas. Tenta novamente mais tarde.',
         };
 
@@ -333,7 +348,7 @@ class AiBrainService
 
     private function normalizePersonalReport(string $content): array
     {
-        [$sections, $failure] = $this->personalReportSections($content);
+        [$sections, $failure] = $this->personalReportSections($content, true);
         if ($sections === null) {
             return [null, $failure];
         }
@@ -346,7 +361,7 @@ class AiBrainService
         return [implode("\n\n", $formatted), null];
     }
 
-    public function personalReportSections(string $content): array
+    public function personalReportSections(string $content, bool $requireMinimumPoints = false): array
     {
         preg_match_all('/[\p{L}\p{N}]+(?:[.,\'’_-][\p{L}\p{N}]+)*/u', $content, $words);
         if (count($words[0]) < 35) {
@@ -376,7 +391,7 @@ class AiBrainService
                 $currentSection = $name;
                 $sections[$name] = [];
                 if (trim($match[3]) !== '') {
-                    $sections[$name][] = $match[3];
+                    $sections[$name][] = ltrim($match[3]);
                 }
             } elseif ($currentSection !== null) {
                 $sections[$currentSection][] = $line;
@@ -391,11 +406,14 @@ class AiBrainService
             if ($body === '') {
                 return [null, 'missing_or_empty_sections'];
             }
+            if ($requireMinimumPoints && $this->countReportPoints($lines) < 5) {
+                return [null, 'insufficient_points'];
+            }
             if ($name === 'resultados' && trim(implode("\n", $preamble)) !== '') {
                 $body = trim(implode("\n", $preamble))."\n\n".$body;
             }
             $body = collect(preg_split('/\R/u', $body))
-                ->map(fn (string $line) => trim($line) !== '' && ! preg_match('/^\s*(?:[-*•]|\d+[.)])\s+\S/u', $line) ? '- '.trim($line) : $line)
+                ->map(fn (string $line) => trim($line) !== '' && ! preg_match('/^\s*(?:[-*+•]|\d+[.)])\s+\S/u', $line) ? '- '.trim($line) : preg_replace('/^(\s*)•\s+/u', '$1- ', $line))
                 ->implode("\n");
             $formatted[$name] = $body;
         }
@@ -403,24 +421,45 @@ class AiBrainService
         return [$formatted, null];
     }
 
-    private function hasSupportedReportValues(string $content, array $snapshot): bool
+    private function countReportPoints(array $lines): int
+    {
+        $indents = [];
+        $fence = null;
+        foreach ($lines as $line) {
+            if (preg_match('/^ {0,3}(`{3,}|~{3,})/', $line, $match)) {
+                if ($fence === null) {
+                    $fence = $match[1][0];
+                } elseif ($match[1][0] === $fence) {
+                    $fence = null;
+                }
+
+                continue;
+            }
+            if ($fence === null && preg_match('/^( {0,3})(?:[-*+•]|\d+[.)])\s+\S/u', $line, $match)) {
+                $indents[] = strlen($match[1]);
+            }
+        }
+
+        if ($indents === []) {
+            return 0;
+        }
+
+        $minimumIndent = min($indents);
+
+        return count(array_filter($indents, fn (int $indent) => $indent === $minimumIndent));
+    }
+
+    private function hasSupportedReportValues(string $content, array $snapshot, bool $requireValue = false): bool
     {
         $amounts = [];
         $percentages = [];
-        $collect = function (array $data) use (&$collect, &$amounts, &$percentages): void {
-            foreach ($data as $key => $value) {
-                if (is_array($value)) {
-                    $collect($value);
-                } elseif ((is_int($value) || is_float($value)) && ! in_array($key, ['id', 'quantity', 'expense_record_count'], true)) {
-                    if (str_ends_with((string) $key, '_percent')) {
-                        $percentages[] = (float) $value;
-                    } else {
-                        $amounts[] = (float) $value;
-                    }
-                }
+        foreach ($this->reportNumericValues($snapshot) as $entry) {
+            if ($entry['percentage']) {
+                $percentages[] = $entry['value'];
+            } else {
+                $amounts[] = $entry['value'];
             }
-        };
-        $collect($snapshot);
+        }
 
         $currency = preg_quote((string) ($snapshot['currency'] ?? 'EUR'), '/');
         $symbol = match ($snapshot['currency'] ?? 'EUR') {
@@ -456,7 +495,25 @@ class AiBrainService
             }
         }
 
-        return true;
+        return ! $requireValue || $suffixCount + $prefixCount > 0;
+    }
+
+    private function reportNumericValues(array $snapshot): array
+    {
+        $values = [];
+        $collect = function (array $data, string $path = '') use (&$collect, &$values): void {
+            foreach ($data as $key => $value) {
+                $field = $path === '' ? (string) $key : $path.'.'.$key;
+                if (is_array($value)) {
+                    $collect($value, $field);
+                } elseif ((is_int($value) || is_float($value)) && ! in_array($key, ['id', 'quantity', 'expense_record_count'], true)) {
+                    $values[] = ['path' => $field, 'value' => (float) $value, 'percentage' => str_ends_with((string) $key, '_percent')];
+                }
+            }
+        };
+        $collect($snapshot);
+
+        return $values;
     }
 
     private function reportValueExists(string $formatted, array $values): bool
@@ -710,7 +767,7 @@ class AiBrainService
         }
     }
 
-    private function systemPrompt(array $context, array $snapshot, array $memories, array $intent, bool $qualitativeReport = false): string
+    private function systemPrompt(array $context, array $snapshot, array $memories, array $intent): string
     {
         $contextJson = json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $snapshotJson = json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -723,9 +780,6 @@ class AiBrainService
             'business', 'company' => 'EMPRESARIAL',
             default => 'DESCONHECIDO',
         };
-        $responseRule = $qualitativeReport
-            ? 'Para este relatório, não apresentes montantes monetários nem percentagens. Analisa os dados qualitativamente.'
-            : 'Responde de forma curta por defeito e usa os números reais disponíveis.';
 
         return <<<PROMPT
 És o Finance Pro AI — Financial Copilot. Fala sempre em Português de Portugal.
@@ -752,7 +806,7 @@ REGRAS ABSOLUTAS
 9. Operações destrutivas exigem confirmação explícita e separada.
 10. Para investimentos, impostos ou temas legais, apresenta informação e incerteza; não prometas retornos nem inventes regras.
 11. Distingue FACTO, INFERÊNCIA, ESTIMATIVA e RECOMENDAÇÃO quando isso evitar confusão.
-12. {$responseRule}
+12. Responde de forma curta por defeito e usa os números reais disponíveis.
 13. Quando receberes uma pergunta de seguimento, usa o histórico recente e o contexto financeiro do workspace atual.
 
 INTENÇÃO DETERMINÍSTICA DETETADA

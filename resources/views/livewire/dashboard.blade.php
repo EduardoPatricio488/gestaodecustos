@@ -1004,7 +1004,14 @@
                             </p>
                         </div>
                     </div>
-                    <div class="flex shrink-0 items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" wire:click="refreshInvestmentPrices" wire:loading.attr="disabled" wire:target="refreshInvestmentPrices"
+                                @disabled($dashboardInvestmentsCount === 0)
+                                class="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-300/60 bg-white/80 px-4 py-2.5 text-[11px] font-black text-sky-700 shadow-sm transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-400/30 dark:bg-slate-800 dark:text-sky-300 dark:hover:bg-slate-700">
+                            <flux:icon name="arrow-path" class="size-4" wire:loading.class="animate-spin" wire:target="refreshInvestmentPrices" />
+                            <span wire:loading.remove wire:target="refreshInvestmentPrices">Atualizar preços</span>
+                            <span wire:loading wire:target="refreshInvestmentPrices">A atualizar...</span>
+                        </button>
                         <a href="{{ route('hub.investments') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-[11px] font-black text-white shadow-md shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-400">
                             Ver investimentos
                             <flux:icon name="arrow-up-right" class="size-4" />
@@ -1014,6 +1021,11 @@
                         </button>
                     </div>
                 </div>
+
+                @if($investmentRefreshMessage)
+                    <p role="{{ $investmentRefreshFailed ? 'alert' : 'status' }}" class="mt-3 text-xs font-semibold {{ $investmentRefreshFailed ? 'text-amber-700 dark:text-amber-300' : 'text-emerald-700 dark:text-emerald-300' }}">{{ $investmentRefreshMessage }}</p>
+                    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Os Certificados de Aforro só alteram o valor quando há capitalização vencida e taxas disponíveis.</p>
+                @endif
 
                 <div class="mt-4 grid grid-cols-2 gap-y-4 border-t border-zinc-100 pt-4 dark:border-zinc-800 sm:grid-cols-4 sm:gap-0">
                     <div class="min-w-0 pr-3 sm:border-r sm:border-zinc-200 sm:pr-5 dark:sm:border-zinc-700">

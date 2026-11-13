@@ -1,4 +1,6 @@
 <div class="space-y-8 pb-8">
+    @include('livewire.report-highlights')
+
     {{-- Header --}}
     <section class="relative overflow-hidden rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:p-8">
         <div class="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full bg-violet-500/10 blur-3xl"></div>
@@ -250,5 +252,4 @@
         @endforelse
     </section>
 
-    @include('livewire.report-highlights')
 </div>

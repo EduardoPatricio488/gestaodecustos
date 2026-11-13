@@ -45,6 +45,10 @@ class Dashboard extends Component
 {
     public bool $refreshingInvestmentPrices = false;
 
+    public ?string $investmentRefreshMessage = null;
+
+    public bool $investmentRefreshFailed = false;
+
     #[On('dashboard-record-created')]
     public function refreshAfterQuickCreate(): void
     {
@@ -74,14 +78,12 @@ class Dashboard extends Component
         }
 
         $this->refreshingInvestmentPrices = true;
+        $this->investmentRefreshMessage = null;
+        $this->investmentRefreshFailed = false;
 
         try {
             $refresher = app(InvestmentsHub::class);
-            if (! $refresher->refreshPrices(true)) {
-                $this->dispatch('toast', variant: 'error', text: 'Não foi possível atualizar as cotações. Tenta novamente dentro de momentos.');
-
-                return;
-            }
+            $result = $refresher->refreshPrices(true);
 
             Cache::forget("dashboard:investments:v3:{$workspace->id}:{$user->id}");
             Cache::forget("dashboard:account-overview:v1:{$workspace->id}:{$user->id}");
@@ -104,7 +106,33 @@ class Dashboard extends Component
                 })->values()->all();
 
             $this->dispatch('dashboard-investments-updated', items: $updatedInvestments);
-            $this->dispatch('toast', text: 'Preços dos investimentos atualizados com sucesso.');
+            if ($result === false) {
+                $this->investmentRefreshFailed = true;
+                $this->investmentRefreshMessage = 'Não foi possível concluir a atualização. Algumas cotações podem ter sido alteradas.';
+                $this->dispatch('toast', variant: 'error', text: $this->investmentRefreshMessage);
+            } elseif ($result['updated'] === 0 && $result['current'] === 0 && $result['partial'] === 0) {
+                $this->investmentRefreshFailed = true;
+                $this->investmentRefreshMessage = 'Nenhuma cotação foi atualizada. Alguns ativos não têm atualização automática ou cotação disponível.';
+                $this->dispatch('toast', variant: 'error', text: $this->investmentRefreshMessage);
+            } else {
+                $updated = $result['updated'];
+                $current = $result['current'];
+                $partial = $result['partial'];
+                $unavailable = $result['unavailable'];
+                $this->investmentRefreshMessage = $updated.' '.($updated === 1 ? 'ativo atualizado' : 'ativos atualizados').'.';
+                if ($current > 0) {
+                    $this->investmentRefreshMessage .= ' '.$current.' '.($current === 1 ? 'ativo sem alterações pendentes' : 'ativos sem alterações pendentes').'.';
+                }
+                if ($partial > 0) {
+                    $this->investmentRefreshFailed = true;
+                    $this->investmentRefreshMessage .= ' '.$partial.' '.($partial === 1 ? 'ativo atualizado parcialmente' : 'ativos atualizados parcialmente').' por falta de dados.';
+                }
+                if ($unavailable > 0) {
+                    $this->investmentRefreshFailed = true;
+                    $this->investmentRefreshMessage .= ' '.$unavailable.' '.($unavailable === 1 ? 'ativo não pôde ser atualizado' : 'ativos não puderam ser atualizados').'.';
+                }
+                $this->dispatch('toast', variant: $this->investmentRefreshFailed ? 'error' : 'success', text: $this->investmentRefreshMessage);
+            }
         } finally {
             $this->refreshingInvestmentPrices = false;
         }

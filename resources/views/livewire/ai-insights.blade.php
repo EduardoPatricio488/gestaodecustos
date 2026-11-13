@@ -44,16 +44,19 @@
         <div class="flex items-center gap-3 flex-wrap flex-shrink-0">
             @if($aiAnalysis && !$isAnalyzing)
                 <flux:button
-                    x-data="{ copied: false, text: @js($aiAnalysis) }"
-                    x-on:click="navigator.clipboard.writeText(text); copied = true; setTimeout(() => copied = false, 2000)"
+                    x-data="{ copied: false, copyError: false }"
+                    x-on:click="copyError = false; copied = false; try { await navigator.clipboard.writeText($wire.aiAnalysis); copied = true; setTimeout(() => copied = false, 2000) } catch (error) { copyError = true }"
                     variant="ghost"
                     class="rounded-2xl font-black uppercase tracking-widest text-[10px] text-zinc-500"
                 >
-                    <span x-show="!copied" class="flex items-center gap-2">
+                    <span x-show="!copied && !copyError" class="flex items-center gap-2">
                         <flux:icon name="clipboard-document" class="size-4" /> Copiar
                     </span>
                     <span x-show="copied" x-cloak class="flex items-center gap-2 text-emerald-500">
                         <flux:icon name="check" class="size-4" /> Copiado
+                    </span>
+                    <span x-show="copyError" x-cloak class="flex items-center gap-2 text-red-500" role="alert">
+                        Não foi possível copiar
                     </span>
                 </flux:button>
             @endif
@@ -168,9 +171,9 @@
 
             <div class="w-full max-w-sm space-y-2">
                 <div class="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
-                    <div class="h-full w-1/3 bg-gradient-to-r from-brand-500 to-emerald-500 rounded-full animate-pulse"></div>
+                    <div class="cfo-loading-progress h-full bg-gradient-to-r from-brand-500 to-emerald-500 rounded-full"></div>
                 </div>
-                <p class="text-xs text-zinc-400">O fornecedor pode demorar e a aplicação pode tentar novamente. Mantém esta página aberta.</p>
+                <p class="text-xs text-zinc-400">Barra indicativa: o fornecedor não envia progresso real e pode ser necessária uma nova tentativa. Mantém esta página aberta.</p>
             </div>
         </div>
     </div>
@@ -277,12 +280,18 @@
     .cfo-report li::marker { color: #34d399; }
     .cfo-report strong { color: #fff; font-weight: 700; }
 
-    @keyframes progress {
-        0% { width: 0%; }
-        20% { width: 25%; }
-        50% { width: 55%; }
-        75% { width: 75%; }
-        95% { width: 90%; }
-        100% { width: 95%; }
+    .cfo-loading-progress {
+        width: 3%;
+        animation: cfo-report-progress 75s ease-out forwards, cfo-report-pulse 2s ease-in-out infinite;
+    }
+    @keyframes cfo-report-progress {
+        from { width: 3%; }
+        to { width: 95%; }
+    }
+    @keyframes cfo-report-pulse {
+        50% { opacity: 0.6; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .cfo-loading-progress { width: 50%; animation: none; }
     }
 </style>

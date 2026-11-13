@@ -52,21 +52,46 @@ class AiBrainAvailabilityTest extends TestCase
     {
         return "**Resultados**\n"
             ."- Os registos disponíveis permitem uma análise inicial prudente.\n"
-            ."- Os investimentos devem ser avaliados de acordo com os dados disponíveis.\n\n"
+            ."- Os investimentos devem ser avaliados de acordo com os dados disponíveis.\n"
+            ."- Os rendimentos previstos devem ser distinguidos dos recebidos.\n"
+            ."- Os valores registados ajudam a avaliar a situação atual.\n"
+            ."- As despesas futuras podem exigir confirmação.\n\n"
             ."**O que penso**\n"
             ."- As valorizações registadas são positivas, mas não garantem resultados futuros.\n"
-            ."- As despesas atuais podem incluir valores pontuais que exigem confirmação.\n\n"
+            ."- As despesas atuais podem incluir valores pontuais que exigem confirmação.\n"
+            ."- A qualidade dos registos influencia a confiança na análise.\n"
+            ."- Os resultados devem ser analisados em função dos objetivos.\n"
+            ."- É importante distinguir estimativas de valores efetivos.\n\n"
             ."**Cenários**\n"
-            ."- A evolução depende dos rendimentos e dos compromissos ainda por confirmar.\n\n"
+            ."- A evolução depende dos rendimentos e dos compromissos ainda por confirmar.\n"
+            ."- Despesas inesperadas podem alterar os planos futuros.\n"
+            ."- Mais registos podem melhorar a avaliação do ritmo de gastos.\n"
+            ."- Os rendimentos futuros devem ser confirmados antes de planear.\n"
+            ."- A evolução dos investimentos depende das condições de mercado.\n\n"
             ."**Pontos fortes**\n"
-            ."- Os investimentos registados permitem acompanhar a evolução da carteira.\n\n"
+            ."- Os investimentos registados permitem acompanhar a evolução da carteira.\n"
+            ."- Os movimentos registados apoiam o acompanhamento financeiro.\n"
+            ."- A informação disponível permite identificar dados a confirmar.\n"
+            ."- O acompanhamento periódico facilita a revisão de prioridades.\n"
+            ."- Os dados existentes permitem começar a definir objetivos.\n\n"
             ."**Pontos negativos**\n"
-            ."- A falta de dados confirmados limita a avaliação dos riscos.\n\n"
+            ."- A falta de dados confirmados limita a avaliação dos riscos.\n"
+            ."- As despesas futuras podem diferir do ritmo atual.\n"
+            ."- A ausência de registos não demonstra ausência de movimentos.\n"
+            ."- Uma análise incompleta pode ocultar compromissos futuros.\n"
+            ."- Os valores de investimentos podem mudar com o mercado.\n\n"
             ."**O que aconselho**\n"
             ."- Confirma os rendimentos recebidos antes de assumir que estão disponíveis.\n"
-            ."- Revê os objetivos e define prioridades para os próximos meses.\n\n"
+            ."- Revê os objetivos e define prioridades para os próximos meses.\n"
+            ."- Atualiza os registos financeiros quando houver alterações.\n"
+            ."- Confirma os compromissos futuros antes de elaborar planos.\n"
+            ."- Analisa a carteira em função dos objetivos e do risco.\n\n"
             ."**Resumo**\n"
-            .'- Analisa os resultados e confirma os dados em falta antes de decidir.';
+            ."- Analisa os resultados antes de decidir.\n"
+            ."- Confirma os dados em falta.\n"
+            ."- Revê os compromissos previstos.\n"
+            ."- Distingue estimativas de valores efetivos.\n"
+            .'- Revê as prioridades quando houver mais informação.';
     }
 
     public function test_report_and_chat_use_free_models_even_when_another_model_is_configured(): void
@@ -131,6 +156,8 @@ class AiBrainAvailabilityTest extends TestCase
             ->assertSeeHtml('<h3>Cenários</h3>')
             ->assertSeeHtml('<h3>O que aconselho</h3>')
             ->assertSeeHtml('<h3>Resumo</h3>')
+            ->assertSeeHtml('x-data="{ copied: false, copyError: false }"')
+            ->assertDontSeeHtml('@js($aiAnalysis)')
             ->assertDontSee('Verificações de Segurança')
             ->assertSeeHtml('wire:name="ai-control-center"');
 
@@ -294,7 +321,7 @@ class AiBrainAvailabilityTest extends TestCase
         $this->assertStringContainsString('dá a tua opinião fundamentada', $request['messages'][1]['content']);
         $this->assertStringContainsString('não te concentres apenas nas despesas', $request['messages'][1]['content']);
         $this->assertStringContainsString('500 a 700 palavras', $request['messages'][1]['content']);
-        $this->assertStringContainsString('dois a quatro pontos e desenvolve cada um em duas ou três frases', $request['messages'][1]['content']);
+        $this->assertStringContainsString('pelo menos cinco pontos distintos', $request['messages'][1]['content']);
         $this->assertSame(4000, $request['max_tokens']);
         $this->assertStringContainsString('**Resultados**, **O que penso**, **Cenários**, **Pontos fortes**, **Pontos negativos**, **O que aconselho** e **Resumo**', $request['messages'][1]['content']);
         $this->assertStringContainsString('não os somes', $request['messages'][1]['content']);
@@ -476,9 +503,10 @@ class AiBrainAvailabilityTest extends TestCase
     public function test_report_retries_missing_topics_and_reorders_complete_topics(): void
     {
         $report = $this->exampleReport();
-        $missing = str_replace("**Cenários**\n- A evolução depende dos rendimentos e dos compromissos ainda por confirmar.\n\n", '', $report);
-        $strong = "**Pontos fortes**\n- Os investimentos registados permitem acompanhar a evolução da carteira.";
-        $negative = "**Pontos negativos**\n- A falta de dados confirmados limita a avaliação dos riscos.";
+        $sections = explode("\n\n", $report);
+        $missing = str_replace($sections[2]."\n\n", '', $report);
+        $strong = $sections[3];
+        $negative = $sections[4];
         $outOfOrder = str_replace(
             $strong."\n\n".$negative,
             $negative."\n\n".$strong,
@@ -506,15 +534,15 @@ class AiBrainAvailabilityTest extends TestCase
         Http::assertSentCount(1);
     }
 
-    public function test_complete_report_paragraphs_are_converted_to_points(): void
+    public function test_report_without_list_points_is_retried(): void
     {
         $withoutBullets = str_replace('- ', '', $this->exampleReport());
-        Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::response([
-            'choices' => [['finish_reason' => 'stop', 'message' => ['content' => $withoutBullets]]],
-        ])]);
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::sequence()
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $withoutBullets]]]])
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $this->exampleReport()]]]])]);
 
         $this->assertSame($this->exampleReport(), app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace)['content']);
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
     }
 
     public function test_report_accepts_inline_markdown_headings_and_equivalent_topic_names(): void
@@ -528,10 +556,10 @@ class AiBrainAvailabilityTest extends TestCase
                 "**O que aconselho**\n- Confirma",
             ],
             [
-                "**Resultados:** Os registos disponíveis permitem uma análise inicial prudente.",
-                "### Cenários: A evolução",
+                "**Resultados:** - Os registos disponíveis permitem uma análise inicial prudente.",
+                "### Cenários: - A evolução",
                 '5. Pontos fracos',
-                "* **O que ele aconselha:** Confirma",
+                "* **O que ele aconselha:** - Confirma",
             ],
             $report,
         );
@@ -564,7 +592,7 @@ class AiBrainAvailabilityTest extends TestCase
         );
         $variant = str_replace(
             "**Resultados**\n- **Os registos**",
-            'Resultados: **Os registos**',
+            'Resultados: - **Os registos**',
             $report,
         );
         Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::response([
@@ -575,7 +603,7 @@ class AiBrainAvailabilityTest extends TestCase
         Http::assertSentCount(1);
     }
 
-    public function test_report_accepts_four_points_in_a_section(): void
+    public function test_report_accepts_more_than_five_points_in_a_section(): void
     {
         $report = str_replace(
             "**O que penso**\n",
@@ -588,6 +616,80 @@ class AiBrainAvailabilityTest extends TestCase
 
         $this->assertSame($report, app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace)['content']);
         Http::assertSentCount(1);
+    }
+
+    public function test_report_retries_when_the_summary_has_fewer_than_five_points(): void
+    {
+        $incomplete = str_replace("\n- Revê as prioridades quando houver mais informação.", '', $this->exampleReport());
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::sequence()
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $incomplete]]]])
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $this->exampleReport()]]]])]);
+
+        $this->assertSame($this->exampleReport(), app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace)['content']);
+        Http::assertSentCount(2);
+        $requests = Http::recorded();
+        $this->assertStringContainsString('pelo menos cinco pontos distintos', $requests[0][0]['messages'][1]['content']);
+        $this->assertStringContainsString('cada um com pelo menos cinco pontos distintos', $requests[1][0]['messages'][1]['content']);
+    }
+
+    public function test_each_topic_requires_five_points(): void
+    {
+        $report = $this->exampleReport();
+        $sections = explode("\n\n", $report);
+        $variants = [];
+        foreach (array_keys($sections) as $index) {
+            $modified = $sections;
+            $lines = explode("\n", $modified[$index]);
+            array_pop($lines);
+            $modified[$index] = implode("\n", $lines);
+            $variants[] = implode("\n\n", $modified);
+        }
+
+        $attempt = 0;
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => function () use (&$attempt, $variants, $report) {
+            $content = $attempt % 2 === 0 ? $variants[intdiv($attempt, 2)] : $report;
+            $attempt++;
+
+            return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $content]]]]);
+        }]);
+
+        foreach ($variants as $variant) {
+            $this->assertSame($report, app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace)['content']);
+        }
+        Http::assertSentCount(14);
+    }
+
+    public function test_nested_points_do_not_satisfy_the_minimum_and_previous_report_is_preserved(): void
+    {
+        $incomplete = str_replace("\n- Revê as prioridades quando houver mais informação.", "\n  - Revê as prioridades quando houver mais informação.", $this->exampleReport());
+        $key = AiInsights::reportCacheKey($this->user);
+        Cache::put($key, ['text' => 'Relatório anterior', 'at' => now()->toIso8601String()]);
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::response([
+            'choices' => [['finish_reason' => 'stop', 'message' => ['content' => $incomplete]]],
+        ])]);
+
+        Livewire::test(AiInsights::class)
+            ->set('aiAnalysis', 'Relatório anterior')
+            ->call('generateInsights')
+            ->assertSet('aiAnalysis', 'Relatório anterior')
+            ->assertSee('A IA não apresentou pelo menos cinco pontos em cada tópico.');
+        Http::assertSentCount(2);
+        $this->assertSame('Relatório anterior', Cache::get($key)['text']);
+        $this->assertSame(0, AiActionLog::count());
+    }
+
+    public function test_highlights_remain_available_for_old_reports_with_fewer_points(): void
+    {
+        $oldReport = collect(explode("\n\n", $this->exampleReport()))
+            ->map(fn (string $section) => implode("\n", array_slice(explode("\n", $section), 0, 2)))
+            ->implode("\n\n");
+        Cache::put(AiInsights::reportCacheKey($this->user), ['text' => $oldReport, 'at' => now()->toIso8601String(), 'numeric_check_version' => 1]);
+        $this->mock(\App\Services\AI\ProactiveAiService::class)->shouldReceive('analyze')->andReturn([]);
+
+        Livewire::test(AiControlCenter::class)
+            ->assertSee('As valorizações registadas são positivas')
+            ->assertSee('A evolução depende dos rendimentos')
+            ->assertSee('Confirma os rendimentos recebidos');
     }
 
     public function test_unsupported_scenario_amount_and_percentage_are_retried(): void
@@ -603,7 +705,7 @@ class AiBrainAvailabilityTest extends TestCase
             ->set('aiAnalysis', 'Relatório anterior')
             ->call('generateInsights')
             ->assertSet('aiAnalysis', 'Relatório anterior')
-            ->assertSee('A última resposta da IA apresentou valores que não foi possível confirmar.')
+            ->assertSee('A última resposta da IA não apresentou valores que fosse possível confirmar.')
             ->assertDontSee('200 EUR');
         Http::assertSentCount(2);
         $this->assertSame(0, AiActionLog::count());
@@ -613,24 +715,67 @@ class AiBrainAvailabilityTest extends TestCase
         ))->twice();
     }
 
-    public function test_unsupported_values_trigger_a_qualitative_retry(): void
+    public function test_unsupported_values_trigger_a_retry_with_backend_value_references(): void
     {
+        Expense::create([
+            'user_id' => $this->user->id, 'workspace_id' => $this->workspace->id,
+            'description' => 'Despesa', 'amount' => 1234.56, 'spent_at' => now()->toDateString(),
+        ]);
+        Investment::create([
+            'user_id' => $this->user->id, 'workspace_id' => $this->workspace->id,
+            'name' => 'Investimento', 'type' => 'ETF', 'quantity' => 1,
+            'average_price' => 100, 'current_price' => 125,
+        ]);
         $invalid = $this->exampleReport()."\n- Uma despesa hipotética de 200 EUR.";
-        Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::sequence()
-            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $invalid]]]])
-            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $this->exampleReport()]]]])]);
+        $attempt = 0;
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => function (Request $request) use (&$attempt, $invalid) {
+            $attempt++;
+            if ($attempt === 1) {
+                return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $invalid]]]]);
+            }
+            $prompt = $request['messages'][1]['content'];
+            $references = json_decode(substr($prompt, strrpos($prompt, "\n\n[") + 2), true, 512, JSON_THROW_ON_ERROR);
+            $amount = collect($references)->firstWhere('campo', 'recorded_expenses_through_today');
+            $percent = collect($references)->firstWhere('campo', 'investment_profit_loss_percent');
+            $report = $this->exampleReport()."\n- Despesas: ".$amount['marcador'].". Valorização: ".$percent['marcador'].'.';
+
+            return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $report]]]]);
+        }]);
 
         $result = app(AiBrainService::class)->generateExecutiveReport($this->user, $this->workspace);
 
-        $this->assertStringContainsString('esta análise privilegiou uma abordagem qualitativa', $result['content']);
         $this->assertStringContainsString($this->exampleReport(), $result['content']);
+        $this->assertStringContainsString('Despesas: 1.234,56 EUR. Valorização: 25%.', $result['content']);
+        $this->assertStringNotContainsString('abordagem qualitativa', $result['content']);
+        $this->assertStringNotContainsString('[[V', $result['content']);
         Http::assertSentCount(2);
         $requests = Http::recorded();
-        $this->assertStringContainsString('Não escrevas montantes monetários nem percentagens', $requests[1][0]['messages'][1]['content']);
-        $this->assertStringContainsString('não apresentes montantes monetários nem percentagens', $requests[1][0]['messages'][0]['content']);
-        $this->assertStringNotContainsString('usa os números reais disponíveis', $requests[1][0]['messages'][0]['content']);
-        $this->assertStringNotContainsString('Indica valores monetários e percentagens', $requests[1][0]['messages'][1]['content']);
+        $this->assertStringContainsString('usa apenas os marcadores da lista abaixo', $requests[1][0]['messages'][1]['content']);
+        foreach ($requests as [$request]) {
+            $this->assertStringContainsString('nem compares despesas projetadas com rendimentos', $request['messages'][1]['content']);
+            $this->assertStringContainsString('a ausência de data de avaliação de um investimento não prova que o preço esteja desatualizado', $request['messages'][1]['content']);
+            $this->assertStringContainsString('A falta de registos não prova ausência de recebimentos ou gastos', $request['messages'][1]['content']);
+        }
         $this->assertStringNotContainsString('Uma despesa hipotética de 200 EUR', json_encode($requests[1][0]['messages']));
+    }
+
+    public function test_retry_rejects_unknown_references_and_reports_without_values(): void
+    {
+        $invalid = $this->exampleReport()."\n- Despesa de 987654 EUR.";
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::sequence()
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $invalid]]]])
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $this->exampleReport()."\n- Valor: [[V99999]]."]]]])
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $invalid]]]])
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => $this->exampleReport()]]]])]);
+
+        for ($i = 0; $i < 2; $i++) {
+            Livewire::test(AiInsights::class)
+                ->set('aiAnalysis', 'Relatório anterior')
+                ->call('generateInsights')
+                ->assertSet('aiAnalysis', 'Relatório anterior')
+                ->assertSee('A última resposta da IA não apresentou valores que fosse possível confirmar.');
+        }
+        Http::assertSentCount(4);
     }
 
     public function test_supported_currency_and_percent_values_pass_the_check(): void
@@ -673,7 +818,7 @@ class AiBrainAvailabilityTest extends TestCase
             ->set('aiAnalysis', 'Relatório anterior')
             ->call('generateInsights')
             ->assertSet('aiAnalysis', 'Relatório anterior')
-            ->assertSee('valores que não foi possível confirmar');
+            ->assertSee('valores que fosse possível confirmar');
         Http::assertSentCount(2);
     }
 
@@ -814,7 +959,7 @@ class AiBrainAvailabilityTest extends TestCase
         Cache::put($key, ['text' => $this->exampleReport(), 'at' => now()->toIso8601String(), 'numeric_check_version' => 1]);
 
         $center = Livewire::test(AiControlCenter::class)
-            ->assertSee('Destaques do diagnóstico')
+            ->assertSeeInOrder(['Destaques do diagnóstico', 'AI Intelligence Center'])
             ->assertSee('As valorizações registadas são positivas')
             ->assertSee('A evolução depende dos rendimentos')
             ->assertSee('Confirma os rendimentos recebidos')
