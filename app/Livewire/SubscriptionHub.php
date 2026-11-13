@@ -127,7 +127,12 @@ class SubscriptionHub extends Component
         $this->billing_day = $sub->billing_day;
         $this->billing_cycle = $sub->cycle;
         $this->status = $sub->status;
-        $this->bank_account_id = $sub->bank_account_id;
+        $this->bank_account_id = BankAccount::query()
+            ->where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->whereNotIn('type', ['investimento', 'investimentos'])
+            ->whereKey($sub->bank_account_id)
+            ->value('id');
         $this->started_at = $sub->started_at?->format('Y-m-d');
         $this->renewal_date = $sub->renewal_date?->format('Y-m-d');
         $this->notes = $sub->notes;
@@ -438,6 +443,7 @@ class SubscriptionHub extends Component
 
         $bankAccount = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
             ->where('user_id', auth()->id())
+            ->whereNotIn('type', ['investimento', 'investimentos'])
             ->findOrFail($this->bank_account_id);
 
         $subscriptionData = [
@@ -618,6 +624,7 @@ class SubscriptionHub extends Component
 
         $bankAccounts = BankAccount::where('workspace_id', $wsId)
             ->where('user_id', $user->id)
+            ->whereNotIn('type', ['investimento', 'investimentos'])
             ->orderBy('name')
             ->get();
 
