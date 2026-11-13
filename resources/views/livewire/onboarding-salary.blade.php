@@ -1,4 +1,11 @@
 <form wire:submit.prevent="saveEmployment" class="space-y-5">
+    @if($onboardingSalaryId)
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300" role="status">
+            <p class="font-black">Já tens um registo de salário guardado.</p>
+            <p class="mt-1 text-xs">Os dados abaixo correspondem ao teu registo atual. Podes confirmar ou atualizar a informação.</p>
+        </div>
+    @endif
+
     <div class="flex items-center gap-4">
         <div class="rounded-2xl bg-indigo-600 p-3 text-white shadow-lg">
             <flux:icon name="briefcase" class="size-6" />
