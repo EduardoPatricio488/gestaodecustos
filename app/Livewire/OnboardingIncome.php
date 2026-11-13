@@ -55,7 +55,6 @@ class OnboardingIncome extends IncomeHub
     private function prepareNewIncome(): void
     {
         $this->authorizeOnboardingWrite();
-        $this->editingFixedId = null;
         if ($this->recBankAccountId !== '') {
             $user = auth()->user();
             abort_unless(BankAccount::where('workspace_id', $user->current_workspace_id)
@@ -73,6 +72,54 @@ class OnboardingIncome extends IncomeHub
         $this->onboardingSaved = $id !== null;
 
         return $id;
+    }
+
+    public function editSavedIncome(int $incomeId): void
+    {
+        $this->authorizeOnboardingWrite();
+
+        $record = RecurringIncome::query()
+            ->where('workspace_id', $this->onboardingWorkspaceId)
+            ->where('user_id', auth()->id())
+            ->whereIn('source', ['emprego', 'imobiliario', 'freelance', 'investimento', 'reforma', 'bolsa', 'outro'])
+            ->where(function ($query): void {
+                $query->where('source', '!=', 'emprego')
+                    ->orWhereNull('metadata->income_type');
+            })
+            ->findOrFail($incomeId);
+
+        $this->resetValidation();
+        $this->onboardingSaved = false;
+        $this->editFixed($record->id);
+    }
+
+    public function deleteSavedIncome(int $incomeId): void
+    {
+        $this->authorizeOnboardingWrite();
+
+        $record = RecurringIncome::query()
+            ->where('workspace_id', $this->onboardingWorkspaceId)
+            ->where('user_id', auth()->id())
+            ->whereIn('source', ['emprego', 'imobiliario', 'freelance', 'investimento', 'reforma', 'bolsa', 'outro'])
+            ->where(function ($query): void {
+                $query->where('source', '!=', 'emprego')
+                    ->orWhereNull('metadata->income_type');
+            })
+            ->findOrFail($incomeId);
+
+        $mealCardIncomeId = $record->metadata['meal_card_income_id'] ?? null;
+        if ($mealCardIncomeId) {
+            RecurringIncome::query()
+                ->where('workspace_id', $this->onboardingWorkspaceId)
+                ->where('user_id', auth()->id())
+                ->whereKey($mealCardIncomeId)
+                ->delete();
+        }
+
+        $record->delete();
+        $this->editingFixedId = null;
+        $this->onboardingSaved = false;
+        $this->dispatch('toast', text: 'Rendimento eliminado com sucesso.');
     }
 
     public function scanEmploymentContract(): void
