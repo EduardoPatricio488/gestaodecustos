@@ -173,12 +173,20 @@
             </p>
             <div class="mt-3 space-y-2">
                 @foreach($savedBankAccounts as $savedAccount)
-                    <div class="flex items-center justify-between gap-3 rounded-xl bg-white/80 px-3 py-2 text-xs dark:bg-zinc-900/70">
-                        <div class="min-w-0">
+                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/80 px-3 py-3 text-xs dark:bg-zinc-900/70">
+                        <div class="min-w-0 flex-1">
                             <p class="truncate font-bold text-zinc-800 dark:text-zinc-100">{{ $savedAccount->name }}</p>
                             <p class="text-zinc-500">{{ $savedAccount->bank_name ?: ucfirst(str_replace('_', ' ', $savedAccount->type)) }}</p>
+                            <p class="mt-1 font-black tabular-nums text-zinc-700 dark:text-zinc-200">{{ number_format((float) $savedAccount->balance, 2, ',', ' ') }} {{ $savedAccount->currency }}</p>
                         </div>
-                        <p class="shrink-0 font-black tabular-nums text-zinc-700 dark:text-zinc-200">{{ number_format((float) $savedAccount->balance, 2, ',', ' ') }} {{ $savedAccount->currency }}</p>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <button type="button" wire:click="editSavedBankAccount({{ $savedAccount->id }})" class="rounded-lg border border-sky-200 px-3 py-2 font-bold text-sky-700 transition hover:bg-sky-50 dark:border-sky-900 dark:text-sky-300 dark:hover:bg-sky-950">
+                                <flux:icon name="pencil" class="mr-1 inline size-3.5" /> Editar
+                            </button>
+                            <button type="button" wire:click="deleteSavedBankAccount({{ $savedAccount->id }})" wire:confirm="Tens a certeza de que pretendes eliminar esta conta bancária?" class="rounded-lg border border-red-200 px-3 py-2 font-bold text-red-600 transition hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950">
+                                <flux:icon name="trash" class="mr-1 inline size-3.5" /> Eliminar
+                            </button>
+                        </div>
                     </div>
                 @endforeach
             </div>
