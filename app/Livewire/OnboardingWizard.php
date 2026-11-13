@@ -933,6 +933,7 @@ class OnboardingWizard extends Component
             ? BankAccount::query()
                 ->where('workspace_id', $workspaceId)
                 ->where('user_id', $user->id)
+                ->where('type', '!=', 'investimento')
                 ->orderBy('name')
                 ->get(['id', 'name', 'bank_name', 'type', 'balance', 'currency'])
             : collect();
