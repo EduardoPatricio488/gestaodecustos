@@ -839,6 +839,16 @@ class Dashboard extends Component
                     'current_price' => (float) ($latest->current_price ?: $latest->average_price),
                     'fees' => (float) $positions->sum(fn ($position) => (float) ($position->fees ?? 0)),
                     'positions_count' => $positions->count(),
+                    'positions' => $positions->map(fn ($position) => [
+                        'id' => $position->id,
+                        'symbol' => $position->symbol,
+                        'name' => $position->name,
+                        'type' => $position->type,
+                        'quantity' => (float) $position->quantity,
+                        'average_price' => (float) $position->average_price,
+                        'current_price' => (float) ($position->current_price ?: $position->average_price),
+                        'fees' => (float) ($position->fees ?? 0),
+                    ])->values()->all(),
                     'updated_at' => $positions->max(fn ($position) => $position->updated_at?->timestamp),
                 ];
             })->values()->all());
