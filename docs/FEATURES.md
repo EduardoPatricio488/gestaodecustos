@@ -34,7 +34,9 @@ Na configuração inicial, o formulário de salário é o mesmo do módulo Recei
 
 A configuração inicial inclui ainda passos opcionais para outras fontes de rendimento, investimentos, importação de extratos e assinaturas, com os formulários dos respetivos módulos. Os extratos são pré-visualizados e os movimentos selecionados antes da confirmação.
 
-No passo de investimentos, é também possível analisar e importar relatórios XTB (Excel ou CSV) e extratos AforroNet em PDF, revendo as posições antes da confirmação. Se o OpenRouter estiver configurado, a análise XTB envia um resumo das posições e respetivos valores para validação por IA.
+No passo de investimentos, é também possível analisar e importar relatórios XTB (Excel ou CSV) e extratos AforroNet em PDF, revendo as posições antes da confirmação. As posições XTB com identificador são guardadas individualmente, mesmo quando partilham o mesmo símbolo. Se o OpenRouter estiver configurado, a análise XTB envia um resumo das posições e respetivos valores para validação por IA.
+
+As posições XTB guardadas podem ser expandidas, editadas ou eliminadas nesse passo. Uma nova importação pode atualizar os valores editados ou voltar a criar uma posição eliminada.
 
 ## Business
 

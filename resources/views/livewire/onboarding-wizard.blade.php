@@ -922,7 +922,7 @@
         $extraSteps = [
             5 => ['title' => 'Adiciona outros rendimentos', 'description' => 'Escolhe uma fonte para abrir o formulário correspondente.', 'icon' => 'banknotes'],
             6 => ['title' => 'Organiza os teus investimentos', 'description' => 'Adiciona os ativos que já tens à tua carteira.', 'icon' => 'chart-bar-square'],
-            7 => ['title' => 'Importa um extrato bancário', 'description' => 'Analisa e revê os movimentos antes de os importar.', 'icon' => 'document-arrow-up'],
+            7 => ['title' => 'Importa um extrato de movimentos bancários', 'description' => 'Analisa e revê os movimentos antes de os importar.', 'icon' => 'document-arrow-up'],
             8 => ['title' => 'Organiza as tuas assinaturas', 'description' => 'Regista serviços recorrentes para acompanhares os seus custos.', 'icon' => 'credit-card'],
         ];
         $extraStep = $extraSteps[$step];

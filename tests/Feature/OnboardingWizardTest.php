@@ -8,11 +8,13 @@ use App\Livewire\OnboardingInvestmentImport;
 use App\Livewire\InvestmentsHub;
 use App\Livewire\OnboardingStatement;
 use App\Livewire\OnboardingSubscription;
+use App\Livewire\XtbInvestmentImportHub;
 use App\Models\BankAccount;
 use App\Models\BankStatementImport;
 use App\Models\BankTransfer;
 use App\Models\Category;
 use App\Models\Investment;
+use App\Models\InvestmentIncome;
 use App\Models\RecurringIncome;
 use App\Models\Subscription;
 use App\Models\User;
@@ -88,7 +90,7 @@ test('new onboarding steps can be skipped and revisited without saving records',
     foreach ([
         5 => 'Adiciona outros rendimentos',
         6 => 'Organiza os teus investimentos',
-        7 => 'Importa um extrato bancário',
+        7 => 'Importa um extrato de movimentos bancários',
         8 => 'Organiza as tuas assinaturas',
     ] as $step => $title) {
         $wizard->assertSet('step', $step)->assertSee($title)
@@ -182,16 +184,158 @@ test('investment onboarding offers the report importer with both providers', fun
         ->assertSee('Ficheiro PDF do extrato AforroNet');
 });
 
+test('investment step shows XTB positions from the active workspace only', function () {
+    $otherUser = User::factory()->create();
+    $otherWorkspace = Workspace::create(['name' => 'Outro', 'owner_id' => $otherUser->id, 'type' => 'personal']);
+    [$user, $workspace] = onboardingWorkspace();
+    $data = ['type' => 'Acao', 'quantity' => 2, 'average_price' => 10, 'current_price' => 12];
+
+    Investment::withoutEvents(function () use ($data, $user, $workspace, $otherUser, $otherWorkspace) {
+        Investment::create($data + ['workspace_id' => $workspace->id, 'user_id' => $user->id, 'name' => 'Posição XTB própria', 'symbol' => 'OWN', 'broker' => 'XTB']);
+        Investment::create($data + ['workspace_id' => $workspace->id, 'user_id' => $user->id, 'name' => 'Posição de outro banco', 'symbol' => 'OTHER', 'broker' => 'Outro']);
+        Investment::create($data + ['workspace_id' => $otherWorkspace->id, 'user_id' => $otherUser->id, 'name' => 'Posição de outro espaço', 'symbol' => 'PRIVATE', 'broker' => 'XTB']);
+        Investment::create($data + ['workspace_id' => $workspace->id, 'user_id' => $otherUser->id, 'name' => 'Posição de outra pessoa', 'symbol' => 'PERSON', 'broker' => 'XTB']);
+    });
+
+    Livewire::test(OnboardingInvestment::class)
+        ->assertSee('Investimentos XTB guardados')
+        ->assertSee('Posição XTB própria')
+        ->assertSee('24,00 €')
+        ->assertDontSee('Posição de outro banco')
+        ->assertDontSee('Posição de outro espaço')
+        ->assertDontSee('Posição de outra pessoa');
+});
+
+test('investment step expands and edits each saved XTB position without changing its identity', function () {
+    [$user, $workspace] = onboardingWorkspace();
+    $account = BankAccount::create(['workspace_id' => $workspace->id, 'user_id' => $user->id, 'name' => 'XTB', 'type' => 'investimento', 'balance' => 0]);
+    $data = ['workspace_id' => $workspace->id, 'user_id' => $user->id, 'bank_account_id' => $account->id,
+        'name' => 'Índice', 'symbol' => 'TEST', 'type' => 'ETF', 'broker' => 'XTB',
+        'quantity' => 2, 'average_price' => 10, 'current_price' => 12];
+    $first = Investment::create($data + ['xtb_position_id' => '111111']);
+    $second = Investment::create($data + ['xtb_position_id' => '222222']);
+
+    Livewire::test(OnboardingInvestment::class)
+        ->assertDontSee('Guardar alterações')
+        ->call('toggleXtbInvestment', $first->id)
+        ->assertSee('Guardar alterações')->assertSee('Preço atual por unidade')
+        ->assertSee('Eliminar')->assertSet('xtbForm.quantity', 2.0)
+        ->set('xtbForm.name', 'Índice atualizado')
+        ->set('xtbForm.quantity', 3)
+        ->set('xtbForm.average_price', 11)
+        ->set('xtbForm.current_price', 14)
+        ->set('xtbForm.fees', 1)
+        ->set('xtbForm.operation_date', '2026-01-02')
+        ->set('xtbForm.xtb_position_id', '333333')
+        ->set('xtbForm.broker', 'Outro')
+        ->call('saveXtbInvestment')->assertHasNoErrors()
+        ->assertSet('expandedXtbInvestmentId', null)
+        ->assertSee('Índice atualizado')->assertSee('42,00 €');
+
+    expect($first->fresh()->xtb_position_id)->toBe('111111')
+        ->and($first->fresh()->broker)->toBe('XTB')
+        ->and($first->fresh()->user_id)->toBe($user->id)
+        ->and($first->fresh()->quantity)->toBe(3.0)
+        ->and($first->fresh()->average_price)->toBe(11.0)
+        ->and($first->fresh()->current_price)->toBe(14.0)
+        ->and($first->fresh()->fees)->toBe(1.0)
+        ->and($first->fresh()->operation_date->toDateString())->toBe('2026-01-02')
+        ->and($second->fresh()->quantity)->toBe(2.0)
+        ->and(Investment::count())->toBe(2);
+});
+
+test('investment step validates edits and cannot associate an account from another workspace', function () {
+    $otherUser = User::factory()->create();
+    $otherWorkspace = Workspace::create(['name' => 'Outro', 'owner_id' => $otherUser->id, 'type' => 'personal']);
+    $otherAccount = BankAccount::create(['workspace_id' => $otherWorkspace->id, 'user_id' => $otherUser->id, 'name' => 'Outra', 'type' => 'corrente', 'balance' => 0]);
+    [$user, $workspace] = onboardingWorkspace();
+    $account = BankAccount::create(['workspace_id' => $workspace->id, 'user_id' => $user->id, 'name' => 'XTB', 'type' => 'investimento', 'balance' => 0]);
+    $investment = Investment::create(['workspace_id' => $workspace->id, 'user_id' => $user->id,
+        'bank_account_id' => $account->id, 'name' => 'Índice', 'symbol' => 'TEST', 'type' => 'ETF',
+        'broker' => 'XTB', 'quantity' => 2, 'average_price' => 10, 'current_price' => 12]);
+
+    Livewire::test(OnboardingInvestment::class)->call('toggleXtbInvestment', $investment->id)
+        ->set('xtbForm.quantity', 0)->set('xtbForm.bank_account_id', $otherAccount->id)
+        ->call('saveXtbInvestment')
+        ->assertHasErrors(['xtbForm.quantity', 'xtbForm.bank_account_id'])
+        ->assertSee('O campo quantidade deve ser superior a 0.')
+        ->assertSee('A conta associada selecionada não está disponível neste espaço.');
+    expect($investment->fresh()->quantity)->toBe(2.0)
+        ->and($investment->fresh()->bank_account_id)->toBe($account->id);
+});
+
+test('investment step deletes only the selected XTB position after confirmation', function () {
+    [$user, $workspace] = onboardingWorkspace();
+    $data = ['workspace_id' => $workspace->id, 'user_id' => $user->id, 'name' => 'Índice',
+        'symbol' => 'TEST', 'type' => 'ETF', 'broker' => 'XTB', 'quantity' => 2, 'average_price' => 10, 'current_price' => 12];
+    $first = Investment::create($data + ['xtb_position_id' => '111111']);
+    $second = Investment::create($data + ['xtb_position_id' => '222222']);
+    $income = InvestmentIncome::create([
+        'investment_id' => $first->id, 'user_id' => $user->id, 'workspace_id' => $workspace->id,
+        'reference_date' => '2026-01-01', 'gross_amount' => 1, 'tax_amount' => 0,
+        'net_amount' => 1, 'base_rate' => 1, 'loyalty_bonus' => 0,
+        'capital_before' => 20, 'capital_after' => 21, 'type' => 'CA',
+    ]);
+
+    Livewire::test(OnboardingInvestment::class)->call('toggleXtbInvestment', $first->id)
+        ->assertSee('rendimentos associados')
+        ->call('deleteAsset', $first->id)
+        ->assertSet('expandedXtbInvestmentId', null)
+        ->assertDontSee('Posição 111111')->assertSee('Posição 222222');
+    expect(Investment::find($first->id))->toBeNull()
+        ->and(Investment::find($second->id))->not->toBeNull()
+        ->and(InvestmentIncome::find($income->id))->toBeNull();
+});
+
+test('investment step cannot edit or delete another workspace or non-XTB investment', function () {
+    $otherUser = User::factory()->create();
+    $otherWorkspace = Workspace::create(['name' => 'Outro', 'owner_id' => $otherUser->id, 'type' => 'personal']);
+    [$user, $workspace] = onboardingWorkspace();
+    $data = ['name' => 'Índice', 'symbol' => 'TEST', 'type' => 'ETF', 'quantity' => 2, 'average_price' => 10, 'current_price' => 12];
+    Investment::withoutEvents(function () use ($data, $user, $workspace, $otherUser, $otherWorkspace, &$foreign, &$nonXtb) {
+        $foreign = Investment::create($data + ['workspace_id' => $otherWorkspace->id, 'user_id' => $otherUser->id, 'broker' => 'XTB']);
+        $nonXtb = Investment::create($data + ['workspace_id' => $workspace->id, 'user_id' => $user->id, 'broker' => 'Outro']);
+    });
+
+    expect(fn () => Livewire::test(OnboardingInvestment::class)->call('toggleXtbInvestment', $foreign->id))
+        ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+    expect(fn () => Livewire::test(OnboardingInvestment::class)->call('deleteAsset', $foreign->id))
+        ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+    expect(fn () => Livewire::test(OnboardingInvestment::class)->call('deleteAsset', $nonXtb->id))
+        ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+    expect(Investment::withoutGlobalScopes()->find($foreign->id))->not->toBeNull()
+        ->and(Investment::find($nonXtb->id))->not->toBeNull();
+});
+
+test('investment step refuses changes after the active workspace changes', function () {
+    [$user, $workspace] = onboardingWorkspace();
+    $user->forceFill(['current_workspace_id' => null])->save();
+    $other = Workspace::create(['name' => 'Outro', 'owner_id' => $user->id, 'type' => 'personal']);
+    $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+    $investment = Investment::create(['workspace_id' => $workspace->id, 'user_id' => $user->id,
+        'name' => 'Índice', 'symbol' => 'TEST', 'type' => 'ETF', 'broker' => 'XTB',
+        'quantity' => 2, 'average_price' => 10, 'current_price' => 12]);
+    $component = Livewire::test(OnboardingInvestment::class)->call('toggleXtbInvestment', $investment->id);
+    $deleteComponent = Livewire::test(OnboardingInvestment::class);
+    $user->forceFill(['current_workspace_id' => $other->id])->save();
+
+    $component->call('saveXtbInvestment')->assertForbidden();
+    $deleteComponent->call('deleteAsset', $investment->id)->assertForbidden();
+    expect(Investment::withoutGlobalScopes()->find($investment->id))->not->toBeNull();
+});
+
 test('onboarding previews an XTB report before synchronizing positions', function () {
     Storage::fake('local');
     config(['services.openrouter.api_key' => null]);
     Http::fake();
     [$user, $workspace] = onboardingWorkspace();
     $report = UploadedFile::fake()->createWithContent('relatorio.csv', "Ticker,Category,Volume,Value,Open Price,Current Price,Instrument/Position\nTEST,STOCK,2,24,10,12,123456\n");
+    $investmentStep = Livewire::test(OnboardingInvestment::class)
+        ->assertSee('Ainda não há investimentos XTB guardados neste espaço.');
 
     $importer = Livewire::test(OnboardingInvestmentImport::class)
         ->set('reportFile', $report)
-        ->call('importPositions');
+        ->call('importPositions')->assertNotDispatched('onboarding-xtb-imported');
     expect(Investment::where('workspace_id', $workspace->id)->count())->toBe(0);
 
     $importer->call('analyzeReport')->assertHasNoErrors()->assertSet('previewReady', true)
@@ -199,7 +343,9 @@ test('onboarding previews an XTB report before synchronizing positions', functio
     expect(Investment::where('workspace_id', $workspace->id)->count())->toBe(0);
 
     $importer->call('importPositions')->assertHasNoErrors()->assertSet('previewReady', false)
+        ->assertDispatchedTo(OnboardingInvestment::class, 'onboarding-xtb-imported')
         ->assertSee('Posições XTB importadas.');
+    $investmentStep->dispatch('onboarding-xtb-imported')->assertSee('TEST')->assertSee('24,00 €');
     $investment = Investment::where('workspace_id', $workspace->id)->where('symbol', 'TEST')->firstOrFail();
     expect((float) $investment->quantity)->toBe(2.0)
         ->and((float) $investment->current_price)->toBe(12.0)
@@ -207,9 +353,146 @@ test('onboarding previews an XTB report before synchronizing positions', functio
 
     $importer->set('reportFile', UploadedFile::fake()->createWithContent('relatorio.csv', "Ticker,Category,Volume,Value,Open Price,Current Price,Instrument/Position\nTEST,STOCK,3,45,10,15,123456\n"))
         ->call('analyzeReport')->call('importPositions');
+    $investmentStep->dispatch('onboarding-xtb-imported')->assertSee('45,00 €');
     expect(Investment::where('workspace_id', $workspace->id)->where('broker', 'XTB')->count())->toBe(1)
         ->and((float) $investment->fresh()->quantity)->toBe(3.0);
     Http::assertNothingSent();
+});
+
+test('XTB imports separate positions with the same ticker and reimports without duplicates', function () {
+    Storage::fake('local');
+    config(['services.openrouter.api_key' => null]);
+    [$user, $workspace] = onboardingWorkspace();
+    $account = BankAccount::create(['workspace_id' => $workspace->id, 'user_id' => $user->id, 'name' => 'XTB', 'type' => 'investimento', 'balance' => 0]);
+    $old = Investment::create([
+        'workspace_id' => $workspace->id, 'user_id' => $user->id, 'bank_account_id' => $account->id,
+        'name' => 'Índice de teste', 'symbol' => 'TEST', 'type' => 'ETF', 'broker' => 'XTB',
+        'quantity' => 3, 'average_price' => 10, 'current_price' => 12,
+    ]);
+    $csv = "Ticker,Category,Volume,Value,Open Price,Current Price,Instrument/Position,Net Profit\n".
+        "TEST,ETF,3,36,10,12,Índice de teste,6\n".
+        "TEST,ETF,1,12,10,12,111111,2\n".
+        "TEST,ETF,2,24,10,12,222222,4\n";
+    $importer = Livewire::test(OnboardingInvestmentImport::class)
+        ->set('reportFile', UploadedFile::fake()->createWithContent('relatorio.csv', $csv))
+        ->call('analyzeReport')->assertHasNoErrors()
+        ->assertSet('reportSummary.positions_count', 2)
+        ->assertSet('reportSummary.open_value', 36.0)
+        ->assertSee('Posição 111111')->assertSee('Posição 222222');
+
+    $importer->call('importPositions')->assertHasNoErrors();
+    expect(Investment::where('broker', 'XTB')->count())->toBe(2)
+        ->and($old->fresh()->xtb_position_id)->toBe('111111')
+        ->and(Investment::where('xtb_position_id', '222222')->firstOrFail()->quantity)->toBe(2.0);
+
+    $importer->set('reportFile', UploadedFile::fake()->createWithContent('relatorio.csv', $csv))
+        ->call('analyzeReport')->call('importPositions')->assertHasNoErrors();
+    expect(Investment::where('broker', 'XTB')->count())->toBe(2);
+
+    Livewire::test(OnboardingInvestment::class)->assertSee('Posição 111111')->assertSee('Posição 222222');
+    Livewire::test(InvestmentsHub::class)->assertSee('Posição 111111')->assertSee('Posição 222222');
+});
+
+test('XTB refuses a report whose summary does not match its positions', function () {
+    Storage::fake('local');
+    config(['services.openrouter.api_key' => null]);
+    onboardingWorkspace();
+    $csv = "Ticker,Category,Volume,Value,Open Price,Current Price,Instrument/Position\n".
+        "TEST,ETF,3,36,10,12,Índice de teste\n".
+        "TEST,ETF,1,12,10,12,111111\n";
+
+    Livewire::test(OnboardingInvestmentImport::class)
+        ->set('reportFile', UploadedFile::fake()->createWithContent('relatorio.csv', $csv))
+        ->call('analyzeReport')->assertHasErrors(['reportFile'])
+        ->assertSet('previewReady', false)
+        ->assertSee('As posições individuais não coincidem com o resumo do relatório XTB.');
+    expect(Investment::count())->toBe(0);
+});
+
+test('XTB clears an earlier preview when a different report is uploaded', function () {
+    Storage::fake('local');
+    config(['services.openrouter.api_key' => null]);
+    onboardingWorkspace();
+    $header = "Ticker,Category,Volume,Value,Open Price,Current Price,Instrument/Position\n";
+    $importer = Livewire::test(OnboardingInvestmentImport::class)
+        ->set('reportFile', UploadedFile::fake()->createWithContent('primeiro.csv', $header."TEST,ETF,1,12,10,12,111111\n"))
+        ->call('analyzeReport')->assertSet('previewReady', true);
+
+    $importer->set('reportFile', UploadedFile::fake()->createWithContent('segundo.csv', $header.
+        "TEST,ETF,2,24,10,12,Índice de teste\n".
+        "TEST,ETF,1,12,10,12,111111\n"))
+        ->assertSet('previewReady', false)
+        ->call('analyzeReport')->assertHasErrors(['reportFile'])
+        ->call('importPositions');
+
+    expect(Investment::count())->toBe(0);
+});
+
+test('XTB rejects duplicate position identifiers', function () {
+    Storage::fake('local');
+    config(['services.openrouter.api_key' => null]);
+    onboardingWorkspace();
+    $csv = "Ticker,Category,Volume,Value,Open Price,Current Price,Instrument/Position\n".
+        "TEST,ETF,1,12,10,12,111111\n".
+        "TEST,ETF,1,12,10,12,111111\n";
+
+    Livewire::test(OnboardingInvestmentImport::class)
+        ->set('reportFile', UploadedFile::fake()->createWithContent('relatorio.csv', $csv))
+        ->call('analyzeReport')->assertHasErrors(['reportFile'])
+        ->assertSee('O relatório contém identificadores de posição XTB inválidos ou repetidos.');
+    expect(Investment::count())->toBe(0);
+});
+
+test('XTB refuses an unidentified summary after importing individual positions', function () {
+    Storage::fake('local');
+    config(['services.openrouter.api_key' => null]);
+    onboardingWorkspace();
+    $header = "Ticker,Category,Volume,Value,Open Price,Current Price,Instrument/Position\n";
+    $importer = Livewire::test(OnboardingInvestmentImport::class)
+        ->set('reportFile', UploadedFile::fake()->createWithContent('detalhado.csv', $header.
+            "TEST,ETF,1,12,10,12,111111\n".
+            "TEST,ETF,2,24,10,12,222222\n"))
+        ->call('analyzeReport')->call('importPositions')->assertHasNoErrors();
+
+    $importer->set('reportFile', UploadedFile::fake()->createWithContent('resumo.csv', $header.
+        "TEST,ETF,3,36,10,12,Índice de teste\n"))
+        ->call('analyzeReport')->assertHasNoErrors()
+        ->call('importPositions')->assertHasErrors(['reportFile'])
+        ->assertSee('Não foi possível distinguir os investimentos XTB já guardados.');
+    expect(Investment::count())->toBe(2)
+        ->and(Investment::whereNotNull('xtb_position_id')->count())->toBe(2);
+});
+
+test('XTB does not split a legacy investment with linked income automatically', function () {
+    Storage::fake('local');
+    config(['services.openrouter.api_key' => null]);
+    [$user, $workspace] = onboardingWorkspace();
+    $old = Investment::create([
+        'workspace_id' => $workspace->id, 'user_id' => $user->id, 'name' => 'Índice de teste',
+        'symbol' => 'TEST', 'type' => 'ETF', 'broker' => 'XTB',
+        'quantity' => 3, 'average_price' => 10, 'current_price' => 12,
+    ]);
+    InvestmentIncome::create([
+        'investment_id' => $old->id, 'user_id' => $user->id, 'workspace_id' => $workspace->id,
+        'reference_date' => '2026-01-01', 'gross_amount' => 1, 'tax_amount' => 0,
+        'net_amount' => 1, 'base_rate' => 1, 'loyalty_bonus' => 0,
+        'capital_before' => 30, 'capital_after' => 31, 'type' => 'CA',
+    ]);
+    $csv = "Ticker,Category,Volume,Value,Open Price,Current Price,Instrument/Position\n".
+        "TEST,ETF,3,36,10,12,Índice de teste\n".
+        "TEST,ETF,1,12,10,12,111111\n".
+        "TEST,ETF,2,24,10,12,222222\n";
+
+    Livewire::test(OnboardingInvestmentImport::class)
+        ->set('reportFile', UploadedFile::fake()->createWithContent('relatorio.csv', $csv))
+        ->call('analyzeReport')->assertHasNoErrors()
+        ->call('importPositions')->assertHasErrors(['reportFile'])
+        ->assertSee('Um investimento XTB agregado tem rendimentos associados.');
+
+    expect(Investment::count())->toBe(1)
+        ->and($old->fresh()->xtb_position_id)->toBeNull()
+        ->and($old->fresh()->quantity)->toBe(3.0)
+        ->and(InvestmentIncome::where('investment_id', $old->id)->count())->toBe(1);
 });
 
 test('the investments module still exposes its original report importer', function () {
@@ -252,6 +535,59 @@ test('onboarding previews and imports AforroNet subscriptions after confirmation
     $investment = Investment::where('workspace_id', $workspace->id)->where('broker', 'AforroNet')->firstOrFail();
     expect((float) $investment->quantity)->toBe(100.0)
         ->and($investment->subscription_number)->toBe('123456');
+});
+
+test('AforroNet recognises decomposed accents in the certificate series', function (string $series) {
+    $component = new XtbInvestmentImportHub;
+    $detect = new ReflectionMethod($component, 'detectAforroNetSeries');
+    $detect->setAccessible(true);
+
+    expect($detect->invoke($component, "Certificados de Aforro Se\u{0301}rie $series Unidades Valor"))->toBe($series);
+})->with(['E', 'F']);
+
+test('AforroNet reads subscription rows without treating the header as a subscription', function () {
+    Storage::fake('local');
+    [$user, $workspace] = onboardingWorkspace();
+    $pdf = onboardingProofPdf(
+        'Data do Extrato 13-11-2026 Titular 987654321 Saldo 2.000,00 '.
+        'Certificados de Aforro Série E 3.000 3.250,00 '.
+        'CAF / Série E Valor Unitário Unidades Valor '.
+        '01-01-2022 123456789 1,05000 1.000 1.050,00 '.
+        '01-02-2022 234567890 1,10000 2.000 2.200,00'
+    );
+
+    Livewire::test(OnboardingInvestmentImport::class)
+        ->call('switchProvider', 'aforronet')
+        ->set('aforroNetFile', $pdf)
+        ->call('analyzeAforroNetFile')
+        ->assertHasNoErrors()
+        ->assertSet('aforroNetPreviewReady', true)
+        ->assertDontSee('Diagnóstico técnico (sem dados pessoais)')
+        ->assertSet('aforroNetPosition.quantity', 3000.0)
+        ->assertSet('aforroNetPosition.current_value', 3250.0)
+        ->assertCount('aforroNetSubscriptions', 2);
+
+    expect(Investment::where('workspace_id', $workspace->id)->count())->toBe(0);
+});
+
+test('AforroNet still rejects a total that differs from the subscription rows', function () {
+    Storage::fake('local');
+    onboardingWorkspace();
+    $pdf = onboardingProofPdf(
+        'Data do Extrato 13-11-2026 Certificados de Aforro Série E 3.000 3.251,00 '.
+        'CAF / Série E Valor Unitário Unidades Valor '.
+        '01-01-2022 123456789 1,05000 1.000 1.050,00 '.
+        '01-02-2022 234567890 1,10000 2.000 2.200,00'
+    );
+
+    Livewire::test(OnboardingInvestmentImport::class)
+        ->call('switchProvider', 'aforronet')
+        ->set('aforroNetFile', $pdf)
+        ->call('analyzeAforroNetFile')
+        ->assertHasErrors(['aforroNetFile'])
+        ->assertSet('aforroNetPreviewReady', false)
+        ->assertDontSee('Diagnóstico técnico (sem dados pessoais)')
+        ->assertSee('A soma das subscrições individuais não coincide com o total indicado no PDF.');
 });
 
 test('investment report importer rejects users without write access', function () {
@@ -587,11 +923,27 @@ test('onboarding requires account details or lets the user skip the step', funct
         ->set('step', 3)
         ->call('nextStep')
         ->assertHasErrors(['bankAccounts.0.name', 'bankAccounts.0.balance'])
+        ->assertSee('O nome da conta é obrigatório.')
+        ->assertSee('O saldo atual é obrigatório.')
         ->assertSet('step', 3)
         ->call('skipStep')
         ->assertSet('step', 4);
 
     $this->assertDatabaseCount('bank_accounts', 0);
+});
+
+test('required bank account messages are translated for additional accounts', function () {
+    onboardingWorkspace();
+
+    Livewire::test(OnboardingWizard::class)
+        ->set('step', 3)
+        ->set('bankAccounts.0.name', 'Conta principal')
+        ->set('bankAccounts.0.balance', 100)
+        ->call('addBankAccount')
+        ->call('nextStep')
+        ->assertHasErrors(['bankAccounts.1.name', 'bankAccounts.1.balance'])
+        ->assertSee('O nome da conta é obrigatório.')
+        ->assertSee('O saldo atual é obrigatório.');
 });
 
 test('onboarding reports when no workspace is available to save accounts', function () {

@@ -8,7 +8,9 @@ use App\Services\BusinessAccessService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
@@ -28,17 +30,27 @@ class XtbInvestmentImportHub extends Component
     public bool $isAnalyzingAforroNet = false;
     public ?string $aforroNetDiagnostic = null;
     public bool $isImportingAforroNet = false;
+    #[Locked]
     public array $positions = [];
     public array $reportSummary = [];
     public ?string $reportDate = null;
     public ?string $aiSummary = null;
+    #[Locked]
     public bool $previewReady = false;
     public bool $isAnalyzing = false;
     public bool $isImporting = false;
 
+    public function updatedReportFile(): void
+    {
+        $this->reset(['positions', 'reportSummary', 'reportDate', 'aiSummary', 'previewReady']);
+        $this->resetValidation('reportFile');
+    }
+
     public function analyzeReport(): void
     {
         $this->authorizeImport();
+        $this->reset(['positions', 'reportSummary', 'reportDate', 'aiSummary', 'previewReady']);
+        $this->resetValidation('reportFile');
         $this->validate([
             'reportFile' => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
         ]);
@@ -59,6 +71,8 @@ class XtbInvestmentImportHub extends Component
             $this->previewReady = true;
             $this->aiSummary = $this->getAiValidationSummary($this->positions, $this->reportSummary);
             $this->dispatch('toast', variant: 'success', text: count($this->positions).' posições identificadas. Confirma os dados antes de importar.');
+        } catch (\UnexpectedValueException $exception) {
+            $this->addError('reportFile', $exception->getMessage());
         } catch (\Throwable $exception) {
             Log::warning('XTB report import: failed to parse report', ['user_id' => auth()->id(), 'message' => $exception->getMessage()]);
             $this->addError('reportFile', 'Não foi possível ler este ficheiro. Experimenta exportar novamente o relatório da XTB em Excel (.xlsx).');
@@ -129,6 +143,7 @@ class XtbInvestmentImportHub extends Component
                         'average_price' => $openPrice > 0 ? $openPrice : null,
                         'reported_profit' => isset($columns['net profit']) && filled($data[$columns['net profit']] ?? null) ? $this->parseNumber($data[$columns['net profit']]) : null,
                         'open_time' => $this->parseDate($openTime),
+                        'xtb_position_id' => ctype_digit($instrument) ? $instrument : null,
                         'is_summary' => $isSummaryRow,
                         'product' => $product,
                     ];
@@ -156,9 +171,40 @@ class XtbInvestmentImportHub extends Component
         }
 
         $result = [];
+        $seenPositionIds = [];
         foreach ($positions as $ticker => $bucket) {
             $summary = $bucket['summary'];
             $details = $bucket['details'];
+            $identifiedDetails = array_filter($details, fn ($detail) => $detail['xtb_position_id'] !== null);
+
+            if ($identifiedDetails) {
+                if (count($identifiedDetails) !== count($details)) {
+                    throw new \UnexpectedValueException('O relatório contém posições sem identificador. Confirma que exportaste o relatório XTB completo.');
+                }
+
+                if ($summary) {
+                    $quantity = array_sum(array_column($details, 'quantity'));
+                    $value = array_sum(array_column($details, 'current_value'));
+                    if (abs($quantity - $summary['quantity']) > max(0.000001, count($details) * 0.0001)
+                        || abs($value - $summary['current_value']) > max(0.02, count($details) * 0.01)) {
+                        throw new \UnexpectedValueException('As posições individuais não coincidem com o resumo do relatório XTB.');
+                    }
+                }
+
+                foreach ($details as $detail) {
+                    $positionId = $detail['xtb_position_id'];
+                    if (strlen($positionId) > 64 || isset($seenPositionIds[$positionId])) {
+                        throw new \UnexpectedValueException('O relatório contém identificadores de posição XTB inválidos ou repetidos.');
+                    }
+                    $seenPositionIds[$positionId] = true;
+                    $detail['name'] = $summary['name'] ?? $ticker;
+                    $detail['average_price'] = $detail['average_price'] ?: $detail['current_price'];
+                    $detail['profit'] = $detail['reported_profit'] ?? ($detail['current_value'] - $detail['quantity'] * $detail['average_price']);
+                    $result[] = $detail;
+                }
+
+                continue;
+            }
 
             if ($summary) {
                 $position = $summary;
@@ -349,41 +395,66 @@ class XtbInvestmentImportHub extends Component
                     ['type' => 'investimentos', 'balance' => 0, 'currency' => 'EUR', 'color' => '#16a34a', 'include_in_total' => false, 'status' => 'active', 'description' => 'Conta de investimentos importada da XTB']
                 );
 
-                foreach ($this->positions as $position) {
-                    $existing = Investment::query()
+                foreach (collect($this->positions)->groupBy('symbol') as $symbol => $positions) {
+                    $query = Investment::query()
                         ->where('workspace_id', $workspace->id)
                         ->where('user_id', $user->id)
-                        ->where('broker', 'XTB')
-                        ->where('symbol', $position['symbol'])
-                        ->first();
+                        ->where('broker', 'XTB');
+                    $legacy = (clone $query)->where('symbol', $symbol)
+                        ->whereNull('xtb_position_id')->lockForUpdate()->get();
+                    $identified = $positions->first()['xtb_position_id'] !== null;
+                    $existingIds = $identified
+                        ? (clone $query)->whereIn('xtb_position_id', $positions->pluck('xtb_position_id'))->lockForUpdate()->get()->keyBy('xtb_position_id')
+                        : collect();
+                    $hasIdentifiedForSymbol = (clone $query)->where('symbol', $symbol)
+                        ->whereNotNull('xtb_position_id')->exists();
 
-                    $data = [
-                        'user_id' => $user->id,
-                        'workspace_id' => $workspace->id,
-                        'bank_account_id' => $account->id,
-                        'name' => $position['name'] ?: $position['symbol'],
-                        'symbol' => $position['symbol'],
-                        'type' => $position['type'],
-                        'quantity' => $position['quantity'],
-                        'average_price' => max(0.00000001, $position['average_price'] ?: $position['current_price']),
-                        'current_price' => $position['current_price'],
-                        'provider' => 'XTB',
-                        'broker' => 'XTB',
-                        'exchange' => str_contains($position['symbol'], '.') ? substr(strrchr($position['symbol'], '.'), 1) : null,
-                        'operation_date' => $position['open_time'],
-                        'fees' => 0,
-                    ];
+                    if ($legacy->count() > 1
+                        || ($legacy->isNotEmpty() && $identified && ($hasIdentifiedForSymbol || $existingIds->isNotEmpty()))
+                        || (! $identified && $hasIdentifiedForSymbol)) {
+                        throw new \DomainException('Não foi possível distinguir os investimentos XTB já guardados. Revê os registos existentes antes de importar.');
+                    }
+                    if ($identified && $legacy->isNotEmpty() && $legacy->first()->incomes()->exists()) {
+                        throw new \DomainException('Um investimento XTB agregado tem rendimentos associados. Revê esse registo antes de separar as posições.');
+                    }
 
-                    if ($existing) {
-                        $existing->update($data);
-                    } else {
-                        Investment::create($data);
+                    foreach ($positions as $position) {
+                        $positionId = $position['xtb_position_id'];
+                        $existing = $identified
+                            ? ($existingIds->get($positionId) ?? $legacy->shift())
+                            : $legacy->shift();
+                        $data = [
+                            'user_id' => $user->id,
+                            'workspace_id' => $workspace->id,
+                            'bank_account_id' => $account->id,
+                            'name' => $position['name'] ?: $position['symbol'],
+                            'symbol' => $position['symbol'],
+                            'xtb_position_id' => $positionId,
+                            'type' => $position['type'],
+                            'quantity' => $position['quantity'],
+                            'average_price' => max(0.00000001, $position['average_price'] ?: $position['current_price']),
+                            'current_price' => $position['current_price'],
+                            'provider' => 'XTB',
+                            'broker' => 'XTB',
+                            'exchange' => str_contains($position['symbol'], '.') ? substr(strrchr($position['symbol'], '.'), 1) : null,
+                            'operation_date' => $position['open_time'],
+                            'fees' => 0,
+                        ];
+
+                        if ($existing) {
+                            $existing->update($data);
+                        } else {
+                            Investment::create($data);
+                        }
                     }
                 }
             });
 
             $this->dispatch('toast', variant: 'success', text: count($this->positions).' posições XTB sincronizadas com os Investimentos.');
             $this->reset(['reportFile', 'positions', 'reportSummary', 'reportDate', 'aiSummary', 'previewReady']);
+        } catch (\DomainException $exception) {
+            $this->addError('reportFile', $exception->getMessage());
+            $this->dispatch('toast', variant: 'danger', text: $exception->getMessage());
         } catch (\Throwable $exception) {
             Log::error('XTB investment import failed', ['user_id' => $user->id, 'message' => $exception->getMessage()]);
             $this->dispatch('toast', variant: 'danger', text: 'Não foi possível importar as posições. Nenhuma alteração parcial foi guardada.');
@@ -441,13 +512,7 @@ class XtbInvestmentImportHub extends Component
             }
             // A série pode aparecer no resumo geral ou no detalhe CAF / Série E.
             // Normaliza acentos porque alguns extratores de PDF os corrompem.
-            $normalizedText = $text;
-            if (function_exists('iconv')) {
-                $asciiText = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
-                if ($asciiText !== false) {
-                    $normalizedText = $asciiText;
-                }
-            }
+            $normalizedText = Str::ascii($text);
             $normalizedText = preg_replace('/[\p{Z}\s]+/u', ' ', $normalizedText);
 
             $series = $this->detectAforroNetSeries($normalizedText);
@@ -473,10 +538,7 @@ class XtbInvestmentImportHub extends Component
 
             $subscriptions = [];
 
-            // Os motores de extração podem separar as colunas por quebras de
-            // linha, tabs ou espaços. Procura os campos dentro de cada registo
-            // de subscrição, em vez de exigir que estejam lado a lado.
-            $rowPattern = '/(\d{2}[-\/.]\d{2}[-\/.]\d{4})[\s\S]{0,100}?(\d{6,})[\s\S]{0,100}?([\d.,]+)[\s\S]{0,100}?([\d.]+)[\s\S]{0,100}?([\d.,]+)/u';
+            $rowPattern = '/(?<!\d)(\d{2}[-\/.]\d{2}[-\/.]\d{4})\s+(\d{6,})\s+(\d+(?:[.,]\d+)*)\s+(\d+(?:[.]\d+)*)\s+(\d+(?:[.,]\d+)*)(?!\d)/u';
             preg_match_all($rowPattern, $normalizedText, $rows, PREG_SET_ORDER);
 
             foreach ($rows as $row) {
@@ -566,7 +628,7 @@ class XtbInvestmentImportHub extends Component
      */
     private function detectAforroNetSeries(string $text): ?string
     {
-        $text = mb_strtoupper(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text) ?: $text);
+        $text = mb_strtoupper(Str::ascii($text));
         $text = preg_replace('/[^A-Z0-9]+/', ' ', $text);
         $text = trim(preg_replace('/\s+/', ' ', $text));
 
@@ -671,7 +733,7 @@ class XtbInvestmentImportHub extends Component
         }
 
         $scoreText = function (string $candidate): int {
-            $upper = mb_strtoupper(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $candidate) ?: $candidate);
+            $upper = mb_strtoupper(Str::ascii($candidate));
             $score = 0;
             foreach (['AFORRO', 'SERIE', 'SUBSCRICAO', 'UNIDADES', 'VALOR UNITARIO', 'TOTAL'] as $term) {
                 if (str_contains($upper, $term)) {
@@ -783,7 +845,7 @@ class XtbInvestmentImportHub extends Component
         // extraído, nomes, NIF, IBAN, números de conta ou números de subscrição.
         $diagnosticParts = [];
         foreach ($candidates as $index => $candidate) {
-            $upper = mb_strtoupper(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $candidate) ?: $candidate);
+            $upper = mb_strtoupper(Str::ascii($candidate));
             $compact = trim(preg_replace('/\\s+/', ' ', preg_replace('/[^A-Z0-9]+/', ' ', $upper)));
             $diagnosticParts[] = ($candidateSources[$index] ?? 'Leitor')
                 . ':AFORRO='.(str_contains($compact, 'AFORRO') ? 'sim' : 'nao')
@@ -802,7 +864,7 @@ class XtbInvestmentImportHub extends Component
             'user_id' => auth()->id(),
             'candidate_count' => count($candidates),
             'selected_score' => $bestScore,
-            'has_series_label' => (bool) preg_match('/CAF\s*\/\s*SERIE\s*E|CERTIFICADOS\s+DE\s+AFORRO\s+SERIE\s+E/i', iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $bestText) ?: $bestText),
+            'has_series_label' => (bool) preg_match('/CAF\s*\/\s*SERIE\s*E|CERTIFICADOS\s+DE\s+AFORRO\s+SERIE\s+E/i', Str::ascii($bestText)),
         ]);
 
         return $bestText;

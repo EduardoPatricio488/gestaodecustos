@@ -599,6 +599,9 @@ class OnboardingWizard extends Component
             'bankAccounts.*.alert_below' => 'nullable|numeric',
             'bankAccounts.*.is_business' => 'required|boolean',
             'bankAccounts.*.include_in_total' => 'required|boolean',
+        ], [
+            'bankAccounts.*.name.required' => 'O nome da conta é obrigatório.',
+            'bankAccounts.*.balance.required' => 'O saldo atual é obrigatório.',
         ]);
 
         $user = auth()->user();

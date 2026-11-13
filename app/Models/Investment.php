@@ -11,7 +11,7 @@ class Investment extends Model
     use BelongsToWorkspace, HasFactory;
 
     protected $fillable = [
-        'issuer', 'series', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'subscription_number', 'valuation_date',
+        'issuer', 'series', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'subscription_number', 'xtb_position_id', 'valuation_date',
         'user_id',
         'workspace_id',
         'bank_account_id',

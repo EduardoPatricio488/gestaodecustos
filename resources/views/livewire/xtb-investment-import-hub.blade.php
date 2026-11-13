@@ -133,7 +133,7 @@
             </div>
 
             <div class="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3">
-                <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Ativos identificados</p><p class="mt-1 text-2xl font-black text-zinc-900 dark:text-white">{{ $reportSummary['positions_count'] ?? count($positions) }}</p></div>
+                <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Posições identificadas</p><p class="mt-1 text-2xl font-black text-zinc-900 dark:text-white">{{ $reportSummary['positions_count'] ?? count($positions) }}</p></div>
                 <div class="rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Valor atual total</p><p class="mt-1 text-2xl font-black text-emerald-600">{{ number_format((float)($reportSummary['open_value'] ?? 0), 2, ',', ' ') }} €</p></div>
                 <div class="col-span-2 sm:col-span-1 rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Lucro não realizado</p><p class="mt-1 text-2xl font-black {{ ($reportSummary['open_profit'] ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ number_format((float)($reportSummary['open_profit'] ?? 0), 2, ',', ' ') }} €</p></div>
             </div>
@@ -144,7 +144,7 @@
                     <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                         @foreach($positions as $position)
                             <tr>
-                                <td class="px-5 py-4"><p class="font-bold text-zinc-900 dark:text-white">{{ $position['name'] }}</p><p class="text-xs text-zinc-500">{{ $position['symbol'] }}</p></td>
+                                <td class="px-5 py-4"><p class="font-bold text-zinc-900 dark:text-white">{{ $position['name'] }}</p><p class="text-xs text-zinc-500">{{ $position['symbol'] }}@if($position['xtb_position_id']) · Posição {{ $position['xtb_position_id'] }}@endif</p></td>
                                 <td class="px-5 py-4"><span class="rounded-full bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300">{{ $position['type'] }}</span></td>
                                 <td class="px-5 py-4 text-right font-semibold tabular-nums">{{ number_format((float)$position['quantity'], 4, ',', ' ') }}</td>
                                 <td class="px-5 py-4 text-right tabular-nums">{{ number_format((float)$position['average_price'], 4, ',', ' ') }} €</td>
@@ -165,7 +165,7 @@
             @endif
 
             <div class="flex flex-col gap-3 border-t border-zinc-100 dark:border-zinc-800 p-5 sm:flex-row sm:items-center sm:justify-between">
-                <p class="text-xs text-zinc-500">A importação atualiza posições XTB existentes e cria as que ainda não estão registadas.</p>
+                <p class="text-xs text-zinc-500">As posições XTB são identificadas individualmente. A importação atualiza as existentes e cria as que ainda não estão registadas.</p>
                 <div class="flex gap-3">
                     <flux:button type="button" variant="ghost" wire:click="clearReport">Cancelar</flux:button>
                     <flux:button type="button" variant="primary" icon="arrow-down-tray" wire:click="importPositions" wire:loading.attr="disabled" wire:target="importPositions,reportFile,analyzeReport">
@@ -203,13 +203,6 @@
                         @endif
                     </label>
                     @error('aforroNetFile') <p class="text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
-                    @if($aforroNetDiagnostic)
-                        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200">
-                            <p class="font-black">Diagnóstico técnico (sem dados pessoais)</p>
-                            <p class="mt-2 break-words">{{ $aforroNetDiagnostic }}</p>
-                            <p class="mt-2 text-[11px] opacity-80">Copia esta informação e envia-a na conversa. Não contém o conteúdo do extrato.</p>
-                        </div>
-                    @endif
                     <div wire:loading wire:target="aforroNetFile" class="text-xs font-semibold text-teal-700 dark:text-teal-300">A carregar PDF...</div>
                     <button type="submit" wire:loading.attr="disabled" wire:target="analyzeAforroNetFile,aforroNetFile" class="w-full rounded-xl bg-teal-700 px-5 py-3.5 text-sm font-black text-white transition hover:bg-teal-800 disabled:opacity-60">
                         <span wire:loading.remove wire:target="analyzeAforroNetFile">Analisar PDF e validar subscrições</span><span wire:loading wire:target="analyzeAforroNetFile">A analisar documento...</span>

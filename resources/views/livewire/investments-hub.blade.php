@@ -810,6 +810,11 @@
                                                     · {{ $asset->broker }}
                                                 </span>
                                             @endif
+                                            @if($asset->broker === 'XTB' && $asset->xtb_position_id)
+                                                <span class="text-[8px] sm:text-[9px] text-zinc-400 font-medium">
+                                                    · Posição {{ $asset->xtb_position_id }}
+                                                </span>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

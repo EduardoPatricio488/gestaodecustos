@@ -48,6 +48,7 @@ class OnboardingInvestmentImport extends XtbInvestmentImportHub
         parent::importPositions();
         if ($hadPreview && ! $this->previewReady) {
             $this->onboardingImportStatus = 'Posições XTB importadas. Podes fechar esta janela e continuar.';
+            $this->dispatch('onboarding-xtb-imported')->to(OnboardingInvestment::class);
         }
     }
 
