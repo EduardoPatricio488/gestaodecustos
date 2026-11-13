@@ -48,7 +48,7 @@ class OnboardingInvestmentImport extends XtbInvestmentImportHub
         parent::importPositions();
         if ($hadPreview && ! $this->previewReady) {
             $this->onboardingImportStatus = 'Posições XTB importadas. Podes fechar esta janela e continuar.';
-            $this->dispatch('onboarding-xtb-imported')->to(OnboardingInvestment::class);
+            $this->dispatch('onboarding-investments-imported')->to(OnboardingInvestment::class);
         }
     }
 
@@ -59,6 +59,7 @@ class OnboardingInvestmentImport extends XtbInvestmentImportHub
         parent::importAforroNetPosition();
         if ($hadPreview && ! $this->aforroNetPreviewReady) {
             $this->onboardingImportStatus = 'Subscrições AforroNet importadas. Podes fechar esta janela e continuar.';
+            $this->dispatch('onboarding-investments-imported')->to(OnboardingInvestment::class);
         }
     }
 
