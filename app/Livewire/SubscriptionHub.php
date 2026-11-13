@@ -86,6 +86,10 @@ class SubscriptionHub extends Component
 
     public array $paymentHistory = [];
 
+    public float $paymentHistoryTotal = 0;
+
+    public int $paymentHistoryCount = 0;
+
     public function mount(bool $dashboardMode = false): void
     {
         $this->dashboardMode = $dashboardMode;
@@ -152,19 +156,41 @@ class SubscriptionHub extends Component
             ->findOrFail($id);
 
         $this->paymentHistoryTitle = $subscription->name;
-        $this->paymentHistory = SubscriptionPayment::query()
-            ->where('workspace_id', $user->current_workspace_id)
-            ->where('user_id', $user->id)
-            ->where('subscription_id', $subscription->id)
-            ->orderByDesc('billing_date')
-            ->get()
-            ->map(fn (SubscriptionPayment $payment) => [
-                'billing_date' => $payment->billing_date?->format('d/m/Y'),
-                'paid_at' => $payment->paid_at?->format('d/m/Y'),
-                'amount' => (float) $payment->amount,
-                'source' => $payment->payment_source === 'company' ? 'Pago pela empresa' : 'Pagamento registado',
-            ])
-            ->all();
+
+        // Calcula as mensalidades/ciclos desde a data de início até hoje.
+        // A data de início conta como o primeiro pagamento previsto.
+        $startDate = $subscription->started_at
+            ? Carbon::parse($subscription->started_at)->startOfDay()
+            : null;
+        $today = Carbon::today();
+        $intervalMonths = match ($subscription->cycle) {
+            'quarterly' => 3,
+            'semiannual' => 6,
+            'annual' => 12,
+            default => 1,
+        };
+
+        $this->paymentHistory = [];
+        $this->paymentHistoryTotal = 0;
+        $this->paymentHistoryCount = 0;
+
+        if ($startDate && $startDate->lte($today)) {
+            $paymentDate = $startDate->copy();
+            while ($paymentDate->lte($today)) {
+                $this->paymentHistory[] = [
+                    'billing_date' => $paymentDate->format('d/m/Y'),
+                    'paid_at' => null,
+                    'amount' => (float) $subscription->amount,
+                    'source' => 'Ciclo contabilizado desde o início',
+                ];
+                $this->paymentHistoryTotal += (float) $subscription->amount;
+                $this->paymentHistoryCount++;
+                $paymentDate->addMonthsNoOverflow($intervalMonths);
+            }
+        }
+
+        $this->paymentHistoryTotal = round($this->paymentHistoryTotal, 2);
+        $this->paymentHistory = array_reverse($this->paymentHistory);
 
         $this->showPaymentHistoryModal = true;
     }
@@ -173,6 +199,8 @@ class SubscriptionHub extends Component
     {
         $this->showPaymentHistoryModal = false;
         $this->paymentHistory = [];
+        $this->paymentHistoryTotal = 0;
+        $this->paymentHistoryCount = 0;
         $this->paymentHistoryTitle = '';
     }
 
