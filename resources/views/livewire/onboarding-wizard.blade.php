@@ -1179,7 +1179,7 @@
                             <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Inteligência artificial</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Usa as ferramentas de IA disponíveis no teu plano para analisar informação e apoiar decisões.</p></div>
                         </div>
                         <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900">
-                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300"><flux:icon name="target" class="size-5" /></span>
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300"><flux:icon name="trophy" class="size-5" /></span>
                             <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Objetivos e controlo</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Define objetivos, acompanha hábitos financeiros e mantém as tuas subscrições sob controlo.</p></div>
                         </div>
                         <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900 sm:col-span-2">
