@@ -16,7 +16,7 @@ class OnboardingInvestment extends InvestmentsHub
     public bool $onboardingSaved = false;
 
     #[Locked]
-    public ?int $expandedXtbInvestmentId = null;
+    public ?int $expandedInvestmentId = null;
 
     public array $xtbForm = [];
 
@@ -54,14 +54,14 @@ class OnboardingInvestment extends InvestmentsHub
     {
         $this->authorizeOnboardingWrite();
         $this->resetValidation();
-        if ($this->expandedXtbInvestmentId === $id) {
-            $this->reset(['expandedXtbInvestmentId', 'xtbForm']);
+        if ($this->expandedInvestmentId === $id) {
+            $this->reset(['expandedInvestmentId', 'xtbForm']);
 
             return;
         }
 
-        $investment = $this->xtbInvestmentQuery()->findOrFail($id);
-        $this->expandedXtbInvestmentId = $investment->id;
+        $investment = $this->investmentQuery()->findOrFail($id);
+        $this->expandedInvestmentId = $investment->id;
         $this->xtbForm = $investment->only([
             'name', 'symbol', 'isin', 'type', 'quantity', 'average_price', 'current_price',
             'fees', 'bank_account_id', 'exchange', 'network', 'provider', 'issuer', 'series',
@@ -75,8 +75,8 @@ class OnboardingInvestment extends InvestmentsHub
     public function saveXtbInvestment(): void
     {
         $this->authorizeOnboardingWrite();
-        abort_unless($this->expandedXtbInvestmentId, 404);
-        $investment = $this->xtbInvestmentQuery()->findOrFail($this->expandedXtbInvestmentId);
+        abort_unless($this->expandedInvestmentId, 404);
+        $investment = $this->investmentQuery()->findOrFail($this->expandedInvestmentId);
         $user = auth()->user();
         $validated = $this->validate([
             'xtbForm.name' => 'required|string|max:255',
@@ -127,32 +127,31 @@ class OnboardingInvestment extends InvestmentsHub
         $data['isin'] = filled($data['isin'] ?? null) ? strtoupper(trim($data['isin'])) : null;
         $data['fees'] = $data['fees'] ?? 0;
         $investment->update($data);
-        $this->reset(['expandedXtbInvestmentId', 'xtbForm']);
+        $this->reset(['expandedInvestmentId', 'xtbForm']);
         $this->onboardingSaved = true;
     }
 
     public function deleteAsset(int $id): void
     {
         $this->authorizeOnboardingWrite();
-        $this->xtbInvestmentQuery()->findOrFail($id)->delete();
-        if ($this->expandedXtbInvestmentId === $id) {
-            $this->reset(['expandedXtbInvestmentId', 'xtbForm']);
+        $this->investmentQuery()->findOrFail($id)->delete();
+        if ($this->expandedInvestmentId === $id) {
+            $this->reset(['expandedInvestmentId', 'xtbForm']);
         }
         $this->onboardingSaved = false;
         $this->dispatch('toast', text: 'Investimento eliminado.');
     }
 
-    private function xtbInvestmentQuery()
+    private function investmentQuery()
     {
         $user = auth()->user();
 
         return Investment::where('workspace_id', $user->current_workspace_id)
-            ->where('broker', 'XTB')
             ->when($user->currentWorkspace?->type === 'personal', fn ($query) => $query->where('user_id', $user->id));
     }
 
-    #[On('onboarding-xtb-imported')]
-    public function refreshXtbInvestments(): void
+    #[On('onboarding-investments-imported')]
+    public function refreshInvestments(): void
     {
         $this->authorizeOnboardingWrite();
     }
@@ -164,7 +163,7 @@ class OnboardingInvestment extends InvestmentsHub
         $bankAccounts = BankAccount::where('workspace_id', $user->current_workspace_id)
             ->when($user->currentWorkspace?->type === 'personal', fn ($query) => $query->where('user_id', $user->id))
             ->orderBy('name')->get();
-        $xtbInvestments = $this->xtbInvestmentQuery()->orderBy('name')->orderBy('id')->get();
+        $xtbInvestments = $this->investmentQuery()->orderBy('name')->orderBy('id')->get();
 
         return view('livewire.onboarding-investment', compact('bankAccounts', 'xtbInvestments'));
     }
