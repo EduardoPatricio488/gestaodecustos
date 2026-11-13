@@ -41,6 +41,7 @@ class DebtHub extends Component
     {
         return BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
             ->where('user_id', auth()->id())
+            ->whereNotIn('type', ['investimento', 'investimentos'])
             ->orderBy('name')
             ->get();
     }
