@@ -95,9 +95,10 @@ class Dashboard extends Component
                 ->map(function ($positions) use ($workspace) {
                     $quantity = (float) $positions->sum(fn ($position) => (float) $position->quantity);
                     $invested = (float) $positions->sum(fn ($position) => ((float) $position->quantity * (float) $position->average_price) + (float) ($position->fees ?? 0));
-                    $current = (float) $positions->sum(fn ($position) => (float) $position->quantity * (float) ($position->current_price ?: $position->average_price));
-                    $profit = round($current - $invested, 2);
                     $investment = $positions->first();
+                    $currentPrice = (float) ($investment->current_price ?: $investment->average_price);
+                    $current = $quantity * $currentPrice;
+                    $profit = round($current - $invested, 2);
 
                     return [
                         'symbol' => $investment->symbol ?: 'Ativo',
