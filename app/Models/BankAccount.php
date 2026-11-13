@@ -20,6 +20,18 @@ class BankAccount extends Model
         'tags' => 'array', 'is_business' => 'boolean', 'include_in_total' => 'boolean', 'balance' => 'float', 'credit_limit' => 'float', 'forecast_balance' => 'float', 'alert_below' => 'float', 'risk_score' => 'integer', 'opened_at' => 'date',
     ];
 
+    /**
+     * Restricts account selectors and bank totals to actual bank/cash accounts.
+     * XTB and AforroNet are investment providers, not bank accounts.
+     */
+    public function scopeOnlyBankAccounts($query)
+    {
+        return $query
+            ->whereNotIn('type', ['investimento', 'investimentos'])
+            ->whereRaw("LOWER(CONCAT(COALESCE(name, ''), ' ', COALESCE(bank_name, ''))) NOT LIKE ?", ['%xtb%'])
+            ->whereRaw("REPLACE(LOWER(CONCAT(COALESCE(name, ''), ' ', COALESCE(bank_name, ''))), ' ', '') NOT LIKE ?", ['%aforronet%']);
+    }
+
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
