@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\BankAccount;
 use App\Models\Category;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -29,7 +30,7 @@ class SubscriptionHub extends Component
 
     public $billing_cycle = 'monthly';
 
-    public $payment_method;
+    public ?int $bank_account_id = null;
 
     public $status = 'active';
 
@@ -126,7 +127,7 @@ class SubscriptionHub extends Component
         $this->billing_day = $sub->billing_day;
         $this->billing_cycle = $sub->cycle;
         $this->status = $sub->status;
-        $this->payment_method = $sub->payment_method;
+        $this->bank_account_id = $sub->bank_account_id;
         $this->started_at = $sub->started_at?->format('Y-m-d');
         $this->renewal_date = $sub->renewal_date?->format('Y-m-d');
         $this->notes = $sub->notes;
@@ -380,7 +381,7 @@ class SubscriptionHub extends Component
 
     public function openExtraModal()
     {
-        $this->reset(['name', 'amount', 'billing_day', 'category_id', 'billing_cycle', 'payment_method', 'status', 'started_at', 'renewal_date', 'notes', 'notify_before_billing', 'notify_days_before', 'editingId']);
+        $this->reset(['name', 'amount', 'billing_day', 'category_id', 'billing_cycle', 'bank_account_id', 'status', 'started_at', 'renewal_date', 'notes', 'notify_before_billing', 'notify_days_before', 'editingId']);
         $this->transportPassMode = false;
         $this->transportPassName = 'Passe mensal';
         $this->transportPassAmount = null;
@@ -418,7 +419,7 @@ class SubscriptionHub extends Component
             'billing_day' => 'required|integer|between:1,31',
             'billing_cycle' => 'nullable|in:monthly,quarterly,semiannual,annual',
             'status' => 'nullable|in:active,paused,cancelled',
-            'payment_method' => 'nullable|in:card,direct_debit,bank_transfer,paypal,cash',
+            'bank_account_id' => 'required|integer',
             'started_at' => 'nullable|date',
             'renewal_date' => 'nullable|date',
             'notes' => 'nullable|string|max:1000',
@@ -435,6 +436,10 @@ class SubscriptionHub extends Component
             'Categoria inválida.'
         );
 
+        $bankAccount = BankAccount::where('workspace_id', auth()->user()->current_workspace_id)
+            ->where('user_id', auth()->id())
+            ->findOrFail($this->bank_account_id);
+
         $subscriptionData = [
             'user_id' => auth()->id(),
             'workspace_id' => auth()->user()->current_workspace_id,
@@ -445,7 +450,8 @@ class SubscriptionHub extends Component
             'cycle' => $this->billing_cycle ?: 'monthly',
             'status' => $this->status ?: 'active',
             'is_active' => ($this->status ?: 'active') === 'active',
-            'payment_method' => $this->payment_method,
+            'bank_account_id' => $bankAccount->id,
+            'payment_method' => null,
             'started_at' => $this->started_at,
             'renewal_date' => $this->renewal_date,
             'notes' => $this->notes,
@@ -466,7 +472,7 @@ class SubscriptionHub extends Component
         }
 
         $isCreating = ! $this->editingId;
-        $this->reset(['name', 'amount', 'category_id', 'billing_day', 'payment_method', 'started_at', 'renewal_date', 'notes', 'notify_days_before', 'editingId']);
+        $this->reset(['name', 'amount', 'category_id', 'billing_day', 'bank_account_id', 'started_at', 'renewal_date', 'notes', 'notify_days_before', 'editingId']);
 
         if ($this->dashboardMode && $isCreating) {
             $this->showExtraModal = false;
@@ -610,6 +616,11 @@ class SubscriptionHub extends Component
             );
         }
 
+        $bankAccounts = BankAccount::where('workspace_id', $wsId)
+            ->where('user_id', $user->id)
+            ->orderBy('name')
+            ->get();
+
         $subscriptionCategories = Category::where('workspace_id', $wsId)
             ->whereIn('name', $subCatNames)
             ->orderBy('name')
@@ -631,6 +642,7 @@ class SubscriptionHub extends Component
                 'cancelledCount' => 0,
                 'averageMonthly' => 0,
                 'categories' => $subscriptionCategories,
+                'bankAccounts' => $bankAccounts,
                 'platformPlan' => null,
                 'platformPayments' => collect(),
                 'platformCashierSubscription' => null,
@@ -639,7 +651,7 @@ class SubscriptionHub extends Component
 
         $baseQuery = Subscription::where('workspace_id', $wsId)
             ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id))
-            ->with('category');
+            ->with(['category', 'bankAccount']);
 
         if (filled($this->search)) {
             $baseQuery->where(function ($inner) {
@@ -731,7 +743,8 @@ class SubscriptionHub extends Component
             'cancelledCount' => $allSubs->where('status', 'cancelled')->count(),
             'averageMonthly' => $activeCount ? $totalMonthly / $activeCount : 0,
             'categories' => $subscriptionCategories,
-            'platformPlan' => $platformPlan,
+            'bankAccounts' => $bankAccounts,
+            'platformPlan => $platformPlan,
             'platformPayments' => $platformPayments,
             'platformCashierSubscription' => $cashierSub,
         ]);
