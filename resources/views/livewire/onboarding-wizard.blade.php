@@ -1171,7 +1171,7 @@
                             <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Contas e investimentos</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Centraliza contas bancárias, acompanha investimentos e consulta a evolução do teu património.</p></div>
                         </div>
                         <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900">
-                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300"><flux:icon name="file-up" class="size-5" /></span>
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300"><flux:icon name="document-arrow-up" class="size-5" /></span>
                             <div><p class="text-sm font-bold text-zinc-900 dark:text-white">Importação inteligente</p><p class="mt-1 text-xs leading-relaxed text-zinc-500">Importa extratos e relatórios suportados para reduzir o trabalho de registo manual.</p></div>
                         </div>
                         <div class="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left dark:border-zinc-800 dark:bg-zinc-900">
