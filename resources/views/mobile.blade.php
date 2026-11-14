@@ -11,7 +11,9 @@
     <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
     <link rel="apple-touch-icon" href="/icon-192x192.png?v=20261114-1">
     <title>{{ config('app.name', 'Finance Pro AI') }} — Mobile</title>
-    @include('partials.head')
+    <title>{{ config('app.name', 'Finance Pro AI') }} — Mobile</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=20261114-5">
+    @vite('resources/css/app.css')
     <link rel="stylesheet" href="/flux/flux.css">
     @livewireStyles
     <style>
