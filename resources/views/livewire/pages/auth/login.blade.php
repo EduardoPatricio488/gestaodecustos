@@ -24,7 +24,9 @@ new #[Layout('layouts.guest')] class extends Component
 
             $user = auth()->user();
 
-            if (session()->pull('pending_mobile_login', false)) {
+            if (session()->pull('pending_app_launch', false)) {
+                $this->redirect(route('app.launch', absolute: false), navigate: true);
+            } elseif (session()->pull('pending_mobile_login', false)) {
                 session()->put('mobile_access_mode', 'mobile');
                 $this->redirect(route('mobile.home', absolute: false), navigate: true);
             } elseif ($user->isAdminRole() || $user->is_admin) {
