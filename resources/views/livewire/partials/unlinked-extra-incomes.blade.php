@@ -1,5 +1,5 @@
 @if($unlinkedExtraIncomes->isNotEmpty())
-    <section class="mt-8 space-y-4">
+    <section id="outras-entradas-extra" class="mt-8 scroll-mt-24 space-y-4">
         <div class="flex items-center justify-between px-2">
             <div>
                 <h2 class="text-sm font-black uppercase tracking-widest text-zinc-400">Outras entradas extra</h2>
