@@ -14,13 +14,17 @@
         (() => {
             const storageKey = 'finance-pro-mobile-theme';
             const applyTheme = () => {
-                let theme = 'light';
+                let theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
                 try {
-                    theme = localStorage.getItem(storageKey) === 'dark' ? 'dark' : 'light';
+                    const savedTheme = localStorage.getItem(storageKey);
+                    if (savedTheme === 'dark' || savedTheme === 'light') theme = savedTheme;
+                    else localStorage.setItem(storageKey, theme);
                 } catch (_) {}
                 const isDark = theme === 'dark';
                 document.documentElement.classList.toggle('dark', isDark);
                 document.documentElement.style.colorScheme = theme;
+                const themeColor = document.querySelector('meta[name="theme-color"]');
+                if (themeColor) themeColor.setAttribute('content', isDark ? '#09090b' : '#10b981');
                 return isDark;
             };
 
@@ -35,7 +39,7 @@
             };
 
             applyTheme();
-            window.addEventListener('pageshow', applyTheme);
+            window.addEventListener('pageshow', () => applyTheme());
         })();
     </script>
     <title>{{ config('app.name', 'Finance Pro AI') }} — Mobile</title>
@@ -87,7 +91,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-white">
+<body class="min-h-[100dvh] w-full overflow-y-auto bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-white" style="min-height:100vh; min-height:100dvh; height:auto; -webkit-overflow-scrolling:touch;">
     @php
         $mobileShortcutDefaults = [
             'expense' => ['label' => 'Nova despesa', 'enabled' => true, 'order' => 1],
@@ -346,57 +350,37 @@
 
     <script>
         (() => {
-            let startY = 0;
-            let startX = 0;
-            let tracking = false;
-            let refreshing = false;
-            let pullDistance = 0;
-            const threshold = 85;
-            const maxHorizontalDrift = 75;
-
+            let startY = 0, startX = 0, tracking = false, pullDistance = 0, refreshing = false;
+            const threshold = 120;
             const pageIsAtTop = () => {
                 const root = document.scrollingElement || document.documentElement;
-                return Math.max(window.scrollY || 0, root.scrollTop || 0) <= 2;
+                return Math.max(window.scrollY || 0, root.scrollTop || 0) <= 1;
             };
-
             window.addEventListener('touchstart', (event) => {
-                if (refreshing || event.touches.length !== 1 || !pageIsAtTop()) {
+                if (refreshing || event.touches.length !== 1 || !pageIsAtTop() || event.touches[0].clientY > 28) {
                     tracking = false;
                     return;
                 }
-
                 startY = event.touches[0].clientY;
                 startX = event.touches[0].clientX;
                 pullDistance = 0;
                 tracking = true;
             }, { passive: true, capture: true });
-
             window.addEventListener('touchmove', (event) => {
                 if (!tracking || event.touches.length !== 1) return;
-
                 const touch = event.touches[0];
-                const horizontalDrift = Math.abs(touch.clientX - startX);
+                if (Math.abs(touch.clientX - startX) > 55) { tracking = false; return; }
                 pullDistance = touch.clientY - startY;
-
-                if (horizontalDrift > maxHorizontalDrift || (pullDistance < 0 && !pageIsAtTop())) {
-                    tracking = false;
-                }
+                if (pullDistance < 0 || !pageIsAtTop()) tracking = false;
             }, { passive: true, capture: true });
-
             window.addEventListener('touchend', () => {
                 if (!tracking || refreshing) return;
-
                 tracking = false;
                 if (pullDistance < threshold || !pageIsAtTop()) return;
-
                 refreshing = true;
                 window.location.reload();
             }, { passive: true, capture: true });
-
-            window.addEventListener('touchcancel', () => {
-                tracking = false;
-                pullDistance = 0;
-            }, { passive: true, capture: true });
+            window.addEventListener('touchcancel', () => { tracking = false; pullDistance = 0; }, { passive: true, capture: true });
         })();
     </script>
 
