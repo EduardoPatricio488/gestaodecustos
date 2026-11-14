@@ -33,11 +33,6 @@
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Receitas</span>
                     <span class="mt-1 block text-xs text-zinc-500">Adicionar rendimento</span>
                 </button>
-                <a href="{{ route('expenses.index') }}" wire:navigate class="group rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
-                    <span class="flex size-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"><span class="text-xl font-bold" aria-hidden="true">▤</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Despesas</span>
-                    <span class="mt-1 block text-xs text-zinc-500">Ver movimentos de saída</span>
-                </a>
                 <a href="{{ route('movements.index') }}" wire:navigate class="group rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"><span class="text-xl font-bold" aria-hidden="true">⇄</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Movimentos</span>
