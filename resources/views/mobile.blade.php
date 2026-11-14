@@ -46,62 +46,6 @@
     </style>
 </head>
 <body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-white">
-    <style>
-        @keyframes fp-intro-orbit { from { transform: rotate(0deg) translateX(34px) rotate(0deg); } to { transform: rotate(360deg) translateX(34px) rotate(-360deg); } }
-        @keyframes fp-intro-pulse { 0%,100% { transform: scale(.92); opacity:.45; } 50% { transform: scale(1.08); opacity:1; } }
-        @keyframes fp-intro-rise { from { transform: translateY(24px) scale(.82); opacity:0; } to { transform: translateY(0) scale(1); opacity:1; } }
-        @keyframes fp-intro-bar { from { transform: scaleY(.12); } to { transform: scaleY(1); } }
-        @keyframes fp-intro-shine { 0% { transform: translateX(-130%) skewX(-18deg); } 100% { transform: translateX(230%) skewX(-18deg); } }
-        .fp-intro-orbit { animation: fp-intro-orbit 5s linear infinite; }
-        .fp-intro-pulse { animation: fp-intro-pulse 1.8s ease-in-out infinite; }
-        .fp-intro-rise { animation: fp-intro-rise .75s cubic-bezier(.2,.8,.2,1) both; }
-        .fp-intro-bar { transform-origin: bottom; animation: fp-intro-bar .8s cubic-bezier(.2,.8,.2,1) both; }
-        .fp-intro-shine { animation: fp-intro-shine 1.5s ease-in-out .35s both; }
-        @media (prefers-reduced-motion: reduce) { .fp-intro-orbit,.fp-intro-pulse,.fp-intro-rise,.fp-intro-bar,.fp-intro-shine { animation: none !important; } }
-    </style>
-    <div
-        x-data="{ visible: !sessionStorage.getItem('fp_mobile_intro_seen') }"
-        x-init="if (visible) { document.body.style.overflow = 'hidden'; setTimeout(() => { visible = false; sessionStorage.setItem('fp_mobile_intro_seen', '1'); document.body.style.overflow = ''; }, 2100); }"
-        x-show="visible"
-        x-transition:leave="transition ease-in duration-500"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        x-cloak
-        class="fixed inset-0 z-[20000] flex items-center justify-center overflow-hidden bg-[#070b13] px-7 text-white"
-        role="status"
-        aria-label="A iniciar Finance Pro AI"
-    >
-        <div class="pointer-events-none absolute inset-0 opacity-70" style="background: radial-gradient(circle at 50% 42%, rgba(16,185,129,.25), transparent 42%), radial-gradient(circle at 15% 85%, rgba(59,130,246,.16), transparent 35%);"></div>
-        <div class="pointer-events-none absolute left-1/2 top-1/2 size-64 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-300/10"></div>
-        <div class="pointer-events-none absolute left-1/2 top-1/2 size-48 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-300/15"></div>
-        <div class="fp-intro-orbit pointer-events-none absolute left-1/2 top-[calc(50%-34px)] size-3 rounded-full bg-emerald-300 shadow-[0_0_24px_8px_rgba(52,211,153,.55)]"></div>
-        <div class="relative z-10 w-full max-w-xs text-center">
-            <div class="fp-intro-rise relative mx-auto mb-8 flex size-24 items-center justify-center rounded-[2rem] border border-emerald-300/30 bg-gradient-to-br from-emerald-400/25 via-emerald-500/10 to-blue-500/20 shadow-[0_0_70px_rgba(16,185,129,.22)]">
-                <div class="fp-intro-pulse absolute inset-2 rounded-[1.5rem] border border-emerald-200/30"></div>
-                <svg viewBox="0 0 64 64" class="relative size-14" fill="none" aria-hidden="true">
-                    <path d="M10 46V32h10v14M27 46V20h10v26M44 46V10h10v36" stroke="#6ee7b7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="m9 24 15-9 12 4 18-12" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M45 7h9v9" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full bg-emerald-400 text-sm font-black text-emerald-950 shadow-lg">+</span>
-            </div>
-            <p class="fp-intro-rise text-[10px] font-black uppercase tracking-[.38em] text-emerald-300" style="animation-delay:.12s">FINANCE PRO AI</p>
-            <h1 class="fp-intro-rise mt-3 text-3xl font-black tracking-tight" style="animation-delay:.22s">As tuas finanças.</h1>
-            <p class="fp-intro-rise mt-1 text-sm font-medium text-zinc-400" style="animation-delay:.3s">Tudo em movimento. Tudo sob controlo.</p>
-            <div class="mx-auto mt-10 flex h-16 items-end justify-center gap-2">
-                <span class="fp-intro-bar h-5 w-3 rounded-full bg-emerald-500" style="animation-delay:.12s"></span>
-                <span class="fp-intro-bar h-9 w-3 rounded-full bg-emerald-400" style="animation-delay:.2s"></span>
-                <span class="fp-intro-bar h-7 w-3 rounded-full bg-teal-300" style="animation-delay:.28s"></span>
-                <span class="fp-intro-bar h-14 w-3 rounded-full bg-emerald-300" style="animation-delay:.36s"></span>
-                <span class="fp-intro-bar h-10 w-3 rounded-full bg-cyan-300" style="animation-delay:.44s"></span>
-                <span class="fp-intro-bar h-16 w-3 rounded-full bg-emerald-400" style="animation-delay:.52s"></span>
-                <span class="fp-intro-bar h-8 w-3 rounded-full bg-teal-300" style="animation-delay:.6s"></span>
-            </div>
-            <div class="relative mx-auto mt-8 h-1 w-40 overflow-hidden rounded-full bg-white/10">
-                <span class="fp-intro-shine absolute inset-y-0 left-0 w-1/2 rounded-full bg-gradient-to-r from-transparent via-emerald-300 to-transparent"></span>
-            </div>
-        </div>
-    </div>
     @php
         $mobileShortcutDefaults = [
             'expense' => ['label' => 'Nova despesa', 'enabled' => true, 'order' => 1],
