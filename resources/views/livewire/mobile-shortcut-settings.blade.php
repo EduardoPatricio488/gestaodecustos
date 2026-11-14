@@ -10,11 +10,7 @@
         <div class="fixed inset-0 z-[10050] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4" wire:key="mobile-shortcut-settings-modal">
             <div class="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl dark:bg-zinc-900 sm:rounded-3xl">
                 <div class="mb-4 flex items-center justify-between">
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">A tua experiência</p>
-                        <h2 class="mt-1 text-xl font-black text-zinc-900 dark:text-white">Personalizar versão mobile</h2>
-                        <p class="mt-1 text-xs text-zinc-500">As alterações ficam guardadas apenas na tua conta.</p>
-                    </div>
+
                     <button type="button" wire:click="$set('open', false)" class="flex size-9 items-center justify-center rounded-xl bg-zinc-100 text-xl text-zinc-500 dark:bg-zinc-800" aria-label="Fechar">×</button>
                 </div>
 
