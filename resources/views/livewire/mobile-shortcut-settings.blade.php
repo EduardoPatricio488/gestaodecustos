@@ -23,7 +23,7 @@
                     <label class="mt-3 block text-[10px] font-bold uppercase tracking-wide text-zinc-400">Colocar divisão depois de</label>
                     <select wire:model.live="dividerAfter" @disabled(!$dividerEnabled) class="mt-1 w-full rounded-lg border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-semibold text-zinc-900 focus:border-emerald-500 focus:ring-emerald-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
                         @foreach(collect($shortcuts)->sortBy('order') as $key => $shortcut)
-                            <option value="{{ $key }}">{{ $shortcutNames[$key] }}</option>
+                            <option value="{{ $key }}">{{ $shortcut['label'] ?: $shortcutNames[$key] }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -38,7 +38,7 @@
                                 </label>
                                 <div class="min-w-0 flex-1">
                                     <label class="mb-1 block text-[10px] font-bold uppercase tracking-wide text-zinc-400">{{ $shortcutNames[$key] }}</label>
-                                    <input type="text" maxlength="32" wire:model="shortcuts.{{ $key }}.label" class="w-full rounded-lg border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-sm font-semibold text-zinc-900 focus:border-emerald-500 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                    <input type="text" maxlength="32" wire:model.live="shortcuts.{{ $key }}.label" class="w-full rounded-lg border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-sm font-semibold text-zinc-900 focus:border-emerald-500 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
                                 </div>
                             </div>
                             <div class="flex shrink-0 flex-col gap-1">
