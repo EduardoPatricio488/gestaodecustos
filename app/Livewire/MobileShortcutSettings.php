@@ -3,11 +3,60 @@
 namespace App\Livewire;
 
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class MobileShortcutSettings extends Component
 {
     public bool $open = false;
+
+    public bool $editing = false;
+
+    public function toggleEditing(): void
+    {
+        $this->editing = ! $this->editing;
+        $this->dispatch('mobile-shortcuts-edit-mode', enabled: $this->editing);
+    }
+
+    #[On('mobile-shortcuts-reordered')]
+    public function reorderFromPage(array $items): void
+    {
+        $defaults = $this->defaults();
+        $saved = auth()->user()->mobile_shortcuts ?? [];
+        $saved = is_array($saved) ? $saved : [];
+        $divider = $saved['_divider'] ?? ['enabled' => true, 'after' => 'investments'];
+        unset($saved['_divider']);
+        $shortcuts = array_replace_recursive($defaults, $saved);
+
+        $validKeys = array_keys($defaults);
+        $visibleOrder = array_values(array_filter($items, fn ($key) => $key === '_divider' || in_array($key, $validKeys, true)));
+        $orderedKeys = array_values(array_filter($visibleOrder, fn ($key) => $key !== '_divider'));
+        $hiddenKeys = collect($shortcuts)->reject(fn ($item) => (bool) ($item['enabled'] ?? true))->sortBy('order')->keys()->all();
+        $orderedKeys = array_values(array_unique(array_merge($orderedKeys, $hiddenKeys)));
+
+        foreach ($orderedKeys as $position => $key) {
+            $shortcuts[$key]['order'] = $position + 1;
+        }
+
+        $dividerPosition = array_search('_divider', $visibleOrder, true);
+        if ($dividerPosition !== false) {
+            for ($index = $dividerPosition - 1; $index >= 0; $index--) {
+                if ($visibleOrder[$index] !== '_divider') {
+                    $divider['after'] = $visibleOrder[$index];
+                    break;
+                }
+            }
+        }
+
+        $shortcuts['_divider'] = $divider;
+        DB::table('users')->where('id', auth()->id())->update([
+            'mobile_shortcuts' => json_encode($shortcuts, JSON_UNESCAPED_UNICODE),
+            'updated_at' => now(),
+        ]);
+
+        $this->dispatch('mobile-shortcuts-reordered-saved');
+    }
+
 
     public array $shortcuts = [];
 
