@@ -185,15 +185,11 @@ Route::get('/sitemap.xml', function () {
 Route::view('/llms.txt', 'seo.llms')->name('seo.llms');
 
 
-Route::view('/', 'welcome')->name('home');
+Route::redirect('/', '/abrir-app')->name('home');
 
-Route::get('/abrir-app', function (Request $request) {
-    if (! $request->user()) {
-        $request->session()->put('pending_app_launch', true);
+Route::view('/inicio', 'welcome')->name('public.home');
 
-        return redirect()->route('login');
-    }
-
+Route::get('/abrir-app', function () {
     return view('auth.app-launch');
 })->name('app.launch');
 
@@ -203,7 +199,7 @@ Route::post('/abrir-app', function (Request $request) {
     if ($validated['mode'] === 'full') {
         $request->session()->forget(['pending_mobile_login', 'pending_app_launch', 'mobile_access_mode']);
 
-        return redirect()->route('home');
+        return redirect()->route('public.home');
     }
 
     if ($request->user()) {
