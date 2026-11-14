@@ -1315,6 +1315,13 @@ $hasStoreAccess = $hasLockInAccess;
                 <flux:separator class="my-4 mx-2" />
 
                 <flux:sidebar.group heading="Finanças">
+                    <flux:sidebar.item
+                        icon="bolt-slash"
+                        href="/offline.html"
+                        class="text-rose-600 dark:text-rose-400"
+                    >
+                        Bunker Offline
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="arrow-trending-up" :href="route('hub.incomes')" wire:navigate.hover>
                         Receitas {!! $badge($counts['incomes']) !!}
                     </flux:sidebar.item>
