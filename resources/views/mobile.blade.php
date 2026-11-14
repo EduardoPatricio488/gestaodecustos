@@ -344,6 +344,50 @@
     <livewire:hub.reminders-hub :dashboard-mode="true" lazy />
     <livewire:subscription-hub :dashboard-mode="true" lazy />
 
+    <script>
+        (() => {
+            let startY = 0;
+            let startX = 0;
+            let tracking = false;
+            let refreshing = false;
+            const threshold = 95;
+            const maxHorizontalDrift = 70;
+
+            const isAtTop = () => window.scrollY <= 0
+                && (document.scrollingElement?.scrollTop ?? 0) <= 0;
+
+            document.addEventListener('touchstart', (event) => {
+                if (event.touches.length !== 1 || !isAtTop()) {
+                    tracking = false;
+                    return;
+                }
+
+                startY = event.touches[0].clientY;
+                startX = event.touches[0].clientX;
+                tracking = true;
+            }, { passive: true });
+
+            document.addEventListener('touchend', (event) => {
+                if (!tracking || refreshing || !event.changedTouches.length) return;
+
+                const endY = event.changedTouches[0].clientY;
+                const endX = event.changedTouches[0].clientX;
+                const pullDistance = endY - startY;
+                const horizontalDrift = Math.abs(endX - startX);
+                tracking = false;
+
+                if (pullDistance < threshold || horizontalDrift > maxHorizontalDrift || !isAtTop()) return;
+
+                refreshing = true;
+                window.location.reload();
+            }, { passive: true });
+
+            document.addEventListener('touchcancel', () => {
+                tracking = false;
+            }, { passive: true });
+        })();
+    </script>
+
     @livewireScripts
     @fluxScripts
 </body>
