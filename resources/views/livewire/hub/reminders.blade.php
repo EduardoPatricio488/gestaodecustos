@@ -180,25 +180,25 @@
          x-transition:leave-end="opacity-0 translate-y-2"
 
          class="relative w-full max-w-2xl rounded-[2.5rem] overflow-hidden
-                bg-white/10 dark:bg-zinc-900/30
-                backdrop-blur-lg
-                border border-white/10 dark:border-white/5
-                shadow-[0_6px_28px_rgba(0,0,0,0.45)]
+                bg-white
+                
+                border border-zinc-200
+                shadow-2xl
                 max-h-[90vh] flex flex-col">
 
         {{-- HEADER --}}
-        <div class="shrink-0 px-8 py-6 border-b border-white/10 bg-white/5 flex justify-between items-center">
+        <div class="shrink-0 px-8 py-6 border-b border-zinc-200 bg-zinc-50 flex justify-between items-center">
             <div>
-                <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">
+                <h2 class="text-2xl font-black text-zinc-900 uppercase italic tracking-tighter">
                     Configurar Lembrete
                 </h2>
-                <p class="text-[9px] text-emerald-300 font-black uppercase mt-2 tracking-widest">
+                <p class="text-[9px] text-emerald-600 font-black uppercase mt-2 tracking-widest">
                     Agendamento Inteligente Finance Connect
                 </p>
             </div>
 
             <button @click="modal = false"
-                    class="p-3 bg-white/10 rounded-2xl shadow-sm text-white hover:text-emerald-300 transition-all active:scale-95">
+                    class="p-3 bg-zinc-100 rounded-2xl shadow-sm text-zinc-500 hover:text-emerald-600 transition-all active:scale-95">
                 <flux:icon name="x-mark" class="size-6" />
             </button>
         </div>
@@ -211,24 +211,24 @@
 
                 {{-- TÍTULO --}}
                 <div class="relative">
-                    <label class="absolute left-4 -top-2.5 px-2 bg-white/5 text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                    <label class="absolute left-4 -top-2.5 px-2 bg-white text-[10px] font-black uppercase tracking-widest text-emerald-700 z-10">
                         Título do Evento
                     </label>
                     <input type="text" wire:model="title"
                            placeholder="Ex: Liquidação de Dividendos"
-                           class="w-full bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700
-                                  rounded-2xl py-4 px-5 text-sm font-bold text-black dark:text-white
+                           class="w-full bg-white border border-zinc-200
+                                  rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900
                                   placeholder-zinc-500 outline-none transition-all focus:ring-2 focus:ring-emerald-500/40">
                 </div>
 
                 {{-- DATA E HORA --}}
                 <div class="relative">
-                    <label class="absolute left-4 -top-2.5 px-2 bg-white/5 text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                    <label class="absolute left-4 -top-2.5 px-2 bg-white text-[10px] font-black uppercase tracking-widest text-emerald-700 z-10">
                         Data e Hora
                     </label>
                     <input type="datetime-local" wire:model="remind_at"
-                           class="w-full bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700
-                                  rounded-2xl py-4 px-5 text-sm font-bold text-black dark:text-white
+                           class="w-full bg-white border border-zinc-200
+                                  rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900
                                   outline-none transition-all focus:ring-2 focus:ring-emerald-500/40">
                 </div>
 
@@ -237,12 +237,12 @@
 
                     {{-- PRIORIDADE --}}
                     <div class="relative">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-white/5 text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white text-[10px] font-black uppercase tracking-widest text-emerald-700 z-10">
                             Prioridade
                         </label>
                         <select wire:model="priority"
-                                class="w-full bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700
-                                       rounded-2xl py-4 px-5 text-sm font-bold text-black dark:text-white outline-none">
+                                class="w-full bg-white border border-zinc-200
+                                       rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 outline-none">
                             <option class="text-black" value="low">🟢 Baixa</option>
                             <option class="text-black" value="medium">🟡 Média</option>
                             <option class="text-black" value="high">🔴 Alta</option>
@@ -251,12 +251,12 @@
 
                     {{-- FREQUÊNCIA --}}
                     <div class="relative">
-                        <label class="absolute left-4 -top-2.5 px-2 bg-white/5 text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white text-[10px] font-black uppercase tracking-widest text-emerald-700 z-10">
                             Frequência
                         </label>
                         <select wire:model="frequency"
-                                class="w-full bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700
-                                       rounded-2xl py-4 px-5 text-sm font-bold text-black dark:text-white outline-none">
+                                class="w-full bg-white border border-zinc-200
+                                       rounded-2xl py-4 px-5 text-sm font-bold text-zinc-900 outline-none">
                             <option class="text-black" value="once">📌 Única</option>
                             <option class="text-black" value="daily">📅 Diária</option>
                             <option class="text-black" value="weekly">🔁 Semanal</option>
@@ -267,7 +267,7 @@
 
                 {{-- CATEGORIA --}}
                 <div class="space-y-3">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-emerald-300 px-1">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-emerald-700 px-1">
                         Categoria
                     </p>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -277,7 +277,7 @@
                                     class="py-3 rounded-2xl border-2 text-[9px] font-black uppercase tracking-widest transition-all
                                     {{ $category === $val
                                         ? 'bg-emerald-600 text-white border-emerald-600'
-                                        : 'bg-zinc-200 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-black dark:text-white hover:border-emerald-500' }}">
+                                        : 'bg-zinc-200 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 hover:border-emerald-500' }}">
                                 {{ $l }}
                             </button>
                         @endforeach
@@ -286,25 +286,25 @@
 
                 {{-- NOTAS --}}
                 <div class="relative">
-                    <label class="absolute left-4 -top-2.5 px-2 bg-white/5 text-[10px] font-black uppercase tracking-widest text-emerald-300 z-10">
+                    <label class="absolute left-4 -top-2.5 px-2 bg-white text-[10px] font-black uppercase tracking-widest text-emerald-700 z-10">
                         Notas (opcional)
                     </label>
                     <textarea wire:model="notes" rows="3"
                               placeholder="Detalhes estratégicos..."
-                              class="w-full bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700
-                                     rounded-2xl py-4 px-5 text-sm font-medium text-black dark:text-white
+                              class="w-full bg-white border border-zinc-200
+                                     rounded-2xl py-4 px-5 text-sm font-medium text-zinc-900
                                      outline-none placeholder-zinc-500"></textarea>
                 </div>
 
             </div>
 
             {{-- FOOTER --}}
-            <div class="shrink-0 px-8 py-5 flex flex-col sm:flex-row gap-3 border-t border-white/10 bg-white/5">
+            <div class="shrink-0 px-8 py-5 flex flex-col sm:flex-row gap-3 border-t border-zinc-200 bg-zinc-50">
 
                 <button type="button"
                         @click="modal = false"
-                        class="w-full h-14 rounded-2xl text-white/70 hover:text-white
-                               hover:bg-white/10 font-bold uppercase text-xs tracking-widest
+                        class="w-full h-14 rounded-2xl text-zinc-500 hover:text-zinc-900
+                               hover:bg-zinc-100 font-bold uppercase text-xs tracking-widest
                                transition-all active:scale-95">
                     Cancelar
                 </button>
