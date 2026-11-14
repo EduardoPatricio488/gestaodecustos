@@ -14,10 +14,6 @@
             </div>
             <button type="button" wire:click="openExtraModal" x-on:click="sourceMenu = false" class="mt-2 w-full rounded-xl bg-emerald-600 px-4 py-3 text-left text-sm font-black text-white">Receita Extra</button>
         </div>
-        <div class="mx-auto mt-3 grid w-full max-w-2xl grid-cols-2 gap-3">
-            <button type="button" x-on:click="$dispatch('open-mobile-income-menu')" class="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white">Adicionar Rendimento</button>
-            <button type="button" wire:click="openExtraModal" class="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-black text-emerald-700 dark:border-emerald-900 dark:bg-zinc-900 dark:text-emerald-300">Receita Extra</button>
-        </div>
     @endif
 
     @if($dashboardMode)
