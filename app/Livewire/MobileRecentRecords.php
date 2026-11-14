@@ -29,6 +29,7 @@ class MobileRecentRecords extends Component
             ->each(fn (Expense $item) => $records->push([
                 'id' => 'expense-'.$item->id,
                 'type' => 'Despesa',
+                'url' => route('expenses.edit', $item->id),
                 'title' => $item->title ?: ($item->description ?: 'Nova despesa'),
                 'detail' => $item->spent_at?->format('d/m/Y'),
                 'amount' => $item->amount,
@@ -45,6 +46,7 @@ class MobileRecentRecords extends Component
             ->each(fn (Income $item) => $records->push([
                 'id' => 'income-'.$item->id,
                 'type' => 'Receita',
+                'url' => route('hub.incomes', ['highlight' => $item->id]),
                 'title' => $item->description ?: 'Nova receita',
                 'detail' => $item->received_at?->format('d/m/Y'),
                 'amount' => $item->amount,
@@ -61,6 +63,7 @@ class MobileRecentRecords extends Component
             ->each(fn (Investment $item) => $records->push([
                 'id' => 'investment-'.$item->id,
                 'type' => 'Investimento',
+                'url' => route('hub.investments', ['highlight' => $item->id]),
                 'title' => $item->name ?: ($item->symbol ?: 'Novo investimento'),
                 'detail' => $item->symbol,
                 'amount' => null,
@@ -77,6 +80,7 @@ class MobileRecentRecords extends Component
             ->each(fn (Goal $item) => $records->push([
                 'id' => 'goal-'.$item->id,
                 'type' => 'Objetivo',
+                'url' => route('hub.goals', ['highlight' => $item->id]),
                 'title' => $item->name,
                 'detail' => 'Valor alvo',
                 'amount' => $item->target_amount,
@@ -93,6 +97,7 @@ class MobileRecentRecords extends Component
             ->each(fn (Reminder $item) => $records->push([
                 'id' => 'reminder-'.$item->id,
                 'type' => 'Lembrete',
+                'url' => route('hub.reminders', ['highlight' => $item->id]),
                 'title' => $item->title,
                 'detail' => $item->remind_at?->format('d/m/Y H:i'),
                 'amount' => null,
