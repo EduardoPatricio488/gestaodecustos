@@ -22,13 +22,11 @@ new #[Layout('layouts.guest')] class extends Component
             $this->form->authenticate();
             Session::regenerate();
 
-            // Em dispositivos móveis, escolhe-se o modo depois da autenticação.
             $user = auth()->user();
-            $isMobileDevice = preg_match('/Android|iPhone|iPad|iPod|Mobile|Windows Phone|webOS/i', request()->userAgent() ?? '') === 1;
 
-            if ($isMobileDevice) {
-                session()->forget('mobile_access_mode');
-                $this->redirect(route('device.access', absolute: false), navigate: true);
+            if (session()->pull('pending_mobile_login', false)) {
+                session()->put('mobile_access_mode', 'mobile');
+                $this->redirect(route('mobile.home', absolute: false), navigate: true);
             } elseif ($user->isAdminRole() || $user->is_admin) {
                 $this->redirect(route('admin.dashboard', absolute: false), navigate: true);
             } else {
