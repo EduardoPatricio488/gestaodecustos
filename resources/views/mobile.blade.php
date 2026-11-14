@@ -82,7 +82,7 @@
         <livewire:mobile-recent-records />
 
         <div class="rounded-2xl border border-dashed border-zinc-300 p-4 text-center dark:border-zinc-700">
-            <p class="text-xs leading-relaxed text-zinc-500">Esta é uma área experimental. Podes continuar a utilizar todas as funcionalidades na versão completa através do menu lateral.</p>
+            <p class="text-xs leading-relaxed text-zinc-500">Esta área foi pensada para utilizares no telemóvel e registares rapidamente as tuas despesas, receitas, investimentos e outros movimentos do dia a dia.</p>
         </div>
     </div>
 
