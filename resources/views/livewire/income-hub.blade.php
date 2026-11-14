@@ -4,6 +4,7 @@
         <div x-data="{ sourceMenu: false, menuStyle: '' }" x-on:open-mobile-income-menu.window="const r = $event.detail.rect; const w = Math.min(360, window.innerWidth - 32); const left = Math.max(16, Math.min(r.left, window.innerWidth - w - 16)); const below = window.innerHeight - r.bottom - 16; const h = Math.min(520, window.innerHeight - 32); const top = below >= 260 ? r.bottom + 8 : Math.max(16, r.top - h - 8); menuStyle = 'position:fixed;left:' + left + 'px;top:' + top + 'px;width:' + w + 'px;max-height:calc(100vh - ' + (top + 16) + 'px);overflow-y:auto;'; sourceMenu = true" x-bind:style="menuStyle" @click.outside="sourceMenu = false" class="z-[9999] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" x-cloak x-show="sourceMenu">
             <p class="px-2 pb-2 text-[10px] font-black uppercase tracking-widest text-zinc-400">Adicionar Rendimento</p>
             <div class="grid grid-cols-1 gap-2">
+            <button type="button" wire:click="openExtraModal" x-on:click="sourceMenu = false" class="mb-2 w-full rounded-xl bg-emerald-600 px-4 py-3 text-left text-sm font-black text-white">Receita Extra</button>
                 <button type="button" wire:click="openIncomeSource('emprego')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Salário / Contrato de Trabalho</button>
                 <button type="button" wire:click="openIncomeSource('renda')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Renda Imobiliária</button>
                 <button type="button" wire:click="openIncomeSource('freelance')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Freelance / Trabalho Independente</button>
@@ -12,7 +13,7 @@
                 <button type="button" wire:click="openIncomeSource('bolsa')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Bolsa de Estudo</button>
                 <button type="button" wire:click="openIncomeSource('outro')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Outra Fonte</button>
             </div>
-            <button type="button" wire:click="openExtraModal" x-on:click="sourceMenu = false" class="mt-2 w-full rounded-xl bg-emerald-600 px-4 py-3 text-left text-sm font-black text-white">Receita Extra</button>
+
         </div>
     @endif
 
