@@ -61,6 +61,11 @@
             <span class="mt-1 block text-xs text-zinc-500">Agendar um lembrete</span>
         </button>
 
+                <a href="{{ route('hub.subscriptions') }}" wire:navigate class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
+                    <span class="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"><span class="text-xl font-bold" aria-hidden="true">▤</span></span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Assinaturas</span>
+                    <span class="mt-1 block text-xs text-zinc-500">Gerir subscrições</span>
+                </a>
                 <a href="{{ route('hub.fitness') }}" wire:navigate class="group rounded-2xl border border-orange-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-orange-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"><span class="text-xl font-bold" aria-hidden="true">↗</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Zona de Treino</span>
