@@ -1328,7 +1328,7 @@ $hasStoreAccess = $hasLockInAccess;
                     <flux:sidebar.item icon="arrow-trending-up" :href="route('hub.incomes')" wire:navigate.hover>
                         Receitas {!! $badge($counts['incomes']) !!}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="receipt" :href="url('/hub/todas-as-categorias')" :current="request()->is('hub/todas-as-categorias')" wire:navigate.hover>
+                    <flux:sidebar.item :href="url('/hub/todas-as-categorias')" :current="request()->is('hub/todas-as-categorias')" wire:navigate.hover>
                         Despesas
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="chart-bar-square" :href="route('hub.investments')" wire:navigate.hover>
