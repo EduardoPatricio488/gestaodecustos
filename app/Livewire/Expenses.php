@@ -64,7 +64,7 @@ class Expenses extends Component
         try {
             $quota = \Illuminate\Support\Facades\Cache::remember(
                 'openrouter:quota:'.hash('sha256', $apiKey),
-                now()->addSeconds(45),
+                now()->addMinutes(5),
                 function () use ($apiKey) {
                     $response = \Illuminate\Support\Facades\Http::withToken($apiKey)
                         ->connectTimeout(5)
