@@ -61,13 +61,13 @@
             </div>
         </section>
 
-        <a href="{{ route('hub.reminders') }}" wire:navigate class="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <button type="button" x-on:click="$dispatch('open-mobile-reminder-create')" class="flex w-full items-center justify-between rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             <span class="flex items-center gap-3">
                 <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">♧</span></span>
-                <span><span class="block text-sm font-black text-zinc-900 dark:text-white">Lembretes</span><span class="block text-xs text-zinc-500">Não te esqueças do que é importante</span></span>
+                <span><span class="block text-sm font-black text-zinc-900 dark:text-white">Novo lembrete</span><span class="block text-xs text-zinc-500">Agendar um lembrete</span></span>
             </span>
             <span class="text-xl text-zinc-400" aria-hidden="true">›</span>
-        </a>
+        </button>
 
         <div class="rounded-2xl border border-dashed border-zinc-300 p-4 text-center dark:border-zinc-700">
             <p class="text-xs leading-relaxed text-zinc-500">Esta é uma área experimental. Podes continuar a utilizar todas as funcionalidades na versão completa através do menu lateral.</p>
@@ -136,4 +136,5 @@
     <livewire:income-hub :dashboard-mode="true" />
     <livewire:investments-hub />
     <livewire:goals-hub />
+    <livewire:hub.reminders-hub :dashboard-mode="true" />
 </x-layouts.app>
