@@ -29,7 +29,7 @@ class MobileRecentRecords extends Component
             ->each(fn (Expense $item) => $records->push([
                 'id' => 'expense-'.$item->id,
                 'type' => 'Despesa',
-                'url' => route('expenses.edit', $item->id),
+                'url' => Str::slug((string) ($item->category?->name ?? '')) === 'alimentacao'\n                    ? route('hub.category', ['slug' => 'alimentacao', 'open_expense' => $item->id])\n                    : route('expenses.edit', $item->id),
                 'title' => $item->title ?: ($item->description ?: 'Nova despesa'),
                 'detail' => $item->spent_at?->format('d/m/Y'),
                 'amount' => $item->amount,
