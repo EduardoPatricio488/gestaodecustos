@@ -100,6 +100,7 @@ class SubscriptionHub extends Component
     }
 
     #[On('dashboard-subscription-create')]
+    #[On('open-mobile-subscription-create')]
     public function openDashboardSubscriptionModal(?string $date = null): void
     {
         if (! $this->dashboardMode) {
