@@ -79,7 +79,7 @@ new #[Layout('layouts.guest')] class extends Component
     <div
         wire:loading.flex
         wire:target="login"
-        class="fixed inset-0 z-[99999] hidden min-h-screen flex-col items-center justify-center overflow-hidden bg-[#070b13] px-6 text-center text-white"
+        class="fixed !inset-0 !left-0 !top-0 z-[99999] hidden !h-[100dvh] !min-h-screen !w-screen !max-w-none flex-col items-center justify-center overflow-hidden bg-[#070b13] px-6 text-center text-white" style="position:fixed;inset:0;width:100vw;height:100dvh;min-height:100vh;margin:0;border-radius:0;"
         role="status"
         aria-live="polite"
     >
