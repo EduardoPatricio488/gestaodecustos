@@ -50,16 +50,13 @@
         }"
         x-on:open-expense-category-picker.window="open = true; activeTab = 'scanner'; $nextTick(() => setTimeout(() => { if (open) $wire.call('refreshOpenRouterQuota') }, 600))"
         x-on:keydown.escape.window="open = false"
-        x-show="open"
-        x-cloak
-        class="fixed inset-0 {{ $dashboardMode ? 'z-[70]' : 'z-50' }}"
-        aria-modal="true"
-        role="dialog"
         data-no-global-close
     >
-        <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60" x-on:click="open = false"></div>
+        <template x-teleport="body">
+        <div x-show="open" x-cloak class="fixed inset-0 {{ $dashboardMode ? 'z-[9998]' : 'z-[9999]' }}" aria-modal="true" role="dialog">
+            <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60" x-on:click="open = false"></div>
 
-        <div x-show="open" x-transition class="absolute inset-0 {{ $dashboardMode ? 'lg:left-64' : '' }} flex items-center justify-center p-4">
+            <div x-show="open" x-transition class="absolute inset-0 {{ $dashboardMode ? 'lg:left-64' : '' }} flex items-center justify-center p-4">
         <div class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
             <div class="border-b border-zinc-100 px-6 py-5 dark:border-zinc-800">
                 <div class="min-w-0">
@@ -205,5 +202,7 @@
                 </div>
             </div>
         </div>
+        </div>
+        </template>
     </div>
 </div>
