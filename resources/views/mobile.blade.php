@@ -137,4 +137,5 @@
     <livewire:investments-hub />
     <livewire:goals-hub />
     <livewire:hub.reminders-hub :dashboard-mode="true" />
+    <livewire:mobile-recent-records />
 </x-layouts.app>
