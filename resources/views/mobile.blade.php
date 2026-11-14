@@ -43,11 +43,6 @@
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Novo investimento</span>
                     <span class="mt-1 block text-xs text-zinc-500">Acompanhar carteira</span>
                 </button>
-        <button type="button" x-on:click="$dispatch('open-mobile-reminder-create')" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-amber-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-amber-900/40 dark:bg-zinc-900">
-            <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">♧</span></span>
-            <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Novo lembrete</span>
-            <span class="mt-1 block text-xs text-zinc-500">Agendar um lembrete</span>
-        </button>
 
                 <div class="col-span-2 py-1" aria-hidden="true"><div class="h-px w-full bg-zinc-200 dark:bg-zinc-700"></div></div>
                 <a href="{{ route('hub.banco') }}" wire:navigate class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
@@ -60,6 +55,12 @@
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Novo objetivo</span>
                     <span class="mt-1 block text-xs text-zinc-500">Criar uma meta financeira</span>
                 </button>
+        <button type="button" x-on:click="$dispatch('open-mobile-reminder-create')" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-amber-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-amber-900/40 dark:bg-zinc-900">
+            <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">♧</span></span>
+            <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Novo lembrete</span>
+            <span class="mt-1 block text-xs text-zinc-500">Agendar um lembrete</span>
+        </button>
+
                 <a href="{{ route('hub.fitness') }}" wire:navigate class="group rounded-2xl border border-orange-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-orange-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"><span class="text-xl font-bold" aria-hidden="true">↗</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Zona de Treino</span>
