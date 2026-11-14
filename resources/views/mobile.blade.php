@@ -1,4 +1,22 @@
-<x-layouts.app>
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
+    <link rel="apple-touch-icon" href="/pwa/splash_screens/apple-icon-180x180.png">
+    <title>{{ config('app.name', 'Finance Pro AI') }} — Mobile</title>
+    @include('partials.head')
+    <link rel="stylesheet" href="/flux/flux.css">
+    @livewireStyles
+    <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-white">
     @php
         $mobileShortcutDefaults = [
             'expense' => ['label' => 'Nova despesa', 'enabled' => true, 'order' => 1],
@@ -229,4 +247,8 @@
     <livewire:hub.reminders-hub :dashboard-mode="true" />
     <livewire:subscription-hub :dashboard-mode="true" />
 
-</x-layouts.app>
+    @fluxScripts
+    @livewireScripts
+    <script src="/flux/flux.js"></script>
+</body>
+</html>
