@@ -42,7 +42,14 @@
     </script>
     <main class="flex min-h-screen items-center justify-center px-5 py-10">
         <section class="w-full max-w-md">
+            @php
+                $hour = now()->hour;
+                $greeting = $hour >= 5 && $hour < 12
+                    ? 'Bom dia'
+                    : ($hour >= 12 && $hour < 20 ? 'Boa tarde' : 'Boa noite');
+            @endphp
             <div class="mb-8 text-center">
+                <p class="mb-3 text-lg font-semibold text-zinc-200">{{ $greeting }}, {{ auth()->user()->name }}</p>
                 <div class="mx-auto mb-5 flex size-16 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300">
                     <svg viewBox="0 0 24 24" class="size-9" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                         <path d="M4 18V9h4v9M10 18V5h4v13M16 18V2h4v16" stroke-linecap="round" stroke-linejoin="round"/>
