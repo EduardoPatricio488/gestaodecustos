@@ -17,8 +17,6 @@
             </a>
         </div>
 
-        <livewire:mobile-recent-records />
-
         <section class="space-y-3">
             <div class="flex items-center justify-between px-1">
                 <h2 class="text-sm font-black uppercase tracking-wider text-zinc-500">Acesso rápido</h2>
@@ -70,6 +68,8 @@
             </span>
             <span class="text-xl text-zinc-400" aria-hidden="true">›</span>
         </button>
+
+        <livewire:mobile-recent-records />
 
         <div class="rounded-2xl border border-dashed border-zinc-300 p-4 text-center dark:border-zinc-700">
             <p class="text-xs leading-relaxed text-zinc-500">Esta é uma área experimental. Podes continuar a utilizar todas as funcionalidades na versão completa através do menu lateral.</p>
