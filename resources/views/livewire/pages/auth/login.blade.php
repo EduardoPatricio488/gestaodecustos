@@ -76,7 +76,24 @@ new #[Layout('layouts.guest')] class extends Component
     @endif
 
     {{-- FORMULÁRIO --}}
-    <form wire:submit="login" class="space-y-4">
+    <form
+        wire:submit="login"
+        x-data="{
+            autoLoginTriggered: false,
+            tryAutoLogin() {
+                if (this.autoLoginTriggered) return;
+                const email = this.$el.querySelector('#email');
+                const password = this.$el.querySelector('#password');
+                if (email?.value?.trim() && password?.value) {
+                    this.autoLoginTriggered = true;
+                    this.$el.requestSubmit();
+                }
+            }
+        }"
+        x-on:input.debounce.700ms="tryAutoLogin()"
+        x-on:change="setTimeout(() => tryAutoLogin(), 250)"
+        class="space-y-4"
+    >
 
         {{-- EMAIL --}}
         <div class="space-y-1.5">
