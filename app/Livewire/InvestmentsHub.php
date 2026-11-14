@@ -110,6 +110,10 @@ class InvestmentsHub extends Component
     {
         $this->lastUpdated = now()->format('H:i');
         $this->loadLatestPortfolioAnalysis();
+
+        if (request()->boolean('open_create')) {
+            $this->createAsset();
+        }
     }
 
     private function portfolioAnalysisQuery()
