@@ -165,7 +165,7 @@
     $workspaceId = $currentWs?->id ?? 0;
 
     // 4. CACHE DE CONTAGENS DA SIDEBAR
-    $counts = \Illuminate\Support\Facades\Cache::remember(
+    $counts = $user ? \Illuminate\Support\Facades\Cache::remember(
         "layout:sidebar-counts:v8:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
         60,
         function () use ($user, $currentWs, $workspaceId, $isAdminMode, $isBusinessMode) {
@@ -295,7 +295,7 @@
                 'imports'       => \App\Models\BankStatementImport::where('workspace_id', $workspaceId)->count(),
             ];
         }
-    );
+    ) : [];
 
     // 5. CACHE DE CATEGORIAS
     $catCounts = \Illuminate\Support\Facades\Cache::remember(
