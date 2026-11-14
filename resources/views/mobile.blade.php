@@ -47,37 +47,41 @@
                 class="grid grid-cols-2 gap-3"
                 x-data="{ editing: false, draggedItem: null }"
                 x-on:mobile-shortcuts-edit-mode.window="editing = $event.detail.enabled"
-                x-on:mobile-shortcuts-reordered-saved.window="window.location.reload()"
+                x-on:mobile-shortcuts-reordered-saved.window="$el.querySelectorAll('[data-mobile-item]').forEach((item, index) => item.style.order = index + 1)"
                 x-on:dragstart="if (!editing) return; const item = $event.target.closest('[data-mobile-item]'); if (!item) return; draggedItem = item; $event.dataTransfer.effectAllowed = 'move'; $event.dataTransfer.setData('text/plain', item.dataset.mobileItem); item.classList.add('opacity-40')"
                 x-on:dragend="if (draggedItem) draggedItem.classList.remove('opacity-40'); draggedItem = null"
                 x-on:dragover.prevent="if (editing) $event.dataTransfer.dropEffect = 'move'"
-                x-on:drop.prevent="if (!editing || !draggedItem) return; const target = $event.target.closest('[data-mobile-item]'); if (target && target !== draggedItem) target.before(draggedItem); else if (!target) $el.append(draggedItem); const items = [...$el.children].filter(child => child.dataset.mobileItem).map((child, index) => { child.style.order = index + 1; return child.dataset.mobileItem; }); Livewire.dispatch('mobile-shortcuts-reordered', { items }); draggedItem.classList.remove('opacity-40'); draggedItem = null"
+                x-on:drop.prevent="if (!editing || !draggedItem) return; const target = $event.target.closest('[data-mobile-item]'); if (target && target !== draggedItem) { const rect = target.getBoundingClientRect(); const after = $event.clientY > rect.top + rect.height / 2; target.parentNode.insertBefore(draggedItem, after ? target.nextSibling : target); } const ordered = [...$el.children].filter(child => child.dataset.mobileItem).sort((a,b) => Number(a.style.order || 0) - Number(b.style.order || 0)); const items = ordered.map((child, index) => { child.style.order = index + 1; return child.dataset.mobileItem; }); Livewire.dispatch('mobile-shortcuts-reordered', { items }); draggedItem.classList.remove('opacity-40'); draggedItem = null"
             >
                 @if($mobileShortcutSettings['expense']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-expense-category-picker')" data-mobile-item="expense" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['expense']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-rose-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-rose-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"><span class="text-xl font-bold" aria-hidden="true">＋</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['expense']['label'] }}</span>
+                    <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['expense']['label'] }}</span>
+                    <input type="text" value="{{ $mobileShortcutSettings['expense']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:change.stop="Livewire.dispatch('mobile-shortcut-label-updated', { key: 'expense', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Registar gasto</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['income']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-mobile-income-menu', { rect: $el.getBoundingClientRect() })" data-mobile-item="income" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['income']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-emerald-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-emerald-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300"><span class="text-xl font-bold" aria-hidden="true">↗</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['income']['label'] }}</span>
+                    <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['income']['label'] }}</span>
+                    <input type="text" value="{{ $mobileShortcutSettings['income']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:change.stop="Livewire.dispatch('mobile-shortcut-label-updated', { key: 'income', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Adicionar rendimento</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['movements']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-mobile-statement-import')" data-mobile-item="movements" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['movements']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"><span class="text-xl font-bold" aria-hidden="true">⇄</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['movements']['label'] }}</span>
+                    <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['movements']['label'] }}</span>
+                    <input type="text" value="{{ $mobileShortcutSettings['movements']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:change.stop="Livewire.dispatch('mobile-shortcut-label-updated', { key: 'movements', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Consultar atividade</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['investments']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-mobile-investment-actions')" data-mobile-item="investments" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['investments']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"><span class="text-xl font-bold" aria-hidden="true">▥</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['investments']['label'] }}</span>
+                    <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['investments']['label'] }}</span>
+                    <input type="text" value="{{ $mobileShortcutSettings['investments']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:change.stop="Livewire.dispatch('mobile-shortcut-label-updated', { key: 'investments', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Acompanhar carteira</span>
                 </button>
                 @endif
@@ -85,21 +89,24 @@
                 @if($mobileShortcutSettings['bank']['enabled'])
                 <a href="{{ route('hub.banco') }}" wire:navigate data-mobile-item="bank" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['bank']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/30 dark:text-emerald-300"><span class="text-xl font-bold" aria-hidden="true">▥</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['bank']['label'] }}</span>
+                    <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['bank']['label'] }}</span>
+                    <input type="text" value="{{ $mobileShortcutSettings['bank']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:change.stop="Livewire.dispatch('mobile-shortcut-label-updated', { key: 'bank', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Contas e saldos</span>
                 </a>
                 @endif
                 @if($mobileShortcutSettings['goal']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-mobile-goal-create')" data-mobile-item="goal" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['goal']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">◎</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['goal']['label'] }}</span>
+                    <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['goal']['label'] }}</span>
+                    <input type="text" value="{{ $mobileShortcutSettings['goal']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:change.stop="Livewire.dispatch('mobile-shortcut-label-updated', { key: 'goal', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Criar uma meta financeira</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['reminder']['enabled'])
         <button type="button" x-on:click="$dispatch('open-mobile-reminder-create')" data-mobile-item="reminder" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['reminder']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-amber-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-amber-900/40 dark:bg-zinc-900">
             <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">♧</span></span>
-            <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['reminder']['label'] }}</span>
+            <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['reminder']['label'] }}</span>
+                    <input type="text" value="{{ $mobileShortcutSettings['reminder']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:change.stop="Livewire.dispatch('mobile-shortcut-label-updated', { key: 'reminder', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
             <span class="mt-1 block text-xs text-zinc-500">Agendar um lembrete</span>
         </button>
                 @endif
@@ -107,21 +114,24 @@
                 @if($mobileShortcutSettings['subscription']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-mobile-subscription-create')" data-mobile-item="subscription" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['subscription']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"><span class="text-xl font-bold" aria-hidden="true">▤</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['subscription']['label'] }}</span>
+                    <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['subscription']['label'] }}</span>
+                    <input type="text" value="{{ $mobileShortcutSettings['subscription']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:change.stop="Livewire.dispatch('mobile-shortcut-label-updated', { key: 'subscription', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Configurar custo recorrente</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['fitness']['enabled'])
                 <a href="{{ route('hub.fitness') }}" wire:navigate data-mobile-item="fitness" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['fitness']['order'] }};" class="group rounded-2xl border border-orange-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-orange-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"><span class="text-xl font-bold" aria-hidden="true">↗</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['fitness']['label'] }}</span>
+                    <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['fitness']['label'] }}</span>
+                    <input type="text" value="{{ $mobileShortcutSettings['fitness']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:change.stop="Livewire.dispatch('mobile-shortcut-label-updated', { key: 'fitness', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Acompanhar atividade física</span>
                 </a>
                 @endif
                 @if($mobileShortcutSettings['calendar']['enabled'])
                 <a href="{{ route('hub.calendar') }}" wire:navigate data-mobile-item="calendar" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['calendar']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"><span class="text-xl font-bold" aria-hidden="true">▦</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['calendar']['label'] }}</span>
+                    <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['calendar']['label'] }}</span>
+                    <input type="text" value="{{ $mobileShortcutSettings['calendar']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:change.stop="Livewire.dispatch('mobile-shortcut-label-updated', { key: 'calendar', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Ver agenda</span>
                 </a>
                 @endif
