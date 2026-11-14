@@ -8,6 +8,7 @@ use App\Models\Income;
 use App\Models\Investment;
 use App\Models\Reminder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class MobileRecentRecords extends Component
@@ -21,6 +22,7 @@ class MobileRecentRecords extends Component
         $records = collect();
 
         Expense::query()
+            ->with('category')
             ->where('workspace_id', $workspaceId)
             ->where('user_id', $user->id)
             ->where('is_company', false)
@@ -29,7 +31,9 @@ class MobileRecentRecords extends Component
             ->each(fn (Expense $item) => $records->push([
                 'id' => 'expense-'.$item->id,
                 'type' => 'Despesa',
-                'url' => Str::slug((string) ($item->category?->name ?? '')) === 'alimentacao'\n                    ? route('hub.category', ['slug' => 'alimentacao', 'open_expense' => $item->id])\n                    : route('expenses.edit', $item->id),
+                'url' => Str::slug((string) ($item->category?->name ?? '')) === 'alimentacao'
+                    ? route('hub.category', ['slug' => 'alimentacao', 'open_expense' => $item->id])
+                    : route('expenses.edit', $item->id),
                 'title' => $item->title ?: ($item->description ?: 'Nova despesa'),
                 'detail' => $item->spent_at?->format('d/m/Y'),
                 'amount' => $item->amount,
