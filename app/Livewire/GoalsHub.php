@@ -13,6 +13,8 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class GoalsHub extends Component
 {
+    public bool $mobileMode = false;
+
     // Formulário de Meta
     public string $name = '';
 
