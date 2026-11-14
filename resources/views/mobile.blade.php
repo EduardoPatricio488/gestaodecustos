@@ -13,7 +13,8 @@
             'calendar' => ['label' => 'Calendário', 'enabled' => true, 'order' => 10],
             'connect' => ['label' => 'Finance Connect', 'enabled' => true, 'order' => 11],
         ];
-        $savedMobileShortcuts = auth()->user()->mobile_shortcuts ?? [];
+        $savedMobileShortcuts = auth()->user()?->mobile_shortcuts ?? [];
+        $savedMobileShortcuts = is_array($savedMobileShortcuts) ? $savedMobileShortcuts : [];
         $mobileDividerSettings = $savedMobileShortcuts['_divider'] ?? ['enabled' => true, 'after' => 'investments'];
         unset($savedMobileShortcuts['_divider']);
         $mobileShortcutSettings = array_replace_recursive($mobileShortcutDefaults, $savedMobileShortcuts);
