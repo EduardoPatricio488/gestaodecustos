@@ -134,8 +134,8 @@
 
     <livewire:expenses :dashboard-mode="true" />
     <livewire:income-hub :dashboard-mode="true" />
-    <livewire:investments-hub />
-    <livewire:goals-hub />
+    <livewire:investments-hub :mobile-mode="true" />
+    <livewire:goals-hub :mobile-mode="true" />
     <livewire:hub.reminders-hub :dashboard-mode="true" />
     <livewire:mobile-recent-records />
 </x-layouts.app>
