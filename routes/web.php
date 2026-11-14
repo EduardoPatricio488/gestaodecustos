@@ -185,15 +185,31 @@ Route::get('/sitemap.xml', function () {
 Route::view('/llms.txt', 'seo.llms')->name('seo.llms');
 
 
-Route::get('/', function (Request $request) {
-    $isMobileDevice = preg_match('/Android|iPhone|iPad|iPod|Mobile|Windows Phone|webOS/i', $request->userAgent() ?? '') === 1;
+Route::view('/', 'welcome')->name('home');
 
-    if ($request->user() && $isMobileDevice && $request->user()->hasVerifiedEmail()) {
-        return redirect()->route('device.access');
+Route::get('/abrir-app', function () {
+    return view('auth.app-launch');
+})->name('app.launch');
+
+Route::post('/abrir-app', function (Request $request) {
+    $validated = $request->validate(['mode' => ['required', 'in:mobile,full']]);
+
+    if ($validated['mode'] === 'full') {
+        $request->session()->forget(['pending_mobile_login', 'mobile_access_mode']);
+
+        return redirect()->route('home');
     }
 
-    return response()->view('welcome');
-})->name('home');
+    if ($request->user()) {
+        $request->session()->put('mobile_access_mode', 'mobile');
+
+        return redirect()->route('mobile.home');
+    }
+
+    $request->session()->put('pending_mobile_login', true);
+
+    return redirect()->route('login');
+})->middleware('throttle:20,1')->name('app.launch.choose');
 Route::view('/termos', 'pages.legal.terms')->name('legal.terms');
 Route::view('/privacidade', 'pages.legal.privacy')->name('legal.privacy');
 Route::view('/cookies', 'pages.legal.cookies')->name('legal.cookies');
