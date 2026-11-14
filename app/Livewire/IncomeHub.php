@@ -1172,6 +1172,12 @@ class IncomeHub extends Component
         $this->dispatch('toast', variant: 'success', text: $user->xpToastText(30, 'rendimento fixo configurado'));
     }
 
+    #[On('mobile-open-extra-income')]
+    public function openMobileExtraIncome(): void
+    {
+        $this->openExtraModal();
+    }
+
     public function openExtraModal(?int $salaryId = null, ?int $quantity = null)
     {
         $this->reset(['description', 'amount', 'tax_estimate', 'notes', 'bankAccountId', 'extraSalaryId', 'serviceUnitAmount', 'editingSalaryExtraIncomeId']);
