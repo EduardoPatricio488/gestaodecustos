@@ -48,7 +48,7 @@
                 return String(minutes).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
             }
         }"
-        x-on:open-expense-category-picker.window="open = true; activeTab = 'scanner'; $nextTick(() => setTimeout(() => { if (open) $wire.call('refreshOpenRouterQuota') }, 600))"
+        x-on:open-expense-category-picker.window="open = true; activeTab = 'scanner'"
         x-on:keydown.escape.window="open = false"
         data-no-global-close
     >
@@ -113,15 +113,20 @@
                                 <flux:icon name="sparkles" class="size-4 shrink-0 text-brand-500" />
                                 <span class="text-[10px] font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-200">Quota da IA · OpenRouter</span>
                             </div>
-                            @if($loadingOpenRouterQuota)
-                                <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-zinc-500">
-                                    <flux:icon name="arrow-path" class="size-3 animate-spin" /> A consultar...
-                                </span>
-                            @elseif($openRouterQuota)
-                                <span class="text-xs font-black tabular-nums {{ $openRouterQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
-                                    {{ number_format($openRouterQuota['remaining']) }} / {{ number_format($openRouterQuota['limit']) }} disponíveis hoje
-                                </span>
-                            @endif
+                            <div class="flex items-center gap-2">
+                                @if($loadingOpenRouterQuota)
+                                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-zinc-500">
+                                        <flux:icon name="arrow-path" class="size-3 animate-spin" /> A consultar...
+                                    </span>
+                                @elseif($openRouterQuota)
+                                    <span class="text-xs font-black tabular-nums {{ $openRouterQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
+                                        {{ number_format($openRouterQuota['remaining']) }} / {{ number_format($openRouterQuota['limit']) }} disponíveis hoje
+                                    </span>
+                                @endif
+                                <button type="button" wire:click="refreshOpenRouterQuota" wire:loading.attr="disabled" wire:target="refreshOpenRouterQuota" class="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-[9px] font-bold text-zinc-500 transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-50">
+                                    @if($loadingOpenRouterQuota) A consultar... @else Atualizar @endif
+                                </button>
+                            </div>
                         </div>
                         @if($openRouterQuota)
                             <div class="mt-2 flex items-center justify-between gap-3">
@@ -133,12 +138,12 @@
                             @if($openRouterQuota['remaining'] <= 0)
                                 <p class="mt-2 text-[10px] font-semibold text-red-500">A quota diária gratuita está esgotada. A quota renova às 00:00 UTC.</p>
                             @else
-                                <p class="mt-2 text-[10px] text-zinc-500">Quota diária de pedidos gratuitos da tua chave OpenRouter. Atualizada automaticamente ao abrir esta janela.</p>
+                                <p class="mt-2 text-[10px] text-zinc-500">Quota diária de pedidos gratuitos da tua chave OpenRouter. Atualiza manualmente quando quiseres consultar os valores mais recentes.</p>
                             @endif
                         @elseif($openRouterQuotaError)
                             <p class="mt-2 text-[10px] text-amber-600 dark:text-amber-400">{{ $openRouterQuotaError }}</p>
                         @else
-                            <p class="mt-2 text-[10px] text-zinc-500">A quota diária será consultada quando abrires o scanner.</p>
+                            <p class="mt-2 text-[10px] text-zinc-500">Carrega em «Atualizar» para consultar a quota diária da tua chave OpenRouter.</p>
                         @endif
                     </div>
 
