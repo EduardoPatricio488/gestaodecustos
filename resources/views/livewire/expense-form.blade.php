@@ -9,7 +9,7 @@
     {{-- Página deliberadamente vazia: o registo acontece através dos modais, como nas páginas de categorias. --}}
 
     {{-- MODAL 1: ESCOLHA DA CATEGORIA --}}
-    <div x-show="categoryModal" x-cloak class="fixed inset-0 z-[70]" role="dialog" aria-modal="true">
+    <div x-show="categoryModal" x-cloak class="fixed inset-0 z-[70]" role="dialog" aria-modal="true" data-no-global-close>
         <div x-show="categoryModal" x-transition.opacity class="absolute inset-0 bg-black/70 backdrop-blur-md" x-on:click="categoryModal = false; $wire.cancel()"></div>
         <div x-show="categoryModal" x-transition class="absolute inset-0 flex items-center justify-center p-4 sm:p-6 lg:left-64">
         <div class="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
@@ -19,7 +19,7 @@
                     <h1 class="mt-1 text-xl sm:text-2xl font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white">Escolhe uma categoria</h1>
                     <p class="mt-1 text-xs text-zinc-500">Os campos do próximo passo serão definidos pela categoria.</p>
                 </div>
-                <button type="button" x-on:click="categoryModal = false; $wire.cancel()" class="shrink-0 p-2.5 rounded-xl text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:text-white dark:hover:bg-zinc-800 transition"><flux:icon name="x-mark" class="size-5" /></button>
+                <button type="button" x-on:click="categoryModal = false; $wire.cancel()" aria-label="Fechar modal" title="Fechar" class="shrink-0 p-2.5 rounded-xl text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:text-white dark:hover:bg-zinc-800 transition"><flux:icon name="x-mark" class="size-5" /></button>
             </div>
 
             <div class="max-h-[70vh] overflow-y-auto p-6 sm:p-8">
@@ -43,7 +43,7 @@
 
     {{-- MODAL 2: FORMULÁRIO DINÂMICO DA CATEGORIA --}}
     @if($category)
-        <div x-show="formModal" x-cloak class="fixed inset-0 z-[71]" role="dialog" aria-modal="true">
+        <div x-show="formModal" x-cloak class="fixed inset-0 z-[71]" role="dialog" aria-modal="true" data-no-global-close>
             <div x-show="formModal" x-transition.opacity class="absolute inset-0 bg-black/70 backdrop-blur-md" x-on:click="formModal = false; $wire.cancel()"></div>
             <div x-show="formModal" x-transition class="absolute inset-0 flex items-center justify-center p-4 sm:p-6 lg:left-64">
             <div class="relative w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
@@ -56,7 +56,7 @@
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
                             @if(!$isEditing)<button type="button" x-on:click="formModal = false; categoryModal = true" class="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition" title="Alterar categoria"><flux:icon name="arrow-path" class="size-5" /></button>@endif
-                            <button type="button" x-on:click="formModal = false; $wire.cancel()" class="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition"><flux:icon name="x-mark" class="size-5" /></button>
+                            <button type="button" x-on:click="formModal = false; $wire.cancel()" aria-label="Fechar modal" title="Fechar" class="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition"><flux:icon name="x-mark" class="size-5" /></button>
                         </div>
                     </div>
                 </div>
