@@ -302,7 +302,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ['Content-Type' => 'application/pdf']
         )->deleteFileAfterSend(true);
     })->name('hub.incomes.statement.download');
-    Route::get('/dividas', BankTransactionsHub::class)->name('hub.debts');
+    Route::get('/dividas', DebtHub::class)->name('hub.debts');
     Route::get('/objetivos', GoalsHub::class)->name('hub.goals');
     Route::get('/wrapped', WrappedReport::class)->name('hub.wrapped');
     Route::get('/banco', BancoHub::class)->name('hub.banco');
