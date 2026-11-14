@@ -1,6 +1,9 @@
 <div>
+    <button type="button" wire:click="toggleEditing" class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-300">
+        <span aria-hidden="true">↕</span> {{ $editing ? 'Concluir organização' : 'Organizar por arrasto' }}
+    </button>
     <button type="button" wire:click="openSettings" class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-bold text-zinc-700 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
-        <span aria-hidden="true">⚙</span> Personalizar botões
+        <span aria-hidden="true">⚙</span> Editar nomes e visibilidade
     </button>
 
     @if($open)
