@@ -48,10 +48,10 @@
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Investimentos</span>
                     <span class="mt-1 block text-xs text-zinc-500">Acompanhar carteira</span>
                 </a>
-                <a href="{{ route('hub.goals') }}" wire:navigate class="group rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('open-mobile-goal-create')" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">◎</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Objetivos</span>
-                    <span class="mt-1 block text-xs text-zinc-500">Acompanhar metas</span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Novo objetivo</span>
+                    <span class="mt-1 block text-xs text-zinc-500">Criar uma meta financeira</span>
                 </a>
                 <a href="{{ route('hub.calendar') }}" wire:navigate class="group rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"><span class="text-xl font-bold" aria-hidden="true">▦</span></span>
@@ -135,4 +135,5 @@
     <livewire:expenses :dashboard-mode="true" />
     <livewire:income-hub :dashboard-mode="true" />
     <livewire:investments-hub />
+    <livewire:goals-hub />
 </x-layouts.app>
