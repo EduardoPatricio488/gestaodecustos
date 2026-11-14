@@ -42,13 +42,6 @@ class GoalsHub extends Component
     /**
      * Criar ou atualizar meta
      */
-    public function mount(): void
-    {
-        if (request()->boolean('open_create')) {
-            $this->openGoalModal();
-        }
-    }
-
     public function save()
     {
         $this->validate([
