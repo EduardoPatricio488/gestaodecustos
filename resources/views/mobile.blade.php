@@ -116,6 +116,15 @@
             </form>
         </div>
 
+        @php
+            $mobileHour = now()->hour;
+            $mobileGreeting = $mobileHour < 12 ? 'Bom dia' : ($mobileHour < 19 ? 'Boa tarde' : 'Boa noite');
+        @endphp
+        <div class="px-1">
+            <p class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">{{ $mobileGreeting }},</p>
+            <h2 class="mt-1 text-2xl font-black tracking-tight text-zinc-900 dark:text-white">{{ auth()->user()->name }}</h2>
+        </div>
+
         <section class="space-y-3">
             <div class="flex items-center justify-between px-1">
                 <h2 class="text-sm font-black uppercase tracking-wider text-zinc-500">Acesso rápido</h2>
