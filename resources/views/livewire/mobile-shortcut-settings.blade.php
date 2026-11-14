@@ -15,6 +15,19 @@
                     <button type="button" wire:click="$set('open', false)" class="flex size-9 items-center justify-center rounded-xl bg-zinc-100 text-xl text-zinc-500 dark:bg-zinc-800" aria-label="Fechar">×</button>
                 </div>
 
+                <div class="rounded-2xl border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
+                    <label class="flex items-center gap-2 text-sm font-bold text-zinc-800 dark:text-zinc-100">
+                        <input type="checkbox" wire:model.live="dividerEnabled" class="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500">
+                        Mostrar divisão entre os botões
+                    </label>
+                    <label class="mt-3 block text-[10px] font-bold uppercase tracking-wide text-zinc-400">Colocar divisão depois de</label>
+                    <select wire:model="dividerAfter" @disabled(!$dividerEnabled) class="mt-1 w-full rounded-lg border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-semibold text-zinc-900 focus:border-emerald-500 focus:ring-emerald-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                        @foreach(collect($shortcutNames)->sortKeys() as $key => $name)
+                            <option value="{{ $key }}">{{ $name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="space-y-2">
                     @foreach(collect($shortcuts)->sortBy('order') as $key => $shortcut)
                         <div wire:key="mobile-shortcut-setting-{{ $key }}" class="flex items-center gap-2 rounded-2xl border border-zinc-200 p-3 dark:border-zinc-700">
