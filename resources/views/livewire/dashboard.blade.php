@@ -643,17 +643,32 @@
         </a>
 
         <div
-            x-data="{ openQuickCreate: false }"
+            x-data="{
+                openQuickCreate: false,
+                menuStyle: '',
+                toggleQuickCreate() {
+                    if (this.openQuickCreate) {
+                        this.openQuickCreate = false;
+                        return;
+                    }
+
+                    const rect = this.$refs.quickCreateTrigger.getBoundingClientRect();
+                    this.menuStyle = `position: fixed; top: ${rect.bottom + 8}px; right: ${Math.max(16, window.innerWidth - rect.right)}px;`;
+                    this.openQuickCreate = true;
+                }
+            }"
             class="relative"
         >
-            <button type="button" x-on:click="openQuickCreate = !openQuickCreate" x-on:keydown.escape.window="openQuickCreate = false"
+            <button x-ref="quickCreateTrigger" type="button" x-on:click="toggleQuickCreate()" x-on:keydown.escape.window="openQuickCreate = false"
                 :aria-expanded="openQuickCreate.toString()" aria-label="Adicionar novo registo"
                 class="group flex size-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:scale-105 hover:shadow-xl active:scale-95">
                 <flux:icon name="plus" class="size-5 transition-transform duration-200" x-bind:class="openQuickCreate ? 'rotate-45' : ''" />
             </button>
 
-            <div x-cloak x-show="openQuickCreate" x-transition.origin.top.right x-on:click.outside="openQuickCreate = false"
-                class="absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+            <template x-teleport="body">
+                <div x-cloak x-show="openQuickCreate" x-transition.origin.top.right x-on:click.outside="openQuickCreate = false"
+                    x-bind:style="menuStyle"
+                    class="z-[9999] w-64 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
                 <p class="px-3 pb-2 pt-1 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">Criar novo registo</p>
                 <button type="button" x-on:click="openQuickCreate = false; Livewire.dispatch('open-expense-category-picker')"
                     class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-rose-50 dark:hover:bg-rose-950/30">
@@ -670,7 +685,8 @@
                     <span class="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300"><flux:icon name="arrow-path" class="size-4" /></span>
                     <span class="text-xs font-bold text-zinc-800 dark:text-zinc-100">Nova subscrição</span>
                 </button>
-            </div>
+                </div>
+            </template>
 
             <livewire:expenses :dashboard-mode="true" />
             <livewire:expense-form :dashboard-mode="true" />
