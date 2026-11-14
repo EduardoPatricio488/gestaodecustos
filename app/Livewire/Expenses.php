@@ -24,6 +24,8 @@ class Expenses extends Component
 
     public bool $dashboardMode = false;
 
+    public bool $expenseModalOpen = false;
+
     public ?string $calendarCreateDate = null;
 
     public $scannerReceipt;
@@ -62,8 +64,11 @@ class Expenses extends Component
         }
 
         try {
+            $quotaCacheKey = 'openrouter:quota:'.hash('sha256', $apiKey);
+            \Illuminate\Support\Facades\Cache::forget($quotaCacheKey);
+
             $quota = \Illuminate\Support\Facades\Cache::remember(
-                'openrouter:quota:'.hash('sha256', $apiKey),
+                $quotaCacheKey,
                 now()->addMinutes(5),
                 function () use ($apiKey) {
                     $response = \Illuminate\Support\Facades\Http::withToken($apiKey)
