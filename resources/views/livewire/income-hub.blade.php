@@ -1,7 +1,7 @@
 <div class="{{ $dashboardMode ? '' : 'space-y-10 pb-20' }}">
 
     @if($dashboardMode)
-        <div x-data="{ sourceMenu: false }" x-on:open-mobile-income-menu.window="sourceMenu = !sourceMenu" class="fixed inset-x-4 bottom-24 z-[80] mx-auto max-w-2xl rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" x-cloak x-show="sourceMenu">
+        <div x-data="{ sourceMenu: false }" x-on:open-mobile-income-menu.window="sourceMenu = true" class="fixed inset-x-4 bottom-24 z-[80] mx-auto max-w-2xl rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" x-cloak x-show="sourceMenu">
             <p class="px-2 pb-2 text-[10px] font-black uppercase tracking-widest text-zinc-400">Adicionar Rendimento</p>
             <div class="grid grid-cols-1 gap-2">
                 <button type="button" wire:click="openIncomeSource('emprego')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Salário / Contrato de Trabalho</button>
