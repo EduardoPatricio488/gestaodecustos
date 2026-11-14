@@ -7,6 +7,7 @@ use App\Http\Middleware\CheckPlanAccess;
 use App\Http\Middleware\CheckRegistrationStatus;
 use App\Http\Middleware\EnsureBusinessWorkspaceAccess;
 use App\Http\Middleware\EnsureImpersonationIsValid;
+use App\Http\Middleware\EnforceMobileOnlyAccess;
 use App\Http\Middleware\ForceHttps;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
@@ -50,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
             CheckRegistrationStatus::class,
             UpdateUserActivity::class,
             EnsureImpersonationIsValid::class,
+            EnforceMobileOnlyAccess::class,
             EnsureBusinessWorkspaceAccess::class,
             ThrottleVerificationCode::class,
         ]);
