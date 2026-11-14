@@ -21,9 +21,9 @@
                         Mostrar divisão entre os botões
                     </label>
                     <label class="mt-3 block text-[10px] font-bold uppercase tracking-wide text-zinc-400">Colocar divisão depois de</label>
-                    <select wire:model="dividerAfter" @disabled(!$dividerEnabled) class="mt-1 w-full rounded-lg border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-semibold text-zinc-900 focus:border-emerald-500 focus:ring-emerald-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
-                        @foreach(collect($shortcutNames)->sortKeys() as $key => $name)
-                            <option value="{{ $key }}">{{ $name }}</option>
+                    <select wire:model.live="dividerAfter" @disabled(!$dividerEnabled) class="mt-1 w-full rounded-lg border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-semibold text-zinc-900 focus:border-emerald-500 focus:ring-emerald-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                        @foreach(collect($shortcuts)->sortBy('order') as $key => $shortcut)
+                            <option value="{{ $key }}">{{ $shortcutNames[$key] }}</option>
                         @endforeach
                     </select>
                 </div>
