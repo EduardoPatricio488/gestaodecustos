@@ -10,6 +10,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
     <link rel="apple-touch-icon" href="/icon-192x192.png?v=20261114-1">
+    <script>
+        (() => {
+            try {
+                if (localStorage.getItem('finance-pro-mobile-theme') === 'dark') {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (_) {}
+        })();
+    </script>
     <title>{{ config('app.name', 'Finance Pro AI') }} — Mobile</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=20261114-5">
     @vite('resources/css/app.css')
@@ -89,8 +98,13 @@
                     <h1 class="mt-2 text-2xl font-black tracking-tight">A tua gestão, simplificada.</h1>
                     <p class="mt-1 text-sm text-zinc-300">Uma experiência mais prática para utilizar no telemóvel.</p>
                 </div>
-                <div class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-emerald-300">
-                    <span class="text-2xl" aria-hidden="true">▣</span>
+                <div class="flex shrink-0 flex-col items-center gap-2" x-data="{ dark: document.documentElement.classList.contains('dark'), toggleTheme() { this.dark = !this.dark; document.documentElement.classList.toggle('dark', this.dark); try { localStorage.setItem('finance-pro-mobile-theme', this.dark ? 'dark' : 'light'); } catch (_) {} } }">
+                    <div class="flex size-12 items-center justify-center rounded-2xl bg-white/10 text-emerald-300">
+                        <span class="text-2xl" aria-hidden="true">▣</span>
+                    </div>
+                    <button type="button" x-on:click="toggleTheme()" class="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1.5 text-[10px] font-bold text-white transition active:scale-95" aria-label="Alterar tema">
+                        <span x-text="dark ? '☀️ Claro' : '🌙 Escuro'"></span>
+                    </button>
                 </div>
             </div>
             <form method="POST" action="{{ route('device.mode') }}" class="mt-5">
