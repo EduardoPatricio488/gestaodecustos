@@ -17,7 +17,7 @@
         $mobileDividerSettings = $savedMobileShortcuts['_divider'] ?? ['enabled' => true, 'after' => 'investments'];
         unset($savedMobileShortcuts['_divider']);
         $mobileShortcutSettings = array_replace_recursive($mobileShortcutDefaults, $savedMobileShortcuts);
-        $mobileDividerOrder = ($mobileShortcutSettings[$mobileDividerSettings['after'] ?? 'investments']['order'] ?? 4) + 0.5;
+        $mobileDividerOrder = $mobileDividerSettings['order'] ?? (($mobileShortcutSettings[$mobileDividerSettings['after'] ?? 'investments']['order'] ?? 4) + 0.5);
     @endphp
     <div class="mx-auto w-full max-w-2xl space-y-5 pb-24">
         <div class="rounded-3xl bg-gradient-to-br from-zinc-950 via-zinc-900 to-emerald-950 p-5 text-white shadow-xl sm:p-7">
