@@ -17,6 +17,8 @@
             </a>
         </div>
 
+        <livewire:mobile-recent-records />
+
         <section class="space-y-3">
             <div class="flex items-center justify-between px-1">
                 <h2 class="text-sm font-black uppercase tracking-wider text-zinc-500">Acesso rápido</h2>
@@ -137,5 +139,5 @@
     <livewire:investments-hub :mobile-mode="true" />
     <livewire:goals-hub :mobile-mode="true" />
     <livewire:hub.reminders-hub :dashboard-mode="true" />
-    <livewire:mobile-recent-records />
+
 </x-layouts.app>
