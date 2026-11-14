@@ -14,8 +14,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#070b13">
     <title>Escolher acesso — Finance Pro AI</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
+    @vite('resources/css/app.css')
 </head>
 <body class="min-h-screen bg-zinc-950 text-white antialiased">
     <div id="fp-launch-splash" class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#070b13] transition-opacity duration-500">
@@ -93,6 +92,5 @@
             </div>
         </section>
     </main>
-    @livewireScripts
 </body>
 </html>
