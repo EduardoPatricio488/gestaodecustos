@@ -133,7 +133,7 @@
                             <h2 class="text-xl font-black uppercase italic tracking-tight text-zinc-900 dark:text-white">{{ $transportPassMode ? ($editingId ? 'Editar Passe Mensal' : 'Novo Passe Mensal') : ($editingId ? 'Editar Assinatura' : 'Nova Assinatura') }}</h2>
                             <p class="mt-1.5 text-[10px] font-black uppercase italic tracking-widest text-zinc-400">{{ $transportPassMode ? 'Configuração do passe mensal de transporte' : 'Configuração completa de custo recorrente' }}</p>
                         </div>
-                        <button type="button" @click="close()" aria-label="Fechar janela" class="rounded-full p-2 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-white"><flux:icon name="x-mark" class="size-5" /></button>
+                        <button type="button" wire:click="closeExtraModal" aria-label="Fechar janela" class="rounded-full p-2 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-white"><flux:icon name="x-mark" class="size-5" /></button>
                     </div>
                     <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
                         @include('livewire.partials.onboarding-validation-errors')
@@ -189,7 +189,7 @@
                         </div>
                         @endif
                     </div>
-                    <div class="flex shrink-0 flex-col gap-3 border-t border-zinc-100 bg-white p-6 pt-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row"><button type="button" @click="close()" class="h-14 w-full rounded-2xl text-xs font-bold uppercase tracking-widest text-zinc-500 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button><button type="submit" wire:loading.attr="disabled" wire:target="save" class="h-14 w-full rounded-2xl bg-brand-600 text-white font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 transition-all hover:bg-brand-500 disabled:opacity-60"><span wire:loading.remove wire:target="save">{{ $editingId ? ($transportPassMode ? 'Atualizar Passe Mensal' : 'Atualizar Assinatura') : ($transportPassMode ? 'Criar Passe Mensal' : 'Guardar Assinatura') }}</span><span wire:loading wire:target="save">A guardar...</span></button></div>
+                    <div class="flex shrink-0 flex-col gap-3 border-t border-zinc-100 bg-white p-6 pt-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row"><button type="button" wire:click="closeExtraModal" class="h-14 w-full rounded-2xl text-xs font-bold uppercase tracking-widest text-zinc-500 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button><button type="submit" wire:loading.attr="disabled" wire:target="save" class="h-14 w-full rounded-2xl bg-brand-600 text-white font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 transition-all hover:bg-brand-500 disabled:opacity-60"><span wire:loading.remove wire:target="save">{{ $editingId ? ($transportPassMode ? 'Atualizar Passe Mensal' : 'Atualizar Assinatura') : ($transportPassMode ? 'Criar Passe Mensal' : 'Guardar Assinatura') }}</span><span wire:loading wire:target="save">A guardar...</span></button></div>
                 </form>
             </div>
         </div>
