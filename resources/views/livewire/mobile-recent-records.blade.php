@@ -11,7 +11,7 @@
 
             <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
                 @foreach($this->records as $record)
-                    <div wire:key="recent-record-{{ $record['id'] }}" class="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                    <a href="{{ $record['url'] }}" wire:key="recent-record-{{ $record['id'] }}" wire:navigate class="flex items-center gap-3 rounded-xl py-3 first:pt-0 last:pb-0 transition hover:bg-zinc-50 dark:hover:bg-zinc-800/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
                         <div @class([
                             'flex size-10 shrink-0 items-center justify-center rounded-2xl text-lg font-black',
                             'bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-300' => $record['tone'] === 'rose',
@@ -30,7 +30,7 @@
                             @endif
                             <p class="mt-0.5 text-[10px] text-zinc-400">{{ $record['created_at']->diffForHumans() }}</p>
                         </div>
-                    </div>
+                    </a>
                 @endforeach
             </div>
         </section>
