@@ -13,7 +13,11 @@
             'calendar' => ['label' => 'Calendário', 'enabled' => true, 'order' => 10],
             'connect' => ['label' => 'Finance Connect', 'enabled' => true, 'order' => 11],
         ];
-        $mobileShortcutSettings = array_replace_recursive($mobileShortcutDefaults, auth()->user()->mobile_shortcuts ?? []);
+        $savedMobileShortcuts = auth()->user()->mobile_shortcuts ?? [];
+        $mobileDividerSettings = $savedMobileShortcuts['_divider'] ?? ['enabled' => true, 'after' => 'investments'];
+        unset($savedMobileShortcuts['_divider']);
+        $mobileShortcutSettings = array_replace_recursive($mobileShortcutDefaults, $savedMobileShortcuts);
+        $mobileDividerOrder = ($mobileShortcutSettings[$mobileDividerSettings['after'] ?? 'investments']['order'] ?? 4) + 0.5;
     @endphp
     <div class="mx-auto w-full max-w-2xl space-y-5 pb-24">
         <div class="rounded-3xl bg-gradient-to-br from-zinc-950 via-zinc-900 to-emerald-950 p-5 text-white shadow-xl sm:p-7">
@@ -111,6 +115,13 @@
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['calendar']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Ver agenda</span>
                 </a>
+                @endif
+                @if($mobileDividerSettings['enabled'] ?? true)
+                <div class="col-span-2 flex items-center gap-3 py-1" style="order: {{ $mobileDividerOrder }};" aria-hidden="true">
+                    <span class="h-px flex-1 bg-zinc-200 dark:bg-zinc-700"></span>
+                    <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-400">Divisão</span>
+                    <span class="h-px flex-1 bg-zinc-200 dark:bg-zinc-700"></span>
+                </div>
                 @endif
                 @if($mobileShortcutSettings['connect']['enabled'])
                 <a href="/social" wire:navigate style="order: {{ $mobileShortcutSettings['connect']['order'] }};" class="group col-span-2 flex min-h-24 w-full items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
