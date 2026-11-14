@@ -55,6 +55,17 @@
                 <h1 class="mt-3 text-2xl font-black tracking-tight">Como queres entrar?</h1>
                 <p class="mt-2 text-sm text-zinc-400">Escolhe a experiência que pretendes utilizar.</p>
             </div>
+            @auth
+                <div class="mb-5 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-center" role="status">
+                    <p class="text-sm font-bold text-emerald-200">Sessão já iniciada</p>
+                    <p class="mt-1 text-xs text-zinc-300">Olá, {{ auth()->user()->name }}. Podes entrar diretamente no mobile ou no site completo, sem voltar a iniciar sessão.</p>
+                </div>
+            @else
+                <div class="mb-5 rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-center" role="status">
+                    <p class="text-sm font-bold text-zinc-200">Ainda não tens sessão iniciada</p>
+                    <p class="mt-1 text-xs text-zinc-400">Escolhe uma opção e inicia sessão quando te for pedido.</p>
+                </div>
+            @endauth
             <div class="space-y-3">
                 <form method="POST" action="{{ route('app.launch.choose') }}">
                     @csrf
