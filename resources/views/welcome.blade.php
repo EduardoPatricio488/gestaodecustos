@@ -18,13 +18,8 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
-        <link rel="apple-touch-icon" href="/pwa/splash_screens/apple-icon-180x180.png">
-
-        <link rel="apple-touch-startup-image"
-              href="/pwa/splash_screens/iPhone_16__iPhone_15_Pro__iPhone_15__iPhone_14_Pro_portrait.png"
-              media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
-
-        {{-- 2. TEMA & ASSETS --}}
+        <link rel="apple-touch-icon" href="/icon-192x192.png?v=20261114-1">
+{{-- 2. TEMA & ASSETS --}}
         <script>
             var savedAppearance = localStorage.getItem('flux.appearance') || localStorage.theme;
             if (savedAppearance && !localStorage.getItem('flux.appearance') && ['dark', 'light'].includes(savedAppearance)) {
