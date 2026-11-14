@@ -28,7 +28,7 @@
 
     <div
         x-data="{
-            open: false,
+            open: $wire.entangle('expenseModalOpen'),
             activeTab: 'scanner',
             scanSecondsRemaining: 45,
             scanTimeoutRemaining: 180,
