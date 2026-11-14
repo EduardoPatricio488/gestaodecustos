@@ -67,6 +67,7 @@ use App\Livewire\CategoryFields;
 use App\Livewire\CategoryHub;
 use App\Livewire\ClientPortal;
 use App\Livewire\Dashboard;
+use App\Livewire\DebtHub;
 use App\Livewire\BankTransactionsHub;
 use App\Livewire\ExpenseForecastHub;
 use App\Livewire\Expenses;
