@@ -166,7 +166,7 @@
 
     // 4. CACHE DE CONTAGENS DA SIDEBAR
     $counts = \Illuminate\Support\Facades\Cache::remember(
-        "layout:sidebar-counts:v7:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
+        "layout:sidebar-counts:v8:{$user?->id}:{$workspaceId}:{$isAdminMode}:{$isBusinessMode}",
         60,
         function () use ($user, $currentWs, $workspaceId, $isAdminMode, $isBusinessMode) {
             if ($isAdminMode) {
@@ -253,6 +253,10 @@
                 + $movementScope(\App\Models\SubscriptionPayment::query())->count();
 
             return [
+                'expenses'      => \App\Models\Expense::where('workspace_id', $workspaceId)
+                    ->where('user_id', $user->id)
+                    ->where('is_company', false)
+                    ->count(),
                 'movements'     => $movementCount,
                 'incomes'       => \App\Models\RecurringIncome::where('workspace_id', $workspaceId)
                     ->where('user_id', $user->id)
@@ -1329,7 +1333,7 @@ $hasStoreAccess = $hasLockInAccess;
                         Receitas {!! $badge($counts['incomes']) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="receipt-percent" :href="url('/hub/todas-as-categorias')" :current="request()->is('hub/todas-as-categorias')" wire:navigate.hover>
-                        Despesas
+                        Despesas {!! $badge($counts['expenses'] ?? 0) !!}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="chart-bar-square" :href="route('hub.investments')" wire:navigate.hover>
                         Investimentos {!! $badge($counts['investments']) !!}
