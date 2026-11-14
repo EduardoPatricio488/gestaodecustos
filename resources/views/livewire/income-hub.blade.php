@@ -1,5 +1,25 @@
 <div class="{{ $dashboardMode ? '' : 'space-y-10 pb-20' }}">
 
+    @if($dashboardMode)
+        <div x-data="{ sourceMenu: false }" x-on:open-mobile-income-menu.window="sourceMenu = !sourceMenu" class="fixed inset-x-4 bottom-24 z-[80] mx-auto max-w-2xl rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" x-cloak x-show="sourceMenu">
+            <p class="px-2 pb-2 text-[10px] font-black uppercase tracking-widest text-zinc-400">Adicionar Rendimento</p>
+            <div class="grid grid-cols-1 gap-2">
+                <button type="button" wire:click="openIncomeSource('emprego')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Salário / Contrato de Trabalho</button>
+                <button type="button" wire:click="openIncomeSource('renda')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Renda Imobiliária</button>
+                <button type="button" wire:click="openIncomeSource('freelance')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Freelance / Trabalho Independente</button>
+                <button type="button" wire:click="openIncomeSource('investimento')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Rendimento de Investimento</button>
+                <button type="button" wire:click="openIncomeSource('reforma')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Reforma / Pensão</button>
+                <button type="button" wire:click="openIncomeSource('bolsa')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Bolsa de Estudo</button>
+                <button type="button" wire:click="openIncomeSource('outro')" x-on:click="sourceMenu = false" class="w-full rounded-xl bg-zinc-50 px-4 py-3 text-left text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-white">Outra Fonte</button>
+            </div>
+            <button type="button" wire:click="openExtraModal" x-on:click="sourceMenu = false" class="mt-2 w-full rounded-xl bg-emerald-600 px-4 py-3 text-left text-sm font-black text-white">Receita Extra</button>
+        </div>
+        <div class="mx-auto mt-3 grid w-full max-w-2xl grid-cols-2 gap-3">
+            <button type="button" x-on:click="$dispatch('open-mobile-income-menu')" class="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white">Adicionar Rendimento</button>
+            <button type="button" wire:click="openExtraModal" class="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-black text-emerald-700 dark:border-emerald-900 dark:bg-zinc-900 dark:text-emerald-300">Receita Extra</button>
+        </div>
+    @endif
+
     @unless($dashboardMode)
     {{-- ================================================================== --}}
     {{-- HEADER · RESPONSIVO                                               --}}
