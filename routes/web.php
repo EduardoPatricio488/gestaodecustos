@@ -281,6 +281,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->whereNumber('salaryDocument')
         ->name('salary-documents.preview');
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
+    Route::view('/mobile', 'mobile')->name('mobile.home');
     Route::get('/noticias', NewsHub::class)->name('hub.news');
     Route::get('/atividades', ActivityFeed::class)->name('activity-log');
     Route::get('/planos', SubscriptionPlans::class)->name('hub.pricing');
