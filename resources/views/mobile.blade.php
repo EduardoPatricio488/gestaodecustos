@@ -106,12 +106,14 @@
                     <span class="text-2xl" aria-hidden="true">▣</span>
                 </div>
             </div>
-            @if(session('mobile_access_mode') !== 'mobile')
-                <a href="{{ route('dashboard') }}" wire:navigate class="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-zinc-900 shadow-sm transition active:scale-95">
-                    <span aria-hidden="true">←</span>
-                    Voltar ao dashboard completo
-                </a>
-            @endif
+            <form method="POST" action="{{ route('device.mode') }}" class="mt-5">
+                @csrf
+                <input type="hidden" name="mode" value="full">
+                <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-zinc-900 shadow-sm transition active:scale-95">
+                    <span aria-hidden="true">↗</span>
+                    Entrar no site completo
+                </button>
+            </form>
         </div>
 
         <section class="space-y-3">
