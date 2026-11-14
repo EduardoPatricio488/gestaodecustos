@@ -1203,6 +1203,36 @@ class IncomeHub extends Component
         $this->dispatch('modal-show-receita-extra');
     }
 
+    public function editUnlinkedExtraIncome(int $incomeId): void
+    {
+        if (auth()->user()->isViewer()) {
+            $this->dispatch('toast', variant: 'error', text: 'Ação negada.');
+
+            return;
+        }
+
+        $user = auth()->user();
+        $income = Income::where('workspace_id', $user->current_workspace_id)
+            ->where('user_id', $user->id)
+            ->whereNull('salary_recurring_income_id')
+            ->findOrFail($incomeId);
+
+        $this->reset(['description', 'amount', 'tax_estimate', 'notes', 'bankAccountId', 'extraSalaryId', 'serviceUnitAmount', 'editingSalaryExtraIncomeId']);
+        $this->serviceQuantity = 1;
+        $this->editingSalaryExtraIncomeId = $income->id;
+        $this->description = $income->description;
+        $this->amount = (float) $income->amount;
+        $this->currency = strtoupper($income->currency ?: ($user->currentWorkspace?->currency ?? 'EUR'));
+        $this->received_at = $income->received_at?->format('Y-m-d') ?? now()->format('Y-m-d');
+        $this->tax_estimate = $income->tax_estimate;
+        $this->notes = $income->notes ?? '';
+        $this->extraDestination = $income->bank_account_id ? 'bank:'.$income->bank_account_id : 'cash';
+        $this->source = $income->source ?? 'emprego';
+        $this->frequency = $income->frequency ?? 'pontual';
+        $this->showExtraModal = true;
+        $this->dispatch('modal-show-receita-extra');
+    }
+
     public function editSalaryExtraIncome(int $incomeId): void
     {
         $salary = $this->salaryDetailsContract((int) $this->salaryIncomeHistoryId);
