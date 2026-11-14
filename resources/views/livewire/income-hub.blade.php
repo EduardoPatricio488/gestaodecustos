@@ -450,8 +450,14 @@
         </div>
     </div>
 {{-- ENTRADAS EXTRAS --}}
-<div class="relative p-6 rounded-[2rem] bg-white/40 dark:bg-zinc-900/40
-            backdrop-blur-xl border border-white/20 shadow-xl overflow-visible group relative z-10 hover:z-50">
+<div
+    role="link"
+    tabindex="0"
+    aria-label="Ver outras entradas extra e prémios"
+    @click="window.location.href = '/receitas#outras-entradas-extra'"
+    @keydown.enter="window.location.href = '/receitas#outras-entradas-extra'"
+    class="relative cursor-pointer p-6 rounded-[2rem] bg-white/40 dark:bg-zinc-900/40
+            backdrop-blur-xl border border-white/20 shadow-xl overflow-visible group relative z-10 hover:z-50 transition hover:border-yellow-400/50 focus:outline-none focus:ring-2 focus:ring-yellow-500">
 
     <div class="absolute inset-0 opacity-10">
         <flux:icon name="bolt" class="size-32 text-yellow-500/20 rotate-12" />
