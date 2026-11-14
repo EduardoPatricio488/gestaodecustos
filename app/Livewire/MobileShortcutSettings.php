@@ -48,21 +48,28 @@ class MobileShortcutSettings extends Component
 
         $validKeys = array_keys($defaults);
         $visibleOrder = array_values(array_filter($items, fn ($key) => $key === '_divider' || in_array($key, $validKeys, true)));
-        $orderedKeys = array_values(array_filter($visibleOrder, fn ($key) => $key !== '_divider'));
         $hiddenKeys = collect($shortcuts)->reject(fn ($item) => (bool) ($item['enabled'] ?? true))->sortBy('order')->keys()->all();
-        $orderedKeys = array_values(array_unique(array_merge($orderedKeys, $hiddenKeys)));
+        $visibleShortcutKeys = [];
 
-        foreach ($orderedKeys as $position => $key) {
+        foreach ($visibleOrder as $position => $key) {
+            if ($key === '_divider') {
+                $divider['order'] = $position + 1;
+                for ($index = $position - 1; $index >= 0; $index--) {
+                    if ($visibleOrder[$index] !== '_divider') {
+                        $divider['after'] = $visibleOrder[$index];
+                        break;
+                    }
+                }
+                continue;
+            }
+
             $shortcuts[$key]['order'] = $position + 1;
+            $visibleShortcutKeys[] = $key;
         }
 
-        $dividerPosition = array_search('_divider', $visibleOrder, true);
-        if ($dividerPosition !== false) {
-            for ($index = $dividerPosition - 1; $index >= 0; $index--) {
-                if ($visibleOrder[$index] !== '_divider') {
-                    $divider['after'] = $visibleOrder[$index];
-                    break;
-                }
+        foreach (array_values(array_unique(array_merge($visibleShortcutKeys, $hiddenKeys))) as $offset => $key) {
+            if (! in_array($key, $visibleShortcutKeys, true)) {
+                $shortcuts[$key]['order'] = count($visibleOrder) + $offset + 1;
             }
         }
 
