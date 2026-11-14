@@ -20,6 +20,11 @@
         </div>
     @endif
 
+    @if($dashboardMode)
+        @include('livewire.partials.employment-modal')
+        @include('livewire.partials.income-source-modals')
+    @endif
+
     @unless($dashboardMode)
     {{-- ================================================================== --}}
     {{-- HEADER · RESPONSIVO                                               --}}
