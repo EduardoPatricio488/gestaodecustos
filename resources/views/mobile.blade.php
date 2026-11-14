@@ -38,16 +38,16 @@
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Movimentos</span>
                     <span class="mt-1 block text-xs text-zinc-500">Consultar atividade</span>
                 </button>
-                <a href="{{ route('hub.banco') }}" wire:navigate class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
-                    <span class="flex size-10 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/30 dark:text-emerald-300"><span class="text-xl font-bold" aria-hidden="true">▥</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Banco</span>
-                    <span class="mt-1 block text-xs text-zinc-500">Contas e saldos</span>
-                </a>
                 <button type="button" x-on:click="$dispatch('open-mobile-investment-actions')" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"><span class="text-xl font-bold" aria-hidden="true">▥</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Investimentos</span>
                     <span class="mt-1 block text-xs text-zinc-500">Acompanhar carteira</span>
                 </button>
+                <a href="{{ route('hub.banco') }}" wire:navigate class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                    <span class="flex size-10 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/30 dark:text-emerald-300"><span class="text-xl font-bold" aria-hidden="true">▥</span></span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Banco</span>
+                    <span class="mt-1 block text-xs text-zinc-500">Contas e saldos</span>
+                </a>
                 <button type="button" x-on:click="$dispatch('open-mobile-goal-create')" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">◎</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Novo objetivo</span>
