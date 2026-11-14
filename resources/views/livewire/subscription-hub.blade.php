@@ -123,8 +123,9 @@
 
     @if($showExtraModal)
     <div x-data="{ open: false, show(){requestAnimationFrame(()=>{this.open=true;document.documentElement.classList.add('overflow-hidden')})}, close(){this.open=false;document.documentElement.classList.remove('overflow-hidden');setTimeout(()=> $wire.closeExtraModal(),50)} }" x-init="show()" x-on:keydown.escape.window="close()">
-        <div x-show="open" x-cloak x-transition.opacity.duration.50ms @click="close()" class="fixed inset-0 {{ $dashboardMode ? 'z-[69]' : 'z-50' }} bg-zinc-950/70"></div>
-        <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 {{ $dashboardMode ? 'z-[70]' : 'z-50' }} {{ $dashboardMode && empty($onboardingModal) ? 'lg:left-64 lg:w-[calc(100vw-16rem)]' : '' }} flex items-center justify-center p-4 will-change-transform">
+        <template x-teleport="body">
+        <div x-show="open" x-cloak x-transition.opacity.duration.50ms @click="close()" class="fixed inset-0 z-[99998] bg-zinc-950/70"></div>
+        <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 will-change-transform">
             <div @click.stop x-show="open" x-transition:enter="transition duration-65 ease-[cubic-bezier(.18,.89,.32,1.28)] transform-gpu" x-transition:enter-start="opacity-0 scale-[0.997] translate-y-0.5" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="transition duration-50 ease-[cubic-bezier(.4,0,.2,1)] transform-gpu" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-[0.985] translate-y-1" class="relative w-full max-w-2xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
                 <form wire:submit.prevent="save" class="flex max-h-[86vh] flex-col">
                     <div class="flex shrink-0 items-center gap-4 border-b border-zinc-100 p-6 pb-4 dark:border-zinc-800">
@@ -193,6 +194,7 @@
                 </form>
             </div>
         </div>
+        </template>
     </div>
     @endif
 
