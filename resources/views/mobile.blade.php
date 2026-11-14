@@ -339,7 +339,7 @@
 
     <livewire:expenses :dashboard-mode="true" />
     <livewire:income-hub :dashboard-mode="true" />
-    <livewire:investments-hub :mobile-mode="true" lazy />
+    <livewire:investments-hub :mobile-mode="true" />
     <livewire:goals-hub :mobile-mode="true" lazy />
     <livewire:hub.reminders-hub :dashboard-mode="true" lazy />
     <livewire:subscription-hub :dashboard-mode="true" lazy />
