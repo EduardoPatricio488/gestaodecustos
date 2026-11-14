@@ -1,5 +1,6 @@
 <div
     x-data
+    x-on:open-mobile-goal-create.window="$wire.openGoalModal()"
     class="space-y-8 pb-24"
 >
 
