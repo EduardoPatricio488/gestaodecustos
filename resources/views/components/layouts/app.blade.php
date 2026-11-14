@@ -329,6 +329,39 @@
 
 
 
+@if(session()->pull('show_account_loading', false))
+    <div id="account-loading-screen" class="fixed inset-0 z-[999999] flex min-h-screen h-[100dvh] w-screen flex-col items-center justify-center overflow-hidden bg-[#070b13] px-6 text-center text-white" role="status" aria-live="polite">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(16,185,129,.18),transparent_38%)]"></div>
+        <div class="relative flex size-28 items-center justify-center">
+            <div class="absolute inset-0 rounded-full border border-emerald-400/20"></div>
+            <div class="absolute inset-2 rounded-full border-2 border-transparent border-t-emerald-300 animate-spin"></div>
+            <div class="absolute inset-5 rounded-full border-2 border-transparent border-b-cyan-300 animate-[spin_1.6s_linear_infinite_reverse]"></div>
+            <div class="flex size-12 items-center justify-center rounded-2xl bg-emerald-400/15 text-emerald-300 shadow-[0_0_35px_rgba(16,185,129,.2)]">
+                <svg viewBox="0 0 24 24" class="size-7" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 18V9h4v9M10 18V5h4v13M16 18V2h4v16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+        </div>
+        <p class="relative mt-8 text-xs font-black uppercase tracking-[.35em] text-emerald-300">Finance Pro AI</p>
+        <h2 class="relative mt-3 text-2xl font-black tracking-tight">A preparar a tua conta</h2>
+        <p class="relative mt-2 max-w-xs text-sm leading-relaxed text-zinc-400">Estamos a carregar os teus dados e a preparar o teu espaço de trabalho.</p>
+        <div class="relative mt-8 h-1 w-48 overflow-hidden rounded-full bg-white/10">
+            <div class="h-full w-1/3 animate-[fp-account-progress_1.2s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-emerald-400 to-cyan-300"></div>
+        </div>
+    </div>
+    <style>
+        @keyframes fp-account-progress { 0% { transform: translateX(-110%); } 100% { transform: translateX(410%); } }
+        @media (prefers-reduced-motion: reduce) { #account-loading-screen * { animation: none !important; } }
+    </style>
+    <script>
+        window.setTimeout(() => {
+            const screen = document.getElementById('account-loading-screen');
+            if (!screen) return;
+            screen.style.transition = 'opacity .35s ease';
+            screen.style.opacity = '0';
+            window.setTimeout(() => screen.remove(), 400);
+        }, 1100);
+    </script>
+@endif
+
 <body
     class="layout-fixed app-shell antialiased bg-zinc-50 dark:bg-zinc-950 h-screen overflow-hidden flex"
     x-data="{
