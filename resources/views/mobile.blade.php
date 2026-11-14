@@ -11,7 +11,6 @@
     <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
     <link rel="apple-touch-icon" href="/icon-192x192.png?v=20261114-1">
     <title>{{ config('app.name', 'Finance Pro AI') }} — Mobile</title>
-    <title>{{ config('app.name', 'Finance Pro AI') }} — Mobile</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=20261114-5">
     @vite('resources/css/app.css')
     <link rel="stylesheet" href="/flux/flux.css">
@@ -285,13 +284,12 @@
 
     <livewire:expenses :dashboard-mode="true" />
     <livewire:income-hub :dashboard-mode="true" />
-    <livewire:investments-hub :mobile-mode="true" />
-    <livewire:goals-hub :mobile-mode="true" />
-    <livewire:hub.reminders-hub :dashboard-mode="true" />
-    <livewire:subscription-hub :dashboard-mode="true" />
+    <livewire:investments-hub :mobile-mode="true" lazy />
+    <livewire:goals-hub :mobile-mode="true" lazy />
+    <livewire:hub.reminders-hub :dashboard-mode="true" lazy />
+    <livewire:subscription-hub :dashboard-mode="true" lazy />
 
-    @fluxScripts
     @livewireScripts
-    <script src="/flux/flux.js"></script>
+    @fluxScripts
 </body>
 </html>
