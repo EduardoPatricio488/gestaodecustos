@@ -43,30 +43,39 @@
                 <livewire:mobile-shortcut-settings />
                 <span class="rounded-full bg-amber-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Versão temporária</span>
             </div>
-            <div class="grid grid-cols-2 gap-3">
+            <div
+                class="grid grid-cols-2 gap-3"
+                x-data="{ editing: false, draggedItem: null }"
+                x-on:mobile-shortcuts-edit-mode.window="editing = $event.detail.enabled"
+                x-on:mobile-shortcuts-reordered-saved.window="window.location.reload()"
+                x-on:dragstart="if (!editing) return; const item = $event.target.closest('[data-mobile-item]'); if (!item) return; draggedItem = item; $event.dataTransfer.effectAllowed = 'move'; $event.dataTransfer.setData('text/plain', item.dataset.mobileItem); item.classList.add('opacity-40')"
+                x-on:dragend="if (draggedItem) draggedItem.classList.remove('opacity-40'); draggedItem = null"
+                x-on:dragover.prevent="if (editing) $event.dataTransfer.dropEffect = 'move'"
+                x-on:drop.prevent="if (!editing || !draggedItem) return; const target = $event.target.closest('[data-mobile-item]'); if (target && target !== draggedItem) target.before(draggedItem); else if (!target) $el.append(draggedItem); const items = [...$el.children].filter(child => child.dataset.mobileItem).map((child, index) => { child.style.order = index + 1; return child.dataset.mobileItem; }); Livewire.dispatch('mobile-shortcuts-reordered', { items }); draggedItem.classList.remove('opacity-40'); draggedItem = null"
+            >
                 @if($mobileShortcutSettings['expense']['enabled'])
-                <button type="button" x-on:click="$dispatch('open-expense-category-picker')" style="order: {{ $mobileShortcutSettings['expense']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-rose-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-rose-900/40 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('open-expense-category-picker')" data-mobile-item="expense" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['expense']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-rose-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-rose-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"><span class="text-xl font-bold" aria-hidden="true">＋</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['expense']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Registar gasto</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['income']['enabled'])
-                <button type="button" x-on:click="$dispatch('open-mobile-income-menu', { rect: $el.getBoundingClientRect() })" style="order: {{ $mobileShortcutSettings['income']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-emerald-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-emerald-900/40 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('open-mobile-income-menu', { rect: $el.getBoundingClientRect() })" data-mobile-item="income" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['income']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-emerald-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-emerald-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300"><span class="text-xl font-bold" aria-hidden="true">↗</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['income']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Adicionar rendimento</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['movements']['enabled'])
-                <button type="button" x-on:click="$dispatch('open-mobile-statement-import')" style="order: {{ $mobileShortcutSettings['movements']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('open-mobile-statement-import')" data-mobile-item="movements" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['movements']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"><span class="text-xl font-bold" aria-hidden="true">⇄</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['movements']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Consultar atividade</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['investments']['enabled'])
-                <button type="button" x-on:click="$dispatch('open-mobile-investment-actions')" style="order: {{ $mobileShortcutSettings['investments']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('open-mobile-investment-actions')" data-mobile-item="investments" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['investments']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"><span class="text-xl font-bold" aria-hidden="true">▥</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['investments']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Acompanhar carteira</span>
@@ -74,21 +83,21 @@
                 @endif
 
                 @if($mobileShortcutSettings['bank']['enabled'])
-                <a href="{{ route('hub.banco') }}" wire:navigate style="order: {{ $mobileShortcutSettings['bank']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <a href="{{ route('hub.banco') }}" wire:navigate data-mobile-item="bank" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['bank']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/30 dark:text-emerald-300"><span class="text-xl font-bold" aria-hidden="true">▥</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['bank']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Contas e saldos</span>
                 </a>
                 @endif
                 @if($mobileShortcutSettings['goal']['enabled'])
-                <button type="button" x-on:click="$dispatch('open-mobile-goal-create')" style="order: {{ $mobileShortcutSettings['goal']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('open-mobile-goal-create')" data-mobile-item="goal" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['goal']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">◎</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['goal']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Criar uma meta financeira</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['reminder']['enabled'])
-        <button type="button" x-on:click="$dispatch('open-mobile-reminder-create')" style="order: {{ $mobileShortcutSettings['reminder']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-amber-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-amber-900/40 dark:bg-zinc-900">
+        <button type="button" x-on:click="$dispatch('open-mobile-reminder-create')" data-mobile-item="reminder" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['reminder']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-amber-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-amber-900/40 dark:bg-zinc-900">
             <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">♧</span></span>
             <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['reminder']['label'] }}</span>
             <span class="mt-1 block text-xs text-zinc-500">Agendar um lembrete</span>
@@ -96,35 +105,35 @@
                 @endif
 
                 @if($mobileShortcutSettings['subscription']['enabled'])
-                <button type="button" x-on:click="$dispatch('open-mobile-subscription-create')" style="order: {{ $mobileShortcutSettings['subscription']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('open-mobile-subscription-create')" data-mobile-item="subscription" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['subscription']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"><span class="text-xl font-bold" aria-hidden="true">▤</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['subscription']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Configurar custo recorrente</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['fitness']['enabled'])
-                <a href="{{ route('hub.fitness') }}" wire:navigate style="order: {{ $mobileShortcutSettings['fitness']['order'] }};" class="group rounded-2xl border border-orange-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-orange-900/40 dark:bg-zinc-900">
+                <a href="{{ route('hub.fitness') }}" wire:navigate data-mobile-item="fitness" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['fitness']['order'] }};" class="group rounded-2xl border border-orange-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-orange-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"><span class="text-xl font-bold" aria-hidden="true">↗</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['fitness']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Acompanhar atividade física</span>
                 </a>
                 @endif
                 @if($mobileShortcutSettings['calendar']['enabled'])
-                <a href="{{ route('hub.calendar') }}" wire:navigate style="order: {{ $mobileShortcutSettings['calendar']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <a href="{{ route('hub.calendar') }}" wire:navigate data-mobile-item="calendar" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['calendar']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"><span class="text-xl font-bold" aria-hidden="true">▦</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['calendar']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Ver agenda</span>
                 </a>
                 @endif
                 @if($mobileDividerSettings['enabled'] ?? true)
-                <div class="col-span-2 flex items-center gap-3 py-1" style="order: {{ $mobileDividerOrder }};" aria-hidden="true">
+                <div class="col-span-2 flex items-center gap-3 py-1" data-mobile-item="_divider" :draggable="editing" :class="editing ? 'cursor-grab rounded-lg bg-emerald-50/70 ring-2 ring-dashed ring-emerald-400/70 dark:bg-emerald-900/20' : ''" style="order: {{ $mobileDividerOrder }};" aria-hidden="true">
                     <span class="h-px flex-1 bg-zinc-200 dark:bg-zinc-700"></span>
                     <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-400">Divisão</span>
                     <span class="h-px flex-1 bg-zinc-200 dark:bg-zinc-700"></span>
                 </div>
                 @endif
                 @if($mobileShortcutSettings['connect']['enabled'])
-                <a href="/social" wire:navigate style="order: {{ $mobileShortcutSettings['connect']['order'] }};" class="group col-span-2 flex min-h-24 w-full items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
+                <a href="/social" wire:navigate data-mobile-item="connect" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['connect']['order'] }};" class="group col-span-2 flex min-h-24 w-full items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
                     <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"><span class="text-2xl font-bold" aria-hidden="true">◎</span></span>
                     <span class="min-w-0">
                         <span class="block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['connect']['label'] }}</span>
