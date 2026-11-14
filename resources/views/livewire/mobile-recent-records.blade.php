@@ -27,7 +27,7 @@
                         $remainingPercent = max(0, min(100, (1 - ($ageSeconds / 172800)) * 100));
                         $isNew = $ageSeconds < 3600;
                     @endphp
-                    <a href="{{ $record['url'] }}" wire:key="recent-record-{{ $record['id'] }}" wire:navigate class="group flex items-center gap-3 rounded-2xl border border-zinc-100 bg-white/90 p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-zinc-800 dark:bg-zinc-950/70 dark:hover:border-emerald-800">
+                    <div wire:key="recent-record-{{ $record['id'] }}" aria-disabled="true" class="group flex cursor-not-allowed items-center gap-3 rounded-2xl border border-zinc-100 bg-white/70 p-3 opacity-75 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/50">
                         <div @class([
                             'flex size-11 shrink-0 items-center justify-center rounded-2xl text-lg font-black transition-transform duration-200 group-hover:scale-105',
                             'bg-rose-50 text-rose-600 dark:bg-rose-950/70 dark:text-rose-300' => $record['tone'] === 'rose',
@@ -55,9 +55,9 @@
                                 <p class="text-sm font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format((float) $record['amount'], 2, ',', '.') }} €</p>
                             @endif
                             <p class="text-[10px] font-medium text-zinc-400">{{ $record['created_at']->diffForHumans() }}</p>
-                            <span class="text-sm text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-600 dark:text-zinc-600" aria-hidden="true">›</span>
+                            <span class="rounded-full bg-amber-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Em breve</span>
                         </div>
-                    </a>
+                    </div>
                 @endforeach
             </div>
             <p class="mt-3 text-center text-[10px] text-zinc-400">A barra indica o tempo que falta até o registo sair desta lista.</p>
