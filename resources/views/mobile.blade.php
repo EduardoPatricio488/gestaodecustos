@@ -43,7 +43,7 @@
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Banco</span>
                     <span class="mt-1 block text-xs text-zinc-500">Contas e saldos</span>
                 </a>
-                <a href="{{ route('hub.investments') }}" wire:navigate class="group rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('open-mobile-investment-actions')" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"><span class="text-xl font-bold" aria-hidden="true">▥</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Investimentos</span>
                     <span class="mt-1 block text-xs text-zinc-500">Acompanhar carteira</span>
@@ -71,6 +71,37 @@
 
         <div class="rounded-2xl border border-dashed border-zinc-300 p-4 text-center dark:border-zinc-700">
             <p class="text-xs leading-relaxed text-zinc-500">Esta é uma área experimental. Podes continuar a utilizar todas as funcionalidades na versão completa através do menu lateral.</p>
+        </div>
+    </div>
+
+    <div
+        x-data="{ investmentActionsOpen: false }"
+        x-on:open-mobile-investment-actions.window="investmentActionsOpen = true"
+        x-on:keydown.escape.window="investmentActionsOpen = false"
+        x-cloak
+        x-show="investmentActionsOpen"
+        x-transition.opacity
+        class="fixed inset-0 z-[10000] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+        style="display: none;"
+    >
+        <div x-on:click.outside="investmentActionsOpen = false" class="w-full max-w-md rounded-t-3xl bg-white p-5 shadow-2xl dark:bg-zinc-900 sm:rounded-3xl">
+            <div class="mb-5 flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600">Carteira</p>
+                    <h2 class="mt-1 text-xl font-black text-zinc-900 dark:text-white">Investimentos</h2>
+                </div>
+                <button type="button" x-on:click="investmentActionsOpen = false" class="flex size-9 items-center justify-center rounded-xl bg-zinc-100 text-xl text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300" aria-label="Fechar">×</button>
+            </div>
+            <div class="grid grid-cols-1 gap-3">
+                <button type="button" x-on:click="investmentActionsOpen = false; $dispatch('open-mobile-investment-upload')" class="flex items-center gap-4 rounded-2xl border border-violet-200 p-4 text-left transition active:scale-[0.98] dark:border-violet-900/50">
+                    <span class="flex size-11 items-center justify-center rounded-xl bg-violet-50 text-xl text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">⇧</span>
+                    <span><span class="block text-sm font-black text-zinc-900 dark:text-white">Upload de relatórios</span><span class="mt-1 block text-xs text-zinc-500">Importar posições e operações</span></span>
+                </button>
+                <button type="button" x-on:click="investmentActionsOpen = false; $dispatch('open-mobile-investment-create')" class="flex items-center gap-4 rounded-2xl border border-zinc-200 p-4 text-left transition active:scale-[0.98] dark:border-zinc-700">
+                    <span class="flex size-11 items-center justify-center rounded-xl bg-emerald-50 text-xl text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">＋</span>
+                    <span><span class="block text-sm font-black text-zinc-900 dark:text-white">Novo Ativo</span><span class="mt-1 block text-xs text-zinc-500">Registar um investimento</span></span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -103,4 +134,5 @@
 
     <livewire:expenses :dashboard-mode="true" />
     <livewire:income-hub :dashboard-mode="true" />
+    <livewire:investments-hub />
 </x-layouts.app>
