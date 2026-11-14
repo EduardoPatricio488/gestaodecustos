@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
-    <link rel="apple-touch-icon" href="/pwa/splash_screens/apple-icon-180x180.png">
+    <link rel="apple-touch-icon" href="/icon-192x192.png?v=20261114-1">
     <title>{{ config('app.name', 'Finance Pro AI') }} — Mobile</title>
     @include('partials.head')
     <link rel="stylesheet" href="/flux/flux.css">
