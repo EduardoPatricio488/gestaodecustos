@@ -88,12 +88,11 @@ new #[Layout('layouts.guest')] class extends Component
                     id="email"
                     type="email"
                     required
-                    autofocus
                     autocomplete="username"
                     placeholder="teu@email.com"
                     :disabled="$isSubmitting"
                     aria-label="Endereço de email"
-                    class="w-full h-11 pl-10 pr-4 bg-zinc-50 dark:bg-zinc-900 border @error('form.email') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 dark:focus:border-brand-600 transition-all"
+                    class="w-full h-11 pl-10 pr-4 bg-zinc-50 dark:bg-zinc-900 border @error('form.email') border-red-400 dark:border-red-700 @else border-zinc-200 dark:border-zinc-800 @enderror rounded-xl text-base sm:text-sm font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 dark:focus:border-brand-600 transition-all"
                 />
             </div>
             <x-input-error :messages="$errors->get('form.email')" class="text-[11px]" />
