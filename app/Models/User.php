@@ -144,6 +144,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'onboarding_completed' => 'boolean',
             'daily_report_enabled' => 'boolean',
             'daily_report_sections' => 'array',
+            'mobile_shortcuts' => 'array',
         ];
     }
 
