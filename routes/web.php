@@ -185,16 +185,6 @@ Route::get('/sitemap.xml', function () {
 Route::view('/llms.txt', 'seo.llms')->name('seo.llms');
 
 
-Route::post('/preferencia-dispositivo', function (Request $request) {
-    $validated = $request->validate([
-        'mode' => ['required', 'in:mobile,full'],
-    ]);
-
-    $request->session()->put('mobile_access_mode', $validated['mode']);
-
-    return redirect()->route('login');
-})->middleware('throttle:10,1')->name('device.mode');
-
 Route::view('/', 'welcome')->name('home');
 Route::view('/termos', 'pages.legal.terms')->name('legal.terms');
 Route::view('/privacidade', 'pages.legal.privacy')->name('legal.privacy');
@@ -288,6 +278,28 @@ Route::middleware('auth')->group(function () {
 // 3. GRUPO PROTEGIDO (ÁREA LOGADA - ACESSO BÁSICO / FREE)
 // ══════════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/escolher-acesso', function (Request $request) {
+        abort_unless(preg_match('/Android|iPhone|iPad|iPod|Mobile|Windows Phone|webOS/i', $request->userAgent() ?? '') === 1, 404);
+
+        return view('auth.device-access');
+    })->name('device.access');
+
+    Route::post('/preferencia-dispositivo', function (Request $request) {
+        $validated = $request->validate([
+            'mode' => ['required', 'in:mobile,full'],
+        ]);
+
+        $request->session()->put('mobile_access_mode', $validated['mode']);
+
+        if ($validated['mode'] === 'mobile') {
+            return redirect()->route('mobile.home');
+        }
+
+        $user = $request->user();
+
+        return redirect()->route(($user->isAdminRole() || $user->is_admin) ? 'admin.dashboard' : 'dashboard');
+    })->middleware('throttle:10,1')->name('device.mode');
+
     Route::get('/salary-documents/{salaryDocument}/preview', SalaryDocumentPreviewController::class)
         ->whereNumber('salaryDocument')
         ->name('salary-documents.preview');
