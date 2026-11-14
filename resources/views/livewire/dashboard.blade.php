@@ -775,7 +775,19 @@
                 'profit_label' => ($profit >= 0 ? '+' : '').$currentWs->money($profit),
                 'percent_label' => ($invested > 0 && $profit >= 0 ? '+' : '').number_format($invested > 0 ? ($profit / $invested) * 100 : 0, 2, ',', ' ').'%',
             ];
-        })->sortBy(fn ($investment) => mb_strtolower(trim((string) ($investment['type'] ?? ''))) === 'etf' ? 0 : 1)->values()->all();
+        })->sortBy(function ($investment) {
+            $type = mb_strtolower(trim((string) ($investment['type'] ?? '')));
+
+            if (str_contains($type, 'ação') || str_contains($type, 'acoes') || str_contains($type, 'acao') || str_contains($type, 'stock') || str_contains($type, 'equity')) {
+                return 0;
+            }
+
+            if (str_contains($type, 'etf')) {
+                return 1;
+            }
+
+            return 2;
+        })->values()->all();
     @endphp
 
     <div class="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2.5">
