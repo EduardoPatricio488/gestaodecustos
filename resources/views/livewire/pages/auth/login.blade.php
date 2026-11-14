@@ -22,12 +22,10 @@ new #[Layout('layouts.guest')] class extends Component
             $this->form->authenticate();
             Session::regenerate();
 
-            // LÓGICA DE REDIRECIONAMENTO POR DISPOSITIVO
+            // Respeita a escolha feita no modal apresentado em dispositivos móveis.
             $user = auth()->user();
-            $userAgent = request()->userAgent() ?? '';
-            $isMobileDevice = preg_match('/Android|iPhone|iPad|iPod|Mobile|Windows Phone|webOS/i', $userAgent) === 1;
 
-            if ($isMobileDevice) {
+            if (session('mobile_access_mode') === 'mobile') {
                 $this->redirect(route('mobile.home', absolute: false), navigate: true);
             } elseif ($user->isAdminRole() || $user->is_admin) {
                 $this->redirect(route('admin.dashboard', absolute: false), navigate: true);
@@ -209,5 +207,62 @@ new #[Layout('layouts.guest')] class extends Component
     </a>
 
 </div>
+
+@php
+    $loginUserAgent = request()->userAgent() ?? '';
+    $isMobileLoginDevice = preg_match('/Android|iPhone|iPad|iPod|Mobile|Windows Phone|webOS/i', $loginUserAgent) === 1;
+@endphp
+
+@if($isMobileLoginDevice && !in_array(session('mobile_access_mode'), ['mobile', 'full'], true))
+    <div
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/75 px-5 py-8 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="device-mode-title"
+    >
+        <div class="w-full max-w-sm rounded-3xl border border-white/10 bg-white p-6 text-left shadow-2xl dark:bg-zinc-900">
+            <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                <svg class="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <rect x="5" y="2.5" width="14" height="19" rx="2.5"></rect>
+                    <path d="M10 18.5h4"></path>
+                </svg>
+            </div>
+            <h2 id="device-mode-title" class="text-center text-xl font-black text-zinc-900 dark:text-white">Como queres utilizar o Finance Pro AI?</h2>
+            <p class="mt-2 text-center text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Escolhe a experiência que pretendes abrir neste telemóvel.</p>
+
+            <div class="mt-6 space-y-3">
+                <form method="POST" action="{{ route('device.mode') }}">
+                    @csrf
+                    <input type="hidden" name="mode" value="mobile">
+                    <button type="submit" class="flex w-full items-center gap-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-4 text-left transition active:scale-[0.98] dark:bg-emerald-950/30">
+                        <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"></rect><path d="M10 18h4"></path></svg>
+                        </span>
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-sm font-black text-zinc-900 dark:text-white">Apenas versão mobile</span>
+                            <span class="mt-0.5 block text-xs text-zinc-600 dark:text-zinc-400">Acesso exclusivo à página mobile. As restantes páginas ficam bloqueadas.</span>
+                        </span>
+                        <span class="text-xl font-bold text-emerald-600" aria-hidden="true">›</span>
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ route('device.mode') }}">
+                    @csrf
+                    <input type="hidden" name="mode" value="full">
+                    <button type="submit" class="flex w-full items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left transition hover:border-zinc-400 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-800">
+                        <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
+                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+                        </span>
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-sm font-black text-zinc-900 dark:text-white">Site completo</span>
+                            <span class="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">Acesso ao dashboard e a todas as funcionalidades.</span>
+                        </span>
+                        <span class="text-xl font-bold text-zinc-400" aria-hidden="true">›</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+@endif
 
 <style>[x-cloak] { display: none !important; }</style>
