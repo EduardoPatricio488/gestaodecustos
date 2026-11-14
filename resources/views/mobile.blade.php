@@ -43,28 +43,28 @@
                 @if($mobileShortcutSettings['expense']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-expense-category-picker')" style="order: {{ $mobileShortcutSettings['expense']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-rose-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-rose-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"><span class="text-xl font-bold" aria-hidden="true">＋</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Nova despesa</span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['expense']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Registar gasto</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['income']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-mobile-income-menu', { rect: $el.getBoundingClientRect() })" style="order: {{ $mobileShortcutSettings['income']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-emerald-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-emerald-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300"><span class="text-xl font-bold" aria-hidden="true">↗</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Nova receita</span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['income']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Adicionar rendimento</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['movements']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-mobile-statement-import')" style="order: {{ $mobileShortcutSettings['movements']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"><span class="text-xl font-bold" aria-hidden="true">⇄</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Importar Movimentos</span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['movements']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Consultar atividade</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['investments']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-mobile-investment-actions')" style="order: {{ $mobileShortcutSettings['investments']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"><span class="text-xl font-bold" aria-hidden="true">▥</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Novo investimento</span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['investments']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Acompanhar carteira</span>
                 </button>
                 @endif
@@ -72,21 +72,21 @@
                 @if($mobileShortcutSettings['bank']['enabled'])
                 <a href="{{ route('hub.banco') }}" wire:navigate style="order: {{ $mobileShortcutSettings['bank']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/30 dark:text-emerald-300"><span class="text-xl font-bold" aria-hidden="true">▥</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Banco</span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['bank']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Contas e saldos</span>
                 </a>
                 @endif
                 @if($mobileShortcutSettings['goal']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-mobile-goal-create')" style="order: {{ $mobileShortcutSettings['goal']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">◎</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Novo objetivo</span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['goal']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Criar uma meta financeira</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['reminder']['enabled'])
         <button type="button" x-on:click="$dispatch('open-mobile-reminder-create')" style="order: {{ $mobileShortcutSettings['reminder']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-amber-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-amber-900/40 dark:bg-zinc-900">
             <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">♧</span></span>
-            <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Novo lembrete</span>
+            <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['reminder']['label'] }}</span>
             <span class="mt-1 block text-xs text-zinc-500">Agendar um lembrete</span>
         </button>
                 @endif
@@ -94,21 +94,21 @@
                 @if($mobileShortcutSettings['subscription']['enabled'])
                 <button type="button" x-on:click="$dispatch('open-mobile-subscription-create')" style="order: {{ $mobileShortcutSettings['subscription']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"><span class="text-xl font-bold" aria-hidden="true">▤</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Nova assinatura</span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['subscription']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Configurar custo recorrente</span>
                 </button>
                 @endif
                 @if($mobileShortcutSettings['fitness']['enabled'])
                 <a href="{{ route('hub.fitness') }}" wire:navigate style="order: {{ $mobileShortcutSettings['fitness']['order'] }};" class="group rounded-2xl border border-orange-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-orange-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"><span class="text-xl font-bold" aria-hidden="true">↗</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Zona de Treino</span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['fitness']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Acompanhar atividade física</span>
                 </a>
                 @endif
                 @if($mobileShortcutSettings['calendar']['enabled'])
                 <a href="{{ route('hub.calendar') }}" wire:navigate style="order: {{ $mobileShortcutSettings['calendar']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"><span class="text-xl font-bold" aria-hidden="true">▦</span></span>
-                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Calendário</span>
+                    <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['calendar']['label'] }}</span>
                     <span class="mt-1 block text-xs text-zinc-500">Ver agenda</span>
                 </a>
                 @endif
@@ -116,7 +116,7 @@
                 <a href="/social" wire:navigate style="order: {{ $mobileShortcutSettings['connect']['order'] }};" class="group col-span-2 flex min-h-24 w-full items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
                     <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"><span class="text-2xl font-bold" aria-hidden="true">◎</span></span>
                     <span class="min-w-0">
-                        <span class="block text-sm font-black text-zinc-900 dark:text-white">Finance Connect</span>
+                        <span class="block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['connect']['label'] }}</span>
                         <span class="mt-1 block text-xs text-zinc-500">Comunidade, partilha e notificações</span>
                     </span>
                     <span class="ml-auto text-xl text-indigo-500" aria-hidden="true">→</span>
