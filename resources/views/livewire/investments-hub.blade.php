@@ -1,4 +1,4 @@
-<div x-data="{ showXtbUploadModal: false }" @open-mobile-investment-upload.window="showXtbUploadModal = true" @open-mobile-investment-create.window="$wire.createAsset()" @keydown.escape.window="showXtbUploadModal = false" class="space-y-8 pb-20 p-4 lg:p-10" wire:init="refreshPrices(true)" wire:poll.60s.visible="refreshPrices(true)">
+<div x-data="{ showXtbUploadModal: false }" @open-mobile-investment-upload.window="showXtbUploadModal = true" @open-mobile-investment-create.window="$wire.createAsset()" @keydown.escape.window="showXtbUploadModal = false" class="space-y-8 pb-20 p-4 lg:p-10" wire:init="refreshPrices(true)" @if(! $mobileMode) wire:poll.60s.visible="refreshPrices(true)" @endif>
     @if($mobileMode)
         @include('livewire.partials.investment-modal')
         @include('livewire.partials.investment-report-modal')
