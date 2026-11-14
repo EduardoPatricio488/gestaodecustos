@@ -13,7 +13,7 @@ class EnforceMobileOnlyAccess
         if (
             $request->user()
             && $request->session()->get('mobile_access_mode') === 'mobile'
-            && ! $request->routeIs('mobile.home', 'logout')
+            && ! $request->routeIs('mobile.home', 'logout', 'device.mode')
             && ! $request->is('livewire/*')
             && ! $request->is('api/*')
         ) {
