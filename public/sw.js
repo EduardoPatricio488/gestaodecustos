@@ -3,7 +3,7 @@
  * Navegação sempre atualizada e instalação resiliente em iOS/PWA.
  */
 
-const cacheName = 'finance-pro-v5';
+const cacheName = 'finance-pro-v6';
 const OFFLINE_URL = '/offline.html';
 
 const staticAssets = [
