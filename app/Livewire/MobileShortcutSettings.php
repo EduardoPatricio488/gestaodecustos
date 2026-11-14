@@ -18,6 +18,24 @@ class MobileShortcutSettings extends Component
         $this->dispatch('mobile-shortcuts-edit-mode', enabled: $this->editing);
     }
 
+
+    #[On('mobile-shortcut-label-updated')]
+    public function updateShortcutLabel(string $key, string $label): void
+    {
+        $defaults = $this->defaults();
+        abort_unless(array_key_exists($key, $defaults), 404);
+
+        $saved = auth()->user()->mobile_shortcuts ?? [];
+        $saved = is_array($saved) ? $saved : [];
+        $saved = array_replace_recursive($defaults, $saved);
+        $saved[$key]['label'] = mb_substr(trim($label) ?: $defaults[$key]['label'], 0, 32);
+
+        DB::table('users')->where('id', auth()->id())->update([
+            'mobile_shortcuts' => json_encode($saved, JSON_UNESCAPED_UNICODE),
+            'updated_at' => now(),
+        ]);
+    }
+
     #[On('mobile-shortcuts-reordered')]
     public function reorderFromPage(array $items): void
     {
