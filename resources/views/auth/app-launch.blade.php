@@ -4,6 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#070b13">
+    <link rel="manifest" href="/manifest.json?v=20261114-2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Finance Pro AI">
+    <link rel="apple-touch-icon" href="/icon-192x192.png?v=20261114-2">
     <title>Finance Pro AI</title>
     @vite('resources/css/app.css')
     <style>
@@ -25,27 +30,8 @@
     <div id="fp-navigation-progress" class="pointer-events-none fixed inset-x-0 top-0 z-[100] h-1 overflow-hidden bg-white/10" role="status" aria-live="polite">
         <div id="fp-navigation-progress-bar" class="h-full w-1/3 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,.8)]"></div>
     </div>
-    <div id="fp-launch-splash" class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#070b13] transition-opacity duration-500">
-        <div class="absolute inset-0" style="background:radial-gradient(circle at 50% 45%,rgba(16,185,129,.24),transparent 44%),radial-gradient(circle at 15% 85%,rgba(59,130,246,.15),transparent 35%)"></div>
-        <div class="fp-orbit absolute left-1/2 top-[calc(50%-30px)] size-3 rounded-full bg-emerald-300 shadow-[0_0_24px_8px_rgba(52,211,153,.55)]"></div>
-        <div class="fp-rise relative z-10 text-center">
-            <div class="fp-pulse mx-auto mb-7 flex size-24 items-center justify-center rounded-[2rem] border border-emerald-300/30 bg-emerald-400/10 shadow-[0_0_70px_rgba(16,185,129,.22)]">
-                <svg viewBox="0 0 64 64" class="size-14" fill="none" aria-hidden="true"><path d="M10 46V32h10v14M27 46V20h10v26M44 46V10h10v36" stroke="#6ee7b7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="m9 24 15-9 12 4 18-12" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <p class="text-[10px] font-black uppercase tracking-[.38em] text-emerald-300">FINANCE PRO AI</p>
-            <h1 class="mt-3 text-3xl font-black">As tuas finanças.</h1>
-            <p class="mt-2 text-sm text-zinc-400">Tudo em movimento. Tudo sob controlo.</p>
-            <div class="mx-auto mt-8 h-1 w-36 overflow-hidden rounded-full bg-white/10"><div class="h-full w-1/2 animate-pulse rounded-full bg-emerald-300"></div></div>
-        </div>
-    </div>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
-            const splash = document.getElementById('fp-launch-splash');
-            window.setTimeout(() => {
-                splash.classList.add('opacity-0');
-                window.setTimeout(() => splash.remove(), 520);
-            }, 1450);
-
             const progress = document.getElementById('fp-navigation-progress');
             document.querySelectorAll('form[action="{{ route('app.launch.choose') }}"]').forEach((form) => {
                 form.addEventListener('submit', () => {
@@ -60,7 +46,7 @@
         });
     </script>
     <main class="flex min-h-screen items-center justify-center px-5 py-10">
-        <section class="w-full max-w-md">
+        <section class="fp-rise w-full max-w-md">
             <div class="mb-8 text-center">
                 <div class="mx-auto mb-5 flex size-16 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300">
                     <svg viewBox="0 0 24 24" class="size-9" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 18V9h4v9M10 18V5h4v13M16 18V2h4v16" stroke-linecap="round" stroke-linejoin="round"/></svg>
