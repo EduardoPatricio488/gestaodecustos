@@ -17,6 +17,19 @@
     @livewireStyles
     <style>
         [x-cloak] { display: none !important; }
+        @keyframes fp-greeting-in {
+            from { opacity: 0; transform: translate3d(0, 12px, 0); }
+            to { opacity: 1; transform: translate3d(0, 0, 0); }
+        }
+        @keyframes fp-greeting-wave {
+            0%, 100% { transform: rotate(0deg) translateY(0); }
+            25% { transform: rotate(-12deg) translateY(-2px); }
+            50% { transform: rotate(10deg) translateY(-2px); }
+            75% { transform: rotate(-5deg) translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .fp-mobile-greeting, .fp-mobile-greeting span { animation: none !important; }
+        }
 
         @keyframes fp-modal-backdrop-in {
             from { opacity: 0; }
@@ -93,9 +106,19 @@
         @php
             $mobileHour = now()->hour;
             $mobileGreeting = $mobileHour < 12 ? 'Bom dia' : ($mobileHour < 19 ? 'Boa tarde' : 'Boa noite');
+            $mobileGreetingIcon = $mobileHour < 12 ? '☀️' : ($mobileHour < 19 ? '🌤️' : '🌙');
+            $mobileGreetingMessage = $mobileHour < 12
+                ? 'Vamos começar o dia com as finanças em ordem.'
+                : ($mobileHour < 19
+                    ? 'Continua a acompanhar os teus objetivos.'
+                    : 'Está tudo em ordem? Vê como está o teu dia.');
         @endphp
-        <div class="px-1">
-            <h2 class="text-2xl font-black tracking-tight text-zinc-900 dark:text-white">{{ $mobileGreeting }}, {{ auth()->user()->name }}</h2>
+        <div class="fp-mobile-greeting px-1" style="animation: fp-greeting-in .65s cubic-bezier(.2,.8,.2,1) both;">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl" aria-hidden="true" style="animation: fp-greeting-wave 2.4s ease-in-out infinite;">{{ $mobileGreetingIcon }}</span>
+                <h2 class="text-2xl font-black tracking-tight text-zinc-900 dark:text-white">{{ $mobileGreeting }}, {{ auth()->user()->name }}</h2>
+            </div>
+            <p class="mt-1 pl-9 text-xs font-medium text-zinc-500 dark:text-zinc-400">{{ $mobileGreetingMessage }}</p>
         </div>
 
         <section class="space-y-3">
