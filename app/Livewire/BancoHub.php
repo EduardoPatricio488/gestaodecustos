@@ -110,10 +110,6 @@ class BancoHub extends Component
         $this->tr_date = now()->format('Y-m-d');
         $this->trs_expected_date = now()->addDays(3)->format('Y-m-d');
         $this->crd_due_date = now()->addDays(30)->format('Y-m-d');
-
-        if (request()->boolean('open_account')) {
-            $this->openAccountModal();
-        }
     }
 
     public function openAccountModal(?int $id = null): void
