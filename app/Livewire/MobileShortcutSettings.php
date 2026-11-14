@@ -11,6 +11,10 @@ class MobileShortcutSettings extends Component
 
     public array $shortcuts = [];
 
+    public bool $dividerEnabled = true;
+
+    public string $dividerAfter = 'investments';
+
     private function defaults(): array
     {
         return [
@@ -31,14 +35,24 @@ class MobileShortcutSettings extends Component
     public function mount(): void
     {
         $saved = auth()->user()->mobile_shortcuts ?? [];
-        $this->shortcuts = array_replace_recursive($this->defaults(), is_array($saved) ? $saved : []);
+        $saved = is_array($saved) ? $saved : [];
+        $divider = $saved['_divider'] ?? [];
+        unset($saved['_divider']);
+        $this->shortcuts = array_replace_recursive($this->defaults(), $saved);
+        $this->dividerEnabled = (bool) ($divider['enabled'] ?? true);
+        $this->dividerAfter = (string) ($divider['after'] ?? 'investments');
         $this->normalizeOrder();
     }
 
     public function openSettings(): void
     {
         $saved = auth()->user()->mobile_shortcuts ?? [];
-        $this->shortcuts = array_replace_recursive($this->defaults(), is_array($saved) ? $saved : []);
+        $saved = is_array($saved) ? $saved : [];
+        $divider = $saved['_divider'] ?? [];
+        unset($saved['_divider']);
+        $this->shortcuts = array_replace_recursive($this->defaults(), $saved);
+        $this->dividerEnabled = (bool) ($divider['enabled'] ?? true);
+        $this->dividerAfter = (string) ($divider['after'] ?? 'investments');
         $this->normalizeOrder();
         $this->open = true;
     }
@@ -73,6 +87,13 @@ class MobileShortcutSettings extends Component
         }
 
         $this->normalizeOrder();
+        if (! array_key_exists($this->dividerAfter, $defaults)) {
+            $this->dividerAfter = 'investments';
+        }
+        $this->shortcuts['_divider'] = [
+            'enabled' => $this->dividerEnabled,
+            'after' => $this->dividerAfter,
+        ];
 
         DB::table('users')->where('id', auth()->id())->update([
             'mobile_shortcuts' => json_encode($this->shortcuts, JSON_UNESCAPED_UNICODE),
