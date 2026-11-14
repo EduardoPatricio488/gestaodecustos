@@ -2,7 +2,7 @@
     "name": "Finance Pro IA",
     "short_name": "FinancePro",
     "description": "Gestão de Custos Inteligente com IA",
-    "start_url": "/escolher-acesso",
+    "start_url": "/abrir-app",
     "display": "standalone",
     "background_color": "#09090b",
     "theme_color": "#10b981",
