@@ -14,13 +14,6 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class DebtHub extends Component
 {
-    public function mount(): void
-    {
-        if (request()->boolean('open_create')) {
-            $this->openCreateModal();
-        }
-    }
-
     // Propriedades do Formulário - Inicializadas para evitar erros de tipo
     public string $type = 'owe';
 
