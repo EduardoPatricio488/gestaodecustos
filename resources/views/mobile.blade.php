@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt" class="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -59,7 +59,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-white">
+<body class="min-h-screen bg-zinc-950 text-white antialiased" style="background-color:#09090b;color:#fff;">
     @php
         $mobileShortcutDefaults = [
             'expense' => ['label' => 'Nova despesa', 'enabled' => true, 'order' => 1],
