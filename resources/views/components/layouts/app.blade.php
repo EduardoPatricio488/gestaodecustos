@@ -1114,16 +1114,6 @@
 <flux:sidebar.item icon="squares-2x2" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate.hover>
     Dashboard
 </flux:sidebar.item>
-<flux:sidebar.item
-    icon="device-phone-mobile"
-    :href="route('mobile.home')"
-    :current="request()->routeIs('mobile.home')"
-    wire:navigate
-    class="text-emerald-600 dark:text-emerald-400 font-semibold"
->
-    Versão Telemóvel
-    <span class="ml-auto text-[8px] font-black bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded uppercase">Temporário</span>
-</flux:sidebar.item>
 {{-- Lógica de Acesso à Área Empresarial (COM ESTADO BLOQUEADO PARA PLANO BÁSICO) --}}
 @if(!$isBusinessMode)
     <div class="px-4 mt-6 mb-4">
@@ -1325,6 +1315,16 @@ $hasStoreAccess = $hasLockInAccess;
                 <flux:separator class="my-4 mx-2" />
 
                 <flux:sidebar.group heading="Finanças">
+<flux:sidebar.item
+    icon="device-phone-mobile"
+    :href="route('mobile.home')"
+    :current="request()->routeIs('mobile.home')"
+    wire:navigate
+    class="text-emerald-600 dark:text-emerald-400 font-semibold"
+>
+    Versão Telemóvel
+    <span class="ml-auto text-[8px] font-black bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded uppercase">Temporário</span>
+</flux:sidebar.item>
                     <flux:sidebar.item icon="arrow-trending-up" :href="route('hub.incomes')" wire:navigate.hover>
                         Receitas {!! $badge($counts['incomes']) !!}
                     </flux:sidebar.item>
