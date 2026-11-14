@@ -99,7 +99,7 @@
                 </button>
                 <button type="button" x-on:click="investmentActionsOpen = false; $dispatch('open-mobile-investment-create')" class="flex items-center gap-4 rounded-2xl border border-zinc-200 p-4 text-left transition active:scale-[0.98] dark:border-zinc-700">
                     <span class="flex size-11 items-center justify-center rounded-xl bg-emerald-50 text-xl text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">＋</span>
-                    <span><span class="block text-sm font-black text-zinc-900 dark:text-white">Novo Ativo</span><span class="mt-1 block text-xs text-zinc-500">Registar um investimento</span></span>
+                    <span><span class="block text-sm font-black text-zinc-900 dark:text-white">Novo investimento</span><span class="mt-1 block text-xs text-zinc-500">Registar um investimento</span></span>
                 </button>
             </div>
         </div>
