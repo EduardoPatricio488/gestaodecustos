@@ -13,10 +13,18 @@
         .fp-orbit { animation:fp-orbit 2.2s linear infinite; }
         .fp-rise { animation:fp-rise .7s cubic-bezier(.2,.8,.2,1) both; }
         .fp-pulse { animation:fp-pulse 1.4s ease-in-out infinite; }
-        @media(prefers-reduced-motion:reduce){.fp-orbit,.fp-rise,.fp-pulse{animation:none!important}}
+        @keyframes fp-loading-progress { 0% { transform: translateX(-110%); } 100% { transform: translateX(310%); } }
+        #fp-navigation-progress { opacity: 0; transition: opacity .2s ease; }
+        #fp-navigation-progress.is-loading { opacity: 1; }
+        #fp-navigation-progress-bar { animation: fp-loading-progress 1.1s ease-in-out infinite; }
+        .fp-launch-button:disabled { opacity: .72; cursor: wait; }
+        @media(prefers-reduced-motion:reduce){.fp-orbit,.fp-rise,.fp-pulse,#fp-navigation-progress-bar{animation:none!important}}
     </style>
 </head>
 <body class="min-h-screen bg-[#070b13] text-white antialiased">
+    <div id="fp-navigation-progress" class="pointer-events-none fixed inset-x-0 top-0 z-[100] h-1 overflow-hidden bg-white/10" role="status" aria-live="polite">
+        <div id="fp-navigation-progress-bar" class="h-full w-1/3 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,.8)]"></div>
+    </div>
     <div id="fp-launch-splash" class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#070b13] transition-opacity duration-500">
         <div class="absolute inset-0" style="background:radial-gradient(circle at 50% 45%,rgba(16,185,129,.24),transparent 44%),radial-gradient(circle at 15% 85%,rgba(59,130,246,.15),transparent 35%)"></div>
         <div class="fp-orbit absolute left-1/2 top-[calc(50%-30px)] size-3 rounded-full bg-emerald-300 shadow-[0_0_24px_8px_rgba(52,211,153,.55)]"></div>
@@ -37,6 +45,18 @@
                 splash.classList.add('opacity-0');
                 window.setTimeout(() => splash.remove(), 520);
             }, 1450);
+
+            const progress = document.getElementById('fp-navigation-progress');
+            document.querySelectorAll('form[action="{{ route('app.launch.choose') }}"]').forEach((form) => {
+                form.addEventListener('submit', () => {
+                    progress.classList.add('is-loading');
+                    document.querySelectorAll('.fp-launch-button').forEach((button) => {
+                        button.disabled = true;
+                        button.setAttribute('aria-busy', 'true');
+                        button.querySelector('span:last-child').textContent = '…';
+                    });
+                });
+            });
         });
     </script>
     <main class="flex min-h-screen items-center justify-center px-5 py-10">
@@ -53,7 +73,7 @@
                 <form method="POST" action="{{ route('app.launch.choose') }}">
                     @csrf
                     <input type="hidden" name="mode" value="mobile">
-                    <button type="submit" class="flex w-full items-center gap-4 rounded-2xl border border-emerald-400/50 bg-emerald-500/10 p-5 text-left transition hover:bg-emerald-500/15 active:scale-[.98]">
+                    <button type="submit" class="fp-launch-button flex w-full items-center gap-4 rounded-2xl border border-emerald-400/50 bg-emerald-500/10 p-5 text-left transition hover:bg-emerald-500/15 active:scale-[.98]">
                         <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-zinc-950"><svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></span>
                         <span class="min-w-0 flex-1"><span class="block text-base font-black">Apenas registos rápidos</span><span class="mt-1 block text-xs leading-relaxed text-zinc-400">Entrar na conta e abrir a versão mobile.</span></span>
                         <span class="text-2xl text-emerald-300">›</span>
