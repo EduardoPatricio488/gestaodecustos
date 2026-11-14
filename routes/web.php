@@ -184,6 +184,17 @@ Route::get('/sitemap.xml', function () {
 
 Route::view('/llms.txt', 'seo.llms')->name('seo.llms');
 
+
+Route::post('/preferencia-dispositivo', function (Request $request) {
+    $validated = $request->validate([
+        'mode' => ['required', 'in:mobile,full'],
+    ]);
+
+    $request->session()->put('mobile_access_mode', $validated['mode']);
+
+    return redirect()->route('login');
+})->middleware('throttle:10,1')->name('device.mode');
+
 Route::view('/', 'welcome')->name('home');
 Route::view('/termos', 'pages.legal.terms')->name('legal.terms');
 Route::view('/privacidade', 'pages.legal.privacy')->name('legal.privacy');
