@@ -128,7 +128,7 @@
             <div class="relative z-10 w-full max-w-2xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
                 <form wire:submit.prevent="save" class="flex max-h-[86vh] flex-col">
                     <div class="flex shrink-0 items-center gap-4 border-b border-zinc-100 p-6 pb-4 dark:border-zinc-800">
-                        <div class="rounded-2xl bg-brand-600 p-3 text-white shadow"><flux:icon name="{{ $transportPassMode ? 'train-front' : 'credit-card' }}" class="size-5" /></div>
+                        <div class="rounded-2xl bg-brand-600 p-3 text-white shadow"><span class="text-xl leading-none" aria-hidden="true">{{ $transportPassMode ? '🚆' : '💳' }}</span></div>
                         <div class="min-w-0 flex-1">
                             <h2 class="text-xl font-black uppercase italic tracking-tight text-zinc-900 dark:text-white">{{ $transportPassMode ? ($editingId ? 'Editar Passe Mensal' : 'Novo Passe Mensal') : ($editingId ? 'Editar Assinatura' : 'Nova Assinatura') }}</h2>
                             <p class="mt-1.5 text-[10px] font-black uppercase italic tracking-widest text-zinc-400">{{ $transportPassMode ? 'Configuração do passe mensal de transporte' : 'Configuração completa de custo recorrente' }}</p>
