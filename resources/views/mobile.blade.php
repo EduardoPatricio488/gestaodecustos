@@ -12,11 +12,30 @@
     <link rel="apple-touch-icon" href="/icon-192x192.png?v=20261114-1">
     <script>
         (() => {
-            try {
-                if (localStorage.getItem('finance-pro-mobile-theme') === 'dark') {
-                    document.documentElement.classList.add('dark');
-                }
-            } catch (_) {}
+            const storageKey = 'finance-pro-mobile-theme';
+            const applyTheme = () => {
+                let theme = 'light';
+                try {
+                    theme = localStorage.getItem(storageKey) === 'dark' ? 'dark' : 'light';
+                } catch (_) {}
+                const isDark = theme === 'dark';
+                document.documentElement.classList.toggle('dark', isDark);
+                document.documentElement.style.colorScheme = theme;
+                return isDark;
+            };
+
+            window.FinanceProMobileTheme = {
+                apply: applyTheme,
+                toggle() {
+                    const nextTheme = applyTheme() ? 'light' : 'dark';
+                    try { localStorage.setItem(storageKey, nextTheme); } catch (_) {}
+                    applyTheme();
+                    return nextTheme === 'dark';
+                },
+            };
+
+            applyTheme();
+            window.addEventListener('pageshow', applyTheme);
         })();
     </script>
     <title>{{ config('app.name', 'Finance Pro AI') }} — Mobile</title>
@@ -98,7 +117,7 @@
                     <h1 class="mt-2 text-2xl font-black tracking-tight">A tua gestão, simplificada.</h1>
                     <p class="mt-1 text-sm text-zinc-300">Uma experiência mais prática para utilizar no telemóvel.</p>
                 </div>
-                <div class="flex shrink-0 flex-col items-center gap-2" x-data="{ dark: document.documentElement.classList.contains('dark'), toggleTheme() { this.dark = !this.dark; document.documentElement.classList.toggle('dark', this.dark); try { localStorage.setItem('finance-pro-mobile-theme', this.dark ? 'dark' : 'light'); } catch (_) {} } }">
+                <div class="flex shrink-0 flex-col items-center gap-2" x-data="{ dark: document.documentElement.classList.contains('dark'), toggleTheme() { this.dark = window.FinanceProMobileTheme.toggle(); } }">
                     <div class="flex size-12 items-center justify-center rounded-2xl bg-white/10 text-emerald-300">
                         <span class="text-2xl" aria-hidden="true">▣</span>
                     </div>
