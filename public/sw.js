@@ -1,9 +1,9 @@
 /**
- * Service Worker: Finance Pro v4
- * Cache offline, Bunker fallback e sincronização em segundo plano.
+ * Service Worker: Finance Pro v5
+ * Navegação sempre atualizada e instalação resiliente em iOS/PWA.
  */
 
-const cacheName = 'finance-pro-v4';
+const cacheName = 'finance-pro-v5';
 const OFFLINE_URL = '/offline.html';
 
 const staticAssets = [
@@ -14,49 +14,74 @@ const staticAssets = [
 ];
 
 self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(cacheName)
-            .then(cache => cache.addAll(staticAssets))
-            .then(() => self.skipWaiting())
-    );
+    event.waitUntil((async () => {
+        const cache = await caches.open(cacheName);
+
+        // Um recurso opcional em falta não pode impedir a instalação da PWA.
+        await Promise.allSettled(
+            staticAssets.map(async asset => {
+                const response = await fetch(asset, { cache: 'reload' });
+                if (response.ok) await cache.put(asset, response);
+            })
+        );
+
+        await self.skipWaiting();
+    })());
 });
 
 self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(keys => Promise.all(
-            keys.filter(key => key !== cacheName).map(key => caches.delete(key))
-        )).then(() => self.clients.claim())
+        caches.keys()
+            .then(keys => Promise.all(
+                keys.filter(key => key.startsWith('finance-pro-') && key !== cacheName)
+                    .map(key => caches.delete(key))
+            ))
+            .then(() => self.clients.claim())
     );
 });
 
 self.addEventListener('fetch', event => {
-    const url = new URL(event.request.url);
+    const request = event.request;
+    const url = new URL(request.url);
 
-    if (event.request.mode === 'navigate') {
-        event.respondWith(
-            fetch(event.request).catch(() => caches.match(OFFLINE_URL))
-        );
+    if (request.method !== 'GET' || url.origin !== self.location.origin) {
+        return;
+    }
+
+    // Nunca servir HTML antigo na abertura da aplicação instalada.
+    if (request.mode === 'navigate') {
+        event.respondWith((async () => {
+            try {
+                return await fetch(new Request(request, { cache: 'no-store' }));
+            } catch (error) {
+                const offlinePage = await caches.match(OFFLINE_URL);
+                if (offlinePage) return offlinePage;
+                return new Response(
+                    '<!doctype html><html lang="pt"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Finance Pro IA</title><body style="font-family:system-ui;padding:32px;background:#09090b;color:white"><h1>Sem ligação à Internet</h1><p>Verifica a ligação e volta a abrir o Finance Pro IA.</p></body></html>',
+                    { headers: { 'Content-Type': 'text/html; charset=utf-8' }, status: 503 }
+                );
+            }
+        })());
         return;
     }
 
     if (
-        event.request.method !== 'GET' ||
         url.pathname.startsWith('/livewire') ||
         url.pathname.startsWith('/api') ||
-        event.request.headers.get('X-Livewire')
+        request.headers.get('X-Livewire')
     ) {
-        event.respondWith(fetch(event.request));
+        event.respondWith(fetch(request));
         return;
     }
 
-    if (url.origin === self.location.origin && staticAssets.includes(url.pathname)) {
+    if (staticAssets.includes(url.pathname)) {
         event.respondWith(
-            caches.match(event.request).then(cached => cached || fetch(event.request))
+            caches.match(request).then(cached => cached || fetch(request))
         );
         return;
     }
 
-    event.respondWith(fetch(event.request));
+    event.respondWith(fetch(request));
 });
 
 self.addEventListener('sync', event => {
@@ -83,7 +108,7 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
     event.notification.close();
-    event.waitUntil(clients.openWindow(event.notification.data.url));
+    event.waitUntil(self.clients.openWindow(event.notification.data.url));
 });
 
 self.addEventListener('message', event => {
