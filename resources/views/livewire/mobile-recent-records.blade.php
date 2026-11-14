@@ -1,4 +1,4 @@
-<div wire:poll.30s class="space-y-4">
+<div class="space-y-4">
     @if($this->records->isNotEmpty())
         <section class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-white via-white to-emerald-50/70 p-4 shadow-sm dark:border-emerald-900/50 dark:from-zinc-900 dark:via-zinc-900 dark:to-emerald-950/30 sm:p-5">
             <div class="pointer-events-none absolute -right-10 -top-12 size-36 rounded-full bg-emerald-200/20 blur-2xl dark:bg-emerald-400/10"></div>
