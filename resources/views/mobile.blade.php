@@ -33,7 +33,7 @@
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Receitas</span>
                     <span class="mt-1 block text-xs text-zinc-500">Adicionar rendimento</span>
                 </button>
-                <a href="{{ route('movements.index') }}" wire:navigate class="group rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('open-mobile-statement-import')" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"><span class="text-xl font-bold" aria-hidden="true">⇄</span></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Movimentos</span>
                     <span class="mt-1 block text-xs text-zinc-500">Consultar atividade</span>
@@ -71,6 +71,33 @@
 
         <div class="rounded-2xl border border-dashed border-zinc-300 p-4 text-center dark:border-zinc-700">
             <p class="text-xs leading-relaxed text-zinc-500">Esta é uma área experimental. Podes continuar a utilizar todas as funcionalidades na versão completa através do menu lateral.</p>
+        </div>
+    </div>
+
+    <div
+        x-data="{ statementImportOpen: false }"
+        x-on:open-mobile-statement-import.window="statementImportOpen = true"
+        x-on:keydown.escape.window="statementImportOpen = false"
+        x-cloak
+        x-show="statementImportOpen"
+        x-transition.opacity
+        class="fixed inset-0 z-[10000] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+        style="display: none;"
+    >
+        <div
+            x-on:click.outside="statementImportOpen = false"
+            class="relative flex max-h-[95dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-zinc-50 shadow-2xl dark:bg-zinc-950 sm:rounded-3xl"
+        >
+            <div class="flex shrink-0 items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">Importação bancária</p>
+                    <h2 class="mt-1 text-lg font-black text-zinc-900 dark:text-white">Importar Movimentos</h2>
+                </div>
+                <button type="button" x-on:click="statementImportOpen = false" class="flex size-9 items-center justify-center rounded-xl bg-zinc-100 text-xl text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300" aria-label="Fechar">×</button>
+            </div>
+            <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+                <livewire:statement-import-hub />
+            </div>
         </div>
     </div>
 
