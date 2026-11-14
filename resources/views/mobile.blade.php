@@ -29,7 +29,7 @@
                     <span class="mt-1 block text-xs text-zinc-500">Registar gasto</span>
                 </a>
                 <a href="{{ route('hub.incomes') }}" wire:navigate class="group rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-emerald-900/40 dark:bg-zinc-900">
-                    <span class="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300"><flux:icon name="trending-up" class="size-5" /></span>
+                    <span class="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300"><flux:icon name="arrow-trending-up" class="size-5" /></span>
                     <span class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">Receitas</span>
                     <span class="mt-1 block text-xs text-zinc-500">Consultar entradas</span>
                 </a>
