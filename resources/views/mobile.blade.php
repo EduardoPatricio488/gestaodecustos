@@ -14,7 +14,36 @@
     @include('partials.head')
     <link rel="stylesheet" href="/flux/flux.css">
     @livewireStyles
-    <style>[x-cloak] { display: none !important; }</style>
+    <style>
+        [x-cloak] { display: none !important; }
+
+        @keyframes fp-modal-backdrop-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fp-modal-panel-in {
+            from { opacity: 0; transform: translate3d(0, 22px, 0) scale(.97); }
+            to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+        }
+
+        /* Animação consistente para os modais abertos pelos atalhos móveis. */
+        body div[x-show].fixed.inset-0:not([style*="display: none"]) {
+            animation: fp-modal-backdrop-in .24s ease-out both;
+        }
+
+        body div[x-show].fixed.inset-0:not([style*="display: none"]) > div:not(.pointer-events-none) {
+            animation: fp-modal-panel-in .32s cubic-bezier(.2,.8,.2,1) both;
+            will-change: transform, opacity;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            body div[x-show].fixed.inset-0:not([style*="display: none"]),
+            body div[x-show].fixed.inset-0:not([style*="display: none"]) > div:not(.pointer-events-none) {
+                animation: none !important;
+            }
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-white">
     <style>
