@@ -32,6 +32,8 @@ class InvestmentsHub extends Component
 
     public bool $showNetValues = false;
 
+    public bool $mobileMode = false;
+
     public $filterType = 'Todos';
 
     public bool $isRefreshing = false;
