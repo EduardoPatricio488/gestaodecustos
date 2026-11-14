@@ -350,41 +350,53 @@
             let startX = 0;
             let tracking = false;
             let refreshing = false;
-            const threshold = 95;
-            const maxHorizontalDrift = 70;
+            let pullDistance = 0;
+            const threshold = 85;
+            const maxHorizontalDrift = 75;
 
-            const isAtTop = () => window.scrollY <= 0
-                && (document.scrollingElement?.scrollTop ?? 0) <= 0;
+            const pageIsAtTop = () => {
+                const root = document.scrollingElement || document.documentElement;
+                return Math.max(window.scrollY || 0, root.scrollTop || 0) <= 2;
+            };
 
-            document.addEventListener('touchstart', (event) => {
-                if (event.touches.length !== 1 || !isAtTop()) {
+            window.addEventListener('touchstart', (event) => {
+                if (refreshing || event.touches.length !== 1 || !pageIsAtTop()) {
                     tracking = false;
                     return;
                 }
 
                 startY = event.touches[0].clientY;
                 startX = event.touches[0].clientX;
+                pullDistance = 0;
                 tracking = true;
-            }, { passive: true });
+            }, { passive: true, capture: true });
 
-            document.addEventListener('touchend', (event) => {
-                if (!tracking || refreshing || !event.changedTouches.length) return;
+            window.addEventListener('touchmove', (event) => {
+                if (!tracking || event.touches.length !== 1) return;
 
-                const endY = event.changedTouches[0].clientY;
-                const endX = event.changedTouches[0].clientX;
-                const pullDistance = endY - startY;
-                const horizontalDrift = Math.abs(endX - startX);
+                const touch = event.touches[0];
+                const horizontalDrift = Math.abs(touch.clientX - startX);
+                pullDistance = touch.clientY - startY;
+
+                if (horizontalDrift > maxHorizontalDrift || (pullDistance < 0 && !pageIsAtTop())) {
+                    tracking = false;
+                }
+            }, { passive: true, capture: true });
+
+            window.addEventListener('touchend', () => {
+                if (!tracking || refreshing) return;
+
                 tracking = false;
-
-                if (pullDistance < threshold || horizontalDrift > maxHorizontalDrift || !isAtTop()) return;
+                if (pullDistance < threshold || !pageIsAtTop()) return;
 
                 refreshing = true;
                 window.location.reload();
-            }, { passive: true });
+            }, { passive: true, capture: true });
 
-            document.addEventListener('touchcancel', () => {
+            window.addEventListener('touchcancel', () => {
                 tracking = false;
-            }, { passive: true });
+                pullDistance = 0;
+            }, { passive: true, capture: true });
         })();
     </script>
 
