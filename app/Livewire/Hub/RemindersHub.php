@@ -52,10 +52,6 @@ class RemindersHub extends Component
     public function mount(bool $dashboardMode = false): void
     {
         $this->dashboardMode = $dashboardMode;
-
-        if (request()->boolean('open_create')) {
-            $this->openReminderModal();
-        }
     }
 
     /**
