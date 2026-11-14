@@ -23,6 +23,11 @@
                         <span class="text-sm font-black tabular-nums text-emerald-600">
                             +{{ number_format((float) ($extra->amount_converted ?? $extra->amount), 2, ',', ' ') }} {{ $workspaceCurrency }}
                         </span>
+                        @if($canManage)
+                            <button type="button" wire:click="editUnlinkedExtraIncome({{ $extra->id }})" class="rounded-lg p-2 text-zinc-400 transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950/30" aria-label="Editar entrada extra">
+                                <flux:icon name="pencil" class="size-4" />
+                            </button>
+                        @endif
                         @if($salaryContractOptions->isNotEmpty())
                             <select
                                 aria-label="Associar {{ $extra->description }} a um contrato"
