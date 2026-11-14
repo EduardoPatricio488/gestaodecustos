@@ -56,7 +56,7 @@
         <div x-show="open" x-cloak class="fixed inset-0 {{ $dashboardMode ? 'z-[9998]' : 'z-[9999]' }}" aria-modal="true" role="dialog">
             <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60" x-on:click="open = false"></div>
 
-            <div x-show="open" x-transition class="absolute inset-0 {{ $dashboardMode ? 'lg:left-64' : '' }} flex items-center justify-center p-4">
+            <div x-show="open" x-transition class="absolute inset-0 {{ $dashboardMode ? 'lg:left-64' : '' }} flex items-center justify-center p-4" x-on:click.self="open = false">
         <div class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
             <div class="border-b border-zinc-100 px-6 py-5 dark:border-zinc-800">
                 <div class="min-w-0">
