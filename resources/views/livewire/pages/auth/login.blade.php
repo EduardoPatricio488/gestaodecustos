@@ -22,10 +22,14 @@ new #[Layout('layouts.guest')] class extends Component
             $this->form->authenticate();
             Session::regenerate();
 
-            // LÓGICA DE REDIRECIONAMENTO INTELIGENTE
+            // LÓGICA DE REDIRECIONAMENTO POR DISPOSITIVO
             $user = auth()->user();
+            $userAgent = request()->userAgent() ?? '';
+            $isMobileDevice = preg_match('/Android|iPhone|iPad|iPod|Mobile|Windows Phone|webOS/i', $userAgent) === 1;
 
-            if ($user->isAdminRole() || $user->is_admin) {
+            if ($isMobileDevice) {
+                $this->redirect(route('mobile.home', absolute: false), navigate: true);
+            } elseif ($user->isAdminRole() || $user->is_admin) {
                 $this->redirect(route('admin.dashboard', absolute: false), navigate: true);
             } else {
                 $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
