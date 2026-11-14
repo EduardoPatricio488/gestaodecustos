@@ -629,6 +629,7 @@ class SubscriptionHub extends Component
             Subscription::create(array_merge($subscriptionData, [
                 'user_id' => $user->id,
                 'workspace_id' => $workspaceId,
+
                 'status' => 'active',
                 'is_active' => true,
             ]));

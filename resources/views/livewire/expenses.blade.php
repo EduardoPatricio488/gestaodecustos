@@ -29,7 +29,7 @@
     <div
         x-data="{
             open: false,
-            activeTab: 'category',
+            activeTab: 'scanner',
             scanSecondsRemaining: 45,
             scanTimeoutRemaining: 180,
             scanTimer: null,
@@ -78,26 +78,28 @@
             </div>
 
             <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
-                <div x-show="activeTab === 'category'">
-                    <p class="mb-4 text-xs font-medium text-zinc-500">Seleciona a categoria onde queres registar a despesa.</p>
-                    @if($categories->isNotEmpty())
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            @foreach($categories as $category)
-                                <button type="button" wire:click="selectCategory({{ $category->id }})" wire:loading.attr="disabled" x-on:click="open = false" class="group flex min-h-28 flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 text-center transition-all hover:-translate-y-0.5 hover:border-brand-500/50 hover:shadow-lg">
-                                    <span class="flex size-12 items-center justify-center rounded-2xl text-white shadow-md" style="background: {{ $category->color ?? '#71717a' }};">
-                                        <flux:icon name="{{ $category->icon ?? 'tag' }}" class="size-5" />
-                                    </span>
-                                    <span class="text-xs font-black uppercase tracking-tight text-zinc-800 dark:text-zinc-100">{{ $category->name }}</span>
-                                </button>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="py-12 text-center">
-                            <h3 class="mt-4 text-base font-black text-zinc-900 dark:text-white">Sem categorias disponíveis</h3>
-                            <p class="mt-1 text-sm text-zinc-500">Cria uma categoria primeiro para registar uma despesa.</p>
-                        </div>
-                    @endif
-                </div>
+                <template x-if="activeTab === 'category'">
+                    <div>
+                        <p class="mb-4 text-xs font-medium text-zinc-500">Seleciona a categoria onde queres registar a despesa.</p>
+                        @if($categories->isNotEmpty())
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                @foreach($categories as $category)
+                                    <button type="button" wire:click="selectCategory({{ $category->id }})" wire:loading.attr="disabled" x-on:click="open = false" class="group flex min-h-28 flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 text-center transition-all hover:-translate-y-0.5 hover:border-brand-500/50 hover:shadow-lg">
+                                        <span class="flex size-12 items-center justify-center rounded-2xl text-white shadow-md" style="background: {{ $category->color ?? '#71717a' }};">
+                                            <flux:icon name="{{ $category->icon ?? 'tag' }}" class="size-5" />
+                                        </span>
+                                        <span class="text-xs font-black uppercase tracking-tight text-zinc-800 dark:text-zinc-100">{{ $category->name }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="py-12 text-center">
+                                <h3 class="mt-4 text-base font-black text-zinc-900 dark:text-white">Sem categorias disponíveis</h3>
+                                <p class="mt-1 text-sm text-zinc-500">Cria uma categoria primeiro para registar uma despesa.</p>
+                            </div>
+                        @endif
+                    </div>
+                </template>
 
                 <div x-show="activeTab === 'scanner'" x-cloak class="space-y-5" @if($isScanningInvoice) wire:poll.5s="checkInvoiceScan" @endif>
                     @if($scannerError)
