@@ -2192,22 +2192,10 @@
 </div>
     @endunless
 @if($showExtraModal)
-
-<div
-    x-data="{
-        open: false,
-        show() { this.open = true; document.documentElement.classList.add('overflow-hidden'); },
-        close() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); }
-    }"
-    x-on:modal-show-receita-extra.window="show()"
-    x-on:modal-close-receita-extra.window="close()"
-    x-on:keydown.escape.window="close()"
->
-    <template x-teleport="body">
-    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-[9998] bg-zinc-950/80 backdrop-blur-sm"></div>
-
-    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6">
-        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+@teleport('body')
+    <div class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6" wire:click.self="closeExtraModal" x-on:keydown.escape.window="$wire.closeExtraModal()">
+        <div class="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm" wire:click="closeExtraModal"></div>
+        <div class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
 
             <form wire:submit.prevent="saveExtra" class="flex flex-col" autocomplete="off">
                 {{-- HEADER --}}
@@ -2219,7 +2207,7 @@
                         <h2 class="text-xl font-black uppercase italic text-zinc-900 dark:text-white leading-none">Receita Extra</h2>
                         <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Regista uma entrada ou serviço extra</p>
                     </div>
-                    <button type="button" @click="close(); $wire.closeExtraModal()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
+                    <button type="button" wire:click="closeExtraModal" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
                 </div>
 
                 {{-- BODY --}}
@@ -2319,7 +2307,7 @@
 
                 {{-- FOOTER --}}
                 <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
-                    <button type="button" @click="close(); $wire.closeExtraModal()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="button" wire:click="closeExtraModal" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
                     <button
                         type="submit"
                         wire:loading.attr="disabled"
@@ -2331,8 +2319,7 @@
             </form>
         </div>
     </div>
-    </template>
-</div>
+@endteleport
 @endif
 @unless($dashboardMode)
 
