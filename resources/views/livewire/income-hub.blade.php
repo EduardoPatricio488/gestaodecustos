@@ -2203,9 +2203,10 @@
     x-on:modal-close-receita-extra.window="close()"
     x-on:keydown.escape.window="close()"
 >
-    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 {{ $dashboardMode ? 'z-[69]' : 'z-50' }} bg-zinc-950/80 backdrop-blur-sm"></div>
+    <template x-teleport="body">
+    <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-[9998] bg-zinc-950/80 backdrop-blur-sm"></div>
 
-    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 {{ $dashboardMode ? 'z-[70] lg:left-64 lg:w-[calc(100vw-16rem)]' : 'z-50' }} flex items-center justify-center p-3 sm:p-6">
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6">
         <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
 
             <form wire:submit.prevent="saveExtra" class="flex flex-col" autocomplete="off">
@@ -2330,6 +2331,7 @@
             </form>
         </div>
     </div>
+    </template>
 </div>
 @endif
 @unless($dashboardMode)
