@@ -125,7 +125,6 @@
             <div class="flex items-center justify-between px-1">
                 <h2 class="text-sm font-black uppercase tracking-wider text-zinc-500">Acesso rápido</h2>
                 <livewire:mobile-shortcut-settings />
-                <span class="rounded-full bg-amber-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Versão temporária</span>
             </div>
             <div
                 class="grid grid-cols-2 gap-3"
