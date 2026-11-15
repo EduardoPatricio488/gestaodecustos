@@ -95,8 +95,13 @@ PROMPT;
         $lastStatus = null;
         $result = null;
         $lastFinishReason = null;
-        // Uma única rota agregadora evita esperar por dois modelos gratuitos em sequência.
-        $models = [self::MODEL];
+        // Tenta primeiro um modelo gratuito de visão específico e, se estiver indisponível,
+        // recorre ao agregador de fornecedores gratuitos do OpenRouter.
+        $configuredModel = (string) config('services.openrouter.model', 'google/gemma-4-26b-a4b-it:free');
+        $firstFreeModel = str_ends_with($configuredModel, ':free')
+            ? $configuredModel
+            : 'google/gemma-4-26b-a4b-it:free';
+        $models = array_values(array_unique([$firstFreeModel, self::MODEL]));
 
         foreach ($models as $model) {
             $payload = [
@@ -124,13 +129,13 @@ PROMPT;
                         'HTTP-Referer' => (string) config('app.url'),
                         'X-Title' => 'Finance Pro AI',
                     ])
-                    ->connectTimeout((int) config('services.openrouter.connect_timeout', 4))
-                    ->timeout(min(15, (int) config('services.openrouter.request_timeout', 15)))
+                    ->connectTimeout(min(8, (int) config('services.openrouter.connect_timeout', 6)))
+                    ->timeout(min(35, (int) config('services.openrouter.request_timeout', 35)))
                     ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
             } catch (ConnectionException $exception) {
                 $response = null;
                 $lastStatus = null;
-                Log::warning('Invoice scanner: free OpenRouter route timed out; trying fallback.', [
+                Log::warning('Invoice scanner: free OpenRouter model timed out; trying next free route.', [
                     'model' => $model,
                     'exception' => $exception::class,
                 ]);
@@ -161,7 +166,7 @@ PROMPT;
                     break;
                 }
 
-                Log::warning('Invoice scanner: free model returned an invalid response; trying fallback.', [
+                Log::warning('Invoice scanner: free model returned an invalid response; trying next free route.', [
                     'model' => $model,
                     'response_id' => $response->json('id'),
                     'finish_reason' => $lastFinishReason,
