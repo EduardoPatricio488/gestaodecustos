@@ -54,9 +54,7 @@ class Expenses extends Component
      */
     public function refreshOpenRouterQuota(): void
     {
-        // A atualização é iniciada dentro do modal: mantém-no aberto durante o pedido.
-        $this->expenseModalOpen = true;
-        $this->expenseModalActiveTab = 'scanner';
+        // Atualiza apenas os dados da quota; não altera a abertura/minimização do modal.
         $this->openRouterQuotaError = '';
         $this->loadingOpenRouterQuota = true;
 
@@ -260,6 +258,9 @@ class Expenses extends Component
 
         $this->isScanningInvoice = false;
         $this->dispatch('invoice-scan-finished');
+
+        // A quota é consultada novamente depois de a IA terminar, incluindo falhas.
+        $this->refreshOpenRouterQuota();
 
         if (($scan['status'] ?? null) !== 'completed') {
             $this->invoiceScanId = null;
