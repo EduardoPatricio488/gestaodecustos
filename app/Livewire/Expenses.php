@@ -259,6 +259,7 @@ class Expenses extends Component
         }
 
         $this->isScanningInvoice = false;
+        $this->dispatch('invoice-scan-finished');
 
         if (($scan['status'] ?? null) !== 'completed') {
             $this->invoiceScanId = null;
