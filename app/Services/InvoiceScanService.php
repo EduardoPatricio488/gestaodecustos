@@ -97,7 +97,6 @@ PROMPT;
         $lastFinishReason = null;
         $models = [
             'google/gemma-4-31b-it:free',
-            'nvidia/nemotron-3.5-super-vl:free',
             self::MODEL,
         ];
 
@@ -105,7 +104,7 @@ PROMPT;
             $payload = [
                 'model' => $model,
                 'temperature' => 0,
-                'max_tokens' => 4000,
+                'max_tokens' => 2500,
                 'provider' => [
                     'allow_fallbacks' => true,
                     'max_price' => [
@@ -120,10 +119,6 @@ PROMPT;
                 ]],
             ];
 
-            if ($model === 'nvidia/nemotron-3.5-super-vl:free') {
-                $payload['reasoning'] = ['enabled' => false];
-            }
-
             try {
                 $response = Http::withToken(config('services.openrouter.api_key'))
                     ->acceptJson()
@@ -132,7 +127,7 @@ PROMPT;
                         'X-Title' => 'Finance Pro AI',
                     ])
                     ->connectTimeout((int) config('services.openrouter.connect_timeout', 8))
-                    ->timeout(min(30, (int) config('services.openrouter.request_timeout', 45)))
+                    ->timeout(min(18, (int) config('services.openrouter.request_timeout', 18)))
                     ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
             } catch (ConnectionException $exception) {
                 $response = null;
