@@ -33,7 +33,7 @@
     <div
         x-data="{
             // A abertura e a mudança de separador são locais para o modal surgir sem esperar pelo servidor.
-            open: false,
+            open: window.__financeProExpenseModalOpen === true,
             activeTab: 'scanner',
             scanSecondsRemaining: 45,
             scanTimeoutRemaining: 180,
@@ -53,8 +53,9 @@
                 return String(minutes).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
             }
         }"
-        x-on:open-expense-category-picker.window="open = true; activeTab = 'scanner'"
-        x-on:toggle-expense-scan-modal.window="open = !open; if (open) activeTab = 'scanner'"
+        x-init="$watch('open', value => window.__financeProExpenseModalOpen = value); if (window.__financeProExpenseModalOpen) open = true"
+        x-on:open-expense-category-picker.window="window.__financeProExpenseModalOpen = true; open = true; activeTab = 'scanner'"
+        x-on:toggle-expense-scan-modal.window="window.__financeProExpenseModalOpen = true; open = true; activeTab = 'scanner'"
         x-on:keydown.escape.window="open = false"
         data-no-global-close
     >
@@ -62,7 +63,7 @@
         @if($isScanningInvoice || $invoiceScanCompleted)
             <button
                 type="button"
-                x-on:click="open = true; activeTab = 'scanner'"
+                x-on:click="window.dispatchEvent(new Event('open-expense-category-picker'))"
                 class="fixed bottom-5 right-5 z-[10001] flex max-w-[calc(100vw-2.5rem)] items-center gap-3 rounded-full border px-4 py-3 text-left shadow-none transition hover:scale-[1.02] {{ $invoiceScanCompleted ? 'border-emerald-300 bg-emerald-600 text-white' : 'border-brand-300 bg-zinc-950 text-white' }}"
                 aria-live="polite"
             >
