@@ -30,7 +30,7 @@
                             </button>
                             <p class="text-[10px] leading-4 text-zinc-500">A análise pode falhar em fotografias pouco nítidas. Os dados só são guardados quando confirmares o contrato.</p>
                         </section>
-                    @else
+                    <section x-cloak x-show="salaryMode !== 'scanner'" class="space-y-4">
                     {{-- DESCRIÇÃO --}}
                     <div class="relative">
                         <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-indigo-600 z-10">Nome da Empresa</label>
