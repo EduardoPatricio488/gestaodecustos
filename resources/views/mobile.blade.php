@@ -131,9 +131,7 @@
                     <div class="flex size-12 items-center justify-center rounded-2xl bg-white/10 text-emerald-300">
                         <span class="text-2xl" aria-hidden="true">▣</span>
                     </div>
-                    <button type="button" x-on:click="toggleTheme()" class="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1.5 text-[10px] font-bold text-white transition active:scale-95" aria-label="Alterar tema">
-                        <span x-text="dark ? '☀️ Claro' : '🌙 Escuro'"></span>
-                    </button>
+
                 </div>
             </div>
             <div class="mt-5 flex flex-wrap items-center gap-2">
@@ -161,12 +159,16 @@
         <div class="fp-mobile-greeting px-1" style="animation: fp-greeting-in .65s cubic-bezier(.2,.8,.2,1) both;">
             <div class="flex items-center gap-2">
                 <span class="text-2xl" aria-hidden="true" style="animation: fp-greeting-wave 2.4s ease-in-out infinite;">{{ $mobileGreetingIcon }}</span>
-                <div class="relative" x-data="{ accountMenuOpen: false }">
+                <div class="relative" x-data="{ accountMenuOpen: false, dark: document.documentElement.classList.contains('dark'), toggleTheme() { this.dark = window.FinanceProMobileTheme.toggle(); } }">
                     <button type="button" x-on:click="accountMenuOpen = !accountMenuOpen" x-on:click.outside="accountMenuOpen = false" class="inline-flex items-center gap-2 rounded-xl text-left text-2xl font-black tracking-tight text-zinc-900 dark:text-white">
                         <span>{{ $mobileGreeting }}, {{ auth()->user()->name }}</span>
                         <span class="text-sm text-zinc-400 transition-transform" x-bind:class="accountMenuOpen ? 'rotate-180' : ''" aria-hidden="true">▾</span>
                     </button>
                     <div x-cloak x-show="accountMenuOpen" x-transition class="absolute left-0 top-full z-50 mt-2 min-w-52 rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+                        <button type="button" x-on:click="toggleTheme()" class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800" aria-label="Alterar tema">
+                            <span x-text="dark ? '☀️' : '🌙'"></span>
+                            <span x-text="dark ? 'Mudar para tema claro' : 'Mudar para tema escuro'"></span>
+                        </button>
                         <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Tens a certeza de que pretendes terminar a sessão?')">
                             @csrf
                             <button type="submit" class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-rose-600 transition hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30">
