@@ -87,7 +87,7 @@
             <div x-show="open" x-transition:enter="transition-opacity ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0 bg-black/60" x-on:click="open = false"></div>
 
             <div x-show="open" x-transition class="absolute inset-0 {{ $dashboardMode ? 'lg:left-64' : '' }} flex items-center justify-center p-4" x-on:click.self="open = false">
-        <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-6 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-100" x-transition:leave-end="opacity-0 translate-y-4 scale-95" class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
+        <div x-show="open" x-transition:enter="transition-[opacity,transform] duration-400 ease-[cubic-bezier(0.16,1,0.3,1)]" x-transition:enter-start="opacity-0 translate-y-8 scale-[0.96]" x-transition:enter-end="opacity-100 translate-y-0 scale-100" x-transition:leave="transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,1,1)]" x-transition:leave-start="opacity-100 translate-y-0 scale-100" x-transition:leave-end="opacity-0 translate-y-5 scale-[0.97]" class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
             <div class="border-b border-zinc-100 px-6 py-5 dark:border-zinc-800">
                 <div class="min-w-0">
                     <p class="text-[9px] font-black uppercase tracking-[0.2em] text-brand-500">Novo movimento</p>
@@ -303,7 +303,7 @@
                     @endif
                     <div class="flex flex-col-reverse sm:flex-row gap-3">
                         @if($isScanningInvoice)
-                            <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-xs font-black uppercase tracking-wider text-brand-600 transition hover:bg-brand-500/20 dark:text-brand-300">
+                            <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-xs font-black uppercase tracking-wider text-brand-600 transition-all duration-300 ease-out hover:scale-[1.02] hover:bg-brand-500/20 active:scale-[0.98] dark:text-brand-300">
                                 Minimizar scanner
                             </button>
                         @else
