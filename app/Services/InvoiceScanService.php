@@ -95,19 +95,22 @@ PROMPT;
         $lastStatus = null;
         $result = null;
         $lastFinishReason = null;
-        // Tenta primeiro um modelo gratuito de visão específico e, se estiver indisponível,
-        // recorre ao agregador de fornecedores gratuitos do OpenRouter.
+        // Percorre várias rotas gratuitas com suporte a imagem antes do router automático.
+        // O limite de preço zero impede a utilização de fornecedores/modelos pagos.
         $configuredModel = (string) config('services.openrouter.model', 'google/gemma-4-26b-a4b-it:free');
-        $firstFreeModel = str_ends_with($configuredModel, ':free')
-            ? $configuredModel
-            : 'google/gemma-4-26b-a4b-it:free';
-        $models = array_values(array_unique([$firstFreeModel, self::MODEL]));
+        $models = array_values(array_unique(array_filter([
+            'google/gemma-4-31b-it:free',
+            'dots-studio/dots-3-note-preview:free',
+            $configuredModel,
+            'google/gemma-4-26b-a4b-it:free',
+            self::MODEL,
+        ], static fn ($model) => $model === self::MODEL || str_ends_with($model, ':free'))));
 
         foreach ($models as $model) {
             $payload = [
                 'model' => $model,
                 'temperature' => 0,
-                'max_tokens' => 2500,
+                'max_tokens' => 6000,
                 'provider' => [
                     'allow_fallbacks' => true,
                     'max_price' => [
@@ -130,7 +133,7 @@ PROMPT;
                         'X-Title' => 'Finance Pro AI',
                     ])
                     ->connectTimeout(min(8, (int) config('services.openrouter.connect_timeout', 6)))
-                    ->timeout(min(35, (int) config('services.openrouter.request_timeout', 35)))
+                    ->timeout(min(25, (int) config('services.openrouter.request_timeout', 25)))
                     ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
             } catch (ConnectionException $exception) {
                 $response = null;
