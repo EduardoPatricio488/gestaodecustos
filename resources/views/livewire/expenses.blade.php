@@ -60,6 +60,8 @@
         x-on:open-expense-category-picker.window="window.__financeProExpenseModalOpen = true; open = true; activeTab = 'scanner'"
         x-on:toggle-expense-scan-modal.window="window.__financeProExpenseModalOpen = true; open = true; activeTab = 'scanner'"
         x-on:keydown.escape.window="@if($isScanningInvoice) $event.preventDefault() @else open = false @endif"
+        x-effect="window.__financeProExpenseModalOpen = open"
+        wire:ignore.self
         data-no-global-close
     >
         <template x-teleport="body">
@@ -319,7 +321,7 @@
                             <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500">Cancelar</button>
                         @endif
                         
-                        <button type="button" wire:click="scanInvoiceAndDetectCategory" x-on:click="startInvoiceTimer()" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || $isScanningInvoice) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
+                        <button type="button" wire:click="scanInvoiceAndDetectCategory" x-on:click="startInvoiceTimer(); open = true; window.__financeProExpenseModalOpen = true" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || $isScanningInvoice) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
                             @if($isScanningInvoice)
                                 <flux:icon name="arrow-path" class="size-4 animate-spin" /> A analisar fatura...
                             @else
