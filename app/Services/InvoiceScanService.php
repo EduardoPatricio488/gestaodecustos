@@ -95,10 +95,8 @@ PROMPT;
         $lastStatus = null;
         $result = null;
         $lastFinishReason = null;
-        $models = [
-            'google/gemma-4-31b-it:free',
-            self::MODEL,
-        ];
+        // Uma única rota agregadora evita esperar por dois modelos gratuitos em sequência.
+        $models = [self::MODEL];
 
         foreach ($models as $model) {
             $payload = [
@@ -126,8 +124,8 @@ PROMPT;
                         'HTTP-Referer' => (string) config('app.url'),
                         'X-Title' => 'Finance Pro AI',
                     ])
-                    ->connectTimeout((int) config('services.openrouter.connect_timeout', 8))
-                    ->timeout(min(18, (int) config('services.openrouter.request_timeout', 18)))
+                    ->connectTimeout((int) config('services.openrouter.connect_timeout', 4))
+                    ->timeout(min(15, (int) config('services.openrouter.request_timeout', 15)))
                     ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
             } catch (ConnectionException $exception) {
                 $response = null;
@@ -265,7 +263,7 @@ PROMPT;
         try {
             $width = imagesx($source);
             $height = imagesy($source);
-            $scale = min(1, 1800 / max($width, $height));
+            $scale = min(1, 1500 / max($width, $height));
             if ($scale >= 1) {
                 return [$contents, $mimeType];
             }
@@ -277,7 +275,7 @@ PROMPT;
             imagefill($target, 0, 0, $white);
             imagecopyresampled($target, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $width, $height);
             ob_start();
-            imagejpeg($target, null, 84);
+            imagejpeg($target, null, 76);
             $compressed = ob_get_clean();
             imagedestroy($target);
 
