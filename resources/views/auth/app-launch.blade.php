@@ -95,12 +95,17 @@
             const progress = document.getElementById('fp-navigation-progress');
             document.querySelectorAll('form[action="{{ route('app.launch.choose') }}"]').forEach((form) => {
                 form.addEventListener('submit', () => {
-                    progress.classList.add('is-loading');
                     document.querySelectorAll('.fp-launch-button, .fp-option-secondary').forEach((button) => {
                         button.disabled = true;
                         button.setAttribute('aria-busy', 'true');
                     });
-                    document.getElementById('fp-account-loading')?.classList.add('is-visible');
+
+                    // Só mostrar o ecrã de carregamento quando a sessão já está iniciada.
+                    // Sem sessão, o utilizador deve primeiro autenticar-se.
+                    if (@json(auth()->check())) {
+                        progress?.classList.add('is-loading');
+                        document.getElementById('fp-account-loading')?.classList.add('is-visible');
+                    }
                 });
             });
         });
