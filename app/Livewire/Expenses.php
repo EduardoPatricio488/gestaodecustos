@@ -177,6 +177,7 @@ class Expenses extends Component
         $this->invoiceScanStartedAt = now()->timestamp;
         $this->invoiceScanCompleted = false;
         $this->isScanningInvoice = true;
+        $this->dispatch('invoice-scan-started');
 
         \Illuminate\Support\Facades\Cache::put($cacheKey, [
             'status' => 'processing',
@@ -214,6 +215,7 @@ class Expenses extends Component
             ], now()->addMinutes(20));
 
             $this->isScanningInvoice = false;
+            $this->dispatch('invoice-scan-finished');
             $this->invoiceScanId = null;
             $this->scannerError = 'Não foi possível iniciar o processamento em segundo plano. Confirma se o worker da fila está ativo e tenta novamente.';
         }
