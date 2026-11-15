@@ -39,11 +39,13 @@ class MobileQuickActions extends Component
                 422
             );
             $this->dispatch($event, rect: $rect);
+            $this->dispatch('mobile-modal-ready');
 
             return;
         }
 
         $this->dispatch($event);
+        $this->dispatch('mobile-modal-ready');
     }
 
     public function render()
