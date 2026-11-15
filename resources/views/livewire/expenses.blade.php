@@ -54,6 +54,30 @@
         data-no-global-close
     >
         <template x-teleport="body">
+        @if($isScanningInvoice || $invoiceScanCompleted)
+            <button
+                type="button"
+                x-on:click="open = true; activeTab = 'scanner'"
+                class="fixed bottom-5 right-5 z-[10001] flex max-w-[calc(100vw-2.5rem)] items-center gap-3 rounded-full border px-4 py-3 text-left shadow-2xl transition hover:scale-[1.02] {{ $invoiceScanCompleted ? 'border-emerald-300 bg-emerald-600 text-white' : 'border-brand-300 bg-zinc-950 text-white' }}"
+                aria-live="polite"
+            >
+                @if($invoiceScanCompleted)
+                    <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-xl font-black">✓</span>
+                    <span class="min-w-0">
+                        <span class="block text-xs font-black">Análise concluída</span>
+                        <span class="block text-[10px] font-medium text-white/80">Carrega para aceitar os dados</span>
+                    </span>
+                @else
+                    <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-500/20">
+                        <span class="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
+                    </span>
+                    <span class="min-w-0">
+                        <span class="block text-xs font-black">A analisar ficheiro</span>
+                        <span class="block text-[10px] font-medium text-white/70">Carrega para abrir o scanner</span>
+                    </span>
+                @endif
+            </button>
+        @endif
         <div x-show="open" x-cloak class="fixed inset-0 {{ $dashboardMode ? 'z-[9998]' : 'z-[9999]' }}" aria-modal="true" role="dialog">
             <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60" x-on:click="open = false"></div>
 
@@ -107,6 +131,18 @@
                         <div class="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">
                             <flux:icon name="exclamation-triangle" class="size-4 shrink-0" />
                             <span>{{ $scannerError }}</span>
+                        </div>
+                    @endif
+
+                    @if($invoiceScanCompleted)
+                        <div role="status" aria-live="polite" class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center">
+                            <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-500 text-2xl font-black text-white">✓</div>
+                            <h3 class="mt-3 text-sm font-black text-emerald-700 dark:text-emerald-300">Análise concluída!</h3>
+                            <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">Os dados da fatura estão prontos. Podes agora abrir o formulário e confirmar antes de guardar a despesa.</p>
+                            <button type="button" wire:click="acceptInvoiceScan" wire:loading.attr="disabled" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg transition hover:bg-emerald-700 disabled:opacity-50">
+                                <span wire:loading.remove wire:target="acceptInvoiceScan">Aceitar dados e continuar</span>
+                                <span wire:loading.inline-flex wire:target="acceptInvoiceScan">A abrir formulário...</span>
+                            </button>
                         </div>
                     @endif
 
