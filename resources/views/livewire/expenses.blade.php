@@ -122,7 +122,7 @@
                                     </span>
                                 @elseif($openRouterQuota)
                                     <span class="text-xs font-black tabular-nums {{ $openRouterQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
-                                        {{ number_format($openRouterQuota['remaining']) }} / {{ number_format($openRouterQuota['limit']) }} disponíveis hoje
+                                        {{ number_format($openRouterQuota['remaining']) }} / {{ number_format($openRouterQuota['limit']) }} de crédito disponíveis
                                     </span>
                                 @endif
                                 <button type="button" wire:click="refreshOpenRouterQuota" wire:loading.attr="disabled" wire:target="refreshOpenRouterQuota" class="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-[9px] font-bold text-zinc-500 transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-50">
@@ -138,14 +138,14 @@
                                 <span class="shrink-0 text-[9px] font-bold text-zinc-500">{{ $openRouterQuota['used'] }} utilizados</span>
                             </div>
                             @if($openRouterQuota['remaining'] <= 0)
-                                <p class="mt-2 text-[10px] font-semibold text-red-500">A quota diária gratuita está esgotada. A quota renova às 00:00 UTC.</p>
+                                <p class="mt-2 text-[10px] font-semibold text-red-500">O saldo de crédito desta chave está esgotado. Verifica os limites da tua conta OpenRouter.</p>
                             @else
-                                <p class="mt-2 text-[10px] text-zinc-500">Quota diária de pedidos gratuitos da tua chave OpenRouter. Atualiza manualmente quando quiseres consultar os valores mais recentes.</p>
+                                <p class="mt-2 text-[10px] text-zinc-500">Saldo de crédito e utilização da tua chave OpenRouter. Atualiza manualmente para consultar os valores mais recentes.</p>
                             @endif
                         @elseif($openRouterQuotaError)
                             <p class="mt-2 text-[10px] text-amber-600 dark:text-amber-400">{{ $openRouterQuotaError }}</p>
                         @else
-                            <p class="mt-2 text-[10px] text-zinc-500">Carrega em «Atualizar» para consultar a quota diária da tua chave OpenRouter.</p>
+                            <p class="mt-2 text-[10px] text-zinc-500">Carrega em «Atualizar» para consultar o saldo e a utilização da tua chave OpenRouter.</p>
                         @endif
                     </div>
 
