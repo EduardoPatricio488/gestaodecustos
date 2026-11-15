@@ -1577,6 +1577,7 @@ class IncomeHub extends Component
     public function closeExtraModal()
     {
         $this->showExtraModal = false;
+        $this->dispatch('modal-close-receita-extra');
     }
 
     public function closeRaiseModal()
