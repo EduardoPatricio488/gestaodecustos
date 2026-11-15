@@ -1,4 +1,4 @@
-<div class="{{ $dashboardMode ? '' : 'max-w-7xl mx-auto space-y-10 pb-20' }}" x-data="{ modal: @entangle('openModal') }">
+<div class="{{ $dashboardMode ? '' : 'max-w-7xl mx-auto space-y-10 pb-20' }}" x-data="{ modal: @entangle('openModal') }" x-on:open-mobile-reminder-create.window="modal = true; $wire.openReminderModal()">
 
     {{-- ── ESTILOS DE ALTA FIDELIDADE ── --}}
     @once
