@@ -50,10 +50,12 @@ class Expenses extends Component
      */
     public function refreshOpenRouterQuota(): void
     {
-        $apiKey = config('services.openrouter.api_key');
-
+        // A atualização é iniciada dentro do modal: mantém-no aberto durante o pedido.
+        $this->expenseModalOpen = true;
         $this->openRouterQuotaError = '';
         $this->loadingOpenRouterQuota = true;
+
+        $apiKey = config('services.openrouter.api_key');
 
         if (blank($apiKey)) {
             $this->openRouterQuota = null;
