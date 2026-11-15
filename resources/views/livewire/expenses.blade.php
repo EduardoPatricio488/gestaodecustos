@@ -50,6 +50,7 @@
             }
         }"
         x-on:open-expense-category-picker.window="open = true; activeTab = 'scanner'"
+        x-on:toggle-expense-scan-modal.window="open = !open; if (open) activeTab = 'scanner'"
         x-on:keydown.escape.window="open = false"
         data-no-global-close
     >
@@ -57,7 +58,7 @@
         @if($isScanningInvoice || $invoiceScanCompleted)
             <button
                 type="button"
-                x-on:click="window.dispatchEvent(new CustomEvent('open-expense-category-picker'))"
+                x-on:click="window.dispatchEvent(new CustomEvent('toggle-expense-scan-modal'))"
                 class="fixed bottom-5 right-5 z-[10001] flex max-w-[calc(100vw-2.5rem)] items-center gap-3 rounded-full border px-4 py-3 text-left shadow-2xl transition hover:scale-[1.02] {{ $invoiceScanCompleted ? 'border-emerald-300 bg-emerald-600 text-white' : 'border-brand-300 bg-zinc-950 text-white' }}"
                 aria-live="polite"
             >
@@ -73,16 +74,16 @@
                     </span>
                     <span class="min-w-0">
                         <span class="block text-xs font-black">A analisar ficheiro</span>
-                        <span class="block text-[10px] font-medium text-white/70">Carrega para abrir o scanner</span>
+                        <span class="block text-[10px] font-medium text-white/70" x-text="open ? 'Carrega para fechar o scanner' : 'Carrega para abrir o scanner'"></span>
                     </span>
                 @endif
             </button>
         @endif
-        <div x-show="open" x-cloak class="fixed inset-0 {{ $dashboardMode ? 'z-[9998]' : 'z-[9999]' }}" aria-modal="true" role="dialog">
-            <div x-show="open" x-transition.opacity class="absolute inset-0 bg-black/60" x-on:click="open = false"></div>
+        <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 {{ $dashboardMode ? 'z-[9998]' : 'z-[9999]' }}" aria-modal="true" role="dialog">
+            <div x-show="open" x-transition:enter="transition-opacity ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0 bg-black/60" x-on:click="open = false"></div>
 
             <div x-show="open" x-transition class="absolute inset-0 {{ $dashboardMode ? 'lg:left-64' : '' }} flex items-center justify-center p-4" x-on:click.self="open = false">
-        <div class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
+        <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-6 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-100" x-transition:leave-end="opacity-0 translate-y-4 scale-95" class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
             <div class="border-b border-zinc-100 px-6 py-5 dark:border-zinc-800">
                 <div class="min-w-0">
                     <p class="text-[9px] font-black uppercase tracking-[0.2em] text-brand-500">Novo movimento</p>
