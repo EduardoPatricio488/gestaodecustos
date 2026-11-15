@@ -167,7 +167,6 @@ class RemindersHub extends Component
     }
 
     #[On('calendar-reminder-create')]
-    #[On('open-mobile-reminder-create')]
     public function openReminderModal($id = null, ?string $date = null)
     {
         if ($this->dashboardMode && auth()->user()->isViewer()) {
