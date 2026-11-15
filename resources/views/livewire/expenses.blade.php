@@ -27,7 +27,7 @@
     @endunless
 
     @if($isScanningInvoice)
-        <div wire:poll.5s="checkInvoiceScan" class="hidden" aria-hidden="true"></div>
+        <div data-invoice-scan-active wire:poll.5s="checkInvoiceScan" class="hidden" aria-hidden="true"></div>
     @endif
 
     <div
@@ -68,6 +68,7 @@
         @if($isScanningInvoice || $invoiceScanCompleted)
             <button
                 type="button"
+                @if($isScanningInvoice) data-invoice-scan-active @endif
                 x-on:click.stop.prevent="const root = document.querySelector('[data-expense-modal-root]'); const modal = root && window.Alpine ? window.Alpine.$data(root) : null; if (modal) { modal.activeTab = 'scanner'; modal.open = true; window.__financeProExpenseModalOpen = true; }"
                 class="fixed bottom-5 right-5 z-[10001] flex max-w-[calc(100vw-2.5rem)] items-center gap-3 rounded-full border px-4 py-3 text-left shadow-none transition hover:scale-[1.02] {{ $invoiceScanCompleted ? 'border-emerald-300 bg-emerald-600 text-white' : 'border-brand-300 bg-zinc-950 text-white' }}"
                 aria-live="polite"
