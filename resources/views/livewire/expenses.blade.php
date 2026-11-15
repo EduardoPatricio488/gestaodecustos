@@ -28,8 +28,9 @@
 
     <div
         x-data="{
-            open: $wire.entangle('expenseModalOpen').live,
-            activeTab: $wire.entangle('expenseModalActiveTab').live,
+            // A abertura e a mudança de separador são locais para o modal surgir sem esperar pelo servidor.
+            open: false,
+            activeTab: 'scanner',
             scanSecondsRemaining: 45,
             scanTimeoutRemaining: 180,
             scanTimer: null,
