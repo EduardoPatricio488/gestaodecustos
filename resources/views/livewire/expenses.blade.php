@@ -116,12 +116,11 @@
                                 <span class="text-[10px] font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-200">Quota da IA · OpenRouter</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                @if($loadingOpenRouterQuota)
-                                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-zinc-500">
-                                        <flux:icon name="arrow-path" class="size-3 animate-spin" /> A consultar...
-                                    </span>
-                                @elseif($openRouterQuota)
-                                    <span class="text-xs font-black tabular-nums {{ $openRouterQuota['unlimited'] || $openRouterQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
+                                <span wire:loading.inline-flex wire:target="refreshOpenRouterQuota" class="items-center gap-1.5 text-[10px] font-bold text-zinc-500">
+                                    <flux:icon name="arrow-path" class="size-3 animate-spin" /> A consultar...
+                                </span>
+                                @if($openRouterQuota)
+                                    <span wire:loading.remove wire:target="refreshOpenRouterQuota" class="text-xs font-black tabular-nums {{ $openRouterQuota['unlimited'] || $openRouterQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
                                         @if($openRouterQuota['unlimited'])
                                             Sem limite definido
                                         @else
@@ -130,7 +129,8 @@
                                     </span>
                                 @endif
                                 <button type="button" wire:click.stop="refreshOpenRouterQuota" wire:loading.attr="disabled" wire:target="refreshOpenRouterQuota" class="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-[9px] font-bold text-zinc-500 transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-50">
-                                    @if($loadingOpenRouterQuota) A consultar... @else Atualizar @endif
+                                    <span wire:loading.remove wire:target="refreshOpenRouterQuota">Atualizar</span>
+                                    <span wire:loading wire:target="refreshOpenRouterQuota">A consultar...</span>
                                 </button>
                             </div>
                         </div>
