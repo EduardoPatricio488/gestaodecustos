@@ -1,5 +1,10 @@
-<div>
-    <div wire:loading.flex class="fixed inset-0 z-[100000] items-center justify-center bg-zinc-950/50 p-4" role="status" aria-live="polite">
+<div
+    x-data="{ opening: false, label: 'formulário' }"
+    x-on:mobile-modal-opening.window="opening = true; label = $event.detail?.label || 'formulário'"
+    x-on:mobile-modal-ready.window="opening = false"
+    x-on:mobile-modal-failed.window="opening = false"
+>
+    <div x-cloak x-show="opening" x-transition.opacity class="fixed inset-0 z-[100000] flex items-center justify-center bg-zinc-950/45 p-4" role="status" aria-live="polite">
         <div class="flex items-center gap-3 rounded-2xl bg-white px-5 py-4 text-sm font-bold text-zinc-800 shadow-xl dark:bg-zinc-900 dark:text-white">
             <span class="size-5 animate-spin rounded-full border-2 border-emerald-500/30 border-t-emerald-600" aria-hidden="true"></span>
             A preparar formulário…
