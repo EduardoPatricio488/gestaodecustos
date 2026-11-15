@@ -134,16 +134,6 @@
 
                 </div>
             </div>
-            <div class="mt-5 flex flex-wrap items-center gap-2">
-                <form method="POST" action="{{ route('device.mode') }}">
-                    @csrf
-                    <input type="hidden" name="mode" value="full">
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-zinc-900 shadow-sm transition active:scale-95">
-                        <span aria-hidden="true">↗</span>
-                        Entrar no site completo
-                    </button>
-                </form>
-            </div>
         </div>
 
         @php
@@ -165,6 +155,14 @@
                         <span class="text-sm text-zinc-400 transition-transform" x-bind:class="accountMenuOpen ? 'rotate-180' : ''" aria-hidden="true">▾</span>
                     </button>
                     <div x-cloak x-show="accountMenuOpen" x-transition class="absolute left-0 top-full z-50 mt-2 min-w-52 rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+                        <form method="POST" action="{{ route('device.mode') }}">
+                            @csrf
+                            <input type="hidden" name="mode" value="full">
+                            <button type="submit" class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800">
+                                <span aria-hidden="true">↗</span>
+                                Entrar no site completo
+                            </button>
+                        </form>
                         <button type="button" x-on:click="toggleTheme()" class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800" aria-label="Alterar tema">
                             <span x-text="dark ? '☀️' : '🌙'"></span>
                             <span x-text="dark ? 'Mudar para tema claro' : 'Mudar para tema escuro'"></span>
