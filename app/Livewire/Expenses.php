@@ -80,16 +80,21 @@ class Expenses extends Component
                         throw new \RuntimeException('Não foi possível consultar a quota OpenRouter (HTTP '.$response->status().').');
                     }
 
-                    $daily = $response->json('data.free_model_daily_requests');
+                    $data = $response->json('data');
 
-                    if (! is_array($daily) || ! isset($daily['remaining'], $daily['limit'], $daily['used'])) {
-                        throw new \RuntimeException('O OpenRouter não disponibilizou os dados da quota diária para esta chave.');
+                    if (! is_array($data) || ! array_key_exists('usage', $data) || ! array_key_exists('limit_remaining', $data)) {
+                        throw new \RuntimeException('O OpenRouter não disponibilizou os dados de utilização desta chave.');
                     }
 
+                    $used = max(0, (float) $data['usage']);
+                    $remaining = max(0, (float) $data['limit_remaining']);
+                    $limit = max(0, (float) ($data['limit'] ?? ($used + $remaining)));
+
                     return [
-                        'used' => max(0, (int) $daily['used']),
-                        'limit' => max(0, (int) $daily['limit']),
-                        'remaining' => max(0, (int) $daily['remaining']),
+                        'used' => $used,
+                        'limit' => $limit,
+                        'remaining' => $remaining,
+                        'is_free_tier' => (bool) ($data['is_free_tier'] ?? false),
                     ];
                 }
             );
