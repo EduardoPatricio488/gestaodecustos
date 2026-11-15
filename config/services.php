@@ -66,7 +66,7 @@ return [
         'request_timeout' => (int) env('OPENROUTER_REQUEST_TIMEOUT', 45),
         // Modelos gratuitos com suporte a imagem. Não adicionar modelos pagos a esta lista.
         'model' => env('AI_MODEL', 'google/gemma-4-26b-a4b-it:free'),
-        // O scanner de faturas fixa openrouter/free em InvoiceScanService; não usa fallback.
+        // O scanner usa exclusivamente rotas gratuitas, com fallback entre modelos gratuitos.
     ],
 
     'market_data' => [
