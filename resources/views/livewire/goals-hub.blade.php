@@ -1,6 +1,6 @@
 <div
     x-data
-    x-on:open-mobile-goal-create.window="$wire.openGoalModal()"
+    
     class="space-y-8 pb-24"
 >
     @if(!$mobileMode)
@@ -473,6 +473,7 @@
         }
     }"
     x-on:modal-show-goal.window="show()"
+    x-on:open-mobile-goal-create.window="show(); $wire.openGoalModal()"
 
     x-on:modal-close-goal.window="close()"
 
