@@ -26,6 +26,8 @@ class Expenses extends Component
 
     public bool $expenseModalOpen = false;
 
+    public string $expenseModalActiveTab = 'scanner';
+
     public ?string $calendarCreateDate = null;
 
     public $scannerReceipt;
@@ -52,6 +54,7 @@ class Expenses extends Component
     {
         // A atualização é iniciada dentro do modal: mantém-no aberto durante o pedido.
         $this->expenseModalOpen = true;
+        $this->expenseModalActiveTab = 'scanner';
         $this->openRouterQuotaError = '';
         $this->loadingOpenRouterQuota = true;
 
