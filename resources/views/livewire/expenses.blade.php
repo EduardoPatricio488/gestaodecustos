@@ -62,7 +62,7 @@
         @if($isScanningInvoice || $invoiceScanCompleted)
             <button
                 type="button"
-                x-on:click="open = !open; if (open) activeTab = 'scanner'"
+                x-on:click="open = true; activeTab = 'scanner'"
                 class="fixed bottom-5 right-5 z-[10001] flex max-w-[calc(100vw-2.5rem)] items-center gap-3 rounded-full border px-4 py-3 text-left shadow-none transition hover:scale-[1.02] {{ $invoiceScanCompleted ? 'border-emerald-300 bg-emerald-600 text-white' : 'border-brand-300 bg-zinc-950 text-white' }}"
                 aria-live="polite"
             >
@@ -78,7 +78,7 @@
                     </span>
                     <span class="min-w-0">
                         <span class="block text-xs font-black">A analisar ficheiro</span>
-                        <span class="block text-[10px] font-medium text-white/70" x-text="open ? 'Carrega para fechar o scanner' : 'Carrega para abrir o scanner'"></span>
+                        <span class="block text-[10px] font-medium text-white/70" x-text="'Carrega para abrir o scanner'"></span>
                     </span>
                 @endif
             </button>
