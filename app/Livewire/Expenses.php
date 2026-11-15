@@ -86,14 +86,16 @@ class Expenses extends Component
                         throw new \RuntimeException('O OpenRouter não disponibilizou os dados de utilização desta chave.');
                     }
 
-                    $used = max(0, (float) $data['usage']);
-                    $remaining = max(0, (float) $data['limit_remaining']);
-                    $limit = max(0, (float) ($data['limit'] ?? ($used + $remaining)));
+                    $used = max(0, (float) ($data['usage'] ?? 0));
+                    $hasUnlimitedLimit = $data['limit_remaining'] === null || ($data['limit'] ?? null) === null;
+                    $remaining = $hasUnlimitedLimit ? null : max(0, (float) $data['limit_remaining']);
+                    $limit = $hasUnlimitedLimit ? null : max(0, (float) $data['limit']);
 
                     return [
                         'used' => $used,
                         'limit' => $limit,
                         'remaining' => $remaining,
+                        'unlimited' => $hasUnlimitedLimit,
                         'is_free_tier' => (bool) ($data['is_free_tier'] ?? false),
                     ];
                 }
