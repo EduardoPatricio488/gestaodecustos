@@ -53,9 +53,20 @@
                 return String(minutes).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
             }
         }"
-        x-init="$watch('open', value => window.__financeProExpenseModalOpen = value); if (window.__financeProExpenseModalOpen) open = true"
-        x-on:open-expense-category-picker.window="window.__financeProExpenseModalOpen = true; open = true; activeTab = 'scanner'"
-        x-on:toggle-expense-scan-modal.window="window.__financeProExpenseModalOpen = true; open = true; activeTab = 'scanner'"
+        x-init="
+            $watch('open', value => window.__financeProExpenseModalOpen = value);
+            if (window.__financeProExpenseModalOpen) open = true;
+            window.addEventListener('open-expense-category-picker', () => {
+                window.__financeProExpenseModalOpen = true;
+                open = true;
+                activeTab = 'scanner';
+            });
+            window.addEventListener('toggle-expense-scan-modal', () => {
+                window.__financeProExpenseModalOpen = true;
+                open = true;
+                activeTab = 'scanner';
+            });
+        "
         x-on:keydown.escape.window="open = false"
         data-no-global-close
     >
@@ -194,9 +205,9 @@
 
                     <div
                         x-data="{
-                            previewUrl: null,
-                            isImage: false,
-                            fileName: '',
+                            previewUrl: window.__financeProInvoicePreviewUrl || null,
+                            isImage: window.__financeProInvoiceIsImage || false,
+                            fileName: window.__financeProInvoiceFileName || '',
                             isPreparing: false,
                             uploadProgress: 0,
                             async prepareAndUpload(event) {
@@ -205,6 +216,8 @@
                                 if (!original) return;
                                 this.fileName = original.name;
                                 this.isImage = original.type.startsWith('image/');
+                                window.__financeProInvoiceFileName = this.fileName;
+                                window.__financeProInvoiceIsImage = this.isImage;
                                 this.isPreparing = this.isImage;
                                 this.uploadProgress = 0;
                                 if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
@@ -230,6 +243,8 @@
                                     }
                                     this.previewUrl = this.isImage ? URL.createObjectURL(uploadFile) : null;
                                     this.fileName = uploadFile.name;
+                                    window.__financeProInvoicePreviewUrl = this.previewUrl;
+                                    window.__financeProInvoiceFileName = this.fileName;
                                     await this.$wire.upload('scannerReceipt', uploadFile, () => {
                                         this.isPreparing = false;
                                         this.uploadProgress = 100;
@@ -243,6 +258,7 @@
                                     console.warn('Não foi possível comprimir a fotografia; será enviada no formato original.', error);
                                     try {
                                         this.previewUrl = this.isImage ? URL.createObjectURL(original) : null;
+                                        window.__financeProInvoicePreviewUrl = this.previewUrl;
                                         await this.$wire.upload('scannerReceipt', original, () => {
                                             this.isPreparing = false;
                                             this.uploadProgress = 100;
