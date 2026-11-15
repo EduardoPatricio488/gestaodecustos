@@ -239,7 +239,18 @@ class Expenses extends Component
         $this->invoiceScanCompleted = false;
         $this->invoiceScanId = null;
 
-        // Abre o formulário de revisão da categoria com os dados extraídos pela IA.
+        // No acesso mobile, mantém o utilizador na página da app e abre a revisão
+        // dentro de um painel sobreposto. No site completo mantém o fluxo atual.
+        if ($this->dashboardMode) {
+            $this->redirect(route('mobile.home', [
+                'open_scan_review' => 1,
+                'scan_id' => $scanId,
+                'slug' => $scan['category_slug'],
+            ]), navigate: true);
+
+            return;
+        }
+
         $this->redirect(route('hub.category', [
             'slug' => $scan['category_slug'],
             'open_scan_review' => 1,
