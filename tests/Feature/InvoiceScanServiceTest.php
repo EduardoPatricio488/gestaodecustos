@@ -50,7 +50,7 @@ test('invoice scanner uses only openrouter free and returns normalised data', fu
     Http::assertSentCount(2);
 });
 
-test('invoice scanner rejects an unreadable response without retrying', function () {
+test('invoice scanner rejects an unreadable response after trying the free routes', function () {
     Http::fake([
         'https://openrouter.ai/api/v1/key' => Http::response([
             'data' => ['free_model_daily_requests' => ['used' => 0, 'limit' => 50, 'remaining' => 50]],
@@ -69,7 +69,7 @@ test('invoice scanner rejects an unreadable response without retrying', function
         'image/jpeg',
     ))->toThrow(RuntimeException::class);
 
-    Http::assertSentCount(2);
+    Http::assertSentCount(6);
 });
 
 test('invoice scanner extracts selectable pdf text locally without a hosted parser', function () {
@@ -125,7 +125,7 @@ test('invoice scanner uses a zero-cost fallback after a free route is limited', 
             'data' => ['free_model_daily_requests' => ['used' => 0, 'limit' => 50, 'remaining' => 50]],
         ]),
         'https://openrouter.ai/api/v1/chat/completions' => Http::sequence()
-            ->push(['error' => ['message' => 'Provider temporarily rate-limited upstream.']], 429)
+            ->push(['error' => ['message' => 'Provider temporarily rate-limited upstream.', 'metadata' => ['provider_name' => 'Google AI Studio', 'provider_error_code' => '429', 'limit_source' => 'upstream_provider_shared_pool']]], 429)
             ->push([
                 'choices' => [[
                     'finish_reason' => 'stop',
@@ -287,8 +287,10 @@ test('invoice scanner retries another free model when a response is truncated', 
         && data_get($request->data(), 'provider.max_price.image') === 0
     );
     Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/chat/completions')
-        && $request['model'] === 'nvidia/nemotron-3.5-super-vl:free'
-        && data_get($request->data(), 'reasoning.enabled') === false
+        && $request['model'] === 'inclusionai/ling-3.2-flash:free'
+        && data_get($request->data(), 'provider.max_price.prompt') === 0
+        && data_get($request->data(), 'provider.max_price.completion') === 0
+        && data_get($request->data(), 'provider.max_price.image') === 0
     );
     Http::assertSentCount(3);
 });
@@ -315,7 +317,36 @@ test('invoice scanner accepts complete JSON when the provider marks the response
     expect($result['amount'])->toBe(12.5);
 
     Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/chat/completions')
-        && data_get($request->data(), 'max_tokens') === 4000
+        && data_get($request->data(), 'max_tokens') === 6000
     );
     Http::assertSentCount(2);
 });
+
+test('invoice scanner stops retrying when the OpenRouter daily free quota is exhausted', function () {
+    Http::fake([
+        'https://openrouter.ai/api/v1/key' => Http::sequence()
+            ->push(['data' => ['free_model_daily_requests' => ['used' => 49, 'limit' => 50, 'remaining' => 1]]])
+            ->push(['data' => ['free_model_daily_requests' => ['used' => 50, 'limit' => 50, 'remaining' => 0]]]),
+        'https://openrouter.ai/api/v1/chat/completions' => Http::response([
+            'error' => [
+                'message' => 'Rate limit exceeded',
+                'metadata' => ['error_type' => 'rate_limit_exceeded'],
+            ],
+        ], 429),
+    ]);
+
+    expect(fn () => app(InvoiceScanService::class)->analyse(
+        'fake image bytes',
+        'fatura.jpg',
+        'image/jpeg',
+    ))->toThrow(RuntimeException::class, 'quota diária gratuita');
+
+    Http::assertSentCount(3);
+    Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/chat/completions')
+        && $request['model'] === 'google/gemma-4-31b-it:free'
+        && data_get($request->data(), 'provider.max_price.prompt') === 0
+        && data_get($request->data(), 'provider.max_price.completion') === 0
+        && data_get($request->data(), 'provider.max_price.image') === 0
+    );
+});
+
