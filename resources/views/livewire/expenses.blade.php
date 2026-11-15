@@ -121,11 +121,15 @@
                                         <flux:icon name="arrow-path" class="size-3 animate-spin" /> A consultar...
                                     </span>
                                 @elseif($openRouterQuota)
-                                    <span class="text-xs font-black tabular-nums {{ $openRouterQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
-                                        {{ number_format($openRouterQuota['remaining']) }} / {{ number_format($openRouterQuota['limit']) }} de crédito disponíveis
+                                    <span class="text-xs font-black tabular-nums {{ $openRouterQuota['unlimited'] || $openRouterQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
+                                        @if($openRouterQuota['unlimited'])
+                                            Sem limite definido
+                                        @else
+                                            {{ number_format($openRouterQuota['remaining'], 2, ',', '.') }} / {{ number_format($openRouterQuota['limit'], 2, ',', '.') }} créditos disponíveis
+                                        @endif
                                     </span>
                                 @endif
-                                <button type="button" wire:click="refreshOpenRouterQuota" wire:loading.attr="disabled" wire:target="refreshOpenRouterQuota" class="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-[9px] font-bold text-zinc-500 transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-50">
+                                <button type="button" wire:click.stop="refreshOpenRouterQuota" wire:loading.attr="disabled" wire:target="refreshOpenRouterQuota" class="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-[9px] font-bold text-zinc-500 transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-50">
                                     @if($loadingOpenRouterQuota) A consultar... @else Atualizar @endif
                                 </button>
                             </div>
@@ -133,9 +137,9 @@
                         @if($openRouterQuota)
                             <div class="mt-2 flex items-center justify-between gap-3">
                                 <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-                                    <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ $openRouterQuota['limit'] > 0 ? min(100, ($openRouterQuota['used'] / $openRouterQuota['limit']) * 100) : 0 }}%"></div>
+                                    <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ ! $openRouterQuota['unlimited'] && $openRouterQuota['limit'] > 0 ? min(100, ($openRouterQuota['used'] / $openRouterQuota['limit']) * 100) : 0 }}%"></div>
                                 </div>
-                                <span class="shrink-0 text-[9px] font-bold text-zinc-500">{{ $openRouterQuota['used'] }} utilizados</span>
+                                <span class="shrink-0 text-[9px] font-bold text-zinc-500">{{ number_format($openRouterQuota['used'], 2, ',', '.') }} utilizados</span>
                             </div>
                             @if($openRouterQuota['remaining'] <= 0)
                                 <p class="mt-2 text-[10px] font-semibold text-red-500">O saldo de crédito desta chave está esgotado. Verifica os limites da tua conta OpenRouter.</p>
