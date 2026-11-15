@@ -125,8 +125,6 @@
                                         {{ $openRouterQuota['requests_remaining'] }} uploads disponíveis hoje
                                     </span>
                                 @endif
-                                    </span>
-                                @endif
                                 <button type="button" x-on:click.stop.prevent="$wire.call('refreshOpenRouterQuota')" wire:loading.attr="disabled" wire:target="refreshOpenRouterQuota" class="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-[9px] font-bold text-zinc-500 transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-50">
                                     <span wire:loading.remove wire:target="refreshOpenRouterQuota">Atualizar</span>
                                     <span wire:loading wire:target="refreshOpenRouterQuota">A consultar...</span>
