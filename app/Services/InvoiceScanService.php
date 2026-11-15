@@ -54,7 +54,8 @@ class InvoiceScanService
             }
         }
 
-        $quota = app(OpenRouterQuotaService::class)->dailyQuota();
+        // Consulta sempre o contador atualizado para não iniciar uma análise com quota em cache desatualizada.
+        $quota = app(OpenRouterQuotaService::class)->dailyQuota(true);
         if (($quota['available'] ?? false) && (int) ($quota['remaining'] ?? 0) <= 0) {
             throw new RuntimeException('A quota diária gratuita do OpenRouter está esgotada. A reposição ocorre às 00:00 UTC.');
         }
@@ -95,11 +96,15 @@ PROMPT;
         $lastStatus = null;
         $result = null;
         $lastFinishReason = null;
+        $dailyQuotaExhausted = false;
+        $platformRateLimited = false;
+        $retryAfterSeconds = null;
         // Percorre várias rotas gratuitas com suporte a imagem antes do router automático.
         // O limite de preço zero impede a utilização de fornecedores/modelos pagos.
         $configuredModel = (string) config('services.openrouter.model', 'google/gemma-4-26b-a4b-it:free');
         $models = array_values(array_unique(array_filter([
             'google/gemma-4-31b-it:free',
+            'inclusionai/ling-3.2-flash:free',
             'dots-studio/dots-3-note-preview:free',
             $configuredModel,
             'google/gemma-4-26b-a4b-it:free',
@@ -187,9 +192,49 @@ PROMPT;
                 'provider_error' => $response->json('error'),
             ]);
 
+            if ($lastStatus === 429) {
+                $metadata = $response->json('error.metadata', []);
+                $providerName = data_get($metadata, 'provider_name');
+                $providerCode = data_get($metadata, 'provider_error_code') ?? data_get($metadata, 'provider_code');
+                $limitSource = (string) data_get($metadata, 'limit_source', '');
+                $isUpstreamLimit = filled($providerName)
+                    || filled($providerCode)
+                    || str_starts_with($limitSource, 'upstream_');
+
+                // Os limites da OpenRouter são partilhados por todos os modelos gratuitos.
+                // Não vale a pena consumir mais pedidos de fallback quando o bloqueio é da plataforma.
+                if (! $isUpstreamLimit) {
+                    $latestQuota = app(OpenRouterQuotaService::class)->dailyQuota(true);
+
+                    if (($latestQuota['available'] ?? false) && (int) ($latestQuota['remaining'] ?? 0) <= 0) {
+                        $dailyQuotaExhausted = true;
+                        break;
+                    }
+
+                    if (data_get($metadata, 'error_type') === 'rate_limit_exceeded'
+                        || $response->hasHeader('X-RateLimit-Reset')) {
+                        $platformRateLimited = true;
+                        $retryAfter = $response->header('Retry-After');
+                        $retryAfterSeconds = is_numeric($retryAfter) ? max(1, (int) $retryAfter) : null;
+                        break;
+                    }
+                }
+            }
+
             if (! in_array($lastStatus, [404, 429, 502, 503, 504], true)) {
                 break;
             }
+        }
+
+        if ($dailyQuotaExhausted) {
+            throw new RuntimeException('A quota diária gratuita do OpenRouter foi atingida. Todos os modelos gratuitos partilham este limite; aguarda a reposição às 00:00 UTC antes de voltares a analisar a fatura.');
+        }
+
+        if ($platformRateLimited) {
+            $waitMessage = $retryAfterSeconds
+                ? ' Aguarda '.$retryAfterSeconds.' segundos e tenta novamente.'
+                : ' Aguarda um pouco e tenta novamente.';
+            throw new RuntimeException('O OpenRouter atingiu temporariamente o limite de pedidos gratuitos por minuto. Não foi criada qualquer despesa nem utilizado um modelo pago.'.$waitMessage);
         }
 
         if (! is_array($result) && ! $response?->successful()) {
@@ -201,6 +246,18 @@ PROMPT;
             }
             if ($response === null) {
                 throw new RuntimeException('Os fornecedores gratuitos do OpenRouter não responderam a tempo. Não foi criada qualquer despesa nem utilizado um modelo pago; tenta novamente mais tarde.');
+            }
+            if ($lastStatus === 429) {
+                $latestQuota = app(OpenRouterQuotaService::class)->dailyQuota(true);
+                if (($latestQuota['available'] ?? false) && (int) ($latestQuota['remaining'] ?? 0) <= 0) {
+                    throw new RuntimeException('A quota diária gratuita do OpenRouter foi atingida. Todos os modelos gratuitos partilham este limite; aguarda a reposição às 00:00 UTC antes de voltares a analisar a fatura.');
+                }
+
+                $retryAfter = $response->header('Retry-After');
+                $waitMessage = is_numeric($retryAfter)
+                    ? ' Aguarda '.max(1, (int) $retryAfter).' segundos e tenta novamente.'
+                    : ' Aguarda alguns minutos e tenta novamente.';
+                throw new RuntimeException('Os fornecedores gratuitos do OpenRouter estão temporariamente sem capacidade (HTTP 429). Foram tentadas alternativas gratuitas; não foi criado qualquer gasto nem utilizado um modelo pago.'.$waitMessage);
             }
             if ($lastStatus === 404) {
                 throw new RuntimeException('O OpenRouter não encontrou um endpoint gratuito permitido pelas preferências da conta. Não foi criada qualquer despesa nem utilizado um modelo pago; verifica as preferências de privacidade e guardrails da conta.');
