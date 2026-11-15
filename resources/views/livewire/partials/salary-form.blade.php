@@ -1,9 +1,10 @@
-<div class="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800">
-                        <button type="button" wire:click="$set('salaryFormMode', 'manual')" class="rounded-xl px-3 py-3 text-[10px] font-black uppercase transition {{ $salaryFormMode === 'manual' ? 'bg-white text-indigo-600 shadow dark:bg-zinc-900' : 'text-zinc-500' }}">Preencher manualmente</button>
-                        <button type="button" wire:click="$set('salaryFormMode', 'scanner')" class="rounded-xl px-3 py-3 text-[10px] font-black uppercase transition {{ $salaryFormMode === 'scanner' ? 'bg-white text-indigo-600 shadow dark:bg-zinc-900' : 'text-zinc-500' }}">Scanner do contrato IA</button>
+<div x-data="{ salaryMode: @entangle('salaryFormMode').live }" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800">
+                        <button type="button" x-on:click="salaryMode = 'manual'" x-bind:class="salaryMode === 'manual' ? 'bg-white text-indigo-600 shadow dark:bg-zinc-900' : 'text-zinc-500'" class="rounded-xl px-3 py-3 text-[10px] font-black uppercase transition">Preencher manualmente</button>
+                        <button type="button" x-on:click="salaryMode = 'scanner'" x-bind:class="salaryMode === 'scanner' ? 'bg-white text-indigo-600 shadow dark:bg-zinc-900' : 'text-zinc-500'" class="rounded-xl px-3 py-3 text-[10px] font-black uppercase transition">Scanner do contrato IA</button>
                     </div>
 
-                    @if($salaryFormMode === 'scanner')
+                    <section x-cloak x-show="salaryMode === 'scanner'">
                         <section class="space-y-4 rounded-3xl border border-indigo-200 bg-indigo-50/70 p-5 dark:border-indigo-900/50 dark:bg-indigo-950/20">
                             <div>
                                 <h3 class="text-sm font-black uppercase text-indigo-700 dark:text-indigo-300">Ler fotografia do contrato</h3>
@@ -249,4 +250,5 @@
                         <textarea wire:model="recAdditionalBenefits" rows="3" maxlength="2000" placeholder="Ex.: seguro de saúde, prémio anual, formação, teletrabalho, viatura, passe de transporte..." class="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"></textarea>
                         @error('recAdditionalBenefits')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                     </div>
-                    @endif
+                    </section>
+                    </div>
