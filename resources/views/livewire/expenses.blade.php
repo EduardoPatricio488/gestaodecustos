@@ -153,22 +153,35 @@
                         @endif
                     </div>
 
-                    <div class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 sm:p-5 text-center">
-                        <input type="file" wire:model="scannerReceipt" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
-                        @if($scannerReceipt)
-                            <div class="mt-4 flex flex-col items-center gap-2">
-                                @if(str_starts_with($scannerReceipt->getMimeType() ?? '', 'image/'))
-                                    <img src="{{ $scannerReceipt->temporaryUrl() }}" alt="Pré-visualização da fatura" class="max-h-44 rounded-xl border border-zinc-200 dark:border-zinc-700 object-contain shadow-lg" />
-                                @else
-                                    <div class="rounded-xl bg-red-50 px-6 py-4 text-xs font-black text-red-600 dark:bg-red-950/30">PDF carregado</div>
-                                @endif
-                                <span class="text-[10px] font-bold text-emerald-600">Fatura carregada com sucesso</span>
-                            </div>
-                        @else
-                            <p class="mt-3 text-xs font-bold text-zinc-500">Seleciona uma fotografia, imagem ou PDF da fatura</p>
-                            <p class="mt-1 text-[10px] text-zinc-400">PDF, JPG, PNG ou WEBP · Máximo 20 MB</p>
-                        @endif
+                    <div
+                        x-data="{
+                            previewUrl: null,
+                            isImage: false,
+                            fileName: '',
+                            showPreview(event) {
+                                const file = event.target.files?.[0];
+                                if (!file) return;
+                                if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
+                                this.fileName = file.name;
+                                this.isImage = file.type.startsWith('image/');
+                                this.previewUrl = this.isImage ? URL.createObjectURL(file) : null;
+                            }
+                        }"
+                        class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 sm:p-5 text-center"
+                    >
+                        <input type="file" wire:model="scannerReceipt" x-on:change="showPreview($event)" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
+                        <div x-show="previewUrl" x-cloak class="mt-4 flex flex-col items-center gap-2">
+                            <img x-bind:src="previewUrl" alt="Pré-visualização da fatura" class="max-h-56 max-w-full rounded-xl border border-zinc-200 dark:border-zinc-700 object-contain shadow-lg" />
+                            <span class="max-w-full truncate text-[10px] font-bold text-zinc-600 dark:text-zinc-300" x-text="fileName"></span>
+                        </div>
+                        <div x-show="fileName && !isImage" x-cloak class="mt-4 flex flex-col items-center gap-2">
+                            <div class="rounded-xl bg-red-50 px-6 py-4 text-xs font-black text-red-600 dark:bg-red-950/30">PDF selecionado</div>
+                            <span class="max-w-full truncate text-[10px] font-bold text-zinc-600 dark:text-zinc-300" x-text="fileName"></span>
+                        </div>
+                        <p x-show="!fileName" class="mt-3 text-xs font-bold text-zinc-500">Seleciona uma fotografia, imagem ou PDF da fatura</p>
+                        <p x-show="!fileName" class="mt-1 text-[10px] text-zinc-400">PDF, JPG, PNG ou WEBP · Máximo 20 MB</p>
                         <div wire:loading wire:target="scannerReceipt" class="mt-3 text-xs font-bold text-brand-500">A carregar imagem...</div>
+                        <div wire:loading.remove wire:target="scannerReceipt" x-show="fileName" class="mt-2 text-[10px] font-bold text-emerald-600">Ficheiro pronto</div>
                     </div>
                     <div wire:loading.flex wire:target="scanInvoiceAndDetectCategory" class="flex-col rounded-xl border border-brand-500/20 bg-brand-500/5 px-4 py-3 text-center">
                         <div class="flex items-center justify-center gap-2">
