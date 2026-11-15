@@ -145,13 +145,6 @@
                         Entrar no site completo
                     </button>
                 </form>
-                <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Tens a certeza de que pretendes terminar a sessão?')">
-                    @csrf
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-bold text-white transition active:scale-95 hover:bg-white/20">
-                        <span aria-hidden="true">⇥</span>
-                        Terminar sessão
-                    </button>
-                </form>
             </div>
         </div>
 
@@ -168,7 +161,21 @@
         <div class="fp-mobile-greeting px-1" style="animation: fp-greeting-in .65s cubic-bezier(.2,.8,.2,1) both;">
             <div class="flex items-center gap-2">
                 <span class="text-2xl" aria-hidden="true" style="animation: fp-greeting-wave 2.4s ease-in-out infinite;">{{ $mobileGreetingIcon }}</span>
-                <h2 class="text-2xl font-black tracking-tight text-zinc-900 dark:text-white">{{ $mobileGreeting }}, {{ auth()->user()->name }}</h2>
+                <div class="relative" x-data="{ accountMenuOpen: false }">
+                    <button type="button" x-on:click="accountMenuOpen = !accountMenuOpen" x-on:click.outside="accountMenuOpen = false" class="inline-flex items-center gap-2 rounded-xl text-left text-2xl font-black tracking-tight text-zinc-900 dark:text-white">
+                        <span>{{ $mobileGreeting }}, {{ auth()->user()->name }}</span>
+                        <span class="text-sm text-zinc-400 transition-transform" x-bind:class="accountMenuOpen ? 'rotate-180' : ''" aria-hidden="true">▾</span>
+                    </button>
+                    <div x-cloak x-show="accountMenuOpen" x-transition class="absolute left-0 top-full z-50 mt-2 min-w-52 rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+                        <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Tens a certeza de que pretendes terminar a sessão?')">
+                            @csrf
+                            <button type="submit" class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-rose-600 transition hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30">
+                                <span aria-hidden="true">⇥</span>
+                                Terminar sessão
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
             <p class="mt-1 pl-9 text-xs font-medium text-zinc-500 dark:text-zinc-400">{{ $mobileGreetingMessage }}</p>
         </div>
