@@ -94,7 +94,7 @@ class Expenses extends Component
                     $freeRequests = $data['free_model_daily_requests'] ?? null;
 
                     if (! is_array($freeRequests) || ! array_key_exists('remaining', $freeRequests) || ! array_key_exists('limit', $freeRequests)) {
-                        throw new \\RuntimeException('O OpenRouter não disponibilizou o limite diário de pedidos gratuitos desta chave.');
+                        throw new \RuntimeException('O OpenRouter não disponibilizou o limite diário de pedidos gratuitos desta chave.');
                     }
 
                     return [
