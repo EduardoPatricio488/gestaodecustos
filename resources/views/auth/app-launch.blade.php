@@ -4,15 +4,19 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#070b13">
-    <meta name="color-scheme" content="dark">
+    <meta name="color-scheme" content="light dark">
     <script>
         (() => {
+            let theme = 'dark';
             try {
-                localStorage.setItem('finance-pro-mobile-theme', 'dark');
-                localStorage.setItem('finance-pro-theme', 'dark');
+                const saved = localStorage.getItem('finance-pro-theme') || localStorage.getItem('finance-pro-mobile-theme');
+                if (saved === 'light' || saved === 'dark') theme = saved;
+                localStorage.setItem('finance-pro-theme', theme);
+                localStorage.setItem('finance-pro-mobile-theme', theme);
             } catch (_) {}
-            document.documentElement.classList.add('dark');
-            document.documentElement.style.colorScheme = 'dark';
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+            document.documentElement.dataset.theme = theme;
+            document.documentElement.style.colorScheme = theme;
         })();
     </script>
     <link rel="manifest" href="/manifest.json?v=20261114-2">
@@ -34,6 +38,16 @@
         #fp-navigation-progress.is-loading { opacity: 1; }
         #fp-navigation-progress-bar { animation: fp-loading-progress 1.1s ease-in-out infinite; }
         .fp-launch-button:disabled { opacity: .72; cursor: wait; }
+        html[data-theme="light"] body { background:#f4f7fb; color:#18181b; }
+        html[data-theme="light"] .fp-launch-card { background:#fff; border-color:#e4e4e7; color:#18181b; }
+        html[data-theme="light"] .fp-muted { color:#52525b; }
+        html[data-theme="light"] .fp-status { background:#fff; border-color:#d4d4d8; }
+        html[data-theme="light"] .fp-status p:last-child { color:#52525b; }
+        html[data-theme="light"] .fp-option-secondary { background:#fff; border-color:#d4d4d8; color:#18181b; }
+        html[data-theme="light"] .fp-option-secondary span:last-child { color:#71717a; }
+        html[data-theme="light"] .fp-option-secondary .fp-option-description { color:#52525b; }
+        html[data-theme="light"] .fp-theme-button { background:#fff; border-color:#d4d4d8; color:#27272a; }
+        html[data-theme="light"] .fp-heading-description { color:#52525b; }
         @media(prefers-reduced-motion:reduce){.fp-orbit,.fp-rise,.fp-pulse,#fp-navigation-progress-bar{animation:none!important}}
     </style>
 </head>
@@ -41,6 +55,33 @@
     <div id="fp-navigation-progress" class="pointer-events-none fixed inset-x-0 top-0 z-[100] h-1 overflow-hidden bg-white/10" role="status" aria-live="polite">
         <div id="fp-navigation-progress-bar" class="h-full w-1/3 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,.8)]"></div>
     </div>
+    <script>
+        (() => {
+            const button = document.getElementById('fp-theme-toggle');
+            const label = document.getElementById('fp-theme-label');
+            const icon = document.getElementById('fp-theme-icon');
+            const meta = document.querySelector('meta[name="theme-color"]');
+            const applyTheme = (theme) => {
+                const normalized = theme === 'light' ? 'light' : 'dark';
+                document.documentElement.dataset.theme = normalized;
+                document.documentElement.classList.toggle('dark', normalized === 'dark');
+                document.documentElement.style.colorScheme = normalized;
+                if (meta) meta.setAttribute('content', normalized === 'dark' ? '#070b13' : '#f4f7fb');
+                if (label) label.textContent = normalized === 'dark' ? 'Tema claro' : 'Tema escuro';
+                if (icon) icon.textContent = normalized === 'dark' ? '☀' : '☾';
+                try {
+                    localStorage.setItem('finance-pro-theme', normalized);
+                    localStorage.setItem('finance-pro-mobile-theme', normalized);
+                } catch (_) {}
+            };
+            let current = document.documentElement.dataset.theme || 'dark';
+            applyTheme(current);
+            button?.addEventListener('click', () => {
+                current = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+                applyTheme(current);
+            });
+        })();
+    </script>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
             const progress = document.getElementById('fp-navigation-progress');
@@ -64,15 +105,19 @@
                 </div>
                 <p class="text-xs font-black uppercase tracking-[.3em] text-emerald-300">Finance Pro AI</p>
                 <h1 class="mt-3 text-2xl font-black tracking-tight">Como queres entrar?</h1>
-                <p class="mt-2 text-sm text-zinc-400">Escolhe a experiência que pretendes utilizar.</p>
+                <p class="fp-heading-description mt-2 text-sm text-zinc-400">Escolhe a experiência que pretendes utilizar.</p>
+                <button id="fp-theme-toggle" type="button" class="fp-theme-button mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.06] px-4 py-2 text-xs font-bold text-zinc-200 transition hover:bg-white/10" aria-label="Alterar tema">
+                    <span id="fp-theme-icon" aria-hidden="true">☀</span>
+                    <span id="fp-theme-label">Tema claro</span>
+                </button>
             </div>
             @auth
-                <div class="mb-5 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-center" role="status">
+                <div class="fp-status mb-5 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-center" role="status">
                     <p class="text-sm font-bold text-emerald-200">Sessão já iniciada</p>
                     <p class="mt-1 text-xs text-zinc-300">Olá, {{ auth()->user()->name }}. Podes entrar diretamente no mobile ou no site completo, sem voltar a iniciar sessão.</p>
                 </div>
             @else
-                <div class="mb-5 rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-center" role="status">
+                <div class="fp-status mb-5 rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-center" role="status">
                     <p class="text-sm font-bold text-zinc-200">Ainda não tens sessão iniciada</p>
                     <p class="mt-1 text-xs text-zinc-400">Escolhe uma opção e inicia sessão quando te for pedido.</p>
                 </div>
@@ -90,7 +135,7 @@
                 <form method="POST" action="{{ route('app.launch.choose') }}">
                     @csrf
                     <input type="hidden" name="mode" value="full">
-                    <button type="submit" class="flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-white/[.04] p-5 text-left transition hover:bg-white/[.08] active:scale-[.98]">
+                    <button type="submit" class="fp-option-secondary flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-white/[.04] p-5 text-left transition hover:bg-white/[.08] active:scale-[.98]">
                         <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-zinc-700 text-white"><svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
                         <span class="min-w-0 flex-1"><span class="block text-base font-black">Entrar no site completo</span><span class="mt-1 block text-xs leading-relaxed text-zinc-400">Abrir a página inicial e todas as funcionalidades.</span></span>
                         <span class="text-2xl text-zinc-400">›</span>
