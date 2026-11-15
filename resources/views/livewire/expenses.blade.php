@@ -66,7 +66,7 @@
         @if($isScanningInvoice || $invoiceScanCompleted)
             <button
                 type="button"
-                x-on:click="open = true; activeTab = 'scanner'; window.__financeProExpenseModalOpen = true"
+                x-on:click.stop.prevent="window.dispatchEvent(new CustomEvent('open-expense-category-picker'))"
                 class="fixed bottom-5 right-5 z-[10001] flex max-w-[calc(100vw-2.5rem)] items-center gap-3 rounded-full border px-4 py-3 text-left shadow-none transition hover:scale-[1.02] {{ $invoiceScanCompleted ? 'border-emerald-300 bg-emerald-600 text-white' : 'border-brand-300 bg-zinc-950 text-white' }}"
                 aria-live="polite"
             >
