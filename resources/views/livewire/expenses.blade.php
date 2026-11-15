@@ -298,7 +298,14 @@
                         </div>
                     @endif
                     <div class="flex flex-col-reverse sm:flex-row gap-3">
-                        <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500">Cancelar</button>
+                        @if($isScanningInvoice)
+                            <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-xs font-black uppercase tracking-wider text-brand-600 transition hover:bg-brand-500/20 dark:text-brand-300">
+                                Minimizar scanner
+                            </button>
+                        @else
+                            <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500">Cancelar</button>
+                        @endif
+                        
                         <button type="button" wire:click="scanInvoiceAndDetectCategory" x-on:click="startInvoiceTimer()" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || $isScanningInvoice) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
                             @if($isScanningInvoice)
                                 <flux:icon name="arrow-path" class="size-4 animate-spin" /> A analisar fatura...
