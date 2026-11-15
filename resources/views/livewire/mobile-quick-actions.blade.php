@@ -16,6 +16,21 @@
         <livewire:expense-form :dashboard-mode="true" :key="'mobile-expense-form'" />
     @endif
 
+    @if($loaded['scan-review'] ?? false)
+        <div class="fixed inset-0 z-[100050] flex flex-col bg-zinc-50 dark:bg-zinc-950" role="dialog" aria-modal="true" aria-label="Revisão da despesa">
+            <div class="flex shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+                <div>
+                    <p class="text-[9px] font-black uppercase tracking-widest text-emerald-600">Análise concluída</p>
+                    <h2 class="text-sm font-black text-zinc-900 dark:text-white">Rever dados da fatura</h2>
+                </div>
+                <a href="{{ route('mobile.home') }}" wire:navigate class="flex size-9 items-center justify-center rounded-xl bg-zinc-100 text-xl text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300" aria-label="Fechar">×</a>
+            </div>
+            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                <livewire:category-hub :slug="request()->query('slug')" :key="'mobile-scan-review-'.request()->query('scan_id')" />
+            </div>
+        </div>
+    @endif
+
     @if($loaded['income'] ?? false)
         <livewire:income-hub :dashboard-mode="true" :key="'mobile-income'" />
     @endif
