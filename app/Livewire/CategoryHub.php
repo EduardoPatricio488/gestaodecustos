@@ -172,7 +172,12 @@ class CategoryHub extends Component
         $this->spent_at = now()->format('Y-m-d');
         $this->currency = auth()->user()->currentWorkspace->currency ?? 'EUR';
         $this->setHubConfig();
-        $this->refreshScannerQuota();
+
+        // A revisão de uma fatura já analisada não precisa de consultar a quota
+        // externa da IA; evita atrasar a abertura do formulário no telemóvel.
+        if (! request()->boolean('open_scan_review')) {
+            $this->refreshScannerQuota();
+        }
 
         $pendingScanKey = 'pending_expense_scan:'.auth()->user()->current_workspace_id.':'.auth()->id();
         $pendingScan = null;
