@@ -289,7 +289,7 @@
                 </div>
                 @endif
                 @if($mobileShortcutSettings['connect']['enabled'])
-                <div aria-disabled="true" href="/social" wire:navigate data-mobile-item="connect" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['connect']['order'] }};" class="group cursor-not-allowed opacity-75 col-span-2 flex min-h-24 w-full items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
+                <div aria-disabled="true" data-mobile-item="connect" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['connect']['order'] }};" class="group cursor-not-allowed opacity-75 col-span-2 flex min-h-24 w-full items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
                     <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"><span class="text-2xl font-bold" aria-hidden="true">◎</span></span>
                     <span class="min-w-0">
                         <span class="block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['connect']['label'] }}</span>
