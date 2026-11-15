@@ -19,7 +19,7 @@ class MobileQuickActions extends Component
         if (
             request()->boolean('open_scan_review')
             && is_string($scanId)
-            && \\Illuminate\\Support\\Str::isUuid($scanId)
+            && \Illuminate\Support\Str::isUuid($scanId)
             && is_string($slug)
             && $slug !== ''
         ) {
