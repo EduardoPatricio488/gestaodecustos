@@ -185,7 +185,11 @@ Route::get('/sitemap.xml', function () {
 Route::view('/llms.txt', 'seo.llms')->name('seo.llms');
 
 
-Route::redirect('/', '/abrir-app')->name('home');
+Route::get('/', function (Request $request) {
+    $isMobileDevice = preg_match('/Android|iPhone|iPad|iPod|Mobile|Windows Phone|webOS/i', $request->userAgent() ?? '') === 1;
+
+    return redirect()->route($isMobileDevice ? 'app.launch' : 'public.home');
+})->name('home');
 
 Route::view('/inicio', 'welcome')->name('public.home');
 
