@@ -12,6 +12,7 @@
         }
     }"
     x-on:{{ !empty($onboardingModal) ? 'onboarding-' : '' }}modal-show-add-investment.window="show()"
+    x-on:open-mobile-investment-create.window="show()"
     x-on:{{ !empty($onboardingModal) ? 'onboarding-' : '' }}modal-close-add-investment.window="close()"
     x-on:keydown.escape.window="close()">
 
