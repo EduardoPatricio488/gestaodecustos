@@ -4,6 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#070b13">
+    <meta name="color-scheme" content="dark">
+    <script>
+        (() => {
+            try {
+                localStorage.setItem('finance-pro-mobile-theme', 'dark');
+                localStorage.setItem('finance-pro-theme', 'dark');
+            } catch (_) {}
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+        })();
+    </script>
     <link rel="manifest" href="/manifest.json?v=20261114-2">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
