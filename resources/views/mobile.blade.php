@@ -136,14 +136,23 @@
                     </button>
                 </div>
             </div>
-            <form method="POST" action="{{ route('device.mode') }}" class="mt-5">
-                @csrf
-                <input type="hidden" name="mode" value="full">
-                <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-zinc-900 shadow-sm transition active:scale-95">
-                    <span aria-hidden="true">↗</span>
-                    Entrar no site completo
-                </button>
-            </form>
+            <div class="mt-5 flex flex-wrap items-center gap-2">
+                <form method="POST" action="{{ route('device.mode') }}">
+                    @csrf
+                    <input type="hidden" name="mode" value="full">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-zinc-900 shadow-sm transition active:scale-95">
+                        <span aria-hidden="true">↗</span>
+                        Entrar no site completo
+                    </button>
+                </form>
+                <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Tens a certeza de que pretendes terminar a sessão?')">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-bold text-white transition active:scale-95 hover:bg-white/20">
+                        <span aria-hidden="true">⇥</span>
+                        Terminar sessão
+                    </button>
+                </form>
+            </div>
         </div>
 
         @php
