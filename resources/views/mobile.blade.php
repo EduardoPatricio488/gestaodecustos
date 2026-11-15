@@ -12,13 +12,16 @@
     <link rel="apple-touch-icon" href="/icon-192x192.png?v=20261114-1">
     <script>
         (() => {
-            const storageKey = 'finance-pro-mobile-theme';
+            const storageKey = 'finance-pro-theme';
+            const mobileStorageKey = 'finance-pro-mobile-theme';
             const applyTheme = () => {
                 let theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
                 try {
-                    const savedTheme = localStorage.getItem(storageKey);
+                    // O tema principal é a fonte de verdade partilhada pelo site e pela app.
+                    const savedTheme = localStorage.getItem(storageKey) || localStorage.getItem(mobileStorageKey);
                     if (savedTheme === 'dark' || savedTheme === 'light') theme = savedTheme;
-                    else localStorage.setItem(storageKey, theme);
+                    localStorage.setItem(storageKey, theme);
+                    localStorage.setItem(mobileStorageKey, theme);
                 } catch (_) {}
                 const isDark = theme === 'dark';
                 document.documentElement.classList.toggle('dark', isDark);
@@ -32,7 +35,10 @@
                 apply: applyTheme,
                 toggle() {
                     const nextTheme = applyTheme() ? 'light' : 'dark';
-                    try { localStorage.setItem(storageKey, nextTheme); } catch (_) {}
+                    try {
+                        localStorage.setItem(storageKey, nextTheme);
+                        localStorage.setItem(mobileStorageKey, nextTheme);
+                    } catch (_) {}
                     applyTheme();
                     return nextTheme === 'dark';
                 },
