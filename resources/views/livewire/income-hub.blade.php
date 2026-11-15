@@ -2265,10 +2265,6 @@
                             <input type="number" step="0.01" wire:model="amount" placeholder="0,00" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-lg font-black text-zinc-900 dark:text-white outline-none focus:border-emerald-500 transition-all">
                         </div>
                         @endif
-                        <div class="relative">
-                            <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Data</label>
-                            <input type="date" wire:model="received_at" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none">
-                        </div>
                         @if($extraSalaryId)
                             <div class="relative">
                                 <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-emerald-600 z-10">Total do serviço ({{ strtoupper($currency) }})</label>
@@ -2276,6 +2272,12 @@
                                 @error('amount')<p class="mt-1 text-xs font-bold text-red-600">{{ $message }}</p>@enderror
                             </div>
                         @endif
+                    </div>
+
+                    {{-- DATA COM A MESMA LARGURA DA DESCRIÇÃO --}}
+                    <div class="relative">
+                        <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Data</label>
+                        <input type="date" wire:model="received_at" class="w-full h-14 bg-zinc-50 dark:bg-zinc-950 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 text-sm font-bold text-zinc-900 dark:text-white outline-none">
                     </div>
 
                     @if(! $extraSalaryId)
