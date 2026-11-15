@@ -111,7 +111,11 @@ class InvestmentsHub extends Component
     public function mount(): void
     {
         $this->lastUpdated = now()->format('H:i');
-        $this->loadLatestPortfolioAnalysis();
+
+        // Na versão móvel só são necessários os formulários; não carregar análises nesta fase.
+        if (! $this->mobileMode) {
+            $this->loadLatestPortfolioAnalysis();
+        }
     }
 
     private function portfolioAnalysisQuery()
@@ -1263,6 +1267,39 @@ class InvestmentsHub extends Component
     public function render()
     {
         $user = Auth::user();
+
+        // A página móvel utiliza este componente apenas para os modais de registo.
+        // Evita carregar carteira, análises e cotações externas durante a abertura da app.
+        if ($this->mobileMode) {
+            $bankAccounts = BankAccount::where('workspace_id', $user->current_workspace_id)
+                ->whereNotIn('type', ['investimento', 'investimentos'])
+                ->when($user->currentWorkspace?->type === 'personal', fn ($q) => $q->where('user_id', $user->id))
+                ->where('status', '!=', 'archived')
+                ->orderBy('name')
+                ->get();
+
+            return view('livewire.investments-hub', [
+                'bankAccounts' => $bankAccounts,
+                'myAssets' => collect(),
+                'totalInvested' => 0,
+                'currentValue' => 0,
+                'totalProfit' => 0,
+                'totalPnlPct' => 0,
+                'composition' => collect(),
+                'bestPerformer' => null,
+                'worstPerformer' => null,
+                'highestExposure' => null,
+                'marketData' => [],
+                'estimatedTax' => 0,
+                'recentIncomes' => collect(),
+                'totalIncomeNet' => 0,
+                'advisorData' => [],
+                'portfolioAnalysisHistory' => collect(),
+                'portfolioAnalysisDate' => null,
+                'selectedPortfolioAnalysisId' => null,
+            ]);
+        }
+
         $isPersonalWorkspace = $user->currentWorkspace?->type === 'personal';
         $query = Investment::where('workspace_id', $user->current_workspace_id)
             ->when($isPersonalWorkspace, fn ($q) => $q->where('user_id', $user->id));
