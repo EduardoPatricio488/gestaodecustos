@@ -38,6 +38,8 @@ class Expenses extends Component
 
     public ?int $invoiceScanStartedAt = null;
 
+    public bool $invoiceScanCompleted = false;
+
     public string $scannerError = '';
 
     public ?array $openRouterQuota = null;
@@ -127,6 +129,7 @@ class Expenses extends Component
         $this->isScanningInvoice = false;
         $this->invoiceScanId = null;
         $this->invoiceScanStartedAt = null;
+        $this->invoiceScanCompleted = false;
 
         try {
             $this->validate([
@@ -174,6 +177,7 @@ class Expenses extends Component
         $cacheKey = 'invoice_scan:'.$user->id.':'.$user->current_workspace_id.':'.$scanId;
         $this->invoiceScanId = $scanId;
         $this->invoiceScanStartedAt = now()->timestamp;
+        $this->invoiceScanCompleted = false;
         $this->isScanningInvoice = true;
 
         \Illuminate\Support\Facades\Cache::put($cacheKey, [
@@ -254,17 +258,43 @@ class Expenses extends Component
             \Illuminate\Support\Facades\Cache::put($cacheKey, $scan, now()->addMinutes(5));
         }
 
-        $scanId = $this->invoiceScanId;
         $this->isScanningInvoice = false;
-        $this->invoiceScanId = null;
 
         if (($scan['status'] ?? null) !== 'completed') {
+            $this->invoiceScanId = null;
+            $this->invoiceScanCompleted = false;
             \Illuminate\Support\Facades\Cache::forget($cacheKey);
             $this->scannerError = $scan['error'] ?? 'Não foi possível analisar a fatura.';
             return;
         }
 
-        \Illuminate\Support\Facades\Cache::put($cacheKey, $scan, now()->addMinutes(10));
+        // Mantém o resultado disponível até o utilizador abrir o indicador e aceitar os dados.
+        \Illuminate\Support\Facades\Cache::put($cacheKey, $scan, now()->addMinutes(30));
+        $this->invoiceScanCompleted = true;
+        $this->scannerError = '';
+    }
+
+    public function acceptInvoiceScan(): void
+    {
+        if (blank($this->invoiceScanId)) {
+            $this->scannerError = 'Não existe nenhuma análise pronta para aceitar.';
+            return;
+        }
+
+        $user = auth()->user();
+        $scanId = $this->invoiceScanId;
+        $cacheKey = 'invoice_scan:'.$user->id.':'.$user->current_workspace_id.':'.$scanId;
+        $scan = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+        if (! is_array($scan) || ($scan['status'] ?? null) !== 'completed'
+            || (int) ($scan['user_id'] ?? 0) !== (int) $user->id
+            || (int) ($scan['workspace_id'] ?? 0) !== (int) $user->current_workspace_id) {
+            $this->invoiceScanCompleted = false;
+            $this->invoiceScanId = null;
+            $this->scannerError = 'O resultado da análise já não está disponível. Envia novamente o ficheiro.';
+            return;
+        }
+
         session()->put('pending_expense_scan:'.$user->current_workspace_id.':'.$user->id, [
             'data' => $scan['data'],
             'document_path' => $scan['document_path'],
@@ -272,8 +302,10 @@ class Expenses extends Component
             'document_mime' => $scan['document_mime'],
         ]);
 
-        // Força um carregamento completo para que o CategoryHub::mount()
-        // leia a análise guardada na sessão e abra o formulário de revisão.
+        $this->invoiceScanCompleted = false;
+        $this->invoiceScanId = null;
+
+        // Abre o formulário de revisão da categoria com os dados extraídos pela IA.
         $this->redirect(route('hub.category', [
             'slug' => $scan['category_slug'],
             'open_scan_review' => 1,
