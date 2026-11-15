@@ -122,7 +122,9 @@
 </script>
 @endif
 
+@include('partials.theme')
+
 @fonts
 @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/modal-controls.js'])
 
-@fluxAppearance
+<style>:root.dark { color-scheme: dark; }</style>

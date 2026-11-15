@@ -502,12 +502,12 @@
         <div
             @click.stop
             x-transition.scale.duration.120ms
-            class="relative w-full max-w-lg rounded-[2rem] overflow-hidden
+            class="relative flex max-h-[88vh] w-full max-w-2xl flex-col rounded-[2rem] overflow-hidden
                    backdrop-blur-sm border border-white/20 shadow-[0_6px_22px_-4px_rgba(0,0,0,0.45)]
                    bg-emerald-500/15"
         >
 
-            <form wire:submit.prevent="save" class="p-8 space-y-7">
+            <form wire:submit.prevent="save" class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6 space-y-7">
 
                 {{-- HEADER --}}
                 <div class="space-y-3 text-center">
@@ -691,12 +691,12 @@
         <div
             @click.stop
             x-transition.scale.duration.120ms
-            class="relative w-full max-w-lg rounded-[2rem] overflow-hidden
+            class="relative flex max-h-[88vh] w-full max-w-2xl flex-col rounded-[2rem] overflow-hidden
                    backdrop-blur-sm border border-white/20 shadow-[0_6px_22px_-4px_rgba(0,0,0,0.45)]
                    bg-emerald-500/15"
         >
 
-            <form wire:submit.prevent="saveDeposit" class="p-8 space-y-7">
+            <form wire:submit.prevent="saveDeposit" class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6 space-y-7">
 
                 {{-- HEADER --}}
                 <div class="space-y-3 text-center">

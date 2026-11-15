@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Página não encontrada — Finance Pro IA</title>
+    @include('partials.theme')
     <style>
         :root {
             color-scheme: light dark;
@@ -84,11 +85,9 @@
             transform: translateY(-1px);
         }
 
-        @media (prefers-color-scheme: dark) {
-            body { background: #09090b; color: #fafafa; }
-            .code { color: #27272a; }
-            p { color: #a1a1aa; }
-        }
+        html.dark body { background: #09090b; color: #fafafa; }
+        html.dark .code { color: #27272a; }
+        html.dark p { color: #a1a1aa; }
     </style>
 </head>
 <body>

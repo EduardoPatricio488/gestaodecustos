@@ -110,6 +110,9 @@ class StatementImportHub extends Component
             }
 
             $this->dispatch('toast', variant: 'success', text: $text);
+            if ($this->lastImport->transactions_imported > 0) {
+                $this->dispatch('dashboard-record-created');
+            }
         } else {
             $this->dispatch('toast', variant: 'danger', text: 'Erro na importação. Verifica o formato do ficheiro.');
         }

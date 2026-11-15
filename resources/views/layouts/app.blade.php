@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('partials.theme')
 
     <!-- Configurações PWA -->
     <meta name="theme-color" content="#10b981">
@@ -111,7 +112,7 @@
     </style>
 </head>
     <body class="font-sans antialiased" data-authenticated="{{ auth()->check() ? '1' : '0' }}">
-        <div class="min-h-screen bg-gray-100">
+        <div class="min-h-screen bg-gray-100 dark:bg-zinc-950 dark:text-zinc-100">
             <livewire:layout.navigation />
 
             <!-- Page Heading -->
@@ -131,8 +132,6 @@
 
         <script>
             (() => {
-                const STORAGE_KEY = 'finance-pro-bunker-theme';
-
                 const applyBunkerTheme = (bunker, theme) => {
                     const dark = theme === 'dark';
                     bunker.classList.toggle('fp-bunker-theme-dark', dark);
@@ -155,16 +154,17 @@
                     button.className = 'fp-bunker-theme-toggle';
                     button.dataset.bunkerThemeToggle = '1';
                     button.addEventListener('click', () => {
-                        const next = bunker.classList.contains('fp-bunker-theme-dark') ? 'light' : 'dark';
-                        localStorage.setItem(STORAGE_KEY, next);
-                        applyBunkerTheme(bunker, next);
+                        window.FinanceProTheme.toggleTheme();
                     });
                     topbar.appendChild(button);
-                    applyBunkerTheme(bunker, localStorage.getItem(STORAGE_KEY) || 'light');
+                    applyBunkerTheme(bunker, document.documentElement.dataset.theme);
                 };
 
                 const scan = () => document.querySelectorAll('.fp-bunker').forEach(setupBunkerTheme);
                 scan();
+                window.addEventListener('finance-pro-theme-changed', (event) => {
+                    document.querySelectorAll('.fp-bunker').forEach((bunker) => applyBunkerTheme(bunker, event.detail.dark ? 'dark' : 'light'));
+                });
 
                 new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
             })();

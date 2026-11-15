@@ -1252,6 +1252,7 @@ class InvestmentsHub extends Component
             $user = Auth::user();
             $user->awardXp(25, 'investimento registado');
             $msg = 'Novo capital registado com sucesso! '.$user->xpToastText(25, 'investimento registado');
+            $this->dispatch('dashboard-record-created');
         }
         $this->reset(['symbol', 'name', 'isin', 'quantity', 'average_price', 'fees', 'total_amount', 'exchange', 'network', 'provider', 'broker', 'operation_date', 'editingId', 'interest_rate', 'loyalty_bonus', 'capitalization_date', 'issuer', 'series', 'product_type', 'bank_account_id']);
         $this->dispatch('modal-close-add-investment');

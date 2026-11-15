@@ -96,6 +96,10 @@ class GoalsHub extends Component
         // TOAST
         $this->dispatch('toast', variant: 'success', text: $user->xpToastText($isCreating ? 15 : 0, $isCreating ? 'meta criada' : 'meta atualizada'));
 
+        if ($isCreating) {
+            $this->dispatch('dashboard-record-created');
+        }
+
         // RESET
         $this->reset(['name', 'target_amount', 'current_amount', 'deadline', 'editingGoalId']);
     }

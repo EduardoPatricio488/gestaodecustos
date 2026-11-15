@@ -20,19 +20,6 @@
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
         <link rel="apple-touch-icon" href="/icon-192x192.png?v=20261114-1">
 {{-- 2. TEMA & ASSETS --}}
-        <script>
-            var savedAppearance = localStorage.getItem('flux.appearance') || localStorage.theme;
-            if (savedAppearance && !localStorage.getItem('flux.appearance') && ['dark', 'light'].includes(savedAppearance)) {
-                localStorage.setItem('flux.appearance', savedAppearance);
-            }
-
-            if (savedAppearance === 'dark' || ((!savedAppearance || savedAppearance === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark')
-            } else {
-                document.documentElement.classList.remove('dark')
-            }
-        </script>
-
         @include('partials.head')
     </head>
 
@@ -57,14 +44,10 @@
                 x-data="{
                     darkMode: document.documentElement.classList.contains('dark'),
                     toggleTheme() {
-                        this.darkMode = !this.darkMode;
-                        var appearance = this.darkMode ? 'dark' : 'light';
-                        localStorage.setItem('flux.appearance', appearance);
-                        localStorage.removeItem('theme');
-                        document.documentElement.classList.toggle('dark', this.darkMode);
-                        if (window.Flux?.applyAppearance) window.Flux.applyAppearance(appearance);
+                        window.FinanceProTheme.toggleTheme();
                     }
                 }"
+                x-on:finance-pro-theme-changed.window="darkMode = $event.detail.dark"
                 x-on:click="toggleTheme()"
                 aria-label="Alternar modo claro e escuro"
                 class="mr-2 flex size-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition-all hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"

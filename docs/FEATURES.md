@@ -28,6 +28,13 @@ Este documento descreve apenas funcionalidades identificadas no projecto actual.
 - Fitness e integração Strava configurável
 - PWA/offline para fluxos suportados
 
+Na entrada «Apenas registos rápidos», a página móvel carrega os formulários e a importação apenas quando o respetivo atalho é aberto. A primeira abertura de cada formulário pode exigir uma breve espera.
+
+No scanner de despesas, a fotografia é pré-visualizada de imediato e o envio mostra o progresso ou uma mensagem de erro. Se a preparação demorar demasiado, é enviado o ficheiro original; se o envio demorar, é apresentada orientação para tentar novamente.
+Ao abrir o scanner, a quota diária gratuita do OpenRouter é consultada em segundo plano; «Atualizar» volta a consultá-la. Os pedidos são partilhados e uma análise pode consumir mais de um.
+
+O tema é partilhado neste dispositivo entre a entrada, os registos rápidos e o site completo. O modo automático segue o horário configurado nas definições.
+
 Na configuração inicial e no módulo Banco é possível importar comprovativos de IBAN português em PDF com texto legível (até 5 MB). A leitura preenche os dados identificados; é necessário confirmá-los e introduzir o saldo antes de guardar.
 
 Na configuração inicial, o formulário de salário é o mesmo do módulo Receitas, incluindo a estimativa fiscal e o scanner de contratos por fotografia. A análise envia a imagem ao OpenRouter e os dados detetados devem ser revistos antes de guardar.

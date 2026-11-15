@@ -1207,7 +1207,7 @@
     @endunless
 @if($showCalendarBonusContractPicker)
     <div class="fixed inset-0 z-[80] flex items-center justify-center bg-zinc-950/60 p-4" role="dialog" aria-modal="true" data-no-global-close>
-        <div class="w-full max-w-lg rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
             <div class="mb-5 flex items-start justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-black text-zinc-900 dark:text-white">Escolher contrato para o prémio</h2>
@@ -1243,8 +1243,8 @@
     x-on:keydown.escape.window="close(); $wire.closeSalaryBonusModal()"
 >
     <div x-show="open" x-cloak x-transition.opacity.duration.150ms @click="close(); $wire.closeSalaryBonusModal()" class="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm"></div>
-    <div x-show="open" x-cloak @click.self="close(); $wire.closeSalaryBonusModal()" class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-6">
-        <div x-show="open" x-transition.scale.duration.150ms class="relative z-10 my-auto flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-950/20 dark:border-zinc-800 dark:bg-zinc-900" @click.stop>
+    <div x-show="open" x-cloak @click.self="close(); $wire.closeSalaryBonusModal()" class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
+        <div x-show="open" x-transition.scale.duration.150ms class="relative z-10 my-auto flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl shadow-zinc-950/20 dark:border-zinc-800 dark:bg-zinc-900" @click.stop>
             <form wire:submit.prevent="saveSalaryBonus" class="flex min-h-0 flex-col" autocomplete="off">
                 <header class="flex items-start gap-4 border-b border-zinc-100 px-5 py-5 dark:border-zinc-800 sm:px-7">
                     <div class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-2xl dark:bg-amber-500/10">
@@ -2066,12 +2066,12 @@
         x-show="open"
         x-cloak
         @click.self="close()"
-        class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-6"
+        class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
     >
         <div
             x-show="open"
             x-transition.scale.duration.150ms
-            class="relative z-10 my-auto flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-950/20 dark:border-zinc-800 dark:bg-zinc-900"
+            class="relative z-10 my-auto flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl shadow-zinc-950/20 dark:border-zinc-800 dark:bg-zinc-900"
             @click.stop
         >
 
@@ -2220,13 +2220,13 @@
 </div>
     @endunless
 @teleport('body')
-    <div x-data="{ open: false }" x-on:open-mobile-income-extra.window="open = true" x-on:modal-show-receita-extra.window="open = true" x-on:modal-close-receita-extra.window="open = false" x-show="open" x-cloak class="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6" wire:click.self="closeExtraModal" x-on:keydown.escape.window="$wire.closeExtraModal()">
+    <div x-data="{ open: false }" x-on:open-mobile-income-extra.window="open = true" x-on:modal-show-receita-extra.window="open = true" x-on:modal-close-receita-extra.window="open = false" x-show="open" x-cloak class="fixed inset-0 z-[99999] flex items-center justify-center p-4" wire:click.self="closeExtraModal" x-on:keydown.escape.window="$wire.closeExtraModal()">
         <div class="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm" wire:click="closeExtraModal"></div>
-        <div class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+        <div class="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
 
-            <form wire:submit.prevent="saveExtra" class="flex flex-col" autocomplete="off">
+            <form wire:submit.prevent="saveExtra" class="flex min-h-0 flex-1 flex-col" autocomplete="off">
                 {{-- HEADER --}}
-                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                <div class="shrink-0 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
                     <div class="p-3 bg-emerald-600 rounded-2xl text-white shadow-lg">
                         <flux:icon name="sparkles" class="size-6" />
                     </div>
@@ -2238,7 +2238,7 @@
                 </div>
 
                 {{-- BODY --}}
-                <div class="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+                <div class="min-h-0 flex-1 overscroll-contain p-4 sm:p-6 space-y-6 overflow-y-auto custom-scrollbar text-left">
 
                     {{-- DESCRIÇÃO --}}
                     <div class="relative">
@@ -2333,13 +2333,13 @@
                 </div>
 
                 {{-- FOOTER --}}
-                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
-                    <button type="button" wire:click="closeExtraModal" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                <div class="shrink-0 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" wire:click="closeExtraModal" class="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
                     <button
                         type="submit"
                         wire:loading.attr="disabled"
                         wire:target="saveExtra"
-                        class="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20 transition-all disabled:opacity-60">
+                        class="flex-[2] h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20 transition-all disabled:opacity-60">
                         Confirmar Ganho ✨
                     </button>
                 </div>
@@ -2382,19 +2382,19 @@
         x-show="open"
         x-cloak
         @click.self="close()"
-        class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
 
         {{-- PAINEL PREMIUM --}}
         <div
             x-show="open"
             x-transition.scale.duration.120ms
-            class="relative z-10 w-full max-w-2xl rounded-[2rem] shadow-xl overflow-hidden transform-gpu
+            class="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col rounded-[2rem] shadow-xl overflow-hidden transform-gpu
                    bg-emerald-500/10 backdrop-blur-sm border border-emerald-500/20"
             @click.stop
         >
 
-            <form wire:submit.prevent="{{ $editingFixedId ? 'updateFixed' : 'saveFixed' }}" class="flex max-h-[86vh] flex-col" autocomplete="off">
+            <form wire:submit.prevent="{{ $editingFixedId ? 'updateFixed' : 'saveFixed' }}" class="flex min-h-0 flex-1 flex-col" autocomplete="off">
 
                 {{-- HEADER --}}
                 <div class="shrink-0 p-6 pb-4 flex items-center gap-4 border-b border-white/10 bg-white/10 backdrop-blur-sm">

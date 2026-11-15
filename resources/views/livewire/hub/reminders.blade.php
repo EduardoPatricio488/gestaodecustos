@@ -163,7 +163,7 @@
 
 {{-- ── 4. MODAL ALPINE (ULTRA FLUIDO + CAMPOS ESCUROS + TEXTO PRETO) ── --}}
 <div x-show="modal" x-cloak
-     class="fixed inset-0 z-[300] flex items-center justify-center p-3 sm:p-6
+     class="fixed inset-0 z-[300] flex items-center justify-center p-4
             bg-zinc-950/50 transition-opacity duration-75">
 
     <div @click.away="modal = false"
@@ -179,17 +179,17 @@
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 translate-y-2"
 
-         class="relative w-full max-w-2xl rounded-[2.5rem] overflow-hidden
+         class="relative w-full max-w-2xl rounded-[2rem] overflow-hidden
                 bg-white
                 
                 border border-zinc-200
                 shadow-2xl
-                max-h-[90vh] flex flex-col">
+                max-h-[88vh] flex flex-col">
 
         {{-- HEADER --}}
-        <div class="shrink-0 px-8 py-6 border-b border-zinc-200 bg-zinc-50 flex justify-between items-center">
+        <div class="shrink-0 px-6 py-5 border-b border-zinc-200 bg-zinc-50 flex justify-between items-center">
             <div>
-                <h2 class="text-2xl font-black text-zinc-900 uppercase italic tracking-tighter">
+                <h2 class="text-xl font-black text-zinc-900 uppercase italic tracking-tighter">
                     Configurar Lembrete
                 </h2>
                 <p class="text-[9px] text-emerald-600 font-black uppercase mt-2 tracking-widest">
@@ -207,7 +207,7 @@
         <form wire:submit.prevent="saveReminder" class="flex flex-col min-h-0 flex-1">
 
             {{-- BODY --}}
-            <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain custom-scrollbar p-4 sm:p-6 space-y-6">
 
                 {{-- TÍTULO --}}
                 <div class="relative">
@@ -299,7 +299,7 @@
             </div>
 
             {{-- FOOTER --}}
-            <div class="shrink-0 px-8 py-5 flex flex-col sm:flex-row gap-3 border-t border-zinc-200 bg-zinc-50">
+            <div class="shrink-0 px-6 py-4 flex flex-col sm:flex-row gap-3 border-t border-zinc-200 bg-zinc-50">
 
                 <button type="button"
                         @click="modal = false"

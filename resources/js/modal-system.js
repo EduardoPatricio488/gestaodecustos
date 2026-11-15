@@ -83,6 +83,7 @@
         if (event.key !== 'Escape') return;
         const dialog = topDialog();
         if (!dialog) return;
+        if (dialog.hasAttribute('data-no-global-close')) return;
         event.preventDefault();
         event.stopPropagation();
         close(dialog);

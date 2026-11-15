@@ -27,7 +27,7 @@
                         $remainingPercent = max(0, min(100, (1 - ($ageSeconds / 172800)) * 100));
                         $isNew = $ageSeconds < 3600;
                     @endphp
-                    <div wire:key="recent-record-{{ $record['id'] }}" aria-disabled="true" class="group flex cursor-not-allowed items-center gap-3 rounded-2xl border border-zinc-100 bg-white/70 p-3 opacity-75 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/50">
+                    <a href="{{ $record['url'] }}" wire:key="recent-record-{{ $record['id'] }}" aria-label="Abrir {{ $record['type'] }}: {{ $record['title'] }}" class="group flex items-center gap-3 rounded-2xl border border-zinc-100 bg-white/70 p-3 shadow-sm transition hover:border-emerald-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-zinc-800 dark:bg-zinc-950/50 dark:hover:border-emerald-700 dark:hover:bg-zinc-900">
                         <div @class([
                             'flex size-11 shrink-0 items-center justify-center rounded-2xl text-lg font-black transition-transform duration-200 group-hover:scale-105',
                             'bg-rose-50 text-rose-600 dark:bg-rose-950/70 dark:text-rose-300' => $record['tone'] === 'rose',
@@ -35,6 +35,7 @@
                             'bg-blue-50 text-blue-600 dark:bg-blue-950/70 dark:text-blue-300' => $record['tone'] === 'blue',
                             'bg-violet-50 text-violet-600 dark:bg-violet-950/70 dark:text-violet-300' => $record['tone'] === 'violet',
                             'bg-amber-50 text-amber-600 dark:bg-amber-950/70 dark:text-amber-300' => $record['tone'] === 'amber',
+                            'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300' => $record['tone'] === 'indigo',
                         ])>{{ $record['icon'] }}</div>
 
                         <div class="min-w-0 flex-1">
@@ -55,9 +56,9 @@
                                 <p class="text-sm font-black tabular-nums text-zinc-900 dark:text-white">{{ number_format((float) $record['amount'], 2, ',', '.') }} €</p>
                             @endif
                             <p class="text-[10px] font-medium text-zinc-400">{{ $record['created_at']->diffForHumans() }}</p>
-                            <span class="rounded-full bg-amber-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Em breve</span>
+                            <span class="text-zinc-400 transition group-hover:text-emerald-600 dark:group-hover:text-emerald-400" aria-hidden="true">↗</span>
                         </div>
-                    </div>
+                    </a>
                 @endforeach
             </div>
             <p class="mt-3 text-center text-[10px] text-zinc-400">A barra indica o tempo que falta até o registo sair desta lista.</p>

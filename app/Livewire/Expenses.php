@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Category;
 use App\Models\Expense;
+use App\Services\OpenRouterQuotaService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -44,80 +45,9 @@ class Expenses extends Component
 
     public ?array $openRouterQuota = null;
 
-    public bool $loadingOpenRouterQuota = false;
-
-    public string $openRouterQuotaError = '';
-
-    /**
-     * Atualiza a quota diária gratuita apresentada no scanner.
-     * A resposta é guardada em cache durante 45 segundos para evitar pedidos repetidos.
-     */
-    public function refreshOpenRouterQuota(): void
+    public function refreshOpenRouterQuota(bool $forceRefresh = true): void
     {
-        // Atualiza apenas os dados da quota; não altera a abertura/minimização do modal.
-        $this->openRouterQuotaError = '';
-        $this->loadingOpenRouterQuota = true;
-
-        $apiKey = config('services.openrouter.api_key');
-
-        if (blank($apiKey)) {
-            $this->openRouterQuota = null;
-            $this->openRouterQuotaError = 'A chave OpenRouter não está configurada.';
-            $this->loadingOpenRouterQuota = false;
-
-            return;
-        }
-
-        try {
-            $quotaCacheKey = 'openrouter:quota:'.hash('sha256', $apiKey);
-            \Illuminate\Support\Facades\Cache::forget($quotaCacheKey);
-
-            $quota = \Illuminate\Support\Facades\Cache::remember(
-                $quotaCacheKey,
-                now()->addMinutes(5),
-                function () use ($apiKey) {
-                    $response = \Illuminate\Support\Facades\Http::withToken($apiKey)
-                        ->connectTimeout(5)
-                        ->timeout(8)
-                        ->get('https://openrouter.ai/api/v1/key');
-
-                    if (! $response->successful()) {
-                        throw new \RuntimeException('Não foi possível consultar a quota OpenRouter (HTTP '.$response->status().').');
-                    }
-
-                    $data = $response->json('data');
-
-                    if (! is_array($data) || ! array_key_exists('usage', $data) || ! array_key_exists('limit_remaining', $data)) {
-                        throw new \RuntimeException('O OpenRouter não disponibilizou os dados de utilização desta chave.');
-                    }
-
-                    $freeRequests = $data['free_model_daily_requests'] ?? null;
-
-                    if (! is_array($freeRequests) || ! array_key_exists('remaining', $freeRequests) || ! array_key_exists('limit', $freeRequests)) {
-                        throw new \RuntimeException('O OpenRouter não disponibilizou o limite diário de pedidos gratuitos desta chave.');
-                    }
-
-                    return [
-                        'requests_used' => max(0, (int) ($freeRequests['used'] ?? 0)),
-                        'requests_limit' => max(0, (int) $freeRequests['limit']),
-                        'requests_remaining' => max(0, (int) $freeRequests['remaining']),
-                        'is_free_tier' => (bool) ($data['is_free_tier'] ?? false),
-                    ];
-                }
-            );
-
-            $this->openRouterQuota = $quota;
-        } catch (\Throwable $exception) {
-            $this->openRouterQuota = null;
-            $this->openRouterQuotaError = $exception->getMessage();
-
-            \Illuminate\Support\Facades\Log::notice('Expenses scanner: OpenRouter quota display could not be refreshed.', [
-                'message' => $exception->getMessage(),
-                'user_id' => auth()->id(),
-            ]);
-        } finally {
-            $this->loadingOpenRouterQuota = false;
-        }
+        $this->openRouterQuota = app(OpenRouterQuotaService::class)->dailyQuota($forceRefresh);
     }
 
     public function updatedScannerReceipt(): void

@@ -6,6 +6,7 @@
 
     <title>Registos Fechados | {{ config('app.name') }}</title>
 
+    @include('partials.theme')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>

@@ -10,42 +10,22 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
     <link rel="apple-touch-icon" href="/icon-192x192.png?v=20261114-1">
+    @include('partials.theme')
     <script>
         (() => {
-            const storageKey = 'finance-pro-theme';
-            const mobileStorageKey = 'finance-pro-mobile-theme';
-            const applyTheme = () => {
-                let theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-                try {
-                    // O tema principal é a fonte de verdade partilhada pelo site e pela app.
-                    const savedTheme = localStorage.getItem(storageKey) || localStorage.getItem(mobileStorageKey);
-                    if (savedTheme === 'dark' || savedTheme === 'light') theme = savedTheme;
-                    localStorage.setItem(storageKey, theme);
-                    localStorage.setItem(mobileStorageKey, theme);
-                } catch (_) {}
-                const isDark = theme === 'dark';
-                document.documentElement.classList.toggle('dark', isDark);
-                document.documentElement.style.colorScheme = theme;
-                const themeColor = document.querySelector('meta[name="theme-color"]');
-                if (themeColor) themeColor.setAttribute('content', isDark ? '#09090b' : '#10b981');
-                return isDark;
+            const updateThemeColor = () => {
+                const dark = document.documentElement.classList.contains('dark');
+                document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#09090b' : '#10b981');
             };
-
             window.FinanceProMobileTheme = {
-                apply: applyTheme,
                 toggle() {
-                    const nextTheme = applyTheme() ? 'light' : 'dark';
-                    try {
-                        localStorage.setItem(storageKey, nextTheme);
-                        localStorage.setItem(mobileStorageKey, nextTheme);
-                    } catch (_) {}
-                    applyTheme();
-                    return nextTheme === 'dark';
+                    window.FinanceProTheme.toggleTheme();
+                    return document.documentElement.classList.contains('dark');
                 },
             };
-
-            applyTheme();
-            window.addEventListener('pageshow', () => applyTheme());
+            updateThemeColor();
+            window.addEventListener('finance-pro-theme-changed', updateThemeColor);
+            document.addEventListener('livewire:navigated', updateThemeColor);
         })();
     </script>
     <title>{{ config('app.name', 'Finance Pro AI') }} — Mobile</title>
@@ -54,6 +34,7 @@
     <link rel="stylesheet" href="/flux/flux.css">
     @livewireStyles
     <style>
+        html { overscroll-behavior-y: contain; }
         [x-cloak] { display: none !important; }
         @keyframes fp-greeting-in {
             from { opacity: 0; transform: translate3d(0, 12px, 0); }
@@ -149,7 +130,7 @@
         <div class="fp-mobile-greeting px-1" style="animation: fp-greeting-in .65s cubic-bezier(.2,.8,.2,1) both;">
             <div class="flex items-center gap-2">
                 <span class="text-2xl" aria-hidden="true" style="animation: fp-greeting-wave 2.4s ease-in-out infinite;">{{ $mobileGreetingIcon }}</span>
-                <div class="relative" x-data="{ accountMenuOpen: false, dark: document.documentElement.classList.contains('dark'), toggleTheme() { this.dark = window.FinanceProMobileTheme.toggle(); } }">
+                <div class="relative" x-data="{ accountMenuOpen: false, dark: document.documentElement.classList.contains('dark'), toggleTheme() { this.dark = window.FinanceProMobileTheme.toggle(); } }" x-on:finance-pro-theme-changed.window="dark = $event.detail.dark">
                     <button type="button" x-on:click="accountMenuOpen = !accountMenuOpen" x-on:click.outside="accountMenuOpen = false" class="inline-flex items-center gap-2 rounded-xl text-left text-2xl font-black tracking-tight text-zinc-900 dark:text-white">
                         <span>{{ $mobileGreeting }}, {{ auth()->user()->name }}</span>
                         <span class="text-sm text-zinc-400 transition-transform" x-bind:class="accountMenuOpen ? 'rotate-180' : ''" aria-hidden="true">▾</span>
@@ -197,7 +178,7 @@
                 x-on:pointercancel.window="if (draggedItem) draggedItem.classList.remove('opacity-40'); draggedItem = null"
             >
                 @if($mobileShortcutSettings['expense']['enabled'])
-                <button type="button" x-data="{ invoiceScanning: false, syncInvoiceScanning() { this.invoiceScanning = !!document.querySelector('[data-invoice-scan-active]'); window.__financeProInvoiceScanning = this.invoiceScanning; } }" x-init="syncInvoiceScanning(); const scanObserver = new MutationObserver(() => syncInvoiceScanning()); scanObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-invoice-scan-active'] }); window.addEventListener('invoice-scan-started', () => { invoiceScanning = true; window.__financeProInvoiceScanning = true; }); window.addEventListener('invoice-scan-finished', () => { invoiceScanning = false; window.__financeProInvoiceScanning = false; });" x-on:click.stop.prevent="window.dispatchEvent(new CustomEvent('open-expense-category-picker'))" data-mobile-item="expense" :draggable="editing" :class="editing ? 'cursor-grab touch-none select-none ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['expense']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-rose-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-rose-900/40 dark:bg-zinc-900">
+                <button type="button" x-data="{ invoiceScanning: false, syncInvoiceScanning() { this.invoiceScanning = !!document.querySelector('[data-invoice-scan-active]'); window.__financeProInvoiceScanning = this.invoiceScanning; } }" x-init="syncInvoiceScanning(); const scanObserver = new MutationObserver(() => syncInvoiceScanning()); scanObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-invoice-scan-active'] }); window.addEventListener('invoice-scan-started', () => { invoiceScanning = true; window.__financeProInvoiceScanning = true; }); window.addEventListener('invoice-scan-finished', () => { invoiceScanning = false; window.__financeProInvoiceScanning = false; });" x-on:click.stop.prevent="$dispatch('mobile-load-action', { action: 'expense' })" data-mobile-item="expense" :draggable="editing" :class="editing ? 'cursor-grab touch-none select-none ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['expense']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-rose-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-rose-900/40 dark:bg-zinc-900">
                     <span class="flex items-center gap-2"><span class="flex size-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"><span class="text-xl font-bold" aria-hidden="true">＋</span></span><span x-cloak x-show="invoiceScanning" class="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-amber-700 dark:border-amber-700/50 dark:bg-amber-900/30 dark:text-amber-300" aria-label="Fotografia a ser analisada"><span class="size-2.5 animate-spin rounded-full border-2 border-amber-500/30 border-t-amber-600"></span>A analisar foto</span></span>
                     <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['expense']['label'] }}</span>
                     <input type="text" value="{{ $mobileShortcutSettings['expense']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:input.debounce.400ms.stop="$el.previousElementSibling.textContent = $el.value; Livewire.dispatch('mobile-shortcut-label-updated', { key: 'expense', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
@@ -205,7 +186,7 @@
                 </button>
                 @endif
                 @if($mobileShortcutSettings['income']['enabled'])
-                <button type="button" x-on:click="$dispatch('open-mobile-income-menu', { rect: $el.getBoundingClientRect() })" data-mobile-item="income" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['income']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-emerald-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-emerald-900/40 dark:bg-zinc-900">
+                <button type="button" x-on:click="const rect = $el.getBoundingClientRect(); $dispatch('mobile-load-action', { action: 'income', rect: { left: rect.left, top: rect.top, bottom: rect.bottom } })" data-mobile-item="income" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['income']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-emerald-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-emerald-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300"><span class="text-xl font-bold" aria-hidden="true">↗</span></span>
                     <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['income']['label'] }}</span>
                     <input type="text" value="{{ $mobileShortcutSettings['income']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:input.debounce.400ms.stop="$el.previousElementSibling.textContent = $el.value; Livewire.dispatch('mobile-shortcut-label-updated', { key: 'income', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
@@ -213,7 +194,7 @@
                 </button>
                 @endif
                 @if($mobileShortcutSettings['movements']['enabled'])
-                <button type="button" x-on:click="$dispatch('open-mobile-statement-import')" data-mobile-item="movements" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['movements']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('mobile-load-action', { action: 'statement' })" data-mobile-item="movements" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['movements']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"><span class="text-xl font-bold" aria-hidden="true">⇄</span></span>
                     <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['movements']['label'] }}</span>
                     <input type="text" value="{{ $mobileShortcutSettings['movements']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:input.debounce.400ms.stop="$el.previousElementSibling.textContent = $el.value; Livewire.dispatch('mobile-shortcut-label-updated', { key: 'movements', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
@@ -230,16 +211,16 @@
                 @endif
 
                 @if($mobileShortcutSettings['bank']['enabled'])
-                <div aria-disabled="true" data-mobile-item="bank" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['bank']['order'] }};" class="group cursor-not-allowed opacity-75 flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <a href="{{ route('hub.banco') }}" x-on:click="if (editing) $event.preventDefault()" data-mobile-item="bank" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['bank']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition hover:border-emerald-300 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-emerald-700">
                     <span class="flex size-10 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/30 dark:text-emerald-300"><span class="text-xl font-bold" aria-hidden="true">▥</span></span>
                     <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['bank']['label'] }}</span>
                     <input type="text" value="{{ $mobileShortcutSettings['bank']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:input.debounce.400ms.stop="$el.previousElementSibling.textContent = $el.value; Livewire.dispatch('mobile-shortcut-label-updated', { key: 'bank', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Contas e saldos</span>
-                    <span class="mt-2 inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Em breve</span>
-                </div>
+                    <span class="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">Abrir contas e saldos ↗</span>
+                </a>
                 @endif
                 @if($mobileShortcutSettings['goal']['enabled'])
-                <button type="button" x-on:click="$dispatch('open-mobile-goal-create')" data-mobile-item="goal" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['goal']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('mobile-load-action', { action: 'goal' })" data-mobile-item="goal" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['goal']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">◎</span></span>
                     <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['goal']['label'] }}</span>
                     <input type="text" value="{{ $mobileShortcutSettings['goal']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:input.debounce.400ms.stop="$el.previousElementSibling.textContent = $el.value; Livewire.dispatch('mobile-shortcut-label-updated', { key: 'goal', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
@@ -247,7 +228,7 @@
                 </button>
                 @endif
                 @if($mobileShortcutSettings['reminder']['enabled'])
-        <button type="button" x-on:click="$dispatch('open-mobile-reminder-create')" data-mobile-item="reminder" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['reminder']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-amber-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-amber-900/40 dark:bg-zinc-900">
+        <button type="button" x-on:click="$dispatch('mobile-load-action', { action: 'reminder' })" data-mobile-item="reminder" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['reminder']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-amber-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-amber-900/40 dark:bg-zinc-900">
             <span class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><span class="text-xl font-bold" aria-hidden="true">♧</span></span>
             <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['reminder']['label'] }}</span>
                     <input type="text" value="{{ $mobileShortcutSettings['reminder']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:input.debounce.400ms.stop="$el.previousElementSibling.textContent = $el.value; Livewire.dispatch('mobile-shortcut-label-updated', { key: 'reminder', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
@@ -256,7 +237,7 @@
                 @endif
 
                 @if($mobileShortcutSettings['subscription']['enabled'])
-                <button type="button" x-on:click="$dispatch('open-mobile-subscription-create')" data-mobile-item="subscription" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['subscription']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
+                <button type="button" x-on:click="$dispatch('mobile-load-action', { action: 'subscription' })" data-mobile-item="subscription" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['subscription']['order'] }};" class="group flex min-h-32 w-full flex-col items-start rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"><span class="text-xl font-bold" aria-hidden="true">▤</span></span>
                     <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['subscription']['label'] }}</span>
                     <input type="text" value="{{ $mobileShortcutSettings['subscription']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:input.debounce.400ms.stop="$el.previousElementSibling.textContent = $el.value; Livewire.dispatch('mobile-shortcut-label-updated', { key: 'subscription', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
@@ -264,22 +245,22 @@
                 </button>
                 @endif
                 @if($mobileShortcutSettings['fitness']['enabled'])
-                <div aria-disabled="true" data-mobile-item="fitness" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['fitness']['order'] }};" class="group cursor-not-allowed opacity-75 rounded-2xl border border-orange-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-orange-900/40 dark:bg-zinc-900">
+                <a href="{{ route('hub.fitness') }}" x-on:click="if (editing) $event.preventDefault()" data-mobile-item="fitness" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['fitness']['order'] }};" class="group rounded-2xl border border-orange-100 bg-white p-4 text-left shadow-sm transition hover:border-orange-300 active:scale-[0.98] dark:border-orange-900/40 dark:bg-zinc-900 dark:hover:border-orange-700">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"><span class="text-xl font-bold" aria-hidden="true">↗</span></span>
                     <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['fitness']['label'] }}</span>
                     <input type="text" value="{{ $mobileShortcutSettings['fitness']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:input.debounce.400ms.stop="$el.previousElementSibling.textContent = $el.value; Livewire.dispatch('mobile-shortcut-label-updated', { key: 'fitness', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Acompanhar atividade física</span>
-                    <span class="mt-2 inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Em breve</span>
-                </div>
+                    <span class="mt-2 block text-xs font-semibold text-orange-600 dark:text-orange-400">Abrir zona de treino ↗</span>
+                </a>
                 @endif
                 @if($mobileShortcutSettings['calendar']['enabled'])
-                <div aria-disabled="true" data-mobile-item="calendar" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['calendar']['order'] }};" class="group cursor-not-allowed opacity-75 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900">
+                <a href="{{ route('hub.calendar') }}" x-on:click="if (editing) $event.preventDefault()" data-mobile-item="calendar" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['calendar']['order'] }};" class="group rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-sky-300 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-sky-700">
                     <span class="flex size-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"><span class="text-xl font-bold" aria-hidden="true">▦</span></span>
                     <span x-show="!editing" class="mt-3 block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['calendar']['label'] }}</span>
                     <input type="text" value="{{ $mobileShortcutSettings['calendar']['label'] }}" maxlength="32" x-show="editing" x-cloak x-on:click.stop x-on:keydown.enter="$el.blur()" x-on:input.debounce.400ms.stop="$el.previousElementSibling.textContent = $el.value; Livewire.dispatch('mobile-shortcut-label-updated', { key: 'calendar', label: $event.target.value })" class="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-2 py-1 text-sm font-black text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-zinc-800 dark:text-white">
                     <span class="mt-1 block text-xs text-zinc-500">Ver agenda</span>
-                    <span class="mt-2 inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Em breve</span>
-                </div>
+                    <span class="mt-2 block text-xs font-semibold text-sky-600 dark:text-sky-400">Abrir calendário ↗</span>
+                </a>
                 @endif
                 @if($mobileDividerSettings['enabled'] ?? true)
                 <div class="col-span-2 flex items-center gap-3 py-1" data-mobile-item="_divider" :draggable="editing" :class="editing ? 'cursor-grab touch-none select-none rounded-lg bg-emerald-50/70 ring-2 ring-dashed ring-emerald-400/70 dark:bg-emerald-900/20' : ''" style="order: {{ $mobileDividerOrder }};" aria-hidden="true">
@@ -289,14 +270,14 @@
                 </div>
                 @endif
                 @if($mobileShortcutSettings['connect']['enabled'])
-                <div aria-disabled="true" data-mobile-item="connect" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['connect']['order'] }};" class="group cursor-not-allowed opacity-75 col-span-2 flex min-h-24 w-full items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900">
+                <a href="{{ route('social.hub') }}" x-on:click="if (editing) $event.preventDefault()" data-mobile-item="connect" :draggable="editing" :class="editing ? 'cursor-grab ring-2 ring-dashed ring-emerald-400/70' : ''" style="order: {{ $mobileShortcutSettings['connect']['order'] }};" class="group col-span-2 flex min-h-24 w-full items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition hover:border-indigo-300 active:scale-[0.98] dark:border-indigo-900/40 dark:bg-zinc-900 dark:hover:border-indigo-700">
                     <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"><span class="text-2xl font-bold" aria-hidden="true">◎</span></span>
                     <span class="min-w-0">
                         <span class="block text-sm font-black text-zinc-900 dark:text-white">{{ $mobileShortcutSettings['connect']['label'] }}</span>
                         <span class="mt-1 block text-xs text-zinc-500">Comunidade, partilha e notificações</span>
                     </span>
-                    <span class="ml-auto rounded-full bg-amber-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Em breve</span>
-                </div>
+                    <span class="ml-auto text-xs font-semibold text-indigo-600 dark:text-indigo-400">Abrir ↗</span>
+                </a>
                 @endif
             </div>
         </section>
@@ -315,10 +296,10 @@
         x-cloak
         x-show="investmentActionsOpen"
         x-transition.opacity
-        class="fixed inset-0 z-[10000] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+        class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
         style="display: none;"
     >
-        <div x-on:click.outside="investmentActionsOpen = false" class="w-full max-w-md rounded-t-3xl bg-white p-5 shadow-2xl dark:bg-zinc-900 sm:rounded-3xl">
+        <div x-on:click.outside="investmentActionsOpen = false" class="w-full max-w-2xl rounded-[2rem] bg-white p-5 shadow-2xl dark:bg-zinc-900">
             <div class="mb-5 flex items-center justify-between">
                 <div>
                     <p class="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600">Carteira</p>
@@ -327,11 +308,11 @@
                 <button type="button" x-on:click="investmentActionsOpen = false" class="flex size-9 items-center justify-center rounded-xl bg-zinc-100 text-xl text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300" aria-label="Fechar">×</button>
             </div>
             <div class="grid grid-cols-1 gap-3">
-                <button type="button" x-on:click="investmentActionsOpen = false; $dispatch('open-mobile-investment-upload')" class="flex items-center gap-4 rounded-2xl border border-violet-200 p-4 text-left transition active:scale-[0.98] dark:border-violet-900/50">
+                <button type="button" x-on:click="investmentActionsOpen = false; $dispatch('mobile-load-action', { action: 'investment-upload' })" class="flex items-center gap-4 rounded-2xl border border-violet-200 p-4 text-left transition active:scale-[0.98] dark:border-violet-900/50">
                     <span class="flex size-11 items-center justify-center rounded-xl bg-violet-50 text-xl text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">⇧</span>
                     <span><span class="block text-sm font-black text-zinc-900 dark:text-white">Upload de relatórios</span><span class="mt-1 block text-xs text-zinc-500">Importar posições e operações</span></span>
                 </button>
-                <button type="button" x-on:click="investmentActionsOpen = false; $dispatch('open-mobile-investment-create')" class="flex items-center gap-4 rounded-2xl border border-zinc-200 p-4 text-left transition active:scale-[0.98] dark:border-zinc-700">
+                <button type="button" x-on:click="investmentActionsOpen = false; $dispatch('mobile-load-action', { action: 'investment-create' })" class="flex items-center gap-4 rounded-2xl border border-zinc-200 p-4 text-left transition active:scale-[0.98] dark:border-zinc-700">
                     <span class="flex size-11 items-center justify-center rounded-xl bg-emerald-50 text-xl text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">＋</span>
                     <span><span class="block text-sm font-black text-zinc-900 dark:text-white">Novo investimento</span><span class="mt-1 block text-xs text-zinc-500">Registar um investimento</span></span>
                 </button>
@@ -339,39 +320,7 @@
         </div>
     </div>
 
-    <div
-        x-data="{ statementImportOpen: false }"
-        x-on:open-mobile-statement-import.window="statementImportOpen = true"
-        x-on:keydown.escape.window="statementImportOpen = false"
-        x-cloak
-        x-show="statementImportOpen"
-        x-transition.opacity
-        class="fixed inset-0 z-[10000] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-        style="display: none;"
-    >
-        <div
-            x-on:click.outside="statementImportOpen = false"
-            class="relative flex max-h-[95dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-zinc-50 shadow-2xl dark:bg-zinc-950 sm:rounded-3xl"
-        >
-            <div class="flex shrink-0 items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
-                <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">Importação bancária</p>
-                    <h2 class="mt-1 text-lg font-black text-zinc-900 dark:text-white">Importar Movimentos</h2>
-                </div>
-                <button type="button" x-on:click="statementImportOpen = false" class="flex size-9 items-center justify-center rounded-xl bg-zinc-100 text-xl text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300" aria-label="Fechar">×</button>
-            </div>
-            <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
-                <livewire:statement-import-hub />
-            </div>
-        </div>
-    </div>
-
-    <livewire:expenses :dashboard-mode="true" />
-    <livewire:income-hub :dashboard-mode="true" />
-    <livewire:investments-hub :mobile-mode="true" />
-    <livewire:goals-hub :mobile-mode="true" />
-    <livewire:hub.reminders-hub :dashboard-mode="true" />
-    <livewire:subscription-hub :dashboard-mode="true" />
+    <livewire:mobile-quick-actions />
 
     <script>
         (() => {
@@ -382,7 +331,7 @@
                 return Math.max(window.scrollY || 0, root.scrollTop || 0) <= 1;
             };
             window.addEventListener('touchstart', (event) => {
-                if (refreshing || event.touches.length !== 1 || !pageIsAtTop() || event.touches[0].clientY > 28) {
+                if (refreshing || window.__financeProExpenseModalOpen || event.touches.length !== 1 || !pageIsAtTop() || event.touches[0].clientY > 28) {
                     tracking = false;
                     return;
                 }
@@ -401,7 +350,7 @@
             window.addEventListener('touchend', () => {
                 if (!tracking || refreshing) return;
                 tracking = false;
-                if (pullDistance < threshold || !pageIsAtTop()) return;
+                if (window.__financeProExpenseModalOpen || pullDistance < threshold || !pageIsAtTop()) return;
                 refreshing = true;
                 window.location.reload();
             }, { passive: true, capture: true });

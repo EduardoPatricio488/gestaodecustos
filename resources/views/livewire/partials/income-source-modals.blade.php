@@ -12,13 +12,13 @@
 >
     <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
 
-    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
-        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div x-show="open" x-transition.scale class="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
 
-            <form wire:submit.prevent="saveRental" class="flex flex-col {{ !empty($onboardingModal) ? 'max-h-[90vh]' : '' }}">
+            <form wire:submit.prevent="saveRental" class="flex min-h-0 flex-1 flex-col">
                 @include('livewire.partials.onboarding-validation-errors')
                 {{-- HEADER --}}
-                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                <div class="shrink-0 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
                     <div class="p-3 bg-blue-600 rounded-2xl text-white shadow-lg">
                         <flux:icon name="home-modern" class="size-6" />
                     </div>
@@ -30,7 +30,7 @@
                 </div>
 
                 {{-- BODY --}}
-                <div class="min-h-0 flex-1 p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+                <div class="min-h-0 flex-1 overscroll-contain p-4 sm:p-6 space-y-6 overflow-y-auto custom-scrollbar text-left">
 
                     {{-- TIPO DE EXPLORAÇÃO (Estilo Wizard) --}}
                     <div class="relative">
@@ -95,9 +95,9 @@
                 </div>
 
                 {{-- FOOTER --}}
-                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
-                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
-                    <button type="submit" class="flex-[2] h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 transition-all">
+                <div class="shrink-0 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 transition-all">
                         Ativar Rendimento 🏢
                     </button>
                 </div>
@@ -122,12 +122,12 @@
 >
     <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
 
-    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
-        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div x-show="open" x-transition.scale class="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
 
-            <form wire:submit.prevent="saveFreelance" class="flex flex-col {{ !empty($onboardingModal) ? 'max-h-[90vh]' : '' }}">
+            <form wire:submit.prevent="saveFreelance" class="flex min-h-0 flex-1 flex-col">
                 @include('livewire.partials.onboarding-validation-errors')
-                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                <div class="shrink-0 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
                     <div class="p-3 bg-sky-600 rounded-2xl text-white shadow-lg">
                         <flux:icon name="computer-desktop" class="size-6" />
                     </div>
@@ -138,7 +138,7 @@
                     <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
                 </div>
 
-                <div class="min-h-0 flex-1 p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+                <div class="min-h-0 flex-1 overscroll-contain p-4 sm:p-6 space-y-6 overflow-y-auto custom-scrollbar text-left">
 
                     <div class="relative">
                         <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Descrição</label>
@@ -214,9 +214,9 @@
                     </div>
                 </div>
 
-                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
-                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
-                    <button type="submit" class="flex-[2] h-14 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-sky-500/20 transition-all">
+                <div class="shrink-0 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-12 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-sky-500/20 transition-all">
                         Confirmar Rendimento 💻
                     </button>
                 </div>
@@ -241,12 +241,12 @@
 >
     <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
 
-    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
-        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div x-show="open" x-transition.scale class="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
 
-            <form wire:submit.prevent="saveInvestment" class="flex flex-col {{ !empty($onboardingModal) ? 'max-h-[90vh]' : '' }}">
+            <form wire:submit.prevent="saveInvestment" class="flex min-h-0 flex-1 flex-col">
                 @include('livewire.partials.onboarding-validation-errors')
-                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                <div class="shrink-0 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
                     <div class="p-3 bg-violet-600 rounded-2xl text-white shadow-lg">
                         <flux:icon name="chart-bar" class="size-6" />
                     </div>
@@ -257,7 +257,7 @@
                     <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
                 </div>
 
-                <div class="min-h-0 flex-1 p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+                <div class="min-h-0 flex-1 overscroll-contain p-4 sm:p-6 space-y-6 overflow-y-auto custom-scrollbar text-left">
 
                     <div class="relative">
                         <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Descrição</label>
@@ -328,9 +328,9 @@
                     </div>
                 </div>
 
-                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
-                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
-                    <button type="submit" class="flex-[2] h-14 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-violet-500/20 transition-all">
+                <div class="shrink-0 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-violet-500/20 transition-all">
                         Confirmar Investimento 📈
                     </button>
                 </div>
@@ -355,12 +355,12 @@
 >
     <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
 
-    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
-        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div x-show="open" x-transition.scale class="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
 
-            <form wire:submit.prevent="savePension" class="flex flex-col {{ !empty($onboardingModal) ? 'max-h-[90vh]' : '' }}">
+            <form wire:submit.prevent="savePension" class="flex min-h-0 flex-1 flex-col">
                 @include('livewire.partials.onboarding-validation-errors')
-                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                <div class="shrink-0 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
                     <div class="p-3 bg-rose-600 rounded-2xl text-white shadow-lg">
                         <flux:icon name="user-circle" class="size-6" />
                     </div>
@@ -370,7 +370,7 @@
                     <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
                 </div>
 
-                <div class="min-h-0 flex-1 p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+                <div class="min-h-0 flex-1 overscroll-contain p-4 sm:p-6 space-y-6 overflow-y-auto custom-scrollbar text-left">
 
                     <div class="relative">
                         <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Descrição</label>
@@ -421,9 +421,9 @@
                     </div>
                 </div>
 
-                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
-                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
-                    <button type="submit" class="flex-[2] h-14 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-rose-500/20 transition-all">
+                <div class="shrink-0 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-12 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-rose-500/20 transition-all">
                         Confirmar Pensão 👴
                     </button>
                 </div>
@@ -448,12 +448,12 @@
 >
     <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
 
-    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
-        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div x-show="open" x-transition.scale class="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
 
-            <form wire:submit.prevent="saveScholarship" class="flex flex-col {{ !empty($onboardingModal) ? 'max-h-[90vh]' : '' }}">
+            <form wire:submit.prevent="saveScholarship" class="flex min-h-0 flex-1 flex-col">
                 @include('livewire.partials.onboarding-validation-errors')
-                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                <div class="shrink-0 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
                     <div class="p-3 bg-amber-600 rounded-2xl text-white shadow-lg">
                         <flux:icon name="academic-cap" class="size-6" />
                     </div>
@@ -464,7 +464,7 @@
                     <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
                 </div>
 
-                <div class="min-h-0 flex-1 p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+                <div class="min-h-0 flex-1 overscroll-contain p-4 sm:p-6 space-y-6 overflow-y-auto custom-scrollbar text-left">
 
                     <div class="relative">
                         <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-400 z-10">Descrição</label>
@@ -525,9 +525,9 @@
                     </div>
                 </div>
 
-                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
-                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
-                    <button type="submit" class="flex-[2] h-14 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-amber-500/20 transition-all">
+                <div class="shrink-0 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-12 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-amber-500/20 transition-all">
                         Confirmar Bolsa 🎓
                     </button>
                 </div>
@@ -552,12 +552,12 @@
 >
     <div x-show="open" x-cloak x-transition.opacity @click="close()" class="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm"></div>
 
-    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
-        <div x-show="open" x-transition.scale class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+    <div x-show="open" x-cloak @click.self="close()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div x-show="open" x-transition.scale class="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
 
-            <form wire:submit.prevent="saveOther" class="flex flex-col {{ !empty($onboardingModal) ? 'max-h-[90vh]' : '' }}">
+            <form wire:submit.prevent="saveOther" class="flex min-h-0 flex-1 flex-col">
                 @include('livewire.partials.onboarding-validation-errors')
-                <div class="p-8 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
+                <div class="shrink-0 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-4">
                     <div class="p-3 bg-zinc-900 dark:bg-white rounded-2xl text-white dark:text-zinc-900 shadow-lg">
                         <flux:icon name="sparkles" class="size-6" />
                     </div>
@@ -567,7 +567,7 @@
                     </div>
                     <button type="button" @click="close()" class="text-zinc-400 hover:text-zinc-600"><flux:icon name="x-mark" /></button>
                 </div>
-                <div class="min-h-0 flex-1 p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar text-left">
+                <div class="min-h-0 flex-1 overscroll-contain p-4 sm:p-6 space-y-6 overflow-y-auto custom-scrollbar text-left">
 
                     <div class="relative">
                         <label class="absolute left-4 -top-2.5 px-2 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase text-zinc-600 z-10">Nome da Fonte</label>
@@ -608,9 +608,9 @@
                     </div>
                 </div>
 
-                <div class="p-8 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
-                    <button type="button" @click="close()" class="flex-1 h-14 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
-                    <button type="submit" class="flex-[2] h-14 bg-zinc-900 dark:bg-white hover:opacity-90 text-white dark:text-zinc-900 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all">
+                <div class="shrink-0 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 flex gap-3">
+                    <button type="button" @click="close()" class="flex-1 h-12 rounded-2xl font-black uppercase text-[10px] text-zinc-400 hover:bg-zinc-50 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] h-12 bg-zinc-900 dark:bg-white hover:opacity-90 text-white dark:text-zinc-900 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all">
                         Confirmar Rendimento ✨
                     </button>
                 </div>

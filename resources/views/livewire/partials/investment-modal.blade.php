@@ -30,7 +30,7 @@
         x-show="open"
         x-cloak
         @click.self="close()"
-        class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+        class="fixed inset-0 z-50 flex items-center justify-center p-4">
 
         {{-- CAIXA DO MODAL --}}
         <div
@@ -42,13 +42,13 @@
             x-transition:leave="transition ease-in duration-100 transform-gpu"
             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
             x-transition:leave-end="opacity-0 scale-[0.97] translate-y-1"
-            class="relative w-full max-w-2xl bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden max-h-[90vh] flex flex-col">
+            class="relative w-full max-w-2xl bg-white dark:bg-zinc-950 rounded-[2rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden max-h-[88vh] flex flex-col">
 
             {{-- FORM --}}
             <form
                 wire:submit.prevent="save"
                 x-data="{ selected: @entangle('type'), mode: 'unit' }"
-                class="flex flex-col max-h-[90vh] overflow-hidden"
+                class="flex min-h-0 flex-1 flex-col overflow-hidden"
                 autocomplete="off">
 
                 {{-- SCROLL INTERNO --}}

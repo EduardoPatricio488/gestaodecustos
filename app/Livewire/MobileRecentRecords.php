@@ -7,8 +7,10 @@ use App\Models\Goal;
 use App\Models\Income;
 use App\Models\Investment;
 use App\Models\Reminder;
+use App\Models\Subscription;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class MobileRecentRecords extends Component
@@ -110,7 +112,29 @@ class MobileRecentRecords extends Component
                 'tone' => 'amber',
             ]));
 
+        Subscription::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('user_id', $user->id)
+            ->where('created_at', '>=', $since)
+            ->get()
+            ->each(fn (Subscription $item) => $records->push([
+                'id' => 'subscription-'.$item->id,
+                'type' => 'Assinatura',
+                'url' => route('hub.subscriptions', ['highlight' => $item->id]),
+                'title' => $item->name,
+                'detail' => $item->renewal_date?->format('d/m/Y'),
+                'amount' => $item->amount,
+                'created_at' => $item->created_at,
+                'icon' => '▤',
+                'tone' => 'indigo',
+            ]));
+
         return $records->sortByDesc('created_at')->values();
+    }
+
+    #[On('dashboard-record-created')]
+    public function refreshRecords(): void
+    {
     }
 
     public function render()

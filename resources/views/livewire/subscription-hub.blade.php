@@ -124,9 +124,9 @@
     @teleport('body')
         <div x-data="{ open: false }" x-on:open-mobile-subscription-create.window="open = true" x-on:modal-show-subscription.window="open = true" x-on:modal-close-subscription.window="open = false" x-show="open" x-cloak class="fixed inset-0 z-[99999] flex items-center justify-center p-4" wire:click.self="closeExtraModal" x-on:keydown.escape.window="$wire.closeExtraModal()">
             <div class="absolute inset-0 bg-zinc-950/70" wire:click="closeExtraModal"></div>
-            <div class="relative z-10 w-full max-w-2xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
-                <form wire:submit.prevent="save" class="flex max-h-[86vh] flex-col">
-                    <div class="flex shrink-0 items-center gap-4 border-b border-zinc-100 p-6 pb-4 dark:border-zinc-800">
+            <div class="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+                <form wire:submit.prevent="save" class="flex min-h-0 flex-1 flex-col">
+                    <div class="flex shrink-0 items-center gap-4 border-b border-zinc-100 px-6 py-5 dark:border-zinc-800">
                         <div class="rounded-2xl bg-brand-600 p-3 text-white shadow"><span class="text-xl leading-none" aria-hidden="true">{{ $transportPassMode ? '🚆' : '💳' }}</span></div>
                         <div class="min-w-0 flex-1">
                             <h2 class="text-xl font-black uppercase italic tracking-tight text-zinc-900 dark:text-white">{{ $transportPassMode ? ($editingId ? 'Editar Passe Mensal' : 'Novo Passe Mensal') : ($editingId ? 'Editar Assinatura' : 'Nova Assinatura') }}</h2>
@@ -134,7 +134,7 @@
                         </div>
                         <button type="button" wire:click="closeExtraModal" aria-label="Fechar janela" class="rounded-full p-2 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-white"><flux:icon name="x-mark" class="size-5" /></button>
                     </div>
-                    <div class="min-h-0 flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+                    <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain custom-scrollbar p-4 sm:p-6 space-y-6">
                         @include('livewire.partials.onboarding-validation-errors')
                         @php
                             $subscriptionLabelClass = 'text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400';
@@ -188,7 +188,7 @@
                         </div>
                         @endif
                     </div>
-                    <div class="flex shrink-0 flex-col gap-3 border-t border-zinc-100 bg-white p-6 pt-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row"><button type="button" wire:click="closeExtraModal" class="h-14 w-full rounded-2xl text-xs font-bold uppercase tracking-widest text-zinc-500 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button><button type="submit" wire:loading.attr="disabled" wire:target="save" class="h-14 w-full rounded-2xl bg-brand-600 text-white font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 transition-all hover:bg-brand-500 disabled:opacity-60"><span wire:loading.remove wire:target="save">{{ $editingId ? ($transportPassMode ? 'Atualizar Passe Mensal' : 'Atualizar Assinatura') : ($transportPassMode ? 'Criar Passe Mensal' : 'Guardar Assinatura') }}</span><span wire:loading wire:target="save">A guardar...</span></button></div>
+                    <div class="flex shrink-0 flex-col gap-3 border-t border-zinc-100 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row"><button type="button" wire:click="closeExtraModal" class="h-14 w-full rounded-2xl text-xs font-bold uppercase tracking-widest text-zinc-500 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancelar</button><button type="submit" wire:loading.attr="disabled" wire:target="save" class="h-14 w-full rounded-2xl bg-brand-600 text-white font-black uppercase tracking-widest shadow-xl shadow-brand-500/20 transition-all hover:bg-brand-500 disabled:opacity-60"><span wire:loading.remove wire:target="save">{{ $editingId ? ($transportPassMode ? 'Atualizar Passe Mensal' : 'Atualizar Assinatura') : ($transportPassMode ? 'Criar Passe Mensal' : 'Guardar Assinatura') }}</span><span wire:loading wire:target="save">A guardar...</span></button></div>
                 </form>
             </div>
         </div>

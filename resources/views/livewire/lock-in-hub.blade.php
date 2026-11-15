@@ -36,13 +36,10 @@
             return ((this.seconds % 600) / 600) * 100;
         },
 
-        theme: localStorage.getItem('lockin_theme') || (document.documentElement.getAttribute('data-lockin-theme') || 'dark'),
+        theme: document.documentElement.dataset.lockinTheme,
 
         toggleTheme() {
-            this.theme = this.theme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('lockin_theme', this.theme);
-            document.documentElement.setAttribute('data-lockin-theme', this.theme);
-            document.documentElement.classList.toggle('dark', this.theme === 'dark');
+            window.FinanceProTheme.toggleTheme();
         },
 
         startHold() {
@@ -52,6 +49,7 @@
             if (!this.unlockDone) this.unlockHolding = false;
         }
     }"
+    x-on:finance-pro-theme-changed.window="theme = $event.detail.dark ? 'dark' : 'light'"
     :class="{ 'privacy-active': privacy }"
     class="relative min-h-screen w-full flex flex-col overflow-hidden select-none"
     wire:poll.1s="tick"

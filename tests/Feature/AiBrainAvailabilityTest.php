@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Exceptions\AiProviderException;
 use App\Livewire\AiControlCenter;
 use App\Livewire\AiInsights;
+use App\Livewire\Expenses;
 use App\Livewire\Profile\AiMemorySettings;
 use App\Models\AiActionLog;
 use App\Models\AiInsight;
@@ -292,6 +293,67 @@ class AiBrainAvailabilityTest extends TestCase
             ->assertSee('Quota indisponível.')
             ->assertSee('Não foi possível consultar a quota no OpenRouter.')
             ->assertDontSee('restantes');
+    }
+
+    public function test_expense_scanner_loads_cached_quota_and_refreshes_exhausted_quota(): void
+    {
+        Cache::forget('openrouter.daily_quota.'.hash('sha256', 'test-key'));
+        Http::fake(['*' => Http::sequence()
+            ->push(['data' => ['free_model_daily_requests' => ['used' => 25, 'limit' => 50, 'remaining' => 25]]])
+            ->push(['data' => ['free_model_daily_requests' => ['used' => 50, 'limit' => 50, 'remaining' => 0]]])]);
+
+        $scanner = Livewire::test(Expenses::class, ['dashboardMode' => true]);
+        Http::assertNothingSent();
+
+        $scanner->call('refreshOpenRouterQuota', false)
+            ->assertSet('openRouterQuota.available', true)
+            ->assertSet('openRouterQuota.remaining', 25)
+            ->assertSee('25 pedidos gratuitos restantes')
+            ->assertSee('25 / 50 utilizados')
+            ->call('refreshOpenRouterQuota', false);
+        Http::assertSentCount(1);
+
+        $scanner->call('refreshOpenRouterQuota')
+            ->assertSet('openRouterQuota.remaining', 0)
+            ->assertSee('0 pedidos gratuitos restantes')
+            ->assertSee('A reposição ocorre às 00:00 UTC.');
+        Http::assertSentCount(2);
+    }
+
+    public function test_expense_scanner_reports_quota_errors_without_inventing_counts(): void
+    {
+        Http::fake(['*' => Http::sequence()
+            ->push([], 401)
+            ->push(['data' => []])
+            ->push(['data' => ['free_model_daily_requests' => ['used' => 'invalid', 'limit' => 50, 'remaining' => 20]]])
+            ->push(['data' => ['free_model_daily_requests' => ['used' => 1, 'limit' => 50, 'remaining' => -1]]])]);
+
+        $scanner = Livewire::test(Expenses::class, ['dashboardMode' => true])
+            ->call('refreshOpenRouterQuota')
+            ->assertSet('openRouterQuota.available', false)
+            ->assertSet('openRouterQuota.remaining', null)
+            ->assertSee('O OpenRouter recusou a chave configurada.')
+            ->assertDontSee('pedidos gratuitos restantes');
+
+        foreach (range(1, 3) as $attempt) {
+            $scanner->call('refreshOpenRouterQuota')
+                ->assertSet('openRouterQuota.available', false)
+                ->assertSet('openRouterQuota.remaining', null)
+                ->assertSee('O OpenRouter não devolveu os dados da quota diária.')
+                ->assertDontSee('pedidos gratuitos restantes');
+        }
+        Http::assertSentCount(4);
+    }
+
+    public function test_expense_scanner_reports_quota_connection_failure(): void
+    {
+        Http::fake(['*' => Http::failedConnection()]);
+
+        Livewire::test(Expenses::class, ['dashboardMode' => true])
+            ->call('refreshOpenRouterQuota')
+            ->assertSet('openRouterQuota.available', false)
+            ->assertSet('openRouterQuota.remaining', null)
+            ->assertSee('Não foi possível ligar ao OpenRouter.');
     }
 
     public function test_report_uses_current_records_for_its_short_run_rate_forecast(): void

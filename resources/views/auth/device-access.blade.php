@@ -14,10 +14,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#070b13">
     <title>Escolher acesso — Finance Pro AI</title>
+    @include('partials.theme')
     @vite('resources/css/app.css')
 </head>
-<body class="min-h-screen bg-zinc-950 text-white antialiased">
-    <div id="fp-launch-splash" class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#070b13] transition-opacity duration-500">
+<body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-white">
+    <div id="fp-launch-splash" class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-zinc-50 transition-opacity duration-500 dark:bg-[#070b13]">
         <div class="absolute inset-0" style="background:radial-gradient(circle at 50% 45%,rgba(16,185,129,.24),transparent 44%),radial-gradient(circle at 15% 85%,rgba(59,130,246,.15),transparent 35%)"></div>
         <div class="fp-launch-orbit absolute left-1/2 top-[calc(50%-30px)] size-3 rounded-full bg-emerald-300 shadow-[0_0_24px_8px_rgba(52,211,153,.55)]"></div>
         <div class="fp-launch-rise relative z-10 text-center">
@@ -48,7 +49,7 @@
                     : ($hour >= 12 && $hour < 20 ? 'Boa tarde' : 'Boa noite');
             @endphp
             <div class="mb-8 text-center">
-                <p class="mb-3 text-lg font-semibold text-zinc-200">{{ $greeting }}, {{ auth()->user()->name }}</p>
+                <p class="mb-3 text-lg font-semibold text-zinc-700 dark:text-zinc-200">{{ $greeting }}, {{ auth()->user()->name }}</p>
                 <div class="mx-auto mb-5 flex size-16 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300">
                     <svg viewBox="0 0 24 24" class="size-9" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                         <path d="M4 18V9h4v9M10 18V5h4v13M16 18V2h4v16" stroke-linecap="round" stroke-linejoin="round"/>
@@ -78,7 +79,7 @@
                 <form method="POST" action="{{ route('device.mode') }}">
                     @csrf
                     <input type="hidden" name="mode" value="full">
-                    <button type="submit" class="flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-white/[.04] p-5 text-left transition hover:bg-white/[.08] active:scale-[.98]">
+                    <button type="submit" class="flex w-full items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 text-left transition hover:bg-zinc-100 active:scale-[.98] dark:border-white/10 dark:bg-white/[.04] dark:hover:bg-white/[.08]">
                         <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-zinc-700 text-white">
                             <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
                         </span>

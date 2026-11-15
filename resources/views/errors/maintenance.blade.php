@@ -7,6 +7,7 @@
     <title>Manutenção | {{ config('app.name') }}</title>
 
     <!-- Fontes e Estilos (Reaproveitando o teu Vite) -->
+    @include('partials.theme')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>

@@ -38,6 +38,10 @@
             scanSecondsRemaining: 45,
             scanTimeoutRemaining: 180,
             scanTimer: null,
+            receiptPreparing: false,
+            receiptUploading: false,
+            receiptReady: !!$wire.scannerReceipt,
+            get receiptBusy() { return this.receiptPreparing || this.receiptUploading; },
             startInvoiceTimer() {
                 this.scanSecondsRemaining = 45;
                 this.scanTimeoutRemaining = 180;
@@ -57,11 +61,13 @@
             $watch('open', value => window.__financeProExpenseModalOpen = value);
             if (window.__financeProExpenseModalOpen) open = true;
         "
-        x-on:open-expense-category-picker.window="window.__financeProExpenseModalOpen = true; open = true; activeTab = 'scanner'"
+        x-on:open-expense-category-picker.window="window.__financeProExpenseModalOpen = true; open = true; activeTab = 'scanner'; $wire.refreshOpenRouterQuota(false)"
         x-on:toggle-expense-scan-modal.window="window.__financeProExpenseModalOpen = true; open = true; activeTab = 'scanner'"
-        x-on:keydown.escape.window="@if($isScanningInvoice) $event.preventDefault() @else open = false @endif"
+        x-on:keydown.escape.window="if (receiptBusy || $wire.isScanningInvoice) $event.preventDefault(); else open = false"
+        x-on:beforeunload.window="if (receiptBusy) { $event.preventDefault(); $event.returnValue = '' }"
         x-effect="window.__financeProExpenseModalOpen = open"
         data-expense-modal-root
+        wire:key="expense-modal"
         wire:ignore.self
         data-no-global-close
     >
@@ -91,10 +97,10 @@
             </button>
         @endif
         <template x-teleport="body">
-        <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 {{ $dashboardMode ? 'z-[9998]' : 'z-[9999]' }}" aria-modal="true" role="dialog">
-            <div x-show="open" x-transition:enter="transition-opacity ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0 bg-black/60" x-on:click="@if($isScanningInvoice) $event.stopPropagation() @else open = false @endif"></div>
+        <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 {{ $dashboardMode ? 'z-[9998]' : 'z-[9999]' }}" aria-modal="true" role="dialog" data-no-global-close>
+            <div x-show="open" x-transition:enter="transition-opacity ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0 bg-black/60" x-on:click="if (!receiptBusy && !$wire.isScanningInvoice) open = false"></div>
 
-            <div x-show="open" x-transition class="absolute inset-0 {{ $dashboardMode ? 'lg:left-64' : '' }} flex items-center justify-center p-4" x-on:click.self="@if($isScanningInvoice) $event.stopPropagation() @else open = false @endif">
+            <div x-show="open" x-transition class="absolute inset-0 {{ $dashboardMode ? 'lg:left-64' : '' }} flex items-center justify-center p-4" x-on:click.self="if (!receiptBusy && !$wire.isScanningInvoice) open = false">
         <div x-show="open" x-transition:enter="transition-[opacity,transform] duration-400 ease-[cubic-bezier(0.16,1,0.3,1)]" x-transition:enter-start="opacity-0 translate-y-8 scale-[0.96]" x-transition:enter-end="opacity-100 translate-y-0 scale-100" x-transition:leave="transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,1,1)]" x-transition:leave-start="opacity-100 translate-y-0 scale-100" x-transition:leave-end="opacity-0 translate-y-5 scale-[0.97]" class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
             <div class="border-b border-zinc-100 px-6 py-5 dark:border-zinc-800">
                 <div class="min-w-0">
@@ -109,7 +115,7 @@
                     <flux:icon name="sparkles" class="size-4" />
                     Scanner de fatura
                 </button>
-                <button type="button" x-on:click="activeTab = 'category'" x-bind:class="activeTab === 'category' ? 'bg-brand-600 text-white shadow-lg' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" class="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all">
+                <button type="button" x-on:click="if (!receiptBusy) activeTab = 'category'" x-bind:disabled="receiptBusy" x-bind:class="activeTab === 'category' ? 'bg-brand-600 text-white shadow-lg' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" class="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50">
                     <flux:icon name="tag" class="size-4" />
                     Escolher categoria
                 </button>
@@ -146,6 +152,9 @@
                             <span>{{ $scannerError }}</span>
                         </div>
                     @endif
+                    @error('scannerReceipt')
+                        <div role="alert" class="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">{{ $message }}</div>
+                    @enderror
 
                     @if($invoiceScanCompleted)
                         <div role="status" aria-live="polite" class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center">
@@ -169,113 +178,155 @@
                                 <span wire:loading.inline-flex wire:target="refreshOpenRouterQuota" class="items-center gap-1.5 text-[10px] font-bold text-zinc-500">
                                     <flux:icon name="arrow-path" class="size-3 animate-spin" /> A consultar...
                                 </span>
-                                @if($openRouterQuota)
-                                    <span wire:loading.remove wire:target="refreshOpenRouterQuota" class="text-xs font-black tabular-nums {{ $openRouterQuota['requests_remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
-                                        {{ $openRouterQuota['requests_remaining'] }} uploads disponíveis hoje
+                                <div wire:loading.remove wire:target="refreshOpenRouterQuota">
+                                @if($openRouterQuota['available'] ?? false)
+                                    <span wire:loading.remove wire:target="refreshOpenRouterQuota" class="text-xs font-black tabular-nums {{ $openRouterQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
+                                        {{ $openRouterQuota['remaining'] }} pedidos gratuitos restantes
                                     </span>
                                 @endif
-                                <button type="button" x-on:click.stop.prevent="$wire.call('refreshOpenRouterQuota')" wire:loading.attr="disabled" wire:target="refreshOpenRouterQuota" class="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-[9px] font-bold text-zinc-500 transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-50">
+                                <button type="button" wire:click="refreshOpenRouterQuota" wire:loading.attr="disabled" wire:target="refreshOpenRouterQuota" class="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-[9px] font-bold text-zinc-500 transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-50">
                                     <span wire:loading.remove wire:target="refreshOpenRouterQuota">Atualizar</span>
                                     <span wire:loading wire:target="refreshOpenRouterQuota">A consultar...</span>
                                 </button>
                             </div>
                         </div>
-                        @if($openRouterQuota)
+                        @if($openRouterQuota['available'] ?? false)
                             <div class="mt-2 flex items-center justify-between gap-3">
                                 <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-                                    <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ $openRouterQuota['requests_limit'] > 0 ? min(100, ($openRouterQuota['requests_used'] / $openRouterQuota['requests_limit']) * 100) : 0 }}%"></div>
+                                    <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ $openRouterQuota['percent'] }}%"></div>
                                 </div>
-                                <span class="shrink-0 text-[9px] font-bold text-zinc-500">{{ $openRouterQuota['requests_used'] }} / {{ $openRouterQuota['requests_limit'] }} utilizados</span>
+                                <span class="shrink-0 text-[9px] font-bold text-zinc-500">{{ $openRouterQuota['used'] }} / {{ $openRouterQuota['limit'] }} utilizados</span>
                             </div>
-                            @if($openRouterQuota['requests_remaining'] <= 0)
+                            @if($openRouterQuota['remaining'] <= 0)
                                 <p class="mt-2 text-[10px] font-semibold text-red-500">A quota diária de pedidos gratuitos está esgotada. A reposição ocorre às 00:00 UTC.</p>
                             @else
-                                <p class="mt-2 text-[10px] text-zinc-500">Estimativa de uploads/análises disponíveis hoje, com base nos pedidos gratuitos restantes do OpenRouter. Atualiza para consultar os valores mais recentes.</p>
+                                <p class="mt-2 text-[10px] text-zinc-500">Pedidos gratuitos partilhados com outras funções. Uma análise pode consumir mais de um pedido.</p>
                             @endif
-                        @elseif($openRouterQuotaError)
-                            <p class="mt-2 text-[10px] text-amber-600 dark:text-amber-400">{{ $openRouterQuotaError }}</p>
+                        @elseif(!empty($openRouterQuota['error']))
+                            <p role="alert" class="mt-2 text-[10px] text-amber-600 dark:text-amber-400">{{ $openRouterQuota['error'] }}</p>
                         @else
-                            <p class="mt-2 text-[10px] text-zinc-500">Carrega em «Atualizar» para consultar o saldo e a utilização da tua chave OpenRouter.</p>
+                            <p class="mt-2 text-[10px] text-zinc-500">A quota será consultada ao abrir o scanner. Podes usar «Atualizar» para voltar a consultar.</p>
                         @endif
+                        </div>
                     </div>
 
                     <div
+                        wire:ignore
+                        wire:key="expense-receipt-upload"
                         x-data="{
                             previewUrl: window.__financeProInvoicePreviewUrl || null,
                             isImage: window.__financeProInvoiceIsImage || false,
                             fileName: window.__financeProInvoiceFileName || '',
-                            isPreparing: false,
                             uploadProgress: 0,
+                            uploadError: '',
+                            uploadSlow: false,
+                            uploadTimer: null,
                             async prepareAndUpload(event) {
                                 const input = event.target;
                                 const original = input.files?.[0];
-                                if (!original) return;
+                                if (!original || this.receiptBusy) return;
                                 this.fileName = original.name;
                                 this.isImage = original.type.startsWith('image/');
                                 window.__financeProInvoiceFileName = this.fileName;
                                 window.__financeProInvoiceIsImage = this.isImage;
-                                this.isPreparing = this.isImage;
+                                this.receiptReady = false;
+                                this.receiptPreparing = this.isImage && original.size > 1024 * 1024;
+                                this.uploadError = '';
+                                this.uploadSlow = false;
                                 this.uploadProgress = 0;
                                 if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
+                                this.previewUrl = this.isImage ? URL.createObjectURL(original) : null;
+                                window.__financeProInvoicePreviewUrl = this.previewUrl;
 
                                 let uploadFile = original;
                                 try {
-                                    if (this.isImage && original.size > 350 * 1024) {
-                                        const bitmap = await createImageBitmap(original, { imageOrientation: 'from-image' });
-                                        const maxSide = 1500;
-                                        const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-                                        const canvas = document.createElement('canvas');
-                                        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-                                        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-                                        const context = canvas.getContext('2d', { alpha: false });
-                                        context.fillStyle = '#ffffff';
-                                        context.fillRect(0, 0, canvas.width, canvas.height);
-                                        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-                                        bitmap.close?.();
-                                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.72));
-                                        if (blob && blob.size < original.size) {
-                                            uploadFile = new File([blob], original.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+                                    if (this.receiptPreparing) {
+                                        let decodeTimedOut = false;
+                                        let decodeTimer;
+                                        const decoding = createImageBitmap(original, { imageOrientation: 'from-image' }).then(bitmap => {
+                                            if (decodeTimedOut) bitmap.close?.();
+                                            return bitmap;
+                                        });
+                                        const timeout = new Promise((resolve, reject) => {
+                                            decodeTimer = setTimeout(() => { decodeTimedOut = true; reject(new Error('Tempo de preparação esgotado.')); }, 5000);
+                                        });
+                                        let bitmap;
+                                        try {
+                                            bitmap = await Promise.race([decoding, timeout]);
+                                        } finally {
+                                            clearTimeout(decodeTimer);
+                                        }
+                                        try {
+                                            const scale = Math.min(1, 1500 / Math.max(bitmap.width, bitmap.height));
+                                            const canvas = document.createElement('canvas');
+                                            canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+                                            canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+                                            const context = canvas.getContext('2d', { alpha: false });
+                                            if (!context) throw new Error('Canvas indisponível.');
+                                            context.fillStyle = '#ffffff';
+                                            context.fillRect(0, 0, canvas.width, canvas.height);
+                                            context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                                            const blob = await new Promise((resolve, reject) => {
+                                                const timer = setTimeout(() => reject(new Error('Tempo de conversão esgotado.')), 5000);
+                                                try {
+                                                    canvas.toBlob(result => { clearTimeout(timer); resolve(result); }, 'image/jpeg', 0.72);
+                                                } catch (error) {
+                                                    clearTimeout(timer);
+                                                    reject(error);
+                                                }
+                                            });
+                                            if (blob && blob.size < original.size) {
+                                                uploadFile = new File([blob], original.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+                                            }
+                                        } finally {
+                                            bitmap.close?.();
                                         }
                                     }
-                                    this.previewUrl = this.isImage ? URL.createObjectURL(uploadFile) : null;
-                                    this.fileName = uploadFile.name;
-                                    window.__financeProInvoicePreviewUrl = this.previewUrl;
-                                    window.__financeProInvoiceFileName = this.fileName;
-                                    await this.$wire.upload('scannerReceipt', uploadFile, () => {
-                                        this.isPreparing = false;
+                                } catch (error) {
+                                    console.warn('Não foi possível comprimir a fotografia; será enviada no formato original.', error);
+                                }
+                                this.receiptPreparing = false;
+                                if (uploadFile.size > 20 * 1024 * 1024) {
+                                    this.uploadError = 'O ficheiro é demasiado grande. Seleciona uma imagem ou PDF até 20 MB.';
+                                    input.value = '';
+                                    return;
+                                }
+                                this.receiptUploading = true;
+                                this.uploadTimer = setTimeout(() => { this.uploadSlow = true; }, 30000);
+                                try {
+                                    this.$wire.upload('scannerReceipt', uploadFile, () => {
+                                        clearTimeout(this.uploadTimer);
+                                        this.uploadSlow = false;
+                                        this.receiptUploading = false;
+                                        this.receiptReady = !!this.$wire.scannerReceipt;
                                         this.uploadProgress = 100;
+                                        if (!this.receiptReady && !this.$wire.scannerError) {
+                                            this.uploadError = 'Não foi possível confirmar o ficheiro enviado. Seleciona-o novamente.';
+                                        }
                                     }, () => {
-                                        this.isPreparing = false;
+                                        clearTimeout(this.uploadTimer);
+                                        this.uploadSlow = false;
+                                        this.receiptUploading = false;
+                                        this.receiptReady = false;
                                         this.uploadProgress = 0;
+                                        this.uploadError = 'Não foi possível enviar o ficheiro. Verifica o formato, o tamanho e a ligação e tenta novamente.';
                                     }, event => {
                                         this.uploadProgress = event.detail.progress ?? 0;
                                     });
                                 } catch (error) {
-                                    console.warn('Não foi possível comprimir a fotografia; será enviada no formato original.', error);
-                                    try {
-                                        this.previewUrl = this.isImage ? URL.createObjectURL(original) : null;
-                                        window.__financeProInvoicePreviewUrl = this.previewUrl;
-                                        await this.$wire.upload('scannerReceipt', original, () => {
-                                            this.isPreparing = false;
-                                            this.uploadProgress = 100;
-                                        }, () => {
-                                            this.isPreparing = false;
-                                            this.uploadProgress = 0;
-                                        }, event => {
-                                            this.uploadProgress = event.detail.progress ?? 0;
-                                        });
-                                    } catch (uploadError) {
-                                        console.error('Falha ao enviar a fotografia da fatura.', uploadError);
-                                    } finally {
-                                        this.isPreparing = false;
-                                    }
+                                    console.error('Falha ao iniciar o envio da fatura.', error);
+                                    clearTimeout(this.uploadTimer);
+                                    this.uploadSlow = false;
+                                    this.receiptUploading = false;
+                                    this.receiptReady = false;
+                                    this.uploadError = 'Não foi possível enviar o ficheiro. Verifica o formato, o tamanho e a ligação e tenta novamente.';
                                 }
                                 input.value = '';
                             }
                         }"
                         class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 sm:p-5 text-center"
                     >
-                        <input type="file" x-on:change="prepareAndUpload($event)" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
+                        <input type="file" x-on:change="prepareAndUpload($event)" x-bind:disabled="receiptBusy" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700 disabled:opacity-50" />
                         <div x-show="previewUrl" x-cloak class="mt-4 flex flex-col items-center gap-2">
                             <img x-bind:src="previewUrl" alt="Pré-visualização da fatura" class="max-h-56 max-w-full rounded-xl border border-zinc-200 dark:border-zinc-700 object-contain shadow-lg" />
                             <span class="max-w-full truncate text-[10px] font-bold text-zinc-600 dark:text-zinc-300" x-text="fileName"></span>
@@ -286,9 +337,14 @@
                         </div>
                         <p x-show="!fileName" class="mt-3 text-xs font-bold text-zinc-500">Seleciona uma fotografia, imagem ou PDF da fatura</p>
                         <p x-show="!fileName" class="mt-1 text-[10px] text-zinc-400">PDF, JPG, PNG ou WEBP · Máximo 20 MB</p>
-                        <div x-show="isPreparing" x-cloak class="mt-3 text-xs font-bold text-brand-500">A preparar fotografia...</div>
-                        <div wire:loading wire:target="upload:scannerReceipt" class="mt-3 text-xs font-bold text-brand-500">A enviar fotografia... <span x-text="uploadProgress + '%'"></span></div>
-                        <div wire:loading.remove wire:target="upload:scannerReceipt" x-show="fileName && !isPreparing" class="mt-2 text-[10px] font-bold text-emerald-600">Ficheiro preparado</div>
+                        <div x-show="receiptPreparing" x-cloak role="status" class="mt-3 text-xs font-bold text-brand-500">A preparar fotografia...</div>
+                        <div x-show="receiptUploading" x-cloak role="status" class="mt-3 text-xs font-bold text-brand-500">A enviar ficheiro... <span x-text="uploadProgress + '%'"></span></div>
+                        <div x-show="uploadSlow && receiptUploading" x-cloak role="alert" class="mt-3 text-xs font-bold text-amber-600">
+                            O envio está a demorar mais do que o esperado. Podes aguardar ou recarregar a página e tentar novamente.
+                            <button type="button" x-on:click="window.location.reload()" class="mt-2 block w-full underline">Recarregar e tentar novamente</button>
+                        </div>
+                        <div x-show="receiptReady && !receiptBusy" x-cloak class="mt-2 text-[10px] font-bold text-emerald-600">Ficheiro preparado</div>
+                        <div x-show="uploadError" x-cloak role="alert" class="mt-3 text-xs font-bold text-red-500" x-text="uploadError"></div>
                     </div>
                     <div wire:loading.flex wire:target="scanInvoiceAndDetectCategory" class="flex-col rounded-xl border border-brand-500/20 bg-brand-500/5 px-4 py-3 text-center">
                         <div class="flex items-center justify-center gap-2">
@@ -320,10 +376,10 @@
                                 Minimizar scanner
                             </button>
                         @else
-                            <button type="button" x-on:click="open = false" class="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500">Cancelar</button>
+                            <button type="button" x-on:click="if (!receiptBusy) open = false" x-bind:disabled="receiptBusy" class="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-xs font-black uppercase tracking-wider text-zinc-500 disabled:opacity-50">Cancelar</button>
                         @endif
                         
-                        <button type="button" wire:click="scanInvoiceAndDetectCategory" x-on:click="startInvoiceTimer(); open = true; window.__financeProExpenseModalOpen = true" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || $isScanningInvoice) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
+                        <button type="button" wire:click="scanInvoiceAndDetectCategory" x-on:click="startInvoiceTimer(); open = true; window.__financeProExpenseModalOpen = true" x-bind:disabled="receiptBusy || !receiptReady || $wire.isScanningInvoice" wire:loading.attr="disabled" wire:target="scannerReceipt, scanInvoiceAndDetectCategory" @disabled(! $scannerReceipt || $isScanningInvoice) class="flex-[2] inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand-600/20 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
                             @if($isScanningInvoice)
                                 <flux:icon name="arrow-path" class="size-4 animate-spin" /> A analisar fatura...
                             @else

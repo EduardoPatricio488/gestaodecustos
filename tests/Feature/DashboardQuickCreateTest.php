@@ -5,8 +5,11 @@ namespace Tests\Feature;
 use App\Livewire\Dashboard;
 use App\Livewire\ExpenseForm;
 use App\Livewire\Expenses;
+use App\Livewire\GoalsHub;
 use App\Livewire\IncomeHub;
 use App\Livewire\InvestmentsHub;
+use App\Livewire\MobileQuickActions;
+use App\Livewire\MobileRecentRecords;
 use App\Livewire\BankTransactionsHub;
 use App\Livewire\PersonalCalendar;
 use App\Livewire\SubscriptionHub;
@@ -207,6 +210,168 @@ class DashboardQuickCreateTest extends TestCase
         $subscription = Subscription::where('workspace_id', $workspace->id)->firstOrFail();
         $this->assertSame('Video Teste', $subscription->name);
         $this->assertSame($category->id, $subscription->category_id);
+        Livewire::test(MobileRecentRecords::class)
+            ->assertSee('Video Teste')
+            ->assertSee(route('hub.subscriptions', ['highlight' => $subscription->id]));
+    }
+
+    public function test_mobile_recent_records_refresh_after_quick_entries_and_link_to_them(): void
+    {
+        [$user, $workspace] = $this->signInWithWorkspace();
+        $category = $this->createCategory($user, $workspace, 'Transportes');
+        $records = Livewire::test(MobileRecentRecords::class)
+            ->assertDontSee('Bilhete de teste')
+            ->assertDontSee('Plano mobile');
+
+        $expense = Expense::create([
+            'user_id' => $user->id,
+            'workspace_id' => $workspace->id,
+            'category_id' => $category->id,
+            'amount' => 2.50,
+            'description' => 'Bilhete de teste',
+            'spent_at' => now()->toDateString(),
+        ]);
+        $subscription = Subscription::create([
+            'user_id' => $user->id,
+            'workspace_id' => $workspace->id,
+            'category_id' => $category->id,
+            'name' => 'Plano mobile',
+            'amount' => 8.99,
+            'billing_day' => 12,
+            'cycle' => 'monthly',
+            'is_active' => true,
+        ]);
+
+        $records->dispatch('dashboard-record-created')
+            ->assertSee('Bilhete de teste')
+            ->assertSee(route('expenses.edit', $expense->id))
+            ->assertSee('Plano mobile')
+            ->assertSee(route('hub.subscriptions', ['highlight' => $subscription->id]))
+            ->assertDontSee('Em breve');
+    }
+
+    public function test_mobile_goal_and_investment_creation_refresh_recent_records(): void
+    {
+        [$user, $workspace] = $this->signInWithWorkspace();
+
+        Livewire::test(GoalsHub::class, ['mobileMode' => true])
+            ->set('name', 'Férias')
+            ->set('target_amount', '1000')
+            ->set('current_amount', '0')
+            ->call('save')
+            ->assertDispatched('dashboard-record-created');
+
+        $account = BankAccount::create([
+            'workspace_id' => $workspace->id,
+            'user_id' => $user->id,
+            'name' => 'Conta corrente',
+            'bank_name' => 'Banco de teste',
+            'type' => 'corrente',
+            'balance' => 500,
+            'currency' => 'EUR',
+            'include_in_total' => true,
+        ]);
+
+        Livewire::test(InvestmentsHub::class, ['mobileMode' => true])
+            ->call('createAsset')
+            ->set('bank_account_id', $account->id)
+            ->set('symbol', 'VWCE')
+            ->set('name', 'ETF global')
+            ->set('quantity', '1')
+            ->set('average_price', '100')
+            ->call('save')
+            ->assertDispatched('dashboard-record-created');
+    }
+
+    public function test_mobile_page_renders_destinations_for_all_shortcut_cards(): void
+    {
+        $this->signInWithWorkspace();
+
+        $this->withSession(['mobile_access_mode' => 'mobile'])
+            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148 Safari/604.1'])
+            ->get(route('mobile.home'))
+            ->assertOk()
+            ->assertSee(route('hub.banco'), false)
+            ->assertSee(route('hub.fitness'), false)
+            ->assertSee(route('hub.calendar'), false)
+            ->assertSee(route('social.hub'), false);
+    }
+
+    public function test_mobile_page_can_be_opened_and_selected_on_desktop_for_testing(): void
+    {
+        $this->signInWithWorkspace();
+
+        $headers = ['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'];
+
+        $this->withHeaders($headers)
+            ->get(route('mobile.home'))
+            ->assertOk();
+
+        $this->withHeaders($headers)
+            ->post(route('app.launch.choose'), ['mode' => 'mobile'])
+            ->assertRedirect(route('mobile.home'));
+
+        $this->withHeaders($headers)
+            ->post(route('device.mode'), ['mode' => 'mobile'])
+            ->assertRedirect(route('mobile.home'));
+    }
+
+    public function test_mobile_initial_page_does_not_load_quick_action_modules(): void
+    {
+        [, $workspace] = $this->signInWithWorkspace();
+        $categoryCount = Category::where('workspace_id', $workspace->id)->count();
+
+        $this->get(route('mobile.home'))
+            ->assertOk()
+            ->assertSee('wire:name="mobile-quick-actions"', false)
+            ->assertDontSee('wire:name="expenses"', false)
+            ->assertDontSee('wire:name="income-hub"', false)
+            ->assertDontSee('wire:name="investments-hub"', false)
+            ->assertDontSee('wire:name="goals-hub"', false)
+            ->assertDontSee('wire:name="hub.reminders-hub"', false)
+            ->assertDontSee('wire:name="subscription-hub"', false)
+            ->assertDontSee('wire:name="statement-import-hub"', false);
+
+        $this->assertSame($categoryCount, Category::where('workspace_id', $workspace->id)->count());
+    }
+
+    public function test_mobile_quick_actions_load_only_requested_forms_and_dispatch_their_open_events(): void
+    {
+        $this->signInWithWorkspace();
+
+        $actions = Livewire::test(MobileQuickActions::class)
+            ->assertSet('loaded', [])
+            ->dispatch('mobile-load-action', action: 'expense')
+            ->assertSet('loaded.expense', true)
+            ->assertSee('wire:name="expenses"', false)
+            ->assertSee('wire:name="expense-form"', false)
+            ->assertDontSee('wire:name="income-hub"', false)
+            ->assertDispatched('open-expense-category-picker')
+            ->dispatch('mobile-load-action', action: 'income', rect: ['left' => 16, 'top' => 20, 'bottom' => 120])
+            ->assertSet('loaded.income', true)
+            ->assertSee('wire:name="income-hub"', false)
+            ->assertDispatched('open-mobile-income-menu', rect: ['left' => 16, 'top' => 20, 'bottom' => 120]);
+
+        foreach ([
+            'statement' => ['open-mobile-statement-import', 'statement-import-hub'],
+            'investment-upload' => ['open-mobile-investment-upload', 'investments-hub'],
+            'goal' => ['open-mobile-goal-create', 'goals-hub'],
+            'reminder' => ['open-mobile-reminder-create', 'hub.reminders-hub'],
+            'subscription' => ['open-mobile-subscription-create', 'subscription-hub'],
+        ] as $action => [$event, $component]) {
+            $actions->dispatch('mobile-load-action', action: $action)
+                ->assertSee('wire:name="'.$component.'"', false)
+                ->assertDispatched($event);
+        }
+
+        $actions->dispatch('mobile-load-action', action: 'investment-create')
+            ->assertDispatched('open-mobile-investment-create');
+
+        $actions->assertSet('loaded.investment', true)
+            ->assertSet('loaded.statement', true)
+            ->assertSet('loaded.goal', true)
+            ->assertSet('loaded.reminder', true)
+            ->assertSet('loaded.subscription', true);
     }
 
     public function test_dashboard_quick_create_saves_extra_income_and_offers_its_page(): void
