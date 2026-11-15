@@ -65,7 +65,7 @@
         <div id="fp-navigation-progress-bar" class="h-full w-1/3 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,.8)]"></div>
     </div>
     <script>
-        (() => {
+        window.addEventListener('DOMContentLoaded', () => {
             const button = document.getElementById('fp-theme-toggle');
             const label = document.getElementById('fp-theme-label');
             const icon = document.getElementById('fp-theme-icon');
@@ -83,13 +83,12 @@
                     localStorage.setItem('finance-pro-mobile-theme', normalized);
                 } catch (_) {}
             };
-            let current = document.documentElement.dataset.theme || 'dark';
-            applyTheme(current);
+            applyTheme(document.documentElement.dataset.theme || 'dark');
             button?.addEventListener('click', () => {
-                current = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-                applyTheme(current);
+                const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+                applyTheme(nextTheme);
             });
-        })();
+        });
     </script>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
