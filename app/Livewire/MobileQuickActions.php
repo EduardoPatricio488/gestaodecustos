@@ -11,6 +11,22 @@ class MobileQuickActions extends Component
     #[Locked]
     public array $loaded = [];
 
+    public function mount(): void
+    {
+        $scanId = request()->query('scan_id');
+        $slug = request()->query('slug');
+
+        if (
+            request()->boolean('open_scan_review')
+            && is_string($scanId)
+            && \\Illuminate\\Support\\Str::isUuid($scanId)
+            && is_string($slug)
+            && $slug !== ''
+        ) {
+            $this->loaded['scan-review'] = true;
+        }
+    }
+
     #[On('mobile-load-action')]
     public function loadAction(string $action, ?array $rect = null): void
     {
