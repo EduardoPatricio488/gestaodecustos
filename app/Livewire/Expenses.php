@@ -91,16 +91,16 @@ class Expenses extends Component
                         throw new \RuntimeException('O OpenRouter não disponibilizou os dados de utilização desta chave.');
                     }
 
-                    $used = max(0, (float) ($data['usage'] ?? 0));
-                    $hasUnlimitedLimit = $data['limit_remaining'] === null || ($data['limit'] ?? null) === null;
-                    $remaining = $hasUnlimitedLimit ? null : max(0, (float) $data['limit_remaining']);
-                    $limit = $hasUnlimitedLimit ? null : max(0, (float) $data['limit']);
+                    $freeRequests = $data['free_model_daily_requests'] ?? null;
+
+                    if (! is_array($freeRequests) || ! array_key_exists('remaining', $freeRequests) || ! array_key_exists('limit', $freeRequests)) {
+                        throw new \\RuntimeException('O OpenRouter não disponibilizou o limite diário de pedidos gratuitos desta chave.');
+                    }
 
                     return [
-                        'used' => $used,
-                        'limit' => $limit,
-                        'remaining' => $remaining,
-                        'unlimited' => $hasUnlimitedLimit,
+                        'requests_used' => max(0, (int) ($freeRequests['used'] ?? 0)),
+                        'requests_limit' => max(0, (int) $freeRequests['limit']),
+                        'requests_remaining' => max(0, (int) $freeRequests['remaining']),
                         'is_free_tier' => (bool) ($data['is_free_tier'] ?? false),
                     ];
                 }
