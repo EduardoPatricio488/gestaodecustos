@@ -32,7 +32,7 @@ class ProcessInvoiceScan implements ShouldQueue, ShouldBeUnique
         public int $workspaceId,
         public string $optionField = 'category',
     ) {
-        $this->onConnection('database');
+        $this->onConnection('deferred');
         $this->onQueue('default');
     }
 
