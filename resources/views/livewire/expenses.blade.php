@@ -76,7 +76,9 @@
                 type="button"
                 @if($isScanningInvoice) data-invoice-scan-active @endif
                 x-on:click.stop.prevent="const root = document.querySelector('[data-expense-modal-root]'); const modal = root && window.Alpine ? window.Alpine.$data(root) : null; if (modal) { modal.activeTab = 'scanner'; modal.open = true; window.__financeProExpenseModalOpen = true; }"
-                class="fixed bottom-5 right-5 z-[10001] flex max-w-[calc(100vw-2.5rem)] items-center gap-3 rounded-full border px-4 py-3 text-left shadow-none transition hover:scale-[1.02] {{ $invoiceScanCompleted ? 'border-emerald-300 bg-emerald-600 text-white' : 'border-brand-300 bg-zinc-950 text-white' }}"
+                class="fixed bottom-5 right-5 z-[10001] flex items-center justify-center rounded-full border shadow-none transition hover:scale-[1.02] {{ $invoiceScanCompleted ? 'max-w-[calc(100vw-2.5rem)] gap-3 px-4 py-3 text-left border-emerald-300 bg-emerald-600 text-white' : 'size-11 p-0 border-brand-300 bg-zinc-950 text-white' }}"
+                aria-label="{{ $invoiceScanCompleted ? 'Abrir análise concluída e aceitar os dados' : 'Abrir scanner da fatura em análise' }}"
+                title="{{ $invoiceScanCompleted ? 'Análise concluída' : 'Abrir scanner' }}"
                 aria-live="polite"
             >
                 @if($invoiceScanCompleted)
@@ -86,13 +88,7 @@
                         <span class="block text-[10px] font-medium text-white/80">Carrega para aceitar os dados</span>
                     </span>
                 @else
-                    <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-500/20">
-                        <span class="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
-                    </span>
-                    <span class="min-w-0">
-                        <span class="block text-xs font-black">A analisar ficheiro</span>
-                        <span class="block text-[10px] font-medium text-white/70" x-text="'Carrega para abrir o scanner'"></span>
-                    </span>
+                    <span class="text-xl leading-none" aria-hidden="true" style="animation: spin 1.5s linear infinite;">⚙</span>
                 @endif
             </button>
         @endif
