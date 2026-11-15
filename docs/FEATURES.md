@@ -35,6 +35,8 @@ Ao abrir o scanner, a quota diária gratuita do OpenRouter é consultada em segu
 
 O tema é partilhado neste dispositivo entre a entrada, os registos rápidos e o site completo. O modo automático segue o horário configurado nas definições.
 
+Os modais de registo rápido (despesa, receitas, investimento, objetivo, lembrete, assinatura e importações) partilham o mesmo tamanho do modal «Nova despesa»: centrados, com largura máxima de 42 rem e altura máxima de 88 % do ecrã, com o conteúdo a deslizar internamente.
+
 Na configuração inicial e no módulo Banco é possível importar comprovativos de IBAN português em PDF com texto legível (até 5 MB). A leitura preenche os dados identificados; é necessário confirmá-los e introduzir o saldo antes de guardar.
 
 Na configuração inicial, o formulário de salário é o mesmo do módulo Receitas, incluindo a estimativa fiscal e o scanner de contratos por fotografia. A análise envia a imagem ao OpenRouter e os dados detetados devem ser revistos antes de guardar.
