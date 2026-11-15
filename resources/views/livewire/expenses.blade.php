@@ -6,7 +6,7 @@
                 <div class="hidden md:block border-r border-zinc-100 dark:border-zinc-800 pr-10"><div class="flex items-center gap-3 mb-1.5"><span class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] italic">Consola de Auditoria</span><span class="text-[9px] font-black bg-brand-600 text-white px-2.5 py-0.5 rounded-full shadow-lg">NÍVEL {{ auth()->user()->level }}</span></div><div class="w-56 h-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-700 shadow-inner"><div class="h-full bg-brand-500 transition-all duration-1000" style="width: {{ (auth()->user()->xp % 1000) / 10 }}%"></div></div></div>
                 <div class="flex items-center gap-4 min-w-0"><div class="p-3 bg-zinc-950 rounded-2xl border border-zinc-800 shadow-xl shrink-0"><flux:icon name="banknotes" class="size-6 text-brand-400" /></div><div class="min-w-0"><h1 class="text-xl sm:text-2xl font-black dark:text-white uppercase tracking-tighter italic leading-none truncate">Todas as Despesas</h1><p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1 italic truncate">{{ auth()->user()->currentWorkspace->name }}</p></div></div>
             </div>
-            @if($canEdit)<flux:button variant="primary" icon="plus" x-on:click="$dispatch('open-expense-category-picker')" class="shrink-0 rounded-xl font-black uppercase tracking-widest">Nova despesa</flux:button>@endif
+            @if($canEdit)<flux:button variant="primary" icon="plus" x-on:click="window.dispatchEvent(new CustomEvent('open-expense-category-picker'))" class="shrink-0 rounded-xl font-black uppercase tracking-widest">Nova despesa</flux:button>@endif
         </div>
     </div>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 px-2">
