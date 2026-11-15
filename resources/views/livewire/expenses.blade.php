@@ -26,6 +26,10 @@
     </div>
     @endunless
 
+    @if($isScanningInvoice)
+        <div wire:poll.5s="checkInvoiceScan" class="hidden" aria-hidden="true"></div>
+    @endif
+
     <div
         x-data="{
             // A abertura e a mudança de separador são locais para o modal surgir sem esperar pelo servidor.
@@ -127,7 +131,7 @@
                     </div>
                 </template>
 
-                <div x-show="activeTab === 'scanner'" x-cloak class="space-y-5" @if($isScanningInvoice) wire:poll.5s="checkInvoiceScan" @endif>
+                <div x-show="activeTab === 'scanner'" x-cloak class="space-y-5">
                     @if($scannerError)
                         <div class="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">
                             <flux:icon name="exclamation-triangle" class="size-4 shrink-0" />
