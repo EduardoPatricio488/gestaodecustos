@@ -59,7 +59,7 @@
         "
         x-on:open-expense-category-picker.window="window.__financeProExpenseModalOpen = true; open = true; activeTab = 'scanner'"
         x-on:toggle-expense-scan-modal.window="window.__financeProExpenseModalOpen = true; open = true; activeTab = 'scanner'"
-        x-on:keydown.escape.window="open = false"
+        x-on:keydown.escape.window="@if($isScanningInvoice) $event.preventDefault() @else open = false @endif"
         data-no-global-close
     >
         <template x-teleport="body">
@@ -88,9 +88,9 @@
             </button>
         @endif
         <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 {{ $dashboardMode ? 'z-[9998]' : 'z-[9999]' }}" aria-modal="true" role="dialog">
-            <div x-show="open" x-transition:enter="transition-opacity ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0 bg-black/60" x-on:click="open = false"></div>
+            <div x-show="open" x-transition:enter="transition-opacity ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0 bg-black/60" x-on:click="@if($isScanningInvoice) $event.stopPropagation() @else open = false @endif"></div>
 
-            <div x-show="open" x-transition class="absolute inset-0 {{ $dashboardMode ? 'lg:left-64' : '' }} flex items-center justify-center p-4" x-on:click.self="open = false">
+            <div x-show="open" x-transition class="absolute inset-0 {{ $dashboardMode ? 'lg:left-64' : '' }} flex items-center justify-center p-4" x-on:click.self="@if($isScanningInvoice) $event.stopPropagation() @else open = false @endif">
         <div x-show="open" x-transition:enter="transition-[opacity,transform] duration-400 ease-[cubic-bezier(0.16,1,0.3,1)]" x-transition:enter-start="opacity-0 translate-y-8 scale-[0.96]" x-transition:enter-end="opacity-100 translate-y-0 scale-100" x-transition:leave="transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.4,0,1,1)]" x-transition:leave-start="opacity-100 translate-y-0 scale-100" x-transition:leave-end="opacity-0 translate-y-5 scale-[0.97]" class="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl">
             <div class="border-b border-zinc-100 px-6 py-5 dark:border-zinc-800">
                 <div class="min-w-0">
@@ -295,7 +295,7 @@
                         <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                             <div class="h-full rounded-full bg-brand-500 transition-[width] duration-1000" x-bind:style="'width: ' + ((180 - scanTimeoutRemaining) / 180 * 100) + '%'"></div>
                         </div>
-                        <p class="mt-2 text-[10px] text-zinc-400">Podes aguardar — não feches esta janela.</p>
+                        <p class="mt-2 text-[10px] text-zinc-400">Podes minimizar o scanner; a análise continua em segundo plano.</p>
                     </div>
                     @if($isScanningInvoice)
                         <div role="status" aria-live="polite" class="rounded-xl border border-brand-500/20 bg-brand-500/5 px-4 py-3 text-center">
@@ -307,7 +307,7 @@
                             <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                                 <div class="h-full rounded-full bg-brand-500 transition-[width] duration-1000" x-bind:style="'width: ' + ((180 - scanTimeoutRemaining) / 180 * 100) + '%'"></div>
                             </div>
-                            <p class="mt-2 text-[10px] text-zinc-400">A janela é atualizada automaticamente.</p>
+                            <p class="mt-2 text-[10px] text-zinc-400">Podes minimizar esta janela enquanto a análise continua.</p>
                         </div>
                     @endif
                     <div class="flex flex-col-reverse sm:flex-row gap-3">
