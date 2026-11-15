@@ -30,6 +30,7 @@
                             </button>
                             <p class="text-[10px] leading-4 text-zinc-500">A análise pode falhar em fotografias pouco nítidas. Os dados só são guardados quando confirmares o contrato.</p>
                         </section>
+                    </section>
                     <section x-cloak x-show="salaryMode !== 'scanner'" class="space-y-4">
                     {{-- DESCRIÇÃO --}}
                     <div class="relative">
