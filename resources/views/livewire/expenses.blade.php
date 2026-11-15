@@ -198,8 +198,23 @@
                                         this.uploadProgress = event.detail.progress ?? 0;
                                     });
                                 } catch (error) {
-                                    this.isPreparing = false;
-                                    console.error('Falha ao preparar a fotografia da fatura.', error);
+                                    console.warn('Não foi possível comprimir a fotografia; será enviada no formato original.', error);
+                                    try {
+                                        this.previewUrl = this.isImage ? URL.createObjectURL(original) : null;
+                                        await this.$wire.upload('scannerReceipt', original, () => {
+                                            this.isPreparing = false;
+                                            this.uploadProgress = 100;
+                                        }, () => {
+                                            this.isPreparing = false;
+                                            this.uploadProgress = 0;
+                                        }, event => {
+                                            this.uploadProgress = event.detail.progress ?? 0;
+                                        });
+                                    } catch (uploadError) {
+                                        console.error('Falha ao enviar a fotografia da fatura.', uploadError);
+                                    } finally {
+                                        this.isPreparing = false;
+                                    }
                                 }
                                 input.value = '';
                             }
