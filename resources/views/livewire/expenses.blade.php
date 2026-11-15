@@ -120,12 +120,10 @@
                                     <flux:icon name="arrow-path" class="size-3 animate-spin" /> A consultar...
                                 </span>
                                 @if($openRouterQuota)
-                                    <span wire:loading.remove wire:target="refreshOpenRouterQuota" class="text-xs font-black tabular-nums {{ $openRouterQuota['unlimited'] || $openRouterQuota['remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
-                                        @if($openRouterQuota['unlimited'])
-                                            Sem limite definido
-                                        @else
-                                            {{ number_format($openRouterQuota['remaining'], 2, ',', '.') }} / {{ number_format($openRouterQuota['limit'], 2, ',', '.') }} créditos disponíveis
-                                        @endif
+                                    <span wire:loading.remove wire:target="refreshOpenRouterQuota" class="text-xs font-black tabular-nums {{ $openRouterQuota['requests_remaining'] > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500' }}">
+                                        {{ $openRouterQuota['requests_remaining'] }} uploads disponíveis hoje
+                                    </span>
+                                @endif
                                     </span>
                                 @endif
                                 <button type="button" x-on:click.stop.prevent="$wire.call('refreshOpenRouterQuota')" wire:loading.attr="disabled" wire:target="refreshOpenRouterQuota" class="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-[9px] font-bold text-zinc-500 transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-50">
@@ -137,14 +135,14 @@
                         @if($openRouterQuota)
                             <div class="mt-2 flex items-center justify-between gap-3">
                                 <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-                                    <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ ! $openRouterQuota['unlimited'] && $openRouterQuota['limit'] > 0 ? min(100, ($openRouterQuota['used'] / $openRouterQuota['limit']) * 100) : 0 }}%"></div>
+                                    <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ $openRouterQuota['requests_limit'] > 0 ? min(100, ($openRouterQuota['requests_used'] / $openRouterQuota['requests_limit']) * 100) : 0 }}%"></div>
                                 </div>
-                                <span class="shrink-0 text-[9px] font-bold text-zinc-500">{{ number_format($openRouterQuota['used'], 2, ',', '.') }} utilizados</span>
+                                <span class="shrink-0 text-[9px] font-bold text-zinc-500">{{ $openRouterQuota['requests_used'] }} / {{ $openRouterQuota['requests_limit'] }} utilizados</span>
                             </div>
-                            @if($openRouterQuota['remaining'] <= 0)
-                                <p class="mt-2 text-[10px] font-semibold text-red-500">O saldo de crédito desta chave está esgotado. Verifica os limites da tua conta OpenRouter.</p>
+                            @if($openRouterQuota['requests_remaining'] <= 0)
+                                <p class="mt-2 text-[10px] font-semibold text-red-500">A quota diária de pedidos gratuitos está esgotada. A reposição ocorre às 00:00 UTC.</p>
                             @else
-                                <p class="mt-2 text-[10px] text-zinc-500">Saldo de crédito e utilização da tua chave OpenRouter. Atualiza manualmente para consultar os valores mais recentes.</p>
+                                <p class="mt-2 text-[10px] text-zinc-500">Estimativa de uploads/análises disponíveis hoje, com base nos pedidos gratuitos restantes do OpenRouter. Atualiza para consultar os valores mais recentes.</p>
                             @endif
                         @elseif($openRouterQuotaError)
                             <p class="mt-2 text-[10px] text-amber-600 dark:text-amber-400">{{ $openRouterQuotaError }}</p>
