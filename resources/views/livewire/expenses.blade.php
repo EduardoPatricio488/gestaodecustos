@@ -58,7 +58,7 @@
         @if($isScanningInvoice || $invoiceScanCompleted)
             <button
                 type="button"
-                x-on:click="window.dispatchEvent(new CustomEvent('toggle-expense-scan-modal'))"
+                x-on:click="open = !open; if (open) activeTab = 'scanner'"
                 class="fixed bottom-5 right-5 z-[10001] flex max-w-[calc(100vw-2.5rem)] items-center gap-3 rounded-full border px-4 py-3 text-left shadow-2xl transition hover:scale-[1.02] {{ $invoiceScanCompleted ? 'border-emerald-300 bg-emerald-600 text-white' : 'border-brand-300 bg-zinc-950 text-white' }}"
                 aria-live="polite"
             >
