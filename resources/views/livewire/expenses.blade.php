@@ -155,18 +155,58 @@
                             previewUrl: null,
                             isImage: false,
                             fileName: '',
-                            showPreview(event) {
-                                const file = event.target.files?.[0];
-                                if (!file) return;
+                            isPreparing: false,
+                            uploadProgress: 0,
+                            async prepareAndUpload(event) {
+                                const input = event.target;
+                                const original = input.files?.[0];
+                                if (!original) return;
+                                this.fileName = original.name;
+                                this.isImage = original.type.startsWith('image/');
+                                this.isPreparing = this.isImage;
+                                this.uploadProgress = 0;
                                 if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
-                                this.fileName = file.name;
-                                this.isImage = file.type.startsWith('image/');
-                                this.previewUrl = this.isImage ? URL.createObjectURL(file) : null;
+
+                                let uploadFile = original;
+                                try {
+                                    if (this.isImage && original.size > 350 * 1024) {
+                                        const bitmap = await createImageBitmap(original, { imageOrientation: 'from-image' });
+                                        const maxSide = 1500;
+                                        const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+                                        const canvas = document.createElement('canvas');
+                                        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+                                        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+                                        const context = canvas.getContext('2d', { alpha: false });
+                                        context.fillStyle = '#ffffff';
+                                        context.fillRect(0, 0, canvas.width, canvas.height);
+                                        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                                        bitmap.close?.();
+                                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.72));
+                                        if (blob && blob.size < original.size) {
+                                            uploadFile = new File([blob], original.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+                                        }
+                                    }
+                                    this.previewUrl = this.isImage ? URL.createObjectURL(uploadFile) : null;
+                                    this.fileName = uploadFile.name;
+                                    await this.$wire.upload('scannerReceipt', uploadFile, () => {
+                                        this.isPreparing = false;
+                                        this.uploadProgress = 100;
+                                    }, () => {
+                                        this.isPreparing = false;
+                                        this.uploadProgress = 0;
+                                    }, event => {
+                                        this.uploadProgress = event.detail.progress ?? 0;
+                                    });
+                                } catch (error) {
+                                    this.isPreparing = false;
+                                    console.error('Falha ao preparar a fotografia da fatura.', error);
+                                }
+                                input.value = '';
                             }
                         }"
                         class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40 p-4 sm:p-5 text-center"
                     >
-                        <input type="file" wire:model="scannerReceipt" x-on:change="showPreview($event)" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
+                        <input type="file" x-on:change="prepareAndUpload($event)" accept=".pdf,image/jpeg,image/png,image/webp" class="block w-full text-xs text-zinc-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:text-[10px] file:font-black file:text-white hover:file:bg-brand-700" />
                         <div x-show="previewUrl" x-cloak class="mt-4 flex flex-col items-center gap-2">
                             <img x-bind:src="previewUrl" alt="Pré-visualização da fatura" class="max-h-56 max-w-full rounded-xl border border-zinc-200 dark:border-zinc-700 object-contain shadow-lg" />
                             <span class="max-w-full truncate text-[10px] font-bold text-zinc-600 dark:text-zinc-300" x-text="fileName"></span>
@@ -177,8 +217,9 @@
                         </div>
                         <p x-show="!fileName" class="mt-3 text-xs font-bold text-zinc-500">Seleciona uma fotografia, imagem ou PDF da fatura</p>
                         <p x-show="!fileName" class="mt-1 text-[10px] text-zinc-400">PDF, JPG, PNG ou WEBP · Máximo 20 MB</p>
-                        <div wire:loading wire:target="scannerReceipt" class="mt-3 text-xs font-bold text-brand-500">A carregar imagem...</div>
-                        <div wire:loading.remove wire:target="scannerReceipt" x-show="fileName" class="mt-2 text-[10px] font-bold text-emerald-600">Ficheiro pronto</div>
+                        <div x-show="isPreparing" x-cloak class="mt-3 text-xs font-bold text-brand-500">A preparar fotografia...</div>
+                        <div wire:loading wire:target="upload:scannerReceipt" class="mt-3 text-xs font-bold text-brand-500">A enviar fotografia... <span x-text="uploadProgress + '%'"></span></div>
+                        <div wire:loading.remove wire:target="upload:scannerReceipt" x-show="fileName && !isPreparing" class="mt-2 text-[10px] font-bold text-emerald-600">Ficheiro preparado</div>
                     </div>
                     <div wire:loading.flex wire:target="scanInvoiceAndDetectCategory" class="flex-col rounded-xl border border-brand-500/20 bg-brand-500/5 px-4 py-3 text-center">
                         <div class="flex items-center justify-center gap-2">
