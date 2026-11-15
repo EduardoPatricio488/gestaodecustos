@@ -432,11 +432,13 @@ class SubscriptionHub extends Component
         $this->transportPassPaymentMethod = 'card';
         $this->transportPassPaidByCompany = false;
         $this->showExtraModal = true;
+        $this->dispatch('modal-show-subscription');
     }
 
     public function closeExtraModal()
     {
         $this->showExtraModal = false;
+        $this->dispatch('modal-close-subscription');
     }
 
     public function updatedBillingCycle(): void
