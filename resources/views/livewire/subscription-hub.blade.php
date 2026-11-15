@@ -121,9 +121,8 @@
 
     @endunless
 
-    @if($showExtraModal)
     @teleport('body')
-        <div class="fixed inset-0 z-[99999] flex items-center justify-center p-4" wire:click.self="closeExtraModal" x-on:keydown.escape.window="$wire.closeExtraModal()">
+        <div x-data="{ open: false }" x-on:open-mobile-subscription-create.window="open = true" x-on:modal-show-subscription.window="open = true" x-on:modal-close-subscription.window="open = false" x-show="open" x-cloak class="fixed inset-0 z-[99999] flex items-center justify-center p-4" wire:click.self="closeExtraModal" x-on:keydown.escape.window="$wire.closeExtraModal()">
             <div class="absolute inset-0 bg-zinc-950/70" wire:click="closeExtraModal"></div>
             <div class="relative z-10 w-full max-w-2xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
                 <form wire:submit.prevent="save" class="flex max-h-[86vh] flex-col">
@@ -194,7 +193,6 @@
             </div>
         </div>
     @endteleport
-    @endif
 
     @if($showPaymentHistoryModal)
         <div class="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6" wire:click.self="closePaymentHistory">
