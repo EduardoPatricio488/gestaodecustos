@@ -212,7 +212,7 @@ PROMPT;
                     }
 
                     if (data_get($metadata, 'error_type') === 'rate_limit_exceeded'
-                        || $response->hasHeader('X-RateLimit-Reset')) {
+                        || filled($response->header('X-RateLimit-Reset'))) {
                         $platformRateLimited = true;
                         $retryAfter = $response->header('Retry-After');
                         $retryAfterSeconds = is_numeric($retryAfter) ? max(1, (int) $retryAfter) : null;
