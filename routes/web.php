@@ -188,12 +188,24 @@ Route::view('/llms.txt', 'seo.llms')->name('seo.llms');
 Route::get('/', function (Request $request) {
     $isMobileDevice = preg_match('/Android|iPhone|iPad|iPod|Mobile|Windows Phone|webOS/i', $request->userAgent() ?? '') === 1;
 
+    if ($isMobileDevice && $request->user()) {
+        $request->session()->put('mobile_access_mode', 'mobile');
+
+        return redirect()->route('mobile.home');
+    }
+
     return redirect()->route($isMobileDevice ? 'app.launch' : 'public.home');
 })->name('home');
 
 Route::view('/inicio', 'welcome')->name('public.home');
 
-Route::get('/abrir-app', function () {
+Route::get('/abrir-app', function (Request $request) {
+    if ($request->user()) {
+        $request->session()->put('mobile_access_mode', 'mobile');
+
+        return redirect()->route('mobile.home');
+    }
+
     return view('auth.app-launch');
 })->name('app.launch');
 
